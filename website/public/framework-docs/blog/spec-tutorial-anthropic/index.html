@@ -4890,7 +4890,7 @@ is written. You approve each task after it's implemented.
 And if you step away, the spec remembers where you left off.</p>
 <h3 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h3>
 <p>Install attune-ai and type one command:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[developer]&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'attune-ai[developer]'</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>attune<span class="w"> </span>setup
 </code></pre></div>
 <p>Then in Claude Code:</p>
@@ -4917,12 +4917,12 @@ use in a design document, but gathered conversationally.</p>
 <h2 id="stage-2-plan">Stage 2: Plan<a class="headerlink" href="#stage-2-plan" title="Permanent link">&para;</a></h2>
 <p>From the brainstorm output, <code>/spec</code> decomposes the work
 into discrete tasks using XML-structured specifications:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">&lt;task</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;1&quot;</span><span class="w"> </span><span class="na">name=</span><span class="s">&quot;rate-limiter-core&quot;</span><span class="nt">&gt;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="nt">&lt;task</span><span class="w"> </span><span class="na">id=</span><span class="s">"1"</span><span class="w"> </span><span class="na">name=</span><span class="s">"rate-limiter-core"</span><span class="nt">&gt;</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">  </span><span class="nt">&lt;objective&gt;</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span>Create<span class="w"> </span>a<span class="w"> </span>sliding-window<span class="w"> </span>rate<span class="w"> </span>limiter<span class="w"> </span>with<span class="w"> </span>Redis<span class="w"> </span>backend
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="nt">&lt;/objective&gt;</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="nt">&lt;files-to-create&gt;</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="nt">&lt;file</span><span class="w"> </span><span class="na">path=</span><span class="s">&quot;src/api/rate_limiter.py&quot;</span><span class="nt">&gt;</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">    </span><span class="nt">&lt;file</span><span class="w"> </span><span class="na">path=</span><span class="s">"src/api/rate_limiter.py"</span><span class="nt">&gt;</span>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">      </span>SlidingWindowLimiter<span class="w"> </span>class<span class="w"> </span>with<span class="w"> </span>check()<span class="w"> </span>and<span class="w"> </span>reset()
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">    </span><span class="nt">&lt;/file&gt;</span>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span><span class="nt">&lt;/files-to-create&gt;</span>
@@ -4931,7 +4931,7 @@ into discrete tasks using XML-structured specifications:</p>
 <a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">    </span><span class="nt">&lt;check&gt;</span>Redis<span class="w"> </span>connection<span class="w"> </span>failure<span class="w"> </span>degrades<span class="w"> </span>gracefully<span class="nt">&lt;/check&gt;</span>
 <a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="w">  </span><span class="nt">&lt;/validation&gt;</span>
 <a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">  </span><span class="nt">&lt;risks&gt;</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">    </span><span class="nt">&lt;risk</span><span class="w"> </span><span class="na">severity=</span><span class="s">&quot;medium&quot;</span><span class="nt">&gt;</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">    </span><span class="nt">&lt;risk</span><span class="w"> </span><span class="na">severity=</span><span class="s">"medium"</span><span class="nt">&gt;</span>
 <a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="w">      </span>Clock<span class="w"> </span>skew<span class="w"> </span>in<span class="w"> </span>distributed<span class="w"> </span>Redis<span class="w"> </span>deployments
 <a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">    </span><span class="nt">&lt;/risk&gt;</span>
 <a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">  </span><span class="nt">&lt;/risks&gt;</span>
@@ -4990,7 +4990,7 @@ gates and blocks on HIGH severity findings.</p>
 <hr />
 <h2 id="resume-support">Resume Support<a class="headerlink" href="#resume-support" title="Permanent link">&para;</a></h2>
 <p>State is persisted as an HTML comment inside the plan file:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="cm">&lt;!-- spec-state: {&quot;completed&quot;:[&quot;1&quot;,&quot;2&quot;],&quot;current&quot;:&quot;3&quot;} --&gt;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="cm">&lt;!-- spec-state: {"completed":["1","2"],"current":"3"} --&gt;</span>
 </code></pre></div>
 <p>If you close Claude Code and come back later, <code>/spec</code>
 detects the incomplete plan and offers to resume:</p>
@@ -5053,7 +5053,7 @@ task 1. The severity gate ensures high-risk findings
 always require human judgment.</p>
 <hr />
 <h2 id="try-it">Try It<a class="headerlink" href="#try-it" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[developer]&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'attune-ai[developer]'</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>attune<span class="w"> </span>setup
 </code></pre></div>
 <p>Then in Claude Code:</p>

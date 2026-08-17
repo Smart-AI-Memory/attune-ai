@@ -4743,7 +4743,7 @@ warnings from past bugs:</p>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  - config.py alongside config/ creates duplicate module
 </code></pre></div>
 <p><strong>3. Progressive depth</strong> — session state in three fields:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">&quot;last_topic&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;security-audit&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;depth_level&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1743580800</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="nt">"last_topic"</span><span class="p">:</span><span class="w"> </span><span class="s2">"security-audit"</span><span class="p">,</span><span class="w"> </span><span class="nt">"depth_level"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="nt">"timestamp"</span><span class="p">:</span><span class="w"> </span><span class="mi">1743580800</span><span class="p">}</span>
 </code></pre></div>
 <p>Ask again → depth increments. New topic → resets to 0.
 4-hour TTL → resets if you've been away. Simple rules,

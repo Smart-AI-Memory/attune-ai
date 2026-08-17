@@ -4854,7 +4854,7 @@
 </code></pre></div>
 <h2 id="tasks">Tasks<a class="headerlink" href="#tasks" title="Permanent link">&para;</a></h2>
 <h3 id="run-a-workflow-from-the-cli">Run a workflow from the CLI<a class="headerlink" href="#run-a-workflow-from-the-cli" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>attune<span class="w"> </span>workflow<span class="w"> </span>list<span class="w">                 </span><span class="c1"># what&#39;s available</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>attune<span class="w"> </span>workflow<span class="w"> </span>list<span class="w">                 </span><span class="c1"># what's available</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>code-review<span class="w">      </span><span class="c1"># run one</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>attune<span class="w"> </span>workflow<span class="w"> </span>info<span class="w"> </span>code-review<span class="w">     </span><span class="c1"># describe it</span>
 </code></pre></div>
@@ -4872,11 +4872,11 @@
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.cli_router</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_slash_command</span><span class="p">,</span> <span class="n">route_user_input</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">is_slash_command</span><span class="p">(</span><span class="s2">&quot;/security&quot;</span><span class="p">))</span>          <span class="c1"># True</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="nb">print</span><span class="p">(</span><span class="n">is_slash_command</span><span class="p">(</span><span class="s2">&quot;scan my code&quot;</span><span class="p">))</span>        <span class="c1"># False</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">is_slash_command</span><span class="p">(</span><span class="s2">"/security"</span><span class="p">))</span>          <span class="c1"># True</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="nb">print</span><span class="p">(</span><span class="n">is_slash_command</span><span class="p">(</span><span class="s2">"scan my code"</span><span class="p">))</span>        <span class="c1"># False</span>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="n">result</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">route_user_input</span><span class="p">(</span><span class="s2">&quot;run a security audit&quot;</span><span class="p">))</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;workflow&quot;</span><span class="p">],</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;confidence&quot;</span><span class="p">])</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="n">result</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">route_user_input</span><span class="p">(</span><span class="s2">"run a security audit"</span><span class="p">))</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">"workflow"</span><span class="p">],</span> <span class="n">result</span><span class="p">[</span><span class="s2">"confidence"</span><span class="p">])</span>
 </code></pre></div>
 <p><strong>Verify:</strong> <code>is_slash_command</code> is synchronous; <code>route_user_input</code> is
 <strong>async</strong> — await it (here via <code>asyncio.run</code>). The result dict includes

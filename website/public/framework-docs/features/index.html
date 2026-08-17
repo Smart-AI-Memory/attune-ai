@@ -5853,13 +5853,13 @@ server is reachable:</p>
 <a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>✅ Long-term memory (file-based) Available       Core feature (always available)
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>✅ File session storage         Available       Core feature (always available)
 <a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>⚠️ Short-term memory (Redis-based) Missing Dependency Redis package not importable
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>                                Install: pip install --force-reinstall &#39;redis&gt;=5.0.0,&lt;9.0.0&#39;
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>                                Install: pip install --force-reinstall 'redis&gt;=5.0.0,&lt;9.0.0'
 <a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>...
 <a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>
 <a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>💡 To enable Redis-enhanced features:
 <a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>   1. Repair the redis package (it ships as a core
 <a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>      dependency, so this means a broken install):
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>      pip install --force-reinstall &#39;redis&gt;=5.0.0,&lt;9.0.0&#39;
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>      pip install --force-reinstall 'redis&gt;=5.0.0,&lt;9.0.0'
 <a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>
 <a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a>   2. Install and start Redis server:
 <a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a>      • macOS: brew install redis &amp;&amp; brew services start redis
@@ -5879,33 +5879,33 @@ server is reachable:</p>
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">memory</span> <span class="o">=</span> <span class="n">FileSessionMemory</span><span class="p">()</span>
 <a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="c1"># Get detailed feature status</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="n">info</span> <span class="o">=</span> <span class="n">MemoryFeatures</span><span class="o">.</span><span class="n">get_feature_status</span><span class="p">(</span><span class="s2">&quot;short_term&quot;</span><span class="p">)</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="n">info</span> <span class="o">=</span> <span class="n">MemoryFeatures</span><span class="o">.</span><span class="n">get_feature_status</span><span class="p">(</span><span class="s2">"short_term"</span><span class="p">)</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="nb">print</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
 <a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="k">if</span> <span class="n">info</span><span class="o">.</span><span class="n">install_command</span><span class="p">:</span>
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Install: </span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">install_command</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Install: </span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">install_command</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>
 <a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="c1"># List all features</span>
 <a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="n">features</span> <span class="o">=</span> <span class="n">MemoryFeatures</span><span class="o">.</span><span class="n">list_all_features</span><span class="p">()</span>
 <a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">info</span> <span class="ow">in</span> <span class="n">features</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>    <span class="n">status_symbol</span> <span class="o">=</span> <span class="s2">&quot;✅&quot;</span> <span class="k">if</span> <span class="n">info</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="s2">&quot;available&quot;</span> <span class="k">else</span> <span class="s2">&quot;⚠️&quot;</span>
-<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">status_symbol</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>    <span class="n">status_symbol</span> <span class="o">=</span> <span class="s2">"✅"</span> <span class="k">if</span> <span class="n">info</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="s2">"available"</span> <span class="k">else</span> <span class="s2">"⚠️"</span>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">status_symbol</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>Telemetry features:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.telemetry.features</span><span class="w"> </span><span class="kn">import</span> <span class="n">TelemetryFeatures</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="c1"># Check specific feature</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">info</span> <span class="o">=</span> <span class="n">TelemetryFeatures</span><span class="o">.</span><span class="n">get_feature_status</span><span class="p">(</span><span class="s2">&quot;event_streaming&quot;</span><span class="p">)</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="k">if</span> <span class="n">info</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="s2">&quot;available&quot;</span><span class="p">:</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">info</span> <span class="o">=</span> <span class="n">TelemetryFeatures</span><span class="o">.</span><span class="n">get_feature_status</span><span class="p">(</span><span class="s2">"event_streaming"</span><span class="p">)</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="k">if</span> <span class="n">info</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">value</span> <span class="o">==</span> <span class="s2">"available"</span><span class="p">:</span>
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">attune.telemetry</span><span class="w"> </span><span class="kn">import</span> <span class="n">EventStreamer</span>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">streamer</span> <span class="o">=</span> <span class="n">EventStreamer</span><span class="p">()</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">streamer</span><span class="o">.</span><span class="n">publish_event</span><span class="p">(</span><span class="s2">&quot;agent_heartbeat&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;running&quot;</span><span class="p">})</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">streamer</span><span class="o">.</span><span class="n">publish_event</span><span class="p">(</span><span class="s2">"agent_heartbeat"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"status"</span><span class="p">:</span> <span class="s2">"running"</span><span class="p">})</span>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="k">else</span><span class="p">:</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Event streaming unavailable: </span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Event streaming unavailable: </span><span class="si">{</span><span class="n">info</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>
 <a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="c1"># Require Redis or raise helpful error</span>
 <a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>    <span class="n">TelemetryFeatures</span><span class="o">.</span><span class="n">require_redis</span><span class="p">(</span><span class="s2">&quot;Event streaming&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>    <span class="n">TelemetryFeatures</span><span class="o">.</span><span class="n">require_redis</span><span class="p">(</span><span class="s2">"Event streaming"</span><span class="p">)</span>
 <a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>    <span class="c1"># Use event streaming features</span>
 <a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
 <a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>  <span class="c1"># Shows install instructions</span>
@@ -5944,15 +5944,15 @@ server is reachable:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.memory</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnifiedMemory</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="c1"># This works whether Redis is available or not</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">memory</span> <span class="o">=</span> <span class="n">UnifiedMemory</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;agent@company.com&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">memory</span> <span class="o">=</span> <span class="n">UnifiedMemory</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">"agent@company.com"</span><span class="p">)</span>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="c1"># Short-term operations (uses FileSessionMemory if Redis unavailable)</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="n">memory</span><span class="o">.</span><span class="n">stash</span><span class="p">(</span><span class="s2">&quot;working_data&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;key&quot;</span><span class="p">:</span> <span class="s2">&quot;value&quot;</span><span class="p">})</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="n">data</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="s2">&quot;working_data&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="n">memory</span><span class="o">.</span><span class="n">stash</span><span class="p">(</span><span class="s2">"working_data"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"key"</span><span class="p">:</span> <span class="s2">"value"</span><span class="p">})</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="n">data</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="s2">"working_data"</span><span class="p">)</span>
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
 <a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="c1"># Long-term operations (always available)</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="n">result</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="n">persist_pattern</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="s2">&quot;Algorithm X&quot;</span><span class="p">,</span> <span class="n">pattern_type</span><span class="o">=</span><span class="s2">&quot;algorithm&quot;</span><span class="p">)</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="n">pattern</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="n">recall_pattern</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;pattern_id&quot;</span><span class="p">])</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="n">result</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="n">persist_pattern</span><span class="p">(</span><span class="n">content</span><span class="o">=</span><span class="s2">"Algorithm X"</span><span class="p">,</span> <span class="n">pattern_type</span><span class="o">=</span><span class="s2">"algorithm"</span><span class="p">)</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="n">pattern</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="n">recall_pattern</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">"pattern_id"</span><span class="p">])</span>
 </code></pre></div>
 <p><strong>No configuration needed</strong> - it just works! The system detects Redis availability at runtime and uses the best available backend.</p>
 <hr />
@@ -6030,7 +6030,7 @@ quotes — zsh and bash treat square brackets as glob characters.</p>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># Start Redis server</span>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>brew<span class="w"> </span>services<span class="w"> </span>start<span class="w"> </span>redis
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Verify it&#39;s running</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Verify it's running</span>
 <a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>redis-cli<span class="w"> </span>ping<span class="w">  </span><span class="c1"># Should return: PONG</span>
 </code></pre></div>
 <h3 id="linux-ubuntudebian">Linux (Ubuntu/Debian)<a class="headerlink" href="#linux-ubuntudebian" title="Permanent link">&para;</a></h3>
@@ -6044,7 +6044,7 @@ quotes — zsh and bash treat square brackets as glob characters.</p>
 <a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="c1"># Enable auto-start on boot</span>
 <a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>redis-server
 <a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="c1"># Verify it&#39;s running</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="c1"># Verify it's running</span>
 <a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a>redis-cli<span class="w"> </span>ping<span class="w">  </span><span class="c1"># Should return: PONG</span>
 </code></pre></div>
 <h3 id="linux-rhelcentos">Linux (RHEL/CentOS)<a class="headerlink" href="#linux-rhelcentos" title="Permanent link">&para;</a></h3>
@@ -6067,7 +6067,7 @@ quotes — zsh and bash treat square brackets as glob characters.</p>
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">  </span>-p<span class="w"> </span><span class="m">6379</span>:6379<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">  </span>redis:alpine
 <a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1"># Verify it&#39;s running</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="c1"># Verify it's running</span>
 <a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>attune-redis<span class="w"> </span>redis-cli<span class="w"> </span>ping<span class="w">  </span><span class="c1"># Should return: PONG</span>
 <a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>
 <a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="c1"># Stop Redis</span>
@@ -6103,7 +6103,7 @@ quotes — zsh and bash treat square brackets as glob characters.</p>
 core dependency, this means a broken or partial install rather than a
 missing extra.</p>
 <p><strong>Solution:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>pip<span class="w"> </span>install<span class="w"> </span>--force-reinstall<span class="w"> </span><span class="s1">&#39;redis&gt;=5.0.0,&lt;9.0.0&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>pip<span class="w"> </span>install<span class="w"> </span>--force-reinstall<span class="w"> </span><span class="s1">'redis&gt;=5.0.0,&lt;9.0.0'</span>
 </code></pre></div>
 <h3 id="redis-server-not-running">"Redis server not running"<a class="headerlink" href="#redis-server-not-running" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> Feature shows "Not Configured"</p>
@@ -6128,7 +6128,7 @@ missing extra.</p>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>pip<span class="w"> </span>list<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>redis
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>
 <a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="c1"># If not installed, reinstall</span>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>pip<span class="w"> </span>install<span class="w"> </span>--force-reinstall<span class="w"> </span><span class="s1">&#39;redis&gt;=5.0.0,&lt;9.0.0&#39;</span>
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>pip<span class="w"> </span>install<span class="w"> </span>--force-reinstall<span class="w"> </span><span class="s1">'redis&gt;=5.0.0,&lt;9.0.0'</span>
 </code></pre></div>
 <h3 id="connection-errors">Connection errors<a class="headerlink" href="#connection-errors" title="Permanent link">&para;</a></h3>
 <p><strong>Problem:</strong> <code>redis.exceptions.ConnectionError: Error connecting to localhost:6379</code></p>
@@ -6267,9 +6267,9 @@ missing extra.</p>
 <a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a><span class="k">try</span><span class="p">:</span>
 <a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>    <span class="n">memory</span> <span class="o">=</span> <span class="n">RedisShortTermMemory</span><span class="p">()</span>
 <a id="__codelineno-22-9" name="__codelineno-22-9" href="#__codelineno-22-9"></a><span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>  <span class="c1"># &quot;Short-term memory requires Redis.\n</span>
+<a id="__codelineno-22-10" name="__codelineno-22-10" href="#__codelineno-22-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>  <span class="c1"># "Short-term memory requires Redis.\n</span>
 <a id="__codelineno-22-11" name="__codelineno-22-11" href="#__codelineno-22-11"></a>              <span class="c1">#  Status: Redis package not importable\n</span>
-<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>              <span class="c1">#  Install: pip install --force-reinstall &#39;redis&gt;=5.0.0,&lt;9.0.0&#39;&quot;</span>
+<a id="__codelineno-22-12" name="__codelineno-22-12" href="#__codelineno-22-12"></a>              <span class="c1">#  Install: pip install --force-reinstall 'redis&gt;=5.0.0,&lt;9.0.0'"</span>
 </code></pre></div>
 <p><strong>Recommended pattern:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.memory.features</span><span class="w"> </span><span class="kn">import</span> <span class="n">MemoryFeatures</span>

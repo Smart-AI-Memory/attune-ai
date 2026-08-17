@@ -4897,14 +4897,14 @@
 <hr />
 <h3 id="step-3-run-the-analysis">Step 3 — Run the analysis<a class="headerlink" href="#step-3-run-the-analysis" title="Permanent link">&para;</a></h3>
 <p>Call <code>execute()</code> and pass the path you want to analyze. The workflow uses it to fill the <code>{path}</code> slot in its internal task prompt and then dispatches the three subagents.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">workflow_result</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;src/&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">workflow_result</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">"src/"</span><span class="p">)</span>
 </code></pre></div>
 <p>This is the step that does real work — expect it to take a few seconds depending on the size of <code>src/</code>. The return value is a <code>WorkflowResult</code> object.</p>
 <p><strong>Verify:</strong> <code>print(workflow_result)</code> should produce a non-empty representation. If it raises an exception, check that <code>src/</code> exists relative to your working directory.</p>
 <hr />
 <h3 id="step-4-extract-the-raw-result-dict">Step 4 — Extract the raw result dict<a class="headerlink" href="#step-4-extract-the-raw-result-dict" title="Permanent link">&para;</a></h3>
 <p><code>format_refactor_plan_report</code> expects a plain <code>dict</code>, not a <code>WorkflowResult</code>. Access the underlying result and record the input data you passed so the formatter can annotate the report correctly.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">input_data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;src/&quot;</span><span class="p">}</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">input_data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"path"</span><span class="p">:</span> <span class="s2">"src/"</span><span class="p">}</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">result_dict</span> <span class="o">=</span> <span class="n">workflow_result</span><span class="o">.</span><span class="n">result</span>  <span class="c1"># WorkflowResult wraps the raw dict</span>
 </code></pre></div>
 <p>Understanding why this step exists: the formatter is a pure function — it takes data in, returns a string out. Keeping it separate from the workflow means you can reformat the same result multiple times or pipe it into different outputs without re-running the analysis.</p>
@@ -4926,10 +4926,10 @@
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">workflow</span> <span class="o">=</span> <span class="n">RefactorPlanWorkflow</span><span class="p">()</span>
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
 <a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># Run the three-subagent analysis against your source directory</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="n">workflow_result</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;src/&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="n">workflow_result</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">"src/"</span><span class="p">)</span>
 <a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>
 <a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="c1"># Prepare data for the formatter</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="n">input_data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;src/&quot;</span><span class="p">}</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="n">input_data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"path"</span><span class="p">:</span> <span class="s2">"src/"</span><span class="p">}</span>
 <a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="n">result_dict</span> <span class="o">=</span> <span class="n">workflow_result</span><span class="o">.</span><span class="n">result</span>
 <a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>
 <a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="c1"># Print the human-readable roadmap</span>

@@ -7021,7 +7021,7 @@ and a unified memory system.</p>
 </table>
 <h3 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>attune-ai<span class="w">                </span><span class="c1"># Core</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[developer]&#39;</span><span class="w">   </span><span class="c1"># Developer extras</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'attune-ai[developer]'</span><span class="w">   </span><span class="c1"># Developer extras</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>pip<span class="w"> </span>install<span class="w"> </span>attune-ai<span class="w">       </span><span class="c1"># Redis-backed memory + AMS plugin</span>
 </code></pre></div>
 <hr />
@@ -7088,7 +7088,7 @@ and a unified memory system.</p>
 <p>Discovers and loads configuration from YAML/JSON files.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.config.loader</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigLoader</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">loader</span> <span class="o">=</span> <span class="n">ConfigLoader</span><span class="p">(</span><span class="n">config_path</span><span class="o">=</span><span class="s2">&quot;attune.yml&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">loader</span> <span class="o">=</span> <span class="n">ConfigLoader</span><span class="p">(</span><span class="n">config_path</span><span class="o">=</span><span class="s2">"attune.yml"</span><span class="p">)</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="n">config</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
 </code></pre></div>
 <table>
@@ -7146,22 +7146,22 @@ and a unified memory system.</p>
 persistent long-term).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.memory</span><span class="w"> </span><span class="kn">import</span> <span class="n">UnifiedMemory</span><span class="p">,</span> <span class="n">Classification</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">memory</span> <span class="o">=</span> <span class="n">UnifiedMemory</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;dev-1&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">memory</span> <span class="o">=</span> <span class="n">UnifiedMemory</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">"dev-1"</span><span class="p">)</span>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="c1"># Short-term (Redis-backed with TTL)</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">memory</span><span class="o">.</span><span class="n">stash</span><span class="p">(</span><span class="s2">&quot;context&quot;</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;topic&quot;</span><span class="p">:</span> <span class="s2">&quot;auth&quot;</span><span class="p">},</span> <span class="n">ttl</span><span class="o">=</span><span class="mi">3600</span><span class="p">)</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">value</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="s2">&quot;context&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">memory</span><span class="o">.</span><span class="n">stash</span><span class="p">(</span><span class="s2">"context"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"topic"</span><span class="p">:</span> <span class="s2">"auth"</span><span class="p">},</span> <span class="n">ttl</span><span class="o">=</span><span class="mi">3600</span><span class="p">)</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">value</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="s2">"context"</span><span class="p">)</span>
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="c1"># Long-term (persistent with classification)</span>
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="n">result</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="n">persist_pattern</span><span class="p">(</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="n">content</span><span class="o">=</span><span class="s2">&quot;Auth patterns use JWT&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>    <span class="n">pattern_type</span><span class="o">=</span><span class="s2">&quot;technique&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="n">content</span><span class="o">=</span><span class="s2">"Auth patterns use JWT"</span><span class="p">,</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>    <span class="n">pattern_type</span><span class="o">=</span><span class="s2">"technique"</span><span class="p">,</span>
 <a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>    <span class="n">classification</span><span class="o">=</span><span class="n">Classification</span><span class="o">.</span><span class="n">INTERNAL</span><span class="p">,</span>
 <a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="p">)</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="n">pattern</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="n">recall_pattern</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;pattern_id&quot;</span><span class="p">])</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="n">pattern</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="n">recall_pattern</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">"pattern_id"</span><span class="p">])</span>
 <a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>
 <a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="c1"># Staging workflow</span>
-<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="n">staged_id</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="n">stage_pattern</span><span class="p">({</span><span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="s2">&quot;draft&quot;</span><span class="p">})</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="n">staged_id</span> <span class="o">=</span> <span class="n">memory</span><span class="o">.</span><span class="n">stage_pattern</span><span class="p">({</span><span class="s2">"content"</span><span class="p">:</span> <span class="s2">"draft"</span><span class="p">})</span>
 <a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="n">memory</span><span class="o">.</span><span class="n">promote_pattern</span><span class="p">(</span><span class="n">staged_id</span><span class="p">)</span>
 </code></pre></div>
 <h4 id="constructor">Constructor<a class="headerlink" href="#constructor" title="Permanent link">&para;</a></h4>
@@ -7325,7 +7325,7 @@ execution, cost tracking, caching, and verification.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">SecurityAuditWorkflow</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">workflow</span> <span class="o">=</span> <span class="n">SecurityAuditWorkflow</span><span class="p">()</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;src/&quot;</span><span class="p">)</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">"src/"</span><span class="p">)</span>
 </code></pre></div>
 <p><strong>Class attributes</strong> (set by subclasses, not constructor
 params):</p>
@@ -7531,8 +7531,8 @@ CLI or programmatic API:</p>
 <p>Central registry of available LLM models.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">MODEL_REGISTRY</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">model</span> <span class="o">=</span> <span class="n">MODEL_REGISTRY</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="s2">&quot;claude-sonnet-5&quot;</span><span class="p">)</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">models</span> <span class="o">=</span> <span class="n">MODEL_REGISTRY</span><span class="o">.</span><span class="n">list_models</span><span class="p">(</span><span class="n">tier</span><span class="o">=</span><span class="s2">&quot;capable&quot;</span><span class="p">)</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="n">model</span> <span class="o">=</span> <span class="n">MODEL_REGISTRY</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="s2">"claude-sonnet-5"</span><span class="p">)</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">models</span> <span class="o">=</span> <span class="n">MODEL_REGISTRY</span><span class="o">.</span><span class="n">list_models</span><span class="p">(</span><span class="n">tier</span><span class="o">=</span><span class="s2">"capable"</span><span class="p">)</span>
 </code></pre></div>
 <table>
 <thead>
@@ -7762,15 +7762,15 @@ Each agent runs its workflow; each gate asserts a minimum score.</p>
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>
 <a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="n">team</span> <span class="o">=</span> <span class="n">AgentTeam</span><span class="p">(</span>
 <a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    <span class="n">agents</span><span class="o">=</span><span class="p">[</span>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>        <span class="n">WorkflowAgent</span><span class="p">(</span><span class="s2">&quot;code-review&quot;</span><span class="p">,</span> <span class="n">CodeReviewWorkflow</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;src/&quot;</span><span class="p">]),</span>
-<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>        <span class="n">WorkflowAgent</span><span class="p">(</span><span class="s2">&quot;security-audit&quot;</span><span class="p">,</span> <span class="n">SecurityAuditWorkflow</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;src/&quot;</span><span class="p">]),</span>
+<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>        <span class="n">WorkflowAgent</span><span class="p">(</span><span class="s2">"code-review"</span><span class="p">,</span> <span class="n">CodeReviewWorkflow</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="p">[</span><span class="s2">"src/"</span><span class="p">]),</span>
+<a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a>        <span class="n">WorkflowAgent</span><span class="p">(</span><span class="s2">"security-audit"</span><span class="p">,</span> <span class="n">SecurityAuditWorkflow</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="p">[</span><span class="s2">"src/"</span><span class="p">]),</span>
 <a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>    <span class="p">],</span>
 <a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a>    <span class="n">gates</span><span class="o">=</span><span class="p">[</span>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>        <span class="n">GateSpec</span><span class="p">(</span><span class="s2">&quot;Code Quality&quot;</span><span class="p">,</span> <span class="s2">&quot;code-review&quot;</span><span class="p">,</span> <span class="mf">80.0</span><span class="p">),</span>
-<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>        <span class="n">GateSpec</span><span class="p">(</span><span class="s2">&quot;Security&quot;</span><span class="p">,</span> <span class="s2">&quot;security-audit&quot;</span><span class="p">,</span> <span class="mf">80.0</span><span class="p">),</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a>        <span class="n">GateSpec</span><span class="p">(</span><span class="s2">"Code Quality"</span><span class="p">,</span> <span class="s2">"code-review"</span><span class="p">,</span> <span class="mf">80.0</span><span class="p">),</span>
+<a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>        <span class="n">GateSpec</span><span class="p">(</span><span class="s2">"Security"</span><span class="p">,</span> <span class="s2">"security-audit"</span><span class="p">,</span> <span class="mf">80.0</span><span class="p">),</span>
 <a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a>    <span class="p">],</span>
 <a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="p">)</span>
-<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="n">report</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">team</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">&quot;src/&quot;</span><span class="p">]))</span>
+<a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="n">report</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">team</span><span class="o">.</span><span class="n">run</span><span class="p">([</span><span class="s2">"src/"</span><span class="p">]))</span>
 <a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">passed</span><span class="p">,</span> <span class="n">report</span><span class="o">.</span><span class="n">blockers</span><span class="p">,</span> <span class="n">report</span><span class="o">.</span><span class="n">warnings</span><span class="p">,</span> <span class="n">report</span><span class="o">.</span><span class="n">cost</span><span class="p">)</span>
 </code></pre></div>
 <table>
@@ -7846,7 +7846,7 @@ blockers, warnings, cost)</code>.</p>
 <a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="p">)</span>
 <a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>
 <a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a><span class="n">templates</span> <span class="o">=</span> <span class="n">get_all_templates</span><span class="p">()</span>  <span class="c1"># 14 built-in templates</span>
-<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="n">security</span> <span class="o">=</span> <span class="n">get_templates_by_capability</span><span class="p">(</span><span class="s2">&quot;vulnerability_scan&quot;</span><span class="p">)</span>
+<a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a><span class="n">security</span> <span class="o">=</span> <span class="n">get_templates_by_capability</span><span class="p">(</span><span class="s2">"vulnerability_scan"</span><span class="p">)</span>
 </code></pre></div>
 <hr />
 <h3 id="executionstrategy">ExecutionStrategy<a class="headerlink" href="#executionstrategy" title="Permanent link">&para;</a></h3>
@@ -7883,8 +7883,8 @@ blockers, warnings, cost)</code>.</p>
 <a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>
 <a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="n">meta</span> <span class="o">=</span> <span class="n">MetaWorkflow</span><span class="p">()</span>
 <a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="n">result</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>    <span class="n">task</span><span class="o">=</span><span class="s2">&quot;Generate tests for auth module&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;src/auth/&quot;</span><span class="p">}</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>    <span class="n">task</span><span class="o">=</span><span class="s2">"Generate tests for auth module"</span><span class="p">,</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a>    <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">"path"</span><span class="p">:</span> <span class="s2">"src/auth/"</span><span class="p">}</span>
 <a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="p">)</span>
 </code></pre></div>
 <hr />
@@ -7901,8 +7901,8 @@ scoping.</p>
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>    <span class="n">detect_and_suggest</span><span class="p">,</span>
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="p">)</span>
 <a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a>
-<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="n">template</span> <span class="o">=</span> <span class="n">auto_detect_template</span><span class="p">(</span><span class="s2">&quot;review code for bugs&quot;</span><span class="p">)</span>
-<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="n">suggestions</span> <span class="o">=</span> <span class="n">detect_and_suggest</span><span class="p">(</span><span class="s2">&quot;security audit&quot;</span><span class="p">)</span>
+<a id="__codelineno-16-6" name="__codelineno-16-6" href="#__codelineno-16-6"></a><span class="n">template</span> <span class="o">=</span> <span class="n">auto_detect_template</span><span class="p">(</span><span class="s2">"review code for bugs"</span><span class="p">)</span>
+<a id="__codelineno-16-7" name="__codelineno-16-7" href="#__codelineno-16-7"></a><span class="n">suggestions</span> <span class="o">=</span> <span class="n">detect_and_suggest</span><span class="p">(</span><span class="s2">"security audit"</span><span class="p">)</span>
 </code></pre></div>
 <hr />
 <h2 id="agents">Agents<a class="headerlink" href="#agents" title="Permanent link">&para;</a></h2>
@@ -7964,7 +7964,7 @@ class method.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.wizards</span><span class="w"> </span><span class="kn">import</span> <span class="n">list_wizards</span><span class="p">,</span> <span class="n">get_wizard</span>
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>
 <a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="n">wizards</span> <span class="o">=</span> <span class="n">list_wizards</span><span class="p">()</span>
-<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="n">wizard_class</span> <span class="o">=</span> <span class="n">get_wizard</span><span class="p">(</span><span class="s2">&quot;security-coach&quot;</span><span class="p">)</span>
+<a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a><span class="n">wizard_class</span> <span class="o">=</span> <span class="n">get_wizard</span><span class="p">(</span><span class="s2">"security-coach"</span><span class="p">)</span>
 </code></pre></div>
 <table>
 <thead>
@@ -8008,7 +8008,7 @@ class method.</p>
 <p>Wizard instantiated from a YAML configuration file.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.wizards</span><span class="w"> </span><span class="kn">import</span> <span class="n">ConfigDrivenWizard</span>
 <a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="n">wizard</span> <span class="o">=</span> <span class="n">ConfigDrivenWizard</span><span class="o">.</span><span class="n">from_yaml</span><span class="p">(</span><span class="s2">&quot;my_wizard.yml&quot;</span><span class="p">)</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="n">wizard</span> <span class="o">=</span> <span class="n">ConfigDrivenWizard</span><span class="o">.</span><span class="n">from_yaml</span><span class="p">(</span><span class="s2">"my_wizard.yml"</span><span class="p">)</span>
 <a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">wizard</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">{})</span>
 </code></pre></div>
 <hr />
@@ -8019,7 +8019,7 @@ class method.</p>
 <a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a>
 <a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="n">decomposer</span> <span class="o">=</span> <span class="n">TaskDecomposer</span><span class="p">()</span>
 <a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="n">tasks</span> <span class="o">=</span> <span class="n">decomposer</span><span class="o">.</span><span class="n">decompose</span><span class="p">(</span>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>    <span class="s2">&quot;Migrate auth from sessions to JWT&quot;</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a>    <span class="s2">"Migrate auth from sessions to JWT"</span>
 <a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="p">)</span>
 <a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="c1"># Returns list[DecomposedTask]</span>
 </code></pre></div>
@@ -8032,7 +8032,7 @@ class method.</p>
 <a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>
 <a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="n">tracker</span> <span class="o">=</span> <span class="n">UsageTracker</span><span class="p">()</span>
 <a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="n">tracker</span><span class="o">.</span><span class="n">log_llm_call</span><span class="p">(</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;claude-sonnet-5&quot;</span><span class="p">,</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">"claude-sonnet-5"</span><span class="p">,</span>
 <a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>    <span class="n">input_tokens</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span>
 <a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>    <span class="n">output_tokens</span><span class="o">=</span><span class="mi">800</span><span class="p">,</span>
 <a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a>    <span class="n">cost</span><span class="o">=</span><span class="mf">0.012</span><span class="p">,</span>
@@ -8056,7 +8056,7 @@ class method.</p>
 <a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>
 <a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="n">loop</span> <span class="o">=</span> <span class="n">FeedbackLoop</span><span class="p">()</span>
 <a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="n">loop</span><span class="o">.</span><span class="n">submit_feedback</span><span class="p">(</span><span class="n">FeedbackEntry</span><span class="p">(</span>
-<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>    <span class="n">workflow_name</span><span class="o">=</span><span class="s2">&quot;code-review&quot;</span><span class="p">,</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>    <span class="n">workflow_name</span><span class="o">=</span><span class="s2">"code-review"</span><span class="p">,</span>
 <a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>    <span class="n">quality_score</span><span class="o">=</span><span class="mf">0.92</span><span class="p">,</span>
 <a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>    <span class="n">latency_ms</span><span class="o">=</span><span class="mi">4500</span><span class="p">,</span>
 <a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>    <span class="n">cost_estimate</span><span class="o">=</span><span class="mf">0.08</span><span class="p">,</span>
@@ -8070,15 +8070,15 @@ class method.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.telemetry</span><span class="w"> </span><span class="kn">import</span> <span class="n">ApprovalGate</span>
 <a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>
 <a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="n">gate</span> <span class="o">=</span> <span class="n">ApprovalGate</span><span class="p">(</span>
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>    <span class="n">workflow_name</span><span class="o">=</span><span class="s2">&quot;release-prep&quot;</span><span class="p">,</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a>    <span class="n">workflow_name</span><span class="o">=</span><span class="s2">"release-prep"</span><span class="p">,</span>
 <a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>    <span class="n">requires_approval</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>    <span class="n">approval_timeout</span><span class="o">=</span><span class="mi">3600</span><span class="p">,</span>
 <a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="p">)</span>
-<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a><span class="n">request</span> <span class="o">=</span> <span class="n">gate</span><span class="o">.</span><span class="n">request_approval</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;version&quot;</span><span class="p">:</span> <span class="s2">&quot;5.3.2&quot;</span><span class="p">})</span>
+<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a><span class="n">request</span> <span class="o">=</span> <span class="n">gate</span><span class="o">.</span><span class="n">request_approval</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">"version"</span><span class="p">:</span> <span class="s2">"5.3.2"</span><span class="p">})</span>
 <a id="__codelineno-25-9" name="__codelineno-25-9" href="#__codelineno-25-9"></a><span class="n">gate</span><span class="o">.</span><span class="n">respond_to_request</span><span class="p">(</span>
 <a id="__codelineno-25-10" name="__codelineno-25-10" href="#__codelineno-25-10"></a>    <span class="n">request</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a>    <span class="n">ApprovalResponse</span><span class="p">(</span><span class="n">approved</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s2">&quot;LGTM&quot;</span><span class="p">,</span>
-<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a>                     <span class="n">responder</span><span class="o">=</span><span class="s2">&quot;patrick&quot;</span><span class="p">),</span>
+<a id="__codelineno-25-11" name="__codelineno-25-11" href="#__codelineno-25-11"></a>    <span class="n">ApprovalResponse</span><span class="p">(</span><span class="n">approved</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">comment</span><span class="o">=</span><span class="s2">"LGTM"</span><span class="p">,</span>
+<a id="__codelineno-25-12" name="__codelineno-25-12" href="#__codelineno-25-12"></a>                     <span class="n">responder</span><span class="o">=</span><span class="s2">"patrick"</span><span class="p">),</span>
 <a id="__codelineno-25-13" name="__codelineno-25-13" href="#__codelineno-25-13"></a><span class="p">)</span>
 </code></pre></div>
 <hr />
@@ -8156,9 +8156,9 @@ class method.</p>
 <p>Codebase intelligence layer for tracking file metadata.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.project_index</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProjectIndex</span>
 <a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="n">index</span> <span class="o">=</span> <span class="n">ProjectIndex</span><span class="p">(</span><span class="n">project_root</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="n">index</span> <span class="o">=</span> <span class="n">ProjectIndex</span><span class="p">(</span><span class="n">project_root</span><span class="o">=</span><span class="s2">"."</span><span class="p">)</span>
 <a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="n">summary</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">scan</span><span class="p">()</span>
-<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="n">record</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">get_file_record</span><span class="p">(</span><span class="s2">&quot;src/auth.py&quot;</span><span class="p">)</span>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a><span class="n">record</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">get_file_record</span><span class="p">(</span><span class="s2">"src/auth.py"</span><span class="p">)</span>
 </code></pre></div>
 <h4 id="constructor_3">Constructor<a class="headerlink" href="#constructor_3" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="n">ProjectIndex</span><span class="p">(</span>
@@ -8308,13 +8308,13 @@ class method.</p>
 <a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a>
 <a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyPlugin</span><span class="p">(</span><span class="n">BasePlugin</span><span class="p">):</span>
 <a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a>    <span class="n">metadata</span> <span class="o">=</span> <span class="n">PluginMetadata</span><span class="p">(</span>
-<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my-plugin&quot;</span><span class="p">,</span>
-<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>        <span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.0.0&quot;</span><span class="p">,</span>
-<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a>        <span class="n">domain</span><span class="o">=</span><span class="s2">&quot;custom&quot;</span><span class="p">,</span>
-<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a>        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;My custom plugin&quot;</span><span class="p">,</span>
-<a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a>        <span class="n">author</span><span class="o">=</span><span class="s2">&quot;Dev&quot;</span><span class="p">,</span>
-<a id="__codelineno-28-10" name="__codelineno-28-10" href="#__codelineno-28-10"></a>        <span class="n">license</span><span class="o">=</span><span class="s2">&quot;MIT&quot;</span><span class="p">,</span>
-<a id="__codelineno-28-11" name="__codelineno-28-11" href="#__codelineno-28-11"></a>        <span class="n">requires_core_version</span><span class="o">=</span><span class="s2">&quot;&gt;=5.0.0&quot;</span><span class="p">,</span>
+<a id="__codelineno-28-5" name="__codelineno-28-5" href="#__codelineno-28-5"></a>        <span class="n">name</span><span class="o">=</span><span class="s2">"my-plugin"</span><span class="p">,</span>
+<a id="__codelineno-28-6" name="__codelineno-28-6" href="#__codelineno-28-6"></a>        <span class="n">version</span><span class="o">=</span><span class="s2">"1.0.0"</span><span class="p">,</span>
+<a id="__codelineno-28-7" name="__codelineno-28-7" href="#__codelineno-28-7"></a>        <span class="n">domain</span><span class="o">=</span><span class="s2">"custom"</span><span class="p">,</span>
+<a id="__codelineno-28-8" name="__codelineno-28-8" href="#__codelineno-28-8"></a>        <span class="n">description</span><span class="o">=</span><span class="s2">"My custom plugin"</span><span class="p">,</span>
+<a id="__codelineno-28-9" name="__codelineno-28-9" href="#__codelineno-28-9"></a>        <span class="n">author</span><span class="o">=</span><span class="s2">"Dev"</span><span class="p">,</span>
+<a id="__codelineno-28-10" name="__codelineno-28-10" href="#__codelineno-28-10"></a>        <span class="n">license</span><span class="o">=</span><span class="s2">"MIT"</span><span class="p">,</span>
+<a id="__codelineno-28-11" name="__codelineno-28-11" href="#__codelineno-28-11"></a>        <span class="n">requires_core_version</span><span class="o">=</span><span class="s2">"&gt;=5.0.0"</span><span class="p">,</span>
 <a id="__codelineno-28-12" name="__codelineno-28-12" href="#__codelineno-28-12"></a>    <span class="p">)</span>
 </code></pre></div>
 <hr />
@@ -8366,8 +8366,8 @@ Used in 77+ files across the codebase.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.security.path_validation</span><span class="w"> </span><span class="kn">import</span> <span class="n">_validate_file_path</span>
 <a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a>
 <a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="n">validated</span> <span class="o">=</span> <span class="n">_validate_file_path</span><span class="p">(</span>
-<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a>    <span class="n">path</span><span class="o">=</span><span class="s2">&quot;output.json&quot;</span><span class="p">,</span>
-<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a>    <span class="n">allowed_dir</span><span class="o">=</span><span class="s2">&quot;./data&quot;</span>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a>    <span class="n">path</span><span class="o">=</span><span class="s2">"output.json"</span><span class="p">,</span>
+<a id="__codelineno-30-5" name="__codelineno-30-5" href="#__codelineno-30-5"></a>    <span class="n">allowed_dir</span><span class="o">=</span><span class="s2">"./data"</span>
 <a id="__codelineno-30-6" name="__codelineno-30-6" href="#__codelineno-30-6"></a><span class="p">)</span>
 </code></pre></div>
 <table>
@@ -8400,7 +8400,7 @@ or paths outside <code>allowed_dir</code>.</p>
 <p>Detects hardcoded secrets (API keys, passwords, tokens).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.security</span><span class="w"> </span><span class="kn">import</span> <span class="n">SecretsDetector</span><span class="p">,</span> <span class="n">detect_secrets</span>
 <a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a>
-<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="n">findings</span> <span class="o">=</span> <span class="n">detect_secrets</span><span class="p">(</span><span class="n">file_path</span><span class="o">=</span><span class="s2">&quot;config.py&quot;</span><span class="p">)</span>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="n">findings</span> <span class="o">=</span> <span class="n">detect_secrets</span><span class="p">(</span><span class="n">file_path</span><span class="o">=</span><span class="s2">"config.py"</span><span class="p">)</span>
 </code></pre></div>
 <hr />
 <h3 id="piiscrubber">PIIScrubber<a class="headerlink" href="#piiscrubber" title="Permanent link">&para;</a></h3>
@@ -8415,7 +8415,7 @@ consistent personality and formatting.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.voice</span><span class="w"> </span><span class="kn">import</span> <span class="n">format_output</span>
 <a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a>
 <a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="n">text</span> <span class="o">=</span> <span class="n">format_output</span><span class="p">(</span>
-<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>    <span class="n">workflow_name</span><span class="o">=</span><span class="s2">&quot;security-audit&quot;</span><span class="p">,</span>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a>    <span class="n">workflow_name</span><span class="o">=</span><span class="s2">"security-audit"</span><span class="p">,</span>
 <a id="__codelineno-32-5" name="__codelineno-32-5" href="#__codelineno-32-5"></a>    <span class="n">result</span><span class="o">=</span><span class="n">workflow_result</span><span class="p">,</span>
 <a id="__codelineno-32-6" name="__codelineno-32-6" href="#__codelineno-32-6"></a>    <span class="n">compact</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
 <a id="__codelineno-32-7" name="__codelineno-32-7" href="#__codelineno-32-7"></a><span class="p">)</span>
@@ -8428,8 +8428,8 @@ guidance.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.voice</span><span class="w"> </span><span class="kn">import</span> <span class="n">format_error</span>
 <a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>
 <a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="n">msg</span> <span class="o">=</span> <span class="n">format_error</span><span class="p">(</span>
-<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a>    <span class="n">message</span><span class="o">=</span><span class="s2">&quot;File not found: auth.py&quot;</span><span class="p">,</span>
-<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a>    <span class="n">context</span><span class="o">=</span><span class="s2">&quot;workflow&quot;</span><span class="p">,</span>
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a>    <span class="n">message</span><span class="o">=</span><span class="s2">"File not found: auth.py"</span><span class="p">,</span>
+<a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a>    <span class="n">context</span><span class="o">=</span><span class="s2">"workflow"</span><span class="p">,</span>
 <a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a><span class="p">)</span>
 </code></pre></div>
 <hr />

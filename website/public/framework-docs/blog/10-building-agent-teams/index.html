@@ -5078,11 +5078,11 @@
 <p>In <a href="../08-grammar-of-ai-collaboration/">Part 1</a>, we introduced the grammar metaphor. In <a href="../09-dynamic-agent-creation/">Part 2</a>, we explored how agents spawn dynamically. Now we tackle the heart of the system: <strong>composition patterns</strong>—the grammar rules that turn individual agents into coordinated teams.</p>
 <h2 id="why-composition-matters">Why Composition Matters<a class="headerlink" href="#why-composition-matters" title="Permanent link">&para;</a></h2>
 <p>Having great agents isn't enough. Consider:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>🤖 Security Auditor: &quot;Found 3 critical vulnerabilities&quot;
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>🤖 Code Reviewer: &quot;Code quality is excellent&quot;
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>🤖 Test Analyzer: &quot;Coverage is 45%&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>🤖 Security Auditor: "Found 3 critical vulnerabilities"
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>🤖 Code Reviewer: "Code quality is excellent"
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>🤖 Test Analyzer: "Coverage is 45%"
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>❓ Human: &quot;Should I release?&quot;
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>❓ Human: "Should I release?"
 </code></pre></div>
 <p>Three agents, three perspectives, no synthesis. Who resolves conflicts? Who prioritizes? Who decides?</p>
 <p><strong>Composition patterns answer these questions.</strong></p>
@@ -5135,11 +5135,11 @@
 <p><strong>When to use:</strong> Each step depends on the previous step's output.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>coverage_analyzer → test_generator → quality_validator
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>       ↓                  ↓                  ↓
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  &quot;45% coverage&quot;    &quot;15 new tests&quot;    &quot;All tests pass&quot;
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>  "45% coverage"    "15 new tests"    "All tests pass"
 </code></pre></div>
 <h3 id="implementation">Implementation<a class="headerlink" href="#implementation" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">SequentialStrategy</span><span class="p">(</span><span class="n">ExecutionStrategy</span><span class="p">):</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute agents one after another, passing results forward.&quot;&quot;&quot;</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="w">    </span><span class="sd">"""Execute agents one after another, passing results forward."""</span>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>        <span class="bp">self</span><span class="p">,</span>
@@ -5168,22 +5168,22 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Define the team</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">team</span> <span class="o">=</span> <span class="n">AgentTeam</span><span class="p">(</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">agents</span><span class="o">=</span><span class="p">[</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        <span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;coverage_analyzer&quot;</span><span class="p">,</span> <span class="n">focus</span><span class="o">=</span><span class="s2">&quot;auth module&quot;</span><span class="p">),</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        <span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;test_generator&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;pytest&quot;</span><span class="p">),</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;quality_validator&quot;</span><span class="p">,</span> <span class="n">min_score</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>        <span class="n">spawn</span><span class="p">(</span><span class="s2">"coverage_analyzer"</span><span class="p">,</span> <span class="n">focus</span><span class="o">=</span><span class="s2">"auth module"</span><span class="p">),</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>        <span class="n">spawn</span><span class="p">(</span><span class="s2">"test_generator"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">"pytest"</span><span class="p">),</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="n">spawn</span><span class="p">(</span><span class="s2">"quality_validator"</span><span class="p">,</span> <span class="n">min_score</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="p">],</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;sequential&quot;</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="n">strategy</span><span class="o">=</span><span class="s2">"sequential"</span>
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="p">)</span>
 <a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="c1"># Execute</span>
 <a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">team</span><span class="o">.</span><span class="n">execute</span><span class="p">({</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="s2">&quot;code_path&quot;</span><span class="p">:</span> <span class="s2">&quot;src/auth/&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>    <span class="s2">&quot;target_coverage&quot;</span><span class="p">:</span> <span class="mi">80</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="s2">"code_path"</span><span class="p">:</span> <span class="s2">"src/auth/"</span><span class="p">,</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>    <span class="s2">"target_coverage"</span><span class="p">:</span> <span class="mi">80</span>
 <a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="p">})</span>
 <a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>
 <a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="c1"># Flow:</span>
-<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="c1"># 1. coverage_analyzer identifies gaps → {gaps: [&quot;login&quot;, &quot;logout&quot;, &quot;refresh&quot;]}</span>
-<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="c1"># 2. test_generator receives gaps → {tests: [&quot;test_login.py&quot;, ...]}</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="c1"># 1. coverage_analyzer identifies gaps → {gaps: ["login", "logout", "refresh"]}</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="c1"># 2. test_generator receives gaps → {tests: ["test_login.py", ...]}</span>
 <a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="c1"># 3. quality_validator receives tests → {quality_score: 0.92, passed: True}</span>
 </code></pre></div>
 <p><strong>Strengths:</strong> Clear dependencies, traceable flow, each agent has full context from predecessors.</p>
@@ -5200,7 +5200,7 @@
     D --&gt; AG</code></pre>
 <h3 id="implementation_1">Implementation<a class="headerlink" href="#implementation_1" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">ParallelStrategy</span><span class="p">(</span><span class="n">ExecutionStrategy</span><span class="p">):</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute all agents simultaneously, aggregate results.&quot;&quot;&quot;</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="sd">"""Execute all agents simultaneously, aggregate results."""</span>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
 <a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>        <span class="bp">self</span><span class="p">,</span>
@@ -5224,15 +5224,15 @@
 <a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>        <span class="p">)</span>
 <a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>
 <a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">_aggregate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AgentResult</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
-<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Combine results with weighted scoring.&quot;&quot;&quot;</span>
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a><span class="w">        </span><span class="sd">"""Combine results with weighted scoring."""</span>
 <a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>        <span class="n">combined</span> <span class="o">=</span> <span class="p">{}</span>
 <a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>        <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">results</span><span class="p">:</span>
 <a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a>            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a>                <span class="n">combined</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">agent_id</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a>                <span class="n">combined</span><span class="p">[</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">agent_id</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
 <a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a>
 <a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a>        <span class="c1"># Calculate overall score</span>
-<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>        <span class="n">scores</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">]</span>
-<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a>        <span class="n">combined</span><span class="p">[</span><span class="s2">&quot;overall_score&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>        <span class="n">scores</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"score"</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">]</span>
+<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a>        <span class="n">combined</span><span class="p">[</span><span class="s2">"overall_score"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
 <a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a>
 <a id="__codelineno-4-36" name="__codelineno-4-36" href="#__codelineno-4-36"></a>        <span class="k">return</span> <span class="n">combined</span>
 </code></pre></div>
@@ -5240,28 +5240,28 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Define parallel checks</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">team</span> <span class="o">=</span> <span class="n">AgentTeam</span><span class="p">(</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">agents</span><span class="o">=</span><span class="p">[</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>        <span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;security_auditor&quot;</span><span class="p">,</span> <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;high&quot;</span><span class="p">),</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>        <span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;performance_validator&quot;</span><span class="p">,</span> <span class="n">sla</span><span class="o">=</span><span class="s2">&quot;100ms&quot;</span><span class="p">),</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        <span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;documentation_checker&quot;</span><span class="p">,</span> <span class="n">completeness</span><span class="o">=</span><span class="mf">0.9</span><span class="p">),</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>        <span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;test_coverage_analyzer&quot;</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>        <span class="n">spawn</span><span class="p">(</span><span class="s2">"security_auditor"</span><span class="p">,</span> <span class="n">severity</span><span class="o">=</span><span class="s2">"high"</span><span class="p">),</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>        <span class="n">spawn</span><span class="p">(</span><span class="s2">"performance_validator"</span><span class="p">,</span> <span class="n">sla</span><span class="o">=</span><span class="s2">"100ms"</span><span class="p">),</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>        <span class="n">spawn</span><span class="p">(</span><span class="s2">"documentation_checker"</span><span class="p">,</span> <span class="n">completeness</span><span class="o">=</span><span class="mf">0.9</span><span class="p">),</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>        <span class="n">spawn</span><span class="p">(</span><span class="s2">"test_coverage_analyzer"</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="mi">80</span><span class="p">)</span>
 <a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="p">],</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;parallel&quot;</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">strategy</span><span class="o">=</span><span class="s2">"parallel"</span>
 <a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="p">)</span>
 <a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
 <a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="c1"># Execute - all run at once</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">team</span><span class="o">.</span><span class="n">execute</span><span class="p">({</span><span class="s2">&quot;release_candidate&quot;</span><span class="p">:</span> <span class="s2">&quot;v4.4.0&quot;</span><span class="p">})</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">team</span><span class="o">.</span><span class="n">execute</span><span class="p">({</span><span class="s2">"release_candidate"</span><span class="p">:</span> <span class="s2">"v4.4.0"</span><span class="p">})</span>
 <a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>
 <a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="c1"># Aggregated result:</span>
 <a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="c1"># {</span>
-<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="c1">#     &quot;security_auditor.vulnerabilities&quot;: 0,</span>
-<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="c1">#     &quot;security_auditor.score&quot;: 95,</span>
-<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="c1">#     &quot;performance_validator.p99_latency&quot;: 82,</span>
-<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="c1">#     &quot;performance_validator.score&quot;: 90,</span>
-<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="c1">#     &quot;documentation_checker.completeness&quot;: 0.94,</span>
-<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="c1">#     &quot;documentation_checker.score&quot;: 94,</span>
-<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="c1">#     &quot;test_coverage_analyzer.coverage&quot;: 87,</span>
-<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="c1">#     &quot;test_coverage_analyzer.score&quot;: 87,</span>
-<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="c1">#     &quot;overall_score&quot;: 91.5  # Weighted average</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="c1">#     "security_auditor.vulnerabilities": 0,</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="c1">#     "security_auditor.score": 95,</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="c1">#     "performance_validator.p99_latency": 82,</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="c1">#     "performance_validator.score": 90,</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a><span class="c1">#     "documentation_checker.completeness": 0.94,</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a><span class="c1">#     "documentation_checker.score": 94,</span>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="c1">#     "test_coverage_analyzer.coverage": 87,</span>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="c1">#     "test_coverage_analyzer.score": 87,</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a><span class="c1">#     "overall_score": 91.5  # Weighted average</span>
 <a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="c1"># }</span>
 </code></pre></div>
 <p><strong>Strengths:</strong> Fast (parallel execution), comprehensive (multiple perspectives).</p>
@@ -5275,7 +5275,7 @@
     A2 --&gt; SY</code></pre>
 <h3 id="implementation_2">Implementation<a class="headerlink" href="#implementation_2" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">DebateStrategy</span><span class="p">(</span><span class="n">ExecutionStrategy</span><span class="p">):</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Multiple perspectives with synthesis.&quot;&quot;&quot;</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span><span class="sd">"""Multiple perspectives with synthesis."""</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rounds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">synthesizer</span><span class="p">:</span> <span class="n">Agent</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">rounds</span> <span class="o">=</span> <span class="n">rounds</span>
@@ -5294,25 +5294,25 @@
 <a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>            <span class="n">round_results</span> <span class="o">=</span> <span class="p">[]</span>
 <a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a>
 <a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>            <span class="k">for</span> <span class="n">agent</span> <span class="ow">in</span> <span class="n">agents</span><span class="p">:</span>
-<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>                <span class="c1"># Agent sees other agents&#39; previous responses</span>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a>                <span class="c1"># Agent sees other agents' previous responses</span>
 <a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>                <span class="n">agent_context</span> <span class="o">=</span> <span class="p">{</span>
 <a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a>                    <span class="o">**</span><span class="n">current_context</span><span class="p">,</span>
-<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>                    <span class="s2">&quot;debate_history&quot;</span><span class="p">:</span> <span class="n">debate_history</span><span class="p">,</span>
-<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a>                    <span class="s2">&quot;round&quot;</span><span class="p">:</span> <span class="n">round_num</span> <span class="o">+</span> <span class="mi">1</span>
+<a id="__codelineno-6-24" name="__codelineno-6-24" href="#__codelineno-6-24"></a>                    <span class="s2">"debate_history"</span><span class="p">:</span> <span class="n">debate_history</span><span class="p">,</span>
+<a id="__codelineno-6-25" name="__codelineno-6-25" href="#__codelineno-6-25"></a>                    <span class="s2">"round"</span><span class="p">:</span> <span class="n">round_num</span> <span class="o">+</span> <span class="mi">1</span>
 <a id="__codelineno-6-26" name="__codelineno-6-26" href="#__codelineno-6-26"></a>                <span class="p">}</span>
 <a id="__codelineno-6-27" name="__codelineno-6-27" href="#__codelineno-6-27"></a>                <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">agent</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">agent_context</span><span class="p">)</span>
 <a id="__codelineno-6-28" name="__codelineno-6-28" href="#__codelineno-6-28"></a>                <span class="n">round_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 <a id="__codelineno-6-29" name="__codelineno-6-29" href="#__codelineno-6-29"></a>
 <a id="__codelineno-6-30" name="__codelineno-6-30" href="#__codelineno-6-30"></a>            <span class="n">debate_history</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
-<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a>                <span class="s2">&quot;round&quot;</span><span class="p">:</span> <span class="n">round_num</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
-<a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a>                <span class="s2">&quot;responses&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">output</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">round_results</span><span class="p">]</span>
+<a id="__codelineno-6-31" name="__codelineno-6-31" href="#__codelineno-6-31"></a>                <span class="s2">"round"</span><span class="p">:</span> <span class="n">round_num</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-6-32" name="__codelineno-6-32" href="#__codelineno-6-32"></a>                <span class="s2">"responses"</span><span class="p">:</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">output</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">round_results</span><span class="p">]</span>
 <a id="__codelineno-6-33" name="__codelineno-6-33" href="#__codelineno-6-33"></a>            <span class="p">})</span>
 <a id="__codelineno-6-34" name="__codelineno-6-34" href="#__codelineno-6-34"></a>
 <a id="__codelineno-6-35" name="__codelineno-6-35" href="#__codelineno-6-35"></a>        <span class="c1"># Synthesis</span>
 <a id="__codelineno-6-36" name="__codelineno-6-36" href="#__codelineno-6-36"></a>        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">synthesizer</span><span class="p">:</span>
 <a id="__codelineno-6-37" name="__codelineno-6-37" href="#__codelineno-6-37"></a>            <span class="n">synthesis_context</span> <span class="o">=</span> <span class="p">{</span>
 <a id="__codelineno-6-38" name="__codelineno-6-38" href="#__codelineno-6-38"></a>                <span class="o">**</span><span class="n">context</span><span class="p">,</span>
-<a id="__codelineno-6-39" name="__codelineno-6-39" href="#__codelineno-6-39"></a>                <span class="s2">&quot;debate_history&quot;</span><span class="p">:</span> <span class="n">debate_history</span>
+<a id="__codelineno-6-39" name="__codelineno-6-39" href="#__codelineno-6-39"></a>                <span class="s2">"debate_history"</span><span class="p">:</span> <span class="n">debate_history</span>
 <a id="__codelineno-6-40" name="__codelineno-6-40" href="#__codelineno-6-40"></a>            <span class="p">}</span>
 <a id="__codelineno-6-41" name="__codelineno-6-41" href="#__codelineno-6-41"></a>            <span class="n">synthesis</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">synthesizer</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">synthesis_context</span><span class="p">)</span>
 <a id="__codelineno-6-42" name="__codelineno-6-42" href="#__codelineno-6-42"></a>            <span class="k">return</span> <span class="n">StrategyResult</span><span class="p">(</span>
@@ -5328,37 +5328,37 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Define debaters</span>
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">team</span> <span class="o">=</span> <span class="n">AgentTeam</span><span class="p">(</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">agents</span><span class="o">=</span><span class="p">[</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>        <span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;architect&quot;</span><span class="p">,</span> <span class="n">focus</span><span class="o">=</span><span class="s2">&quot;scalability&quot;</span><span class="p">),</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>        <span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;architect&quot;</span><span class="p">,</span> <span class="n">focus</span><span class="o">=</span><span class="s2">&quot;cost_efficiency&quot;</span><span class="p">),</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>        <span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;architect&quot;</span><span class="p">,</span> <span class="n">focus</span><span class="o">=</span><span class="s2">&quot;simplicity&quot;</span><span class="p">)</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>        <span class="n">spawn</span><span class="p">(</span><span class="s2">"architect"</span><span class="p">,</span> <span class="n">focus</span><span class="o">=</span><span class="s2">"scalability"</span><span class="p">),</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>        <span class="n">spawn</span><span class="p">(</span><span class="s2">"architect"</span><span class="p">,</span> <span class="n">focus</span><span class="o">=</span><span class="s2">"cost_efficiency"</span><span class="p">),</span>
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>        <span class="n">spawn</span><span class="p">(</span><span class="s2">"architect"</span><span class="p">,</span> <span class="n">focus</span><span class="o">=</span><span class="s2">"simplicity"</span><span class="p">)</span>
 <a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="p">],</span>
 <a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    <span class="n">strategy</span><span class="o">=</span><span class="n">DebateStrategy</span><span class="p">(</span>
 <a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>        <span class="n">rounds</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>        <span class="n">synthesizer</span><span class="o">=</span><span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;decision_maker&quot;</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">&quot;consensus&quot;</span><span class="p">)</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>        <span class="n">synthesizer</span><span class="o">=</span><span class="n">spawn</span><span class="p">(</span><span class="s2">"decision_maker"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="s2">"consensus"</span><span class="p">)</span>
 <a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a>    <span class="p">)</span>
 <a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="p">)</span>
 <a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a>
 <a id="__codelineno-7-14" name="__codelineno-7-14" href="#__codelineno-7-14"></a><span class="c1"># Execute debate</span>
 <a id="__codelineno-7-15" name="__codelineno-7-15" href="#__codelineno-7-15"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">team</span><span class="o">.</span><span class="n">execute</span><span class="p">({</span>
-<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>    <span class="s2">&quot;decision&quot;</span><span class="p">:</span> <span class="s2">&quot;How should we handle caching?&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>    <span class="s2">&quot;constraints&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;budget: $500/mo&quot;</span><span class="p">,</span> <span class="s2">&quot;latency: &lt;50ms&quot;</span><span class="p">,</span> <span class="s2">&quot;team_size: 3&quot;</span><span class="p">]</span>
+<a id="__codelineno-7-16" name="__codelineno-7-16" href="#__codelineno-7-16"></a>    <span class="s2">"decision"</span><span class="p">:</span> <span class="s2">"How should we handle caching?"</span><span class="p">,</span>
+<a id="__codelineno-7-17" name="__codelineno-7-17" href="#__codelineno-7-17"></a>    <span class="s2">"constraints"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"budget: $500/mo"</span><span class="p">,</span> <span class="s2">"latency: &lt;50ms"</span><span class="p">,</span> <span class="s2">"team_size: 3"</span><span class="p">]</span>
 <a id="__codelineno-7-18" name="__codelineno-7-18" href="#__codelineno-7-18"></a><span class="p">})</span>
 <a id="__codelineno-7-19" name="__codelineno-7-19" href="#__codelineno-7-19"></a>
 <a id="__codelineno-7-20" name="__codelineno-7-20" href="#__codelineno-7-20"></a><span class="c1"># Debate flow:</span>
 <a id="__codelineno-7-21" name="__codelineno-7-21" href="#__codelineno-7-21"></a><span class="c1"># Round 1:</span>
-<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="c1">#   scale_architect: &quot;Use Redis cluster for horizontal scaling&quot;</span>
-<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="c1">#   cost_architect: &quot;In-memory cache sufficient, Redis overkill&quot;</span>
-<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="c1">#   simple_architect: &quot;Start with functools.lru_cache&quot;</span>
+<a id="__codelineno-7-22" name="__codelineno-7-22" href="#__codelineno-7-22"></a><span class="c1">#   scale_architect: "Use Redis cluster for horizontal scaling"</span>
+<a id="__codelineno-7-23" name="__codelineno-7-23" href="#__codelineno-7-23"></a><span class="c1">#   cost_architect: "In-memory cache sufficient, Redis overkill"</span>
+<a id="__codelineno-7-24" name="__codelineno-7-24" href="#__codelineno-7-24"></a><span class="c1">#   simple_architect: "Start with functools.lru_cache"</span>
 <a id="__codelineno-7-25" name="__codelineno-7-25" href="#__codelineno-7-25"></a><span class="c1">#</span>
 <a id="__codelineno-7-26" name="__codelineno-7-26" href="#__codelineno-7-26"></a><span class="c1"># Round 2 (responds to each other):</span>
-<a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="c1">#   scale_architect: &quot;lru_cache doesn&#39;t share across instances&quot;</span>
-<a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a><span class="c1">#   cost_architect: &quot;Single Redis instance balances cost/capability&quot;</span>
-<a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a><span class="c1">#   simple_architect: &quot;Agree with single Redis, simpler than cluster&quot;</span>
+<a id="__codelineno-7-27" name="__codelineno-7-27" href="#__codelineno-7-27"></a><span class="c1">#   scale_architect: "lru_cache doesn't share across instances"</span>
+<a id="__codelineno-7-28" name="__codelineno-7-28" href="#__codelineno-7-28"></a><span class="c1">#   cost_architect: "Single Redis instance balances cost/capability"</span>
+<a id="__codelineno-7-29" name="__codelineno-7-29" href="#__codelineno-7-29"></a><span class="c1">#   simple_architect: "Agree with single Redis, simpler than cluster"</span>
 <a id="__codelineno-7-30" name="__codelineno-7-30" href="#__codelineno-7-30"></a><span class="c1">#</span>
 <a id="__codelineno-7-31" name="__codelineno-7-31" href="#__codelineno-7-31"></a><span class="c1"># Synthesis:</span>
-<a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a><span class="c1">#   &quot;Recommendation: Single Redis instance with local LRU fallback.</span>
+<a id="__codelineno-7-32" name="__codelineno-7-32" href="#__codelineno-7-32"></a><span class="c1">#   "Recommendation: Single Redis instance with local LRU fallback.</span>
 <a id="__codelineno-7-33" name="__codelineno-7-33" href="#__codelineno-7-33"></a><span class="c1">#    Rationale: Balances scalability needs with cost constraints.</span>
-<a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a><span class="c1">#    Migration path: Start simple, scale cluster when &gt;1000 RPS.&quot;</span>
+<a id="__codelineno-7-34" name="__codelineno-7-34" href="#__codelineno-7-34"></a><span class="c1">#    Migration path: Start simple, scale cluster when &gt;1000 RPS."</span>
 </code></pre></div>
 <p><strong>Strengths:</strong> Rich decision-making, surfaces trade-offs, reduces single-agent bias.</p>
 <p><strong>Weaknesses:</strong> Expensive (multiple rounds × multiple agents), slower.</p>
@@ -5372,7 +5372,7 @@
     E --&gt; R([refined])</code></pre>
 <h3 id="implementation_3">Implementation<a class="headerlink" href="#implementation_3" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">TeachingStrategy</span><span class="p">(</span><span class="n">ExecutionStrategy</span><span class="p">):</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Junior generates, expert validates/refines.&quot;&quot;&quot;</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span><span class="sd">"""Junior generates, expert validates/refines."""</span>
 <a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>        <span class="bp">self</span><span class="p">,</span>
@@ -5401,14 +5401,14 @@
 <a id="__codelineno-8-28" name="__codelineno-8-28" href="#__codelineno-8-28"></a>                <span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <a id="__codelineno-8-29" name="__codelineno-8-29" href="#__codelineno-8-29"></a>                <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">junior_result</span><span class="p">],</span>
 <a id="__codelineno-8-30" name="__codelineno-8-30" href="#__codelineno-8-30"></a>                <span class="n">aggregated_output</span><span class="o">=</span><span class="n">junior_result</span><span class="o">.</span><span class="n">output</span><span class="p">,</span>
-<a id="__codelineno-8-31" name="__codelineno-8-31" href="#__codelineno-8-31"></a>                <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;tier_used&quot;</span><span class="p">:</span> <span class="s2">&quot;CHEAP&quot;</span><span class="p">,</span> <span class="s2">&quot;expert_needed&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
+<a id="__codelineno-8-31" name="__codelineno-8-31" href="#__codelineno-8-31"></a>                <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"tier_used"</span><span class="p">:</span> <span class="s2">"CHEAP"</span><span class="p">,</span> <span class="s2">"expert_needed"</span><span class="p">:</span> <span class="kc">False</span><span class="p">}</span>
 <a id="__codelineno-8-32" name="__codelineno-8-32" href="#__codelineno-8-32"></a>            <span class="p">)</span>
 <a id="__codelineno-8-33" name="__codelineno-8-33" href="#__codelineno-8-33"></a>
 <a id="__codelineno-8-34" name="__codelineno-8-34" href="#__codelineno-8-34"></a>        <span class="c1"># Expert refinement needed</span>
 <a id="__codelineno-8-35" name="__codelineno-8-35" href="#__codelineno-8-35"></a>        <span class="n">expert_context</span> <span class="o">=</span> <span class="p">{</span>
 <a id="__codelineno-8-36" name="__codelineno-8-36" href="#__codelineno-8-36"></a>            <span class="o">**</span><span class="n">context</span><span class="p">,</span>
-<a id="__codelineno-8-37" name="__codelineno-8-37" href="#__codelineno-8-37"></a>            <span class="s2">&quot;junior_output&quot;</span><span class="p">:</span> <span class="n">junior_result</span><span class="o">.</span><span class="n">output</span><span class="p">,</span>
-<a id="__codelineno-8-38" name="__codelineno-8-38" href="#__codelineno-8-38"></a>            <span class="s2">&quot;quality_issues&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_identify_issues</span><span class="p">(</span><span class="n">junior_result</span><span class="p">)</span>
+<a id="__codelineno-8-37" name="__codelineno-8-37" href="#__codelineno-8-37"></a>            <span class="s2">"junior_output"</span><span class="p">:</span> <span class="n">junior_result</span><span class="o">.</span><span class="n">output</span><span class="p">,</span>
+<a id="__codelineno-8-38" name="__codelineno-8-38" href="#__codelineno-8-38"></a>            <span class="s2">"quality_issues"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_identify_issues</span><span class="p">(</span><span class="n">junior_result</span><span class="p">)</span>
 <a id="__codelineno-8-39" name="__codelineno-8-39" href="#__codelineno-8-39"></a>        <span class="p">}</span>
 <a id="__codelineno-8-40" name="__codelineno-8-40" href="#__codelineno-8-40"></a>        <span class="n">expert_result</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">expert</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">expert_context</span><span class="p">)</span>
 <a id="__codelineno-8-41" name="__codelineno-8-41" href="#__codelineno-8-41"></a>
@@ -5416,26 +5416,26 @@
 <a id="__codelineno-8-43" name="__codelineno-8-43" href="#__codelineno-8-43"></a>            <span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <a id="__codelineno-8-44" name="__codelineno-8-44" href="#__codelineno-8-44"></a>            <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">junior_result</span><span class="p">,</span> <span class="n">expert_result</span><span class="p">],</span>
 <a id="__codelineno-8-45" name="__codelineno-8-45" href="#__codelineno-8-45"></a>            <span class="n">aggregated_output</span><span class="o">=</span><span class="n">expert_result</span><span class="o">.</span><span class="n">output</span><span class="p">,</span>
-<a id="__codelineno-8-46" name="__codelineno-8-46" href="#__codelineno-8-46"></a>            <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;tier_used&quot;</span><span class="p">:</span> <span class="s2">&quot;CAPABLE&quot;</span><span class="p">,</span> <span class="s2">&quot;expert_needed&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+<a id="__codelineno-8-46" name="__codelineno-8-46" href="#__codelineno-8-46"></a>            <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"tier_used"</span><span class="p">:</span> <span class="s2">"CAPABLE"</span><span class="p">,</span> <span class="s2">"expert_needed"</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
 <a id="__codelineno-8-47" name="__codelineno-8-47" href="#__codelineno-8-47"></a>        <span class="p">)</span>
 </code></pre></div>
 <h3 id="real-world-example-documentation-generation">Real-World Example: Documentation Generation<a class="headerlink" href="#real-world-example-documentation-generation" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Cost-optimized documentation</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="n">strategy</span> <span class="o">=</span> <span class="n">TeachingStrategy</span><span class="p">(</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">junior</span><span class="o">=</span><span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;documentation_writer&quot;</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;CHEAP&quot;</span><span class="p">),</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="n">expert</span><span class="o">=</span><span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;documentation_writer&quot;</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;CAPABLE&quot;</span><span class="p">),</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>    <span class="n">junior</span><span class="o">=</span><span class="n">spawn</span><span class="p">(</span><span class="s2">"documentation_writer"</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">"CHEAP"</span><span class="p">),</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>    <span class="n">expert</span><span class="o">=</span><span class="n">spawn</span><span class="p">(</span><span class="s2">"documentation_writer"</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">"CAPABLE"</span><span class="p">),</span>
 <a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>    <span class="n">quality_threshold</span><span class="o">=</span><span class="mf">0.85</span>
 <a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="p">)</span>
 <a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>
 <a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">strategy</span><span class="o">.</span><span class="n">execute</span><span class="p">([],</span> <span class="p">{</span>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>    <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">api_module</span><span class="p">,</span>
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>    <span class="s2">&quot;style&quot;</span><span class="p">:</span> <span class="s2">&quot;technical&quot;</span><span class="p">,</span>
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>    <span class="s2">&quot;audience&quot;</span><span class="p">:</span> <span class="s2">&quot;developers&quot;</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>    <span class="s2">"code"</span><span class="p">:</span> <span class="n">api_module</span><span class="p">,</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>    <span class="s2">"style"</span><span class="p">:</span> <span class="s2">"technical"</span><span class="p">,</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>    <span class="s2">"audience"</span><span class="p">:</span> <span class="s2">"developers"</span>
 <a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="p">})</span>
 <a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>
 <a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="c1"># Scenario A: Junior passes (85%+ quality)</span>
 <a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="c1">#   → Cost: $0.002 (Haiku only)</span>
-<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="c1">#   → Output: Junior&#39;s documentation</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="c1">#   → Output: Junior's documentation</span>
 <a id="__codelineno-9-17" name="__codelineno-9-17" href="#__codelineno-9-17"></a><span class="c1">#</span>
 <a id="__codelineno-9-18" name="__codelineno-9-18" href="#__codelineno-9-18"></a><span class="c1"># Scenario B: Junior fails (&lt; 85% quality)</span>
 <a id="__codelineno-9-19" name="__codelineno-9-19" href="#__codelineno-9-19"></a><span class="c1">#   → Cost: $0.002 + $0.015 = $0.017 (Haiku + Sonnet)</span>
@@ -5452,7 +5452,7 @@
     RV --&gt; P["polisher (PREMIUM)&lt;br/&gt;publication-ready"]</code></pre>
 <h3 id="implementation_4">Implementation<a class="headerlink" href="#implementation_4" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">RefinementStrategy</span><span class="p">(</span><span class="n">ExecutionStrategy</span><span class="p">):</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Progressive quality improvement ladder.&quot;&quot;&quot;</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">    </span><span class="sd">"""Progressive quality improvement ladder."""</span>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stages</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Agent</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]):</span>
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>        <span class="c1"># [(agent, role), ...]</span>
@@ -5469,9 +5469,9 @@
 <a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>        <span class="k">for</span> <span class="n">agent</span><span class="p">,</span> <span class="n">role</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stages</span><span class="p">:</span>
 <a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>            <span class="n">stage_context</span> <span class="o">=</span> <span class="p">{</span>
 <a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>                <span class="o">**</span><span class="n">context</span><span class="p">,</span>
-<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>                <span class="s2">&quot;previous_output&quot;</span><span class="p">:</span> <span class="n">current_output</span><span class="p">,</span>
-<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a>                <span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="n">role</span><span class="p">,</span>
-<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a>                <span class="s2">&quot;stage&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">stage_results</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>                <span class="s2">"previous_output"</span><span class="p">:</span> <span class="n">current_output</span><span class="p">,</span>
+<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a>                <span class="s2">"role"</span><span class="p">:</span> <span class="n">role</span><span class="p">,</span>
+<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a>                <span class="s2">"stage"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">stage_results</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
 <a id="__codelineno-10-22" name="__codelineno-10-22" href="#__codelineno-10-22"></a>            <span class="p">}</span>
 <a id="__codelineno-10-23" name="__codelineno-10-23" href="#__codelineno-10-23"></a>
 <a id="__codelineno-10-24" name="__codelineno-10-24" href="#__codelineno-10-24"></a>            <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">agent</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stage_context</span><span class="p">)</span>
@@ -5482,29 +5482,29 @@
 <a id="__codelineno-10-29" name="__codelineno-10-29" href="#__codelineno-10-29"></a>            <span class="n">success</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <a id="__codelineno-10-30" name="__codelineno-10-30" href="#__codelineno-10-30"></a>            <span class="n">outputs</span><span class="o">=</span><span class="n">stage_results</span><span class="p">,</span>
 <a id="__codelineno-10-31" name="__codelineno-10-31" href="#__codelineno-10-31"></a>            <span class="n">aggregated_output</span><span class="o">=</span><span class="n">current_output</span><span class="p">,</span>  <span class="c1"># Final polished version</span>
-<a id="__codelineno-10-32" name="__codelineno-10-32" href="#__codelineno-10-32"></a>            <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;stages_completed&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">stage_results</span><span class="p">)}</span>
+<a id="__codelineno-10-32" name="__codelineno-10-32" href="#__codelineno-10-32"></a>            <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"stages_completed"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">stage_results</span><span class="p">)}</span>
 <a id="__codelineno-10-33" name="__codelineno-10-33" href="#__codelineno-10-33"></a>        <span class="p">)</span>
 </code></pre></div>
 <h3 id="real-world-example-api-documentation-pipeline">Real-World Example: API Documentation Pipeline<a class="headerlink" href="#real-world-example-api-documentation-pipeline" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">strategy</span> <span class="o">=</span> <span class="n">RefinementStrategy</span><span class="p">(</span><span class="n">stages</span><span class="o">=</span><span class="p">[</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    <span class="p">(</span><span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;doc_writer&quot;</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;CHEAP&quot;</span><span class="p">),</span> <span class="s2">&quot;drafter&quot;</span><span class="p">),</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="p">(</span><span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;doc_reviewer&quot;</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;CAPABLE&quot;</span><span class="p">),</span> <span class="s2">&quot;reviewer&quot;</span><span class="p">),</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="p">(</span><span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;doc_editor&quot;</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;PREMIUM&quot;</span><span class="p">),</span> <span class="s2">&quot;polisher&quot;</span><span class="p">)</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    <span class="p">(</span><span class="n">spawn</span><span class="p">(</span><span class="s2">"doc_writer"</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">"CHEAP"</span><span class="p">),</span> <span class="s2">"drafter"</span><span class="p">),</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="p">(</span><span class="n">spawn</span><span class="p">(</span><span class="s2">"doc_reviewer"</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">"CAPABLE"</span><span class="p">),</span> <span class="s2">"reviewer"</span><span class="p">),</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="p">(</span><span class="n">spawn</span><span class="p">(</span><span class="s2">"doc_editor"</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">"PREMIUM"</span><span class="p">),</span> <span class="s2">"polisher"</span><span class="p">)</span>
 <a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="p">])</span>
 <a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
 <a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">strategy</span><span class="o">.</span><span class="n">execute</span><span class="p">([],</span> <span class="p">{</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    <span class="s2">&quot;code&quot;</span><span class="p">:</span> <span class="n">payment_api</span><span class="p">,</span>
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>    <span class="s2">&quot;standard&quot;</span><span class="p">:</span> <span class="s2">&quot;OpenAPI 3.0&quot;</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    <span class="s2">"code"</span><span class="p">:</span> <span class="n">payment_api</span><span class="p">,</span>
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>    <span class="s2">"standard"</span><span class="p">:</span> <span class="s2">"OpenAPI 3.0"</span>
 <a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a><span class="p">})</span>
 <a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>
 <a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a><span class="c1"># Stage 1 - Drafter (CHEAP):</span>
-<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="c1">#   &quot;Generates basic structure, extracts endpoints&quot;</span>
+<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a><span class="c1">#   "Generates basic structure, extracts endpoints"</span>
 <a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a><span class="c1">#</span>
 <a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a><span class="c1"># Stage 2 - Reviewer (CAPABLE):</span>
-<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="c1">#   &quot;Adds examples, improves descriptions, checks accuracy&quot;</span>
+<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a><span class="c1">#   "Adds examples, improves descriptions, checks accuracy"</span>
 <a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a><span class="c1">#</span>
 <a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a><span class="c1"># Stage 3 - Polisher (PREMIUM):</span>
-<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a><span class="c1">#   &quot;Perfects language, ensures consistency, adds edge cases&quot;</span>
+<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a><span class="c1">#   "Perfects language, ensures consistency, adds edge cases"</span>
 </code></pre></div>
 <p><strong>Strengths:</strong> Highest quality output, clear improvement stages.</p>
 <p><strong>Weaknesses:</strong> Most expensive, slowest, not always necessary.</p>
@@ -5517,7 +5517,7 @@
     C --&gt; S3["complex (PREMIUM)"]</code></pre>
 <h3 id="implementation_5">Implementation<a class="headerlink" href="#implementation_5" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">AdaptiveStrategy</span><span class="p">(</span><span class="n">ExecutionStrategy</span><span class="p">):</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Route to appropriate specialist based on complexity.&quot;&quot;&quot;</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span><span class="sd">"""Route to appropriate specialist based on complexity."""</span>
 <a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>
 <a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
 <a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>        <span class="bp">self</span><span class="p">,</span>
@@ -5534,16 +5534,16 @@
 <a id="__codelineno-12-16" name="__codelineno-12-16" href="#__codelineno-12-16"></a>    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StrategyResult</span><span class="p">:</span>
 <a id="__codelineno-12-17" name="__codelineno-12-17" href="#__codelineno-12-17"></a>        <span class="c1"># Classify task complexity (cheap operation)</span>
 <a id="__codelineno-12-18" name="__codelineno-12-18" href="#__codelineno-12-18"></a>        <span class="n">classification</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">classifier</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
-<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a>        <span class="n">complexity</span> <span class="o">=</span> <span class="n">classification</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="s2">&quot;complexity&quot;</span><span class="p">]</span>
+<a id="__codelineno-12-19" name="__codelineno-12-19" href="#__codelineno-12-19"></a>        <span class="n">complexity</span> <span class="o">=</span> <span class="n">classification</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="s2">"complexity"</span><span class="p">]</span>
 <a id="__codelineno-12-20" name="__codelineno-12-20" href="#__codelineno-12-20"></a>
 <a id="__codelineno-12-21" name="__codelineno-12-21" href="#__codelineno-12-21"></a>        <span class="c1"># Route to appropriate specialist</span>
 <a id="__codelineno-12-22" name="__codelineno-12-22" href="#__codelineno-12-22"></a>        <span class="n">specialist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">specialists</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">complexity</span><span class="p">)</span>
 <a id="__codelineno-12-23" name="__codelineno-12-23" href="#__codelineno-12-23"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">specialist</span><span class="p">:</span>
-<a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a>            <span class="n">specialist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">specialists</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">]</span>
+<a id="__codelineno-12-24" name="__codelineno-12-24" href="#__codelineno-12-24"></a>            <span class="n">specialist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">specialists</span><span class="p">[</span><span class="s2">"default"</span><span class="p">]</span>
 <a id="__codelineno-12-25" name="__codelineno-12-25" href="#__codelineno-12-25"></a>
 <a id="__codelineno-12-26" name="__codelineno-12-26" href="#__codelineno-12-26"></a>        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">specialist</span><span class="o">.</span><span class="n">execute</span><span class="p">({</span>
 <a id="__codelineno-12-27" name="__codelineno-12-27" href="#__codelineno-12-27"></a>            <span class="o">**</span><span class="n">context</span><span class="p">,</span>
-<a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a>            <span class="s2">&quot;classification&quot;</span><span class="p">:</span> <span class="n">classification</span><span class="o">.</span><span class="n">output</span>
+<a id="__codelineno-12-28" name="__codelineno-12-28" href="#__codelineno-12-28"></a>            <span class="s2">"classification"</span><span class="p">:</span> <span class="n">classification</span><span class="o">.</span><span class="n">output</span>
 <a id="__codelineno-12-29" name="__codelineno-12-29" href="#__codelineno-12-29"></a>        <span class="p">})</span>
 <a id="__codelineno-12-30" name="__codelineno-12-30" href="#__codelineno-12-30"></a>
 <a id="__codelineno-12-31" name="__codelineno-12-31" href="#__codelineno-12-31"></a>        <span class="k">return</span> <span class="n">StrategyResult</span><span class="p">(</span>
@@ -5551,31 +5551,31 @@
 <a id="__codelineno-12-33" name="__codelineno-12-33" href="#__codelineno-12-33"></a>            <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">classification</span><span class="p">,</span> <span class="n">result</span><span class="p">],</span>
 <a id="__codelineno-12-34" name="__codelineno-12-34" href="#__codelineno-12-34"></a>            <span class="n">aggregated_output</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">output</span><span class="p">,</span>
 <a id="__codelineno-12-35" name="__codelineno-12-35" href="#__codelineno-12-35"></a>            <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
-<a id="__codelineno-12-36" name="__codelineno-12-36" href="#__codelineno-12-36"></a>                <span class="s2">&quot;classified_as&quot;</span><span class="p">:</span> <span class="n">complexity</span><span class="p">,</span>
-<a id="__codelineno-12-37" name="__codelineno-12-37" href="#__codelineno-12-37"></a>                <span class="s2">&quot;specialist_used&quot;</span><span class="p">:</span> <span class="n">specialist</span><span class="o">.</span><span class="n">id</span>
+<a id="__codelineno-12-36" name="__codelineno-12-36" href="#__codelineno-12-36"></a>                <span class="s2">"classified_as"</span><span class="p">:</span> <span class="n">complexity</span><span class="p">,</span>
+<a id="__codelineno-12-37" name="__codelineno-12-37" href="#__codelineno-12-37"></a>                <span class="s2">"specialist_used"</span><span class="p">:</span> <span class="n">specialist</span><span class="o">.</span><span class="n">id</span>
 <a id="__codelineno-12-38" name="__codelineno-12-38" href="#__codelineno-12-38"></a>            <span class="p">}</span>
 <a id="__codelineno-12-39" name="__codelineno-12-39" href="#__codelineno-12-39"></a>        <span class="p">)</span>
 </code></pre></div>
 <h3 id="real-world-example-bug-triage">Real-World Example: Bug Triage<a class="headerlink" href="#real-world-example-bug-triage" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">strategy</span> <span class="o">=</span> <span class="n">AdaptiveStrategy</span><span class="p">(</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>    <span class="n">classifier</span><span class="o">=</span><span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;bug_classifier&quot;</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;CHEAP&quot;</span><span class="p">),</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>    <span class="n">classifier</span><span class="o">=</span><span class="n">spawn</span><span class="p">(</span><span class="s2">"bug_classifier"</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">"CHEAP"</span><span class="p">),</span>
 <a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>    <span class="n">specialists</span><span class="o">=</span><span class="p">{</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>        <span class="s2">&quot;simple&quot;</span><span class="p">:</span> <span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;bug_fixer&quot;</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;CHEAP&quot;</span><span class="p">),</span>      <span class="c1"># Typos, config</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>        <span class="s2">&quot;moderate&quot;</span><span class="p">:</span> <span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;bug_fixer&quot;</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;CAPABLE&quot;</span><span class="p">),</span>   <span class="c1"># Logic errors</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>        <span class="s2">&quot;complex&quot;</span><span class="p">:</span> <span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;bug_fixer&quot;</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;PREMIUM&quot;</span><span class="p">),</span>    <span class="c1"># Architecture issues</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>        <span class="s2">&quot;default&quot;</span><span class="p">:</span> <span class="n">spawn</span><span class="p">(</span><span class="s2">&quot;bug_fixer&quot;</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;CAPABLE&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a>        <span class="s2">"simple"</span><span class="p">:</span> <span class="n">spawn</span><span class="p">(</span><span class="s2">"bug_fixer"</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">"CHEAP"</span><span class="p">),</span>      <span class="c1"># Typos, config</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>        <span class="s2">"moderate"</span><span class="p">:</span> <span class="n">spawn</span><span class="p">(</span><span class="s2">"bug_fixer"</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">"CAPABLE"</span><span class="p">),</span>   <span class="c1"># Logic errors</span>
+<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>        <span class="s2">"complex"</span><span class="p">:</span> <span class="n">spawn</span><span class="p">(</span><span class="s2">"bug_fixer"</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">"PREMIUM"</span><span class="p">),</span>    <span class="c1"># Architecture issues</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>        <span class="s2">"default"</span><span class="p">:</span> <span class="n">spawn</span><span class="p">(</span><span class="s2">"bug_fixer"</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="s2">"CAPABLE"</span><span class="p">)</span>
 <a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a>    <span class="p">}</span>
 <a id="__codelineno-13-9" name="__codelineno-13-9" href="#__codelineno-13-9"></a><span class="p">)</span>
 <a id="__codelineno-13-10" name="__codelineno-13-10" href="#__codelineno-13-10"></a>
-<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="c1"># Bug: &quot;Login button doesn&#39;t work&quot;</span>
-<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">strategy</span><span class="o">.</span><span class="n">execute</span><span class="p">([],</span> <span class="p">{</span><span class="s2">&quot;bug_report&quot;</span><span class="p">:</span> <span class="n">bug</span><span class="p">})</span>
+<a id="__codelineno-13-11" name="__codelineno-13-11" href="#__codelineno-13-11"></a><span class="c1"># Bug: "Login button doesn't work"</span>
+<a id="__codelineno-13-12" name="__codelineno-13-12" href="#__codelineno-13-12"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">strategy</span><span class="o">.</span><span class="n">execute</span><span class="p">([],</span> <span class="p">{</span><span class="s2">"bug_report"</span><span class="p">:</span> <span class="n">bug</span><span class="p">})</span>
 <a id="__codelineno-13-13" name="__codelineno-13-13" href="#__codelineno-13-13"></a>
-<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="c1"># Classifier: &quot;simple&quot; (missing event handler)</span>
+<a id="__codelineno-13-14" name="__codelineno-13-14" href="#__codelineno-13-14"></a><span class="c1"># Classifier: "simple" (missing event handler)</span>
 <a id="__codelineno-13-15" name="__codelineno-13-15" href="#__codelineno-13-15"></a><span class="c1"># → Routes to CHEAP tier fixer</span>
 <a id="__codelineno-13-16" name="__codelineno-13-16" href="#__codelineno-13-16"></a><span class="c1"># → Cost: $0.005</span>
 <a id="__codelineno-13-17" name="__codelineno-13-17" href="#__codelineno-13-17"></a><span class="c1">#</span>
-<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="c1"># Bug: &quot;Race condition in payment processing&quot;</span>
-<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="c1"># Classifier: &quot;complex&quot; (concurrency issue)</span>
+<a id="__codelineno-13-18" name="__codelineno-13-18" href="#__codelineno-13-18"></a><span class="c1"># Bug: "Race condition in payment processing"</span>
+<a id="__codelineno-13-19" name="__codelineno-13-19" href="#__codelineno-13-19"></a><span class="c1"># Classifier: "complex" (concurrency issue)</span>
 <a id="__codelineno-13-20" name="__codelineno-13-20" href="#__codelineno-13-20"></a><span class="c1"># → Routes to PREMIUM tier fixer</span>
 <a id="__codelineno-13-21" name="__codelineno-13-21" href="#__codelineno-13-21"></a><span class="c1"># → Cost: $0.10</span>
 </code></pre></div>
@@ -5621,24 +5621,24 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">select_pattern</span><span class="p">(</span><span class="n">requirements</span><span class="p">:</span> <span class="n">TaskRequirements</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>    <span class="c1"># Dependencies → Sequential</span>
 <a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>    <span class="k">if</span> <span class="n">requirements</span><span class="o">.</span><span class="n">has_dependencies</span><span class="p">:</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>        <span class="k">return</span> <span class="s2">&quot;sequential&quot;</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>        <span class="k">return</span> <span class="s2">"sequential"</span>
 <a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>
 <a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>    <span class="c1"># Multiple perspectives needed → Debate</span>
 <a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>    <span class="k">if</span> <span class="n">requirements</span><span class="o">.</span><span class="n">needs_consensus</span><span class="p">:</span>
-<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>        <span class="k">return</span> <span class="s2">&quot;debate&quot;</span>
+<a id="__codelineno-14-8" name="__codelineno-14-8" href="#__codelineno-14-8"></a>        <span class="k">return</span> <span class="s2">"debate"</span>
 <a id="__codelineno-14-9" name="__codelineno-14-9" href="#__codelineno-14-9"></a>
 <a id="__codelineno-14-10" name="__codelineno-14-10" href="#__codelineno-14-10"></a>    <span class="c1"># Cost-sensitive → Teaching or Adaptive</span>
 <a id="__codelineno-14-11" name="__codelineno-14-11" href="#__codelineno-14-11"></a>    <span class="k">if</span> <span class="n">requirements</span><span class="o">.</span><span class="n">cost_sensitive</span><span class="p">:</span>
 <a id="__codelineno-14-12" name="__codelineno-14-12" href="#__codelineno-14-12"></a>        <span class="k">if</span> <span class="n">requirements</span><span class="o">.</span><span class="n">variable_complexity</span><span class="p">:</span>
-<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>            <span class="k">return</span> <span class="s2">&quot;adaptive&quot;</span>
-<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>        <span class="k">return</span> <span class="s2">&quot;teaching&quot;</span>
+<a id="__codelineno-14-13" name="__codelineno-14-13" href="#__codelineno-14-13"></a>            <span class="k">return</span> <span class="s2">"adaptive"</span>
+<a id="__codelineno-14-14" name="__codelineno-14-14" href="#__codelineno-14-14"></a>        <span class="k">return</span> <span class="s2">"teaching"</span>
 <a id="__codelineno-14-15" name="__codelineno-14-15" href="#__codelineno-14-15"></a>
 <a id="__codelineno-14-16" name="__codelineno-14-16" href="#__codelineno-14-16"></a>    <span class="c1"># Highest quality → Refinement</span>
 <a id="__codelineno-14-17" name="__codelineno-14-17" href="#__codelineno-14-17"></a>    <span class="k">if</span> <span class="n">requirements</span><span class="o">.</span><span class="n">quality_critical</span><span class="p">:</span>
-<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>        <span class="k">return</span> <span class="s2">&quot;refinement&quot;</span>
+<a id="__codelineno-14-18" name="__codelineno-14-18" href="#__codelineno-14-18"></a>        <span class="k">return</span> <span class="s2">"refinement"</span>
 <a id="__codelineno-14-19" name="__codelineno-14-19" href="#__codelineno-14-19"></a>
 <a id="__codelineno-14-20" name="__codelineno-14-20" href="#__codelineno-14-20"></a>    <span class="c1"># Default: Parallel for speed</span>
-<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a>    <span class="k">return</span> <span class="s2">&quot;parallel&quot;</span>
+<a id="__codelineno-14-21" name="__codelineno-14-21" href="#__codelineno-14-21"></a>    <span class="k">return</span> <span class="s2">"parallel"</span>
 </code></pre></div>
 <h2 id="combining-patterns">Combining Patterns<a class="headerlink" href="#combining-patterns" title="Permanent link">&para;</a></h2>
 <p>Patterns can be nested. A release preparation workflow might use:</p>

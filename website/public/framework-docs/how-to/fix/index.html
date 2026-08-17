@@ -4880,10 +4880,10 @@
 <h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h2>
 <p>Preview a fix without executing anything (the default — nothing runs,
 nothing is written):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>attune<span class="w"> </span>fix<span class="w"> </span><span class="s2">&quot;boundary order must price as bulk&quot;</span><span class="w"> </span>--probe<span class="w"> </span><span class="s2">&quot;python -m pytest tests/test_pricing.py -q&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>attune<span class="w"> </span>fix<span class="w"> </span><span class="s2">"boundary order must price as bulk"</span><span class="w"> </span>--probe<span class="w"> </span><span class="s2">"python -m pytest tests/test_pricing.py -q"</span>
 </code></pre></div>
 <p>Execute it, scoped to one file:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>attune<span class="w"> </span>fix<span class="w"> </span><span class="s2">&quot;boundary order must price as bulk&quot;</span><span class="w"> </span>--workflow<span class="w"> </span>fix<span class="w"> </span>--scope<span class="w"> </span>src/pricing.py<span class="w"> </span>--probe<span class="w"> </span><span class="s2">&quot;python -m pytest tests/test_pricing.py -q&quot;</span><span class="w"> </span>--run
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>attune<span class="w"> </span>fix<span class="w"> </span><span class="s2">"boundary order must price as bulk"</span><span class="w"> </span>--workflow<span class="w"> </span>fix<span class="w"> </span>--scope<span class="w"> </span>src/pricing.py<span class="w"> </span>--probe<span class="w"> </span><span class="s2">"python -m pytest tests/test_pricing.py -q"</span><span class="w"> </span>--run
 </code></pre></div>
 <p>Read the exit code:</p>
 <table>

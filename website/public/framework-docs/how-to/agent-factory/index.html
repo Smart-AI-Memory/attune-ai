@@ -5392,27 +5392,27 @@ on what's installed and the <code>use_case</code> argument, falling back to
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># Create agents</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">researcher</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;researcher&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">role</span><span class="o">=</span><span class="s2">&quot;researcher&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">&quot;capable&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">"researcher"</span><span class="p">,</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">role</span><span class="o">=</span><span class="s2">"researcher"</span><span class="p">,</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">"capable"</span><span class="p">,</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">)</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">writer</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;writer&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">role</span><span class="o">=</span><span class="s2">&quot;writer&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">&quot;premium&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">"writer"</span><span class="p">,</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">role</span><span class="o">=</span><span class="s2">"writer"</span><span class="p">,</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">"premium"</span><span class="p">,</span>
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="p">)</span>
 <a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
 <a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="c1"># Create workflow</span>
 <a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_workflow</span><span class="p">(</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;research_pipeline&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">"research_pipeline"</span><span class="p">,</span>
 <a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    <span class="n">agents</span><span class="o">=</span><span class="p">[</span><span class="n">researcher</span><span class="p">,</span> <span class="n">writer</span><span class="p">],</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;sequential&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    <span class="n">mode</span><span class="o">=</span><span class="s2">"sequential"</span><span class="p">,</span>
 <a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="p">)</span>
 <a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>
 <a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="c1"># Run (workflows are async)</span>
-<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;Research AI trends in 2025&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">])</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">"Research AI trends in 2025"</span><span class="p">)</span>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">"output"</span><span class="p">])</span>
 </code></pre></div>
 <p><code>framework=</code> can be a <code>Framework</code> enum value or a string like
 <code>"langgraph"</code> / <code>"langchain"</code> / <code>"autogen"</code> / <code>"haystack"</code> / <code>"native"</code>.</p>
@@ -5420,9 +5420,9 @@ on what's installed and the <code>use_case</code> argument, falling back to
 <h3 id="constructor">Constructor<a class="headerlink" href="#constructor" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">AgentFactory</span><span class="p">(</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">framework</span><span class="p">:</span> <span class="n">Framework</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">provider</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;anthropic&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">provider</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"anthropic"</span><span class="p">,</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">api_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">use_case</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;general&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">use_case</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"general"</span><span class="p">,</span>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p">)</span>
 </code></pre></div>
 <ul>
@@ -5602,33 +5602,33 @@ installed.</p>
 <h2 id="enums">Enums<a class="headerlink" href="#enums" title="Permanent link">&para;</a></h2>
 <h3 id="agentrole"><code>AgentRole</code><a class="headerlink" href="#agentrole" title="Permanent link">&para;</a></h3>
 <p>Built-in roles (string values shown):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>COORDINATOR    &quot;coordinator&quot;
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>RESEARCHER     &quot;researcher&quot;
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>WRITER         &quot;writer&quot;
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>REVIEWER       &quot;reviewer&quot;
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>EDITOR         &quot;editor&quot;
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>EXECUTOR       &quot;executor&quot;
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>DEBUGGER       &quot;debugger&quot;
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>SECURITY       &quot;security&quot;
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>ARCHITECT      &quot;architect&quot;
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>TESTER         &quot;tester&quot;
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>DOCUMENTER     &quot;documenter&quot;
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>RETRIEVER      &quot;retriever&quot;
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>SUMMARIZER     &quot;summarizer&quot;
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>ANSWERER       &quot;answerer&quot;
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>CUSTOM         &quot;custom&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>COORDINATOR    "coordinator"
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>RESEARCHER     "researcher"
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>WRITER         "writer"
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>REVIEWER       "reviewer"
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>EDITOR         "editor"
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>EXECUTOR       "executor"
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>DEBUGGER       "debugger"
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>SECURITY       "security"
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>ARCHITECT      "architect"
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>TESTER         "tester"
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>DOCUMENTER     "documenter"
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>RETRIEVER      "retriever"
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>SUMMARIZER     "summarizer"
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>ANSWERER       "answerer"
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>CUSTOM         "custom"
 </code></pre></div>
 <p>You can pass either the enum value (<code>role=AgentRole.RESEARCHER</code>) or the
 lowercase string (<code>role="researcher"</code>).</p>
 <h3 id="agentcapability"><code>AgentCapability</code><a class="headerlink" href="#agentcapability" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>CODE_EXECUTION     &quot;code_execution&quot;
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>TOOL_USE           &quot;tool_use&quot;
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>WEB_SEARCH         &quot;web_search&quot;
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>FILE_ACCESS        &quot;file_access&quot;
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>MEMORY             &quot;memory&quot;
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>RETRIEVAL          &quot;retrieval&quot;
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>VISION             &quot;vision&quot;
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>FUNCTION_CALLING   &quot;function_calling&quot;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>CODE_EXECUTION     "code_execution"
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>TOOL_USE           "tool_use"
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>WEB_SEARCH         "web_search"
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>FILE_ACCESS        "file_access"
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>MEMORY             "memory"
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>RETRIEVAL          "retrieval"
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>VISION             "vision"
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>FUNCTION_CALLING   "function_calling"
 </code></pre></div>
 <h2 id="model-tiers">Model tiers<a class="headerlink" href="#model-tiers" title="Permanent link">&para;</a></h2>
 <p><code>model_tier</code> is resolved by the adapter's <code>get_model_for_tier</code>, which
@@ -5686,37 +5686,37 @@ from their submodules but not re-exported at the top level.</p>
 <h2 id="example-code-review-pipeline">Example: code review pipeline<a class="headerlink" href="#example-code-review-pipeline" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.agent_factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentFactory</span><span class="p">,</span> <span class="n">AgentRole</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">factory</span> <span class="o">=</span> <span class="n">AgentFactory</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s2">&quot;langgraph&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">factory</span> <span class="o">=</span> <span class="n">AgentFactory</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s2">"langgraph"</span><span class="p">)</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
 <a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">security</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;security&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">"security"</span><span class="p">,</span>
 <a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="n">role</span><span class="o">=</span><span class="n">AgentRole</span><span class="o">.</span><span class="n">SECURITY</span><span class="p">,</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">&quot;capable&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">system_prompt</span><span class="o">=</span><span class="s2">&quot;Analyze code for security vulnerabilities.&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">"capable"</span><span class="p">,</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">system_prompt</span><span class="o">=</span><span class="s2">"Analyze code for security vulnerabilities."</span><span class="p">,</span>
 <a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="p">)</span>
 <a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
 <a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="n">quality</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;quality&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">"quality"</span><span class="p">,</span>
 <a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>    <span class="n">role</span><span class="o">=</span><span class="n">AgentRole</span><span class="o">.</span><span class="n">REVIEWER</span><span class="p">,</span>
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">&quot;capable&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>    <span class="n">system_prompt</span><span class="o">=</span><span class="s2">&quot;Review code quality and suggest improvements.&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">"capable"</span><span class="p">,</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>    <span class="n">system_prompt</span><span class="o">=</span><span class="s2">"Review code quality and suggest improvements."</span><span class="p">,</span>
 <a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="p">)</span>
 <a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>
 <a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="n">coordinator</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
-<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;coordinator&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">"coordinator"</span><span class="p">,</span>
 <a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>    <span class="n">role</span><span class="o">=</span><span class="n">AgentRole</span><span class="o">.</span><span class="n">COORDINATOR</span><span class="p">,</span>
-<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">&quot;premium&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>    <span class="n">system_prompt</span><span class="o">=</span><span class="s2">&quot;Synthesize reviews into actionable feedback.&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">"premium"</span><span class="p">,</span>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>    <span class="n">system_prompt</span><span class="o">=</span><span class="s2">"Synthesize reviews into actionable feedback."</span><span class="p">,</span>
 <a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="p">)</span>
 <a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>
 <a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_workflow</span><span class="p">(</span>
-<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;code_review&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">"code_review"</span><span class="p">,</span>
 <a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>    <span class="n">agents</span><span class="o">=</span><span class="p">[</span><span class="n">security</span><span class="p">,</span> <span class="n">quality</span><span class="p">,</span> <span class="n">coordinator</span><span class="p">],</span>
-<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;sequential&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>    <span class="n">mode</span><span class="o">=</span><span class="s2">"sequential"</span><span class="p">,</span>
 <a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="p">)</span>
 <a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a>
-<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;Review this code:</span><span class="se">\n</span><span class="s2">&lt;paste code here&gt;&quot;</span><span class="p">)</span>
-<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">])</span>
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">"Review this code:</span><span class="se">\n</span><span class="s2">&lt;paste code here&gt;"</span><span class="p">)</span>
+<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">"output"</span><span class="p">])</span>
 </code></pre></div>
 <p>The same code works with <code>framework="langchain"</code>, <code>"autogen"</code>,
 <code>"haystack"</code>, or <code>"native"</code> — the adapter handles the framework-specific

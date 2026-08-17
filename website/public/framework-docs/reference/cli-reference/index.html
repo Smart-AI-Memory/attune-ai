@@ -6214,7 +6214,7 @@
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>attune<span class="w"> </span>provider<span class="w"> </span><span class="nb">set</span><span class="w"> </span>&lt;name&gt;<span class="w">              </span><span class="c1"># Set provider (anthropic)</span>
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="c1"># Memory (Lessons Learned)</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>attune<span class="w"> </span>remember<span class="w"> </span><span class="s2">&quot;lesson text&quot;</span><span class="w">           </span><span class="c1"># Save a lesson</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>attune<span class="w"> </span>remember<span class="w"> </span><span class="s2">"lesson text"</span><span class="w">           </span><span class="c1"># Save a lesson</span>
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>attune<span class="w"> </span>forget<span class="w"> </span>&lt;number-or-keyword&gt;<span class="w">       </span><span class="c1"># Remove a lesson</span>
 <a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>attune<span class="w"> </span>lessons<span class="w">                          </span><span class="c1"># List all lessons</span>
 <a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>
@@ -6274,7 +6274,7 @@
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>security-audit<span class="w"> </span>--path<span class="w"> </span>./src
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="c1"># With JSON input</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>bug-predict<span class="w"> </span>--input<span class="w"> </span><span class="s1">&#39;{&quot;threshold&quot;: 0.8}&#39;</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>bug-predict<span class="w"> </span>--input<span class="w"> </span><span class="s1">'{"threshold": 0.8}'</span>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="c1"># Output as JSON (for CI/CD)</span>
 <a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>security-audit<span class="w"> </span>--path<span class="w"> </span>./src<span class="w"> </span>--json
@@ -6343,7 +6343,7 @@
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>security-audit<span class="w"> </span>--path<span class="w"> </span>./src
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="c1"># Bug prediction with custom threshold</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>bug-predict<span class="w"> </span>--input<span class="w"> </span><span class="s1">&#39;{&quot;path&quot;:&quot;./src&quot;,&quot;threshold&quot;:0.7}&#39;</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>bug-predict<span class="w"> </span>--input<span class="w"> </span><span class="s1">'{"path":"./src","threshold":0.7}'</span>
 <a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
 <a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="c1"># Test coverage targeting 80%</span>
 <a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>test-coverage<span class="w"> </span>--path<span class="w"> </span>./src<span class="w"> </span>--target<span class="w"> </span><span class="m">80</span>
@@ -6838,10 +6838,10 @@ across the multi-agent coordination bus.</p>
 <h3 id="attune-remember-text"><code>attune remember &lt;text&gt;</code><a class="headerlink" href="#attune-remember-text" title="Permanent link">&para;</a></h3>
 <p>Save a lesson learned for future workflow prompts.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Save a project-local lesson</span>
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>attune<span class="w"> </span>remember<span class="w"> </span><span class="s2">&quot;Always run ruff before committing&quot;</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>attune<span class="w"> </span>remember<span class="w"> </span><span class="s2">"Always run ruff before committing"</span>
 <a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>
 <a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="c1"># Save a global lesson (applies to all projects)</span>
-<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>attune<span class="w"> </span>remember<span class="w"> </span>--global<span class="w"> </span><span class="s2">&quot;Prefer heapq.nlargest over sorted()[:N]&quot;</span>
+<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>attune<span class="w"> </span>remember<span class="w"> </span>--global<span class="w"> </span><span class="s2">"Prefer heapq.nlargest over sorted()[:N]"</span>
 </code></pre></div>
 <p><strong>Arguments:</strong></p>
 <table>
@@ -6886,7 +6886,7 @@ into all workflow prompts. Token budget: 3,000 tokens max
 <a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>attune<span class="w"> </span>forget<span class="w"> </span><span class="m">3</span>
 <a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>
 <a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="c1"># Remove by keyword match (first match removed)</span>
-<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>attune<span class="w"> </span>forget<span class="w"> </span><span class="s2">&quot;heapq&quot;</span>
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>attune<span class="w"> </span>forget<span class="w"> </span><span class="s2">"heapq"</span>
 </code></pre></div>
 <p><strong>Arguments:</strong></p>
 <table>
@@ -6942,8 +6942,8 @@ into all workflow prompts. Token budget: 3,000 tokens max
 <h3 id="attune-memory-capture-topic-content"><code>attune memory capture &lt;topic&gt; &lt;content&gt;</code><a class="headerlink" href="#attune-memory-capture-topic-content" title="Permanent link">&para;</a></h3>
 <p>Save a topic to personal cross-session memory. The content is polished by
 Claude before saving so it's clear and retrievable in future sessions.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>attune<span class="w"> </span>memory<span class="w"> </span>capture<span class="w"> </span><span class="s2">&quot;auth-pattern&quot;</span><span class="w"> </span><span class="s2">&quot;Always use _validate_file_path before writes&quot;</span>
-<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>attune<span class="w"> </span>memory<span class="w"> </span>capture<span class="w"> </span><span class="s2">&quot;deploy-note&quot;</span><span class="w"> </span><span class="s2">&quot;Blue/green deploy requires 10-min warm-up&quot;</span><span class="w"> </span>--project
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a>attune<span class="w"> </span>memory<span class="w"> </span>capture<span class="w"> </span><span class="s2">"auth-pattern"</span><span class="w"> </span><span class="s2">"Always use _validate_file_path before writes"</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a>attune<span class="w"> </span>memory<span class="w"> </span>capture<span class="w"> </span><span class="s2">"deploy-note"</span><span class="w"> </span><span class="s2">"Blue/green deploy requires 10-min warm-up"</span><span class="w"> </span>--project
 </code></pre></div>
 <p><strong>Arguments:</strong></p>
 <table>
@@ -7071,7 +7071,7 @@ install, with the pip command for each.</p>
 <a id="__codelineno-36-6" name="__codelineno-36-6" href="#__codelineno-36-6"></a>  ✅ developer     attune-ai[developer] — Development tools
 <a id="__codelineno-36-7" name="__codelineno-36-7" href="#__codelineno-36-7"></a>  ❌ author        attune-ai[author] — Template authoring (attune-author)
 <a id="__codelineno-36-8" name="__codelineno-36-8" href="#__codelineno-36-8"></a>
-<a id="__codelineno-36-9" name="__codelineno-36-9" href="#__codelineno-36-9"></a>Install missing extras: pip install &#39;attune-ai[&lt;name&gt;]&#39;
+<a id="__codelineno-36-9" name="__codelineno-36-9" href="#__codelineno-36-9"></a>Install missing extras: pip install 'attune-ai[&lt;name&gt;]'
 </code></pre></div></p>
 <hr />
 <h3 id="attune-setup"><code>attune setup</code><a class="headerlink" href="#attune-setup" title="Permanent link">&para;</a></h3>
@@ -7181,7 +7181,7 @@ config.</p>
 <a id="__codelineno-41-21" name="__codelineno-41-21" href="#__codelineno-41-21"></a><span class="w">      </span><span class="nt">fail_open</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <a id="__codelineno-41-22" name="__codelineno-41-22" href="#__codelineno-41-22"></a><span class="w">    </span><span class="nt">security-audit</span><span class="p">:</span>
 <a id="__codelineno-41-23" name="__codelineno-41-23" href="#__codelineno-41-23"></a><span class="w">      </span><span class="nt">strategy</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">custom-command</span>
-<a id="__codelineno-41-24" name="__codelineno-41-24" href="#__codelineno-41-24"></a><span class="w">      </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;bandit</span><span class="nv"> </span><span class="s">-r</span><span class="nv"> </span><span class="s">src/</span><span class="nv"> </span><span class="s">--severity-level</span><span class="nv"> </span><span class="s">medium&quot;</span>
+<a id="__codelineno-41-24" name="__codelineno-41-24" href="#__codelineno-41-24"></a><span class="w">      </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="s">"bandit</span><span class="nv"> </span><span class="s">-r</span><span class="nv"> </span><span class="s">src/</span><span class="nv"> </span><span class="s">--severity-level</span><span class="nv"> </span><span class="s">medium"</span>
 </code></pre></div>
 <h3 id="built-in-strategies">Built-in Strategies<a class="headerlink" href="#built-in-strategies" title="Permanent link">&para;</a></h3>
 <table>
@@ -7233,12 +7233,12 @@ If no default is mapped, verification is skipped.</p>
 <p>After verification runs, results are attached to
 <code>workflow_result.metadata["verification"]</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a><span class="p">{</span>
-<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a><span class="w">  </span><span class="nt">&quot;passed&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
-<a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a><span class="w">  </span><span class="nt">&quot;strategy&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;run-tests&quot;</span><span class="p">,</span>
-<a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a><span class="w">  </span><span class="nt">&quot;command&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;pytest tests/ -x --tb=short -q&quot;</span><span class="p">,</span>
-<a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a><span class="w">  </span><span class="nt">&quot;attempts&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
-<a id="__codelineno-42-6" name="__codelineno-42-6" href="#__codelineno-42-6"></a><span class="w">  </span><span class="nt">&quot;duration_ms&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">4230</span><span class="p">,</span>
-<a id="__codelineno-42-7" name="__codelineno-42-7" href="#__codelineno-42-7"></a><span class="w">  </span><span class="nt">&quot;exit_code&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span>
+<a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a><span class="w">  </span><span class="nt">"passed"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a><span class="w">  </span><span class="nt">"strategy"</span><span class="p">:</span><span class="w"> </span><span class="s2">"run-tests"</span><span class="p">,</span>
+<a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a><span class="w">  </span><span class="nt">"command"</span><span class="p">:</span><span class="w"> </span><span class="s2">"pytest tests/ -x --tb=short -q"</span><span class="p">,</span>
+<a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a><span class="w">  </span><span class="nt">"attempts"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<a id="__codelineno-42-6" name="__codelineno-42-6" href="#__codelineno-42-6"></a><span class="w">  </span><span class="nt">"duration_ms"</span><span class="p">:</span><span class="w"> </span><span class="mi">4230</span><span class="p">,</span>
+<a id="__codelineno-42-7" name="__codelineno-42-7" href="#__codelineno-42-7"></a><span class="w">  </span><span class="nt">"exit_code"</span><span class="p">:</span><span class="w"> </span><span class="mi">0</span>
 <a id="__codelineno-42-8" name="__codelineno-42-8" href="#__codelineno-42-8"></a><span class="p">}</span>
 </code></pre></div>
 <p>If verification fails and <code>fail_open</code> is <code>false</code> (the default),
@@ -7424,9 +7424,9 @@ command files:</p>
 <a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a>
 <a id="__codelineno-44-3" name="__codelineno-44-3" href="#__codelineno-44-3"></a><span class="n">registry</span> <span class="o">=</span> <span class="n">CommandRegistry</span><span class="o">.</span><span class="n">get_instance</span><span class="p">()</span>
 <a id="__codelineno-44-4" name="__codelineno-44-4" href="#__codelineno-44-4"></a><span class="n">registry</span><span class="o">.</span><span class="n">load_default_commands</span><span class="p">()</span>  <span class="c1"># commands bundled in the package</span>
-<a id="__codelineno-44-5" name="__codelineno-44-5" href="#__codelineno-44-5"></a><span class="n">registry</span><span class="o">.</span><span class="n">load_from_directory</span><span class="p">(</span><span class="s2">&quot;.claude/commands/&quot;</span><span class="p">)</span>  <span class="c1"># project-local</span>
+<a id="__codelineno-44-5" name="__codelineno-44-5" href="#__codelineno-44-5"></a><span class="n">registry</span><span class="o">.</span><span class="n">load_from_directory</span><span class="p">(</span><span class="s2">".claude/commands/"</span><span class="p">)</span>  <span class="c1"># project-local</span>
 <a id="__codelineno-44-6" name="__codelineno-44-6" href="#__codelineno-44-6"></a>
-<a id="__codelineno-44-7" name="__codelineno-44-7" href="#__codelineno-44-7"></a><span class="n">cmd</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;spec&quot;</span><span class="p">)</span>  <span class="c1"># by name or alias</span>
+<a id="__codelineno-44-7" name="__codelineno-44-7" href="#__codelineno-44-7"></a><span class="n">cmd</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"spec"</span><span class="p">)</span>  <span class="c1"># by name or alias</span>
 <a id="__codelineno-44-8" name="__codelineno-44-8" href="#__codelineno-44-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">registry</span><span class="o">.</span><span class="n">format_help</span><span class="p">())</span>  <span class="c1"># quick listing</span>
 </code></pre></div>
 <p><code>CommandLoader.validate_directory()</code> reports malformed command

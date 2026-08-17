@@ -4859,7 +4859,7 @@
 <hr />
 <h2 id="step-3-execute-the-workflow-with-a-question">Step 3 — Execute the workflow with a question<a class="headerlink" href="#step-3-execute-the-workflow-with-a-question" title="Permanent link">&para;</a></h2>
 <p><code>execute()</code> is the single entry point that triggers retrieval, prompt assembly, and model inference. Pass your question as a keyword argument:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="s2">&quot;How do I define a new task template?&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="s2">"How do I define a new task template?"</span><span class="p">)</span>
 </code></pre></div>
 <p>The workflow retrieves relevant attune-help passages, wraps them in <code>&lt;passage&gt;...&lt;/passage&gt;</code> tags, and sends them to the model alongside your query. The model is instructed to cite the source file of every pattern it references.</p>
 <p><strong>Verify:</strong> <code>print(type(result))</code> should print <code>&lt;class 'workflows.rag_code_gen.WorkflowResult'&gt;</code>. If you see an exception instead, check your API credentials and network access.</p>

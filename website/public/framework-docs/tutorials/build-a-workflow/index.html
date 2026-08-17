@@ -5062,37 +5062,37 @@ things: <code>stages</code>, <code>tier_map</code>, and <code>run_stage()</code>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">DocumentGenerationWorkflow</span><span class="p">(</span><span class="n">BaseWorkflow</span><span class="p">):</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;doc-gen&quot;</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">description</span> <span class="o">=</span> <span class="s2">&quot;Cost-optimized documentation generation&quot;</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">stages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;outline&quot;</span><span class="p">,</span> <span class="s2">&quot;write&quot;</span><span class="p">,</span> <span class="s2">&quot;polish&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">name</span> <span class="o">=</span> <span class="s2">"doc-gen"</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">description</span> <span class="o">=</span> <span class="s2">"Cost-optimized documentation generation"</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">stages</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"outline"</span><span class="p">,</span> <span class="s2">"write"</span><span class="p">,</span> <span class="s2">"polish"</span><span class="p">]</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">tier_map</span> <span class="o">=</span> <span class="p">{</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        <span class="s2">&quot;outline&quot;</span><span class="p">:</span> <span class="n">ModelTier</span><span class="o">.</span><span class="n">CHEAP</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        <span class="s2">&quot;write&quot;</span><span class="p">:</span> <span class="n">ModelTier</span><span class="o">.</span><span class="n">CAPABLE</span><span class="p">,</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>        <span class="s2">&quot;polish&quot;</span><span class="p">:</span> <span class="n">ModelTier</span><span class="o">.</span><span class="n">PREMIUM</span><span class="p">,</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>        <span class="s2">"outline"</span><span class="p">:</span> <span class="n">ModelTier</span><span class="o">.</span><span class="n">CHEAP</span><span class="p">,</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>        <span class="s2">"write"</span><span class="p">:</span> <span class="n">ModelTier</span><span class="o">.</span><span class="n">CAPABLE</span><span class="p">,</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>        <span class="s2">"polish"</span><span class="p">:</span> <span class="n">ModelTier</span><span class="o">.</span><span class="n">PREMIUM</span><span class="p">,</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="p">}</span>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">run_stage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage_name</span><span class="p">,</span> <span class="n">tier</span><span class="p">,</span> <span class="n">input_data</span><span class="p">):</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>        <span class="k">if</span> <span class="n">stage_name</span> <span class="o">==</span> <span class="s2">&quot;outline&quot;</span><span class="p">:</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>        <span class="k">if</span> <span class="n">stage_name</span> <span class="o">==</span> <span class="s2">"outline"</span><span class="p">:</span>
 <a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>            <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_outline</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">tier</span><span class="p">)</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>        <span class="k">if</span> <span class="n">stage_name</span> <span class="o">==</span> <span class="s2">&quot;write&quot;</span><span class="p">:</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>        <span class="k">if</span> <span class="n">stage_name</span> <span class="o">==</span> <span class="s2">"write"</span><span class="p">:</span>
 <a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>            <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">tier</span><span class="p">)</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>        <span class="k">if</span> <span class="n">stage_name</span> <span class="o">==</span> <span class="s2">&quot;polish&quot;</span><span class="p">:</span>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>        <span class="k">if</span> <span class="n">stage_name</span> <span class="o">==</span> <span class="s2">"polish"</span><span class="p">:</span>
 <a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>            <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_polish</span><span class="p">(</span><span class="n">input_data</span><span class="p">,</span> <span class="n">tier</span><span class="p">)</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown stage: </span><span class="si">{</span><span class="n">stage_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Unknown stage: </span><span class="si">{</span><span class="n">stage_name</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>
 <a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_outline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">tier</span><span class="p">):</span>
-<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a doc outline with Haiku (fast, cheap).&quot;&quot;&quot;</span>
-<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>        <span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Create a documentation outline for: </span><span class="si">{</span><span class="n">input_data</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="w">        </span><span class="sd">"""Generate a doc outline with Haiku (fast, cheap)."""</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>        <span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Create a documentation outline for: </span><span class="si">{</span><span class="n">input_data</span><span class="p">[</span><span class="s1">'path'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
 <a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">call_llm</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="n">tier</span><span class="p">)</span>
 <a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>
 <a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">tier</span><span class="p">):</span>
-<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Expand the outline into full sections with Sonnet.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>        <span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Write documentation from this outline:</span><span class="se">\n</span><span class="si">{</span><span class="n">input_data</span><span class="p">[</span><span class="s1">&#39;outline&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a><span class="w">        </span><span class="sd">"""Expand the outline into full sections with Sonnet."""</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>        <span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Write documentation from this outline:</span><span class="se">\n</span><span class="si">{</span><span class="n">input_data</span><span class="p">[</span><span class="s1">'outline'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
 <a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">call_llm</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="n">tier</span><span class="p">)</span>
 <a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>
 <a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_polish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">tier</span><span class="p">):</span>
-<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Final quality pass with Opus.&quot;&quot;&quot;</span>
-<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>        <span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Polish this documentation for clarity and completeness:</span><span class="se">\n</span><span class="si">{</span><span class="n">input_data</span><span class="p">[</span><span class="s1">&#39;draft&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a><span class="w">        </span><span class="sd">"""Final quality pass with Opus."""</span>
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>        <span class="n">prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"Polish this documentation for clarity and completeness:</span><span class="se">\n</span><span class="si">{</span><span class="n">input_data</span><span class="p">[</span><span class="s1">'draft'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
 <a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">call_llm</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">tier</span><span class="o">=</span><span class="n">tier</span><span class="p">)</span>
 </code></pre></div>
 <p>Three concepts to understand:</p>
@@ -5160,7 +5160,7 @@ directories if they don't exist yet —
 <code>mkdir -p plugin/skills/docs</code>):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nn">---</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">documentation</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Generate,</span><span class="nv"> </span><span class="s">explain,</span><span class="nv"> </span><span class="s">or</span><span class="nv"> </span><span class="s">audit</span><span class="nv"> </span><span class="s">documentation&quot;</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"Generate,</span><span class="nv"> </span><span class="s">explain,</span><span class="nv"> </span><span class="s">or</span><span class="nv"> </span><span class="s">audit</span><span class="nv"> </span><span class="s">documentation"</span>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nt">triggers</span><span class="p">:</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">docs</span>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">documentation</span>
@@ -5175,18 +5175,18 @@ directories if they don't exist yet —
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
 <a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>Before running, ask:
 <a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="k">1.</span> <span class="gs">**Type**</span>: &quot;What kind of docs? API reference, README,
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>   changelog, or a general guide?&quot;
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="k">2.</span> <span class="gs">**Scope**</span>: &quot;Which path should I document?&quot;
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="k">3.</span> <span class="gs">**Audience**</span>: &quot;Who&#39;s reading -- developers, end users,
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>   or both?&quot;
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="k">1.</span> <span class="gs">**Type**</span>: "What kind of docs? API reference, README,
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>   changelog, or a general guide?"
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="k">2.</span> <span class="gs">**Scope**</span>: "Which path should I document?"
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="k">3.</span> <span class="gs">**Audience**</span>: "Who's reading -- developers, end users,
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>   or both?"
 <a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>
 <a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="gu">## Execution</span>
 <a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>
 <a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>Call the <span class="sb">`document_generation`</span> MCP tool with the scoped
 <a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>parameters:
 <a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>document_generation(path=&quot;&lt;path&gt;&quot;, doc_type=&quot;&lt;type&gt;&quot;)
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>document_generation(path="&lt;path&gt;", doc_type="&lt;type&gt;")
 <a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>
 <a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a><span class="gu">## Output Format</span>
 <a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>
@@ -5198,9 +5198,9 @@ directories if they don't exist yet —
 <a id="__codelineno-2-25" name="__codelineno-2-25" href="#__codelineno-2-25"></a>
 <a id="__codelineno-2-26" name="__codelineno-2-26" href="#__codelineno-2-26"></a>After presenting results, offer:
 <a id="__codelineno-2-27" name="__codelineno-2-27" href="#__codelineno-2-27"></a>
-<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a><span class="k">-</span><span class="w"> </span>&quot;Want me to export this to a file?&quot;
-<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a><span class="k">-</span><span class="w"> </span>&quot;Should I refine a specific section?&quot;
-<a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a><span class="k">-</span><span class="w"> </span>&quot;Want a changelog based on recent commits?&quot;
+<a id="__codelineno-2-28" name="__codelineno-2-28" href="#__codelineno-2-28"></a><span class="k">-</span><span class="w"> </span>"Want me to export this to a file?"
+<a id="__codelineno-2-29" name="__codelineno-2-29" href="#__codelineno-2-29"></a><span class="k">-</span><span class="w"> </span>"Should I refine a specific section?"
+<a id="__codelineno-2-30" name="__codelineno-2-30" href="#__codelineno-2-30"></a><span class="k">-</span><span class="w"> </span>"Want a changelog based on recent commits?"
 </code></pre></div>
 <p>The <code>triggers</code> array is what connects natural language
 to your skill. When a user types "generate docs for
@@ -5217,12 +5217,12 @@ exactly what they want. Create
 (<code>mkdir -p plugin/commands</code> if needed):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nn">---</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">attune-docs</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Generate</span><span class="nv"> </span><span class="s">documentation</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">path&quot;</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="nt">argument-hint</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;&lt;path&gt;&quot;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">"Generate</span><span class="nv"> </span><span class="s">documentation</span><span class="nv"> </span><span class="s">for</span><span class="nv"> </span><span class="s">a</span><span class="nv"> </span><span class="s">path"</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="nt">argument-hint</span><span class="p">:</span><span class="w"> </span><span class="s">"&lt;path&gt;"</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="nt">category</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">workflows</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="nt">aliases</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">adoc</span><span class="p p-Indicator">]</span>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="nt">tags</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">docs</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">documentation</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">generate</span><span class="p p-Indicator">]</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;3.0.0&quot;</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="s">"3.0.0"</span>
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="nn">---</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="gh"># attune-docs</span>
@@ -5233,7 +5233,7 @@ exactly what they want. Create
 <a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="gu">## Execution</span>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="k">1.</span> If a path argument is provided, use it. Otherwise
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>   ask: &quot;Which path should I document?&quot;
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>   ask: "Which path should I document?"
 <a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="k">2.</span> Call the <span class="sb">`document_generation`</span> MCP tool with the path.
 <a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="k">3.</span> Present results using the format from the docs skill.
 <a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>
@@ -5255,8 +5255,8 @@ exactly what they want. Create
 <h2 id="step-4-register-the-entry-point">Step 4: Register the Entry Point<a class="headerlink" href="#step-4-register-the-entry-point" title="Permanent link">&para;</a></h2>
 <p>Add your workflow to <code>pyproject.toml</code> so the CLI can
 discover it:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">[project.entry-points.</span><span class="s2">&quot;attune.workflows&quot;</span><span class="k">]</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">doc-gen</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;attune.workflows.document_gen:DocumentGenerationWorkflow&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">[project.entry-points.</span><span class="s2">"attune.workflows"</span><span class="k">]</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">doc-gen</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"attune.workflows.document_gen:DocumentGenerationWorkflow"</span>
 </code></pre></div>
 <p>Verify it's registered:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>attune<span class="w"> </span>workflow<span class="w"> </span>list

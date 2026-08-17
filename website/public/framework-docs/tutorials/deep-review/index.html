@@ -4867,7 +4867,7 @@
 <hr />
 <h2 id="step-3-run-the-review-against-a-path">Step 3 — Run the review against a path<a class="headerlink" href="#step-3-run-the-review-against-a-path" title="Permanent link">&para;</a></h2>
 <p>Call <code>execute</code> with the <code>path</code> keyword argument pointing at the directory you want to review. This is where the orchestration happens: the three subagents run their focused passes, then their findings are synthesized into one report.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;./my_project&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">"./my_project"</span><span class="p">)</span>
 </code></pre></div>
 <p>The <code>path</code> you supply can be a directory or a single file. Use a real path on your machine so the output is meaningful.</p>
 <p><strong>Verify:</strong> <code>result</code> should be a <code>WorkflowResult</code>. Print it — you should see sections titled <strong>Summary</strong>, <strong>Security</strong>, <strong>Quality</strong>, <strong>Test Gaps</strong>, and <strong>Suggestions</strong>.</p>
@@ -4884,7 +4884,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">workflows.deep_review</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeepReviewAgentSDKWorkflow</span>
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
 <a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">workflow</span> <span class="o">=</span> <span class="n">DeepReviewAgentSDKWorkflow</span><span class="p">()</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">result</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;./my_project&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">result</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">"./my_project"</span><span class="p">)</span>
 <a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
 </code></pre></div>
 <p>Run it. You should have a full multi-pass review report in your terminal within a few moments.</p>

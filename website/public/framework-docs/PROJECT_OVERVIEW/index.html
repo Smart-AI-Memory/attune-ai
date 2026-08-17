@@ -5142,15 +5142,15 @@ beat one clever abstraction."</p>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>pip<span class="w"> </span>install<span class="w"> </span>attune-ai
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Claude API mode + LangChain/LangGraph agent teams</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[developer]&#39;</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'attune-ai[developer]'</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Ops dashboard (extras combine, e.g. &#39;attune-ai[developer,ops]&#39;)</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Ops dashboard (extras combine, e.g. 'attune-ai[developer,ops]')</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># Redis memory needs no extra — the client ships as a core dependency.</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[ops]&#39;</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'attune-ai[ops]'</span>
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># Development</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Smart-AI-Memory/attune-ai.git
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="nb">cd</span><span class="w"> </span>attune-ai<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s1">&#39;.[dev]&#39;</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="nb">cd</span><span class="w"> </span>attune-ai<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s1">'.[dev]'</span>
 </code></pre></div>
 <p>Zero-config, ready to use. Subscription-first routing with
 automatic API fallback when <code>ANTHROPIC_API_KEY</code> is set. Run
@@ -6018,22 +6018,22 @@ calls/min per tool.</p>
 <hr />
 <h2 id="entry-points">Entry Points<a class="headerlink" href="#entry-points" title="Permanent link">&para;</a></h2>
 <p>Registered in <code>pyproject.toml</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">[project.entry-points.&quot;attune.workflows&quot;]</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="na">code-review</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune.workflows.code_review:CodeReviewWorkflow&quot;</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="na">security-audit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune.workflows.security_audit:SecurityAuditWorkflow&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">[project.entry-points."attune.workflows"]</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="na">code-review</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"attune.workflows.code_review:CodeReviewWorkflow"</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="na">security-audit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"attune.workflows.security_audit:SecurityAuditWorkflow"</span>
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="c1"># ... 13 more</span>
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="k">[project.entry-points.&quot;attune.wizards&quot;]</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="na">debug</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune.wizards.builtin.debug_wizard:DebugWizard&quot;</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="k">[project.entry-points."attune.wizards"]</span>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="na">debug</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"attune.wizards.builtin.debug_wizard:DebugWizard"</span>
 <a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a><span class="c1"># ... 4 more</span>
 <a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="k">[project.entry-points.&quot;attune.plugins&quot;]</span>
-<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="na">software</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune_software.plugin:SoftwarePlugin&quot;</span>
-<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="na">redis</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune_redis.plugin:RedisPlugin&quot;</span>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="k">[project.entry-points."attune.plugins"]</span>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="na">software</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"attune_software.plugin:SoftwarePlugin"</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a><span class="na">redis</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"attune_redis.plugin:RedisPlugin"</span>
 <a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>
-<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="k">[project.entry-points.&quot;attune.memory_backends&quot;]</span>
-<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="na">file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune.memory.file_session:FileSessionMemory&quot;</span>
-<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="na">redis</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune_redis.memory:AMSMemoryBackend&quot;</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a><span class="k">[project.entry-points."attune.memory_backends"]</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a><span class="na">file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"attune.memory.file_session:FileSessionMemory"</span>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a><span class="na">redis</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"attune_redis.memory:AMSMemoryBackend"</span>
 </code></pre></div>
 <hr />
 <h2 id="related-documentation">Related Documentation<a class="headerlink" href="#related-documentation" title="Permanent link">&para;</a></h2>

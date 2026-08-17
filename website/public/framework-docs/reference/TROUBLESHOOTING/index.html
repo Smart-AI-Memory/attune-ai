@@ -5894,7 +5894,7 @@
 </code></pre></div></p>
 <h3 id="issue-dependency-conflicts">Issue: Dependency conflicts<a class="headerlink" href="#issue-dependency-conflicts" title="Permanent link">&para;</a></h3>
 <p><strong>Error Message:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>ERROR: pip&#39;s dependency resolver does not currently take into account all the packages
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>ERROR: pip's dependency resolver does not currently take into account all the packages
 <a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>that are installed. This behaviour is the source of the following dependency conflicts.
 </code></pre></div></p>
 <p><strong>Solutions:</strong></p>
@@ -5921,7 +5921,7 @@
 </code></pre></div></p>
 <h3 id="issue-permission-denied-during-installation">Issue: Permission denied during installation<a class="headerlink" href="#issue-permission-denied-during-installation" title="Permanent link">&para;</a></h3>
 <p><strong>Error Message:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>PermissionError: [Errno 13] Permission denied: &#39;/usr/local/lib/python3.11/site-packages/&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>PermissionError: [Errno 13] Permission denied: '/usr/local/lib/python3.11/site-packages/'
 </code></pre></div></p>
 <p><strong>Solutions:</strong></p>
 <p><strong>Don't use sudo! Use virtual environments instead:</strong>
@@ -5941,7 +5941,7 @@
 <h2 id="import-and-module-errors">Import and Module Errors<a class="headerlink" href="#import-and-module-errors" title="Permanent link">&para;</a></h2>
 <h3 id="issue-modulenotfounderror-no-module-named-attune_llm">Issue: <code>ModuleNotFoundError: No module named 'attune_llm'</code><a class="headerlink" href="#issue-modulenotfounderror-no-module-named-attune_llm" title="Permanent link">&para;</a></h3>
 <p><strong>Error Message:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="ne">ModuleNotFoundError</span><span class="p">:</span> <span class="n">No</span> <span class="n">module</span> <span class="n">named</span> <span class="s1">&#39;attune_llm&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="ne">ModuleNotFoundError</span><span class="p">:</span> <span class="n">No</span> <span class="n">module</span> <span class="n">named</span> <span class="s1">'attune_llm'</span>
 </code></pre></div></p>
 <p><strong>Solutions:</strong></p>
 <p><strong>1. Verify installation:</strong>
@@ -5966,13 +5966,13 @@
 <p><strong>Solutions:</strong></p>
 <p><strong>1. Ensure you're in the project directory:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="nb">cd</span><span class="w"> </span>/path/to/Empathy-framework
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">PYTHONPATH</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">PYTHONPATH</span><span class="si">}</span><span class="s2">:</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">&quot;</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">PYTHONPATH</span><span class="o">=</span><span class="s2">"</span><span class="si">${</span><span class="nv">PYTHONPATH</span><span class="si">}</span><span class="s2">:</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="s2">"</span>
 </code></pre></div></p>
 <p><strong>2. Install in editable mode:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
 </code></pre></div></p>
 <p><strong>3. Verify the module exists:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;from coach_wizards import SecurityWizard; print(&#39;Success!&#39;)&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"from coach_wizards import SecurityWizard; print('Success!')"</span>
 </code></pre></div></p>
 <h3 id="issue-importerror-cannot-import-name-x-from-y">Issue: <code>ImportError: cannot import name 'X' from 'Y'</code><a class="headerlink" href="#issue-importerror-cannot-import-name-x-from-y" title="Permanent link">&para;</a></h3>
 <p><strong>Cause:</strong> API changes between versions</p>
@@ -6008,11 +6008,11 @@
 <a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ANTHROPIC_API_KEY</span><span class="o">=</span>sk-ant-your-key-here
 <a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
 <a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="c1"># Make permanent (macOS/Linux):</span>
-<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;export ANTHROPIC_API_KEY=sk-ant-your-key-here&#39;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/.bashrc
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">'export ANTHROPIC_API_KEY=sk-ant-your-key-here'</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/.bashrc
 <a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a><span class="nb">source</span><span class="w"> </span>~/.bashrc
 <a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>
 <a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a><span class="c1"># Or use ~/.zshrc on macOS with zsh:</span>
-<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">&#39;export ANTHROPIC_API_KEY=sk-ant-your-key-here&#39;</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/.zshrc
+<a id="__codelineno-24-9" name="__codelineno-24-9" href="#__codelineno-24-9"></a><span class="nb">echo</span><span class="w"> </span><span class="s1">'export ANTHROPIC_API_KEY=sk-ant-your-key-here'</span><span class="w"> </span>&gt;&gt;<span class="w"> </span>~/.zshrc
 <a id="__codelineno-24-10" name="__codelineno-24-10" href="#__codelineno-24-10"></a><span class="nb">source</span><span class="w"> </span>~/.zshrc
 </code></pre></div></p>
 <p><strong>3. Use .env file:</strong>
@@ -6028,21 +6028,21 @@
 </code></pre></div></p>
 <p><strong>4. Pass key directly in code (not recommended for production):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="n">llm</span> <span class="o">=</span> <span class="n">EmpathyLLM</span><span class="p">(</span>
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>    <span class="n">provider</span><span class="o">=</span><span class="s2">&quot;anthropic&quot;</span><span class="p">,</span>
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>    <span class="n">api_key</span><span class="o">=</span><span class="s2">&quot;sk-ant-your-key-here&quot;</span>  <span class="c1"># pragma: allowlist secret</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>    <span class="n">provider</span><span class="o">=</span><span class="s2">"anthropic"</span><span class="p">,</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>    <span class="n">api_key</span><span class="o">=</span><span class="s2">"sk-ant-your-key-here"</span>  <span class="c1"># pragma: allowlist secret</span>
 <a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="p">)</span>
 </code></pre></div></p>
 <p><strong>5. Verify key is valid:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="c1"># Test with curl (Anthropic):</span>
 <a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>curl<span class="w"> </span>https://api.anthropic.com/v1/messages<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;x-api-key: </span><span class="nv">$ANTHROPIC_API_KEY</span><span class="s2">&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;anthropic-version: 2023-06-01&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;content-type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
-<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a><span class="s1">    &quot;model&quot;: &quot;claude-3-5-sonnet-20241022&quot;,</span>
-<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a><span class="s1">    &quot;max_tokens&quot;: 10,</span>
-<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a><span class="s1">    &quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;Hi&quot;}]</span>
-<a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a><span class="s1">  }&#39;</span>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"x-api-key: </span><span class="nv">$ANTHROPIC_API_KEY</span><span class="s2">"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"anthropic-version: 2023-06-01"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a><span class="w">  </span>-H<span class="w"> </span><span class="s2">"content-type: application/json"</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a><span class="w">  </span>-d<span class="w"> </span><span class="s1">'{</span>
+<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a><span class="s1">    "model": "claude-3-5-sonnet-20241022",</span>
+<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a><span class="s1">    "max_tokens": 10,</span>
+<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a><span class="s1">    "messages": [{"role": "user", "content": "Hi"}]</span>
+<a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a><span class="s1">  }'</span>
 <a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a>
 <a id="__codelineno-27-12" name="__codelineno-27-12" href="#__codelineno-27-12"></a><span class="c1"># Should return a response, not an error</span>
 </code></pre></div></p>
@@ -6077,25 +6077,25 @@
 <p><strong>Cause:</strong> Attempting to use higher empathy level without sufficient trust</p>
 <p><strong>Solutions:</strong></p>
 <p><strong>1. Build trust through successful interactions:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="n">llm</span> <span class="o">=</span> <span class="n">EmpathyLLM</span><span class="p">(</span><span class="n">provider</span><span class="o">=</span><span class="s2">&quot;anthropic&quot;</span><span class="p">,</span> <span class="n">target_level</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="n">llm</span> <span class="o">=</span> <span class="n">EmpathyLLM</span><span class="p">(</span><span class="n">provider</span><span class="o">=</span><span class="s2">"anthropic"</span><span class="p">,</span> <span class="n">target_level</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 <a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a>
 <a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="c1"># Interact multiple times</span>
 <a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">):</span>
 <a id="__codelineno-33-5" name="__codelineno-33-5" href="#__codelineno-33-5"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span>
-<a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a>        <span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;alice&quot;</span><span class="p">,</span>
-<a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a>        <span class="n">user_input</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Question </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span>
+<a id="__codelineno-33-6" name="__codelineno-33-6" href="#__codelineno-33-6"></a>        <span class="n">user_id</span><span class="o">=</span><span class="s2">"alice"</span><span class="p">,</span>
+<a id="__codelineno-33-7" name="__codelineno-33-7" href="#__codelineno-33-7"></a>        <span class="n">user_input</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Question </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span>
 <a id="__codelineno-33-8" name="__codelineno-33-8" href="#__codelineno-33-8"></a>    <span class="p">)</span>
 <a id="__codelineno-33-9" name="__codelineno-33-9" href="#__codelineno-33-9"></a>    <span class="c1"># Provide positive feedback</span>
-<a id="__codelineno-33-10" name="__codelineno-33-10" href="#__codelineno-33-10"></a>    <span class="n">llm</span><span class="o">.</span><span class="n">update_trust</span><span class="p">(</span><span class="s2">&quot;alice&quot;</span><span class="p">,</span> <span class="n">outcome</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">)</span>
+<a id="__codelineno-33-10" name="__codelineno-33-10" href="#__codelineno-33-10"></a>    <span class="n">llm</span><span class="o">.</span><span class="n">update_trust</span><span class="p">(</span><span class="s2">"alice"</span><span class="p">,</span> <span class="n">outcome</span><span class="o">=</span><span class="s2">"success"</span><span class="p">)</span>
 <a id="__codelineno-33-11" name="__codelineno-33-11" href="#__codelineno-33-11"></a>
 <a id="__codelineno-33-12" name="__codelineno-33-12" href="#__codelineno-33-12"></a><span class="c1"># Check trust level</span>
-<a id="__codelineno-33-13" name="__codelineno-33-13" href="#__codelineno-33-13"></a><span class="n">stats</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">get_statistics</span><span class="p">(</span><span class="s2">&quot;alice&quot;</span><span class="p">)</span>
-<a id="__codelineno-33-14" name="__codelineno-33-14" href="#__codelineno-33-14"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Trust: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">&#39;trust_level&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># Should be &gt; 0.8 for Level 4</span>
+<a id="__codelineno-33-13" name="__codelineno-33-13" href="#__codelineno-33-13"></a><span class="n">stats</span> <span class="o">=</span> <span class="n">llm</span><span class="o">.</span><span class="n">get_statistics</span><span class="p">(</span><span class="s2">"alice"</span><span class="p">)</span>
+<a id="__codelineno-33-14" name="__codelineno-33-14" href="#__codelineno-33-14"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Trust: </span><span class="si">{</span><span class="n">stats</span><span class="p">[</span><span class="s1">'trust_level'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>  <span class="c1"># Should be &gt; 0.8 for Level 4</span>
 </code></pre></div></p>
 <p><strong>2. Force level for testing/demo:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span>
-<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>    <span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">,</span>
-<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>    <span class="n">user_input</span><span class="o">=</span><span class="s2">&quot;Test input&quot;</span><span class="p">,</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a>    <span class="n">user_id</span><span class="o">=</span><span class="s2">"test"</span><span class="p">,</span>
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a>    <span class="n">user_input</span><span class="o">=</span><span class="s2">"Test input"</span><span class="p">,</span>
 <a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a>    <span class="n">force_level</span><span class="o">=</span><span class="mi">4</span>  <span class="c1"># Override trust requirement</span>
 <a id="__codelineno-34-5" name="__codelineno-34-5" href="#__codelineno-34-5"></a><span class="p">)</span>
 </code></pre></div></p>
@@ -6114,12 +6114,12 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 <a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a>
 <a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
-<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a>    <span class="n">llm</span> <span class="o">=</span> <span class="n">EmpathyLLM</span><span class="p">(</span><span class="n">provider</span><span class="o">=</span><span class="s2">&quot;anthropic&quot;</span><span class="p">,</span> <span class="n">target_level</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-<a id="__codelineno-37-5" name="__codelineno-37-5" href="#__codelineno-37-5"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;alice&quot;</span><span class="p">,</span> <span class="n">user_input</span><span class="o">=</span><span class="s2">&quot;Hello&quot;</span><span class="p">)</span>
+<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a>    <span class="n">llm</span> <span class="o">=</span> <span class="n">EmpathyLLM</span><span class="p">(</span><span class="n">provider</span><span class="o">=</span><span class="s2">"anthropic"</span><span class="p">,</span> <span class="n">target_level</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<a id="__codelineno-37-5" name="__codelineno-37-5" href="#__codelineno-37-5"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">"alice"</span><span class="p">,</span> <span class="n">user_input</span><span class="o">=</span><span class="s2">"Hello"</span><span class="p">)</span>
 <a id="__codelineno-37-6" name="__codelineno-37-6" href="#__codelineno-37-6"></a>    <span class="k">return</span> <span class="n">result</span>
 <a id="__codelineno-37-7" name="__codelineno-37-7" href="#__codelineno-37-7"></a>
 <a id="__codelineno-37-8" name="__codelineno-37-8" href="#__codelineno-37-8"></a><span class="c1"># Correct:</span>
-<a id="__codelineno-37-9" name="__codelineno-37-9" href="#__codelineno-37-9"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+<a id="__codelineno-37-9" name="__codelineno-37-9" href="#__codelineno-37-9"></a><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
 <a id="__codelineno-37-10" name="__codelineno-37-10" href="#__codelineno-37-10"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
 <a id="__codelineno-37-11" name="__codelineno-37-11" href="#__codelineno-37-11"></a>
 <a id="__codelineno-37-12" name="__codelineno-37-12" href="#__codelineno-37-12"></a><span class="c1"># Incorrect (in scripts):</span>
@@ -6134,8 +6134,8 @@
 <a id="__codelineno-38-5" name="__codelineno-38-5" href="#__codelineno-38-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmpathyLLM</span>
 <a id="__codelineno-38-6" name="__codelineno-38-6" href="#__codelineno-38-6"></a>
 <a id="__codelineno-38-7" name="__codelineno-38-7" href="#__codelineno-38-7"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
-<a id="__codelineno-38-8" name="__codelineno-38-8" href="#__codelineno-38-8"></a>    <span class="n">llm</span> <span class="o">=</span> <span class="n">EmpathyLLM</span><span class="p">(</span><span class="n">provider</span><span class="o">=</span><span class="s2">&quot;anthropic&quot;</span><span class="p">,</span> <span class="n">target_level</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-<a id="__codelineno-38-9" name="__codelineno-38-9" href="#__codelineno-38-9"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;alice&quot;</span><span class="p">,</span> <span class="n">user_input</span><span class="o">=</span><span class="s2">&quot;Hello&quot;</span><span class="p">)</span>
+<a id="__codelineno-38-8" name="__codelineno-38-8" href="#__codelineno-38-8"></a>    <span class="n">llm</span> <span class="o">=</span> <span class="n">EmpathyLLM</span><span class="p">(</span><span class="n">provider</span><span class="o">=</span><span class="s2">"anthropic"</span><span class="p">,</span> <span class="n">target_level</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<a id="__codelineno-38-9" name="__codelineno-38-9" href="#__codelineno-38-9"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">"alice"</span><span class="p">,</span> <span class="n">user_input</span><span class="o">=</span><span class="s2">"Hello"</span><span class="p">)</span>
 <a id="__codelineno-38-10" name="__codelineno-38-10" href="#__codelineno-38-10"></a>    <span class="k">return</span> <span class="n">result</span>
 <a id="__codelineno-38-11" name="__codelineno-38-11" href="#__codelineno-38-11"></a>
 <a id="__codelineno-38-12" name="__codelineno-38-12" href="#__codelineno-38-12"></a><span class="n">result</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
@@ -6144,12 +6144,12 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastAPI</span>
 <a id="__codelineno-39-2" name="__codelineno-39-2" href="#__codelineno-39-2"></a>
 <a id="__codelineno-39-3" name="__codelineno-39-3" href="#__codelineno-39-3"></a><span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">()</span>
-<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a><span class="n">llm</span> <span class="o">=</span> <span class="n">EmpathyLLM</span><span class="p">(</span><span class="n">provider</span><span class="o">=</span><span class="s2">&quot;anthropic&quot;</span><span class="p">,</span> <span class="n">target_level</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<a id="__codelineno-39-4" name="__codelineno-39-4" href="#__codelineno-39-4"></a><span class="n">llm</span> <span class="o">=</span> <span class="n">EmpathyLLM</span><span class="p">(</span><span class="n">provider</span><span class="o">=</span><span class="s2">"anthropic"</span><span class="p">,</span> <span class="n">target_level</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 <a id="__codelineno-39-5" name="__codelineno-39-5" href="#__codelineno-39-5"></a>
-<a id="__codelineno-39-6" name="__codelineno-39-6" href="#__codelineno-39-6"></a><span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;/chat&quot;</span><span class="p">)</span>
+<a id="__codelineno-39-6" name="__codelineno-39-6" href="#__codelineno-39-6"></a><span class="nd">@app</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">"/chat"</span><span class="p">)</span>
 <a id="__codelineno-39-7" name="__codelineno-39-7" href="#__codelineno-39-7"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">chat</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
 <a id="__codelineno-39-8" name="__codelineno-39-8" href="#__codelineno-39-8"></a>    <span class="c1"># Already in async context - just await</span>
-<a id="__codelineno-39-9" name="__codelineno-39-9" href="#__codelineno-39-9"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="n">user_input</span><span class="o">=</span><span class="n">message</span><span class="p">)</span>
+<a id="__codelineno-39-9" name="__codelineno-39-9" href="#__codelineno-39-9"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">"user"</span><span class="p">,</span> <span class="n">user_input</span><span class="o">=</span><span class="n">message</span><span class="p">)</span>
 <a id="__codelineno-39-10" name="__codelineno-39-10" href="#__codelineno-39-10"></a>    <span class="k">return</span> <span class="n">result</span>
 </code></pre></div></p>
 <hr />
@@ -6160,15 +6160,15 @@
 <p><strong>1. Use faster model:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="c1"># Slow (high quality):</span>
 <a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a><span class="n">llm</span> <span class="o">=</span> <span class="n">EmpathyLLM</span><span class="p">(</span>
-<a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>    <span class="n">provider</span><span class="o">=</span><span class="s2">&quot;anthropic&quot;</span><span class="p">,</span>
-<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;claude-3-opus-20240229&quot;</span><span class="p">,</span>  <span class="c1"># Slowest, highest quality</span>
+<a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a>    <span class="n">provider</span><span class="o">=</span><span class="s2">"anthropic"</span><span class="p">,</span>
+<a id="__codelineno-40-4" name="__codelineno-40-4" href="#__codelineno-40-4"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">"claude-3-opus-20240229"</span><span class="p">,</span>  <span class="c1"># Slowest, highest quality</span>
 <a id="__codelineno-40-5" name="__codelineno-40-5" href="#__codelineno-40-5"></a>    <span class="n">target_level</span><span class="o">=</span><span class="mi">4</span>
 <a id="__codelineno-40-6" name="__codelineno-40-6" href="#__codelineno-40-6"></a><span class="p">)</span>
 <a id="__codelineno-40-7" name="__codelineno-40-7" href="#__codelineno-40-7"></a>
 <a id="__codelineno-40-8" name="__codelineno-40-8" href="#__codelineno-40-8"></a><span class="c1"># Fast (good quality):</span>
 <a id="__codelineno-40-9" name="__codelineno-40-9" href="#__codelineno-40-9"></a><span class="n">llm</span> <span class="o">=</span> <span class="n">EmpathyLLM</span><span class="p">(</span>
-<a id="__codelineno-40-10" name="__codelineno-40-10" href="#__codelineno-40-10"></a>    <span class="n">provider</span><span class="o">=</span><span class="s2">&quot;anthropic&quot;</span><span class="p">,</span>
-<a id="__codelineno-40-11" name="__codelineno-40-11" href="#__codelineno-40-11"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;claude-3-haiku-20240307&quot;</span><span class="p">,</span>  <span class="c1"># 10x faster, 25x cheaper</span>
+<a id="__codelineno-40-10" name="__codelineno-40-10" href="#__codelineno-40-10"></a>    <span class="n">provider</span><span class="o">=</span><span class="s2">"anthropic"</span><span class="p">,</span>
+<a id="__codelineno-40-11" name="__codelineno-40-11" href="#__codelineno-40-11"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">"claude-3-haiku-20240307"</span><span class="p">,</span>  <span class="c1"># 10x faster, 25x cheaper</span>
 <a id="__codelineno-40-12" name="__codelineno-40-12" href="#__codelineno-40-12"></a>    <span class="n">target_level</span><span class="o">=</span><span class="mi">3</span>
 <a id="__codelineno-40-13" name="__codelineno-40-13" href="#__codelineno-40-13"></a><span class="p">)</span>
 </code></pre></div></p>
@@ -6177,22 +6177,22 @@
 <a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a>
 <a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a><span class="n">provider</span> <span class="o">=</span> <span class="n">AnthropicProvider</span><span class="p">(</span>
 <a id="__codelineno-41-4" name="__codelineno-41-4" href="#__codelineno-41-4"></a>    <span class="n">use_prompt_caching</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>  <span class="c1"># 90% faster on repeated prompts</span>
-<a id="__codelineno-41-5" name="__codelineno-41-5" href="#__codelineno-41-5"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;claude-3-5-sonnet-20241022&quot;</span>
+<a id="__codelineno-41-5" name="__codelineno-41-5" href="#__codelineno-41-5"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">"claude-3-5-sonnet-20241022"</span>
 <a id="__codelineno-41-6" name="__codelineno-41-6" href="#__codelineno-41-6"></a><span class="p">)</span>
 </code></pre></div></p>
 <p><strong>3. Use local model for development:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a><span class="c1"># No API latency - runs on your machine</span>
 <a id="__codelineno-42-2" name="__codelineno-42-2" href="#__codelineno-42-2"></a><span class="n">llm</span> <span class="o">=</span> <span class="n">EmpathyLLM</span><span class="p">(</span>
-<a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a>    <span class="n">provider</span><span class="o">=</span><span class="s2">&quot;local&quot;</span><span class="p">,</span>
-<a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a>    <span class="n">endpoint</span><span class="o">=</span><span class="s2">&quot;http://localhost:11434&quot;</span><span class="p">,</span>
-<a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;llama2&quot;</span><span class="p">,</span>
+<a id="__codelineno-42-3" name="__codelineno-42-3" href="#__codelineno-42-3"></a>    <span class="n">provider</span><span class="o">=</span><span class="s2">"local"</span><span class="p">,</span>
+<a id="__codelineno-42-4" name="__codelineno-42-4" href="#__codelineno-42-4"></a>    <span class="n">endpoint</span><span class="o">=</span><span class="s2">"http://localhost:11434"</span><span class="p">,</span>
+<a id="__codelineno-42-5" name="__codelineno-42-5" href="#__codelineno-42-5"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">"llama2"</span><span class="p">,</span>
 <a id="__codelineno-42-6" name="__codelineno-42-6" href="#__codelineno-42-6"></a>    <span class="n">target_level</span><span class="o">=</span><span class="mi">2</span>
 <a id="__codelineno-42-7" name="__codelineno-42-7" href="#__codelineno-42-7"></a><span class="p">)</span>
 </code></pre></div></p>
 <p><strong>4. Reduce max_tokens:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span>
-<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a>    <span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">,</span>
-<a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a>    <span class="n">user_input</span><span class="o">=</span><span class="s2">&quot;Question&quot;</span><span class="p">,</span>
+<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a>    <span class="n">user_id</span><span class="o">=</span><span class="s2">"user"</span><span class="p">,</span>
+<a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a>    <span class="n">user_input</span><span class="o">=</span><span class="s2">"Question"</span><span class="p">,</span>
 <a id="__codelineno-43-4" name="__codelineno-43-4" href="#__codelineno-43-4"></a>    <span class="n">max_tokens</span><span class="o">=</span><span class="mi">512</span>  <span class="c1"># Limit response length (default: 1024)</span>
 <a id="__codelineno-43-5" name="__codelineno-43-5" href="#__codelineno-43-5"></a><span class="p">)</span>
 </code></pre></div></p>
@@ -6201,7 +6201,7 @@
 <a id="__codelineno-44-2" name="__codelineno-44-2" href="#__codelineno-44-2"></a>
 <a id="__codelineno-44-3" name="__codelineno-44-3" href="#__codelineno-44-3"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">analyze_files</span><span class="p">(</span><span class="n">files</span><span class="p">):</span>
 <a id="__codelineno-44-4" name="__codelineno-44-4" href="#__codelineno-44-4"></a>    <span class="n">tasks</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-44-5" name="__codelineno-44-5" href="#__codelineno-44-5"></a>        <span class="n">llm</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="n">user_input</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Analyze </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-44-5" name="__codelineno-44-5" href="#__codelineno-44-5"></a>        <span class="n">llm</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">"user"</span><span class="p">,</span> <span class="n">user_input</span><span class="o">=</span><span class="sa">f</span><span class="s2">"Analyze </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <a id="__codelineno-44-6" name="__codelineno-44-6" href="#__codelineno-44-6"></a>        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span>
 <a id="__codelineno-44-7" name="__codelineno-44-7" href="#__codelineno-44-7"></a>    <span class="p">]</span>
 <a id="__codelineno-44-8" name="__codelineno-44-8" href="#__codelineno-44-8"></a>    <span class="c1"># Run in parallel</span>
@@ -6217,18 +6217,18 @@
 <p><strong>2. Use cheaper models for simple tasks:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-46-1" name="__codelineno-46-1" href="#__codelineno-46-1"></a><span class="c1"># Expensive:</span>
 <a id="__codelineno-46-2" name="__codelineno-46-2" href="#__codelineno-46-2"></a><span class="n">llm_expensive</span> <span class="o">=</span> <span class="n">EmpathyLLM</span><span class="p">(</span>
-<a id="__codelineno-46-3" name="__codelineno-46-3" href="#__codelineno-46-3"></a>    <span class="n">provider</span><span class="o">=</span><span class="s2">&quot;anthropic&quot;</span><span class="p">,</span>
-<a id="__codelineno-46-4" name="__codelineno-46-4" href="#__codelineno-46-4"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;claude-3-opus-20240229&quot;</span>  <span class="c1"># $15 per 1M input tokens</span>
+<a id="__codelineno-46-3" name="__codelineno-46-3" href="#__codelineno-46-3"></a>    <span class="n">provider</span><span class="o">=</span><span class="s2">"anthropic"</span><span class="p">,</span>
+<a id="__codelineno-46-4" name="__codelineno-46-4" href="#__codelineno-46-4"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">"claude-3-opus-20240229"</span>  <span class="c1"># $15 per 1M input tokens</span>
 <a id="__codelineno-46-5" name="__codelineno-46-5" href="#__codelineno-46-5"></a><span class="p">)</span>
 <a id="__codelineno-46-6" name="__codelineno-46-6" href="#__codelineno-46-6"></a>
 <a id="__codelineno-46-7" name="__codelineno-46-7" href="#__codelineno-46-7"></a><span class="c1"># Cheap:</span>
 <a id="__codelineno-46-8" name="__codelineno-46-8" href="#__codelineno-46-8"></a><span class="n">llm_cheap</span> <span class="o">=</span> <span class="n">EmpathyLLM</span><span class="p">(</span>
-<a id="__codelineno-46-9" name="__codelineno-46-9" href="#__codelineno-46-9"></a>    <span class="n">provider</span><span class="o">=</span><span class="s2">&quot;anthropic&quot;</span><span class="p">,</span>
-<a id="__codelineno-46-10" name="__codelineno-46-10" href="#__codelineno-46-10"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;claude-3-haiku-20240307&quot;</span>  <span class="c1"># $0.25 per 1M input tokens (60x cheaper!)</span>
+<a id="__codelineno-46-9" name="__codelineno-46-9" href="#__codelineno-46-9"></a>    <span class="n">provider</span><span class="o">=</span><span class="s2">"anthropic"</span><span class="p">,</span>
+<a id="__codelineno-46-10" name="__codelineno-46-10" href="#__codelineno-46-10"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">"claude-3-haiku-20240307"</span>  <span class="c1"># $0.25 per 1M input tokens (60x cheaper!)</span>
 <a id="__codelineno-46-11" name="__codelineno-46-11" href="#__codelineno-46-11"></a><span class="p">)</span>
 <a id="__codelineno-46-12" name="__codelineno-46-12" href="#__codelineno-46-12"></a>
 <a id="__codelineno-46-13" name="__codelineno-46-13" href="#__codelineno-46-13"></a><span class="c1"># Route appropriately:</span>
-<a id="__codelineno-46-14" name="__codelineno-46-14" href="#__codelineno-46-14"></a><span class="k">if</span> <span class="n">task_complexity</span> <span class="o">==</span> <span class="s2">&quot;high&quot;</span><span class="p">:</span>
+<a id="__codelineno-46-14" name="__codelineno-46-14" href="#__codelineno-46-14"></a><span class="k">if</span> <span class="n">task_complexity</span> <span class="o">==</span> <span class="s2">"high"</span><span class="p">:</span>
 <a id="__codelineno-46-15" name="__codelineno-46-15" href="#__codelineno-46-15"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm_expensive</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="nb">input</span><span class="p">)</span>
 <a id="__codelineno-46-16" name="__codelineno-46-16" href="#__codelineno-46-16"></a><span class="k">else</span><span class="p">:</span>
 <a id="__codelineno-46-17" name="__codelineno-46-17" href="#__codelineno-46-17"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm_cheap</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="nb">input</span><span class="p">)</span>
@@ -6264,7 +6264,7 @@
 <a id="__codelineno-49-6" name="__codelineno-49-6" href="#__codelineno-49-6"></a><span class="c1"># Process one file at a time</span>
 <a id="__codelineno-49-7" name="__codelineno-49-7" href="#__codelineno-49-7"></a><span class="k">for</span> <span class="n">file_path</span> <span class="ow">in</span> <span class="n">large_codebase</span><span class="p">:</span>
 <a id="__codelineno-49-8" name="__codelineno-49-8" href="#__codelineno-49-8"></a>    <span class="n">code</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-<a id="__codelineno-49-9" name="__codelineno-49-9" href="#__codelineno-49-9"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">wizard</span><span class="o">.</span><span class="n">run_full_analysis</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;python&quot;</span><span class="p">)</span>
+<a id="__codelineno-49-9" name="__codelineno-49-9" href="#__codelineno-49-9"></a>    <span class="n">result</span> <span class="o">=</span> <span class="n">wizard</span><span class="o">.</span><span class="n">run_full_analysis</span><span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">file_path</span><span class="p">,</span> <span class="s2">"python"</span><span class="p">)</span>
 <a id="__codelineno-49-10" name="__codelineno-49-10" href="#__codelineno-49-10"></a>    <span class="n">all_issues</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">issues</span><span class="p">)</span>
 <a id="__codelineno-49-11" name="__codelineno-49-11" href="#__codelineno-49-11"></a>    <span class="c1"># Memory freed after each iteration</span>
 </code></pre></div></p>
@@ -6272,15 +6272,15 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-50-1" name="__codelineno-50-1" href="#__codelineno-50-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.llm.providers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AnthropicProvider</span>
 <a id="__codelineno-50-2" name="__codelineno-50-2" href="#__codelineno-50-2"></a>
 <a id="__codelineno-50-3" name="__codelineno-50-3" href="#__codelineno-50-3"></a><span class="n">provider</span> <span class="o">=</span> <span class="n">AnthropicProvider</span><span class="p">(</span>
-<a id="__codelineno-50-4" name="__codelineno-50-4" href="#__codelineno-50-4"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;claude-3-5-sonnet-20241022&quot;</span><span class="p">,</span>  <span class="c1"># 200K context</span>
+<a id="__codelineno-50-4" name="__codelineno-50-4" href="#__codelineno-50-4"></a>    <span class="n">model</span><span class="o">=</span><span class="s2">"claude-3-5-sonnet-20241022"</span><span class="p">,</span>  <span class="c1"># 200K context</span>
 <a id="__codelineno-50-5" name="__codelineno-50-5" href="#__codelineno-50-5"></a>    <span class="n">use_prompt_caching</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Cache large contexts</span>
 <a id="__codelineno-50-6" name="__codelineno-50-6" href="#__codelineno-50-6"></a><span class="p">)</span>
 <a id="__codelineno-50-7" name="__codelineno-50-7" href="#__codelineno-50-7"></a>
 <a id="__codelineno-50-8" name="__codelineno-50-8" href="#__codelineno-50-8"></a><span class="c1"># Can analyze entire repository at once</span>
-<a id="__codelineno-50-9" name="__codelineno-50-9" href="#__codelineno-50-9"></a><span class="n">files</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="n">f</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="nb">open</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()}</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">all_files</span><span class="p">]</span>
+<a id="__codelineno-50-9" name="__codelineno-50-9" href="#__codelineno-50-9"></a><span class="n">files</span> <span class="o">=</span> <span class="p">[{</span><span class="s2">"path"</span><span class="p">:</span> <span class="n">f</span><span class="p">,</span> <span class="s2">"content"</span><span class="p">:</span> <span class="nb">open</span><span class="p">(</span><span class="n">f</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()}</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">all_files</span><span class="p">]</span>
 <a id="__codelineno-50-10" name="__codelineno-50-10" href="#__codelineno-50-10"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">provider</span><span class="o">.</span><span class="n">analyze_large_codebase</span><span class="p">(</span>
 <a id="__codelineno-50-11" name="__codelineno-50-11" href="#__codelineno-50-11"></a>    <span class="n">codebase_files</span><span class="o">=</span><span class="n">files</span><span class="p">,</span>
-<a id="__codelineno-50-12" name="__codelineno-50-12" href="#__codelineno-50-12"></a>    <span class="n">analysis_prompt</span><span class="o">=</span><span class="s2">&quot;Find all security issues&quot;</span>
+<a id="__codelineno-50-12" name="__codelineno-50-12" href="#__codelineno-50-12"></a>    <span class="n">analysis_prompt</span><span class="o">=</span><span class="s2">"Find all security issues"</span>
 <a id="__codelineno-50-13" name="__codelineno-50-13" href="#__codelineno-50-13"></a><span class="p">)</span>
 </code></pre></div></p>
 <p><strong>3. Increase system memory limits:</strong>
@@ -6308,9 +6308,9 @@
 <a id="__codelineno-53-4" name="__codelineno-53-4" href="#__codelineno-53-4"></a>
 <a id="__codelineno-53-5" name="__codelineno-53-5" href="#__codelineno-53-5"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">autouse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <a id="__codelineno-53-6" name="__codelineno-53-6" href="#__codelineno-53-6"></a><span class="k">def</span><span class="w"> </span><span class="nf">set_env</span><span class="p">():</span>
-<a id="__codelineno-53-7" name="__codelineno-53-7" href="#__codelineno-53-7"></a>    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;ANTHROPIC_API_KEY&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;sk-ant-test-key&quot;</span>  <span class="c1"># pragma: allowlist secret</span>
+<a id="__codelineno-53-7" name="__codelineno-53-7" href="#__codelineno-53-7"></a>    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"ANTHROPIC_API_KEY"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"sk-ant-test-key"</span>  <span class="c1"># pragma: allowlist secret</span>
 <a id="__codelineno-53-8" name="__codelineno-53-8" href="#__codelineno-53-8"></a>    <span class="k">yield</span>
-<a id="__codelineno-53-9" name="__codelineno-53-9" href="#__codelineno-53-9"></a>    <span class="k">del</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;ANTHROPIC_API_KEY&quot;</span><span class="p">]</span>
+<a id="__codelineno-53-9" name="__codelineno-53-9" href="#__codelineno-53-9"></a>    <span class="k">del</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"ANTHROPIC_API_KEY"</span><span class="p">]</span>
 </code></pre></div></p>
 <p><strong>3. Use .env file:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-54-1" name="__codelineno-54-1" href="#__codelineno-54-1"></a><span class="c1"># .env.test</span>
@@ -6318,7 +6318,7 @@
 </code></pre></div></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-55-1" name="__codelineno-55-1" href="#__codelineno-55-1"></a><span class="c1"># conftest.py</span>
 <a id="__codelineno-55-2" name="__codelineno-55-2" href="#__codelineno-55-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
-<a id="__codelineno-55-3" name="__codelineno-55-3" href="#__codelineno-55-3"></a><span class="n">load_dotenv</span><span class="p">(</span><span class="s2">&quot;.env.test&quot;</span><span class="p">)</span>
+<a id="__codelineno-55-3" name="__codelineno-55-3" href="#__codelineno-55-3"></a><span class="n">load_dotenv</span><span class="p">(</span><span class="s2">".env.test"</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="issue-tests-are-slow-1-minute">Issue: Tests are slow (&gt;1 minute)<a class="headerlink" href="#issue-tests-are-slow-1-minute" title="Permanent link">&para;</a></h3>
 <p><strong>Solutions:</strong></p>
@@ -6327,19 +6327,19 @@
 <a id="__codelineno-56-2" name="__codelineno-56-2" href="#__codelineno-56-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">unittest.mock</span><span class="w"> </span><span class="kn">import</span> <span class="n">AsyncMock</span><span class="p">,</span> <span class="n">patch</span>
 <a id="__codelineno-56-3" name="__codelineno-56-3" href="#__codelineno-56-3"></a>
 <a id="__codelineno-56-4" name="__codelineno-56-4" href="#__codelineno-56-4"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">asyncio</span>
-<a id="__codelineno-56-5" name="__codelineno-56-5" href="#__codelineno-56-5"></a><span class="nd">@patch</span><span class="p">(</span><span class="s1">&#39;attune_llm.providers.AnthropicProvider.generate&#39;</span><span class="p">)</span>
+<a id="__codelineno-56-5" name="__codelineno-56-5" href="#__codelineno-56-5"></a><span class="nd">@patch</span><span class="p">(</span><span class="s1">'attune_llm.providers.AnthropicProvider.generate'</span><span class="p">)</span>
 <a id="__codelineno-56-6" name="__codelineno-56-6" href="#__codelineno-56-6"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_interaction</span><span class="p">(</span><span class="n">mock_generate</span><span class="p">):</span>
 <a id="__codelineno-56-7" name="__codelineno-56-7" href="#__codelineno-56-7"></a>    <span class="c1"># Mock LLM response</span>
 <a id="__codelineno-56-8" name="__codelineno-56-8" href="#__codelineno-56-8"></a>    <span class="n">mock_generate</span><span class="o">.</span><span class="n">return_value</span> <span class="o">=</span> <span class="n">AsyncMock</span><span class="p">(</span>
-<a id="__codelineno-56-9" name="__codelineno-56-9" href="#__codelineno-56-9"></a>        <span class="n">content</span><span class="o">=</span><span class="s2">&quot;Mocked response&quot;</span><span class="p">,</span>
-<a id="__codelineno-56-10" name="__codelineno-56-10" href="#__codelineno-56-10"></a>        <span class="n">model</span><span class="o">=</span><span class="s2">&quot;claude-3-5-sonnet-20241022&quot;</span><span class="p">,</span>
+<a id="__codelineno-56-9" name="__codelineno-56-9" href="#__codelineno-56-9"></a>        <span class="n">content</span><span class="o">=</span><span class="s2">"Mocked response"</span><span class="p">,</span>
+<a id="__codelineno-56-10" name="__codelineno-56-10" href="#__codelineno-56-10"></a>        <span class="n">model</span><span class="o">=</span><span class="s2">"claude-3-5-sonnet-20241022"</span><span class="p">,</span>
 <a id="__codelineno-56-11" name="__codelineno-56-11" href="#__codelineno-56-11"></a>        <span class="n">tokens_used</span><span class="o">=</span><span class="mi">100</span>
 <a id="__codelineno-56-12" name="__codelineno-56-12" href="#__codelineno-56-12"></a>    <span class="p">)</span>
 <a id="__codelineno-56-13" name="__codelineno-56-13" href="#__codelineno-56-13"></a>
-<a id="__codelineno-56-14" name="__codelineno-56-14" href="#__codelineno-56-14"></a>    <span class="n">llm</span> <span class="o">=</span> <span class="n">EmpathyLLM</span><span class="p">(</span><span class="n">provider</span><span class="o">=</span><span class="s2">&quot;anthropic&quot;</span><span class="p">,</span> <span class="n">target_level</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-<a id="__codelineno-56-15" name="__codelineno-56-15" href="#__codelineno-56-15"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="n">user_input</span><span class="o">=</span><span class="s2">&quot;Hello&quot;</span><span class="p">)</span>
+<a id="__codelineno-56-14" name="__codelineno-56-14" href="#__codelineno-56-14"></a>    <span class="n">llm</span> <span class="o">=</span> <span class="n">EmpathyLLM</span><span class="p">(</span><span class="n">provider</span><span class="o">=</span><span class="s2">"anthropic"</span><span class="p">,</span> <span class="n">target_level</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<a id="__codelineno-56-15" name="__codelineno-56-15" href="#__codelineno-56-15"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">"test"</span><span class="p">,</span> <span class="n">user_input</span><span class="o">=</span><span class="s2">"Hello"</span><span class="p">)</span>
 <a id="__codelineno-56-16" name="__codelineno-56-16" href="#__codelineno-56-16"></a>
-<a id="__codelineno-56-17" name="__codelineno-56-17" href="#__codelineno-56-17"></a>    <span class="k">assert</span> <span class="s2">&quot;Mocked response&quot;</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;content&#39;</span><span class="p">]</span>
+<a id="__codelineno-56-17" name="__codelineno-56-17" href="#__codelineno-56-17"></a>    <span class="k">assert</span> <span class="s2">"Mocked response"</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span><span class="s1">'content'</span><span class="p">]</span>
 <a id="__codelineno-56-18" name="__codelineno-56-18" href="#__codelineno-56-18"></a>    <span class="c1"># Test completes instantly</span>
 </code></pre></div></p>
 <p><strong>2. Use pytest-xdist for parallel tests:</strong>
@@ -6356,13 +6356,13 @@
 </code></pre></div></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-59-1" name="__codelineno-59-1" href="#__codelineno-59-1"></a><span class="c1"># conftest.py</span>
 <a id="__codelineno-59-2" name="__codelineno-59-2" href="#__codelineno-59-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">pytest_addoption</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
-<a id="__codelineno-59-3" name="__codelineno-59-3" href="#__codelineno-59-3"></a>    <span class="n">parser</span><span class="o">.</span><span class="n">addoption</span><span class="p">(</span><span class="s2">&quot;--runslow&quot;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;run slow tests&quot;</span><span class="p">)</span>
+<a id="__codelineno-59-3" name="__codelineno-59-3" href="#__codelineno-59-3"></a>    <span class="n">parser</span><span class="o">.</span><span class="n">addoption</span><span class="p">(</span><span class="s2">"--runslow"</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"run slow tests"</span><span class="p">)</span>
 <a id="__codelineno-59-4" name="__codelineno-59-4" href="#__codelineno-59-4"></a>
 <a id="__codelineno-59-5" name="__codelineno-59-5" href="#__codelineno-59-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">pytest_collection_modifyitems</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">items</span><span class="p">):</span>
-<a id="__codelineno-59-6" name="__codelineno-59-6" href="#__codelineno-59-6"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">getoption</span><span class="p">(</span><span class="s2">&quot;--runslow&quot;</span><span class="p">):</span>
-<a id="__codelineno-59-7" name="__codelineno-59-7" href="#__codelineno-59-7"></a>        <span class="n">skip_slow</span> <span class="o">=</span> <span class="n">pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s2">&quot;need --runslow to run&quot;</span><span class="p">)</span>
+<a id="__codelineno-59-6" name="__codelineno-59-6" href="#__codelineno-59-6"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">getoption</span><span class="p">(</span><span class="s2">"--runslow"</span><span class="p">):</span>
+<a id="__codelineno-59-7" name="__codelineno-59-7" href="#__codelineno-59-7"></a>        <span class="n">skip_slow</span> <span class="o">=</span> <span class="n">pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">skip</span><span class="p">(</span><span class="n">reason</span><span class="o">=</span><span class="s2">"need --runslow to run"</span><span class="p">)</span>
 <a id="__codelineno-59-8" name="__codelineno-59-8" href="#__codelineno-59-8"></a>        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
-<a id="__codelineno-59-9" name="__codelineno-59-9" href="#__codelineno-59-9"></a>            <span class="k">if</span> <span class="s2">&quot;slow&quot;</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">keywords</span><span class="p">:</span>
+<a id="__codelineno-59-9" name="__codelineno-59-9" href="#__codelineno-59-9"></a>            <span class="k">if</span> <span class="s2">"slow"</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">keywords</span><span class="p">:</span>
 <a id="__codelineno-59-10" name="__codelineno-59-10" href="#__codelineno-59-10"></a>                <span class="n">item</span><span class="o">.</span><span class="n">add_marker</span><span class="p">(</span><span class="n">skip_slow</span><span class="p">)</span>
 </code></pre></div>
 <hr />
@@ -6397,17 +6397,17 @@
 <p><strong>4. Batch requests instead of individual calls:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-63-1" name="__codelineno-63-1" href="#__codelineno-63-1"></a><span class="c1"># Instead of:</span>
 <a id="__codelineno-63-2" name="__codelineno-63-2" href="#__codelineno-63-2"></a><span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
-<a id="__codelineno-63-3" name="__codelineno-63-3" href="#__codelineno-63-3"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Analyze </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-63-3" name="__codelineno-63-3" href="#__codelineno-63-3"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"Analyze </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <a id="__codelineno-63-4" name="__codelineno-63-4" href="#__codelineno-63-4"></a>
 <a id="__codelineno-63-5" name="__codelineno-63-5" href="#__codelineno-63-5"></a><span class="c1"># Do:</span>
-<a id="__codelineno-63-6" name="__codelineno-63-6" href="#__codelineno-63-6"></a><span class="n">batch_input</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;Analyze </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">])</span>
+<a id="__codelineno-63-6" name="__codelineno-63-6" href="#__codelineno-63-6"></a><span class="n">batch_input</span> <span class="o">=</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">"Analyze </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span><span class="p">])</span>
 <a id="__codelineno-63-7" name="__codelineno-63-7" href="#__codelineno-63-7"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">llm</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">batch_input</span><span class="p">)</span>
 </code></pre></div></p>
 <hr />
 <h2 id="configuration-issues">Configuration Issues<a class="headerlink" href="#configuration-issues" title="Permanent link">&para;</a></h2>
 <h3 id="issue-configuration-file-not-found">Issue: Configuration file not found<a class="headerlink" href="#issue-configuration-file-not-found" title="Permanent link">&para;</a></h3>
 <p><strong>Error Message:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-64-1" name="__codelineno-64-1" href="#__codelineno-64-1"></a>FileNotFoundError: [Errno 2] No such file or directory: &#39;empathy.config.yml&#39;
+<div class="highlight"><pre><span></span><code><a id="__codelineno-64-1" name="__codelineno-64-1" href="#__codelineno-64-1"></a>FileNotFoundError: [Errno 2] No such file or directory: 'empathy.config.yml'
 </code></pre></div></p>
 <p><strong>Solutions:</strong></p>
 <p><strong>1. Generate default config:</strong>
@@ -6416,7 +6416,7 @@
 <p><strong>2. Specify config path:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-66-1" name="__codelineno-66-1" href="#__codelineno-66-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_config</span>
 <a id="__codelineno-66-2" name="__codelineno-66-2" href="#__codelineno-66-2"></a>
-<a id="__codelineno-66-3" name="__codelineno-66-3" href="#__codelineno-66-3"></a><span class="n">config</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="s2">&quot;/absolute/path/to/empathy.config.yml&quot;</span><span class="p">)</span>
+<a id="__codelineno-66-3" name="__codelineno-66-3" href="#__codelineno-66-3"></a><span class="n">config</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="s2">"/absolute/path/to/empathy.config.yml"</span><span class="p">)</span>
 </code></pre></div></p>
 <p><strong>3. Use environment variables instead:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-67-1" name="__codelineno-67-1" href="#__codelineno-67-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_USER_ID</span><span class="o">=</span>alice
@@ -6444,9 +6444,9 @@
 <a id="__codelineno-70-8" name="__codelineno-70-8" href="#__codelineno-70-8"></a><span class="c1"># Validates automatically</span>
 <a id="__codelineno-70-9" name="__codelineno-70-9" href="#__codelineno-70-9"></a><span class="k">try</span><span class="p">:</span>
 <a id="__codelineno-70-10" name="__codelineno-70-10" href="#__codelineno-70-10"></a>    <span class="n">config</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
-<a id="__codelineno-70-11" name="__codelineno-70-11" href="#__codelineno-70-11"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Config valid!&quot;</span><span class="p">)</span>
+<a id="__codelineno-70-11" name="__codelineno-70-11" href="#__codelineno-70-11"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">"Config valid!"</span><span class="p">)</span>
 <a id="__codelineno-70-12" name="__codelineno-70-12" href="#__codelineno-70-12"></a><span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-<a id="__codelineno-70-13" name="__codelineno-70-13" href="#__codelineno-70-13"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Config error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-70-13" name="__codelineno-70-13" href="#__codelineno-70-13"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Config error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div></p>
 <p><strong>2. Check config file syntax:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-71-1" name="__codelineno-71-1" href="#__codelineno-71-1"></a><span class="c1"># empathy.config.yml</span>
@@ -6455,7 +6455,7 @@
 <a id="__codelineno-71-4" name="__codelineno-71-4" href="#__codelineno-71-4"></a><span class="nt">target_level</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4</span>
 <a id="__codelineno-71-5" name="__codelineno-71-5" href="#__codelineno-71-5"></a>
 <a id="__codelineno-71-6" name="__codelineno-71-6" href="#__codelineno-71-6"></a><span class="c1"># Invalid:</span>
-<a id="__codelineno-71-7" name="__codelineno-71-7" href="#__codelineno-71-7"></a><span class="nt">target_level</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;4&quot;</span><span class="w">  </span><span class="c1"># Must be integer, not string</span>
+<a id="__codelineno-71-7" name="__codelineno-71-7" href="#__codelineno-71-7"></a><span class="nt">target_level</span><span class="p">:</span><span class="w"> </span><span class="s">"4"</span><span class="w">  </span><span class="c1"># Must be integer, not string</span>
 <a id="__codelineno-71-8" name="__codelineno-71-8" href="#__codelineno-71-8"></a>
 <a id="__codelineno-71-9" name="__codelineno-71-9" href="#__codelineno-71-9"></a><span class="c1"># Valid:</span>
 <a id="__codelineno-71-10" name="__codelineno-71-10" href="#__codelineno-71-10"></a><span class="nt">confidence_threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.75</span>
@@ -6473,12 +6473,12 @@
 <p><strong>1. Enable WAL mode (Write-Ahead Logging):</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-73-1" name="__codelineno-73-1" href="#__codelineno-73-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">sqlite3</span>
 <a id="__codelineno-73-2" name="__codelineno-73-2" href="#__codelineno-73-2"></a>
-<a id="__codelineno-73-3" name="__codelineno-73-3" href="#__codelineno-73-3"></a><span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;empathy_data/state.db&quot;</span><span class="p">)</span>
-<a id="__codelineno-73-4" name="__codelineno-73-4" href="#__codelineno-73-4"></a><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;PRAGMA journal_mode=WAL&quot;</span><span class="p">)</span>
+<a id="__codelineno-73-3" name="__codelineno-73-3" href="#__codelineno-73-3"></a><span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">"empathy_data/state.db"</span><span class="p">)</span>
+<a id="__codelineno-73-4" name="__codelineno-73-4" href="#__codelineno-73-4"></a><span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">"PRAGMA journal_mode=WAL"</span><span class="p">)</span>
 <a id="__codelineno-73-5" name="__codelineno-73-5" href="#__codelineno-73-5"></a><span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </code></pre></div></p>
 <p><strong>2. Increase timeout:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-74-1" name="__codelineno-74-1" href="#__codelineno-74-1"></a><span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;empathy_data/state.db&quot;</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">30.0</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-74-1" name="__codelineno-74-1" href="#__codelineno-74-1"></a><span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">"empathy_data/state.db"</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">30.0</span><span class="p">)</span>
 </code></pre></div></p>
 <p><strong>3. Use PostgreSQL for concurrent access:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-75-1" name="__codelineno-75-1" href="#__codelineno-75-1"></a><span class="c1"># empathy.config.yml</span>
@@ -6506,7 +6506,7 @@
 <a id="__codelineno-79-2" name="__codelineno-79-2" href="#__codelineno-79-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">logging.handlers</span><span class="w"> </span><span class="kn">import</span> <span class="n">RotatingFileHandler</span>
 <a id="__codelineno-79-3" name="__codelineno-79-3" href="#__codelineno-79-3"></a>
 <a id="__codelineno-79-4" name="__codelineno-79-4" href="#__codelineno-79-4"></a><span class="n">handler</span> <span class="o">=</span> <span class="n">RotatingFileHandler</span><span class="p">(</span>
-<a id="__codelineno-79-5" name="__codelineno-79-5" href="#__codelineno-79-5"></a>    <span class="s1">&#39;empathy.log&#39;</span><span class="p">,</span>
+<a id="__codelineno-79-5" name="__codelineno-79-5" href="#__codelineno-79-5"></a>    <span class="s1">'empathy.log'</span><span class="p">,</span>
 <a id="__codelineno-79-6" name="__codelineno-79-6" href="#__codelineno-79-6"></a>    <span class="n">maxBytes</span><span class="o">=</span><span class="mi">10</span><span class="o">*</span><span class="mi">1024</span><span class="o">*</span><span class="mi">1024</span><span class="p">,</span>  <span class="c1"># 10MB</span>
 <a id="__codelineno-79-7" name="__codelineno-79-7" href="#__codelineno-79-7"></a>    <span class="n">backupCount</span><span class="o">=</span><span class="mi">5</span>
 <a id="__codelineno-79-8" name="__codelineno-79-8" href="#__codelineno-79-8"></a><span class="p">)</span>
@@ -6535,13 +6535,13 @@
 <p><strong>Solutions:</strong></p>
 <p><strong>1. Use forward slashes or raw strings:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-83-1" name="__codelineno-83-1" href="#__codelineno-83-1"></a><span class="c1"># Good:</span>
-<a id="__codelineno-83-2" name="__codelineno-83-2" href="#__codelineno-83-2"></a><span class="n">config_path</span> <span class="o">=</span> <span class="s2">&quot;C:/Users/alice/empathy.config.yml&quot;</span>
+<a id="__codelineno-83-2" name="__codelineno-83-2" href="#__codelineno-83-2"></a><span class="n">config_path</span> <span class="o">=</span> <span class="s2">"C:/Users/alice/empathy.config.yml"</span>
 <a id="__codelineno-83-3" name="__codelineno-83-3" href="#__codelineno-83-3"></a>
 <a id="__codelineno-83-4" name="__codelineno-83-4" href="#__codelineno-83-4"></a><span class="c1"># Or:</span>
-<a id="__codelineno-83-5" name="__codelineno-83-5" href="#__codelineno-83-5"></a><span class="n">config_path</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;C:\Users\alice\empathy.config.yml&quot;</span>
+<a id="__codelineno-83-5" name="__codelineno-83-5" href="#__codelineno-83-5"></a><span class="n">config_path</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"C:\Users\alice\empathy.config.yml"</span>
 <a id="__codelineno-83-6" name="__codelineno-83-6" href="#__codelineno-83-6"></a>
 <a id="__codelineno-83-7" name="__codelineno-83-7" href="#__codelineno-83-7"></a><span class="c1"># Bad:</span>
-<a id="__codelineno-83-8" name="__codelineno-83-8" href="#__codelineno-83-8"></a><span class="n">config_path</span> <span class="o">=</span> <span class="s2">&quot;C:\Users</span><span class="se">\a</span><span class="s2">lice\empathy.config.yml&quot;</span>  <span class="c1"># Backslashes interpreted</span>
+<a id="__codelineno-83-8" name="__codelineno-83-8" href="#__codelineno-83-8"></a><span class="n">config_path</span> <span class="o">=</span> <span class="s2">"C:\Users</span><span class="se">\a</span><span class="s2">lice\empathy.config.yml"</span>  <span class="c1"># Backslashes interpreted</span>
 </code></pre></div></p>
 <p><strong>2. Run as administrator (if necessary):</strong>
 - Right-click Python/IDE → "Run as administrator"</p>
@@ -6549,9 +6549,9 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-84-1" name="__codelineno-84-1" href="#__codelineno-84-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <a id="__codelineno-84-2" name="__codelineno-84-2" href="#__codelineno-84-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <a id="__codelineno-84-3" name="__codelineno-84-3" href="#__codelineno-84-3"></a>
-<a id="__codelineno-84-4" name="__codelineno-84-4" href="#__codelineno-84-4"></a><span class="c1"># Use user&#39;s home directory</span>
+<a id="__codelineno-84-4" name="__codelineno-84-4" href="#__codelineno-84-4"></a><span class="c1"># Use user's home directory</span>
 <a id="__codelineno-84-5" name="__codelineno-84-5" href="#__codelineno-84-5"></a><span class="n">home</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">home</span><span class="p">()</span>
-<a id="__codelineno-84-6" name="__codelineno-84-6" href="#__codelineno-84-6"></a><span class="n">config_path</span> <span class="o">=</span> <span class="n">home</span> <span class="o">/</span> <span class="s2">&quot;empathy.config.yml&quot;</span>
+<a id="__codelineno-84-6" name="__codelineno-84-6" href="#__codelineno-84-6"></a><span class="n">config_path</span> <span class="o">=</span> <span class="n">home</span> <span class="o">/</span> <span class="s2">"empathy.config.yml"</span>
 </code></pre></div></p>
 <h3 id="linux-selinux-permission-denied">Linux: SELinux permission denied<a class="headerlink" href="#linux-selinux-permission-denied" title="Permanent link">&para;</a></h3>
 <p><strong>Error Message:</strong>
@@ -6560,10 +6560,10 @@
 <p><strong>Solutions:</strong></p>
 <p><strong>1. Check SELinux status:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-86-1" name="__codelineno-86-1" href="#__codelineno-86-1"></a>getenforce
-<a id="__codelineno-86-2" name="__codelineno-86-2" href="#__codelineno-86-2"></a><span class="c1"># If &quot;Enforcing&quot;, SELinux might be blocking</span>
+<a id="__codelineno-86-2" name="__codelineno-86-2" href="#__codelineno-86-2"></a><span class="c1"># If "Enforcing", SELinux might be blocking</span>
 </code></pre></div></p>
 <p><strong>2. Add SELinux policy:</strong>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-87-1" name="__codelineno-87-1" href="#__codelineno-87-1"></a>sudo<span class="w"> </span>semanage<span class="w"> </span>fcontext<span class="w"> </span>-a<span class="w"> </span>-t<span class="w"> </span>user_home_t<span class="w"> </span><span class="s2">&quot;/path/to/empathy_data(/.*)?&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-87-1" name="__codelineno-87-1" href="#__codelineno-87-1"></a>sudo<span class="w"> </span>semanage<span class="w"> </span>fcontext<span class="w"> </span>-a<span class="w"> </span>-t<span class="w"> </span>user_home_t<span class="w"> </span><span class="s2">"/path/to/empathy_data(/.*)?"</span>
 <a id="__codelineno-87-2" name="__codelineno-87-2" href="#__codelineno-87-2"></a>sudo<span class="w"> </span>restorecon<span class="w"> </span>-R<span class="w"> </span>/path/to/empathy_data
 </code></pre></div></p>
 <p><strong>3. Or temporarily disable (not recommended for production):</strong>
@@ -6577,9 +6577,9 @@
 <a id="__codelineno-89-2" name="__codelineno-89-2" href="#__codelineno-89-2"></a>
 <a id="__codelineno-89-3" name="__codelineno-89-3" href="#__codelineno-89-3"></a><span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
 <a id="__codelineno-89-4" name="__codelineno-89-4" href="#__codelineno-89-4"></a>    <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">,</span>
-<a id="__codelineno-89-5" name="__codelineno-89-5" href="#__codelineno-89-5"></a>    <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> - </span><span class="si">%(name)s</span><span class="s1"> - </span><span class="si">%(levelname)s</span><span class="s1"> - </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">,</span>
+<a id="__codelineno-89-5" name="__codelineno-89-5" href="#__codelineno-89-5"></a>    <span class="nb">format</span><span class="o">=</span><span class="s1">'</span><span class="si">%(asctime)s</span><span class="s1"> - </span><span class="si">%(name)s</span><span class="s1"> - </span><span class="si">%(levelname)s</span><span class="s1"> - </span><span class="si">%(message)s</span><span class="s1">'</span><span class="p">,</span>
 <a id="__codelineno-89-6" name="__codelineno-89-6" href="#__codelineno-89-6"></a>    <span class="n">handlers</span><span class="o">=</span><span class="p">[</span>
-<a id="__codelineno-89-7" name="__codelineno-89-7" href="#__codelineno-89-7"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="s2">&quot;empathy_debug.log&quot;</span><span class="p">),</span>
+<a id="__codelineno-89-7" name="__codelineno-89-7" href="#__codelineno-89-7"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="s2">"empathy_debug.log"</span><span class="p">),</span>
 <a id="__codelineno-89-8" name="__codelineno-89-8" href="#__codelineno-89-8"></a>        <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">()</span>
 <a id="__codelineno-89-9" name="__codelineno-89-9" href="#__codelineno-89-9"></a>    <span class="p">]</span>
 <a id="__codelineno-89-10" name="__codelineno-89-10" href="#__codelineno-89-10"></a><span class="p">)</span>
@@ -6598,8 +6598,8 @@
 <a id="__codelineno-90-8" name="__codelineno-90-8" href="#__codelineno-90-8"></a><span class="nb">echo</span><span class="w"> </span><span class="nv">$OPENAI_API_KEY</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>cut<span class="w"> </span>-c1-10
 <a id="__codelineno-90-9" name="__codelineno-90-9" href="#__codelineno-90-9"></a>
 <a id="__codelineno-90-10" name="__codelineno-90-10" href="#__codelineno-90-10"></a><span class="c1"># Test imports</span>
-<a id="__codelineno-90-11" name="__codelineno-90-11" href="#__codelineno-90-11"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;from attune.llm import EmpathyLLM; print(&#39;Core: OK&#39;)&quot;</span>
-<a id="__codelineno-90-12" name="__codelineno-90-12" href="#__codelineno-90-12"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;from coach_wizards import SecurityWizard; print(&#39;Wizards: OK&#39;)&quot;</span>
+<a id="__codelineno-90-11" name="__codelineno-90-11" href="#__codelineno-90-11"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"from attune.llm import EmpathyLLM; print('Core: OK')"</span>
+<a id="__codelineno-90-12" name="__codelineno-90-12" href="#__codelineno-90-12"></a>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"from coach_wizards import SecurityWizard; print('Wizards: OK')"</span>
 </code></pre></div>
 <h3 id="report-bugs">Report Bugs<a class="headerlink" href="#report-bugs" title="Permanent link">&para;</a></h3>
 <p><strong>GitHub Issues:</strong> https://github.com/Smart-AI-Memory/attune-ai/issues</p>

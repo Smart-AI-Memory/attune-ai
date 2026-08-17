@@ -5999,27 +5999,27 @@ Attune AI behavior:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttuneConfig</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">config</span> <span class="o">=</span> <span class="n">AttuneConfig</span><span class="p">(</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;user_123&quot;</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">user_id</span><span class="o">=</span><span class="s2">"user_123"</span><span class="p">,</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">confidence_threshold</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">persistence_enabled</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">)</span>
 </code></pre></div>
 <h3 id="yaml-configuration">YAML Configuration<a class="headerlink" href="#yaml-configuration" title="Permanent link">&para;</a></h3>
 <p>Create <code>attune.config.yml</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">user_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;user_123&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nt">user_id</span><span class="p">:</span><span class="w"> </span><span class="s">"user_123"</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nt">confidence_threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.75</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nt">persistence_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nt">persistence_backend</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;sqlite&quot;</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nt">persistence_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;./attune_data&quot;</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="nt">persistence_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"sqlite"</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="nt">persistence_path</span><span class="p">:</span><span class="w"> </span><span class="s">"./attune_data"</span>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="nt">metrics_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 </code></pre></div>
 <p>Load it:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_config</span>
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">config</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;attune.config.yml&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">config</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="s2">"attune.config.yml"</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="environment-variables">Environment Variables<a class="headerlink" href="#environment-variables" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_USER_ID</span><span class="o">=</span><span class="s2">&quot;user_123&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_USER_ID</span><span class="o">=</span><span class="s2">"user_123"</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_CONFIDENCE_THRESHOLD</span><span class="o">=</span><span class="m">0</span>.75
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_config</span>
@@ -6129,7 +6129,7 @@ Attune AI behavior:</p>
 
 
 <h3 id="attune.config.AttuneConfig.from_env" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">from_env</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;ATTUNE_&#39;</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">from_env</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s1">'ATTUNE_'</span><span class="p">)</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-classmethod"><code>classmethod</code></small>
@@ -6921,7 +6921,7 @@ config.update(user_id="bob", target_level=5)</p>
 <p><strong>Example:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttuneConfig</span>
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">config</span> <span class="o">=</span> <span class="n">AttuneConfig</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;user_123&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">config</span> <span class="o">=</span> <span class="n">AttuneConfig</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">"user_123"</span><span class="p">)</span>
 </code></pre></div>
 <h4 id="confidence_threshold-float-default-075"><code>confidence_threshold</code> (float, default: 0.75)<a class="headerlink" href="#confidence_threshold-float-default-075" title="Permanent link">&para;</a></h4>
 <p>Minimum confidence score (0.0-1.0) required for predictions and
@@ -6986,12 +6986,12 @@ lower quality).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttuneConfig</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="c1"># Local development</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">config</span> <span class="o">=</span> <span class="n">AttuneConfig</span><span class="p">(</span><span class="n">persistence_backend</span><span class="o">=</span><span class="s2">&quot;sqlite&quot;</span><span class="p">)</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="n">config</span> <span class="o">=</span> <span class="n">AttuneConfig</span><span class="p">(</span><span class="n">persistence_backend</span><span class="o">=</span><span class="s2">"sqlite"</span><span class="p">)</span>
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>
 <a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="c1"># Production</span>
 <a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="n">config</span> <span class="o">=</span> <span class="n">AttuneConfig</span><span class="p">(</span>
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>    <span class="n">persistence_backend</span><span class="o">=</span><span class="s2">&quot;postgresql&quot;</span><span class="p">,</span>
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>    <span class="n">persistence_path</span><span class="o">=</span><span class="s2">&quot;postgresql://user:pass@localhost/attune&quot;</span><span class="p">,</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>    <span class="n">persistence_backend</span><span class="o">=</span><span class="s2">"postgresql"</span><span class="p">,</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>    <span class="n">persistence_path</span><span class="o">=</span><span class="s2">"postgresql://user:pass@localhost/attune"</span><span class="p">,</span>
 <a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="p">)</span>
 </code></pre></div>
 <h4 id="persistence_path-str-default-attune_data"><code>persistence_path</code> (str, default: "./attune_data")<a class="headerlink" href="#persistence_path-str-default-attune_data" title="Permanent link">&para;</a></h4>
@@ -7000,10 +7000,10 @@ lower quality).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttuneConfig</span>
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="c1"># Default location</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="n">config</span> <span class="o">=</span> <span class="n">AttuneConfig</span><span class="p">(</span><span class="n">persistence_path</span><span class="o">=</span><span class="s2">&quot;./attune_data&quot;</span><span class="p">)</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="n">config</span> <span class="o">=</span> <span class="n">AttuneConfig</span><span class="p">(</span><span class="n">persistence_path</span><span class="o">=</span><span class="s2">"./attune_data"</span><span class="p">)</span>
 <a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>
 <a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="c1"># Custom location</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="n">config</span> <span class="o">=</span> <span class="n">AttuneConfig</span><span class="p">(</span><span class="n">persistence_path</span><span class="o">=</span><span class="s2">&quot;/var/lib/attune&quot;</span><span class="p">)</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="n">config</span> <span class="o">=</span> <span class="n">AttuneConfig</span><span class="p">(</span><span class="n">persistence_path</span><span class="o">=</span><span class="s2">"/var/lib/attune"</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="metrics-settings">Metrics Settings<a class="headerlink" href="#metrics-settings" title="Permanent link">&para;</a></h3>
 <h4 id="metrics_enabled-bool-default-true"><code>metrics_enabled</code> (bool, default: True)<a class="headerlink" href="#metrics_enabled-bool-default-true" title="Permanent link">&para;</a></h4>
@@ -7018,7 +7018,7 @@ lower quality).</p>
 <p><strong>Example:</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttuneConfig</span>
 <a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="n">config</span> <span class="o">=</span> <span class="n">AttuneConfig</span><span class="p">(</span><span class="n">metrics_path</span><span class="o">=</span><span class="s2">&quot;/var/lib/attune/metrics.db&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="n">config</span> <span class="o">=</span> <span class="n">AttuneConfig</span><span class="p">(</span><span class="n">metrics_path</span><span class="o">=</span><span class="s2">"/var/lib/attune/metrics.db"</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="pattern-library-settings">Pattern Library Settings<a class="headerlink" href="#pattern-library-settings" title="Permanent link">&para;</a></h3>
 <h4 id="pattern_library_enabled-bool-default-true"><code>pattern_library_enabled</code> (bool, default: True)<a class="headerlink" href="#pattern_library_enabled-bool-default-true" title="Permanent link">&para;</a></h4>
@@ -7050,60 +7050,60 @@ lower quality).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_config</span>
 <a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="c1"># Load from YAML file</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="n">config</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;attune.config.yml&quot;</span><span class="p">)</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="n">config</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="s2">"attune.config.yml"</span><span class="p">)</span>
 <a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>
 <a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="c1"># Load from JSON file</span>
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="n">config</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;attune.config.json&quot;</span><span class="p">)</span>
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a><span class="n">config</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="s2">"attune.config.json"</span><span class="p">)</span>
 <a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>
 <a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a><span class="c1"># Load from environment variables</span>
 <a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a><span class="n">config</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="n">use_env</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>
 <a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a><span class="c1"># Load from file with environment overrides</span>
-<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="n">config</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="s2">&quot;attune.config.yml&quot;</span><span class="p">,</span> <span class="n">use_env</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="n">config</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">(</span><span class="n">filepath</span><span class="o">=</span><span class="s2">"attune.config.yml"</span><span class="p">,</span> <span class="n">use_env</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="to_yaml-to_json"><code>to_yaml()</code> / <code>to_json()</code><a class="headerlink" href="#to_yaml-to_json" title="Permanent link">&para;</a></h3>
 <p>Save configuration to file.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttuneConfig</span>
 <a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="n">config</span> <span class="o">=</span> <span class="n">AttuneConfig</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;user_123&quot;</span><span class="p">)</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="n">config</span> <span class="o">=</span> <span class="n">AttuneConfig</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">"user_123"</span><span class="p">)</span>
 <a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>
 <a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="c1"># Save as YAML</span>
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="n">config</span><span class="o">.</span><span class="n">to_yaml</span><span class="p">(</span><span class="s2">&quot;attune.config.yml&quot;</span><span class="p">)</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="n">config</span><span class="o">.</span><span class="n">to_yaml</span><span class="p">(</span><span class="s2">"attune.config.yml"</span><span class="p">)</span>
 <a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>
 <a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="c1"># Save as JSON</span>
-<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="n">config</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="s2">&quot;attune.config.json&quot;</span><span class="p">)</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="n">config</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="s2">"attune.config.json"</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="validate"><code>validate()</code><a class="headerlink" href="#validate" title="Permanent link">&para;</a></h3>
 <p>Validate configuration values.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune</span><span class="w"> </span><span class="kn">import</span> <span class="n">AttuneConfig</span>
 <a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a>
-<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="n">config</span> <span class="o">=</span> <span class="n">AttuneConfig</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;user_123&quot;</span><span class="p">)</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="n">config</span> <span class="o">=</span> <span class="n">AttuneConfig</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="s2">"user_123"</span><span class="p">)</span>
 <a id="__codelineno-19-4" name="__codelineno-19-4" href="#__codelineno-19-4"></a>
 <a id="__codelineno-19-5" name="__codelineno-19-5" href="#__codelineno-19-5"></a><span class="k">try</span><span class="p">:</span>
 <a id="__codelineno-19-6" name="__codelineno-19-6" href="#__codelineno-19-6"></a>    <span class="n">config</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
-<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Configuration valid&quot;</span><span class="p">)</span>
+<a id="__codelineno-19-7" name="__codelineno-19-7" href="#__codelineno-19-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="s2">"Configuration valid"</span><span class="p">)</span>
 <a id="__codelineno-19-8" name="__codelineno-19-8" href="#__codelineno-19-8"></a><span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Configuration invalid: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-19-9" name="__codelineno-19-9" href="#__codelineno-19-9"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Configuration invalid: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="configuration-patterns">Configuration Patterns<a class="headerlink" href="#configuration-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="development-configuration">Development Configuration<a class="headerlink" href="#development-configuration" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="c1"># attune.dev.yml</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="nt">user_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;dev_user&quot;</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="nt">user_id</span><span class="p">:</span><span class="w"> </span><span class="s">"dev_user"</span>
 <a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="nt">confidence_threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.70</span>
 <a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="nt">persistence_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="nt">persistence_backend</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;sqlite&quot;</span>
-<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="nt">persistence_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;./attune_data&quot;</span>
+<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="nt">persistence_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"sqlite"</span>
+<a id="__codelineno-20-6" name="__codelineno-20-6" href="#__codelineno-20-6"></a><span class="nt">persistence_path</span><span class="p">:</span><span class="w"> </span><span class="s">"./attune_data"</span>
 <a id="__codelineno-20-7" name="__codelineno-20-7" href="#__codelineno-20-7"></a><span class="nt">metrics_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 </code></pre></div>
 <h3 id="production-configuration">Production Configuration<a class="headerlink" href="#production-configuration" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="c1"># attune.prod.yml</span>
-<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="nt">user_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;prod_system&quot;</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="nt">user_id</span><span class="p">:</span><span class="w"> </span><span class="s">"prod_system"</span>
 <a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="nt">confidence_threshold</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.80</span>
 <a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="nt">persistence_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="nt">persistence_backend</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;postgresql&quot;</span>
-<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="nt">persistence_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;postgresql://user:pass@db.example.com/attune&quot;</span>
+<a id="__codelineno-21-5" name="__codelineno-21-5" href="#__codelineno-21-5"></a><span class="nt">persistence_backend</span><span class="p">:</span><span class="w"> </span><span class="s">"postgresql"</span>
+<a id="__codelineno-21-6" name="__codelineno-21-6" href="#__codelineno-21-6"></a><span class="nt">persistence_path</span><span class="p">:</span><span class="w"> </span><span class="s">"postgresql://user:pass@db.example.com/attune"</span>
 <a id="__codelineno-21-7" name="__codelineno-21-7" href="#__codelineno-21-7"></a><span class="nt">metrics_enabled</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
-<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="nt">metrics_path</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;postgresql://user:pass@db.example.com/metrics&quot;</span>
+<a id="__codelineno-21-8" name="__codelineno-21-8" href="#__codelineno-21-8"></a><span class="nt">metrics_path</span><span class="p">:</span><span class="w"> </span><span class="s">"postgresql://user:pass@db.example.com/metrics"</span>
 <a id="__codelineno-21-9" name="__codelineno-21-9" href="#__codelineno-21-9"></a>
 <a id="__codelineno-21-10" name="__codelineno-21-10" href="#__codelineno-21-10"></a><span class="c1"># Stricter trust and pattern thresholds</span>
 <a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="nt">trust_erosion_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.15</span>
@@ -7114,9 +7114,9 @@ lower quality).</p>
 <a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>
 <a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="c1"># For unit tests</span>
 <a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="n">config</span> <span class="o">=</span> <span class="n">AttuneConfig</span><span class="p">(</span>
-<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>    <span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;test_user&quot;</span><span class="p">,</span>
-<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>    <span class="n">persistence_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># Don&#39;t save during tests</span>
-<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>    <span class="n">metrics_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>      <span class="c1"># Don&#39;t collect metrics during tests</span>
+<a id="__codelineno-22-5" name="__codelineno-22-5" href="#__codelineno-22-5"></a>    <span class="n">user_id</span><span class="o">=</span><span class="s2">"test_user"</span><span class="p">,</span>
+<a id="__codelineno-22-6" name="__codelineno-22-6" href="#__codelineno-22-6"></a>    <span class="n">persistence_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># Don't save during tests</span>
+<a id="__codelineno-22-7" name="__codelineno-22-7" href="#__codelineno-22-7"></a>    <span class="n">metrics_enabled</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>      <span class="c1"># Don't collect metrics during tests</span>
 <a id="__codelineno-22-8" name="__codelineno-22-8" href="#__codelineno-22-8"></a><span class="p">)</span>
 </code></pre></div>
 <h2 id="environment-variable-reference">Environment Variable Reference<a class="headerlink" href="#environment-variable-reference" title="Permanent link">&para;</a></h2>
@@ -7124,7 +7124,7 @@ lower quality).</p>
 the <code>ATTUNE_</code> prefix (<code>EMPATHY_</code> prefix is also accepted for backward
 compatibility):</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Core settings</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_USER_ID</span><span class="o">=</span><span class="s2">&quot;user_123&quot;</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_USER_ID</span><span class="o">=</span><span class="s2">"user_123"</span>
 <a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_CONFIDENCE_THRESHOLD</span><span class="o">=</span><span class="m">0</span>.75
 <a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>
 <a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="c1"># Trust settings</span>

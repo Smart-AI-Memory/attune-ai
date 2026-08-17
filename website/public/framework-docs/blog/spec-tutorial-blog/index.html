@@ -4900,7 +4900,7 @@ describing a feature and hoping the AI gets it right,
    gates and approval</li>
 </ol>
 <h2 id="getting-started">Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[developer]&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'attune-ai[developer]'</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>attune<span class="w"> </span>setup
 </code></pre></div>
 <p>In Claude Code:</p>
@@ -4953,26 +4953,26 @@ the plan stage.</p>
 <h2 id="plan-stage">Plan Stage<a class="headerlink" href="#plan-stage" title="Permanent link">&para;</a></h2>
 <p>From the brainstorm, <code>/spec</code> generates a plan file saved
 to <code>.claude/plans/</code>. Each task is an XML block:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">&lt;task</span><span class="w"> </span><span class="na">id=</span><span class="s">&quot;1&quot;</span><span class="w"> </span><span class="na">name=</span><span class="s">&quot;jwt-auth-core&quot;</span><span class="nt">&gt;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nt">&lt;task</span><span class="w"> </span><span class="na">id=</span><span class="s">"1"</span><span class="w"> </span><span class="na">name=</span><span class="s">"jwt-auth-core"</span><span class="nt">&gt;</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span><span class="nt">&lt;objective&gt;</span>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span>Create<span class="w"> </span>JWT<span class="w"> </span>token<span class="w"> </span>generation<span class="w"> </span>and<span class="w"> </span>validation<span class="w"> </span>with
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span>configurable<span class="w"> </span>expiry<span class="w"> </span>and<span class="w"> </span>refresh<span class="w"> </span>support
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="w">  </span><span class="nt">&lt;/objective&gt;</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="w">  </span><span class="nt">&lt;files-to-create&gt;</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">    </span><span class="nt">&lt;file</span><span class="w"> </span><span class="na">path=</span><span class="s">&quot;src/auth/jwt.py&quot;</span><span class="nt">&gt;</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="w">    </span><span class="nt">&lt;file</span><span class="w"> </span><span class="na">path=</span><span class="s">"src/auth/jwt.py"</span><span class="nt">&gt;</span>
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="w">      </span>JWTManager<span class="w"> </span>class<span class="w"> </span>with<span class="w"> </span>create_token(),
 <a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="w">      </span>validate_token(),<span class="w"> </span>and<span class="w"> </span>refresh_token()
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="w">    </span><span class="nt">&lt;/file&gt;</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">    </span><span class="nt">&lt;file</span><span class="w"> </span><span class="na">path=</span><span class="s">&quot;tests/auth/test_jwt.py&quot;</span><span class="nt">&gt;</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="w">    </span><span class="nt">&lt;file</span><span class="w"> </span><span class="na">path=</span><span class="s">"tests/auth/test_jwt.py"</span><span class="nt">&gt;</span>
 <a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="w">      </span>Tests<span class="w"> </span>for<span class="w"> </span>token<span class="w"> </span>creation,<span class="w"> </span>validation,<span class="w"> </span>expiry,
 <a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="w">      </span>and<span class="w"> </span>refresh<span class="w"> </span>flows
 <a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="w">    </span><span class="nt">&lt;/file&gt;</span>
 <a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a><span class="w">  </span><span class="nt">&lt;/files-to-create&gt;</span>
 <a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>
 <a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a><span class="w">  </span><span class="nt">&lt;files-to-modify&gt;</span>
-<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">    </span><span class="nt">&lt;file</span><span class="w"> </span><span class="na">path=</span><span class="s">&quot;src/auth/__init__.py&quot;</span><span class="nt">&gt;</span>
-<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">      </span><span class="nt">&lt;change</span><span class="w"> </span><span class="na">location=</span><span class="s">&quot;exports&quot;</span><span class="nt">&gt;</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a><span class="w">    </span><span class="nt">&lt;file</span><span class="w"> </span><span class="na">path=</span><span class="s">"src/auth/__init__.py"</span><span class="nt">&gt;</span>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="w">      </span><span class="nt">&lt;change</span><span class="w"> </span><span class="na">location=</span><span class="s">"exports"</span><span class="nt">&gt;</span>
 <a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="w">        </span>Add<span class="w"> </span>JWTManager<span class="w"> </span>to<span class="w"> </span>public<span class="w"> </span>exports
 <a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="w">      </span><span class="nt">&lt;/change&gt;</span>
 <a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a><span class="w">    </span><span class="nt">&lt;/file&gt;</span>
@@ -4985,7 +4985,7 @@ to <code>.claude/plans/</code>. Each task is an XML block:</p>
 <a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a><span class="w">  </span><span class="nt">&lt;/validation&gt;</span>
 <a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a>
 <a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a><span class="w">  </span><span class="nt">&lt;risks&gt;</span>
-<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a><span class="w">    </span><span class="nt">&lt;risk</span><span class="w"> </span><span class="na">severity=</span><span class="s">&quot;medium&quot;</span><span class="nt">&gt;</span>
+<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a><span class="w">    </span><span class="nt">&lt;risk</span><span class="w"> </span><span class="na">severity=</span><span class="s">"medium"</span><span class="nt">&gt;</span>
 <a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a><span class="w">      </span>Secret<span class="w"> </span>key<span class="w"> </span>rotation<span class="w"> </span>requires<span class="w"> </span>invalidating<span class="w"> </span>all
 <a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a><span class="w">      </span>existing<span class="w"> </span>tokens
 <a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a><span class="w">    </span><span class="nt">&lt;/risk&gt;</span>
@@ -5060,7 +5060,7 @@ on anything serious.</p>
 <h2 id="resume-support">Resume Support<a class="headerlink" href="#resume-support" title="Permanent link">&para;</a></h2>
 <p>Close Claude Code mid-spec? No problem. State is
 persisted inside the plan file as an HTML comment:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="cm">&lt;!-- spec-state: {&quot;completed&quot;:[&quot;1&quot;,&quot;2&quot;],&quot;current&quot;:&quot;3&quot;} --&gt;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="cm">&lt;!-- spec-state: {"completed":["1","2"],"current":"3"} --&gt;</span>
 </code></pre></div>
 <p>Next time you open Claude Code:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>/spec resume
@@ -5107,7 +5107,7 @@ work — start a refactor today, finish it tomorrow.</p>
 </ul>
 <hr />
 <h2 id="install">Install<a class="headerlink" href="#install" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[developer]&#39;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'attune-ai[developer]'</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>attune<span class="w"> </span>setup
 </code></pre></div>
 <p>Then type <code>/spec</code> in Claude Code.</p>

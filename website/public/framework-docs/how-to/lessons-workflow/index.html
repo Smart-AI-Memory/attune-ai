@@ -4926,7 +4926,7 @@ lessons.md, so the two files cannot silently diverge.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.lessons</span><span class="w"> </span><span class="kn">import</span> <span class="n">LessonsIndex</span><span class="p">,</span> <span class="n">find_lessons_file</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">index</span> <span class="o">=</span> <span class="n">LessonsIndex</span><span class="p">(</span><span class="n">find_lessons_file</span><span class="p">())</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">hits</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="s2">&quot;stash pop silently skipped files&quot;</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">hits</span> <span class="o">=</span> <span class="n">index</span><span class="o">.</span><span class="n">retrieve</span><span class="p">(</span><span class="s2">"stash pop silently skipped files"</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 </code></pre></div>
 <p>Retrieval quality on the project's golden-query benchmark:
 P@1 84%, P@3 96%, with all high-severity queries hitting.</p>
