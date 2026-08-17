@@ -535,7 +535,7 @@ requires-dist = [
     { name = "attune-help", marker = "extra == 'dev'", specifier = ">=0.10.0" },
     { name = "attune-rag", specifier = ">=0.1.5,<2.0" },
     { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.5,<2.0" },
-    { name = "attune-verify", specifier = ">=0.1.0,<0.3" },
+    { name = "attune-verify", specifier = ">=0.1.0,<0.6" },
     { name = "bandit", marker = "extra == 'all'", specifier = ">=1.7,<2.0" },
     { name = "bandit", marker = "extra == 'dev'", specifier = ">=1.7,<2.0" },
     { name = "bcrypt", marker = "extra == 'all'", specifier = ">=4.0.0,<6.0.0" },
