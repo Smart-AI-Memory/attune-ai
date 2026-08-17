@@ -1,24 +1,12 @@
 # Modules needing work
 
-**Generated:** 2026-08-16 07:01 UTC by `scripts/modules_needing_work.py` — regenerate in place, don't hand-edit (the dated 2026-07-30 report is the historical first edition).
+**Generated:** 2026-08-17 13:09 UTC by `scripts/modules_needing_work.py` — regenerate in place, don't hand-edit (the dated 2026-07-30 report is the historical first edition).
 
-**Source:** Codecov main — project total 96.13% across 717 files. Candidate list for coverage lanes (test-quality program #1569).
+**Source:** Codecov main — project total 96.16% across 717 files. Candidate list for coverage lanes (test-quality program #1569).
 
-## Tier 1 — measured below the 85% bar (2 modules)
+## Tier 1 — measured below the 85% bar (0 modules)
 
-### Clusters by miss volume
-
-| Cluster | Modules | Missed lines |
-|---|---|---|
-| `hooks` | 1 | 17 |
-| `widgets` | 1 | 0 |
-
-### Full list (ascending coverage)
-
-| Cover | Lines | Miss | Module |
-|---|---|---|---|
-| 82.52% | 103 | 17 | `src/attune/hooks/executor.py` |
-| 83.78% | 37 | 0 | `src/attune/widgets/chart_components.py` |
+Nothing below 85% — the floor is the ceiling today.
 
 ## Tier 2 — omitted from measurement (un-omit-audit candidates)
 
