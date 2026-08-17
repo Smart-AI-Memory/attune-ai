@@ -19,7 +19,7 @@ python-dotenv>=1.0.0,<2.0.0
 
 # Data validation (match core deps)
 pydantic>=2.0.0,<3.0.0
-pydantic-settings>=2.14.2,<3.0.0
+pydantic-settings>=2.15.0,<3.0.0
 email-validator>=2.3.0,<3.0.0
 
 # Async support
