@@ -49,6 +49,9 @@ def isolated_starter(tmp_path, hook_module, monkeypatch):
     path = tmp_path / "next_session_starter.md"
     monkeypatch.setattr(hook_module, "STARTER_PATH", path)
     monkeypatch.setattr(hook_module, "_find_project_starter", lambda *a, **k: None)
+    # Pin repo discovery away from the real cwd so tracked handoffs in
+    # THIS repo don't preempt the legacy-global path under test (R9).
+    monkeypatch.setattr(hook_module, "_repo_root", lambda *a, **k: None)
     return path
 
 
@@ -139,6 +142,7 @@ class TestProjectLocalStarter:
     def test_project_notice_emitted(self, hook_module, tmp_path, monkeypatch, capsys):
         repo = self._make_repo(tmp_path, "# repo handoff\n")
         starter = repo / ".attune" / "next_session_starter.md"
+        monkeypatch.setattr(hook_module, "_repo_root", lambda *a, **k: repo)
         monkeypatch.setattr(hook_module, "_find_project_starter", lambda *a, **k: starter)
         # No global file.
         monkeypatch.setattr(hook_module, "STARTER_PATH", tmp_path / "nope.md")
@@ -148,17 +152,95 @@ class TestProjectLocalStarter:
         assert "[starter-prompt:project]" in out
         assert str(starter) in out
 
-    def test_both_project_and_global_emitted(self, hook_module, tmp_path, monkeypatch, capsys):
+    def test_global_suppressed_when_project_exists(
+        self, hook_module, tmp_path, monkeypatch, capsys
+    ):
+        """R9: the legacy global file only surfaces when nothing
+        repo-scoped exists — never alongside a project starter."""
         repo = self._make_repo(tmp_path, "# repo\n")
         starter = repo / ".attune" / "next_session_starter.md"
         global_path = tmp_path / "global_starter.md"
         global_path.write_text("# global\n", encoding="utf-8")
+        monkeypatch.setattr(hook_module, "_repo_root", lambda *a, **k: repo)
         monkeypatch.setattr(hook_module, "_find_project_starter", lambda *a, **k: starter)
         monkeypatch.setattr(hook_module, "STARTER_PATH", global_path)
         hook_module.main()
         out = capsys.readouterr().out
         assert "[starter-prompt:project]" in out
-        assert "[starter-prompt:global]" in out
+        assert "[starter-prompt:global" not in out
+
+    def test_global_fallback_is_labeled_legacy(self, hook_module, tmp_path, monkeypatch, capsys):
+        global_path = tmp_path / "global_starter.md"
+        global_path.write_text("# global\n", encoding="utf-8")
+        monkeypatch.setattr(hook_module, "_repo_root", lambda *a, **k: None)
+        monkeypatch.setattr(hook_module, "_find_project_starter", lambda *a, **k: None)
+        monkeypatch.setattr(hook_module, "STARTER_PATH", global_path)
+        hook_module.main()
+        out = capsys.readouterr().out
+        assert "[starter-prompt:global:LEGACY]" in out
+        assert "retiring surface" in out
+
+
+class TestFindHandoff:
+    """R9: tracked docs/handoffs/ surfacing, branch-slug first."""
+
+    def _make_repo(self, tmp_path: Path) -> Path:
+        (tmp_path / ".git").mkdir()
+        (tmp_path / "docs" / "handoffs").mkdir(parents=True)
+        return tmp_path
+
+    def test_branch_slug_wins(self, hook_module, tmp_path, monkeypatch):
+        repo = self._make_repo(tmp_path)
+        d = repo / "docs" / "handoffs"
+        (d / "claude-my-branch.md").write_text("branch handoff\n", encoding="utf-8")
+        (d / "other.md").write_text("other\n", encoding="utf-8")
+        monkeypatch.setattr(hook_module, "_current_branch", lambda root: "claude/my-branch")
+        found = hook_module.find_handoff(repo)
+        assert found is not None
+        path, scope = found
+        assert path.name == "claude-my-branch.md"
+        assert scope == "handoff:branch"
+
+    def test_newest_when_no_branch_match(self, hook_module, tmp_path, monkeypatch):
+        import os
+
+        repo = self._make_repo(tmp_path)
+        d = repo / "docs" / "handoffs"
+        old = d / "old.md"
+        new = d / "new.md"
+        old.write_text("old\n", encoding="utf-8")
+        new.write_text("new\n", encoding="utf-8")
+        os.utime(old, (1_600_000_000, 1_600_000_000))
+        monkeypatch.setattr(hook_module, "_current_branch", lambda root: None)
+        found = hook_module.find_handoff(repo)
+        assert found is not None
+        assert found[0].name == "new.md"
+        assert found[1] == "handoff:newest"
+
+    def test_readme_and_empty_skipped(self, hook_module, tmp_path, monkeypatch):
+        repo = self._make_repo(tmp_path)
+        d = repo / "docs" / "handoffs"
+        (d / "README.md").write_text("index\n", encoding="utf-8")
+        (d / "empty.md").write_text("", encoding="utf-8")
+        monkeypatch.setattr(hook_module, "_current_branch", lambda root: None)
+        assert hook_module.find_handoff(repo) is None
+
+    def test_no_handoffs_dir_is_none(self, hook_module, tmp_path):
+        (tmp_path / ".git").mkdir()
+        assert hook_module.find_handoff(tmp_path) is None
+
+    def test_handoff_emitted_first_by_main(self, hook_module, tmp_path, monkeypatch, capsys):
+        repo = self._make_repo(tmp_path)
+        d = repo / "docs" / "handoffs"
+        (d / "claude-x.md").write_text("branch handoff\n", encoding="utf-8")
+        monkeypatch.setattr(hook_module, "_repo_root", lambda *a, **k: repo)
+        monkeypatch.setattr(hook_module, "_current_branch", lambda root: "claude/x")
+        monkeypatch.setattr(hook_module, "_find_project_starter", lambda *a, **k: None)
+        monkeypatch.setattr(hook_module, "STARTER_PATH", tmp_path / "unused-global.md")
+        hook_module.main()
+        out = capsys.readouterr().out
+        assert "[starter-prompt:handoff:branch]" in out
+        assert "[starter-prompt:global" not in out
 
 
 class TestAgeFormatter:

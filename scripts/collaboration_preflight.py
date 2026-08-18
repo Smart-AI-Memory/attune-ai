@@ -286,6 +286,29 @@ def check_projection_commands(root: Path, runner: Runner = run_command) -> list[
     return checks
 
 
+def check_hook_fleet(root: Path, runner: Runner = run_command) -> Check:
+    """Session-hook fleet audit (session-start-integrity R7).
+
+    Runs the fleet projector's ``--check`` mode: sibling repos missing
+    the canonical session-start hooks, or carrying hash-divergent
+    copies, surface as a WARN (never FAIL — sibling state is not this
+    repo's CI concern; absent siblings are skipped by the projector).
+    """
+    registry = root / "scripts" / "session_hook_fleet.json"
+    if not registry.is_file():
+        return Check("SKIP", "hook-fleet", "no fleet registry present")
+    result = runner((sys.executable, "scripts/sync_session_hooks.py", "--check"), root, None)
+    if result.returncode == 0:
+        return Check("PASS", "hook-fleet", "sibling session hooks in sync")
+    drift = [line for line in result.stdout.splitlines() if line.startswith("[drift]")]
+    detail = "; ".join(drift) or result.stdout.strip() or "fleet check failed"
+    return Check(
+        "WARN",
+        "hook-fleet",
+        f"{detail} — run: python scripts/sync_session_hooks.py --write",
+    )
+
+
 def run_governance_tests(root: Path, runner: Runner = run_command) -> Check:
     """Run focused tests without provisioning or changing an environment."""
     if importlib.util.find_spec("pytest") is None:
@@ -333,6 +356,7 @@ def run_preflight(
     """Run all collaboration checks and verify repository status is unchanged."""
     checks, before_status = inspect_git_state(root, runner)
     checks.extend(check_projection_commands(root, runner))
+    checks.append(check_hook_fleet(root, runner))
     if skip_tests:
         checks.append(Check("SKIP", "governance-tests", "skipped by --skip-tests"))
     else:

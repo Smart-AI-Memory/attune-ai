@@ -50,6 +50,7 @@ import re
 import subprocess
 import sys
 import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 
 STARTER_PATH = Path.home() / ".attune" / "next_session_starter.md"
@@ -125,6 +126,90 @@ def _find_project_starter(start: Path | None = None) -> Path | None:
 def _dedupe(items: list[str]) -> list[str]:
     """De-duplicate preserving first-seen order."""
     return list(dict.fromkeys(items))
+
+
+# --- Provenance (session-start-integrity R1-R3) -----------------------
+#: Staleness TTL for a stamped starter, in hours (R2).
+STALE_TTL_HOURS = 48
+
+#: Frontmatter block at the very top of a starter file.
+PROVENANCE_RE = re.compile(r"\A---\n(.*?)\n---\n?", re.DOTALL)
+
+#: Recognized provenance keys — anything else in the block is ignored.
+PROVENANCE_KEYS = ("repo", "branch", "head_sha", "written_at")
+
+
+def parse_provenance(text: str) -> tuple[dict[str, str], str]:
+    """Split starter ``text`` into (provenance fields, body).
+
+    The body has the frontmatter stripped so provenance values (the
+    ``branch:`` line especially) are never extracted as named threads.
+    Missing/absent frontmatter yields ``({}, text)`` unchanged.
+    """
+    match = PROVENANCE_RE.match(text)
+    if not match:
+        return {}, text
+    fields: dict[str, str] = {}
+    for line in match.group(1).splitlines():
+        key, sep, value = line.partition(":")
+        if sep and key.strip() in PROVENANCE_KEYS and value.strip():
+            fields[key.strip()] = value.strip()
+    return fields, text[match.end() :]
+
+
+def _normalize_remote(url: str) -> str:
+    """``owner/name`` slug from a remote URL (D1), lowercased."""
+    tail = url.strip().removesuffix(".git").replace(":", "/")
+    parts = [p for p in tail.split("/") if p]
+    return "/".join(parts[-2:]).lower() if len(parts) >= 2 else tail.lower()
+
+
+def repo_slug(repo_root: Path | None) -> str | None:
+    """Current repo identity: origin slug, else directory name (D1)."""
+    if repo_root is None:
+        return None
+    result = _run(["git", "remote", "get-url", "origin"], repo_root)
+    if result is not None and result.returncode == 0 and result.stdout.strip():
+        return _normalize_remote(result.stdout.strip())
+    return repo_root.name.lower()
+
+
+def starter_age_hours(provenance: dict[str, str]) -> float | None:
+    """Hours since ``written_at``, or None when absent/unparseable."""
+    stamp = provenance.get("written_at")
+    if not stamp:
+        return None
+    try:
+        written = datetime.fromisoformat(stamp)
+    except ValueError:
+        return None
+    if written.tzinfo is None:
+        written = written.replace(tzinfo=timezone.utc)
+    return (datetime.now(timezone.utc) - written).total_seconds() / 3600
+
+
+def stamp_provenance(path: Path, repo_root: Path | None) -> str:
+    """Write machine-derived provenance frontmatter onto ``path`` (R1).
+
+    Replaces any existing frontmatter block; idempotent in structure.
+    Returns the block that was written (for the caller to print).
+    """
+    fields: dict[str, str] = {}
+    slug = repo_slug(repo_root)
+    if slug:
+        fields["repo"] = slug
+    branch = _run(["git", "branch", "--show-current"], repo_root)
+    if branch is not None and branch.returncode == 0 and branch.stdout.strip():
+        fields["branch"] = branch.stdout.strip()
+    head = _run(["git", "rev-parse", "HEAD"], repo_root)
+    if head is not None and head.returncode == 0 and head.stdout.strip():
+        fields["head_sha"] = head.stdout.strip()
+    fields["written_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+    _, body = parse_provenance(path.read_text(encoding="utf-8"))
+    block = "---\n" + "".join(f"{k}: {v}\n" for k, v in fields.items()) + "---\n"
+    path.write_text(block + body, encoding="utf-8")
+    return block
 
 
 def extract_threads(text: str) -> tuple[list[int], list[str], list[str]]:
@@ -371,18 +456,30 @@ def _spec_lines(specs: dict[str, str]) -> list[str]:
     return lines
 
 
-def format_banner(results: dict, label: str, path: Path) -> str | None:
-    """Render the freshness banner, or None if nothing to report."""
+def format_banner(
+    results: dict,
+    label: str,
+    path: Path,
+    header_lines: list[str] | None = None,
+) -> str | None:
+    """Render the freshness banner, or None if nothing to report.
+
+    ``header_lines`` (provenance warnings — STALE / unprovenanced) are
+    inserted right under the path line and force a banner even when no
+    named threads were found: a stale starter with nothing verifiable
+    still deserves its warning.
+    """
     prs = results["prs"]
     branches = results["branches"]
     pypi = results["pypi"]
     versions = results["versions"]
     newer = results.get("newer_merges") or []
     specs = results.get("specs") or {}
-    if not prs and not branches and pypi is None and not newer and not specs:
+    if not prs and not branches and pypi is None and not newer and not specs and not header_lines:
         return None
 
     lines = [f"[starter-reconcile:{label}] {path}"]
+    lines.extend(header_lines or [])
     if prs:
         joined = " · ".join(f"#{num} {state}" for num, state in prs.items())
         lines.append(f"  PRs: {joined}")
@@ -418,12 +515,47 @@ def _reconcile_and_emit(path: Path, label: str, repo_root: Path | None) -> bool:
     except OSError:
         return False
 
+    provenance, body = parse_provenance(text)
+    current = repo_slug(repo_root)
+    prov_repo = provenance.get("repo", "").lower() or None
+
+    # R2 fail-closed: a PROVEN cross-repo starter gets no verdicts —
+    # plausible verification against the wrong repo is worse than none.
+    if prov_repo and current and prov_repo != current:
+        print(
+            f"[starter-reconcile:{label}] {path}\n"
+            f"  ⚠ starter provenance repo={prov_repo} ≠ current={current}"
+            " — named-thread verification SKIPPED (cross-repo);"
+            " stamp a starter for this repo:"
+            " starter_reconciler.py --stamp <file>"
+        )
+        return True
+
+    header_lines: list[str] = []
+    age = starter_age_hours(provenance)
+    if age is not None and age > STALE_TTL_HOURS:
+        header_lines.append(
+            f"  ⚠ STALE starter — written {age / 24:.1f} days ago"
+            f" (TTL {STALE_TTL_HOURS}h); re-verify its queue against main"
+        )
+
     pkg = _package_name(repo_root)
-    results = reconcile(text, pkg, repo_root)
+    results = reconcile(body, pkg, repo_root)
     results["pkg"] = pkg or ""
-    banner = format_banner(results, label, path)
+    banner = format_banner(results, label, path, header_lines)
     if banner is None:
         return False
+    if prov_repo is None:
+        # Annotate only banners that carry verdicts — an empty starter
+        # gets no warning, so the refusal path stays rare (D2).
+        lines = banner.splitlines()
+        lines.insert(
+            1,
+            "  ⚠ no provenance — verdicts below assume this starter is"
+            " about THIS repo; stamp starters at write time"
+            " (starter_reconciler.py --stamp <file>)",
+        )
+        banner = "\n".join(lines)
     print(banner)
     return True
 
@@ -439,8 +571,28 @@ def _repo_root(start: Path | None = None) -> Path | None:
 
 
 def main() -> int:
-    """Reconcile the project-local then global starter, if present."""
+    """Reconcile starters — or, with ``--stamp [file]``, write provenance.
+
+    ``--stamp`` (R1 writer half): stamps the named file (default: the
+    project-local starter, created if absent) with machine-derived
+    provenance from the current git state, then exits.
+    """
     repo_root = _repo_root()
+    if "--stamp" in sys.argv[1:]:
+        args = [a for a in sys.argv[1:] if a != "--stamp"]
+        if args:
+            target = Path(args[0]).expanduser()
+        elif repo_root is not None:
+            target = repo_root / PROJECT_STARTER_RELPATH
+        else:
+            target = STARTER_PATH
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if not target.exists():
+            target.write_text("", encoding="utf-8")
+        block = stamp_provenance(target, repo_root)
+        print(f"stamped {target}\n{block}", end="")
+        return 0
+
     project_path = _find_project_starter()
     if project_path is not None:
         _reconcile_and_emit(project_path, "project", repo_root)
