@@ -131,6 +131,43 @@ class TestTokenBudgetAllocator:
         assert "self.items.append" not in allocated["a.py"]
 
 
+class TestFitSource:
+    """fit_source ladder: full source → skeleton → truncated skeleton."""
+
+    def test_under_budget_passes_through_unchanged(self) -> None:
+        allocator = TokenBudgetAllocator(default_token_limit=4000)
+        assert allocator.fit_source(SAMPLE_CODE) == SAMPLE_CODE
+
+    def test_over_budget_degrades_to_skeleton(self) -> None:
+        # SAMPLE_CODE is ~120 estimated tokens; its skeleton is ~65.
+        allocator = TokenBudgetAllocator(default_token_limit=90)
+        fitted = allocator.fit_source(SAMPLE_CODE)
+        # Every signature survives; bodies are gone.
+        assert "def __init__(self, config: dict) -> None:" in fitted
+        assert "def process(self, data: list) -> dict:" in fitted
+        assert "self.items.append" not in fitted
+        assert "result[x] = x ** 2" not in fitted
+
+    def test_skeleton_over_budget_truncates_with_marker(self) -> None:
+        allocator = TokenBudgetAllocator(default_token_limit=10)
+        fitted = allocator.fit_source(SAMPLE_CODE)
+        assert "truncated at token limit 10" in fitted
+        # Truncation cap is limit * 4 chars plus the marker line.
+        marker_start = fitted.index("\n# ... truncated")
+        assert marker_start <= 40
+
+    def test_non_python_over_budget_degrades_to_truncation(self) -> None:
+        prose = "word " * 200  # unparseable as Python, ~250 tokens
+        allocator = TokenBudgetAllocator(default_token_limit=50)
+        fitted = allocator.fit_source(prose)
+        assert fitted.startswith("word ")
+        assert "truncated at token limit 50" in fitted
+
+    def test_explicit_token_limit_overrides_default(self) -> None:
+        allocator = TokenBudgetAllocator(default_token_limit=10)
+        assert allocator.fit_source(SAMPLE_CODE, token_limit=4000) == SAMPLE_CODE
+
+
 class TestContextInflater:
     """Tests for ContextInflater."""
 

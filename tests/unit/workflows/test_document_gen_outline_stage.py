@@ -193,3 +193,39 @@ class TestOutlineStage:
         )
 
         assert result["content_to_document"] == "some code here"
+
+
+def _oversized_module(n_funcs: int = 40) -> str:
+    """Python source well over the outline budget whose skeleton fits:
+    bulky bodies (sentinel constant 1000001), compact signatures."""
+    body = "\n".join(f"    v{j} = {j} * 1000001" for j in range(6))
+    funcs = [f"def func_{i:03d}(x: int) -> int:\n{body}\n    return x\n" for i in range(n_funcs)]
+    funcs.append(f"def zz_tail_function(name: str) -> str:\n{body}\n    return name\n")
+    return "\n".join(funcs)
+
+
+class TestOutlineSourceBudget:
+    """Oversized source degrades to an AST skeleton in the prompt —
+    every signature survives (the old [:4000] slice chopped the tail)
+    while the full source still flows to later stages untouched."""
+
+    @pytest.mark.asyncio
+    async def test_oversized_source_skeleton_in_prompt(self) -> None:
+        class _Capture(_FakeHost):
+            def __init__(self) -> None:
+                super().__init__()
+                self.user_msg = ""
+
+            async def _call_llm(self, tier, system, user_msg, max_tokens=1000):
+                self.user_msg = user_msg
+                return "1. Introduction\n", 100, 200
+
+        host = _Capture()
+        source = _oversized_module()
+        result, _, _ = await host._outline(
+            {"source_code": source, "doc_type": "api", "audience": "developers"},
+            ModelTier.CHEAP,
+        )
+        assert "def zz_tail_function(name: str) -> str:" in host.user_msg
+        assert "1000001" not in host.user_msg
+        assert result["content_to_document"] == source

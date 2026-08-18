@@ -9,6 +9,8 @@ Licensed under the Apache License, Version 2.0
 
 import logging
 
+from attune.context import TokenBudgetAllocator
+
 from ..base import ModelTier
 
 logger = logging.getLogger(__name__)
@@ -155,7 +157,7 @@ Outline to follow:
 {outline}
 
 Source code to document (extract actual class names, function signatures, parameters):
-{content_to_document[:5000]}
+{TokenBudgetAllocator().fit_source(content_to_document, token_limit=1250)}
 
 ═══════════════════════════════════════════════════════════════
 YOUR TASK:
