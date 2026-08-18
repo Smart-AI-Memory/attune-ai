@@ -518,3 +518,59 @@ def test_main_prints_summary_and_returns_failure(
 def test_main_update_guidance_protects_task_worktree() -> None:
     assert "existing main checkout" in preflight.MAIN_UPDATE_GUIDANCE
     assert "leave the current task worktree untouched" in preflight.MAIN_UPDATE_GUIDANCE
+
+
+# --- hook-fleet audit (session-start-integrity R7) --------------------
+
+
+class _FleetProc:
+    def __init__(self, returncode: int, stdout: str = "") -> None:
+        self.returncode = returncode
+        self.stdout = stdout
+        self.stderr = ""
+
+
+def _fleet_root(tmp_path: Path, with_registry: bool = True) -> Path:
+    if with_registry:
+        (tmp_path / "scripts").mkdir()
+        (tmp_path / "scripts" / "session_hook_fleet.json").write_text("{}", encoding="utf-8")
+    return tmp_path
+
+
+def test_hook_fleet_skips_without_registry(tmp_path) -> None:
+    check = preflight.check_hook_fleet(_fleet_root(tmp_path, with_registry=False))
+    assert check.status == "SKIP"
+
+
+def test_hook_fleet_pass_when_in_sync(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(preflight.subprocess, "run", lambda *a, **k: _FleetProc(0, "[ok] ~/x\n"))
+    check = preflight.check_hook_fleet(_fleet_root(tmp_path))
+    assert check.status == "PASS"
+
+
+def test_hook_fleet_warns_with_drift_detail(tmp_path, monkeypatch) -> None:
+    out = "[drift] ~/x: missing .claude/hooks/spec_orient.py\n[skip] ~/y — not present\n"
+    monkeypatch.setattr(preflight.subprocess, "run", lambda *a, **k: _FleetProc(1, out))
+    check = preflight.check_hook_fleet(_fleet_root(tmp_path))
+    assert check.status == "WARN"
+    assert "missing .claude/hooks/spec_orient.py" in check.detail
+    assert "sync_session_hooks.py --write" in check.detail
+
+
+def test_hook_fleet_timeout_degrades_to_warn(tmp_path, monkeypatch) -> None:
+    def _raise(*a, **k):
+        raise subprocess.TimeoutExpired(cmd="x", timeout=60)
+
+    monkeypatch.setattr(preflight.subprocess, "run", _raise)
+    check = preflight.check_hook_fleet(_fleet_root(tmp_path))
+    assert check.status == "WARN"
+    assert "timed out" in check.detail
+
+
+def test_hook_fleet_unpushed_warns_on_clean_exit(tmp_path, monkeypatch) -> None:
+    """D4: [warn] lines on exit 0 (unpushed sibling hooks) -> WARN."""
+    out = "[ok] ~/x\n[warn] ~/x: 1 unpushed hook commit(s) — push\n"
+    monkeypatch.setattr(preflight.subprocess, "run", lambda *a, **k: _FleetProc(0, out))
+    check = preflight.check_hook_fleet(_fleet_root(tmp_path))
+    assert check.status == "WARN"
+    assert "unpushed hook commit" in check.detail

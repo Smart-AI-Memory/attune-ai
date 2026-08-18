@@ -601,3 +601,185 @@ class TestSpecStatusCrossRead:
 
     def test_none_repo_root_is_empty(self, hook_module):
         assert hook_module.check_specs("docs/specs/x", None) == {}
+
+
+# --- provenance (session-start-integrity R1-R3) -----------------------
+
+
+class _FakeGit:
+    """Route _run calls by subcommand for provenance tests."""
+
+    def __init__(self, remote="git@github.com:Smart-AI-Memory/attune-ai.git"):
+        self.remote = remote
+
+    def __call__(self, cmd, cwd):
+        class _P:
+            returncode = 0
+
+            def __init__(self, out):
+                self.stdout = out
+
+        if cmd[:3] == ["git", "remote", "get-url"]:
+            return _P(self.remote + "\n")
+        if cmd[:3] == ["git", "branch", "--show-current"]:
+            return _P("claude/some-branch\n")
+        if cmd[:2] == ["git", "rev-parse"]:
+            return _P("abc123def\n")
+        return _P("")
+
+
+class TestParseProvenance:
+    def test_parses_and_strips_block(self, hook_module):
+        text = (
+            "---\n"
+            "repo: smart-ai-memory/attune-ai\n"
+            "branch: claude/x\n"
+            "written_at: 2026-08-18T00:00:00+00:00\n"
+            "---\n"
+            "Body mentions #1234\n"
+        )
+        prov, body = hook_module.parse_provenance(text)
+        assert prov["repo"] == "smart-ai-memory/attune-ai"
+        assert prov["branch"] == "claude/x"
+        assert body == "Body mentions #1234\n"
+
+    def test_no_block_returns_text_unchanged(self, hook_module):
+        prov, body = hook_module.parse_provenance("plain starter\n")
+        assert prov == {}
+        assert body == "plain starter\n"
+
+    def test_branch_line_not_extracted_as_thread(self, hook_module):
+        text = "---\nbranch: claude/prov-branch\n---\nno threads here\n"
+        _, body = hook_module.parse_provenance(text)
+        _, branches, _ = hook_module.extract_threads(body)
+        assert branches == []
+
+    def test_unknown_keys_ignored(self, hook_module):
+        prov, _ = hook_module.parse_provenance("---\nfoo: bar\nrepo: a/b\n---\nx")
+        assert prov == {"repo": "a/b"}
+
+
+class TestRepoSlug:
+    def test_ssh_remote_normalized(self, hook_module, monkeypatch, tmp_path):
+        monkeypatch.setattr(hook_module, "_run", _FakeGit())
+        assert hook_module.repo_slug(tmp_path) == "smart-ai-memory/attune-ai"
+
+    def test_https_remote_normalized(self, hook_module, monkeypatch, tmp_path):
+        monkeypatch.setattr(hook_module, "_run", _FakeGit("https://github.com/Owner/Repo.git"))
+        assert hook_module.repo_slug(tmp_path) == "owner/repo"
+
+    def test_no_remote_falls_back_to_dirname(self, hook_module, monkeypatch, tmp_path):
+        monkeypatch.setattr(hook_module, "_run", lambda cmd, cwd: None)
+        assert hook_module.repo_slug(tmp_path) == tmp_path.name.lower()
+
+    def test_none_root_is_none(self, hook_module):
+        assert hook_module.repo_slug(None) is None
+
+
+class TestStarterAge:
+    def test_absent_written_at_is_none(self, hook_module):
+        assert hook_module.starter_age_hours({}) is None
+
+    def test_unparseable_is_none(self, hook_module):
+        assert hook_module.starter_age_hours({"written_at": "yesterday"}) is None
+
+    def test_old_stamp_is_positive_hours(self, hook_module):
+        age = hook_module.starter_age_hours({"written_at": "2020-01-01T00:00:00+00:00"})
+        assert age is not None and age > 24 * 365
+
+
+class TestFailClosedCrossRepo:
+    def test_mismatch_refuses_verification(self, hook_module, tmp_path, capsys, monkeypatch):
+        starter = tmp_path / "s.md"
+        starter.write_text(
+            "---\nrepo: other-org/other-repo\n---\nmerge PR #1118 now\n",
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(hook_module, "repo_slug", lambda root: "smart-ai-memory/attune-ai")
+        called = []
+        monkeypatch.setattr(hook_module, "reconcile", lambda *a, **k: called.append(1))
+        assert hook_module._reconcile_and_emit(starter, "global", tmp_path) is True
+        out = capsys.readouterr().out
+        assert "SKIPPED (cross-repo)" in out
+        assert "other-org/other-repo" in out
+        assert "#1118" not in out  # zero verdicts emitted
+        assert called == []  # verification never ran
+
+    def test_match_verifies_normally(self, hook_module, tmp_path, capsys, monkeypatch):
+        starter = tmp_path / "s.md"
+        starter.write_text(
+            "---\nrepo: smart-ai-memory/attune-ai\n"
+            "written_at: 2026-08-18T00:00:00+00:00\n---\nsee PR #7\n",
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(hook_module, "repo_slug", lambda root: "smart-ai-memory/attune-ai")
+        monkeypatch.setattr(hook_module, "check_pr", lambda n, c: "MERGED")
+        monkeypatch.setattr(hook_module, "merged_prs_on_main", lambda c: [])
+        monkeypatch.setattr(hook_module, "_package_name", lambda root: None)
+        assert hook_module._reconcile_and_emit(starter, "global", tmp_path) is True
+        out = capsys.readouterr().out
+        assert "#7 MERGED" in out
+        assert "no provenance" not in out
+
+    def test_stale_banner_line(self, hook_module, tmp_path, capsys, monkeypatch):
+        starter = tmp_path / "s.md"
+        starter.write_text(
+            "---\nrepo: smart-ai-memory/attune-ai\n"
+            "written_at: 2020-01-01T00:00:00+00:00\n---\nsee PR #7\n",
+            encoding="utf-8",
+        )
+        monkeypatch.setattr(hook_module, "repo_slug", lambda root: "smart-ai-memory/attune-ai")
+        monkeypatch.setattr(hook_module, "check_pr", lambda n, c: "MERGED")
+        monkeypatch.setattr(hook_module, "merged_prs_on_main", lambda c: [])
+        monkeypatch.setattr(hook_module, "_package_name", lambda root: None)
+        hook_module._reconcile_and_emit(starter, "global", tmp_path)
+        assert "STALE starter" in capsys.readouterr().out
+
+    def test_unprovenanced_verdicts_carry_warning(self, hook_module, tmp_path, capsys, monkeypatch):
+        starter = tmp_path / "s.md"
+        starter.write_text("see PR #7\n", encoding="utf-8")
+        monkeypatch.setattr(hook_module, "repo_slug", lambda root: "smart-ai-memory/attune-ai")
+        monkeypatch.setattr(hook_module, "check_pr", lambda n, c: "MERGED")
+        monkeypatch.setattr(hook_module, "merged_prs_on_main", lambda c: [])
+        monkeypatch.setattr(hook_module, "_package_name", lambda root: None)
+        hook_module._reconcile_and_emit(starter, "global", tmp_path)
+        out = capsys.readouterr().out
+        assert "no provenance" in out
+        assert "#7 MERGED" in out
+
+
+class TestStampProvenance:
+    def test_stamp_writes_fields_and_is_idempotent(self, hook_module, tmp_path, monkeypatch):
+        monkeypatch.setattr(hook_module, "_run", _FakeGit())
+        target = tmp_path / "starter.md"
+        target.write_text("queue item one\n", encoding="utf-8")
+        block = hook_module.stamp_provenance(target, tmp_path)
+        assert "repo: smart-ai-memory/attune-ai" in block
+        assert "branch: claude/some-branch" in block
+        assert "head_sha: abc123def" in block
+        first = target.read_text(encoding="utf-8")
+        assert first.startswith("---\n")
+        assert first.endswith("queue item one\n")
+        # Second stamp replaces the block, never nests a second one.
+        hook_module.stamp_provenance(target, tmp_path)
+        second = target.read_text(encoding="utf-8")
+        assert second.count("---\n") == 2
+        assert second.endswith("queue item one\n")
+        prov, body = hook_module.parse_provenance(second)
+        assert prov["repo"] == "smart-ai-memory/attune-ai"
+        assert body == "queue item one\n"
+
+
+class TestStampPathGuard:
+    """Cross-review F3 (codex, 2026-08-18): --stamp refuses
+    non-markdown targets — frontmatter must never be injected into
+    code or config files."""
+
+    def test_non_markdown_target_refused(self, hook_module, tmp_path, monkeypatch, capsys):
+        target = tmp_path / "settings.json"
+        target.write_text("{}", encoding="utf-8")
+        monkeypatch.setattr(hook_module.sys, "argv", ["prog", "--stamp", str(target)])
+        monkeypatch.setattr(hook_module, "_repo_root", lambda *a, **k: tmp_path)
+        assert hook_module.main() == 1
+        assert target.read_text(encoding="utf-8") == "{}"
+        assert "refusing to stamp" in capsys.readouterr().err
