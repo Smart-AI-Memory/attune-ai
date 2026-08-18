@@ -180,7 +180,11 @@ class TestNoPushRegistry:
         projector.write_sibling(sibling, registry)
         monkeypatch.setattr(projector, "unpushed_hook_commits", lambda s: 99)
         monkeypatch.setattr(projector, "load_registry", lambda *a, **k: registry)
+        # Windows expanduser reads USERPROFILE, POSIX reads HOME —
+        # pin BOTH or the ~/sib entry escapes the fake home on
+        # windows-latest (the classic USERPROFILE lane trap).
         monkeypatch.setenv("HOME", str(sibling.parent))
+        monkeypatch.setenv("USERPROFILE", str(sibling.parent))
         assert projector.main(["--check"]) == 0
         out = capsys.readouterr().out
         assert "[warn]" not in out
