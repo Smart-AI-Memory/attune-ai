@@ -80,7 +80,7 @@ import asyncio
 from attune.workflows import (
     CodeReviewWorkflow,
     ParallelTestGenerationWorkflow,
-    DocumentManagerWorkflow,
+    DocumentGenerationWorkflow,
 )
 
 
@@ -92,7 +92,7 @@ async def process_pull_request(pr_number: int):
     test_task = ParallelTestGenerationWorkflow().execute()
 
     # 3. Update docs (parallel)
-    doc_task = DocumentManagerWorkflow().execute(pr=pr_number)
+    doc_task = DocumentGenerationWorkflow().execute(pr=pr_number)
 
     # Wait for all workflows to complete
     review, tests, docs = await asyncio.gather(
@@ -216,7 +216,7 @@ from attune.workflows import (
     SecurityAuditWorkflow,
     ParallelTestGenerationWorkflow,
     CodeReviewWorkflow,
-    DocumentManagerWorkflow,
+    DocumentGenerationWorkflow,
 )
 
 
@@ -225,7 +225,7 @@ async def parallel_workflow():
         SecurityAuditWorkflow().execute(),
         ParallelTestGenerationWorkflow().execute(),
         CodeReviewWorkflow().execute(),
-        DocumentManagerWorkflow().execute(),
+        DocumentGenerationWorkflow().execute(),
     )
 
     return {

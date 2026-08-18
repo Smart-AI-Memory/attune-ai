@@ -55,7 +55,6 @@ if TYPE_CHECKING:
     # DocAuditAgentSDKWorkflow: Merged into DocAuditWorkflow (v4.2.0)
     # DocGenAgentSDKWorkflow: Merged into DocumentGenerationWorkflow (v4.2.0)
     from .document_gen import DocumentGenerationWorkflow
-    from .document_manager import DocumentManagerWorkflow
     from .documentation_orchestrator import DocumentationOrchestrator, OrchestratorResult
     from .escalation import (
         AttemptResult,
@@ -146,7 +145,6 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     "DiscoverySweepWorkflow": (".discovery_sweep", "DiscoverySweepWorkflow"),
     "FixWorkflow": (".fix_workflow", "FixWorkflow"),
     "DocumentGenerationWorkflow": (".document_gen", "DocumentGenerationWorkflow"),
-    "DocumentManagerWorkflow": (".document_manager", "DocumentManagerWorkflow"),
     "DocumentationOrchestrator": (".documentation_orchestrator", "DocumentationOrchestrator"),
     "OrchestratorResult": (".documentation_orchestrator", "OrchestratorResult"),
     "OrchestratedHealthCheckWorkflow": (
@@ -634,7 +632,6 @@ __all__ = [
     "DiscoverySweepWorkflow",
     "DocAuditWorkflow",
     "DocumentGenerationWorkflow",
-    "DocumentManagerWorkflow",
     # Documentation management (v3.5)
     "DocumentationOrchestrator",
     # Health check crew integration (v3.1)

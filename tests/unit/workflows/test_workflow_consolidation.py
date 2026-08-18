@@ -3,14 +3,12 @@
 Verifies that:
 1. Deprecated slugs are removed from the active registry
 2. Migration aliases resolve to correct canonical workflows
-3. Deprecated classes emit DeprecationWarning on instantiation
+3. Removed classes stay removed (lazy-import + attribute drift guards)
 4. Canonical slugs still load correctly
 
 Copyright 2026 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
-
-import warnings
 
 import pytest
 
@@ -71,17 +69,20 @@ class TestRegistryConsolidation:
                 slug in WORKFLOW_ALIASES
             ), f"'{slug}' removed from registry but has no migration alias"
 
-    def test_lazy_imports_preserved(self):
-        """Deprecated classes should still be importable via lazy loading."""
+    def test_removed_classes_not_lazily_importable(self):
+        """Classes removed after their deprecation window stay removed."""
         from attune.workflows import _LAZY_WORKFLOW_IMPORTS
 
-        preserved_classes = [
+        removed_classes = [
+            # Deprecated v4.0 with removal announced for v5.0.0; removed at
+            # 11.6.x. The "document-manager" slug still routes to doc-gen
+            # via migration.py — only the class is gone.
             "DocumentManagerWorkflow",
         ]
-        for cls_name in preserved_classes:
+        for cls_name in removed_classes:
             assert (
-                cls_name in _LAZY_WORKFLOW_IMPORTS
-            ), f"'{cls_name}' should remain in _LAZY_WORKFLOW_IMPORTS for backward compat"
+                cls_name not in _LAZY_WORKFLOW_IMPORTS
+            ), f"'{cls_name}' was removed and must not return to _LAZY_WORKFLOW_IMPORTS"
 
 
 class TestMigrationAliases:
@@ -127,19 +128,15 @@ class TestMigrationAliases:
         assert kwargs.get("mode") == "premium"
 
 
-class TestDeprecationWarnings:
-    """Verify deprecated classes emit DeprecationWarning."""
+class TestRemovedClasses:
+    """Verify classes removed after their deprecation window stay gone."""
 
-    def test_document_manager_warns(self):
-        """DocumentManagerWorkflow should emit DeprecationWarning."""
-        from attune.workflows import DocumentManagerWorkflow
+    def test_document_manager_class_removed(self):
+        """DocumentManagerWorkflow no longer imports; the slug routes to doc-gen."""
+        from attune import workflows as attune_workflows
 
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            DocumentManagerWorkflow()
-            deprecation_warnings = [x for x in w if issubclass(x.category, DeprecationWarning)]
-            assert len(deprecation_warnings) >= 1
-            assert "DocumentManagerWorkflow is deprecated" in str(deprecation_warnings[0].message)
+        with pytest.raises(AttributeError, match="DocumentManagerWorkflow"):
+            _ = attune_workflows.DocumentManagerWorkflow
 
 
 class TestListMigrations:
