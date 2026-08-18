@@ -768,3 +768,18 @@ class TestStampProvenance:
         prov, body = hook_module.parse_provenance(second)
         assert prov["repo"] == "smart-ai-memory/attune-ai"
         assert body == "queue item one\n"
+
+
+class TestStampPathGuard:
+    """Cross-review F3 (codex, 2026-08-18): --stamp refuses
+    non-markdown targets — frontmatter must never be injected into
+    code or config files."""
+
+    def test_non_markdown_target_refused(self, hook_module, tmp_path, monkeypatch, capsys):
+        target = tmp_path / "settings.json"
+        target.write_text("{}", encoding="utf-8")
+        monkeypatch.setattr(hook_module.sys, "argv", ["prog", "--stamp", str(target)])
+        monkeypatch.setattr(hook_module, "_repo_root", lambda *a, **k: tmp_path)
+        assert hook_module.main() == 1
+        assert target.read_text(encoding="utf-8") == "{}"
+        assert "refusing to stamp" in capsys.readouterr().err

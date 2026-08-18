@@ -127,15 +127,19 @@ projector's `--check` the on-demand one.
 
 ### R9 — Retire the global starter (OQ1 ruled RETIRE, chair 2026-08-18)
 
-`starter_prompt_nudge.py` surfaces, in order: the current branch's
-tracked `docs/handoffs/<branch-slug>.md`; else the newest tracked
-handoff; else the project-local stamped starter
-(`<repo>/.attune/next_session_starter.md`); else — transition only —
-the global file, explicitly labeled legacy. The live global file is
-archived (rename, reversible); its still-live attune-ai queue
-migrates to the project-local starter, stamped. Acceptance: a live
-hook run surfaces the branch handoff first and never advertises the
-global path unlabeled.
+`starter_prompt_nudge.py` surfaces the best tracked handoff first
+(current branch's `docs/handoffs/<branch-slug>.md`, else the newest
+tracked handoff) and MAY co-surface the project-local stamped
+starter (`<repo>/.attune/next_session_starter.md`) — the two are
+complementary (branch context vs repo-scoped queue), not
+alternatives (wording amended 2026-08-18 after cross-review F1
+flagged spec-code drift in the original "else"-chain phrasing). The
+global file surfaces ONLY when no repo-scoped surface emitted, and
+always explicitly labeled legacy. The live global file is archived
+(rename, reversible); its still-live attune-ai queue migrates to
+the project-local starter, stamped. Acceptance: a live hook run
+surfaces the branch handoff first and never advertises the global
+path unlabeled.
 
 ## Non-goals / open questions
 - User-facing `attune hooks install` CLI — separate candidate spec

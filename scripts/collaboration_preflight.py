@@ -286,7 +286,7 @@ def check_projection_commands(root: Path, runner: Runner = run_command) -> list[
     return checks
 
 
-def check_hook_fleet(root: Path, runner: Runner = run_command) -> Check:
+def check_hook_fleet(root: Path) -> Check:
     """Session-hook fleet audit (session-start-integrity R7).
 
     Runs the fleet projector's ``--check`` mode: sibling repos missing
@@ -297,7 +297,21 @@ def check_hook_fleet(root: Path, runner: Runner = run_command) -> Check:
     registry = root / "scripts" / "session_hook_fleet.json"
     if not registry.is_file():
         return Check("SKIP", "hook-fleet", "no fleet registry present")
-    result = runner((sys.executable, "scripts/sync_session_hooks.py", "--check"), root, None)
+    try:
+        # Bounded (cross-review scoped lane, 2026-08-18): this check
+        # stats sibling checkouts, and a hung filesystem must never
+        # block preflight. The shared runner stays timeout-free for
+        # in-repo commands; only this cross-repo check is bounded.
+        result = subprocess.run(  # noqa: S603
+            [sys.executable, "scripts/sync_session_hooks.py", "--check"],
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=60,
+        )
+    except subprocess.TimeoutExpired:
+        return Check("WARN", "hook-fleet", "fleet check timed out after 60s — skipped")
     if result.returncode == 0:
         return Check("PASS", "hook-fleet", "sibling session hooks in sync")
     drift = [line for line in result.stdout.splitlines() if line.startswith("[drift]")]
@@ -356,7 +370,7 @@ def run_preflight(
     """Run all collaboration checks and verify repository status is unchanged."""
     checks, before_status = inspect_git_state(root, runner)
     checks.extend(check_projection_commands(root, runner))
-    checks.append(check_hook_fleet(root, runner))
+    checks.append(check_hook_fleet(root))
     if skip_tests:
         checks.append(Check("SKIP", "governance-tests", "skipped by --skip-tests"))
     else:

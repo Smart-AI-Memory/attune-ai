@@ -125,5 +125,19 @@ class TestCheckAndWrite:
         assert projector._settings_has_entry(merged, "spec_orient.py")
 
 
+class TestMalformedSettingsRefused:
+    """Cross-review F2 (codex, 2026-08-18): a malformed settings.json
+    must be REFUSED, never treated as empty and overwritten."""
+
+    def test_malformed_settings_left_untouched(self, projector, fleet):
+        registry, sibling = fleet
+        settings_path = sibling / ".claude" / "settings.json"
+        settings_path.parent.mkdir(parents=True)
+        settings_path.write_text("{not valid json", encoding="utf-8")
+        actions = projector.write_sibling(sibling, registry)
+        assert any("REFUSED settings edit" in a for a in actions)
+        assert settings_path.read_text(encoding="utf-8") == "{not valid json"
+
+
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))

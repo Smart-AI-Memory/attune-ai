@@ -108,10 +108,16 @@ def write_sibling(sibling: Path, registry: dict) -> list[str]:
             actions.append(f"wrote {dst.relative_to(sibling)}")
 
     settings_path = sibling / ".claude" / "settings.json"
-    try:
-        settings = json.loads(settings_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        settings = {}
+    settings: dict = {}
+    if settings_path.is_file():
+        try:
+            settings = json.loads(settings_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            # Cross-review F2 (codex, 2026-08-18): never treat a
+            # malformed settings.json as empty — rewriting it would
+            # destroy the user's (recoverable) content. Leave it alone.
+            actions.append(f"REFUSED settings edit — unreadable settings.json ({exc})")
+            return actions
     if not _settings_has_entry(settings, "spec_orient.py"):
         entry = {
             "type": "command",

@@ -86,6 +86,23 @@ def _current_branch(repo_root: Path) -> str | None:
     return result.stdout.strip() or None
 
 
+def _size_or_zero(path: Path) -> int:
+    """File size, or 0 when missing/unreadable (cross-review F4 —
+    a handoff vanishing mid-scan must degrade, not crash the hook)."""
+    try:
+        return path.stat().st_size if path.is_file() else 0
+    except OSError:
+        return 0
+
+
+def _mtime_or_zero(path: Path) -> float:
+    """File mtime, or 0.0 when missing/unreadable."""
+    try:
+        return path.stat().st_mtime
+    except OSError:
+        return 0.0
+
+
 def find_handoff(repo_root: Path) -> tuple[Path, str] | None:
     """Best tracked handoff: (path, scope label), or None.
 
@@ -99,16 +116,16 @@ def find_handoff(repo_root: Path) -> tuple[Path, str] | None:
     branch = _current_branch(repo_root)
     if branch:
         candidate = handoffs_dir / (branch.replace("/", "-") + ".md")
-        if candidate.is_file() and candidate.stat().st_size > 0:
+        if _size_or_zero(candidate) > 0:
             return candidate, "handoff:branch"
     candidates = [
         p
         for p in handoffs_dir.glob("*.md")
-        if p.name.lower() not in HANDOFF_SKIP_NAMES and p.stat().st_size > 0
+        if p.name.lower() not in HANDOFF_SKIP_NAMES and _size_or_zero(p) > 0
     ]
     if not candidates:
         return None
-    newest = max(candidates, key=lambda p: p.stat().st_mtime)
+    newest = max(candidates, key=lambda p: _mtime_or_zero(p))
     return newest, "handoff:newest"
 
 

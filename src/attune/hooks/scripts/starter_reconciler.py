@@ -586,6 +586,12 @@ def main() -> int:
             target = repo_root / PROJECT_STARTER_RELPATH
         else:
             target = STARTER_PATH
+        # Cross-review F3 (codex, 2026-08-18): stamping prepends
+        # frontmatter — refuse non-markdown targets so a stray path
+        # can't get a provenance block injected into code/config.
+        if target.suffix.lower() != ".md":
+            print(f"refusing to stamp non-markdown target: {target}", file=sys.stderr)
+            return 1
         target.parent.mkdir(parents=True, exist_ok=True)
         if not target.exists():
             target.write_text("", encoding="utf-8")
