@@ -598,7 +598,7 @@ requires-dist = [
     { name = "marshmallow", marker = "extra == 'developer'", specifier = ">=4.1.2,<5.0.0" },
     { name = "marshmallow", marker = "extra == 'enterprise'", specifier = ">=4.1.2,<5.0.0" },
     { name = "marshmallow", marker = "extra == 'full'", specifier = ">=4.1.2,<5.0.0" },
-    { name = "mcp", specifier = ">=1.23.0" },
+    { name = "mcp", specifier = ">=1.23.0,<2" },
     { name = "memdocs", marker = "extra == 'all'", specifier = ">=1.0.0" },
     { name = "memdocs", marker = "extra == 'developer'", specifier = ">=1.0.0" },
     { name = "memdocs", marker = "extra == 'enterprise'", specifier = ">=1.0.0" },
