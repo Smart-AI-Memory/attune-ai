@@ -77,6 +77,37 @@ class TokenBudgetAllocator:
 
         return allocated
 
+    def fit_source(self, source: str, token_limit: int | None = None) -> str:
+        """Fit a single source string into the token budget.
+
+        The ladder: full source when it fits; the AST skeleton when
+        that fits (preserving every signature and docstring while
+        dropping bodies); otherwise the skeleton head-truncated to
+        the budget with an omission marker. Non-Python source passes
+        through the skeleton step unchanged, so it degrades to plain
+        truncation.
+
+        This is the single-string counterpart to
+        :meth:`allocate_context` — use it where a prompt embeds one
+        file's source under a budget, in place of a bare character
+        slice that chops the tail of the module off mid-function.
+
+        Args:
+            source: Source code (or arbitrary text) to fit.
+            token_limit: Custom token limit override.
+
+        Returns:
+            The source, its skeleton, or a truncated skeleton,
+            whichever is the richest representation within budget.
+        """
+        limit = token_limit or self.default_token_limit
+        if self._estimate_tokens(source) <= limit:
+            return source
+        skeleton = self.generator.generate_skeleton(source)
+        if self._estimate_tokens(skeleton) <= limit:
+            return skeleton
+        return skeleton[: limit * 4] + f"\n# ... truncated at token limit {limit}\n"
+
     def _estimate_tokens(self, text: str) -> int:
         """Heuristic token estimation (approx 4 chars per token)."""
         return len(text) // 4

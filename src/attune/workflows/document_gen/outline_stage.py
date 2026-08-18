@@ -11,6 +11,8 @@ import logging
 import re
 from pathlib import Path
 
+from attune.context import TokenBudgetAllocator
+
 from ..base import ModelTier
 
 logger = logging.getLogger(__name__)
@@ -83,7 +85,7 @@ IMPORTANT: This documentation should be production-ready with:
 - Best practices for the target audience
 
 Content to document:
-{content_to_document[:4000]}
+{TokenBudgetAllocator().fit_source(content_to_document, token_limit=1000)}
 
 Generate an outline that covers all these aspects comprehensively."""
 

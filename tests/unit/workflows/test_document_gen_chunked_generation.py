@@ -300,3 +300,43 @@ class TestPolishChunked:
 
         # Document should still have content (polished + unpolished)
         assert len(result["document"]) > 0
+
+
+def _oversized_module(n_funcs: int = 40) -> str:
+    """Python source well over the chunk budget whose skeleton fits:
+    bulky bodies (sentinel constant 1000001), compact signatures."""
+    body = "\n".join(f"    v{j} = {j} * 1000001" for j in range(6))
+    funcs = [f"def func_{i:03d}(x: int) -> int:\n{body}\n    return x\n" for i in range(n_funcs)]
+    funcs.append(f"def zz_tail_function(name: str) -> str:\n{body}\n    return name\n")
+    return "\n".join(funcs)
+
+
+class TestChunkedSourceBudget:
+    """Chunked write: oversized source degrades to an AST skeleton in
+    each chunk prompt — the tail signature survives (the old [:3000]
+    slice chopped it) and bodies are stripped."""
+
+    @pytest.mark.asyncio
+    async def test_oversized_source_skeleton_in_chunk_prompt(self) -> None:
+        class _Capture(_FakeHost):
+            def __init__(self) -> None:
+                super().__init__()
+                self.user_msgs: list[str] = []
+
+            async def _call_llm(self, tier, system, user_msg, max_tokens=8000):
+                self.user_msgs.append(user_msg)
+                return "## Section Content\n\nGenerated documentation.", 100, 200
+
+        host = _Capture()
+        result, _, _ = await host._write_chunked(
+            ["Intro", "API"],
+            "1. Intro\n2. API\n",
+            "api",
+            "developers",
+            _oversized_module(),
+            ModelTier.CAPABLE,
+        )
+        assert host.user_msgs, "chunked write made no LLM calls"
+        for msg in host.user_msgs:
+            assert "def zz_tail_function(name: str) -> str:" in msg
+            assert "1000001" not in msg

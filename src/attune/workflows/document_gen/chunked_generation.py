@@ -28,6 +28,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+from attune.context import TokenBudgetAllocator
 from attune.security.path_validation import _validate_file_path
 
 from ..base import ModelTier
@@ -144,7 +145,7 @@ Document Type: {doc_type}
 Target Audience: {audience}
 
 Source code (extract actual functions/classes from here):
-{content_to_document[:3000]}
+{TokenBudgetAllocator().fit_source(content_to_document, token_limit=750)}
 
 Full outline (for context):
 {outline}

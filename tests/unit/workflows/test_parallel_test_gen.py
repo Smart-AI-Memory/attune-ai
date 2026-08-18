@@ -242,6 +242,54 @@ class TestCompleteTestWithAI:
         mock_llm.assert_called_once()
         assert "test_add" in result
 
+    @pytest.mark.asyncio
+    async def test_small_module_keeps_body_in_prompt(self, parallel_test_gen_workflow, tmp_path):
+        """Under the token budget the full source passes through."""
+        src_file = tmp_path / "module.py"
+        src_file.write_text("def add(a, b):\n    return a + b\n")
+
+        with patch.object(
+            parallel_test_gen_workflow,
+            "_call_llm",
+            new_callable=AsyncMock,
+            return_value=("ok", 1, 1),
+        ) as mock_llm:
+            await parallel_test_gen_workflow.complete_test_with_ai("tpl", str(src_file))
+
+        prompt = mock_llm.call_args.kwargs["user_message"]
+        assert "return a + b" in prompt
+
+    @pytest.mark.asyncio
+    async def test_oversized_module_degrades_to_skeleton_keeping_tail(
+        self, parallel_test_gen_workflow, tmp_path
+    ):
+        """Over budget the prompt carries the AST skeleton: the last
+        function's signature survives (the old [:5000] slice chopped
+        it) and function bodies are stripped."""
+        src_file = tmp_path / "module.py"
+        src_file.write_text(_oversized_module())
+
+        with patch.object(
+            parallel_test_gen_workflow,
+            "_call_llm",
+            new_callable=AsyncMock,
+            return_value=("ok", 1, 1),
+        ) as mock_llm:
+            await parallel_test_gen_workflow.complete_test_with_ai("tpl", str(src_file))
+
+        prompt = mock_llm.call_args.kwargs["user_message"]
+        assert "def zz_tail_function(name: str) -> str:" in prompt
+        assert "1000001" not in prompt  # body sentinel stripped
+
+
+def _oversized_module(n_funcs: int = 40) -> str:
+    """Python source well over every prompt budget whose skeleton fits:
+    bulky bodies (sentinel constant 1000001), compact signatures."""
+    body = "\n".join(f"    v{j} = {j} * 1000001" for j in range(6))
+    funcs = [f"def func_{i:03d}(x: int) -> int:\n{body}\n    return x\n" for i in range(n_funcs)]
+    funcs.append(f"def zz_tail_function(name: str) -> str:\n{body}\n    return name\n")
+    return "\n".join(funcs)
+
 
 @pytest.mark.unit
 class TestProcessModuleBatch:

@@ -24,6 +24,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from attune.context import TokenBudgetAllocator
 from attune.security.path_validation import _validate_file_path
 
 from ..workflows.base import BaseWorkflow, ModelTier, WorkflowResult
@@ -231,12 +232,16 @@ Output ONLY the Python code, no explanations."""
 
         """
         source_code = Path(module_path).read_text(encoding="utf-8")
+        # Budget ≈ the retired 5000-char slice; an oversized module
+        # degrades to its AST skeleton (every signature and docstring
+        # survives) instead of losing all functions past the cap.
+        source_context = TokenBudgetAllocator().fit_source(source_code, token_limit=1250)
 
         prompt = f"""Complete this behavioral test implementation.
 
 MODULE SOURCE CODE:
 ```python
-{source_code[:5000]}  # First 5000 chars
+{source_context}
 ```
 
 TEST TEMPLATE:
