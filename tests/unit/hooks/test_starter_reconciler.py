@@ -783,3 +783,88 @@ class TestStampPathGuard:
         assert hook_module.main() == 1
         assert target.read_text(encoding="utf-8") == "{}"
         assert "refusing to stamp" in capsys.readouterr().err
+
+
+class TestStarterAgeNaiveStamp:
+    """A naive (tz-less) written_at is treated as UTC, not rejected."""
+
+    def test_naive_written_at_treated_as_utc(self, hook_module):
+        age = hook_module.starter_age_hours({"written_at": "2020-01-01T00:00:00"})
+        assert age is not None
+        assert age > 0
+
+
+class TestStampProvenanceDegrade:
+    """With no derivable git identity (no repo root, every git call
+    failing) the stamp still writes — provenance degrades to the
+    written_at field alone rather than erroring (D2: absence soft)."""
+
+    def test_stamps_written_at_only(self, hook_module, tmp_path, monkeypatch):
+        monkeypatch.setattr(hook_module, "_run", lambda *a, **k: None)
+        target = tmp_path / "starter.md"
+        target.write_text("body\n", encoding="utf-8")
+
+        block = hook_module.stamp_provenance(target, None)
+
+        assert "written_at:" in block
+        for absent in ("repo:", "branch:", "head_sha:"):
+            assert absent not in block
+        text = target.read_text(encoding="utf-8")
+        assert text.startswith("---\n")
+        assert text.endswith("body\n")
+
+
+class TestSpecLinesNoClosed:
+    """Specs line renders without the closed-spec warning when no
+    mentioned spec is in a terminal status."""
+
+    def test_active_specs_render_without_warning(self, hook_module):
+        lines = hook_module._spec_lines({"my-spec": "active: in progress"})
+        assert lines == ["  specs: my-spec=active: in progress"]
+
+
+class TestStampMainDefaultTargets:
+    """main() --stamp with no explicit target derives the default:
+    the project-local starter when a repo root exists, else the
+    global starter — creating the file when absent."""
+
+    def test_defaults_to_project_starter(self, hook_module, tmp_path, monkeypatch, capsys):
+        monkeypatch.setattr(hook_module.sys, "argv", ["prog", "--stamp"])
+        monkeypatch.setattr(hook_module, "_repo_root", lambda *a, **k: tmp_path)
+        monkeypatch.setattr(hook_module, "_run", lambda *a, **k: None)
+
+        assert hook_module.main() == 0
+
+        target = tmp_path / ".attune" / "next_session_starter.md"
+        assert target.is_file()
+        text = target.read_text(encoding="utf-8")
+        assert text.startswith("---\n")
+        assert "written_at:" in text
+        assert f"stamped {target}" in capsys.readouterr().out
+
+    def test_explicit_existing_target_keeps_body(self, hook_module, tmp_path, monkeypatch, capsys):
+        target = tmp_path / "starter.md"
+        target.write_text("existing body\n", encoding="utf-8")
+        monkeypatch.setattr(hook_module.sys, "argv", ["prog", "--stamp", str(target)])
+        monkeypatch.setattr(hook_module, "_repo_root", lambda *a, **k: None)
+        monkeypatch.setattr(hook_module, "_run", lambda *a, **k: None)
+
+        assert hook_module.main() == 0
+
+        text = target.read_text(encoding="utf-8")
+        assert text.startswith("---\n")
+        assert text.endswith("existing body\n")
+        assert "stamped" in capsys.readouterr().out
+
+    def test_defaults_to_global_when_no_repo(self, hook_module, tmp_path, monkeypatch, capsys):
+        monkeypatch.setattr(hook_module.sys, "argv", ["prog", "--stamp"])
+        monkeypatch.setattr(hook_module, "_repo_root", lambda *a, **k: None)
+        monkeypatch.setattr(hook_module, "_run", lambda *a, **k: None)
+        global_starter = tmp_path / "home" / ".attune" / "next_session_starter.md"
+        monkeypatch.setattr(hook_module, "STARTER_PATH", global_starter)
+
+        assert hook_module.main() == 0
+
+        assert global_starter.is_file()
+        assert "written_at:" in global_starter.read_text(encoding="utf-8")
+        assert f"stamped {global_starter}" in capsys.readouterr().out

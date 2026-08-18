@@ -12,6 +12,7 @@ Covers:
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -229,6 +230,19 @@ class TestFindHandoff:
         (tmp_path / ".git").mkdir()
         assert hook_module.find_handoff(tmp_path) is None
 
+    def test_empty_branch_handoff_falls_through_to_newest(self, hook_module, tmp_path, monkeypatch):
+        """An empty branch-slug file must not win — the newest
+        non-empty handoff is surfaced instead."""
+        repo = self._make_repo(tmp_path)
+        d = repo / "docs" / "handoffs"
+        (d / "claude-my-branch.md").write_text("", encoding="utf-8")
+        (d / "other.md").write_text("fallback\n", encoding="utf-8")
+        monkeypatch.setattr(hook_module, "_current_branch", lambda root: "claude/my-branch")
+        found = hook_module.find_handoff(repo)
+        assert found is not None
+        assert found[0].name == "other.md"
+        assert found[1] == "handoff:newest"
+
     def test_handoff_emitted_first_by_main(self, hook_module, tmp_path, monkeypatch, capsys):
         repo = self._make_repo(tmp_path)
         d = repo / "docs" / "handoffs"
@@ -273,6 +287,85 @@ class TestAgeFormatter:
         real_now = time.time()
         # 90 minutes ago → comfortably in the hours bucket [60m, 24h).
         assert hook_module._format_age(real_now - 5400) == "1h ago"
+
+
+class TestRepoRoot:
+    """Cover _repo_root (found, not-found, default-cwd)."""
+
+    def test_finds_git_toplevel(self, hook_module, tmp_path):
+        (tmp_path / ".git").mkdir()
+        nested = tmp_path / "a" / "b"
+        nested.mkdir(parents=True)
+        assert hook_module._repo_root(start=nested) == tmp_path
+
+    def test_none_when_no_repo(self, hook_module, tmp_path):
+        assert hook_module._repo_root(start=tmp_path) is None
+
+    def test_default_start_uses_cwd(self, hook_module, tmp_path, monkeypatch):
+        (tmp_path / ".git").mkdir()
+        monkeypatch.chdir(tmp_path)
+        assert hook_module._repo_root() == tmp_path
+
+
+class TestCurrentBranch:
+    """_current_branch returns the branch, degrading to None on every
+    git failure shape (error exit, detached HEAD, timeout)."""
+
+    class _Proc:
+        def __init__(self, returncode: int, stdout: str) -> None:
+            self.returncode = returncode
+            self.stdout = stdout
+
+    def test_returns_branch_name(self, hook_module, monkeypatch):
+        monkeypatch.setattr(
+            hook_module.subprocess,
+            "run",
+            lambda *a, **k: self._Proc(0, "claude/my-branch\n"),
+        )
+        assert hook_module._current_branch(Path("/repo")) == "claude/my-branch"
+
+    def test_none_on_nonzero_exit(self, hook_module, monkeypatch):
+        monkeypatch.setattr(
+            hook_module.subprocess,
+            "run",
+            lambda *a, **k: self._Proc(128, ""),
+        )
+        assert hook_module._current_branch(Path("/repo")) is None
+
+    def test_none_on_detached_head_empty_stdout(self, hook_module, monkeypatch):
+        monkeypatch.setattr(
+            hook_module.subprocess,
+            "run",
+            lambda *a, **k: self._Proc(0, "\n"),
+        )
+        assert hook_module._current_branch(Path("/repo")) is None
+
+    def test_none_on_timeout(self, hook_module, monkeypatch):
+        def raise_timeout(*a, **k):
+            raise subprocess.TimeoutExpired(cmd="git", timeout=3)
+
+        monkeypatch.setattr(hook_module.subprocess, "run", raise_timeout)
+        assert hook_module._current_branch(Path("/repo")) is None
+
+
+class TestStatDegrade:
+    """Cross-review F4: a handoff vanishing mid-scan degrades to
+    0 / 0.0 instead of crashing the hook."""
+
+    class _VanishingPath:
+        """Duck-typed path whose stat() raises after is_file() says True."""
+
+        def is_file(self) -> bool:
+            return True
+
+        def stat(self):
+            raise OSError("vanished mid-scan")
+
+    def test_size_oserror_returns_zero(self, hook_module):
+        assert hook_module._size_or_zero(self._VanishingPath()) == 0
+
+    def test_mtime_missing_file_returns_zero(self, hook_module, tmp_path):
+        assert hook_module._mtime_or_zero(tmp_path / "missing.md") == 0.0
 
 
 class TestErrorHandling:
