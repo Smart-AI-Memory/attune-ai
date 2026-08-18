@@ -34,14 +34,24 @@ All six spec tasks implemented this session:
 - `sync_session_hooks.py --check` → clean after `--write`;
   spec_orient live runs exit 0 in forms + lite.
 
+## Cross-review (D11 lane, done)
+
+Codex lane ran (11 sent / 2 omitted → scoped follow-up on the
+omitted preflight file). 4+1 findings, all accepted and fixed in
+commit `cc21622d7`; ledger row appended to
+`docs/specs/cross-review/receipts.md`.
+
 ## Next action
 
-Open/land the PR from this branch; verify CI incl. Windows lanes
-(hook scripts touch subprocess + paths). Sibling repos need a push
-when convenient.
+PR #2086 is open awaiting chair read + merge (CHAIR-ARMS — the
+diff touches enforcement surfaces, lead does not arm). Verify CI
+incl. Windows lanes (hook scripts touch subprocess + paths).
+Sibling repos need a push when convenient.
 
 ## Unresolved risks
 
 - Sibling commits are local-only (unpushed).
 - `hooks-install` candidate spec (user-facing hook installer) is
   ADJACENT scope — do not conflate with the fleet projector.
+- Shared preflight `run_command` remains timeout-free for in-repo
+  commands (pre-existing; noted in the ledger for a future pass).
