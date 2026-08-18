@@ -292,7 +292,6 @@ _BASELINE: dict[str, int] = {
     "src/attune/workflows/document_gen/outline_stage.py": 2,
     "src/attune/workflows/document_gen/polish_stage.py": 1,
     "src/attune/workflows/document_gen/workflow.py": 1,
-    "src/attune/workflows/document_manager.py": 2,
     "src/attune/workflows/documentation_orchestrator.py": 2,
     "src/attune/workflows/escalation/chain.py": 1,
     "src/attune/workflows/escalation/evaluator.py": 1,

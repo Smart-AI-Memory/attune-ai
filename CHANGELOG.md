@@ -84,6 +84,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   hook (`plugin/hooks/help_post_commit.py` →
   `attune.help.maintenance.run_hook`) is unaffected.
 
+### Removed — DocumentManagerWorkflow (deprecation window long expired)
+
+- **`DocumentManagerWorkflow` deleted** (`workflows/document_manager.py`,
+  its README, and both test files). Deprecated in v4.0 with removal
+  announced for v5.0.0, it survived six major versions past that
+  timer while its `document-manager` slug was already migration-mapped
+  to `doc-gen` — the live routing lands on `DocumentGenerationWorkflow`,
+  whose stages gained `fit_source` context budgeting in #2088. The slug
+  mapping in `workflows/migration.py` stays, so name-level callers keep
+  resolving to doc-gen; only the class import is gone (drift-guarded in
+  `test_workflow_consolidation.py`). Surfaced by the fit_source sweep:
+  the class held the last source-into-prompt char cap in the tree, and
+  converting deprecated code lost to removing it.
+
 ## [11.6.0] — 2026-08-09
 
 Redis config truth-telling completes: every Redis connection-env
