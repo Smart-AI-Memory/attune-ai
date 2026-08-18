@@ -56,20 +56,42 @@ class Check:
     detail: str
 
 
+#: Uniform bound for every preflight subprocess (roundtable
+#: q-context-mgmt-next-001, 2026-08-18): a hung command must fail the
+#: check that ran it, never hang session preflight. Generous on
+#: purpose — the slowest legitimate check (governance pytest) runs in
+#: seconds; the bound exists for pathological hangs, not pacing.
+COMMAND_TIMEOUT_SECONDS = 300
+
+
 def run_command(
     command: Command,
     cwd: Path,
     env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    """Run a fixed preflight command without a shell."""
-    return subprocess.run(  # noqa: S603
-        list(command),
-        cwd=cwd,
-        env=env,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    """Run a fixed preflight command without a shell, time-bounded.
+
+    A timeout yields a synthetic ``CompletedProcess`` with exit code
+    124 (the coreutils ``timeout`` convention) so callers report the
+    check as failed instead of raising or hanging.
+    """
+    try:
+        return subprocess.run(  # noqa: S603
+            list(command),
+            cwd=cwd,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=COMMAND_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(
+            args=list(command),
+            returncode=124,
+            stdout="",
+            stderr=f"timed out after {COMMAND_TIMEOUT_SECONDS}s",
+        )
 
 
 def parse_worktrees(output: str) -> list[Worktree]:
@@ -298,10 +320,9 @@ def check_hook_fleet(root: Path) -> Check:
     if not registry.is_file():
         return Check("SKIP", "hook-fleet", "no fleet registry present")
     try:
-        # Bounded (cross-review scoped lane, 2026-08-18): this check
-        # stats sibling checkouts, and a hung filesystem must never
-        # block preflight. The shared runner stays timeout-free for
-        # in-repo commands; only this cross-repo check is bounded.
+        # Bounded tighter than the shared runner (cross-review scoped
+        # lane, 2026-08-18): this check stats sibling checkouts, and a
+        # hung filesystem must never block preflight.
         result = subprocess.run(  # noqa: S603
             [sys.executable, "scripts/sync_session_hooks.py", "--check"],
             cwd=root,
@@ -312,10 +333,15 @@ def check_hook_fleet(root: Path) -> Check:
         )
     except subprocess.TimeoutExpired:
         return Check("WARN", "hook-fleet", "fleet check timed out after 60s — skipped")
+    warns = [line for line in result.stdout.splitlines() if line.startswith("[warn]")]
     if result.returncode == 0:
+        if warns:
+            # D4 (chair 2026-08-18): unpushed sibling hooks are
+            # WARN-only — a true mid-work state, surfaced not failed.
+            return Check("WARN", "hook-fleet", "; ".join(warns))
         return Check("PASS", "hook-fleet", "sibling session hooks in sync")
     drift = [line for line in result.stdout.splitlines() if line.startswith("[drift]")]
-    detail = "; ".join(drift) or result.stdout.strip() or "fleet check failed"
+    detail = "; ".join(drift + warns) or result.stdout.strip() or "fleet check failed"
     return Check(
         "WARN",
         "hook-fleet",

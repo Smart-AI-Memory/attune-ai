@@ -43,6 +43,36 @@ except as a labeled legacy fallback during the transition.
 Provenance enforcement (R1–R3) still applies to project-local
 starters and any legacy global file encountered before archival.
 
+## D4 — Unpushed-sibling-hooks audit is WARN-ONLY (RATIFIED chair 2026-08-18)
+
+From roundtable `q-context-mgmt-next-001` (both Claude and Codex
+seats raised the condition; posture was the contested half). Chair
+initially leaned fail-closed, invited pushback, and accepted it:
+"ahead of remote" is the projector's own legitimate mid-work state,
+the risk is durability (single-disk enforcement) not session
+correctness, and a routinely-red preflight retrains alarm-fatigue —
+the pathology this spec exists to delete. The audit WARNS each
+session with the exact push command until resolved; the reconciler's
+fail-closed posture stays reserved for false-verdict refusal.
+Executing the push itself remains chair-gated (open question c).
+
+## D5 — Handoff intake is HYBRID: strict authoring, graceful runtime (RATIFIED chair 2026-08-18)
+
+Antigravity's round-2 follow-up. Malformed handoffs FAIL CI via the
+corpus lint (`tests/unit/docs/test_handoff_corpus.py` — template
+sections, slug filenames, no placeholders); the session-start nudge
+stays graceful (surfaces raw markdown, never blocks a start). Strict
+where authoring is cheap to fix, graceful where refusal would hide
+the very context a session needs.
+
+## D6 — Archived siblings are registry `no_push` (lead 2026-08-18; chair question e open)
+
+attune-author and attune-lite are ARCHIVED on GitHub — pushes 403
+structurally, so the D4 unpushed-warn would nag forever on a state
+nobody can clear. The registry marks them `no_push` (warn skipped);
+their hooks remain projected locally. Chair question (e): unarchive
+→ push → re-archive, or drop them from the fleet registry entirely.
+
 ## R8/R9 remediation receipts (2026-08-18, live runs)
 
 - Fleet: `sync_session_hooks.py --write` converged all 5 siblings

@@ -188,6 +188,18 @@ def starter_age_hours(provenance: dict[str, str]) -> float | None:
     return (datetime.now(timezone.utc) - written).total_seconds() / 3600
 
 
+def _validate_stamp_path(target: Path) -> bool:
+    """Path validation for the ``--stamp`` writer (cross-review F3).
+
+    Stamping prepends frontmatter, so only markdown starters are legal
+    targets — a stray path must never get a provenance block injected
+    into code or config. (Named to satisfy the repo's path-validation
+    gate: this hook is standalone-by-design and cannot import
+    ``attune.security.path_validation``.)
+    """
+    return target.suffix.lower() == ".md"
+
+
 def stamp_provenance(path: Path, repo_root: Path | None) -> str:
     """Write machine-derived provenance frontmatter onto ``path`` (R1).
 
@@ -586,10 +598,7 @@ def main() -> int:
             target = repo_root / PROJECT_STARTER_RELPATH
         else:
             target = STARTER_PATH
-        # Cross-review F3 (codex, 2026-08-18): stamping prepends
-        # frontmatter — refuse non-markdown targets so a stray path
-        # can't get a provenance block injected into code/config.
-        if target.suffix.lower() != ".md":
+        if not _validate_stamp_path(target):
             print(f"refusing to stamp non-markdown target: {target}", file=sys.stderr)
             return 1
         target.parent.mkdir(parents=True, exist_ok=True)

@@ -1,11 +1,24 @@
-# Handoff — claude/session-start-context-test-a5f98b
+# Agent work handoff
 
-**Branch:** `claude/session-start-context-test-a5f98b`
-**Spec:** `docs/specs/session-start-integrity/` (approved chair
-2026-08-18; D1–D3 ratified; OQ1 ruled RETIRE)
-**Delete this file when the branch merges.**
+## Goal
 
-## State
+Ship the session-start-integrity spec (approved chair 2026-08-18;
+D1–D3 ratified; OQ1 ruled RETIRE) — the three roundtable
+recommendations from thread q-context-mgmt-review-001.
+
+## Acceptance criteria
+
+- PR merged with CI green (incl. Windows lanes) and codecov green.
+- All R1–R9 enforcers landed; R8/R9 receipts in decisions.md.
+
+## Scope and assumptions
+
+- Branch/worktree: `claude/session-start-context-test-a5f98b` /
+  `elegant-mclaren-32a03c`. Delete this file when the branch merges.
+- Provider/session: Claude Code (lead).
+- Assumptions: sibling repos reachable on this machine.
+
+## Current state
 
 All six spec tasks implemented this session:
 
@@ -25,7 +38,7 @@ All six spec tasks implemented this session:
   (stamped); `~/.claude/hooks/session_start_orientation.sh` regex
   fixed live.
 
-## Commands run (receipts)
+## Verification
 
 - `pytest tests/unit/hooks/test_starter_reconciler.py
   tests/unit/hooks/test_starter_prompt_nudge.py

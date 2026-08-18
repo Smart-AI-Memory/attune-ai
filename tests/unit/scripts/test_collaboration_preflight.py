@@ -565,3 +565,12 @@ def test_hook_fleet_timeout_degrades_to_warn(tmp_path, monkeypatch) -> None:
     check = preflight.check_hook_fleet(_fleet_root(tmp_path))
     assert check.status == "WARN"
     assert "timed out" in check.detail
+
+
+def test_hook_fleet_unpushed_warns_on_clean_exit(tmp_path, monkeypatch) -> None:
+    """D4: [warn] lines on exit 0 (unpushed sibling hooks) -> WARN."""
+    out = "[ok] ~/x\n[warn] ~/x: 1 unpushed hook commit(s) — push\n"
+    monkeypatch.setattr(preflight.subprocess, "run", lambda *a, **k: _FleetProc(0, out))
+    check = preflight.check_hook_fleet(_fleet_root(tmp_path))
+    assert check.status == "WARN"
+    assert "unpushed hook commit" in check.detail

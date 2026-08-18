@@ -141,3 +141,46 @@ class TestMalformedSettingsRefused:
 
 if __name__ == "__main__":
     sys.exit(pytest.main([__file__, "-q"]))
+
+
+class TestUnpushedHookCommits:
+    """D4 (chair 2026-08-18): warn-only unpushed-enforcement signal."""
+
+    def test_counts_lines(self, projector, tmp_path, monkeypatch):
+        class _P:
+            returncode = 0
+            stdout = "abc123 chore(hooks): sync\ndef456 fix: settings\n"
+
+        monkeypatch.setattr(projector.subprocess, "run", lambda *a, **k: _P())
+        assert projector.unpushed_hook_commits(tmp_path) == 2
+
+    def test_git_error_degrades_to_zero(self, projector, tmp_path, monkeypatch):
+        class _P:
+            returncode = 128  # no upstream configured
+            stdout = ""
+
+        monkeypatch.setattr(projector.subprocess, "run", lambda *a, **k: _P())
+        assert projector.unpushed_hook_commits(tmp_path) == 0
+
+    def test_timeout_degrades_to_zero(self, projector, tmp_path, monkeypatch):
+        def _raise(*a, **k):
+            raise projector.subprocess.TimeoutExpired(cmd="git", timeout=10)
+
+        monkeypatch.setattr(projector.subprocess, "run", _raise)
+        assert projector.unpushed_hook_commits(tmp_path) == 0
+
+
+class TestNoPushRegistry:
+    """Archived siblings (registry no_push) never warn about unpushed
+    commits — the push is structurally impossible (GitHub 403)."""
+
+    def test_no_push_entry_skips_unpushed_warn(self, projector, fleet, monkeypatch, capsys):
+        registry, sibling = fleet
+        registry["no_push"] = ["~/sib"]
+        projector.write_sibling(sibling, registry)
+        monkeypatch.setattr(projector, "unpushed_hook_commits", lambda s: 99)
+        monkeypatch.setattr(projector, "load_registry", lambda *a, **k: registry)
+        monkeypatch.setenv("HOME", str(sibling.parent))
+        assert projector.main(["--check"]) == 0
+        out = capsys.readouterr().out
+        assert "[warn]" not in out

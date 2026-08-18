@@ -1,7 +1,11 @@
 {
-  "_comment": "session-start-integrity R6 fleet registry. Canonical hook source is plugin/hooks/ (D3); the projector (sync_session_hooks.py) fans these files out to each sibling's .claude/hooks/ and ensures the SessionStart settings entry. attune-gui is deliberately absent (parked, chair 2026-07-30).",
+  "_comment": "session-start-integrity R6 fleet registry. Canonical hook source is plugin/hooks/ (D3); the projector (sync_session_hooks.py) fans these files out to each sibling's .claude/hooks/ and ensures the SessionStart settings entry. attune-gui is deliberately absent (parked, chair 2026-07-30). Repos in no_push are ARCHIVED on GitHub (push 403s structurally) \u2014 the unpushed-commits warn skips them; unarchive-vs-drop is chair question (e).",
   "canonical_dir": "plugin/hooks",
-  "files": ["spec_orient.py", "_state.py", "_sdk_gate.py"],
+  "files": [
+    "spec_orient.py",
+    "_state.py",
+    "_sdk_gate.py"
+  ],
   "settings_command": "python .claude/hooks/spec_orient.py",
   "settings_timeout": 4000,
   "siblings": [
@@ -9,6 +13,10 @@
     "~/attune-author",
     "~/attune-rag",
     "~/attune-forms",
+    "~/attune-lite"
+  ],
+  "no_push": [
+    "~/attune-author",
     "~/attune-lite"
   ]
 }

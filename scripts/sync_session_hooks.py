@@ -29,6 +29,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -70,6 +71,38 @@ def _settings_has_entry(settings: dict, command: str) -> bool:
             if command in hook.get("command", ""):
                 return True
     return False
+
+
+def unpushed_hook_commits(sibling: Path) -> int:
+    """Count sibling commits touching the hook surface not on upstream.
+
+    WARN-ONLY signal (session-start-integrity D4, chair 2026-08-18):
+    unpushed enforcement lives on one disk — surface it every session
+    until pushed, but never fail on this legitimate mid-work state.
+    Returns 0 on any git error or missing upstream (degrade silently).
+    """
+    try:
+        result = subprocess.run(  # noqa: S603
+            [
+                "git",
+                "log",
+                "@{u}..HEAD",
+                "--oneline",
+                "--",
+                ".claude/hooks",
+                ".claude/settings.json",
+            ],
+            cwd=sibling,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
+        )
+    except (subprocess.TimeoutExpired, OSError):
+        return 0
+    if result.returncode != 0:
+        return 0
+    return len([line for line in result.stdout.splitlines() if line.strip()])
 
 
 def check_sibling(sibling: Path, registry: dict) -> list[str]:
@@ -153,6 +186,13 @@ def main(argv: list[str] | None = None) -> int:
                     print(f"[drift] {entry}: {finding}")
             else:
                 print(f"[ok] {entry}")
+            unpushed = 0 if entry in registry.get("no_push", []) else unpushed_hook_commits(sibling)
+            if unpushed:
+                print(
+                    f"[warn] {entry}: {unpushed} unpushed hook commit(s)"
+                    f" — enforcement lives on one disk until pushed"
+                    f" (git -C {sibling} push)"
+                )
         else:
             actions = write_sibling(sibling, registry)
             if actions:
