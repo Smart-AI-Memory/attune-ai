@@ -133,10 +133,10 @@ class TestRemovedClasses:
 
     def test_document_manager_class_removed(self):
         """DocumentManagerWorkflow no longer imports; the slug routes to doc-gen."""
-        import attune.workflows
+        from attune import workflows as attune_workflows
 
         with pytest.raises(AttributeError, match="DocumentManagerWorkflow"):
-            _ = attune.workflows.DocumentManagerWorkflow
+            _ = attune_workflows.DocumentManagerWorkflow
 
 
 class TestListMigrations:
