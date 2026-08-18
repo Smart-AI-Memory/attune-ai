@@ -57,3 +57,11 @@ def test_every_handoff_has_h1_and_required_sections() -> None:
 def test_no_empty_handoffs() -> None:
     empty = [p.name for p in _corpus() if p.stat().st_size < 80]
     assert not empty, f"placeholder/empty handoffs should be deleted: {empty}"
+
+
+def test_no_template_placeholders_survive() -> None:
+    """A section heading with the template's ``<!-- ... -->`` prompt
+    still inside is unfinished authoring, not a handoff (scoped
+    cross-review lane on the overnight batch, 2026-08-18)."""
+    offenders = [p.name for p in _corpus() if "<!--" in p.read_text(encoding="utf-8")]
+    assert not offenders, f"handoffs still carrying template placeholder comments: {offenders}"
