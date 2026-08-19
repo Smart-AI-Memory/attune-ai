@@ -221,3 +221,19 @@ DISTRIBUTION_POLICY.md              export-ignore
 # Git configuration
 # -----------------------------------------------------------------------------
 .github/                            export-ignore
+
+# =============================================================================
+# Append-only ledgers: auto-resolve concurrent appends (merge=union)
+# =============================================================================
+# Two branches appending rows at the same tail is the dominant conflict
+# on these files (three DIRTY collisions on 2026-08-19 alone). union
+# keeps both sides' lines with no conflict markers. HONORED BY LOCAL
+# git merge/rebase ONLY — GitHub's PR merge ignores it (live probe,
+# 2026-08-19: PR still goes DIRTY), so armed PRs still need a rebase;
+# the rebase just auto-resolves. Hazards, accepted deliberately:
+# (1) line order within a merged hunk is unspecified; (2) two edits to
+# the SAME existing line keep both versions silently; (3) identical
+# lines on both sides duplicate. Do not add files where order carries
+# meaning or in-place edits race.
+docs/specs/cross-review/receipts.md merge=union
+.claude/lessons.md merge=union
