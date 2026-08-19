@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [12.0.0] - 2026-08-18
+
+**A sharper core you can trust.** The dormant context-compaction
+stack is retired (the genuine breaking change behind the major
+version), `attune.context` now exports exactly its live,
+regression-guarded surface, and a new dead-suite guard ensures
+security test suites can never silently skip again.
+
 ### Removed — BREAKING: dormant context-compaction stack (2026-08-18)
 
 - **`attune.context` compaction stack deleted** per
