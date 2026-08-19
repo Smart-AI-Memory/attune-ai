@@ -385,3 +385,70 @@ class TestAgentStateStoreConcurrency:
         data = _json.loads(files[0].read_text())  # raises if interleaved/corrupt
         assert data["agent_id"] == "mixed-agent"
         assert data["successful_executions"] == 10
+
+    def test_two_store_instances_same_dir_no_lost_updates(self, tmp_path: Path) -> None:
+        """Separate store instances on one directory serialize with each other.
+
+        Cross-review finding (codex, 2026-08-19): an instance-local lock
+        plus an instance-local cache would let two stores on the same
+        directory overwrite each other's updates.
+        """
+        import threading
+
+        store_a = AgentStateStore(storage_dir=str(tmp_path))
+        store_b = AgentStateStore(storage_dir=str(tmp_path))
+        per_thread = 25
+        errors: list[Exception] = []
+
+        def worker(store: AgentStateStore) -> None:
+            try:
+                for _ in range(per_thread):
+                    store.record_start("cross-agent", "Auditor")
+            except Exception as e:  # noqa: BLE001 - collected and re-asserted below
+                errors.append(e)
+
+        threads = [
+            threading.Thread(target=worker, args=(store_a,)),
+            threading.Thread(target=worker, args=(store_b,)),
+            threading.Thread(target=worker, args=(store_a,)),
+            threading.Thread(target=worker, args=(store_b,)),
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert errors == []
+        fresh = AgentStateStore(storage_dir=str(tmp_path))
+        state = fresh.get_agent_state("cross-agent")
+        assert state is not None
+        assert state.total_executions == 4 * per_thread
+
+    def test_failed_save_not_persisted_by_later_mutation(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A mutation whose save failed must not leak into a later save.
+
+        Cross-review finding (codex, 2026-08-19): the record is mutated
+        in place before saving, so a stale cache entry could silently
+        persist the failed update on the next successful mutation.
+        """
+        store = AgentStateStore(storage_dir=str(tmp_path))
+        store.record_start("phantom-agent", "Auditor")
+
+        def boom(src: str, dst: str) -> None:
+            raise OSError("simulated write failure")
+
+        monkeypatch.setattr("attune.agents.state.store.os.replace", boom)
+        with pytest.raises(OSError, match="simulated write failure"):
+            store.record_start("phantom-agent", "Auditor")
+        monkeypatch.undo()
+
+        # A later successful mutation must not carry the failed start
+        store.save_checkpoint("phantom-agent", {"step": 9})
+
+        fresh = AgentStateStore(storage_dir=str(tmp_path))
+        state = fresh.get_agent_state("phantom-agent")
+        assert state is not None
+        assert state.total_executions == 1  # the failed second start is gone
+        assert state.last_checkpoint == {"step": 9}

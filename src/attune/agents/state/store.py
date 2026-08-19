@@ -38,6 +38,19 @@ MAX_HISTORY_PER_AGENT = 100
 # Allowed characters in sanitized agent IDs for filenames
 _SAFE_ID_RE = re.compile(r"[^a-zA-Z0-9_\-]")
 
+# Write locks shared per storage directory, so multiple store instances
+# pointed at the same directory serialize with each other — not just
+# writers on one instance.
+_DIR_LOCKS: dict[str, threading.Lock] = {}
+_DIR_LOCKS_GUARD = threading.Lock()
+
+
+def _lock_for_dir(storage_dir: Path) -> threading.Lock:
+    """Return the process-wide lock for a resolved storage directory."""
+    key = str(storage_dir.resolve())
+    with _DIR_LOCKS_GUARD:
+        return _DIR_LOCKS.setdefault(key, threading.Lock())
+
 
 def _sanitize_agent_id(agent_id: str) -> str:
     """Sanitize agent ID for use as a filename.
@@ -135,13 +148,15 @@ class AgentStateStore:
         self._storage_dir.mkdir(parents=True, exist_ok=True)
         self._pattern_learner = pattern_learner
         self._cache: dict[str, AgentStateRecord] = {}
-        # Serializes read-modify-write cycles across threads. The atomic
-        # replace in _atomic_write_text prevents torn files, but without
-        # this lock two concurrent mutators on the same record would
-        # load the same snapshot and the second save would drop the
-        # first's update. Cross-process writers remain last-writer-wins
-        # (never corrupted, thanks to os.replace).
-        self._lock = threading.Lock()
+        # Serializes read-modify-write cycles across threads — shared
+        # per storage directory so separate store instances on the same
+        # directory also serialize. The atomic replace in
+        # _atomic_write_text prevents torn files, but without this lock
+        # two concurrent mutators on the same record would load the
+        # same snapshot and the second save would drop the first's
+        # update. Cross-process writers remain last-writer-wins (never
+        # corrupted, thanks to os.replace).
+        self._lock = _lock_for_dir(self._storage_dir)
 
     def record_start(
         self,
@@ -162,7 +177,7 @@ class AgentStateStore:
         """
         execution_id = uuid.uuid4().hex[:12]
         with self._lock:
-            record = self._load_or_create(agent_id, role)
+            record = self._load_or_create(agent_id, role, use_cache=False)
 
             execution = AgentExecutionRecord(
                 execution_id=execution_id,
@@ -206,7 +221,7 @@ class AgentStateStore:
 
         """
         with self._lock:
-            record = self._load_or_create(agent_id, "")
+            record = self._load_or_create(agent_id, "", use_cache=False)
             execution = self._find_execution(record, execution_id)
             if execution is None:
                 logger.warning("Execution %s not found for agent %s", execution_id, agent_id)
@@ -247,7 +262,7 @@ class AgentStateStore:
 
         """
         with self._lock:
-            record = self._load_or_create(agent_id, "")
+            record = self._load_or_create(agent_id, "", use_cache=False)
             execution = self._find_execution(record, execution_id)
             if execution is None:
                 logger.warning("Execution %s not found for agent %s", execution_id, agent_id)
@@ -275,7 +290,7 @@ class AgentStateStore:
 
         """
         with self._lock:
-            record = self._load_or_create(agent_id, "")
+            record = self._load_or_create(agent_id, "", use_cache=False)
             record.last_checkpoint = checkpoint_data
             record.last_active = datetime.now().isoformat()
             self._save(record)
@@ -357,18 +372,26 @@ class AgentStateStore:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _load_or_create(self, agent_id: str, role: str) -> AgentStateRecord:
-        """Load existing record or create new one."""
-        record = self._load(agent_id)
+    def _load_or_create(
+        self, agent_id: str, role: str, *, use_cache: bool = True
+    ) -> AgentStateRecord:
+        """Load existing record or create new one.
+
+        Mutators pass ``use_cache=False`` so the read-modify-write cycle
+        starts from the on-disk state: another store instance on the
+        same directory may have written since this instance last cached
+        the record.
+        """
+        record = self._load(agent_id, use_cache=use_cache)
         if record is None:
             record = AgentStateRecord(agent_id=agent_id, role=role)
         elif role and not record.role:
             record.role = role
         return record
 
-    def _load(self, agent_id: str) -> AgentStateRecord | None:
+    def _load(self, agent_id: str, *, use_cache: bool = True) -> AgentStateRecord | None:
         """Load agent state from disk or cache."""
-        if agent_id in self._cache:
+        if use_cache and agent_id in self._cache:
             return self._cache[agent_id]
 
         safe_id = _sanitize_agent_id(agent_id)
@@ -392,7 +415,15 @@ class AgentStateStore:
         validated_path = _validate_file_path(file_path, allowed_dir=str(self._storage_dir))
 
         validated_path.parent.mkdir(parents=True, exist_ok=True)
-        _atomic_write_text(validated_path, json.dumps(record.to_dict(), indent=2))
+        try:
+            _atomic_write_text(validated_path, json.dumps(record.to_dict(), indent=2))
+        except OSError:
+            # The record was mutated in place before this save. Dropping
+            # the cache entry forces the next load to re-read the last
+            # good on-disk state, so the failed update can't be silently
+            # persisted by a later successful mutation.
+            self._cache.pop(record.agent_id, None)
+            raise
 
         self._cache[record.agent_id] = record
         return validated_path
