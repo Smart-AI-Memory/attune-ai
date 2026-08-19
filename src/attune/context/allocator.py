@@ -4,11 +4,55 @@ Manages dynamic allocation of full source code vs. AST skeletal context
 based on token budget constraints and target file prioritization.
 """
 
+import json
 import logging
+import os
+from datetime import datetime, timezone
+from pathlib import Path
 
 from .skeleton import ASTSkeletonGenerator
 
 logger = logging.getLogger(__name__)
+
+_FALSEY = {"0", "false", "no", "off"}
+
+
+def _fit_events_path() -> Path:
+    """Resolve the local fit-telemetry stream (sibling of usage.jsonl).
+
+    Resolution mirrors the repo's other telemetry sinks
+    (``memory.serve_telemetry._events_path``,
+    ``gates.lifecycle.ledger.ledger_path``): ``ATTUNE_HOME`` env
+    override, expanded, else ``~/.attune``.
+    """
+    home = os.environ.get("ATTUNE_HOME")
+    base = Path(home).expanduser() if home else Path.home() / ".attune"
+    return base / "telemetry" / "context_fit.jsonl"
+
+
+def _append_fit_event(payload: dict[str, int | str]) -> None:
+    """Append one fit outcome to the local telemetry stream.
+
+    Best-effort, never raises — telemetry must not block a fit. Disable
+    with ``ATTUNE_CONTEXT_FIT_TELEMETRY=0``. The record is serialized to
+    one string and written in a single call so concurrent appenders
+    cannot interleave partial records.
+    """
+    if os.environ.get("ATTUNE_CONTEXT_FIT_TELEMETRY", "1").strip().lower() in _FALSEY:
+        return
+    try:
+        path = _fit_events_path()
+        path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        record = {
+            "v": "1.0",
+            "ts": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
+            **payload,
+        }
+        line = json.dumps(record, separators=(",", ":")) + "\n"
+        with path.open("a", encoding="utf-8") as fh:
+            fh.write(line)
+    except OSError as e:
+        logger.debug("context_fit telemetry append failed: %s", e)
 
 
 class TokenBudgetAllocator:
@@ -136,6 +180,7 @@ class TokenBudgetAllocator:
             "source_tokens": source_tokens,
             "result_tokens": result_tokens,
         }
+        _append_fit_event(self.last_fit)
         logger.info(
             "context_fit rung=%s token_limit=%d source_tokens=%d result_tokens=%d",
             rung,
