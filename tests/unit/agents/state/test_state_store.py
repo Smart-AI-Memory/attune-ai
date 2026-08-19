@@ -254,3 +254,134 @@ class TestAgentStateStorePathSecurity:
         agents = store.get_all_agents()
         # Should skip corrupt file without crashing
         assert all(a.agent_id != "corrupt-agent" for a in agents)
+
+
+class TestAgentStateStoreAtomicity:
+    """Atomicity tests: a failed write never corrupts existing state."""
+
+    def test_failed_replace_leaves_old_file_intact(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Simulated failure between temp-write and replace keeps old state."""
+        store = AgentStateStore(storage_dir=str(tmp_path))
+        store.record_start("atomic-agent", "Auditor")
+        store.save_checkpoint("atomic-agent", {"step": 1})
+
+        def boom(src: str, dst: str) -> None:
+            raise OSError("simulated crash between temp-write and replace")
+
+        monkeypatch.setattr("attune.agents.state.store.os.replace", boom)
+        with pytest.raises(OSError, match="simulated crash"):
+            store.save_checkpoint("atomic-agent", {"step": 2})
+        monkeypatch.undo()
+
+        # A fresh store (empty cache) must read the OLD, valid state
+        fresh = AgentStateStore(storage_dir=str(tmp_path))
+        assert fresh.get_last_checkpoint("atomic-agent") == {"step": 1}
+
+    def test_failed_write_cleans_up_temp_file(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The temp file is removed when the replace step fails."""
+        store = AgentStateStore(storage_dir=str(tmp_path))
+        store.record_start("cleanup-agent", "Auditor")
+
+        def boom(src: str, dst: str) -> None:
+            raise OSError("boom")
+
+        monkeypatch.setattr("attune.agents.state.store.os.replace", boom)
+        with pytest.raises(OSError):
+            store.save_checkpoint("cleanup-agent", {"step": 1})
+        monkeypatch.undo()
+
+        assert list(tmp_path.glob("*.tmp")) == []
+        assert list(tmp_path.glob(".*.tmp")) == []
+
+    def test_no_temp_files_left_after_successful_saves(self, tmp_path: Path) -> None:
+        """Normal operation leaves only the final .json files behind."""
+        store = AgentStateStore(storage_dir=str(tmp_path))
+        for i in range(5):
+            store.record_start("tidy-agent", "Auditor", f"run-{i}")
+
+        leftovers = [p for p in tmp_path.iterdir() if p.suffix != ".json"]
+        assert leftovers == []
+
+
+class TestAgentStateStoreConcurrency:
+    """Concurrent writers on the same record must not lose or interleave updates."""
+
+    def test_concurrent_record_start_no_lost_updates(self, tmp_path: Path) -> None:
+        """N threads recording starts on one agent all land in the file."""
+        import threading
+
+        store = AgentStateStore(storage_dir=str(tmp_path))
+        n_threads, per_thread = 8, 25
+        errors: list[Exception] = []
+
+        def worker() -> None:
+            try:
+                for _ in range(per_thread):
+                    store.record_start("shared-agent", "Auditor")
+            except Exception as e:  # noqa: BLE001 - collected and re-asserted below
+                errors.append(e)
+
+        threads = [threading.Thread(target=worker) for _ in range(n_threads)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert errors == []
+        # The on-disk file must be valid JSON with every update present
+        fresh = AgentStateStore(storage_dir=str(tmp_path))
+        state = fresh.get_agent_state("shared-agent")
+        assert state is not None
+        assert state.total_executions == n_threads * per_thread
+
+    def test_concurrent_mixed_writers_file_stays_valid_json(self, tmp_path: Path) -> None:
+        """Interleaved checkpoint + lifecycle writers never corrupt the file."""
+        import json as _json
+        import threading
+
+        store = AgentStateStore(storage_dir=str(tmp_path))
+        exec_ids = [store.record_start("mixed-agent", "Auditor") for _ in range(10)]
+        errors: list[Exception] = []
+
+        def checkpointer() -> None:
+            try:
+                for i in range(20):
+                    store.save_checkpoint("mixed-agent", {"step": i})
+            except Exception as e:  # noqa: BLE001 - collected and re-asserted below
+                errors.append(e)
+
+        def completer() -> None:
+            try:
+                for exec_id in exec_ids:
+                    store.record_completion(
+                        "mixed-agent",
+                        exec_id,
+                        success=True,
+                        findings={},
+                        score=90.0,
+                        cost=0.01,
+                        execution_time_ms=10.0,
+                    )
+            except Exception as e:  # noqa: BLE001 - collected and re-asserted below
+                errors.append(e)
+
+        threads = [
+            threading.Thread(target=checkpointer),
+            threading.Thread(target=completer),
+            threading.Thread(target=checkpointer),
+        ]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert errors == []
+        files = list(tmp_path.glob("*.json"))
+        assert len(files) == 1
+        data = _json.loads(files[0].read_text())  # raises if interleaved/corrupt
+        assert data["agent_id"] == "mixed-agent"
+        assert data["successful_executions"] == 10
