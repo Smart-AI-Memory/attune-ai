@@ -25,6 +25,19 @@ from .release_parsing import _parse_response
 
 logger = logging.getLogger(__name__)
 
+# Severity counts parsed from bandit are authoritative for the release
+# gate — an LLM response must never overwrite them, or a hallucinated
+# zero count could pass a gate that real findings should fail.
+_BANDIT_AUTHORITATIVE_KEYS = frozenset(
+    {
+        "critical_issues",
+        "high_issues",
+        "medium_issues",
+        "low_issues",
+        "total_findings",
+    }
+)
+
 
 class SecurityAuditorAgent(ReleaseAgent):
     """Analyzes bandit output and classifies vulnerabilities by severity.
@@ -89,7 +102,13 @@ class SecurityAuditorAgent(ReleaseAgent):
                 if response_text:
                     llm_findings = _parse_response(response_text)
                     if "parse_error" not in llm_findings:
-                        findings.update(llm_findings)
+                        findings.update(
+                            {
+                                k: v
+                                for k, v in llm_findings.items()
+                                if k not in _BANDIT_AUTHORITATIVE_KEYS
+                            }
+                        )
 
             findings["mode"] = "llm" if self.llm_client else "rule_based"
             findings["tier"] = tier.value
