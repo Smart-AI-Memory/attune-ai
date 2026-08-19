@@ -79,6 +79,38 @@ class TestAgentStateStore:
         assert state.execution_history[0].status == "completed"
         assert state.execution_history[0].findings == {"coverage": 85.0}
 
+    def test_record_completion_failure_branch_updates_counters(self, tmp_path: Path) -> None:
+        """Test that record_completion with success=False counts a failure."""
+        store = AgentStateStore(storage_dir=str(tmp_path))
+        exec_id = store.record_start("agent-fail", "Auditor")
+
+        store.record_completion(
+            "agent-fail",
+            exec_id,
+            success=False,
+            findings={},
+            score=0.0,
+            cost=0.01,
+            execution_time_ms=50.0,
+        )
+
+        state = store.get_agent_state("agent-fail")
+        assert state is not None
+        assert state.failed_executions == 1
+        assert state.successful_executions == 0
+        assert state.execution_history[0].status == "failed"
+
+    def test_record_failure_for_unknown_execution_warns(self, tmp_path: Path) -> None:
+        """Test that failing an unknown execution logs a warning, not a crash."""
+        store = AgentStateStore(storage_dir=str(tmp_path))
+        store.record_start("agent-unknown-fail", "Auditor")
+
+        store.record_failure("agent-unknown-fail", "nonexistent-exec-id", "boom")
+
+        state = store.get_agent_state("agent-unknown-fail")
+        assert state is not None
+        assert state.failed_executions == 0  # unknown execution changed nothing
+
     def test_record_failure_updates_state(self, tmp_path: Path) -> None:
         """Test that record_failure marks execution as failed."""
         store = AgentStateStore(storage_dir=str(tmp_path))
@@ -296,6 +328,23 @@ class TestAgentStateStoreAtomicity:
 
         assert list(tmp_path.glob("*.tmp")) == []
         assert list(tmp_path.glob(".*.tmp")) == []
+
+    def test_failed_write_with_failed_cleanup_still_raises_original(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """When even the temp-file cleanup fails, the write error still surfaces."""
+        store = AgentStateStore(storage_dir=str(tmp_path))
+
+        def replace_boom(src: str, dst: str) -> None:
+            raise OSError("replace failed")
+
+        def unlink_boom(path: str) -> None:
+            raise OSError("unlink failed")
+
+        monkeypatch.setattr("attune.agents.state.store.os.replace", replace_boom)
+        monkeypatch.setattr("attune.agents.state.store.os.unlink", unlink_boom)
+        with pytest.raises(OSError, match="replace failed"):
+            store.save_checkpoint("cleanup-fail-agent", {"step": 1})
 
     def test_no_temp_files_left_after_successful_saves(self, tmp_path: Path) -> None:
         """Normal operation leaves only the final .json files behind."""
