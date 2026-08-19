@@ -57,9 +57,12 @@ Two signals suffice; four fire.
 ## Proposed disposition (for review, not ratified)
 
 - R1. Delete `context/compaction.py`, `context/manager.py`,
-  `hooks/scripts/pre_compact.py`, and their exports; retire
-  `attune.commands.context.CommandContext`'s `context_manager`
-  field or the commands framework question is taken up separately.
+  `hooks/scripts/pre_compact.py`, and their exports. The
+  `context_manager` field and its runtime import in
+  `attune.commands.context.CommandContext` (line 357 imports
+  `ContextManager` at runtime, not just under TYPE_CHECKING) are
+  removed IN THE SAME CHANGE, unconditionally — R1 must not leave
+  a broken import path regardless of how OQ2 is later ruled.
 - R2. Delete or rewrite the two docs pages; grep for
   `::: attune.context` mkdocstrings blocks and `search-index.json`
   refs before merge (the #279 lesson).
@@ -71,8 +74,10 @@ Two signals suffice; four fire.
 - R4. Breaking-change discipline: `feat!:` with changelog entry;
   the live trio's exports are unchanged.
 - R5. Regression guard: a test asserting `attune.context.__all__`
-  is exactly the live trio, so the dormant half cannot silently
-  return.
+  is exactly the set the chair rules surviving (the live trio,
+  plus `ContextInflater` iff OQ1 rules keep), so the dormant half
+  cannot silently return. The guard's expected set is fixed by
+  the OQ1 ruling, not hard-coded ahead of it.
 
 ## Counter-case (strongest argument against)
 
