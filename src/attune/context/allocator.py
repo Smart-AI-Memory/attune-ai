@@ -18,9 +18,16 @@ _FALSEY = {"0", "false", "no", "off"}
 
 
 def _fit_events_path() -> Path:
-    """Resolve the local fit-telemetry stream (sibling of usage.jsonl)."""
-    home = os.environ.get("ATTUNE_HOME") or str(Path.home() / ".attune")
-    return Path(home) / "telemetry" / "context_fit.jsonl"
+    """Resolve the local fit-telemetry stream (sibling of usage.jsonl).
+
+    Resolution mirrors the repo's other telemetry sinks
+    (``memory.serve_telemetry._events_path``,
+    ``gates.lifecycle.ledger.ledger_path``): ``ATTUNE_HOME`` env
+    override, expanded, else ``~/.attune``.
+    """
+    home = os.environ.get("ATTUNE_HOME")
+    base = Path(home).expanduser() if home else Path.home() / ".attune"
+    return base / "telemetry" / "context_fit.jsonl"
 
 
 def _append_fit_event(payload: dict[str, int | str]) -> None:
