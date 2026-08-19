@@ -1,8 +1,10 @@
 # Context Compaction Retirement — Requirements
 
-**Status:** draft (2026-08-18) — awaiting chair review. No code
-changes are authorized by this document; it records the
-removing-dead-code gate's findings and proposes a disposition.
+**Status:** draft (2026-08-18) — OQ1 and OQ2 ruled by the chair
+(see `decisions.md` D1/D2, this date). No code changes are
+authorized until the chair reads and merges the spec PR; this
+document records the removing-dead-code gate's findings and the
+now-ruled disposition.
 **Slug:** `context-compaction-retirement`
 **Provenance:** "resume work on context management" session
 (2026-08-18). #2088 shipped the live half of `attune.context`
@@ -66,18 +68,14 @@ Two signals suffice; four fire.
 - R2. Delete or rewrite the two docs pages; grep for
   `::: attune.context` mkdocstrings blocks and `search-index.json`
   refs before merge (the #279 lesson).
-- R3. `ContextInflater`: chair picks — delete with R1 (zero
-  consumers, gate says dormant), or keep as the one surviving
-  deferral since #2088 named it deliberately. Lead recommends
-  delete; resurrect from git history if a provider-adapter
-  consumer ever materializes.
+- R3. `ContextInflater`: **RULED (D1)** — deleted with R1.
+  Resurrect from git history if a provider-adapter consumer ever
+  materializes.
 - R4. Breaking-change discipline: `feat!:` with changelog entry;
   the live trio's exports are unchanged.
 - R5. Regression guard: a test asserting `attune.context.__all__`
-  is exactly the set the chair rules surviving (the live trio,
-  plus `ContextInflater` iff OQ1 rules keep), so the dormant half
-  cannot silently return. The guard's expected set is fixed by
-  the OQ1 ruling, not hard-coded ahead of it.
+  is exactly the live-trio surface (D1 ruled the inflater deleted),
+  so the dormant half cannot silently return.
 
 ## Counter-case (strongest argument against)
 
@@ -93,7 +91,9 @@ public API is the more expensive way to store it.
 
 ## Open questions for the chair
 
-- OQ1. R3 — inflater: delete or keep?
-- OQ2. Does the `attune.commands` framework (loader/parser/
-  registry, zero external consumers) get its own gate pass, or is
-  it out of scope permanently?
+Both ruled 2026-08-18 — see `decisions.md`:
+
+- OQ1. Inflater: **delete** (D1).
+- OQ2. `attune.commands`: **out of THIS spec only**; its own gate
+  pass is pickable future work, no standing exemption (D2 — chair
+  accepted the lead's pushback against a permanent exclusion).
