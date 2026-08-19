@@ -74,9 +74,16 @@ class TestSecurityLlmEnhancement:
         monkeypatch.setattr(sec_mod, "_run_command", lambda *a, **k: (0, '{"results": []}', ""))
         monkeypatch.setattr(sec_mod, "LLM_MODE", "real")
         agent.llm_client = object()
-        monkeypatch.setattr(agent, "_call_llm", lambda *a, **k: ('{"critical_issues": 2}', {}))
+        monkeypatch.setattr(
+            agent,
+            "_call_llm",
+            lambda *a, **k: ('{"critical_issues": 2, "confidence": 0.8}', {}),
+        )
         _, findings = agent._execute_tier(".", Tier.CHEAP)
-        assert findings["critical_issues"] == 2  # LLM enhancement merged
+        # Non-gate fields merge; a stricter LLM count ratchets the bandit
+        # value upward (fail-closed) — it can never lower it.
+        assert findings["confidence"] == 0.8
+        assert findings["critical_issues"] == 2
         assert findings["mode"] == "llm"
         assert findings["tier"] == "cheap"
 

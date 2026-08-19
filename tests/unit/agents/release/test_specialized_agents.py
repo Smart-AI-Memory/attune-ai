@@ -748,3 +748,83 @@ class TestSecurityAuditorAgent:
             _, findings = agent._execute_tier(".", Tier.CHEAP)
 
         assert isinstance(findings.get("score"), int | float)
+
+    def test_execute_tier_llm_cannot_overwrite_bandit_critical_count(self):
+        """Regression: an LLM response claiming 0 criticals must not pass
+        the gate when bandit found critical/high issues.
+
+        Before the fix, ``findings.update(llm_findings)`` let the LLM
+        overwrite ``critical_issues`` (and the other severity counts)
+        ahead of the ``critical == 0`` gate decision.
+        """
+        from attune.agents.release.release_models import Tier
+
+        agent = self._make_agent()
+        bandit_output = json.dumps(
+            {
+                "results": [
+                    {
+                        "issue_severity": "HIGH",
+                        "issue_text": "Use of exec",
+                        "filename": "bad.py",
+                        "line_number": 10,
+                    }
+                ]
+            }
+        )
+        llm_response = json.dumps(
+            {
+                "critical_issues": 0,
+                "high_issues": 0,
+                "medium_issues": 0,
+                "low_issues": 0,
+                "total_findings": 0,
+                "score": 100,
+                "confidence": 0.95,
+                "top_findings": [],
+            }
+        )
+        agent.llm_client = object()  # truthy -> LLM-enhancement branch runs
+
+        with (
+            patch("attune.agents.release.security_agent.LLM_MODE", "real"),
+            patch(
+                "attune.agents.release.security_agent._run_command",
+                return_value=(1, bandit_output, ""),
+            ),
+            patch.object(agent, "_call_llm", return_value=(llm_response, {})),
+        ):
+            success, findings = agent._execute_tier(".", Tier.CHEAP)
+
+        assert success is False
+        # Bandit-parsed counts survive the LLM merge untouched.
+        assert findings["critical_issues"] == 1
+        assert findings["high_issues"] == 1
+        assert findings["total_findings"] == 1
+        # Non-gate fields are still LLM-enhanced.
+        assert findings["confidence"] == 0.95
+
+    def test_execute_tier_stricter_llm_count_can_fail_the_gate(self):
+        """Fail-closed ratchet: an LLM count higher than bandit's raises
+        the gate value — a stricter reclassification can still fail the
+        gate, only a downward override is blocked.
+        """
+        from attune.agents.release.release_models import Tier
+
+        agent = self._make_agent()
+        clean_output = json.dumps({"results": []})
+        llm_response = json.dumps({"critical_issues": 2, "confidence": 0.9})
+        agent.llm_client = object()
+
+        with (
+            patch("attune.agents.release.security_agent.LLM_MODE", "real"),
+            patch(
+                "attune.agents.release.security_agent._run_command",
+                return_value=(0, clean_output, ""),
+            ),
+            patch.object(agent, "_call_llm", return_value=(llm_response, {})),
+        ):
+            success, findings = agent._execute_tier(".", Tier.CHEAP)
+
+        assert success is False
+        assert findings["critical_issues"] == 2
