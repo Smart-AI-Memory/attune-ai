@@ -1,9 +1,9 @@
 # Context Compaction Retirement — Requirements
 
-**Status:** draft (2026-08-18) — OQ1 and OQ2 ruled by the chair
-(see `decisions.md` D1/D2, this date). No code changes are
-authorized until the chair reads and merges the spec PR; this
-document records the removing-dead-code gate's findings and the
+**Status:** shipped (2026-08-19) — executed in PR #2093 (12.0.0,
+feat! removal, -4,605 LOC); OQ1/OQ2 ruled in `decisions.md` D1/D2
+(2026-08-18), post-retirement review rulings in D3 (2026-08-19).
+This document records the removing-dead-code gate's findings and the
 now-ruled disposition.
 **Slug:** `context-compaction-retirement`
 **Provenance:** "resume work on context management" session

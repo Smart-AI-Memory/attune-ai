@@ -3,8 +3,8 @@ type: tip
 name: hooks-tip
 feature: hooks
 depth: tip
-generated_at: 2026-06-24T01:45:59.743282+00:00
-source_hash: 4b00173384f5e97dd450a6b8b69e5253088cb776441337b23c6bf960f70c76f7
+generated_at: 2026-08-19T15:41:55.951394+00:00
+source_hash: 135910a198c946084ebe186e1f9f9879826026c95886aa2c85c739e52893fee8
 status: generated
 ---
 

@@ -60,7 +60,7 @@ class TestCommandMetadata:
             description="Context compaction",
             category=CommandCategory.CONTEXT,
             aliases=["comp", "save"],
-            hooks={"pre": "PreCompact", "post": "PostCompact"},
+            hooks={"pre": "PreToolUse", "post": "PostToolUse"},
             requires_user_id=True,
             requires_context=True,
             tags=["context", "state"],
@@ -71,7 +71,7 @@ class TestCommandMetadata:
         assert meta.name == "compact"
         assert meta.category == CommandCategory.CONTEXT
         assert "comp" in meta.aliases
-        assert meta.hooks["pre"] == "PreCompact"
+        assert meta.hooks["pre"] == "PreToolUse"
         assert meta.requires_user_id is True
 
     def test_to_dict(self):

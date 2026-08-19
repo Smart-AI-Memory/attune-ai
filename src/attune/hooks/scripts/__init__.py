@@ -20,7 +20,6 @@ from attune.hooks.scripts.first_time_init import (
     handle_init_response,
     initialize_project,
 )
-from attune.hooks.scripts.suggest_compact import main as suggest_compact
 
 __all__ = [
     "apply_learned_patterns",
@@ -29,5 +28,4 @@ __all__ = [
     "handle_init_response",
     "initialize_project",
     "run_evaluate_session",
-    "suggest_compact",
 ]

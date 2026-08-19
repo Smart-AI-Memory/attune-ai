@@ -120,18 +120,18 @@ Test body content.
     def test_parse_hooks_config(self, parser):
         """Test parsing hook configuration."""
         content = """---
-name: compact
+name: review
 hooks:
-  pre: PreCompact
-  post: PostCompact
+  pre: PreToolUse
+  post: PostToolUse
 ---
 
 Body content.
 """
         config = parser.parse_content(content)
 
-        assert config.hooks["pre"] == "PreCompact"
-        assert config.hooks["post"] == "PostCompact"
+        assert config.hooks["pre"] == "PreToolUse"
+        assert config.hooks["post"] == "PostToolUse"
 
     def test_parse_requires_flags(self, parser):
         """Test parsing requires_user_id and requires_context."""

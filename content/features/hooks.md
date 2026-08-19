@@ -16,12 +16,12 @@ nav:
 
 `attune.hooks` is an **event system**: it lets code (and config) react
 to lifecycle events — before/after a tool runs, at session start/end,
-around compaction, and on stop. The public surface, exported from
+before compaction, and on stop. The public surface, exported from
 `attune.hooks`, is five symbols:
 
 - **`HookEvent`** — the events you can hook (`PRE_TOOL_USE`,
   `POST_TOOL_USE`, `SESSION_START`, `SESSION_END`, `PRE_COMPACT`,
-  `POST_COMPACT`, `PRE_COMMAND`, `POST_COMMAND`, `STOP`).
+  `PRE_COMMAND`, `POST_COMMAND`, `STOP`).
 - **`HookRegistry`** — register Python handlers for events and fire
   them in-process.
 - **`HookExecutor`** — run a configured `HookDefinition` (command,
@@ -156,7 +156,7 @@ it; it returns a result dict.
 
 | Symbol | Kind | Purpose |
 |--------|------|---------|
-| `HookEvent` | enum | `PRE_TOOL_USE`/`POST_TOOL_USE`/`SESSION_START`/`SESSION_END`/`PRE_COMPACT`/`POST_COMPACT`/`PRE_COMMAND`/`POST_COMMAND`/`STOP`; values are Claude Code event names. |
+| `HookEvent` | enum | `PRE_TOOL_USE`/`POST_TOOL_USE`/`SESSION_START`/`SESSION_END`/`PRE_COMPACT`/`PRE_COMMAND`/`POST_COMMAND`/`STOP`; values are Claude Code event names. |
 | `HookRegistry(config=None)` | class | `register(event, handler, description="", matcher=None, priority=0) -> str`, `fire` (async) / `fire_sync`, `get_matching_hooks`, `unregister`, `get_execution_log`, `get_stats`, `load_config`. |
 | `HookExecutor(python_handlers=None)` | class | `execute(hook, context)` — **async**. |
 | `HookDefinition(type=HookType.PYTHON, command, description="", timeout=30, async_execution=False, on_error="log")` | pydantic model | A configured hook. |
@@ -207,7 +207,7 @@ registers with Claude Code.
 
 - **Q:** What events can I hook?
   **A:** The `HookEvent` enum — `PRE_TOOL_USE`, `POST_TOOL_USE`,
-  `SESSION_START`/`SESSION_END`, `PRE_COMPACT`/`POST_COMPACT`,
+  `SESSION_START`/`SESSION_END`, `PRE_COMPACT`,
   `PRE_COMMAND`/`POST_COMMAND`, `STOP`. Their values are the Claude Code
   event names.
 - **Q:** How should a handler be written?

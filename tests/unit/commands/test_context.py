@@ -252,12 +252,12 @@ class TestCommandExecutorExecute:
         ctx = CommandContext(user_id="u")
         ctx.fire_hook = MagicMock(return_value=[])
         executor = CommandExecutor(ctx)
-        cmd = _make_command(hooks={"pre": "PreCompact", "post": "PostCompact"})
+        cmd = _make_command(hooks={"pre": "PreToolUse", "post": "PostToolUse"})
 
         result = executor.execute(cmd)
 
-        assert "pre:PreCompact" in result.hooks_fired
-        assert "post:PostCompact" in result.hooks_fired
+        assert "pre:PreToolUse" in result.hooks_fired
+        assert "post:PostToolUse" in result.hooks_fired
 
     def test_execute_with_patterns_records_applied(self):
         """execute() records first 3 pattern IDs in patterns_applied."""

@@ -25,6 +25,12 @@
   (see `.claude/rules/attune/advanced-optimization-plan.md`)
 - [ ] **Advanced strategies** - Implement ToolEnhanced,
   PromptCached strategies in `orchestration/_strategies/`
+- [ ] **commands dead-code gate pass** — run the
+  removing-dead-code gate over `src/attune/commands/`
+  (loader/parser/registry/models + command `.md` corpus); ruled
+  pickable by context-compaction-retirement D2 (chair,
+  2026-08-18); verify consumers against the tree at pick-up time
+  (see `docs/specs/context-compaction-retirement/decisions.md`)
 
 ## Done
 

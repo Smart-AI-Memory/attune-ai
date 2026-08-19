@@ -757,7 +757,6 @@ omit = [
     "*/hooks/scripts/first_time_init.py",  # Standalone hook
     "*/hooks/scripts/session_end.py",  # Standalone hook
     "*/hooks/scripts/session_start.py",  # Standalone hook
-    "*/hooks/scripts/suggest_compact.py",  # Standalone hook
     "*/hooks/scripts/telemetry_hook.py",  # Standalone hook
     # Core module stubs
     "*/core_modules/interaction.py",  # Interaction stubs

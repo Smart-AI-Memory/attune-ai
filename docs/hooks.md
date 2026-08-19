@@ -12,7 +12,7 @@ Hooks allow you to execute custom code at specific points in the session lifecyc
 
 - **SessionStart/SessionEnd**: Initialize or cleanup session state
 - **PreToolUse/PostToolUse**: Intercept tool calls
-- **PreCompact/PostCompact**: Handle context compaction
+- **PreCompact**: React before Claude Code compacts the context window
 - **PreCommand/PostCommand**: Wrap command execution
 
 ## Quick Start
@@ -49,8 +49,7 @@ results = registry.fire_sync(
 | `SESSION_END` | Session ends | Save state, cleanup |
 | `PRE_TOOL_USE` | Before tool executes | Validation, logging |
 | `POST_TOOL_USE` | After tool executes | Post-processing |
-| `PRE_COMPACT` | Before compaction | Save critical state |
-| `POST_COMPACT` | After compaction | Verify preservation |
+| `PRE_COMPACT` | Before compaction | React before the context window is compacted |
 | `PRE_COMMAND` | Before command runs | Setup, validation |
 | `POST_COMMAND` | After command runs | Cleanup, logging |
 | `STOP` | Session terminated | Emergency cleanup |
@@ -216,7 +215,6 @@ The framework includes pre-built hook scripts:
 |--------|-------|---------|
 | `session_start.py` | SessionStart | Restore context state |
 | `session_end.py` | SessionEnd | Save state, trigger evaluation |
-| `suggest_compact.py` | PostToolUse | Suggest compaction when needed |
 | `evaluate_session.py` | SessionEnd | Extract learning patterns |
 
 ## Integration with Commands
@@ -225,10 +223,10 @@ Commands can specify hooks in their metadata:
 
 ```yaml
 ---
-name: compact
+name: review
 hooks:
-  pre: PreCompact
-  post: PostCompact
+  pre: PreToolUse
+  post: PostToolUse
 ---
 ```
 
@@ -237,7 +235,7 @@ The `CommandExecutor` automatically fires these hooks:
 ```python
 executor = CommandExecutor(context)
 result = executor.execute(command)
-# PreCompact fires before, PostCompact fires after
+# The pre hook fires before execution, the post hook after
 ```
 
 ## API Reference

@@ -25,7 +25,6 @@ Affaan's repository represents 10+ months of battle-tested Claude Code configura
 | Markdown agent format | MarkdownAgentParser integrated with UnifiedAgentConfig |
 | Markdown commands | CommandRegistry with YAML frontmatter parsing and alias resolution |
 | Session persistence | Integration with Empathy's state management and trust levels |
-| Context compaction | CompactionStateManager with SBAR handoff preservation |
 | Continuous learning | SessionEvaluator and PatternExtractor for knowledge retention |
 
 Our implementation is original Python code designed to integrate with Attune AI's existing architecture (LangGraph, Pydantic, multi-tier model routing), but the conceptual patterns we learned from Affaan's work were invaluable.

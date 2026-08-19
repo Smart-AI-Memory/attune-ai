@@ -29,3 +29,34 @@ spec leaves no broken path regardless of when that pass runs.
 `src/attune/commands/` (loader/parser/registry/models + command
 `.md` corpus; consumers today are only its own tests — verify
 against the tree at pick-up time, not this record).
+
+## D3 — post-retirement review rulings (chair, 2026-08-19, decision-packet form)
+
+From the post-retirement architecture review (full report:
+`~/.attune/reports/reviews/context-arch-review-post-12.0.0-2026-08-19.md`;
+repo stub: `docs/reports/review-context-post-retirement-2026-08-19.md`):
+
+- **suggest_compact.py DELETED.** The removing-dead-code gate dogfood
+  fired three signals: zero usage (absent from `plugin/hooks/hooks.json`
+  and every settings surface — grep receipt in the review), orphaned
+  motivation (manual-compaction nudge ported from everything-claude-code
+  JS; the era this spec retired), and a false wiring claim ("Called by
+  PreCompact hook" with no such registration). Removed with its test
+  file, `hooks.scripts` export, coverage exclusion, and
+  path-validation-gate allowlist entry. Same disposition path as its
+  sibling `pre_compact.py` (R1). Resurrect from git history only with
+  a real consumer.
+- **fit_source telemetry: minimal-measurement approved.** #2095's
+  `last_fit` is structurally dead in production (all four consumers use
+  throwaway allocator instances) and nothing consumes the log line.
+  Chair approved a small follow-up PR making rung outcomes actually
+  observable. Budget ratification (the 1250/1000/750 folklore values)
+  is DEFERRED until that measurement yields data.
+- **POST_COMPACT enum member removed** from `HookEvent` — PostCompact
+  is not a Claude Code lifecycle event (fiction signal #3,
+  requirements.md); `PRE_COMPACT` KEPT (PreCompact is real, merely
+  handler-less here).
+- **Post-compact continuity contract documented** at
+  `docs/architecture/post-compact-continuity.md` (the implicit
+  4-hook contract made explicit).
+- **D2 pickable work now tracked** in `TASKS.md` (Someday).

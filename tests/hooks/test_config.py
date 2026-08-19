@@ -21,7 +21,6 @@ class TestHookEvent:
             "SessionStart",
             "SessionEnd",
             "PreCompact",
-            "PostCompact",
             "PreCommand",
             "PostCommand",
             "Stop",

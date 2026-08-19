@@ -44,8 +44,8 @@ class CommandMetadata:
         category: context
         aliases: [comp, save-state]
         hooks:
-          pre: PreCompact
-          post: PostCompact
+          pre: PreToolUse
+          post: PostToolUse
         requires_user_id: true
         ---
     """

@@ -228,7 +228,6 @@ class TestHookEventTypes:
             HookEvent.SESSION_START,
             HookEvent.SESSION_END,
             HookEvent.PRE_COMPACT,
-            HookEvent.POST_COMPACT,
             HookEvent.PRE_COMMAND,
             HookEvent.POST_COMMAND,
             HookEvent.STOP,
