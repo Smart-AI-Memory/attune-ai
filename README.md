@@ -41,7 +41,7 @@ preview the contract (nothing executes), then `--run` for an
 attributed diff whose probes are re-run independently of the
 workflow; exit 0 means the probes passed, not that the agent felt
 good about it — plus a spec-driven,
-multi-agent toolkit: 23 workflows and <!-- cap:mcp_registered_tool_count -->61 MCP tools<!-- /cap --> dispatching 2–6
+multi-agent toolkit: 21 workflows and <!-- cap:mcp_registered_tool_count -->61 MCP tools<!-- /cap --> dispatching 2–6
 domain-specific subagents behind Socratic quality gates, RAG
 grounding with a citation-per-claim contract (mean per-claim
 faithfulness CI-gated at ≥ 0.97; 0.98 currently measured, N=20 runs
@@ -142,7 +142,7 @@ attune fix "imports resolve after the rename" \
   their contracts through a form: goal pre-filled, a scope picker
   built from paths you've touched, probe suggestions from matching
   test files — with the composed command shown before anything runs.
-- **Every workflow declares its inputs.** All 23 workflows carry an
+- **Every workflow declares its inputs.** All 21 workflows carry an
   `input_schema`; unknown or malformed inputs fail with named-field
   errors instead of being silently dropped.
 - **Local-first reports.** Roundtable transcripts write to
@@ -643,7 +643,7 @@ from retrieval. Full methodology:
 
 | | Attune AI | Static Docs | Agent Frameworks | Coding CLIs |
 | --- | --- | --- | --- | --- |
-| **Ready-to-use workflows** | 23 built-in | None | Build from scratch | None |
+| **Ready-to-use workflows** | 21 built-in | None | Build from scratch | None |
 | **Multi-agent teams** | 2–6 agents per workflow | None | Yes | No |
 | **MCP integration** | 61 native tools | None | No | No |
 | **Auto-triggering skills** | 28 skills, natural language | None | None | None |
