@@ -22742,3 +22742,29 @@ format assumption before concluding the corpus lacks the field.
   (`tests/unit/gates/test_claim_drift.py`) but nothing checks
   tagline consistency — if taglines drift again, this list is the
   checklist.
+
+- **`gh pr view --json statusCheckRollup` mixes two shapes — a
+  `StatusContext` (Vercel, external statuses) has `conclusion: null`
+  even when green, because its result lives in `state`, not
+  `conclusion`**: hit 2026-08-19 pre-merge-gating PR #2100. Filtering
+  the rollup with `select(.conclusion==null)` to find "pending" checks
+  returned the two Vercel StatusContexts, which were already
+  `state: SUCCESS` — reading them as unfinished would have wrongly
+  refused a full-matrix-green merge (or worse, polling forever).
+  `CheckRun` entries (GitHub Actions) use `status`/`conclusion`;
+  `StatusContext` entries use `state` only. Rule: when auditing a
+  rollup for completeness, branch on `__typename` — pending is
+  `(.__typename=="CheckRun" and .status!="COMPLETED") or
+  (.__typename=="StatusContext" and .state=="PENDING")`; never treat
+  a null `conclusion` alone as "not finished". Companion to the
+  existing "`gh pr checks --json` field is `bucket`" lesson — same
+  family (gh check-state field names differ per surface), different
+  endpoint.
+
+- **Instance-level telemetry on short-lived objects is structurally dead — check the CONSUMERS' object lifetimes before choosing the recording surface**: #2095 added `TokenBudgetAllocator.last_fit` as the programmatic telemetry surface, but every production caller uses the throwaway pattern `TokenBudgetAllocator().fit_source(...)`, so the instance carrying the data is discarded on the same line it is written — the surface was unreachable from day one and only the log line worked. Caught by the 2026-08-19 post-retirement review; fixed by appending each outcome to a durable JSONL stream (PR #2103). Rule: before landing instance-attribute telemetry, grep the call sites — if callers construct-and-discard, record to a module-level or durable surface instead.
+
+- **A "delete the dormant stack" sweep misses dormant TWINS not named in the spec's inventory — after executing a removal spec, grep for siblings with the same dormancy signature**: context-compaction-retirement deleted `pre_compact.py` (unwired, self-tests only, coverage-excluded) but `suggest_compact.py` — identical profile, same directory, still advertised in docs/hooks.md — survived by omission because the spec's dormant table never listed it. The post-retirement review's gate dogfood fired 3 removal signals on it and the chair ruled deletion (spec D3, PR #2102). Pattern: the spec's inventory is a hypothesis (lessons-core rule); after a removal lands, sweep the removed module's directory and registry surface for entries sharing its signature (unwired + self-tests-only + coverage-excluded) before closing the spec.
+
+- **A shipped spec whose status header still reads "draft" is a live status-truth bug — flip the header in the same PR that executes the spec, or the next reviewer inherits a false premise**: hit 2026-08-19 on context-compaction-retirement: the removal merged in PR #2093 (12.0.0) but requirements.md still opened with "Status: draft (2026-08-18) — no code changes are authorized until the chair reads and merges the spec PR" — a sentence that was false for a full day and would have misdirected any agent recalling the spec. The execute-PR checklist should treat the status header as part of the diff: if the PR completes a phase or the whole spec, the header flips in that PR, not in a later sweep. Fixed in the post-retirement review's residue PR (#2102, spec D3).
+
+- **The path-validation gate's AST scan does not count `Path.open()` as a file op — a module writing via `path.open("a")` is invisible to the enforcer that exists for exactly that pattern**: discovered live 2026-08-19 adding the context_fit telemetry append (PR #2103): an ALLOWLIST entry added for `src/attune/context/allocator.py` FAILED `test_allowlist_entries_are_still_needed` as "no longer needed" because `scan_source` in `tests/unit/gates/test_path_validation_gate.py` only matches the builtin `open()` call with a write mode, `.write_text()`/`.write_bytes()`, and mutating `shutil.*`/`os.*` — an `ast.Attribute` call named `open` (the `Path.open` idiom) never matches. Consequence: the gate's coverage claim ("modules with write-capable file ops must reference a validation helper or hold an allowlist entry") is narrower than its prose; any module can adopt write-capable `Path.open` without tripping it. When citing the gate as a receipt ("the module is a non-offender"), say which constructs the scan actually covers. Tightening the scan to include attribute-`open` with a write mode is pickable work — it would pull several currently-invisible writers into the ratchet, so land it with a re-seeded allowlist, not as a drive-by.
