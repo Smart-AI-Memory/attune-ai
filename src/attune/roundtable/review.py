@@ -115,13 +115,46 @@ def resolve_target(
     }
 
 
+#: Projector-owned surfaces — reviewable content lives in their masters
+#: (content/features/, .claude/skills/, the help sources), so when the
+#: brief cap bites these are the right files to drop first.
+_PROJECTION_PREFIXES = (
+    "plugin/help/generated/",
+    "attune-ai-dev/",
+    ".help/",
+    ".agents/skills/",
+)
+
+
+def _brief_priority(name: str) -> int:
+    """Packing rank: masters before projections when the cap bites.
+
+    2026-08-19 retro: a residue-cleanup lane sent 26 files including
+    HTML help projections while the 60KB cap pushed out the diff's one
+    src enum edit — the omission the scoped follow-up lane existed to
+    cover. src and tests are what the seat is there to judge; known
+    projections duplicate masters that already rank ahead of them.
+    """
+    if name.startswith("src/"):
+        return 0
+    if name.startswith("tests/"):
+        return 1
+    if name.startswith(_PROJECTION_PREFIXES):
+        return 3
+    return 2
+
+
 def budget_manifest(per_file: dict[str, str], cap_chars: int = DIFF_CAP_CHARS) -> dict[str, Any]:
-    """Split files into sent/omitted under the cap, largest first.
+    """Split files into sent/omitted under the cap.
+
+    Packing order: priority class first (src, tests, everything else,
+    known projections — see :func:`_brief_priority`), largest diff
+    first within a class.
 
     R3: the manifest travels everywhere (brief, board post, render)
     — a partial review must say so.
     """
-    ordered = sorted(per_file.items(), key=lambda kv: len(kv[1]), reverse=True)
+    ordered = sorted(per_file.items(), key=lambda kv: (_brief_priority(kv[0]), -len(kv[1])))
     sent: list[str] = []
     omitted: list[str] = []
     total = 0
