@@ -4,7 +4,8 @@ file operations" (collaboration contract; feature-lead-governance
 principles draft, principle 4). Until 2026-07-29 this rule had no
 mechanical enforcer — it relied on review discipline.
 The scan (AST-based, so prose/comments can never false-positive):
-- A module "does file ops" when it calls ``open()`` with a
+- A module "does file ops" when it calls ``open()`` (builtin or the
+  ``path.open(...)`` / ``Path.open`` attribute form) with a
   write-capable mode, ``.write_text()`` / ``.write_bytes()``, a
   mutating ``shutil`` function, or a mutating ``os`` function.
 - A module "has validation" when any identifier it references
@@ -43,6 +44,10 @@ _OS_FUNCS = {"remove", "unlink", "rename", "replace"}
 #: seeding (2026-07-29): each writes only internal/derived paths
 #: (state stores, telemetry sinks, generated docs). Remove entries as
 #: modules adopt ``_validate_file_path``; add only with review.
+#: Re-seeded 2026-08-19 when the scanner learned the ``path.open("a")``
+#: attribute form (previously invisible): 11 writers became visible,
+#: each reviewed as internal/derived-path only (JSONL ledgers,
+#: telemetry sinks, hook metrics, env-gated debug dumps).
 ALLOWLIST = frozenset(
     {
         "src/attune/authoring/fact_check/__init__.py",
@@ -52,9 +57,12 @@ ALLOWLIST = frozenset(
         "src/attune/authoring/polish.py",
         "src/attune/authoring/projector.py",
         "src/attune/authoring/spec_workflow.py",
+        "src/attune/context/allocator.py",
         "src/attune/curator/cache.py",
         "src/attune/gates/envelope.py",
+        "src/attune/gates/lifecycle/ledger.py",
         "src/attune/handoff/packet.py",
+        "src/attune/hooks/scripts/worktree_path_guard.py",
         "src/attune/help/feedback.py",
         "src/attune/help/generator.py",
         "src/attune/help/manifest.py",
@@ -67,25 +75,38 @@ ALLOWLIST = frozenset(
         "src/attune/ops/dismiss_store.py",
         "src/attune/ops/health_snapshot.py",
         "src/attune/ops/ops_config_store.py",
+        "src/attune/ops/pending_writes.py",
         "src/attune/ops/routes/specs.py",
         "src/attune/ops/sweep_results.py",
         "src/attune/orchestration/ghosts/worktree.py",
+        "src/attune/pipeline_learner/decisions.py",
         "src/attune/pipeline_learner/scaffold.py",
+        "src/attune/roundtable/countersign.py",
         "src/attune/roundtable/gate_triage.py",
+        "src/attune/roundtable/role_telemetry.py",
         "src/attune/roundtable/triage_appendix.py",
+        "src/attune/telemetry/help_tracker.py",
+        "src/attune/telemetry/memory_events.py",
         "src/attune/telemetry/usage_ping.py",
         "src/attune/telemetry/usage_tracker.py",
+        "src/attune/workflows/agent_sdk_adapter.py",
+        "src/attune/workflows/migration.py",
         "src/attune/workflows/progress_reporters.py",
+        "src/attune/workflows/progressive/telemetry.py",
         "src/attune/workflows/suggestions.py",
     }
 )
 
 
-def _open_mode_is_write(call: ast.Call) -> bool:
-    """True when an ``open()`` call's mode string enables writing."""
+def _open_mode_is_write(call: ast.Call, mode_arg_index: int = 1) -> bool:
+    """True when an ``open()`` call's mode string enables writing.
+
+    ``mode_arg_index`` is 1 for builtin ``open(path, mode)`` and 0 for
+    the ``path.open(mode)`` attribute form.
+    """
     mode = None
-    if len(call.args) >= 2 and isinstance(call.args[1], ast.Constant):
-        mode = call.args[1].value
+    if len(call.args) > mode_arg_index and isinstance(call.args[mode_arg_index], ast.Constant):
+        mode = call.args[mode_arg_index].value
     for kw in call.keywords:
         if kw.arg == "mode" and isinstance(kw.value, ast.Constant):
             mode = kw.value.value
@@ -115,7 +136,10 @@ def scan_source(source: str) -> tuple[list[str], bool]:
                 if _open_mode_is_write(node):
                     ops.append(f"open-for-write at line {node.lineno}")
             elif isinstance(func, ast.Attribute):
-                if func.attr in _WRITE_ATTRS:
+                if func.attr == "open":
+                    if _open_mode_is_write(node, mode_arg_index=0):
+                        ops.append(f".open()-for-write at line {node.lineno}")
+                elif func.attr in _WRITE_ATTRS:
                     ops.append(f".{func.attr}() at line {node.lineno}")
                 elif (
                     isinstance(func.value, ast.Name)
@@ -182,6 +206,17 @@ def test_scanner_detects_write_open() -> None:
 
 def test_scanner_ignores_read_open() -> None:
     ops, _ = scan_source('f = open(p)\ng = open(p, "r")\n')
+    assert ops == []
+
+
+def test_scanner_detects_attribute_write_open() -> None:
+    """The ``path.open("a")`` idiom is a write, same as builtin open."""
+    ops, _ = scan_source('with p.open("a") as f:\n    f.write(x)\n')
+    assert ops == [".open()-for-write at line 1"]
+
+
+def test_scanner_ignores_attribute_read_open() -> None:
+    ops, _ = scan_source('f = p.open()\ng = p.open("r")\n')
     assert ops == []
 
 
