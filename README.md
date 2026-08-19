@@ -92,35 +92,26 @@ routing, and [Installation Options](#installation-options) for extras.
      a permanent section below (see "Dynamic forms" for the pattern).
      Don't stack a second "New in" section here. -->
 
-## New in 11.6.0 — Redis config truth, complete
+## New in 12.0.0 — a sharper core you can trust
 
-The Redis config-truth arc that 11.5.0 opened is now closed
-end-to-end. 11.5.0 introduced ONE canonical resolver,
-`resolve_redis_connection()` — five-step precedence across the
-`REDIS_URL` variants, credential merging (`REDIS_PASSWORD` merges
-into a password-less URL — the misconfiguration that used to read
-as "Redis down"), a source-map recording which env var supplied
-each component — plus classified degradation (auth failures warn
-ONCE per session with a redacted URL) and a `redis_health_check`
-doctor diagnostic that reports the redacted effective config.
+This release is about one promise: **every public surface is one
+that demonstrably works.**
 
-11.6.0 makes every consumer honor it:
-
-- **Consumers that previously ignored `REDIS_PASSWORD` now
-  authenticate.** Every direct Redis connection-env reader derives
-  from the resolver; stale passwords in staging/CI surface loudly
-  instead of failing silently.
-- **Canonical `REDIS_*` names only** for connection variables —
-  the legacy `EMPATHY_REDIS_HOST`/`EMPATHY_REDIS_PORT` aliases are
-  retired, and connection resolution is host-anchored.
-- **An AST drift guard keeps it true**: any new direct read of the
-  connection env names outside the resolver fails CI.
-
-Also in 11.6.0: security hardening from the 11.5.0 self-review
-(hook-executor command templates tokenize before substitution,
-webhook connections pin the validated IP, ops `run_id` validated
-before any filesystem walk) and performance fixes across help,
-telemetry, and the dashboard.
+- **`attune.context` now exports exactly the live surface.** The
+  module is down to its two proven tools — `TokenBudgetAllocator`
+  (with `fit_source`) and `ASTSkeletonGenerator` — and a new
+  regression guard pins that surface so it stays honest as the
+  package grows. (This is the breaking change behind the major
+  version: a dormant compaction stack with zero live consumers is
+  retired — details in the CHANGELOG, and everything removed
+  remains recoverable from git history. The session-continuity
+  hooks — compact warning, handoff, stash and recall — are live,
+  unrelated, and unchanged.)
+- **Security tests can no longer skip silently.** A new dead-suite
+  guard fails CI whenever a test module's dependency is missing
+  from the environment — the class of gap that used to let whole
+  suites skip unnoticed. Closing the gaps it found brought 41
+  auth-security tests back into every run, CI included.
 
 ## Goal-driven development — receipts, not promises
 
@@ -447,6 +438,23 @@ an advisory staleness sweep for curated memory corpora and a
 broad-except ratchet (seeded at 613 sites; the count only
 shrinks, and CI proves the gate fires).
 
+## Redis config truth — one resolver, no silent drift
+
+All Redis connection config resolves through ONE canonical
+resolver, `resolve_redis_connection()` (shipped across
+11.5.0–11.6.0): five-step precedence across the `REDIS_URL`
+variants, credential merging (`REDIS_PASSWORD` merges into a
+password-less URL — the misconfiguration that used to read as
+"Redis down"), and a source-map recording which env var supplied
+each component. Degradation is classified — auth failures warn
+once per session with a redacted URL — and the
+`redis_health_check` doctor diagnostic reports the redacted
+effective config. Every consumer derives from the resolver, so
+stale passwords surface loudly instead of failing silently;
+connection variables use canonical `REDIS_*` names only; and an
+AST drift guard fails CI on any new direct read of the connection
+env names outside the resolver.
+
 ---
 
 ## Get Started in 60 Seconds
@@ -548,7 +556,9 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 
 ## MCP Tools
 
-50 tools organized into 7 categories:
+50 core tools organized into 7 categories, plus 11 memory tools
+(`session_memory_*`, `redis_memory_*`, `redis_health_check`)
+registered by the bundled Redis plugin — 61 registered in total:
 
 ### Workflow (22)
 
@@ -635,7 +645,7 @@ from retrieval. Full methodology:
 | --- | --- | --- | --- | --- |
 | **Ready-to-use workflows** | 21 built-in | None | Build from scratch | None |
 | **Multi-agent teams** | 2–6 agents per workflow | None | Yes | No |
-| **MCP integration** | 50 native tools | None | No | No |
+| **MCP integration** | 61 native tools | None | No | No |
 | **Auto-triggering skills** | 28 skills, natural language | None | None | None |
 | **Socratic discovery** | Questions before execution | None | None | None |
 | **Portable security hooks** | PreToolUse + PostToolUse | None | No | No |
