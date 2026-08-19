@@ -3,8 +3,8 @@ type: reference
 name: hooks-reference
 feature: hooks
 depth: reference
-generated_at: 2026-06-24T01:45:59.743282+00:00
-source_hash: 4b00173384f5e97dd450a6b8b69e5253088cb776441337b23c6bf960f70c76f7
+generated_at: 2026-08-19T15:41:55.951394+00:00
+source_hash: 135910a198c946084ebe186e1f9f9879826026c95886aa2c85c739e52893fee8
 status: generated
 ---
 
@@ -14,7 +14,7 @@ status: generated
 
 | Symbol | Kind | Purpose |
 |--------|------|---------|
-| `HookEvent` | enum | `PRE_TOOL_USE`/`POST_TOOL_USE`/`SESSION_START`/`SESSION_END`/`PRE_COMPACT`/`POST_COMPACT`/`PRE_COMMAND`/`POST_COMMAND`/`STOP`; values are Claude Code event names. |
+| `HookEvent` | enum | `PRE_TOOL_USE`/`POST_TOOL_USE`/`SESSION_START`/`SESSION_END`/`PRE_COMPACT`/`PRE_COMMAND`/`POST_COMMAND`/`STOP`; values are Claude Code event names. |
 | `HookRegistry(config=None)` | class | `register(event, handler, description="", matcher=None, priority=0) -> str`, `fire` (async) / `fire_sync`, `get_matching_hooks`, `unregister`, `get_execution_log`, `get_stats`, `load_config`. |
 | `HookExecutor(python_handlers=None)` | class | `execute(hook, context)` — **async**. |
 | `HookDefinition(type=HookType.PYTHON, command, description="", timeout=30, async_execution=False, on_error="log")` | pydantic model | A configured hook. |

@@ -48,6 +48,7 @@ exclude_docs: |
   # the projector. The feature_nav.py hook owns the Features nav section.
   architecture/enhanced_escalation_architecture.md
   architecture/extending-composition-patterns.md
+  architecture/post-compact-continuity.md
   architecture/resilience.md
   architecture/cli.md
   architecture/hooks.md

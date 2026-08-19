@@ -59,7 +59,6 @@ ALLOWLIST = frozenset(
         "src/attune/help/generator.py",
         "src/attune/help/manifest.py",
         "src/attune/help/session.py",
-        "src/attune/hooks/scripts/suggest_compact.py",
         "src/attune/memory/file_stash.py",
         "src/attune/memory/personal.py",
         "src/attune/memory/security/audit_logger.py",

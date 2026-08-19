@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — note</title>
-  <meta name="description" content="`attune.hooks` is an **event system**: it lets code (and config) react to lifecycle events — before/after a tool runs, at session start/end, around compaction, and on stop. The public surface, exporte" />
+  <meta name="description" content="`attune.hooks` is an **event system**: it lets code (and config) react to lifecycle events — before/after a tool runs, at session start/end, before compaction, and on stop. The public surface, exporte" />
   <meta property="og:title" content="The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — note" />
-  <meta property="og:description" content="`attune.hooks` is an **event system**: it lets code (and config) react to lifecycle events — before/after a tool runs, at session start/end, around compaction, and on stop. The public surface, exporte" />
+  <meta property="og:description" content="`attune.hooks` is an **event system**: it lets code (and config) react to lifecycle events — before/after a tool runs, at session start/end, before compaction, and on stop. The public surface, exporte" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/hooks/note" />
   <style>
@@ -276,12 +276,12 @@
 <h2>Overview</h2>
 <p><code>attune.hooks</code> is an <strong>event system</strong>: it lets code (and config) react
 to lifecycle events — before/after a tool runs, at session start/end,
-around compaction, and on stop. The public surface, exported from
+before compaction, and on stop. The public surface, exported from
 <code>attune.hooks</code>, is five symbols:</p>
 <ul>
 <li><strong><code>HookEvent</code></strong> — the events you can hook (<code>PRE_TOOL_USE</code>,
 <code>POST_TOOL_USE</code>, <code>SESSION_START</code>, <code>SESSION_END</code>, <code>PRE_COMPACT</code>,
-<code>POST_COMPACT</code>, <code>PRE_COMMAND</code>, <code>POST_COMMAND</code>, <code>STOP</code>).</li>
+<code>PRE_COMMAND</code>, <code>POST_COMMAND</code>, <code>STOP</code>).</li>
 <li><strong><code>HookRegistry</code></strong> — register Python handlers for events and fire
 them in-process.</li>
 <li><strong><code>HookExecutor</code></strong> — run a configured <code>HookDefinition</code> (command,

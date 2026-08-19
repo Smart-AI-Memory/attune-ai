@@ -16,11 +16,9 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
-import importlib
 import json
 import subprocess
 import sys
-import threading
 from pathlib import Path
 
 import pytest
@@ -187,78 +185,3 @@ class TestNonAsciiEndToEnd:
             {"tool_name": "Bash", "tool_input": {"command": NON_ASCII_COMMAND}},
         )
         assert result.returncode == 0, result.stderr
-
-
-# ---------------------------------------------------------------------------
-# 3. Concurrent, atomic state writes
-# ---------------------------------------------------------------------------
-
-
-class TestAtomicStateWrites:
-    def test_concurrent_saves_never_yield_partial_json(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        suggest_compact = importlib.import_module("attune.hooks.scripts.suggest_compact")
-
-        state_file = tmp_path / "compaction_state.json"
-        monkeypatch.setattr(suggest_compact, "get_compaction_state_file", lambda: state_file)
-
-        errors: list[Exception] = []
-        stop = threading.Event()
-
-        def writer(n: int) -> None:
-            payload = {"tool_call_count": n, "data": "célébration 🎉" * 50}
-            try:
-                for _ in range(25):
-                    suggest_compact.save_compaction_state(payload)
-            except Exception as exc:  # noqa: BLE001
-                errors.append(exc)
-
-        def reader() -> None:
-            while not stop.is_set():
-                if state_file.exists():
-                    try:
-                        json.loads(state_file.read_text(encoding="utf-8"))
-                    except json.JSONDecodeError as exc:
-                        errors.append(exc)
-                    except OSError:
-                        # Windows: transient sharing violation while a
-                        # writer's os.replace is in flight — not a torn
-                        # write; keep observing.
-                        continue
-
-        threads = [threading.Thread(target=writer, args=(i,)) for i in range(4)]
-        observer = threading.Thread(target=reader)
-        observer.start()
-        for t in threads:
-            t.start()
-        for t in threads:
-            t.join()
-        stop.set()
-        observer.join()
-
-        assert not errors, f"partial/failed writes observed: {errors[:3]}"
-        final = json.loads(state_file.read_text(encoding="utf-8"))
-        assert "célébration" in final["data"]
-
-    def test_no_leftover_tempfiles_on_success(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        suggest_compact = importlib.import_module("attune.hooks.scripts.suggest_compact")
-
-        state_file = tmp_path / "state.json"
-        monkeypatch.setattr(suggest_compact, "get_compaction_state_file", lambda: state_file)
-        suggest_compact.save_compaction_state({"tool_call_count": 1})
-        leftovers = [p for p in tmp_path.iterdir() if p.name != "state.json"]
-        assert leftovers == []
-
-    def test_roundtrip_preserves_non_ascii(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        suggest_compact = importlib.import_module("attune.hooks.scripts.suggest_compact")
-
-        state_file = tmp_path / "state.json"
-        monkeypatch.setattr(suggest_compact, "get_compaction_state_file", lambda: state_file)
-        suggest_compact.save_compaction_state({"note": "naïve — 日本語 🎉"})
-        loaded = suggest_compact.load_compaction_state()
-        assert loaded["note"] == "naïve — 日本語 🎉"

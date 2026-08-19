@@ -4,12 +4,12 @@
 
 `attune.hooks` is an **event system**: it lets code (and config) react
 to lifecycle events — before/after a tool runs, at session start/end,
-around compaction, and on stop. The public surface, exported from
+before compaction, and on stop. The public surface, exported from
 `attune.hooks`, is five symbols:
 
 - **`HookEvent`** — the events you can hook (`PRE_TOOL_USE`,
   `POST_TOOL_USE`, `SESSION_START`, `SESSION_END`, `PRE_COMPACT`,
-  `POST_COMPACT`, `PRE_COMMAND`, `POST_COMMAND`, `STOP`).
+  `PRE_COMMAND`, `POST_COMMAND`, `STOP`).
 - **`HookRegistry`** — register Python handlers for events and fire
   them in-process.
 - **`HookExecutor`** — run a configured `HookDefinition` (command,
@@ -82,4 +82,4 @@ with `get_hooks_for_event(event)`. A `HookRule` carries a `matcher`, its
 - **Ship a script:** add a module under `attune/hooks/scripts/` and
   register it in the plugin's hook config.
 
-<!-- attune-generated: source_hash=4b00173384f5e97dd450a6b8b69e5253088cb776441337b23c6bf960f70c76f7 feature=hooks kind=architecture generated_at=2026-06-24 -->
+<!-- attune-generated: source_hash=135910a198c946084ebe186e1f9f9879826026c95886aa2c85c739e52893fee8 feature=hooks kind=architecture generated_at=2026-08-19 -->

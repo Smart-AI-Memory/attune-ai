@@ -21,7 +21,6 @@ class HookEvent(str, Enum):
     SESSION_START = "SessionStart"
     SESSION_END = "SessionEnd"
     PRE_COMPACT = "PreCompact"
-    POST_COMPACT = "PostCompact"
     PRE_COMMAND = "PreCommand"
     POST_COMMAND = "PostCommand"
     STOP = "Stop"

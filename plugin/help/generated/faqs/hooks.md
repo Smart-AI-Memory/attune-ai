@@ -14,7 +14,7 @@ type: faq
 ## What events can I hook?
 
 The `HookEvent` enum — `PRE_TOOL_USE`, `POST_TOOL_USE`,
-`SESSION_START`/`SESSION_END`, `PRE_COMPACT`/`POST_COMPACT`,
+`SESSION_START`/`SESSION_END`, `PRE_COMPACT`,
 `PRE_COMMAND`/`POST_COMMAND`, `STOP`. Their values are the Claude Code
 event names.
 
