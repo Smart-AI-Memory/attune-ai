@@ -171,7 +171,6 @@ exclude_docs: |
   commands.md
   comparison.md
   configuration-architecture.md
-  context-management.md
   continuous-learning.md
   experimental_assessment.md
   feature-overview-meta-workflows.md
@@ -233,7 +232,6 @@ nav:
           - Resilience Patterns: how-to/resilience-patterns.md
       - Codebase Intelligence:
           - Project Analysis: how-to/project-analysis-and-metrics.md
-          - Context Management: how-to/context-management.md
           - Learning and Patterns: how-to/learning-and-patterns.md
           - Triage Code-Quality Report: how-to/triage-code-quality.md
       - Observability:

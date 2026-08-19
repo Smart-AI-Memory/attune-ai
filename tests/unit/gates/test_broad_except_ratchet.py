@@ -133,7 +133,6 @@ _BASELINE: dict[str, int] = {
     "src/attune/hooks/scripts/evaluate_session.py": 3,
     "src/attune/hooks/scripts/help_freshness_nudge.py": 1,
     "src/attune/hooks/scripts/lessons_reminder.py": 1,
-    "src/attune/hooks/scripts/pre_compact.py": 1,
     "src/attune/hooks/scripts/starter_prompt_nudge.py": 1,
     "src/attune/hooks/scripts/starter_reconciler.py": 3,
     "src/attune/hooks/scripts/worktree_path_guard.py": 1,

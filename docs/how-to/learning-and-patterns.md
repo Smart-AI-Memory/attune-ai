@@ -218,8 +218,6 @@ python src/attune/hooks/scripts/evaluate_session.py
 
 ## See Also
 
-- [Context Management](context-management.md) — State preservation across
-  compaction events, which feeds pattern data into the learning pipeline
 - [Lessons CLI](../reference/cli-reference.md#attune-lessons) — View and
   manage learned patterns from the command line
 - [Unified Memory System](unified-memory-system.md) — Long-term storage that

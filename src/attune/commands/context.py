@@ -22,7 +22,6 @@ from typing import TYPE_CHECKING, Any
 from attune.commands.models import CommandConfig, CommandResult
 
 if TYPE_CHECKING:
-    from attune.context.manager import ContextManager
     from attune.hooks.config import HookEvent
     from attune.hooks.registry import HookRegistry
     from attune.learning.storage import LearnedSkillsStorage
@@ -37,7 +36,6 @@ class CommandContext:
 
     Provides access to framework components that commands may need:
     - Hook registry for firing events
-    - Context manager for state preservation
     - Learning storage for pattern access
     - Collaboration state for user context
 
@@ -46,7 +44,6 @@ class CommandContext:
         ctx = CommandContext(
             user_id="user123",
             hook_registry=hooks,
-            context_manager=context_mgr,
             learning_storage=storage,
             collaboration_state=state,
         )
@@ -59,7 +56,6 @@ class CommandContext:
 
     user_id: str
     hook_registry: HookRegistry | None = None
-    context_manager: ContextManager | None = None
     learning_storage: LearnedSkillsStorage | None = None
     collaboration_state: CollaborationState | None = None
     project_root: Path | None = None
@@ -98,37 +94,6 @@ class CommandContext:
         hook_context["user_id"] = self.user_id
 
         return self.hook_registry.fire_sync(event, hook_context)
-
-    def save_context_state(self) -> Path | None:
-        """Save current collaboration state for compaction.
-
-        Returns:
-            Path to saved state file or None
-
-        """
-        if self.context_manager is None:
-            logger.debug("No context manager available")
-            return None
-
-        if self.collaboration_state is None:
-            logger.debug("No collaboration state available")
-            return None
-
-        return self.context_manager.save_for_compaction(self.collaboration_state)
-
-    def restore_context_state(self) -> bool:
-        """Restore context state for user.
-
-        Returns:
-            True if state was restored
-
-        """
-        if self.context_manager is None:
-            logger.debug("No context manager available")
-            return False
-
-        state = self.context_manager.restore_state(self.user_id)
-        return state is not None
 
     def get_patterns_for_context(
         self,
@@ -322,7 +287,6 @@ def create_command_context(
     project_root: str | Path | None = None,
     enable_hooks: bool = True,
     enable_learning: bool = True,
-    enable_context: bool = True,
 ) -> CommandContext:
     """Create a CommandContext with available components.
 
@@ -334,14 +298,12 @@ def create_command_context(
         project_root: Project root directory
         enable_hooks: Enable hook integration
         enable_learning: Enable learning integration
-        enable_context: Enable context management
 
     Returns:
         Configured CommandContext
 
     """
     hook_registry = None
-    context_manager = None
     learning_storage = None
 
     if enable_hooks:
@@ -351,14 +313,6 @@ def create_command_context(
             hook_registry = HookRegistry()
         except ImportError:
             logger.debug("Hooks module not available")
-
-    if enable_context:
-        try:
-            from attune.context.manager import ContextManager
-
-            context_manager = ContextManager()
-        except ImportError:
-            logger.debug("Context module not available")
 
     if enable_learning:
         try:
@@ -371,7 +325,6 @@ def create_command_context(
     return CommandContext(
         user_id=user_id,
         hook_registry=hook_registry,
-        context_manager=context_manager,
         learning_storage=learning_storage,
         project_root=Path(project_root) if project_root else None,
     )

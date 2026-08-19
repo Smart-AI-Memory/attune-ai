@@ -2,7 +2,7 @@
 # Copyright 2025 Smart AI Memory, LLC
 """Tests for trivial __init__ and __main__ modules — Batch 11.
 
-Covers: agents_md/__init__, context/__init__, learning/__init__,
+Covers: agents_md/__init__, learning/__init__,
 optimization/__init__, project_index/__main__, test_generator/__main__,
 validation/__init__,
 meta_workflows/cli_commands/__init__, telemetry/__main__.
@@ -43,49 +43,6 @@ class TestAgentsMdInit:
 
         for symbol in (AgentLoader, MarkdownAgentParser, AgentRegistry):
             assert symbol is not None
-
-
-# === Module: context/__init__.py ===
-
-
-class TestContextInit:
-    def test_compact_state_importable(self):
-        from attune.context import CompactState
-
-        assert CompactState is not None
-
-    def test_compaction_state_manager_importable(self):
-        from attune.context import CompactionStateManager
-
-        assert CompactionStateManager is not None
-
-    def test_context_manager_importable(self):
-        from attune.context import ContextManager
-
-        assert ContextManager is not None
-
-    def test_work_handoff_importable(self):
-        from attune.context import WorkHandoff
-
-        assert WorkHandoff is not None
-
-    def test_all_list_complete(self):
-        from attune import context as m
-
-        for name in ("CompactState", "CompactionStateManager", "ContextManager", "WorkHandoff"):
-            assert name in m.__all__
-
-    def test_context_manager_instantiable(self):
-        from attune.context import ContextManager
-
-        cm = ContextManager()
-        assert cm is not None
-
-    def test_context_manager_identity(self):
-        from attune.context import ContextManager
-        from attune.context.manager import ContextManager as Direct
-
-        assert ContextManager is Direct
 
 
 # === Module: learning/__init__.py ===

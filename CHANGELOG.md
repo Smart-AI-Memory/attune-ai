@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed — BREAKING: dormant context-compaction stack (2026-08-18)
+
+- **`attune.context` compaction stack deleted** per
+  `docs/specs/context-compaction-retirement` (chair-ruled D1/D2):
+  `ContextManager`, `CompactionStateManager`, `CompactState`,
+  `WorkHandoff`, `ContextInflater`, and the unregistered
+  `hooks/scripts/pre_compact.py` script. The stack had zero live
+  consumers, preserved trust/empathy state from the EmpathyOS model
+  retired in 9.0.0, and its docs described wiring that never
+  existed. `attune.context` now exports exactly the live surface —
+  `TokenBudgetAllocator` (with `fit_source`) and
+  `ASTSkeletonGenerator` — pinned by a new regression guard
+  (`tests/unit/context/test_public_surface.py`).
+  `CommandContext.context_manager` and the factory's
+  `enable_context` flag are removed with it; the two
+  context-management docs pages and the `examples/complete-workflow`
+  demo are deleted. Recover any of it from git history if a rebuild
+  on current rails is ever wanted.
+
 ### Added — retro tooling (2026-08-16 session close-out)
 
 - **Dead-suite guard** (`tests/unit/test_no_dead_suites.py`): fails

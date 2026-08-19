@@ -1,7 +1,13 @@
 """Context Management for Attune AI
 
-Strategic compaction to preserve critical state through context window resets.
-Ensures trust levels, detected patterns, and session continuity survive compaction events.
+Token-budget fitting for LLM prompts: AST skeletons that preserve
+every signature and docstring when full source exceeds a budget
+(see ``TokenBudgetAllocator.fit_source``).
+
+The former compaction-state stack (ContextManager,
+CompactionStateManager, CompactState, WorkHandoff, ContextInflater)
+was retired by docs/specs/context-compaction-retirement (D1/D2,
+2026-08-18); recover it from git history if ever needed.
 
 Architectural patterns inspired by everything-claude-code by Affaan Mustafa.
 See: https://github.com/affaan-m/everything-claude-code (MIT License)
@@ -12,17 +18,9 @@ Licensed under the Apache License, Version 2.0
 """
 
 from attune.context.allocator import TokenBudgetAllocator
-from attune.context.compaction import CompactionStateManager, CompactState, WorkHandoff
-from attune.context.inflater import ContextInflater
-from attune.context.manager import ContextManager
 from attune.context.skeleton import ASTSkeletonGenerator
 
 __all__ = [
     "ASTSkeletonGenerator",
-    "CompactState",
-    "CompactionStateManager",
-    "ContextInflater",
-    "ContextManager",
     "TokenBudgetAllocator",
-    "WorkHandoff",
 ]
