@@ -57,6 +57,7 @@ ALLOWLIST = frozenset(
         "src/attune/authoring/polish.py",
         "src/attune/authoring/projector.py",
         "src/attune/authoring/spec_workflow.py",
+        "src/attune/context/allocator.py",
         "src/attune/curator/cache.py",
         "src/attune/gates/envelope.py",
         "src/attune/gates/lifecycle/ledger.py",
