@@ -105,6 +105,31 @@ class TestManifest:
         assert manifest["omitted"] == ["b.py"]
         assert manifest["chars"] == 80
 
+    def test_src_outranks_larger_projection_under_cap(self) -> None:
+        """The cap eats projections, never the src edit (2026-08-19 retro)."""
+        per_file = {
+            "plugin/help/generated/concepts/hooks.md": "p" * 90,
+            "src/attune/hooks/config.py": "s" * 30,
+            "tests/hooks/test_config.py": "t" * 30,
+        }
+        manifest = review.budget_manifest(per_file, cap_chars=100)
+        assert manifest["sent"] == [
+            "src/attune/hooks/config.py",
+            "tests/hooks/test_config.py",
+        ]
+        assert manifest["omitted"] == ["plugin/help/generated/concepts/hooks.md"]
+
+    def test_projection_prefixes_rank_last_within_docs(self) -> None:
+        """Hand-authored non-src files still outrank known projections."""
+        per_file = {
+            ".help/templates/hooks/faq.md": "a" * 40,
+            "docs/architecture/post-compact-continuity.md": "b" * 40,
+            "attune-ai-dev/help/hooks/faq.html": "c" * 40,
+        }
+        manifest = review.budget_manifest(per_file, cap_chars=90)
+        assert manifest["sent"][0] == "docs/architecture/post-compact-continuity.md"
+        assert len(manifest["omitted"]) == 1
+
     def test_manifest_note_names_omissions(self) -> None:
         manifest = {"sent": ["a.py"], "omitted": ["b.py"], "chars": 10, "cap": 100}
         note = review.manifest_note(manifest)

@@ -14,6 +14,12 @@
 
 ## Waiting On
 
+- [ ] **fit_source budget ratification** — ruling C
+  (context-compaction-retirement D3, 2026-08-19) deferred the
+  hardcoded 1250/1250/1000/750 budgets until measurement data
+  exists; when `~/.attune/telemetry/context_fit.jsonl` holds a few
+  weeks of real workflow runs, re-open with rung/truncation rates
+
 - [ ] **trap-battery v2 + fable task 9** — gated post-freeze
   (2026-07-28+); design approved 2026-07-13. Do not start
   before the freeze lifts.
