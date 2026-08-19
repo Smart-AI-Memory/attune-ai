@@ -17,7 +17,10 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
+import tempfile
+import threading
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -34,6 +37,19 @@ MAX_HISTORY_PER_AGENT = 100
 
 # Allowed characters in sanitized agent IDs for filenames
 _SAFE_ID_RE = re.compile(r"[^a-zA-Z0-9_\-]")
+
+# Write locks shared per storage directory, so multiple store instances
+# pointed at the same directory serialize with each other — not just
+# writers on one instance.
+_DIR_LOCKS: dict[str, threading.Lock] = {}
+_DIR_LOCKS_GUARD = threading.Lock()
+
+
+def _lock_for_dir(storage_dir: Path) -> threading.Lock:
+    """Return the process-wide lock for a resolved storage directory."""
+    key = str(storage_dir.resolve())
+    with _DIR_LOCKS_GUARD:
+        return _DIR_LOCKS.setdefault(key, threading.Lock())
 
 
 def _sanitize_agent_id(agent_id: str) -> str:
@@ -56,6 +72,41 @@ def _sanitize_agent_id(agent_id: str) -> str:
     sanitized = _SAFE_ID_RE.sub("_", agent_id)
     # Limit length to prevent filesystem issues
     return sanitized[:200]
+
+
+def _atomic_write_text(target: Path, content: str) -> None:
+    """Write ``content`` to ``target`` atomically.
+
+    Uses ``tempfile.mkstemp`` in the same directory followed by
+    ``os.replace`` so a crash mid-write or a concurrent reader never
+    sees a partial file. Matches the pattern used elsewhere in the
+    codebase (``spec.state._atomic_write_text``,
+    ``ops.dismiss_store._write_atomic``).
+
+    Raises:
+        OSError: If the temp-write or replace fails. The temp file is
+            cleaned up before re-raising.
+
+    """
+    fd, tmp_name = tempfile.mkstemp(
+        prefix=f".{target.name}.",
+        suffix=".tmp",
+        dir=str(target.parent),
+    )
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(content)
+        os.replace(tmp_name, target)
+    except OSError:
+        try:
+            os.unlink(tmp_name)
+        except OSError as cleanup_err:
+            logger.debug(
+                "Failed to unlink temp file %s after write error: %s",
+                tmp_name,
+                cleanup_err,
+            )
+        raise
 
 
 class AgentStateStore:
@@ -97,6 +148,15 @@ class AgentStateStore:
         self._storage_dir.mkdir(parents=True, exist_ok=True)
         self._pattern_learner = pattern_learner
         self._cache: dict[str, AgentStateRecord] = {}
+        # Serializes read-modify-write cycles across threads — shared
+        # per storage directory so separate store instances on the same
+        # directory also serialize. The atomic replace in
+        # _atomic_write_text prevents torn files, but without this lock
+        # two concurrent mutators on the same record would load the
+        # same snapshot and the second save would drop the first's
+        # update. Cross-process writers remain last-writer-wins (never
+        # corrupted, thanks to os.replace).
+        self._lock = _lock_for_dir(self._storage_dir)
 
     def record_start(
         self,
@@ -116,20 +176,21 @@ class AgentStateStore:
 
         """
         execution_id = uuid.uuid4().hex[:12]
-        record = self._load_or_create(agent_id, role)
+        with self._lock:
+            record = self._load_or_create(agent_id, role, use_cache=False)
 
-        execution = AgentExecutionRecord(
-            execution_id=execution_id,
-            agent_id=agent_id,
-            role=role,
-            input_summary=input_summary,
-        )
-        record.execution_history.append(execution)
-        record.total_executions += 1
-        record.last_active = datetime.now().isoformat()
+            execution = AgentExecutionRecord(
+                execution_id=execution_id,
+                agent_id=agent_id,
+                role=role,
+                input_summary=input_summary,
+            )
+            record.execution_history.append(execution)
+            record.total_executions += 1
+            record.last_active = datetime.now().isoformat()
 
-        self._trim_history(record)
-        self._save(record)
+            self._trim_history(record)
+            self._save(record)
         return execution_id
 
     def record_completion(
@@ -159,30 +220,31 @@ class AgentStateStore:
             confidence: Confidence in result (0.0-1.0)
 
         """
-        record = self._load_or_create(agent_id, "")
-        execution = self._find_execution(record, execution_id)
-        if execution is None:
-            logger.warning("Execution %s not found for agent %s", execution_id, agent_id)
-            return
+        with self._lock:
+            record = self._load_or_create(agent_id, "", use_cache=False)
+            execution = self._find_execution(record, execution_id)
+            if execution is None:
+                logger.warning("Execution %s not found for agent %s", execution_id, agent_id)
+                return
 
-        execution.completed_at = datetime.now().isoformat()
-        execution.status = "completed" if success else "failed"
-        execution.tier_used = tier_used
-        execution.findings = findings
-        execution.score = score
-        execution.confidence = confidence
-        execution.cost = cost
-        execution.execution_time_ms = execution_time_ms
+            execution.completed_at = datetime.now().isoformat()
+            execution.status = "completed" if success else "failed"
+            execution.tier_used = tier_used
+            execution.findings = findings
+            execution.score = score
+            execution.confidence = confidence
+            execution.cost = cost
+            execution.execution_time_ms = execution_time_ms
 
-        if success:
-            record.successful_executions += 1
-        else:
-            record.failed_executions += 1
+            if success:
+                record.successful_executions += 1
+            else:
+                record.failed_executions += 1
 
-        record.total_cost += cost
-        record.last_active = datetime.now().isoformat()
+            record.total_cost += cost
+            record.last_active = datetime.now().isoformat()
 
-        self._save(record)
+            self._save(record)
         self._contribute_to_learner(record, execution)
 
     def record_failure(
@@ -199,20 +261,21 @@ class AgentStateStore:
             error: Error message or traceback summary
 
         """
-        record = self._load_or_create(agent_id, "")
-        execution = self._find_execution(record, execution_id)
-        if execution is None:
-            logger.warning("Execution %s not found for agent %s", execution_id, agent_id)
-            return
+        with self._lock:
+            record = self._load_or_create(agent_id, "", use_cache=False)
+            execution = self._find_execution(record, execution_id)
+            if execution is None:
+                logger.warning("Execution %s not found for agent %s", execution_id, agent_id)
+                return
 
-        execution.completed_at = datetime.now().isoformat()
-        execution.status = "failed"
-        execution.error = error
+            execution.completed_at = datetime.now().isoformat()
+            execution.status = "failed"
+            execution.error = error
 
-        record.failed_executions += 1
-        record.last_active = datetime.now().isoformat()
+            record.failed_executions += 1
+            record.last_active = datetime.now().isoformat()
 
-        self._save(record)
+            self._save(record)
 
     def save_checkpoint(
         self,
@@ -226,10 +289,11 @@ class AgentStateStore:
             checkpoint_data: Arbitrary state dict to persist
 
         """
-        record = self._load_or_create(agent_id, "")
-        record.last_checkpoint = checkpoint_data
-        record.last_active = datetime.now().isoformat()
-        self._save(record)
+        with self._lock:
+            record = self._load_or_create(agent_id, "", use_cache=False)
+            record.last_checkpoint = checkpoint_data
+            record.last_active = datetime.now().isoformat()
+            self._save(record)
 
     def get_last_checkpoint(self, agent_id: str) -> dict[str, Any] | None:
         """Get the last saved checkpoint for an agent.
@@ -308,18 +372,26 @@ class AgentStateStore:
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _load_or_create(self, agent_id: str, role: str) -> AgentStateRecord:
-        """Load existing record or create new one."""
-        record = self._load(agent_id)
+    def _load_or_create(
+        self, agent_id: str, role: str, *, use_cache: bool = True
+    ) -> AgentStateRecord:
+        """Load existing record or create new one.
+
+        Mutators pass ``use_cache=False`` so the read-modify-write cycle
+        starts from the on-disk state: another store instance on the
+        same directory may have written since this instance last cached
+        the record.
+        """
+        record = self._load(agent_id, use_cache=use_cache)
         if record is None:
             record = AgentStateRecord(agent_id=agent_id, role=role)
         elif role and not record.role:
             record.role = role
         return record
 
-    def _load(self, agent_id: str) -> AgentStateRecord | None:
+    def _load(self, agent_id: str, *, use_cache: bool = True) -> AgentStateRecord | None:
         """Load agent state from disk or cache."""
-        if agent_id in self._cache:
+        if use_cache and agent_id in self._cache:
             return self._cache[agent_id]
 
         safe_id = _sanitize_agent_id(agent_id)
@@ -343,7 +415,15 @@ class AgentStateStore:
         validated_path = _validate_file_path(file_path, allowed_dir=str(self._storage_dir))
 
         validated_path.parent.mkdir(parents=True, exist_ok=True)
-        validated_path.write_text(json.dumps(record.to_dict(), indent=2))
+        try:
+            _atomic_write_text(validated_path, json.dumps(record.to_dict(), indent=2))
+        except OSError:
+            # The record was mutated in place before this save. Dropping
+            # the cache entry forces the next load to re-read the last
+            # good on-disk state, so the failed update can't be silently
+            # persisted by a later successful mutation.
+            self._cache.pop(record.agent_id, None)
+            raise
 
         self._cache[record.agent_id] = record
         return validated_path
