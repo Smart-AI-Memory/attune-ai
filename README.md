@@ -2,7 +2,7 @@
 
 <!-- mcp-name: io.github.Smart-AI-Memory/attune-ai -->
 
-**Spec-driven development for Claude Code — turn requirements into reliable software.**
+**Persistent memory and receipt-verified workflows for Claude Code.**
 
 🌐 **Docs & guides: [attune-ai.dev](https://attune-ai.dev)**
 
@@ -23,437 +23,52 @@
 
 ---
 
-**Attune AI** gives Claude Code persistent memory. Your agent stops
-starting from zero: a stash → recall → promote loop carries
-decisions, bugs, and hard-won lessons from one session into the
-next, and a retrievable lessons corpus surfaces the right lesson at
-the exact moment a prompt needs it — local-first, working from a
-plain `pip install attune-ai`. The economics are measured, not
-promised: recall loads a few hundred exactly-relevant tokens instead
-of your whole corpus — 67× fewer tokens on our own 800+ lesson
-store, retrieved at P@3 96% on a frozen trap-moment benchmark
-(details in [the memory suite](#the-memory-suite--out-of-the-box-measured)
-below).
+Your agent stops starting from zero, and its word stops being the
+evidence.
 
-Around that memory core, the same package also ships **Fix
-Receipts** (`attune fix`) — state the outcome you want and how to verify it,
-preview the contract (nothing executes), then `--run` for an
-attributed diff whose probes are re-run independently of the
-workflow; exit 0 means the probes passed, not that the agent felt
-good about it — plus a spec-driven,
-multi-agent toolkit: 21 workflows and <!-- cap:mcp_registered_tool_count -->61 MCP tools<!-- /cap --> dispatching 2–6
-domain-specific subagents behind Socratic quality gates, RAG
-grounding with a citation-per-claim contract (mean per-claim
-faithfulness CI-gated at ≥ 0.97; 0.98 currently measured, N=20 runs
-on the 40-query golden set), and generation fact-checking — one
-install, one MCP server.
+**Memory:** a stash → recall → promote loop carries decisions, bugs,
+and hard-won lessons from one session into the next, and surfaces the
+right lesson at the exact moment a prompt needs it. Local-first, from
+a plain `pip install attune-ai`. Recall loads a few hundred
+exactly-relevant tokens instead of your whole corpus — **67× fewer
+tokens** on our own 800+ lesson store, retrieved at **P@3 96%** on a
+frozen benchmark ([details](#the-memory-suite--measured)).
 
-We run our own knowledge base on it: the docs, help templates, and
-800+ engineering lessons at [attune-ai.dev](https://attune-ai.dev)
-are authored, grounded, and maintained entirely by Attune's own
-stack.
-
-**Managing and creating help-content, docs, or knowledge-bases?**
-AI authoring and staleness detection are **built into attune-ai**
-(the `attune.authoring` package — the former standalone
-`attune-author` was absorbed in 11.0.0), paired with `attune-help`
-(progressive-depth runtime). The `attune-author` Claude Code
-plugin remains available from this marketplace as the authoring
-companion.
-
----
-
-## What this costs
-
-There are two ways to run Attune, and they bill differently. Pick the
-row you're in:
-
-| How you run it | What it costs |
-| -------------- | ------------- |
-| **Plugin in Claude Code** (skills, hooks, forms) | Your Claude subscription. No API key, no extra charge. |
-| **`attune` CLI + MCP tools** | Direct Anthropic API calls — needs `ANTHROPIC_API_KEY` with **API credits**. |
-
-**The one thing people get wrong:** a Claude Pro/Max subscription does
-*not* include API credits. They are separate products. The subscription
-powers Claude Code — and therefore the plugin — but the CLI and MCP
-tools call the Anthropic API directly, so a key without pay-as-you-go
-credit returns `credit balance is too low`. If you only use the plugin,
-this never comes up.
-
-Free on either path, because they never call a model: the elicitation
-forms, the security hooks, path validation, memory storage and recall,
-and every local transform. See [API Mode](#api-mode) for keys and
-routing, and [Installation Options](#installation-options) for extras.
-
----
-
-<!-- ROTATING SLOT: this "New in <version>" section is replaced each
-     release with the headline feature; the displaced content moves to
-     a permanent section below (see "Dynamic forms" for the pattern).
-     Don't stack a second "New in" section here. -->
-
-## New in 12.0.0 — a sharper core you can trust
-
-This release is about one promise: **every public surface is one
-that demonstrably works.**
-
-- **`attune.context` now exports exactly the live surface.** The
-  module is down to its two proven tools — `TokenBudgetAllocator`
-  (with `fit_source`) and `ASTSkeletonGenerator` — and a new
-  regression guard pins that surface so it stays honest as the
-  package grows. (This is the breaking change behind the major
-  version: a dormant compaction stack with zero live consumers is
-  retired — details in the CHANGELOG, and everything removed
-  remains recoverable from git history. The session-continuity
-  hooks — compact warning, handoff, stash and recall — are live,
-  unrelated, and unchanged.)
-- **Security tests can no longer skip silently.** A new dead-suite
-  guard fails CI whenever a test module's dependency is missing
-  from the environment — the class of gap that used to let whole
-  suites skip unnoticed. Closing the gaps it found brought 41
-  auth-security tests back into every run, CI included.
-
-## Goal-driven development — receipts, not promises
-
-From 11.1.0 + 11.2.0, the discipline underneath: **state the goal
-and how to verify it before anything runs, and get back a receipt —
-not a promise.** If you know acceptance-test-driven development,
-this is that rebuilt for agent workflows: acceptance probes are
-declared up front, and the agent's own word is never the evidence.
+**Receipts:** state the outcome you want and how to verify it, and
+get back a receipt — not a promise:
 
 ```bash
 attune fix "imports resolve after the rename" \
   --scope src/attune/cli_minimal.py \
-  --probe "pytest tests/unit/test_cli_minimal.py"
+  --probe "pytest tests/unit/test_cli_minimal.py" \
+  --run
 ```
 
-- **`attune fix` — outcome-first fixing.** The command above previews
-  a contract (done conditions, constraints, probes) and executes
-  nothing. Add `--run` and it executes, then returns a receipt:
-  changes attributed against a pre-run snapshot, probes re-run
-  independently of the workflow, exit 0 only when the probes pass.
-  The workflow saying "done" is not trusted — the probe result is.
-- **Spec Ladders** (`/spec`) — **goal-driven specs you approve rung by rung.**
-  `/spec` interviews you until "build X" becomes requirements,
-  design, and a gated task ladder: every task behind your explicit
-  go, every quality gate scored, every ruling recorded in a
-  decision file that outlives the session.
-- **Guided intakes in Claude Code.** `/fix` and `/spec` compose
-  their contracts through a form: goal pre-filled, a scope picker
-  built from paths you've touched, probe suggestions from matching
-  test files — with the composed command shown before anything runs.
-- **Every workflow declares its inputs.** All 21 workflows carry an
-  `input_schema`; unknown or malformed inputs fail with named-field
-  errors instead of being silently dropped.
-- **Local-first reports.** Roundtable transcripts write to
-  `~/.attune/reports/`; the repo keeps curated stubs.
+<!-- demo-gif-slot: 30-second recording of the command above producing
+     an attributed diff + probe receipt goes here. -->
 
-From 11.1.0, the layer that keeps receipts honest: a failed or
-absent security auditor now **fails** the Security gate (absence is
-not a pass), spec-closure claims draw a rotating skeptic seat that
-must countersign executor-produced receipt artifacts, risk-class
-diffs authored by the lead model are reviewed by a *different*
-model before promotion, and editing/polish passes moved to a
-dedicated editing model at roughly half the previous cost.
+The probes are re-run *independently* of the workflow that claims it
+finished. Exit 0 means the probes passed — not that the agent felt
+good about it.
 
-## The memory suite — out of the box, measured
+Around that core: 21 workflows and <!-- cap:mcp_registered_tool_count -->61 MCP tools<!-- /cap -->
+dispatching 2–6 domain-specific subagents behind Socratic quality
+gates, RAG grounding with a citation-per-claim contract, and
+generation fact-checking — one install, one MCP server. We run our
+own knowledge base on it: the docs and 800+ engineering lessons at
+[attune-ai.dev](https://attune-ai.dev) are authored, grounded, and
+maintained by Attune's own stack.
 
-**Your agent stops starting from zero — with a plain
-`pip install attune-ai`.** The memory suite matured across recent
-releases (curated promotion in 9.5, files-canonical unification in
-9.6, Redis / Agent Memory Server client as a core dependency in
-9.7). The loop:
-
-- **Stash on stop** — a `Stop` hook extracts decisions, bugs, and
-  references from the session (local LLM when available, heuristic
-  fallback) and writes them to the memory store: a local file by
-  default, Redis Agent Memory Server when one is reachable.
-- **Recall at the door** — a `SessionStart` hook surfaces the most
-  recent findings for your project, and warns when the memory
-  backend is unreachable instead of degrading silently.
-- **Promote what endures** — a reviewed stash→curated path: the
-  agent drafts a node per candidate, you verdict each one (the
-  30-day test), and promotion lands a git-tracked `.md` file in
-  the curated corpus. Files are the store; Redis serves them —
-  recall pulls a few hundred exactly-relevant tokens on demand
-  instead of re-reading whole files into context.
-- **Lessons at the trap moment** — a `UserPromptSubmit` hook
-  retrieves your project's engineering lessons (from
-  `.claude/lessons.md` or `CLAUDE.md`) when a prompt hits a known
-  trap; a `PreToolUse` hook surfaces curated rules at the exact
-  tool call they govern.
-- **On demand** — `/recall <topic>` searches both stores with
-  results labeled by source; `/remember` captures and manages
-  facts explicitly; a full MCP tool surface (memory, personal
-  memory, Redis/AMS) gives agents the same access.
-
-Memory is local-first — nothing leaves your machine, and without a
-Redis server everything degrades to the file backend with clear
-guidance. Your memory, your corpus: we dogfood the loop on our own
-800+ engineering lessons, retrieved via attune-rag at **P@3 96%**
-(100% on the high-severity subset) on a frozen trap-moment benchmark.
-
-**The economics, measured (2026-07-05 snapshot; corpus has grown
-since — the ratios below only improve as it does).** Durable memory
-was 303,205 tokens across 752 docs at measurement time; a session
-recalls only the relevant slice:
-
-| Memory-suite recall | Instead of loading | You load | Win |
-|---|--:|--:|--:|
-| Trap-moment lessons | 202,042 tok (583 lessons) | ≤3,000 tok | **67× fewer tokens** |
-| SessionStart digest | 16 corpus files (4.6 ms) | one Redis call (0.6 ms) | **~7× faster** |
-
-The lessons injection stays budget-capped no matter how large the
-corpus grows, and recall is a single warm Redis call — so both wins
-widen as your memory does. Numbers from `benchmarks/memory_savings.py`
-on our dogfood store (cl100k_base).
-
----
-
-## Multi-LLM collaboration — three models, one repo, receipts required
-
-**Your repo stops being single-provider.** As of 10.6.0, attune
-treats Claude Code, OpenAI Codex, and Google Antigravity as seats at
-the same table — with the discipline that a claim without a receipt
-doesn't ship:
-
-- **`/roundtable`** — convene Claude, Antigravity, and Codex to
-  deliberate a question on a Redis-backed board. Seats post
-  positions independently, synthesis compiles them, and *you* chair
-  what gets promoted — nothing lands without a ruling. Headless
-  routines run the same loop on a schedule.
-- **`/cross-review`** — a one-seat advisory second opinion on a real
-  diff from a *different* model than the one that wrote it.
-  Advisory only, board-recorded.
-- **Cross-provider session handoff** — `handoff_create` /
-  `handoff_resume` MCP tools write a portable, verifiable resume
-  brief so one agent can pick up where another stopped.
-- **Provider-neutral session memory** — the `session_memory_*` MCP
-  tools give every seat the same stash/recall/forget surface over
-  the shared store, with a PII/secrets gate that redacts at rest
-  and fails closed on secrets. Verified live from a Codex session:
-  capture → recall (email stored as `[EMAIL]`) → forget →
-  gone.
-- **A projected collaboration contract** — one master file projects
-  to `AGENTS.md` and per-provider mirrors, so any agent learns the
-  repo's rules (read-only preflight, branch discipline, shared
-  memory etiquette) without Claude-specific context.
-
-Codex installs the same plugin from its marketplace
-(`codex plugin install attune-ai@attune-ai`); Antigravity connects
-over MCP. We dogfood all of it on this repository — the multi-model
-release audit for 10.6.0 ran through the roundtable itself, and
-10.6.1 exists because a cross-provider receipt probe caught a
-protocol bug the primary client silently tolerated.
-
----
-
-## Ecosystem
-
-| Package | Role | Install |
-| ------- | ---- | ------- |
-| **`attune-ai`** | Developer workflow hub (this package) | `pip install attune-ai` |
-| **`attune-rag`** | RAG pipeline (core dep of attune-ai, v0.7+) | bundled |
-| **`attune-verify`** | Generation fact-checker — backs the `/verify` skill (core dep) | bundled |
-| **`attune.authoring`** | Help content authoring, staleness detection (formerly the `attune-author` package, retired 2026-07-27) | bundled |
-| **`attune-help`** | Progressive-depth template runtime | `pip install attune-help` |
-
-`attune-rag` and `attune-verify` both ship as **core dependencies** of
-`attune-ai` — retrieval grounding and generation fact-checking are
-on by default, no extra needed. `attune-help` is standalone — not
-pulled in by a standard `attune-ai` install, but available as an
-optional corpus for `attune-rag` via
-`pip install 'attune-rag[attune-help]'`.
-
----
-
-## How It Works
-
-### 1. Skills trigger automatically
-
-Say what you need in Claude Code and the right skill activates:
-
-```text
-"review my code"        → code-quality skill
-"scan for vulns"        → security-audit skill
-"generate tests"        → smart-test skill
-"plan this feature"     → planning skill
-```
-
-No command to remember. Claude reads your intent and picks the skill.
-Each skill runs a specialist multi-agent team, not a single prompt.
-
-### 2. Multi-agent teams, not single prompts
-
-Every workflow dispatches 2–6 subagents in parallel. Each reads your
-code with `Read`, `Glob`, and `Grep`. An orchestrator synthesizes
-their findings into a unified result:
-
-```text
-security-audit → vuln-scanner + secret-detector + auth-reviewer + remediation-planner
-code-review    → security + quality + perf + architect
-test-gen       → identifier + designer + writer
-```
-
-Subagents are assigned models by task complexity — Opus for deep
-reasoning, Sonnet for analysis, Haiku for fast scanning — keeping
-cost proportional to value.
-
-**A head start on `/agents`, too.** Beyond the workflow teams above,
-attune-ai ships a curated set of Claude Code subagents —
-`security-reviewer`, `spec-author`, `refactor-planner`,
-`release-prep-auditor`, and more — that appear in your `/agents` list the
-moment the plugin installs. Claude Code gives you the *mechanism* to build
-subagents; attune-ai gives you a *running start* — use them as-is, or fork
-one as the scaffold for your own.
-
-### 3. Socratic before execution
-
-Workflows ask questions before executing, not after. The `spec`
-workflow brainstorms, then plans, then executes. `planning` clarifies
-scope before writing a line of code. This eliminates the most common
-failure mode: confidently solving the wrong problem.
-
-**Dynamic communication — the agent adapts how it talks to you.**
-The headline of this release: instead of a fixed wall of prose, Attune
-now *dynamically* shapes each exchange to fit the moment — rendering an
-interactive form in response to your prompt whenever a structured turn
-communicates better than text. A multi-part question becomes one form
-you answer with a click; a recommendation arrives as weighable cards; a
-disagreement is shown side-by-side so you can overrule it in one tap.
-This is a deliberate effort to *improve human/AI communication* — making
-the back-and-forth faster, clearer, and less ambiguous. Three of the
-four constructs fire at a **fork** — a point where the conversation
-can't move forward without your choice; the fourth (**progress**) is a
-status report, not a fork. The agent picks the right *construct* for
-the moment:
-
-- **intake** *(fork)* — gathers several independent decisions as a
-  single (multi-select-capable) form, instead of N back-and-forth
-  questions.
-- **decision** *(fork)* — offers a *recommended* option with a
-  rationale and per-option tradeoffs, rendered as cards (consumed by
-  the `/spec` approval gate).
-- **pushback** *(fork)* — when the agent disagrees with your stated
-  approach, it shows "your approach" beside "I'd suggest instead" with
-  a "why", and you overrule or switch with one pick (`/spec` plan
-  review).
-- **progress** *(report)* — a done / in-progress / blocked status
-  board whose blocked items are a picker for what to fix next (`/spec`
-  execute).
-
-All constructs share one declarative form model and validator, render
-richly on widget-capable surfaces (e.g. claude.ai / Cowork) and degrade
-gracefully to a recommendation-first menu elsewhere. The terse reply
-vocab (`y` / `go` / `1`) answers any of them.
-
-### 4. RAG-grounded generation
-
-`attune-rag` (core dep) grounds LLM generation in retrieved corpus
-passages and enforces citation-per-claim, delivering **0.98 mean
-per-claim faithfulness on the current CI-gated benchmark** (40
-queries, N=20 runs, floor ≥0.97) — the large majority of generated
-claims are grounded in their cited passages. The citation-per-claim
-design itself was chosen via an A/B comparison (2026-04-19): the
-conservative per-query bucket rate (a single ungrounded claim
-disqualifies the whole response) dropped from 46.7% without the
-contract to 6.7% with it. Retrieved passages are wrapped in sentinel
-tags to prevent prompt injection. The Claude provider automatically
-caches the stable RAG context prefix, eliminating repeated token
-costs across calls.
-
-### 5. Memory that compounds across sessions
-
-Most AI coding sessions start from zero. Attune ships a
-cross-session memory loop — stash on stop, recall at the door,
-reviewed promotion into a git-tracked curated corpus, and lessons
-retrieved at the exact trap moment they guard against. Covered in
-depth in "The memory suite" section at the top of this README; the
-hook-by-hook mechanics and tunables live in the
-"Session continuity & cross-session memory" section below.
-
----
-
-## Dynamic forms — structured human/AI communication
-
-Attune improves how you and the AI communicate by dynamically using
-interactive forms (shipped in 9.3.0). Instead of a fixed wall of
-prose, Attune renders the right form whenever a structured turn
-communicates better than text — a multi-part question becomes one
-form you answer with a click, a recommendation arrives as weighable
-cards, and a disagreement is shown side-by-side so you can overrule
-it in one tap. Three constructs fire at a **fork** — a point where
-the conversation needs your choice to continue; the fourth
-(**progress**) is a status report, not a fork:
-
-- **intake** *(fork)* — gather several independent decisions in one
-  form
-- **decision** *(fork)* — a recommended option with rationale +
-  per-option tradeoffs (`/spec` approval gate)
-- **pushback** *(fork)* — agent dissent shown as "your approach" vs
-  "I'd suggest instead"; overrule or switch in one pick (`/spec` plan
-  review)
-- **progress** *(report)* — a done / in-progress / blocked board
-  whose blocked items are a fix-next picker (`/spec` execute)
-
-All constructs share one declarative form model and validator, render
-richly on widget-capable surfaces (e.g. claude.ai / Cowork) and degrade
-gracefully to a recommendation-first menu elsewhere. The terse reply
-vocab (`y` / `go` / `1`) answers any of them.
-
-## Chart widgets — specs in, SVG out
-
-The `chart_render_widget` MCP tool takes a **~50–200-token
-declarative JSON spec** and renders themable SVG through a sealed
-~10KB kernel — the model never writes renderer code. Nine chart
-types (`bar` with stacked/grouped/horizontal, `line`, `scatter`,
-`area`, `heatmap`, `donut`, `box`, `waterfall`, `treemap`), and
-updates are RFC 7386 merge patches against the stored spec, so
-changing a title costs tens of tokens instead of a re-emitted
-widget. The kernel is sealed and CI-enforced: no outward imports,
-and the built artifact stays under a 20,480-byte ceiling that
-does not move. Details: `docs/chartkit.md`.
-
-Diagrams took the practical path: a measured probe found mermaid —
-an existing tool — 1.2–2.1× cheaper to author than a custom
-diagram kernel, so docs diagrams render via mermaid and no kernel
-was built. Charts earn a kernel; diagrams don't need one.
-
-## Docs outbox — many writers, one PR
-
-Small docs artifacts — lessons, run reports, drafts, plans — don't
-ship as their own micro-PRs. Writers drop per-artifact timestamped
-files into `~/.attune/docs-outbox/`:
-
-```bash
-python -m attune.docs_outbox write --kind lesson \
-  --slug my-finding --file body.md
-```
-
-Concurrent sessions never conflict by construction. A curating
-sweep (`/docs-outbox`) dedupes, lints, flags core-worthy
-candidates, and composes ONE approved digest before a single
-batched PR opens — N writers, one review, one merge. Alongside it:
-an advisory staleness sweep for curated memory corpora and a
-broad-except ratchet (seeded at 613 sites; the count only
-shrinks, and CI proves the gate fires).
-
-## Redis config truth — one resolver, no silent drift
-
-All Redis connection config resolves through ONE canonical
-resolver, `resolve_redis_connection()` (shipped across
-11.5.0–11.6.0): five-step precedence across the `REDIS_URL`
-variants, credential merging (`REDIS_PASSWORD` merges into a
-password-less URL — the misconfiguration that used to read as
-"Redis down"), and a source-map recording which env var supplied
-each component. Degradation is classified — auth failures warn
-once per session with a redacted URL — and the
-`redis_health_check` doctor diagnostic reports the redacted
-effective config. Every consumer derives from the resolver, so
-stale passwords surface loudly instead of failing silently;
-connection variables use canonical `REDIS_*` names only; and an
-AST drift guard fails CI on any new direct read of the connection
-env names outside the resolver.
+**Contents:**
+[Install](#get-started-in-60-seconds) ·
+[Costs](#what-this-costs) ·
+[Memory](#the-memory-suite--measured) ·
+[Receipts](#receipts-not-promises) ·
+[Multi-LLM](#multi-llm-collaboration) ·
+[Workflows & tools](#workflows-and-mcp-tools) ·
+[Accuracy](#accuracy--faithfulness) ·
+[Install options](#installation-options) ·
+[Privacy](#privacy--telemetry)
 
 ---
 
@@ -468,7 +83,7 @@ claude plugin install attune-ai@attune-ai
 
 Then say "what can attune do?" in Claude Code.
 
-### Add Python Package (unlocks CLI + MCP)
+### Add the Python package (unlocks CLI + MCP)
 
 ```bash
 pip install attune-ai
@@ -480,11 +95,7 @@ workflow: `attune workflow run code-review --path src/`.
 
 Setup fight you? [Tell me where](https://github.com/Smart-AI-Memory/attune-ai/discussions/1325) — I'm actively fixing this.
 
-The core install includes the CLI, all workflows, and the MCP
-server. See [Installation Options](#installation-options) for
-per-surface extras (API-mode agents, ops dashboard, Redis memory).
-
-### What Each Layer Adds
+### What each layer adds
 
 | Capability | Plugin only | Plugin + pip |
 | ---------- | ----------- | ------------ |
@@ -492,39 +103,129 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 | Security hooks | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
 | <!-- cap:mcp_registered_tool_count -->61 MCP tools<!-- /cap --> | -- | Yes |
-| `attune` CLI | -- | Yes |
-| Multi-agent workflows | -- | Yes |
-| Help system maintenance | -- | Yes |
-| CI/CD automation | -- | Yes |
+| `attune` CLI + multi-agent workflows | -- | Yes |
 | Ops dashboard (`attune ops`) — run history, cost tiles, telemetry | -- | Yes |
 
-> **Note:** Skills use your Claude subscription at no extra cost.
-> CLI and MCP tools make direct Anthropic API calls — API key with
-> credits required. See [What this costs](#what-this-costs).
+---
+
+## What this costs
+
+| How you run it | What it costs |
+| -------------- | ------------- |
+| **Plugin in Claude Code** (skills, hooks, forms) | Your Claude subscription. No API key, no extra charge. |
+| **`attune` CLI + MCP tools** | Direct Anthropic API calls — needs `ANTHROPIC_API_KEY` with **API credits**. |
+
+**The one thing people get wrong:** a Claude Pro/Max subscription does
+*not* include API credits — they are separate products. If you only
+use the plugin, this never comes up. Free on either path (they never
+call a model): elicitation forms, security hooks, path validation,
+memory storage and recall, and every local transform.
 
 ---
 
-## Cheat Sheet
+<!-- ROTATING SLOT: this "New in <version>" section is replaced each
+     release with the headline feature; the displaced content moves to
+     a permanent section below. Don't stack a second "New in" here. -->
 
-| Input | What Happens |
-| ----- | ------------ |
-| "what can attune do?" | Auto-triggers `attune-hub` — guided discovery |
-| "build this feature from scratch" | Auto-triggers `spec` — brainstorm, plan, execute |
-| "review my code" | Auto-triggers `code-quality` skill |
-| "scan for vulnerabilities" | Auto-triggers `security-audit` skill |
-| "generate tests for src/" | Auto-triggers `smart-test` skill |
-| "fix failing tests" | Auto-triggers `fix-test` skill |
-| "predict bugs" | Auto-triggers `bug-predict` skill |
-| "generate docs" | Auto-triggers `doc-gen` skill |
-| "plan this feature" | Auto-triggers `planning` skill |
-| "refactor this module" | Auto-triggers `refactor-plan` skill |
-| "prepare a release" | Auto-triggers `release-prep` skill |
-| "tell me more" | Auto-triggers `coach` — progressive depth help |
-| "run all workflows" | Auto-triggers `workflow-orchestration` skill |
+## New in 12.0.0 — a sharper core you can trust
+
+Every public surface is one that demonstrably works: `attune.context`
+now exports exactly its two proven tools behind a regression guard (a
+dormant compaction stack with zero live consumers is retired — the
+breaking change behind the major version; session-continuity hooks
+are live and unchanged), and a new dead-suite guard fails CI whenever
+a test module's dependency is missing — the gap class that used to
+let whole suites skip silently. Closing what it found brought 41
+auth-security tests back into every run.
 
 ---
 
-## Workflows
+## The memory suite — measured
+
+**Stash on stop. Recall at the door. Promote what endures.**
+
+- **Stash** — a `Stop` hook extracts decisions, bugs, and references
+  from the session and writes them to the memory store (local file by
+  default, Redis Agent Memory Server when reachable).
+- **Recall** — a `SessionStart` hook surfaces the most recent
+  findings for your project; `/recall <topic>` searches on demand.
+- **Promote** — a reviewed stash→curated path lands git-tracked
+  `.md` files in your corpus. Files are the store; Redis serves them.
+- **Lessons at the trap moment** — hooks retrieve the exact lesson a
+  prompt or tool call needs, budget-capped no matter how large the
+  corpus grows.
+
+Memory is local-first — nothing leaves your machine, and without
+Redis everything degrades to the file backend with clear guidance.
+The economics are measured, not promised (2026-07-05 snapshot;
+ratios improve as the corpus grows):
+
+| Memory-suite recall | Instead of loading | You load | Win |
+|---|--:|--:|--:|
+| Trap-moment lessons | 202,042 tok (583 lessons) | ≤3,000 tok | **67× fewer tokens** |
+| SessionStart digest | 16 corpus files (4.6 ms) | one Redis call (0.6 ms) | **~7× faster** |
+
+Numbers from `benchmarks/memory_savings.py` on our dogfood store.
+
+---
+
+## Receipts, not promises
+
+If you know acceptance-test-driven development, this is that rebuilt
+for agent workflows: acceptance probes are declared up front, and the
+agent's own word is never the evidence.
+
+- **Fix Receipts** (`attune fix`) — outcome-first fixing. Preview a
+  contract (done conditions, constraints, probes) with nothing
+  executing; add `--run` for an attributed diff whose probes are
+  re-run independently. Exit 0 only when the probes pass.
+- **Spec Ladders** (`/spec`) — goal-driven specs you approve rung by
+  rung: requirements, design, and a gated task ladder, every ruling
+  recorded in a decision file that outlives the session.
+- **Guided intakes** — `/fix` and `/spec` compose their contracts
+  through a form: goal pre-filled, scope picker from paths you've
+  touched, probe suggestions from matching tests.
+- **Receipts all the way down** — a failed or absent security auditor
+  *fails* the Security gate; spec-closure claims draw a rotating
+  skeptic seat; risk-class diffs authored by the lead model are
+  reviewed by a *different* model before promotion.
+
+---
+
+## Multi-LLM collaboration
+
+As of 10.6.0, attune treats Claude Code, OpenAI Codex, and Google
+Antigravity as seats at the same table — with the discipline that a
+claim without a receipt doesn't ship:
+
+- **`/roundtable`** — the three models deliberate a question on a
+  Redis-backed board; *you* chair what gets promoted.
+- **`/cross-review`** — an advisory second opinion on a real diff
+  from a *different* model than the one that wrote it.
+- **Cross-provider handoff + shared session memory** — portable
+  resume briefs and a provider-neutral stash/recall surface with a
+  PII/secrets gate that redacts at rest and fails closed.
+- **A projected collaboration contract** — one master file projects
+  to `AGENTS.md` and per-provider mirrors.
+
+Codex installs the same plugin from its marketplace
+(`codex plugin install attune-ai@attune-ai`); Antigravity connects
+over MCP. The 10.6.1 release exists because a cross-provider receipt
+probe caught a protocol bug the primary client silently tolerated.
+
+---
+
+## Workflows and MCP tools
+
+Skills trigger from natural language — "review my code", "scan for
+vulns", "generate tests", "plan this feature" — and every workflow
+dispatches 2–6 subagents (Opus for deep reasoning, Sonnet for
+analysis, Haiku for fast scanning), synthesized by an orchestrator.
+Ready-made Claude Code subagents (`security-reviewer`, `spec-author`,
+`refactor-planner`, …) appear in your `/agents` list on install.
+
+<details>
+<summary><b>All 21 workflows</b></summary>
 
 | Workflow | Agents | What It Does |
 | --- | --- | --- |
@@ -547,119 +248,78 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 | **doc-orchestrator** | inventory, outline, content, polish | Full-project documentation |
 | **secure-release** | security, health, dep-auditor, gater | Release pipeline with risk scoring |
 | **research-synthesis** | summarizer, pattern-analyst, writer | Multi-source research synthesis |
-| **discovery-sweep** | pattern-scanner, verifier | Repo-wide bug-pattern sweep with verification, dashboard chips, and run drill-in |
-| **rag-code-gen** | retriever, generator | Citation-forced code generation grounded in the local attune-help corpus |
-| **orchestrated-health-check** | dynamic team via meta-orchestration | Same intent as `health-check` with explicit meta-orchestration of the sub-team |
-| **fix** | agent-fix | Applies a minimal in-place fix within the contract's scope, verified by a receipt (see `/fix`) |
+| **discovery-sweep** | pattern-scanner, verifier | Repo-wide bug-pattern sweep with verification |
+| **rag-code-gen** | retriever, generator | Citation-forced code generation grounded in the local corpus |
+| **orchestrated-health-check** | dynamic team | `health-check` with explicit meta-orchestration |
+| **fix** | agent-fix | Minimal in-place fix within a contract's scope, verified by a receipt |
 
----
+</details>
 
-## MCP Tools
+<details>
+<summary><b>All 61 MCP tools</b> — 50 core in 7 categories, plus 11
+memory tools registered by the bundled Redis plugin</summary>
 
-50 core tools organized into 7 categories, plus 11 memory tools
-(`session_memory_*`, `redis_memory_*`, `redis_health_check`)
-registered by the bundled Redis plugin — 61 registered in total:
+**Workflow (22):** `security_audit` `code_review` `bug_predict`
+`discovery_sweep` `performance_audit` `refactor_plan` `simplify_code`
+`deep_review` `test_generation` `test_audit` `test_gen_parallel`
+`doc_gen` `doc_audit` `doc_orchestrator` `release_notes`
+`health_check` `dependency_check` `secure_release`
+`research_synthesis` `analyze_batch` `analyze_image`
+`rag_knowledge_query`
 
-### Workflow (22)
-
-`security_audit` `code_review` `bug_predict`
-`discovery_sweep` `performance_audit` `refactor_plan`
-`simplify_code` `deep_review` `test_generation`
-`test_audit` `test_gen_parallel` `doc_gen` `doc_audit`
-`doc_orchestrator` `release_notes` `health_check`
-`dependency_check` `secure_release` `research_synthesis`
-`analyze_batch` `analyze_image` `rag_knowledge_query`
-
-### Help (5)
-
-`help_lookup` `help_init` `help_status` `help_update`
+**Help (5):** `help_lookup` `help_init` `help_status` `help_update`
 `help_maintain`
 
-### Memory (4)
-
-`memory_store` `memory_retrieve` `memory_search`
+**Memory (4):** `memory_store` `memory_retrieve` `memory_search`
 `memory_forget`
 
-### Personal Memory (4)
+**Personal Memory (4):** `personal_memory_capture`
+`personal_memory_recall` `personal_memory_topics`
+`personal_memory_forget`
 
-`personal_memory_capture` `personal_memory_recall`
-`personal_memory_topics` `personal_memory_forget`
+**Utility (8):** `auth_status` `auth_recommend` `telemetry_stats`
+`context_get` `context_set` `attune_get_level` `attune_set_level`
+`list_capabilities`
 
-### Utility (8)
-
-`auth_status` `auth_recommend` `telemetry_stats`
-`context_get` `context_set` `attune_get_level`
-`attune_set_level` `list_capabilities`
-
-### Elicitation (5)
-
-`elicitation_ask` `elicitation_render_form`
+**Elicitation (5):** `elicitation_ask` `elicitation_render_form`
 `elicitation_collect_response` `elicitation_render_widget`
 `chart_render_widget`
 
-### Handoff (2)
+**Handoff (2):** `handoff_create` `handoff_resume`
 
-`handoff_create` `handoff_resume`
+**Redis memory (11):** `session_memory_*`, `redis_memory_*`,
+`redis_health_check`
+
+</details>
+
+Structured communication is built in: multi-part questions render as
+one form, recommendations as weighable cards, disagreements
+side-by-side so you can overrule in one tap — degrading gracefully to
+a text menu on plain surfaces. Chart specs render through a sealed
+SVG kernel (`chart_render_widget`, nine chart types).
 
 ---
 
 ## Accuracy & Faithfulness
 
-### RAG grounding — 0.996 per-claim faithfulness (over 99%)
-
-Measured on a 15-query golden set with retrieval held constant. The
-**per-claim faithfulness** score (how much of what the model says is
-grounded in cited passages) is the headline metric. The conservative
-**per-query bucket rate** (a single ungrounded claim disqualifies the
-whole response) is shown alongside for completeness — they measure
-related-but-different things, and the per-claim number is the right
-"how trustworthy is each statement" answer:
-
-| Prompt variant | Per-claim faithfulness | Per-query hallucination |
-|---|---|---|
-| baseline (no grounding rule) | 0.938 | 46.67% |
-| strict ("answer only from context") | 0.968 | 26.67% |
-| **citation (shipped default)** | **0.996** | **6.67%** |
-
-The gain comes from the prompting contract (citation-per-claim), not
-from retrieval. Full methodology:
-
-- [`docs/rag/faithfulness-decision-2026-04-19.md`](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/rag/faithfulness-decision-2026-04-19.md)
-- [`docs/rag/ab-report-2026-04-19.json`](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/rag/ab-report-2026-04-19.json)
-
-### Help resolver — 48/48 benchmark queries pass at P@1
-
-| Bucket | Count | P@1 | Notes |
-|---|---|---|---|
-| easy | 22 | 22/22 (100%) | feature-name synonyms |
-| medium | 26 | 26/26 (100%) | paraphrases + industry terminology |
-| hard | 4 | 0/4 (XFAIL) | shared-tag collisions — structural ambiguity |
-
-- [`tests/unit/help/fixtures/golden_queries.yaml`](https://github.com/Smart-AI-Memory/attune-ai/blob/main/tests/unit/help/fixtures/golden_queries.yaml)
-
----
-
-## Why Attune?
-
-| | Attune AI | Static Docs | Agent Frameworks | Coding CLIs |
-| --- | --- | --- | --- | --- |
-| **Ready-to-use workflows** | 21 built-in | None | Build from scratch | None |
-| **Multi-agent teams** | 2–6 agents per workflow | None | Yes | No |
-| **MCP integration** | 61 native tools | None | No | No |
-| **Auto-triggering skills** | 28 skills, natural language | None | None | None |
-| **Socratic discovery** | Questions before execution | None | None | None |
-| **Portable security hooks** | PreToolUse + PostToolUse | None | No | No |
+RAG generation enforces citation-per-claim: **0.98 mean per-claim
+faithfulness, CI-gated at ≥ 0.97** (40-query golden set, N=20 runs).
+The contract was chosen by A/B measurement — the per-query
+hallucination bucket rate dropped from 46.7% to 6.7% with it
+([methodology](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/rag/faithfulness-decision-2026-04-19.md)).
+Retrieved passages are sentinel-wrapped against prompt injection.
+The help resolver passes 48/48 benchmark queries at P@1
+([golden set](https://github.com/Smart-AI-Memory/attune-ai/blob/main/tests/unit/help/fixtures/golden_queries.yaml)).
 
 ---
 
 ## Installation Options
 
 `pip install attune-ai` works out of the box — the CLI, all
-workflows, the MCP server, RAG, cross-session memory (the Redis /
-Agent Memory Server client is a core dependency as of 9.7.0), and
-the Agent SDK. Memory features activate when a Redis Stack server
-is reachable and degrade with guidance when not. Add extras only
-for the surfaces you use:
+workflows, the MCP server, RAG (`attune-rag` and `attune-verify` are
+core dependencies), cross-session memory, and the Agent SDK. Memory
+features activate when a Redis Stack server is reachable and degrade
+with guidance when not. Add extras only for the surfaces you use:
 
 | You want | Install |
 | -------- | ------- |
@@ -667,12 +327,8 @@ for the surfaces you use:
 | Claude API mode + optional LangChain/LangGraph interop adapters | `pip install 'attune-ai[developer]'` |
 | The ops dashboard (`attune ops`) | `pip install 'attune-ai[ops]'` |
 
-(`[redis]` remains as an empty backward-compat alias. The `[author]`
-extra was **removed in 11.0.0** — drop it from requirements;
-documentation regeneration lives in `/coach maintain`.) Extras
-combine — for example
-`pip install 'attune-ai[developer,ops]'`. Keep the quotes:
-zsh and bash treat square brackets as glob characters.
+Extras combine — `pip install 'attune-ai[developer,ops]'`. Keep the
+quotes: zsh and bash treat square brackets as glob characters.
 
 Contributing? Clone and install the dev toolchain instead:
 
@@ -681,223 +337,66 @@ git clone https://github.com/Smart-AI-Memory/attune-ai.git
 cd attune-ai && pip install -e '.[dev]'
 ```
 
-The `[rag]` extra is a **no-op alias** kept for backward
-compatibility — `attune-rag` is now a core dependency included in
-every install.
+### API mode
 
----
+The CLI and MCP tools call the Anthropic API directly (the plugin
+never needs this):
 
-## Platform Support
+```bash
+export ANTHROPIC_API_KEY="sk-ant-..."      # requires API credits
+export REDIS_URL="redis://localhost:6379"  # optional
+```
+
+Model routing assigns Opus/Sonnet/Haiku by task complexity
+(`ATTUNE_AGENT_MODEL_*` to override); depth budgets run $0.50 /
+$2.00 / $5.00 (`ATTUNE_MAX_BUDGET_USD` to override); `--cheap`
+forces pattern-matching workflows onto Haiku. Live spend tiles on
+the dashboard (`attune ops`).
+
+<details>
+<summary><b>Platform support</b></summary>
 
 | Platform | Support |
 | -------- | ------- |
-| macOS | Full |
-| Linux | Full |
-| Windows via WSL2 | Full |
+| macOS / Linux / WSL2 | Full |
 | Windows native + Git Bash | Supported (Bash tool, POSIX-ish syntax) |
 | Windows native + PowerShell tool | Limited — security validation fails closed |
 
-Notes for native Windows:
-
-- Claude Code supports native Windows (10 1809+). Installing
-  [Git for Windows](https://gitforwindows.org/) enables the Bash
-  tool; without it, the PowerShell tool is used (opt-in via
-  `CLAUDE_CODE_USE_POWERSHELL_TOOL=1`).
-- Under PowerShell, the security-validation hook applies a strict
-  command allowlist and **fails closed**: commands it does not
-  recognize are blocked rather than silently passed. Use Git Bash
-  or WSL2 for the full experience.
-- OS-level sandboxing is available on macOS/Linux/WSL2 only, not
-  native Windows.
-
-### Redis on Windows
-
-Redis has no native Windows build. Docker is the recommended path:
-
-```bash
-docker run -d -p 6379:6379 redis:7-alpine
-```
-
-Without a reachable Redis, cross-session memory degrades gracefully
-to the local file backend —
+Redis has no native Windows build — use Docker
+(`docker run -d -p 6379:6379 redis:7-alpine`). Without reachable
+Redis, memory degrades gracefully to the file backend and
 `attune.memory.session_stash.backend_status()` reports
-`fallback: true` so the degradation is visible, and no errors are
-spammed to the session.
+`fallback: true`.
+
+</details>
 
 ---
 
-## API Mode
+## Ecosystem
 
-API mode is what the `attune` CLI and the MCP tools run on. **It is not
-required to use Attune** — the Claude Code plugin runs on your
-subscription and needs none of this (see
-[What this costs](#what-this-costs)). Set these up only if you want the
-CLI or MCP surfaces:
-
-```bash
-export ANTHROPIC_API_KEY="sk-ant-..."     # Required *for API mode*
-export REDIS_URL="redis://localhost:6379"  # Optional
-```
-
-The key must belong to an org with pay-as-you-go API credit. A Claude
-Pro/Max subscription does not grant it — without credit the calls
-return `credit balance is too low`.
-
-### Model Routing
-
-| Model | Agents | Rationale |
-| --- | --- | --- |
-| **Opus** | security, vuln, architect | Deep reasoning |
-| **Sonnet** | quality, plan, research | Balanced analysis |
-| **Haiku** | complexity, lint, coverage | Fast scanning |
-
-```bash
-export ATTUNE_AGENT_MODEL_SECURITY=sonnet  # Save cost
-export ATTUNE_AGENT_MODEL_DEFAULT=opus     # Max quality
-```
-
-### Budget Controls
-
-| Depth | Budget | Use Case |
-| --- | --- | --- |
-| `quick` | $0.50 | Fast checks |
-| `standard` | $2.00 | Normal analysis (default) |
-| `deep` | $5.00 | Thorough multi-pass review |
-
-```bash
-export ATTUNE_MAX_BUDGET_USD=10.0  # Override
-```
-
-One-flag cheap mode for pattern-matching workflows (forces every
-inherit-default subagent onto Haiku; security/architect/plan/quality
-keywords still get their pinned model):
-
-```bash
-attune workflow run bug-predict --cheap     # Haiku-default subagents
-attune workflow run refactor-plan --cheap
-```
-
-See your spend live on the dashboard (`attune ops` → home) — today / 7-day
-/ MTD / 30-day tiles fed from the Anthropic admin cost-report API.
+| Package | Role | Install |
+| ------- | ---- | ------- |
+| **`attune-ai`** | Developer workflow hub (this package) | `pip install attune-ai` |
+| **`attune-rag`** | RAG pipeline (core dep) | bundled |
+| **`attune-verify`** | Generation fact-checker (core dep) | bundled |
+| **`attune.authoring`** | Help authoring + staleness detection (absorbed the former `attune-author` package in 11.0.0) | bundled |
+| **`attune-help`** | Progressive-depth template runtime | `pip install attune-help` |
 
 ---
 
-## Security
+## Security, Privacy & Telemetry
 
-- Path traversal protection on all file operations (CWE-22)
-- Memory ownership checks (`created_by` validation)
-- MCP rate limiting (60 calls/min per tool)
-- Hook import restriction (`attune.*` modules only)
-- PreToolUse security guard (blocks eval/exec, path traversal)
-- Prompt input sanitization (backticks, control chars, truncation)
-- PII scrubbing in telemetry
-- Automated security scanning (CodeQL, bandit, detect-secrets)
+Path traversal protection on all file ops, a PreToolUse guard that
+blocks eval/exec, MCP rate limiting, prompt sanitization, and
+automated scanning (CodeQL, bandit, detect-secrets) — details in
+[SECURITY.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/SECURITY.md).
 
-See [SECURITY.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/SECURITY.md) for vulnerability
-reporting and full security details.
-
----
-
-## Privacy & Telemetry
-
-Attune AI keeps usage data local-first. An **opt-in, anonymous usage
-ping** is available to help the project understand which workflows
-people actually use — it is **OFF by default** and sends nothing
-unless you explicitly turn it on.
-
-When enabled, each ping carries exactly this, and nothing more:
-
-- the package (`attune-ai`) and its version
-- the workflow name you ran (e.g. `workflow.security_audit`)
-- your OS (`darwin` / `linux` / `windows`) and Python version
-  (e.g. `3.12`)
-- a rotating, anonymous install id (a random UUID you can reset)
-- a timestamp
-
-It **never** sends paths, code, prompts, arguments, filenames,
-project names, cost, tokens, or model data — the payload is frozen in
-source and guarded by a regression test. Transport is fire-and-forget
-with a short timeout, so it can never block, slow, or crash the CLI,
-and the collection endpoint stores no IP address and no request
-headers.
-
-```bash
-attune telemetry status     # show exactly what would be sent
-attune telemetry enable     # opt in (mints an anonymous install id)
-attune telemetry disable    # opt out
-```
-
-`DO_NOT_TRACK=1` and `ATTUNE_USAGE_PING=0` force it off regardless of
-config; `ATTUNE_USAGE_PING=1` forces it on. Full payload disclosure is
-in [SECURITY.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/SECURITY.md).
-
----
-
-## Session continuity & cross-session memory
-
-Lightweight hook surfaces keep long Claude Code sessions
-oriented and recoverable — and carry what you learned into the
-next one. All are opt-in via plugin install and silent until
-they have something to say.
-
-| Surface | Event | When it fires |
-|---------|-------|---------------|
-| `spec_orient.py` | `SessionStart` | On `startup` / `resume` / `clear`, prints up to 3 in-flight spec slugs. On `compact`, prints the most-recent spec body so the model keeps the spec in fresh post-compact context. |
-| `compact_warning.py` | `Stop` | Once per session when transcript size crosses ~70% of the context window. Emits a copy-pasteable resume prompt and recommends starting a fresh session. |
-| `/handoff` | slash command | On demand. Prints the same resume prompt as the auto-warning AND appends it to `~/.attune/last-handoff.md` so you can recover it later. |
-| `session_stash.py` | `Stop` | Once per session past a utilization floor: extracts durable findings (decisions, bugs, references) and stashes them to the memory store (file by default, Redis AMS when installed). |
-| `session_recall.py` | `SessionStart` | Surfaces the most recent cross-session findings for this project; warns when the configured memory backend is unreachable rather than degrading silently. |
-| `lesson_recall.py` | `UserPromptSubmit` | Surfaces up to 3 relevant lessons from the project's lessons corpus when a prompt matches a known trap moment; silent otherwise, once per (session, lesson). |
-| `jit_recall.py` | `PreToolUse` | Surfaces the curated rule governing a tool call at the decision point (e.g. release tagging), once per session. |
-| `/recall <topic>` | slash command | On demand. Searches session findings and the lessons corpus, labels results by source, and names the answering backend. |
-
-### Tunable defaults
-
-- `ATTUNE_AI_COMPACT_WARNING_THRESHOLD` (default `0.70`) — fraction of context window before the warning fires.
-- `ATTUNE_AI_CHARS_PER_TOKEN` (default `4.0`) — utilization estimator's chars-to-tokens factor.
-- `ATTUNE_AI_CONTEXT_WINDOW_TOKENS` (default `200000`) — context window assumed by the estimator.
-- `ATTUNE_AI_WORKSPACE_ROOTS` (`os.pathsep`-separated paths: `:` on POSIX, `;` on Windows) — override the workspace roots scanned for `specs/`.
-- `ATTUNE_AI_SENTINEL_DIR` (default `~/.attune`) — directory for the once-per-session warning sentinel.
-- `ATTUNE_LESSON_RECALL` / `ATTUNE_JIT_RECALL` (set `0` to disable) — off-switches for the prompt-time and tool-call recall hooks.
-- `ATTUNE_LESSON_RECALL_FLOOR` (default `8.0`) — minimum retrieval score before a lesson surfaces at prompt time.
-
-The transcript-size proxy is crude but monotonic: the warning
-fires when the user's total content characters cross the
-threshold once. If your real auto-compact triggers consistently
-earlier or later than the warning, drop the threshold to `0.65`
-or raise it to `0.75`.
-
----
-
-## Migration
-
-`attune-help` ships from the `Smart-AI-Memory/attune-ai` marketplace
-alongside `attune-ai` itself. The separate
-`Smart-AI-Memory/attune-docs` marketplace is retired, and the
-`attune-author` plugin was retired 2026-07-27 — its authoring
-machinery now ships inside `attune-ai` as `attune.authoring`
-(see `docs/specs/attune-author-consolidation/`).
-
-New users:
-
-```text
-/plugin marketplace add Smart-AI-Memory/attune-ai
-/plugin install attune-help@attune-ai
-```
-
-If you previously installed from `attune-docs` or had the retired
-`attune-author` plugin:
-
-1. ```text
-   /plugin uninstall attune-help@attune-docs
-   /plugin uninstall attune-author@attune-docs
-   /plugin uninstall attune-author@attune-ai
-   ```
-
-2. ```text
-   /plugin marketplace add Smart-AI-Memory/attune-ai
-   /plugin install attune-help@attune-ai
-   ```
+Usage data is local-first. An **opt-in, anonymous usage ping**
+(OFF by default) carries only package, version, workflow name, OS,
+Python version, a resettable anonymous id, and a timestamp — never
+paths, code, prompts, or filenames; the payload is frozen in source
+and guarded by a regression test. `attune telemetry status|enable|disable`;
+`DO_NOT_TRACK=1` always wins.
 
 ---
 

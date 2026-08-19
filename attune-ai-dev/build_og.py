@@ -68,8 +68,8 @@ def main() -> int:
 
     # tagline (two lines, hand-wrapped)
     tag = _font(46, _FONT_CANDIDATES_REG)
-    d.text((pad, 365), "The discipline behind productive", font=tag, fill=MUTED)
-    d.text((pad, 420), "collaboration with AI coding agents.", font=tag, fill=MUTED)
+    d.text((pad, 365), "Persistent memory and receipt-verified", font=tag, fill=MUTED)
+    d.text((pad, 420), "workflows for Claude Code.", font=tag, fill=MUTED)
 
     # footer url
     foot = _font(34, _FONT_CANDIDATES)

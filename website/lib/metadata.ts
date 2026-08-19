@@ -15,9 +15,9 @@ export interface SEOConfig {
 
 const defaultMetadata = {
   siteName: 'Attune AI',
-  title: 'Turn requirements into reliable software — Attune AI',
+  title: 'Persistent memory and receipt-verified workflows for Claude Code — Attune AI',
   description:
-    'Spec-driven development platform for Claude Code: AI workflows, project memory, retrieval grounding, and verification. Turn requirements into reliable software — open source.',
+    'Persistent memory and receipt-verified workflows for Claude Code: cross-session memory, acceptance probes re-run independently, RAG grounding, and spec-driven development — open source.',
   url: 'https://smartaimemory.com',
   image: '/og-image.png',
   twitterHandle: '@smartaimemory',
@@ -30,6 +30,11 @@ const defaultMetadata = {
     'attune-help',
     'attune-ai',
     'Claude Code plugin',
+    'Claude Code memory',
+    'persistent memory for Claude Code',
+    'agent memory',
+    'spec driven development Claude Code',
+    'MCP server',
     'Claude Code /coach',
     'self-maintaining docs',
     'knowledge base from code',

@@ -56,7 +56,7 @@ export default function Home() {
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--surface-container-high)] text-[var(--primary)] text-xs font-bold tracking-widest mb-6 uppercase">
                   <span>v12.0.0</span>
                   <span className="w-1 h-1 rounded-full bg-[var(--primary)]"></span>
-                  <span className="opacity-80">Spec-driven development platform</span>
+                  <span className="opacity-80">Memory &amp; receipts for Claude Code</span>
                 </div>
                 <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter mb-8 leading-[1.1]">
                   Build software from{' '}
