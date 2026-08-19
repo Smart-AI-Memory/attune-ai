@@ -22,6 +22,12 @@ class TokenBudgetAllocator:
         """
         self.default_token_limit = default_token_limit
         self.generator = ASTSkeletonGenerator()
+        #: Outcome of the most recent :meth:`fit_source` call, or None
+        #: before the first call. Keys: ``rung`` (``full`` /
+        #: ``skeleton`` / ``truncated_skeleton`` / ``plain_truncation``),
+        #: ``token_limit``, ``source_tokens`` (estimate), and
+        #: ``result_tokens`` (estimate of what was returned).
+        self.last_fit: dict[str, int | str] | None = None
 
     def allocate_context(
         self,
@@ -101,12 +107,42 @@ class TokenBudgetAllocator:
             whichever is the richest representation within budget.
         """
         limit = token_limit or self.default_token_limit
-        if self._estimate_tokens(source) <= limit:
+        source_tokens = self._estimate_tokens(source)
+        if source_tokens <= limit:
+            self._record_fit("full", limit, source_tokens, source_tokens)
             return source
         skeleton = self.generator.generate_skeleton(source)
-        if self._estimate_tokens(skeleton) <= limit:
+        skeleton_tokens = self._estimate_tokens(skeleton)
+        if skeleton_tokens <= limit:
+            self._record_fit("skeleton", limit, source_tokens, skeleton_tokens)
             return skeleton
+        # A skeleton identical to the source means the AST step could
+        # not help (non-Python or unparseable) — the truncation below
+        # is then plain truncation, not a truncated skeleton.
+        rung = "plain_truncation" if skeleton == source else "truncated_skeleton"
+        self._record_fit(rung, limit, source_tokens, limit)
         return skeleton[: limit * 4] + f"\n# ... truncated at token limit {limit}\n"
+
+    def _record_fit(self, rung: str, limit: int, source_tokens: int, result_tokens: int) -> None:
+        """Record a fit_source outcome on the instance and the log.
+
+        The log line is the durable measurement surface (grep
+        ``context_fit`` across run logs to see rung frequency and
+        truncation rates); ``last_fit`` is the programmatic one.
+        """
+        self.last_fit = {
+            "rung": rung,
+            "token_limit": limit,
+            "source_tokens": source_tokens,
+            "result_tokens": result_tokens,
+        }
+        logger.info(
+            "context_fit rung=%s token_limit=%d source_tokens=%d result_tokens=%d",
+            rung,
+            limit,
+            source_tokens,
+            result_tokens,
+        )
 
     def _estimate_tokens(self, text: str) -> int:
         """Heuristic token estimation (approx 4 chars per token)."""
