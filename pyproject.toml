@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "attune-ai"
 version = "12.0.0"
-description = "AI-powered developer workflows for Claude with cost optimization, multi-agent orchestration, and workflow automation."
+description = "Persistent memory and receipt-verified workflows for Claude Code — plugin, MCP server, and spec-driven dev framework."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
 license = {file = "LICENSE"}

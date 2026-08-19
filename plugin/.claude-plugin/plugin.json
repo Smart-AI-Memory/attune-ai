@@ -1,7 +1,7 @@
 {
   "name": "attune-ai",
   "version": "12.0.0",
-  "description": "Spec-driven development for Claude Code — /spec plans, reviews, and executes with quality gates; plus security audits, code reviews, test generation, and release prep from /attune.",
+  "description": "Persistent memory and receipt-verified workflows for Claude Code — /spec plans, reviews, and executes with quality gates; plus security audits, code reviews, test generation, and release prep from /attune.",
   "author": {
     "name": "Smart AI Memory",
     "email": "patrick.roebuck@smartaimemory.com"
@@ -9,5 +9,5 @@
   "homepage": "https://smartaimemory.com",
   "repository": "https://github.com/Smart-AI-Memory/attune-ai",
   "license": "Apache-2.0",
-  "keywords": ["workflows", "security", "code-review", "testing", "release-prep", "cost-optimization", "claude-code"]
+  "keywords": ["workflows", "security", "code-review", "testing", "release-prep", "cost-optimization", "claude-code", "memory", "agent-memory", "mcp"]
 }
