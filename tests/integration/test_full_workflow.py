@@ -1,7 +1,7 @@
 """Full workflow integration tests.
 
 Tests the complete flow: SessionStart → Commands → Learning → SessionEnd
-integrating hooks, context, learning, and commands modules.
+integrating hooks, learning, and commands modules.
 """
 
 from pathlib import Path
@@ -9,8 +9,6 @@ from pathlib import Path
 import pytest
 
 from attune.commands import CommandContext, CommandExecutor, CommandRegistry
-from attune.context.compaction import CompactState
-from attune.context.manager import ContextManager
 from attune.hooks.config import HookEvent
 from attune.hooks.registry import HookRegistry
 from attune.learning.evaluator import SessionEvaluator, SessionQuality
@@ -41,11 +39,6 @@ class TestFullSessionWorkflow:
         return registry
 
     @pytest.fixture
-    def context_manager(self, storage_dir):
-        """Create context manager."""
-        return ContextManager(storage_dir=storage_dir / "compact_states")
-
-    @pytest.fixture
     def learning_storage(self, storage_dir):
         """Create learning storage."""
         return LearnedSkillsStorage(storage_dir=storage_dir / "learned_skills")
@@ -61,7 +54,6 @@ class TestFullSessionWorkflow:
         self,
         user_id,
         hook_registry,
-        context_manager,
         learning_storage,
     ):
         """Test complete session lifecycle."""
@@ -81,16 +73,10 @@ class TestFullSessionWorkflow:
         hook_registry.fire_sync(HookEvent.SESSION_START, {"user_id": user_id})
         assert "session_start" in events_log
 
-        # Try to restore previous state
-        restored_state = context_manager.restore_state(user_id)
-        # First run - no state to restore
-        assert restored_state is None
-
         # === DURING SESSION: Commands ===
         CommandContext(
             user_id=user_id,
             hook_registry=hook_registry,
-            context_manager=context_manager,
             learning_storage=learning_storage,
         )
 
@@ -122,74 +108,12 @@ class TestFullSessionWorkflow:
         hook_registry.fire_sync(HookEvent.PRE_COMPACT, {"user_id": user_id})
         assert "pre_compact" in events_log
 
-        # Create compact state
-        context_manager.session_id = "test_session_123"
-        context_manager.current_phase = "testing"
-
-        # Set handoff
-        context_manager.set_handoff(
-            situation="Running integration tests",
-            background="Testing full workflow",
-            assessment="Tests passing so far",
-            recommendation="Continue with more tests",
-        )
-
         # === SESSION END ===
         hook_registry.fire_sync(HookEvent.SESSION_END, {"user_id": user_id})
         assert "session_end" in events_log
 
         # Verify all events fired
         assert events_log == ["session_start", "pre_compact", "session_end"]
-
-    def test_context_preservation_across_sessions(
-        self,
-        user_id,
-        context_manager,
-    ):
-        """Test that context is preserved and restored across sessions."""
-        # === FIRST SESSION ===
-        context_manager.session_id = "session_1"
-        context_manager.current_phase = "implementation"
-        context_manager.complete_phase("planning")
-
-        handoff = context_manager.set_handoff(
-            situation="Implementing feature X",
-            background="User requested feature X",
-            assessment="50% complete",
-            recommendation="Continue with unit tests",
-            priority="high",
-        )
-
-        # Create and save state
-        state = CompactState(
-            user_id=user_id,
-            trust_level=0.9,
-            empathy_level=4,
-            detected_patterns=[],
-            session_id="session_1",
-            current_phase="implementation",
-            completed_phases=["planning"],
-            pending_handoff=handoff,
-        )
-
-        saved_path = context_manager._state_manager.save_state(state)
-        assert saved_path.exists()
-
-        # === SECOND SESSION ===
-        # Create new context manager (simulates new session)
-        new_context = ContextManager(storage_dir=context_manager._state_manager.storage_dir)
-
-        # Restore state
-        restored = new_context.restore_state(user_id)
-
-        assert restored is not None
-        assert restored.trust_level == 0.9
-        assert restored.empathy_level == 4
-        assert restored.session_id == "session_1"
-        assert restored.current_phase == "implementation"
-        assert "planning" in restored.completed_phases
-        assert restored.pending_handoff is not None
-        assert restored.pending_handoff.priority == "high"
 
     def test_pattern_extraction_and_application(
         self,
@@ -233,7 +157,6 @@ class TestFullSessionWorkflow:
         self,
         user_id,
         hook_registry,
-        context_manager,
         learning_storage,
     ):
         """Test command execution with all context components."""
@@ -252,7 +175,6 @@ class TestFullSessionWorkflow:
         ctx = CommandContext(
             user_id=user_id,
             hook_registry=hook_registry,
-            context_manager=context_manager,
             learning_storage=learning_storage,
         )
 
@@ -278,34 +200,6 @@ class TestFullSessionWorkflow:
 
 class TestModuleIntegration:
     """Test integration between specific modules."""
-
-    def test_hooks_and_context_integration(self, tmp_path):
-        """Test hooks triggering context operations."""
-        context_manager = ContextManager(storage_dir=tmp_path / "states")
-        hook_registry = HookRegistry()
-
-        # Hook that triggers context save
-        # Note: Hook handlers receive keyword arguments, not positional ctx dict
-        def pre_compact_handler(**kwargs):
-            context_manager.session_id = kwargs.get("session_id", "unknown")
-            context_manager.current_phase = "compacting"
-            return {"success": True, "phase": "compacting"}
-
-        hook_registry.register(
-            event=HookEvent.PRE_COMPACT,
-            handler=pre_compact_handler,
-        )
-
-        # Fire hook
-        results = hook_registry.fire_sync(
-            HookEvent.PRE_COMPACT,
-            {"session_id": "session_abc"},
-        )
-
-        assert len(results) > 0
-        assert results[0]["success"] is True
-        assert context_manager.session_id == "session_abc"
-        assert context_manager.current_phase == "compacting"
 
     def test_learning_and_commands_integration(self, tmp_path):
         """Test learning patterns applied to commands."""

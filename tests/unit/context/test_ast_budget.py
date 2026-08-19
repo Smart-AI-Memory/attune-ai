@@ -2,11 +2,7 @@
 
 import ast
 
-from attune.context import (
-    ASTSkeletonGenerator,
-    ContextInflater,
-    TokenBudgetAllocator,
-)
+from attune.context import ASTSkeletonGenerator, TokenBudgetAllocator
 
 SAMPLE_CODE = '''
 class DataProcessor:
@@ -166,44 +162,3 @@ class TestFitSource:
     def test_explicit_token_limit_overrides_default(self) -> None:
         allocator = TokenBudgetAllocator(default_token_limit=10)
         assert allocator.fit_source(SAMPLE_CODE, token_limit=4000) == SAMPLE_CODE
-
-
-class TestContextInflater:
-    """Tests for ContextInflater."""
-
-    def test_inflation_on_mutating_action(self) -> None:
-        inflater = ContextInflater(full_source_repository={"main.py": SAMPLE_CODE})
-        skeleton = "... skeletal code ..."
-
-        # Read action keeps skeleton
-        res_read = inflater.inflate_if_requested("main.py", skeleton, "Read")
-        assert res_read == skeleton
-
-        # Mutating action inflates to full source (case-insensitive)
-        res_edit = inflater.inflate_if_requested("main.py", skeleton, "Edit")
-        assert res_edit == SAMPLE_CODE
-        res_write = inflater.inflate_if_requested("main.py", skeleton, "write")
-        assert res_write == SAMPLE_CODE
-
-    def test_adapter_supplied_mutating_actions(self) -> None:
-        # Provider adapters may use their own tool vocabulary.
-        inflater = ContextInflater(
-            full_source_repository={"main.py": SAMPLE_CODE},
-            mutating_actions={"replace_file_content"},
-        )
-        skeleton = "..."
-        assert (
-            inflater.inflate_if_requested("main.py", skeleton, "replace_file_content")
-            == SAMPLE_CODE
-        )
-        # Canonical names are NOT mutating once overridden
-        assert inflater.inflate_if_requested("main.py", skeleton, "Edit") == skeleton
-
-    def test_unregistered_file_keeps_context(self) -> None:
-        inflater = ContextInflater()
-        assert inflater.inflate_if_requested("ghost.py", "ctx", "Edit") == "ctx"
-
-    def test_register_file_makes_source_inflatable(self) -> None:
-        inflater = ContextInflater()
-        inflater.register_file("late.py", SAMPLE_CODE)
-        assert inflater.inflate_if_requested("late.py", "skel", "Edit") == SAMPLE_CODE

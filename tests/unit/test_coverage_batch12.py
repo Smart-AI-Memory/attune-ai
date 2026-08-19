@@ -3,7 +3,7 @@
 """Tests for hooks scripts — Batch 12.
 
 Covers: hooks/scripts/lessons_reminder, hooks/scripts/format_on_save,
-hooks/scripts/pre_compact, security/path_validation.
+security/path_validation.
 """
 
 from __future__ import annotations
@@ -221,107 +221,6 @@ class TestFormatOnSave:
 
         with patch("sys.stdin", io.StringIO("not-json")):
             main()  # Should not raise
-
-
-# === Module: hooks/scripts/pre_compact.py ===
-
-
-class TestPreCompact:
-    def test_run_pre_compact_no_state_returns_failure(self):
-        from attune.hooks.scripts.pre_compact import run_pre_compact
-
-        result = run_pre_compact({})
-        assert result["state_saved"] is False
-        assert result["restoration_available"] is False
-
-    def test_run_pre_compact_with_state_saves(self):
-        from attune.hooks.scripts.pre_compact import run_pre_compact
-
-        mock_state = MagicMock()
-        mock_cm = MagicMock()
-        mock_compact = MagicMock()
-        mock_compact.trust_level = 0.8
-        mock_compact.empathy_level = "guided"
-        mock_compact.detected_patterns = []
-        mock_compact.pending_handoff = None
-        mock_cm.save_for_compaction.return_value = "/tmp/state.json"
-        mock_cm.extract_compact_state.return_value = mock_compact
-
-        result = run_pre_compact({"collaboration_state": mock_state, "context_manager": mock_cm})
-        assert result["state_saved"] is True
-        assert result["restoration_available"] is True
-        assert result["trust_level"] == 0.8
-
-    def test_run_pre_compact_exception_returns_failure(self):
-        from attune.hooks.scripts.pre_compact import run_pre_compact
-
-        mock_state = MagicMock()
-        mock_cm = MagicMock()
-        mock_cm.save_for_compaction.side_effect = RuntimeError("disk full")
-
-        result = run_pre_compact({"collaboration_state": mock_state, "context_manager": mock_cm})
-        assert result["state_saved"] is False
-        assert "disk full" in result["error"]
-
-    def test_run_pre_compact_sets_session_id(self):
-        from attune.hooks.scripts.pre_compact import run_pre_compact
-
-        mock_state = MagicMock()
-        mock_cm = MagicMock()
-        mock_compact = MagicMock()
-        mock_compact.trust_level = 0.5
-        mock_compact.empathy_level = "reactive"
-        mock_compact.detected_patterns = []
-        mock_compact.pending_handoff = None
-        mock_cm.save_for_compaction.return_value = "/tmp/state.json"
-        mock_cm.extract_compact_state.return_value = mock_compact
-
-        run_pre_compact(
-            {
-                "collaboration_state": mock_state,
-                "context_manager": mock_cm,
-                "session_id": "sess-123",
-                "current_phase": "testing",
-            }
-        )
-        assert mock_cm.session_id == "sess-123"
-        assert mock_cm.current_phase == "testing"
-
-    def test_generate_compaction_summary_basic(self):
-        from attune.hooks.scripts.pre_compact import generate_compaction_summary
-
-        mock_state = MagicMock()
-        mock_state.user_id = "user1"
-        mock_state.trust_level = 0.75
-        mock_state.current_level = "proactive"
-        mock_state.interactions = ["a", "b", "c"]
-        mock_state.detected_patterns = []
-        mock_state.preferences = {}
-
-        summary = generate_compaction_summary(mock_state)
-        assert "user1" in summary
-        assert "0.75" in summary
-        assert "proactive" in summary
-
-    def test_generate_compaction_summary_with_patterns(self):
-        from attune.hooks.scripts.pre_compact import generate_compaction_summary
-
-        mock_pattern = MagicMock()
-        mock_pattern.trigger = "debug"
-        mock_pattern.action = "add logs"
-        mock_pattern.confidence = 0.9
-
-        mock_state = MagicMock()
-        mock_state.user_id = "user1"
-        mock_state.trust_level = 0.5
-        mock_state.current_level = "reactive"
-        mock_state.interactions = []
-        mock_state.detected_patterns = [mock_pattern]
-        mock_state.preferences = {}
-
-        summary = generate_compaction_summary(mock_state, include_patterns=True)
-        assert "debug" in summary
-        assert "add logs" in summary
 
 
 # === Module: security/path_validation.py ===

@@ -217,7 +217,6 @@ The framework includes pre-built hook scripts:
 | `session_start.py` | SessionStart | Restore context state |
 | `session_end.py` | SessionEnd | Save state, trigger evaluation |
 | `suggest_compact.py` | PostToolUse | Suggest compaction when needed |
-| `pre_compact.py` | PreCompact | Prepare state for compaction |
 | `evaluate_session.py` | SessionEnd | Extract learning patterns |
 
 ## Integration with Commands
@@ -273,6 +272,5 @@ class HookConfig:
 
 ## See Also
 
-- [Context Management](context-management.md) - State preservation
 - [Continuous Learning](continuous-learning.md) - Pattern extraction
 - [CLI Reference](reference/cli-reference.md#slash-command-system) - Slash command system

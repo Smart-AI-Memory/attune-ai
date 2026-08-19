@@ -123,7 +123,6 @@ class TestCommandContextIntegration:
             user_id="test_user",
             enable_hooks=True,
             enable_learning=True,
-            enable_context=True,
         )
 
         assert ctx.user_id == "test_user"
@@ -154,16 +153,6 @@ class TestCommandContextIntegration:
 
         results = ctx.search_patterns("test")
         assert results == []
-
-    def test_context_save_without_manager(self):
-        """Test save context with no manager."""
-        ctx = CommandContext(
-            user_id="test",
-            context_manager=None,
-        )
-
-        result = ctx.save_context_state()
-        assert result is None
 
 
 class TestCommandExecutorIntegration:

@@ -285,4 +285,3 @@ class AgentLoader:
 
 - [Hooks](hooks.md) - Event-driven extensibility
 - [CLI Reference](reference/cli-reference.md#slash-command-system) - Slash command system
-- [Context Management](context-management.md) - State preservation

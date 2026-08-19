@@ -380,64 +380,6 @@ class TestLearningWithHooksIntegration:
         assert len(patterns) >= 1
 
 
-class TestLearningWithContextIntegration:
-    """Test learning module integration with context management."""
-
-    def test_patterns_survive_compaction(self, tmp_path):
-        """Test that learned patterns survive context compaction."""
-        from attune.context import CompactState
-        from attune.context.compaction import PatternSummary
-
-        storage = LearnedSkillsStorage(storage_dir=tmp_path / "skills")
-        user_id = "compaction_user"
-
-        # Save patterns
-        for i, category in enumerate(
-            [
-                PatternCategory.PREFERENCE,
-                PatternCategory.ERROR_RESOLUTION,
-            ],
-        ):
-            pattern = ExtractedPattern(
-                category=category,
-                trigger=f"trigger_{i}",
-                context="compaction test",
-                resolution=f"resolution_{i}",
-                confidence=0.9,
-                source_session="compact_session",
-            )
-            storage.save_pattern(user_id, pattern)
-
-        # Get patterns and convert to compact format
-        patterns = storage.get_all_patterns(user_id)
-        pattern_summaries = [
-            PatternSummary(
-                pattern_type=p.category.value,
-                trigger=p.trigger,
-                action=p.resolution,
-                confidence=p.confidence,
-                occurrences=1,
-            )
-            for p in patterns
-        ]
-
-        # Create compact state
-        state = CompactState(
-            user_id=user_id,
-            trust_level=0.85,
-            empathy_level=4,
-            detected_patterns=pattern_summaries,
-        )
-
-        # Serialize and restore
-        data = state.to_dict()
-        restored = CompactState.from_dict(data)
-
-        # Verify patterns survived
-        assert len(restored.detected_patterns) == 2
-        assert restored.detected_patterns[0].pattern_type == "preference"
-
-
 class TestEdgeCases:
     """Test edge cases and error handling."""
 

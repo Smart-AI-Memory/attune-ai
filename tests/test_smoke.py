@@ -129,10 +129,10 @@ class TestLLMToolkit:
 
     def test_context_import(self):
         """Test context module."""
-        from attune.context import ContextManager
+        from attune.context import TokenBudgetAllocator
 
         # Should be able to import without error
-        assert ContextManager is not None
+        assert TokenBudgetAllocator is not None
 
 
 class TestModelsAndCosts:

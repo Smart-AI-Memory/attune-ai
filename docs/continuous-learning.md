@@ -387,5 +387,4 @@ class LearnedSkillsStorage:
 ## See Also
 
 - [Hooks](hooks.md) - Session lifecycle events
-- [Context Management](context-management.md) - State preservation
 - [CLI Reference](reference/cli-reference.md#slash-command-system) - Slash command system
