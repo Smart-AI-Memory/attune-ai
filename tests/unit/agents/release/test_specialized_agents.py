@@ -803,3 +803,28 @@ class TestSecurityAuditorAgent:
         assert findings["total_findings"] == 1
         # Non-gate fields are still LLM-enhanced.
         assert findings["confidence"] == 0.95
+
+    def test_execute_tier_stricter_llm_count_can_fail_the_gate(self):
+        """Fail-closed ratchet: an LLM count higher than bandit's raises
+        the gate value — a stricter reclassification can still fail the
+        gate, only a downward override is blocked.
+        """
+        from attune.agents.release.release_models import Tier
+
+        agent = self._make_agent()
+        clean_output = json.dumps({"results": []})
+        llm_response = json.dumps({"critical_issues": 2, "confidence": 0.9})
+        agent.llm_client = object()
+
+        with (
+            patch("attune.agents.release.security_agent.LLM_MODE", "real"),
+            patch(
+                "attune.agents.release.security_agent._run_command",
+                return_value=(0, clean_output, ""),
+            ),
+            patch.object(agent, "_call_llm", return_value=(llm_response, {})),
+        ):
+            success, findings = agent._execute_tier(".", Tier.CHEAP)
+
+        assert success is False
+        assert findings["critical_issues"] == 2

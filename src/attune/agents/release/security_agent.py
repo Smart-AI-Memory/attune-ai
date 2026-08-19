@@ -26,17 +26,16 @@ from .release_parsing import _parse_response
 logger = logging.getLogger(__name__)
 
 # Severity counts parsed from bandit are authoritative for the release
-# gate — an LLM response must never overwrite them, or a hallucinated
-# zero count could pass a gate that real findings should fail.
-_BANDIT_AUTHORITATIVE_KEYS = frozenset(
-    {
-        "critical_issues",
-        "high_issues",
-        "medium_issues",
-        "low_issues",
-        "total_findings",
-    }
+# gate — an LLM response must never lower them, or a hallucinated zero
+# count could pass a gate that real findings should fail. A stricter
+# LLM count may raise one (fail-closed ratchet, see _execute_tier).
+_SEVERITY_COUNT_KEYS = (
+    "critical_issues",
+    "high_issues",
+    "medium_issues",
+    "low_issues",
 )
+_BANDIT_AUTHORITATIVE_KEYS = frozenset(_SEVERITY_COUNT_KEYS) | {"total_findings"}
 
 
 class SecurityAuditorAgent(ReleaseAgent):
@@ -109,6 +108,16 @@ class SecurityAuditorAgent(ReleaseAgent):
                                 if k not in _BANDIT_AUTHORITATIVE_KEYS
                             }
                         )
+                        # Fail-closed ratchet: a stricter LLM severity
+                        # count may raise the bandit value, never lower it.
+                        for key in _SEVERITY_COUNT_KEYS:
+                            llm_count = llm_findings.get(key)
+                            if (
+                                isinstance(llm_count, int)
+                                and not isinstance(llm_count, bool)
+                                and llm_count > findings[key]
+                            ):
+                                findings[key] = llm_count
 
             findings["mode"] = "llm" if self.llm_client else "rule_based"
             findings["tier"] = tier.value

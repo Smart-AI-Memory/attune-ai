@@ -80,9 +80,10 @@ class TestSecurityLlmEnhancement:
             lambda *a, **k: ('{"critical_issues": 2, "confidence": 0.8}', {}),
         )
         _, findings = agent._execute_tier(".", Tier.CHEAP)
-        # Non-gate fields merge; bandit's severity counts stay authoritative.
+        # Non-gate fields merge; a stricter LLM count ratchets the bandit
+        # value upward (fail-closed) — it can never lower it.
         assert findings["confidence"] == 0.8
-        assert findings["critical_issues"] == 0
+        assert findings["critical_issues"] == 2
         assert findings["mode"] == "llm"
         assert findings["tier"] == "cheap"
 
