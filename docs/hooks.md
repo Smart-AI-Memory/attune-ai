@@ -225,8 +225,8 @@ Commands can specify hooks in their metadata:
 ---
 name: review
 hooks:
-  pre: PreToolUse
-  post: PostToolUse
+  pre: PreCommand
+  post: PostCommand
 ---
 ```
 

@@ -122,16 +122,16 @@ Test body content.
         content = """---
 name: review
 hooks:
-  pre: PreToolUse
-  post: PostToolUse
+  pre: PreCommand
+  post: PostCommand
 ---
 
 Body content.
 """
         config = parser.parse_content(content)
 
-        assert config.hooks["pre"] == "PreToolUse"
-        assert config.hooks["post"] == "PostToolUse"
+        assert config.hooks["pre"] == "PreCommand"
+        assert config.hooks["post"] == "PostCommand"
 
     def test_parse_requires_flags(self, parser):
         """Test parsing requires_user_id and requires_context."""
