@@ -47,7 +47,6 @@ class TestCommandContextInit:
 
         assert ctx.user_id == "user1"
         assert ctx.hook_registry is None
-        assert ctx.context_manager is None
         assert ctx.learning_storage is None
         assert ctx.collaboration_state is None
         assert ctx.project_root is None
@@ -128,74 +127,6 @@ class TestCommandContextFireHook:
         _args, _kwargs = mock_registry.fire_sync.call_args
         passed_ctx = _args[1]
         assert passed_ctx["user_id"] == "bob"
-
-
-class TestCommandContextSaveRestoreState:
-    """Tests for save_context_state and restore_context_state."""
-
-    def test_save_context_state_no_manager_returns_none(self):
-        """save_context_state returns None when context_manager is None."""
-        ctx = CommandContext(user_id="u")
-
-        result = ctx.save_context_state()
-
-        assert result is None
-
-    def test_save_context_state_no_collab_state_returns_none(self):
-        """save_context_state returns None when collaboration_state is None."""
-        mock_manager = MagicMock()
-        ctx = CommandContext(user_id="u", context_manager=mock_manager)
-
-        result = ctx.save_context_state()
-
-        assert result is None
-        mock_manager.save_for_compaction.assert_not_called()
-
-    def test_save_context_state_delegates_to_manager(self, tmp_path):
-        """save_context_state calls context_manager.save_for_compaction."""
-        mock_manager = MagicMock()
-        expected_path = tmp_path / "state.json"
-        mock_manager.save_for_compaction.return_value = expected_path
-        mock_state = MagicMock()
-        ctx = CommandContext(
-            user_id="u",
-            context_manager=mock_manager,
-            collaboration_state=mock_state,
-        )
-
-        result = ctx.save_context_state()
-
-        assert result == expected_path
-        mock_manager.save_for_compaction.assert_called_once_with(mock_state)
-
-    def test_restore_context_state_no_manager_returns_false(self):
-        """restore_context_state returns False when context_manager is None."""
-        ctx = CommandContext(user_id="u")
-
-        result = ctx.restore_context_state()
-
-        assert result is False
-
-    def test_restore_context_state_no_saved_state_returns_false(self):
-        """restore_context_state returns False when manager has no state."""
-        mock_manager = MagicMock()
-        mock_manager.restore_state.return_value = None
-        ctx = CommandContext(user_id="u", context_manager=mock_manager)
-
-        result = ctx.restore_context_state()
-
-        assert result is False
-
-    def test_restore_context_state_with_state_returns_true(self):
-        """restore_context_state returns True when state is present."""
-        mock_manager = MagicMock()
-        mock_manager.restore_state.return_value = {"some": "state"}
-        ctx = CommandContext(user_id="u", context_manager=mock_manager)
-
-        result = ctx.restore_context_state()
-
-        assert result is True
-        mock_manager.restore_state.assert_called_once_with("u")
 
 
 class TestCommandContextPatterns:
@@ -436,14 +367,12 @@ class TestCreateCommandContext:
             "sys.modules",
             {
                 "attune.hooks.registry": None,
-                "attune.context.manager": None,
                 "attune.learning.storage": None,
             },
         ):
             ctx = create_command_context(
                 "user1",
                 enable_hooks=True,
-                enable_context=True,
                 enable_learning=True,
             )
 
@@ -456,7 +385,6 @@ class TestCreateCommandContext:
             "u",
             project_root=str(tmp_path),
             enable_hooks=False,
-            enable_context=False,
             enable_learning=False,
         )
 
@@ -468,12 +396,10 @@ class TestCreateCommandContext:
             "u",
             enable_hooks=False,
             enable_learning=False,
-            enable_context=False,
         )
 
         assert ctx.user_id == "u"
         assert ctx.hook_registry is None
-        assert ctx.context_manager is None
         assert ctx.learning_storage is None
 
     def test_create_handles_import_error_gracefully(self):
@@ -487,7 +413,6 @@ class TestCreateCommandContext:
                 "u",
                 enable_hooks=True,
                 enable_learning=False,
-                enable_context=False,
             )
 
         assert ctx.hook_registry is None
