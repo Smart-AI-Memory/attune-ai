@@ -47,7 +47,6 @@ _BASELINE: dict[str, int] = {
     "unit/cli_commands/test_provider_commands.py": 33,
     "unit/cli_commands/test_telemetry_commands.py": 19,
     "unit/cli_commands/test_utility_commands.py": 24,
-    "unit/commands/test_context.py": 2,
     "unit/help/test_polish.py": 4,
     "unit/help/test_usage_weights.py": 7,
     "unit/hooks/test_help_hooks.py": 1,

@@ -230,24 +230,28 @@ Socratic patterns:
 
 ## Integration
 
-### With Commands
-
-```python
-from attune.commands import CommandContext
-
-ctx = CommandContext(
-    user_id="user123",
-    # Agent configs available through registry
-)
-```
-
 ### With Hooks
 
+A `SessionStart` hook **script** under `attune/hooks/scripts/` can look
+up an agent from the registry (Claude Code invokes it over the stdin /
+exit-code contract — see [Hooks](hooks.md)):
+
 ```python
-def on_session_start(context):
-    registry = AgentRegistry.get_instance()
-    agent = registry.get(context.get("agent_name", "default"))
-    return {"agent": agent.name}
+import json
+import sys
+
+from attune.agents_md import AgentRegistry
+
+try:
+    payload = json.load(sys.stdin)
+except (json.JSONDecodeError, ValueError):
+    sys.exit(0)                          # fail open on malformed input
+
+registry = AgentRegistry.get_instance()
+agent = registry.get(payload.get("agent_name", "default"))
+if agent is not None:
+    print(f"agent ready: {agent.name}", file=sys.stderr)
+sys.exit(0)
 ```
 
 ## API Reference

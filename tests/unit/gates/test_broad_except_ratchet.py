@@ -121,7 +121,6 @@ _BASELINE: dict[str, int] = {
     "src/attune/cli_commands/workflow_commands.py": 1,
     "src/attune/cli_minimal.py": 3,
     "src/attune/cli_router.py": 1,
-    "src/attune/commands/context.py": 2,
     "src/attune/commands/parser.py": 2,
     "src/attune/config/legacy.py": 1,
     "src/attune/config/xml_config.py": 1,
@@ -141,8 +140,6 @@ _BASELINE: dict[str, int] = {
     "src/attune/handoff/memory_link.py": 5,
     "src/attune/help/feedback.py": 1,
     "src/attune/help/polish.py": 1,
-    "src/attune/hooks/executor.py": 2,
-    "src/attune/hooks/registry.py": 1,
     "src/attune/hooks/scripts/evaluate_session.py": 3,
     # format_on_save added 1 for library-review L3 (PR #2117): the
     # PostToolUse exit-0-always contract must survive wrong-typed

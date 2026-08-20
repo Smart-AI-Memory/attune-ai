@@ -902,6 +902,7 @@
       ],
       "prevented_by": [
         "tip-after-10-inspects",
+        "tip-hooks",
         "tip-plugin",
         "tip-rag-grounding"
       ],
@@ -914,6 +915,10 @@
       "embeds": [
         {
           "id": "tip-after-10-inspects",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-hooks",
           "position": "after_resolution"
         },
         {
@@ -1223,6 +1228,7 @@
         "war-claude-code-plugin-is-platform-specific"
       ],
       "prevented_by": [
+        "tip-hooks",
         "tip-plugin"
       ],
       "related_faq": [
@@ -1232,6 +1238,10 @@
         "claude-code"
       ],
       "embeds": [
+        {
+          "id": "tip-hooks",
+          "position": "after_resolution"
+        },
         {
           "id": "tip-plugin",
           "position": "after_resolution"
@@ -1243,6 +1253,7 @@
         "war-claude-code-plugins-expect-plugin-json-inside-claude-plugin"
       ],
       "prevented_by": [
+        "tip-hooks",
         "tip-plugin"
       ],
       "related_faq": [
@@ -1253,6 +1264,10 @@
         "claude-code"
       ],
       "embeds": [
+        {
+          "id": "tip-hooks",
+          "position": "after_resolution"
+        },
         {
           "id": "tip-plugin",
           "position": "after_resolution"
@@ -1502,6 +1517,7 @@
     },
     "err-custom-mcp-stdio-loop-fails-claude-code-handshake": {
       "prevented_by": [
+        "tip-hooks",
         "tip-plugin"
       ],
       "related_faq": [
@@ -1511,6 +1527,10 @@
         "claude-code"
       ],
       "embeds": [
+        {
+          "id": "tip-hooks",
+          "position": "after_resolution"
+        },
         {
           "id": "tip-plugin",
           "position": "after_resolution"
@@ -2178,6 +2198,7 @@
         "war-github-repos-serve-as-claude-code-marketplaces"
       ],
       "prevented_by": [
+        "tip-hooks",
         "tip-plugin"
       ],
       "related_faq": [
@@ -2188,6 +2209,10 @@
         "claude-code"
       ],
       "embeds": [
+        {
+          "id": "tip-hooks",
+          "position": "after_resolution"
+        },
         {
           "id": "tip-plugin",
           "position": "after_resolution"
@@ -2338,7 +2363,8 @@
         "war-hooks"
       ],
       "prevented_by": [
-        "tip-hooks"
+        "tip-hooks",
+        "tip-plugin"
       ],
       "related_faq": [
         "faq-hooks"
@@ -2352,6 +2378,10 @@
       "embeds": [
         {
           "id": "tip-hooks",
+          "position": "after_resolution"
+        },
+        {
+          "id": "tip-plugin",
           "position": "after_resolution"
         }
       ]
@@ -3083,6 +3113,7 @@
         "war-plugin"
       ],
       "prevented_by": [
+        "tip-hooks",
         "tip-plugin"
       ],
       "related_faq": [
@@ -3093,6 +3124,10 @@
         "claude-code"
       ],
       "embeds": [
+        {
+          "id": "tip-hooks",
+          "position": "after_resolution"
+        },
         {
           "id": "tip-plugin",
           "position": "after_resolution"
@@ -7621,7 +7656,10 @@
     },
     "not-hooks": {
       "related_reference": [
-        "ref-hooks"
+        "ref-hooks",
+        "ref-plugin",
+        "ref-tool-code-review",
+        "ref-tool-simplify-code"
       ],
       "tags": [
         "hooks",
@@ -7691,6 +7729,7 @@
     },
     "not-plugin": {
       "related_reference": [
+        "ref-hooks",
         "ref-plugin"
       ],
       "tags": [

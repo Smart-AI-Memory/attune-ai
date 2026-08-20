@@ -9,23 +9,23 @@ tags:
 type: quickstart
 ---
 
-# The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config
+# The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events
 
 ## Quickstart
 
-Register an in-process handler and fire it:
+Read the payload, decide, exit — failing open on anything malformed:
 
 ```python
-from attune.hooks import HookRegistry, HookEvent
+import json
+import sys
 
-registry = HookRegistry()
+try:
+    payload = json.load(sys.stdin)       # {"tool_name": ..., "tool_input": ...}
+except (json.JSONDecodeError, ValueError):
+    sys.exit(0)                          # fail open on malformed input
 
-
-def on_pre_tool(**context) -> dict:        # context arrives as kwargs
-    return {"blocked": False, "tool": context.get("tool_name")}
-
-
-registry.register(HookEvent.PRE_TOOL_USE, on_pre_tool)
-results = registry.fire_sync(HookEvent.PRE_TOOL_USE, {"tool_name": "Bash"})
-print(results)
+if isinstance(payload, dict) and payload.get("tool_name") == "Bash":
+    print("Bash blocked by policy", file=sys.stderr)
+    sys.exit(2)                          # 2 = block
+sys.exit(0)                             # 0 = allow
 ```

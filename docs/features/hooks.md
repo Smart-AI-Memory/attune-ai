@@ -1,6 +1,6 @@
 # Hooks
 
-The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config
+The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events
 
 !!! tip "Start here"
 

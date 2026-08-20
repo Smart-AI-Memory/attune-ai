@@ -949,9 +949,8 @@ print(registry.format_help())  # quick listing
 ```
 
 `CommandLoader.validate_directory()` reports malformed command
-files. `CommandContext` and `CommandExecutor` fire the pre/post
-hooks declared in frontmatter around execution. All classes are
-exported from `attune.commands`.
+files. The loader, parser, and registry classes are exported from
+`attune.commands`.
 
 ---
 
