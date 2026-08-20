@@ -227,8 +227,10 @@ def _export_json(tracker: CostTracker, days: int, path: Path) -> None:
 
     """
     summary = tracker.get_summary(days)
-    with path.open("w", encoding="utf-8") as f:
-        json.dump(summary, f, indent=2)
+    # Serialize before opening: a TypeError from corrupt data must not
+    # leave a truncated file or destroy a previously valid export.
+    payload = json.dumps(summary, indent=2)
+    path.write_text(payload, encoding="utf-8")
 
 
 def _export_csv(tracker: CostTracker, days: int, path: Path) -> None:

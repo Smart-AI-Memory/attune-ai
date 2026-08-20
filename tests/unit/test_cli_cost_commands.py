@@ -536,6 +536,9 @@ class TestCmdCostsExport:
         assert result == 1
         captured = capsys.readouterr()
         assert "Error exporting cost data" in captured.out
+        # Codex cross-review finding: serialization failure must not
+        # leave a truncated/partial export file behind.
+        assert not out_file.exists()
 
 
 # ---------------------------------------------------------------------------
