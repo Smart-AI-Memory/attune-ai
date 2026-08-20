@@ -244,9 +244,13 @@ def _read_stdin_context() -> dict[str, Any]:
     if not raw:
         return {}
     try:
-        return json.loads(raw)
-    except json.JSONDecodeError:
+        parsed = json.loads(raw)
+    except (json.JSONDecodeError, RecursionError):
+        # RecursionError: deeply-nested JSON overflows the parser; this
+        # reader is called BEFORE main()'s crash guard, so it must
+        # absorb it here (library-review L4).
         return {}
+    return parsed if isinstance(parsed, dict) else {}
 
 
 if __name__ == "__main__":

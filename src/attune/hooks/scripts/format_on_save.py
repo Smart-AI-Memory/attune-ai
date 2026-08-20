@@ -77,7 +77,12 @@ def main() -> None:
             return
 
         data = json.loads(raw)
-    except (json.JSONDecodeError, ValueError):
+    except (json.JSONDecodeError, ValueError, RecursionError):
+        return
+
+    # A non-dict payload (list/int/str/null) has no tool fields; the
+    # contract is exit-0-always, so degrade instead of crashing (L3).
+    if not isinstance(data, dict):
         return
 
     tool_name = data.get("tool_name", "")
@@ -119,4 +124,10 @@ if __name__ == "__main__":
     from _sdk_gate import exit_if_sdk_subprocess
 
     exit_if_sdk_subprocess()
-    main()
+    try:
+        main()
+    except Exception:  # noqa: BLE001
+        # PostToolUse best-effort: wrong-typed nested fields (e.g.
+        # tool_input=[...] or file_path=5) must not crash the
+        # exit-0-always contract (library-review L3).
+        pass

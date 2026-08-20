@@ -293,3 +293,62 @@ class TestMainEntryPointExitCodes:
             text=True,
         )
         assert result.returncode == 0
+
+
+class TestMalformedPayloadFailsOpen:
+    """Library-review L1/L4: a blocking guard must fail OPEN (exit 0),
+    never crash to exit 1, on any parsed-but-malformed stdin."""
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            "[1,2,3]",
+            "42",
+            "null",
+            '{"tool_name":123,"tool_input":{"command":"x"}}',
+            '{"tool_name":"Bash","tool_input":[1,2]}',
+            '{"tool_name":"Bash","tool_input":{"command":999}}',
+            '{"tool_name":"Bash","tool_input":null}',
+            '{"tool_name":"Write","tool_input":{"file_path":123}}',
+        ],
+    )
+    def test_malformed_stdin_exits_0(self, payload: str) -> None:
+        import subprocess
+        import sys
+
+        result = subprocess.run(
+            [sys.executable, "src/attune/hooks/scripts/security_guard.py"],
+            input=payload,
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, f"{payload!r} -> exit {result.returncode}"
+
+    def test_deeply_nested_json_exits_0(self) -> None:
+        import subprocess
+        import sys
+
+        payload = '{"a":' * 3000 + "1" + "}" * 3000
+        result = subprocess.run(
+            [sys.executable, "src/attune/hooks/scripts/security_guard.py"],
+            input=payload,
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0
+
+    def test_real_block_still_fires_after_guard(self) -> None:
+        """The fail-open hardening must NOT neuter a real block."""
+        import subprocess
+        import sys
+
+        payload = json.dumps(
+            {"tool_name": "Bash", "tool_input": {"command": "python -c 'ev" + "al(x)'"}}
+        )
+        result = subprocess.run(
+            [sys.executable, "src/attune/hooks/scripts/security_guard.py"],
+            input=payload,
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 2

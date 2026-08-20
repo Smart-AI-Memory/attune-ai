@@ -111,3 +111,19 @@ def test_main_block_reads_records_and_exits_zero(monkeypatch):
         runpy.run_path(str(SCRIPT_PATH), run_name="__main__")
 
     assert exc.value.code == 0
+
+
+def test_malformed_stdin_exits_0_telemetry():
+    """Library-review L2: non-dict/wrong-typed stdin must not crash
+    the exit-0 contract of telemetry_hook."""
+    import subprocess
+    import sys
+
+    for payload in ("[1,2,3]", "42", "null", '"hi"', '{"tool_name":"Bash","tool_input":[1]}'):
+        result = subprocess.run(
+            [sys.executable, "src/attune/hooks/scripts/telemetry_hook.py"],
+            input=payload,
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, f"{payload!r} -> exit {result.returncode}"

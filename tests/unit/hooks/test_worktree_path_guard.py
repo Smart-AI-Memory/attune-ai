@@ -441,3 +441,20 @@ class TestScriptMainEntry:
         captured = capsys.readouterr()
         assert "hook error" in captured.err
         assert "AttributeError" in captured.err
+
+
+def test_deeply_nested_json_exits_0():
+    """Library-review L4: 3000-deep JSON overflows the parser (which
+    runs before main()'s guard); the reader must absorb the
+    RecursionError and fail open (exit 0)."""
+    import subprocess
+    import sys
+
+    payload = '{"a":' * 3000 + "1" + "}" * 3000
+    result = subprocess.run(
+        [sys.executable, "src/attune/hooks/scripts/worktree_path_guard.py"],
+        input=payload,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
