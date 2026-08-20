@@ -275,24 +275,41 @@ class TestHandleMemoryRetrieve:
 
     @pytest.mark.asyncio
     async def test_retrieve_long_term_owned_pattern_returns_data(self):
-        """Pattern with created_by matching the current user is returned."""
+        """Pattern with created_by matching the current user is returned.
+
+        Uses the REAL ``recall_pattern`` return shape — ``created_by`` nested
+        under ``metadata`` — so the ownership gate is exercised against the
+        data it actually receives, not a flat fiction.
+        """
         mem = _make_unified_memory()
         mem.retrieve.return_value = None
         server = _make_server(memory=mem)
-        mem.recall_pattern.return_value = {"content": "mine", "created_by": server._user_id}
+        mem.recall_pattern.return_value = {
+            "content": "mine",
+            "metadata": {"created_by": server._user_id},
+        }
 
         result = await server._handle_memory_retrieve({"key": "k"})
 
         assert result["success"] is True
         assert result["source"] == "long_term"
-        assert result["data"]["created_by"] == server._user_id
+        assert result["data"]["metadata"]["created_by"] == server._user_id
 
     @pytest.mark.asyncio
     async def test_retrieve_long_term_unowned_pattern_denied(self):
-        """Pattern owned by a different user is reported as not found."""
+        """Pattern owned by a different user is reported as not found.
+
+        Regression for the M4 cross-user leak: ``recall_pattern`` returns
+        ``created_by`` nested under ``metadata``. The gate must read that
+        nesting level and deny — the old top-level read always legacy-passed
+        and leaked another user's pattern.
+        """
         mem = _make_unified_memory()
         mem.retrieve.return_value = None
-        mem.recall_pattern.return_value = {"content": "theirs", "created_by": "someone-else"}
+        mem.recall_pattern.return_value = {
+            "content": "theirs",
+            "metadata": {"created_by": "someone-else"},
+        }
         server = _make_server(memory=mem)
 
         result = await server._handle_memory_retrieve({"key": "k"})
@@ -312,6 +329,44 @@ class TestHandleMemoryRetrieve:
 
         assert result["success"] is False
         assert "retrieve boom" in result["error"]
+
+
+# ---------------------------------------------------------------------------
+# _check_ownership (M4 shape-read regression)
+# ---------------------------------------------------------------------------
+
+
+class TestCheckOwnership:
+    """Direct tests for _check_ownership() against the real pattern shape.
+
+    ``recall_pattern`` returns ``{"content": ..., "metadata": {...}}``.
+    Regression for M4: the gate previously read ``created_by`` from the top
+    level, which never exists there, so it always legacy-passed and leaked
+    other users' patterns cross-user.
+    """
+
+    def test_nested_metadata_foreign_owner_denied(self):
+        """Foreign owner under metadata → not owned (the leak that was fixed)."""
+        server = _make_server(memory=_make_unified_memory())
+        pattern = {"content": "theirs", "metadata": {"created_by": "someone-else"}}
+        assert server._check_ownership(pattern) is False
+
+    def test_nested_metadata_own_pattern_owned(self):
+        """created_by under metadata matching the user → owned."""
+        server = _make_server(memory=_make_unified_memory())
+        pattern = {"content": "mine", "metadata": {"created_by": server._user_id}}
+        assert server._check_ownership(pattern) is True
+
+    def test_nested_metadata_no_owner_legacy_passes(self):
+        """No created_by anywhere → legacy data stays accessible."""
+        server = _make_server(memory=_make_unified_memory())
+        pattern = {"content": "legacy", "metadata": {"classification": "PUBLIC"}}
+        assert server._check_ownership(pattern) is True
+
+    def test_flat_shape_foreign_owner_still_denied(self):
+        """Top-level created_by fallback keeps flat backend shapes gated."""
+        server = _make_server(memory=_make_unified_memory())
+        assert server._check_ownership({"created_by": "someone-else"}) is False
 
 
 # ---------------------------------------------------------------------------
@@ -491,7 +546,28 @@ class TestHandleMemoryForget:
         result = await server._handle_memory_forget({"key": "k", "scope": "persistent"})
 
         assert result["success"] is True
-        assert "persistent" not in result["removed_from"]
+
+    @pytest.mark.asyncio
+    async def test_forget_persistent_foreign_owner_refused(self):
+        """A persistent delete of another user's pattern is refused, not silent.
+
+        Regression for M4: with the real nested ``recall_pattern`` shape and a
+        delete-capable backend, the ownership gate must deny — returning
+        success=False and never calling delete_pattern. The old top-level
+        created_by read legacy-passed and let one user delete another's data.
+        """
+        mem = _make_unified_memory()
+        mem.recall_pattern.return_value = {
+            "content": "theirs",
+            "metadata": {"created_by": "someone-else"},
+        }
+        server = _make_server(memory=mem)
+
+        result = await server._handle_memory_forget({"key": "pat-x", "scope": "persistent"})
+
+        assert result["success"] is False
+        assert "authorized" in result["error"].lower()
+        mem.delete_pattern.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_forget_import_error_returns_error_dict(self):
