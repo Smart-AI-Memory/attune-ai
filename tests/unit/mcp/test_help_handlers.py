@@ -784,3 +784,29 @@ class TestHelpLookupUnmatchedLogging:
             await server._handle_help_lookup({"topic": "x"})
 
         assert self._events(tracker) == []
+
+
+@pytest.mark.unit
+class TestHelpInitValidatesBeforeSave:
+    """Library-review M1: help_init accept must reject an invalid
+    feature name BEFORE save_manifest writes it, so one bad entry
+    cannot poison the persisted manifest."""
+
+    async def test_traversal_name_rejected_and_manifest_not_written(self, tmp_path: Any) -> None:
+        server = _make_server(tmp_path)
+        help_dir = tmp_path / ".help"
+        result = await server._handle_help_init(
+            {
+                "action": "accept",
+                "accepted": [
+                    {"name": "../evil", "description": "bad"},
+                    {"name": "good-feature", "description": "ok"},
+                ],
+                "help_dir": str(help_dir),
+                "project_root": str(tmp_path),
+            }
+        )
+        assert result["success"] is False
+        assert "Invalid feature name" in result["error"]
+        # The poisoned manifest must not have been written.
+        assert not (help_dir / "features.yaml").exists()

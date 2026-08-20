@@ -102,7 +102,7 @@ class TestPolish:
     def test_empty_polish_result_returns_original(self, monkeypatch):
         monkeypatch.setattr(
             "attune.memory.personal._load_author",
-            lambda: (lambda text, template_type: ""),
+            lambda: (lambda text, feature_name, source_summary, template_type="generic": ""),
         )
         pm = PersonalMemory()
 
@@ -111,14 +111,16 @@ class TestPolish:
     def test_appends_trailing_newline(self, monkeypatch):
         monkeypatch.setattr(
             "attune.memory.personal._load_author",
-            lambda: (lambda text, template_type: "polished"),
+            lambda: (
+                lambda text, feature_name, source_summary, template_type="generic": "polished"
+            ),
         )
         pm = PersonalMemory()
 
         assert pm._polish("RAW", "decision", strict=False) == "polished\n"
 
     def test_strict_reraises_on_polish_error(self, monkeypatch):
-        def boom(text, template_type):
+        def boom(text, feature_name, source_summary, template_type="generic"):
             raise RuntimeError("polish failed")
 
         monkeypatch.setattr("attune.memory.personal._load_author", lambda: boom)
@@ -128,7 +130,7 @@ class TestPolish:
             pm._polish("RAW", "decision", strict=True)
 
     def test_non_strict_swallows_polish_error(self, monkeypatch):
-        def boom(text, template_type):
+        def boom(text, feature_name, source_summary, template_type="generic"):
             raise RuntimeError("polish failed")
 
         monkeypatch.setattr("attune.memory.personal._load_author", lambda: boom)
@@ -169,3 +171,23 @@ class TestSummariesSidecar:
 
         # Corrupt file is left untouched (nothing to remove).
         assert sidecar.read_text(encoding="utf-8") == "{not valid json"
+
+
+def test_polish_passes_required_positionals(monkeypatch):
+    """Library-review M2: _polish must call polish_template with its two
+    required positionals (feature_name, source_summary) — omitting them
+    raised TypeError on every call and silently killed the polish pass."""
+    import attune.memory.personal as personal
+
+    seen = {}
+
+    def spy(content, feature_name, source_summary, *, template_type="generic", **kw):
+        seen["args"] = (content, feature_name, source_summary, template_type)
+        return content + " [polished]"
+
+    monkeypatch.setattr(personal, "_load_author", lambda: spy)
+    pm = personal.PersonalMemory.__new__(personal.PersonalMemory)
+    out = pm._polish("hello", "decision", strict=True)
+    assert out.strip() == "hello [polished]"
+    assert seen["args"][0] == "hello"
+    assert seen["args"][3] == "decision"
