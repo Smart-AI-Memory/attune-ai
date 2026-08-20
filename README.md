@@ -23,8 +23,8 @@
 
 ---
 
-Your agent stops starting from zero, and its word stops being the
-evidence.
+Your agent stops starting from zero, its word stops being the
+evidence, and it asks you with structure instead of prose.
 
 **Memory:** a stash → recall → promote loop carries decisions, bugs,
 and hard-won lessons from one session into the next, and surfaces the
@@ -51,6 +51,13 @@ The probes are re-run *independently* of the workflow that claims it
 finished. Exit 0 means the probes passed — not that the agent felt
 good about it.
 
+**Interactive forms:** the agent asks with structure, not prose — a
+decision card with its recommendation and tradeoffs, a pushback card
+when it disagrees, a progress report, a ranking or triage — one tap
+each, validated on the way back. One form renders to whatever surface
+your client draws: a native dialog, a rich widget, or a plain menu
+([the vocabulary](#interactive-forms--the-agent-asks-with-structure)).
+
 Around that core: 21 workflows and <!-- cap:mcp_registered_tool_count -->61 MCP tools<!-- /cap -->
 dispatching 2–6 domain-specific subagents behind Socratic quality
 gates, RAG grounding with a citation-per-claim contract, and
@@ -66,6 +73,7 @@ maintained by Attune's own stack.
 [Receipts](#receipts-not-promises) ·
 [Multi-LLM](#multi-llm-collaboration) ·
 [Workflows & tools](#workflows-and-mcp-tools) ·
+[Forms](#interactive-forms--the-agent-asks-with-structure) ·
 [Accuracy](#accuracy--faithfulness) ·
 [Install options](#installation-options) ·
 [Privacy](#privacy--telemetry)
@@ -135,9 +143,12 @@ landing now actually persist or surface the failure; telemetry and
 security-gate state a single malformed record could corrupt are
 locked down; external input that could crash a parse now degrades
 instead. Shared stores (`AgentStateStore`, `ComplianceDatabase`) write
-atomically under a lock. The MCP elicitation schema is re-sourced from
-`attune-forms` 0.7.0 — a strict `additionalProperties` contract, no
-more hand-maintained mirror to drift. The major bump is the removal of
+atomically under a lock. And agents gain **interactive forms** — richer
+than yes/no: a decision card with per-option tradeoffs, a pushback card
+for disagreement, progress reports, plus ranking, triage, and more, each
+rendered to whatever surface your client supports — a native dialog, an
+HTML widget, or multiple-choice (via `attune-forms` 0.7.0). The major
+bump is the removal of
 the dormant in-package hook-execution engine — dead code with no live
 caller (the hooks Claude Code runs are unchanged); the
 memory-durability and schema changes alter observable behavior, so
@@ -297,11 +308,26 @@ memory tools registered by the bundled Redis plugin</summary>
 
 </details>
 
-Structured communication is built in: multi-part questions render as
-one form, recommendations as weighable cards, disagreements
-side-by-side so you can overrule in one tap — degrading gracefully to
-a text menu on plain surfaces. Chart specs render through a sealed
-SVG kernel (`chart_render_widget`, nine chart types).
+---
+
+## Interactive forms — the agent asks with structure
+
+Agent↔you exchanges are interactive forms, not prose Q&A. The agent
+presents a **decision** with its recommendation, rationale, and
+per-option tradeoffs; disagrees through a **pushback** card (your
+approach vs. its alternative, side by side); reports **progress** as
+done / in-flight / blocked; and has you **rank**, **triage**,
+**confirm**, deliberate, or review its **assumptions** — one tap each.
+Every question is validated on the way back, so a malformed answer is
+re-asked, not silently accepted.
+
+One declarative form, written once, renders to the richest surface your
+client supports — a native dialog, a rich HTML widget, or a plain
+multiple-choice menu on a text-only surface — so the same question
+works everywhere and degrades gracefully. The full construct vocabulary
+ships via `attune-forms` 0.7.0 (new in 13.0.0). Chart specs render
+through the same sealed SVG kernel (`chart_render_widget`, nine chart
+types).
 
 ---
 

@@ -25,6 +25,19 @@ one-glance "are you affected?" table.
 
 ### Added
 
+- **Interactive forms — a richer way for agents to ask, recommend, and
+  disagree.** attune's elicitation layer now speaks a first-class set of
+  interactive form constructs, well beyond yes/no and multiple-choice: a
+  **decision** card (a recommendation with its rationale and per-option
+  tradeoffs), a **pushback** card (dissent framed as *your approach* vs.
+  the agent's alternative), a **progress** report (done / in-flight /
+  blocked, where the blocked items *are* the picker), plus
+  **deliberation**, **triage**, **confirm**, **ranking**, and
+  **assumption-review**. One declarative form renders to the best surface
+  your client supports — a native dialog, a rich HTML widget, or batched
+  multiple-choice — and the answer is validated on the way back. The MCP
+  server advertises the full vocabulary (via `attune-forms` 0.7.0; see
+  the dependency note under Changed). (#2131)
 - **Durable fit-outcome stream** — a minimal measurement of context
   ladder fit outcomes on `fit_source`, so the allocator's behavior is
   observable rather than assumed (D3 ruling B) (#2103, #2095).
@@ -100,23 +113,17 @@ assumed the old (permissive) INTERNAL scoping:
   acquisition is atomic and recall connection attempts are bounded, so
   a contended or unreachable store degrades instead of hanging (#2130).
 
-### Changed — attune-forms 0.7.0: elicitation schema sync (D3 mirror)
+### Changed — attune-forms 0.7.0 dependency floor
 
-- **Dependency floor raised to `attune-forms>=0.7.0,<1.0`** and the
-  hand-maintained MCP elicitation tool schema
-  (`attune.mcp.tool_schemas.get_elicitation_tools`) re-sourced from the
-  library. The v2 rich field/form schema now derives from
-  `attune_forms.mcp_server` instead of a hand-declared copy, so the MCP
-  server advertises 0.7.0's contract to end users: the full construct
-  vocabulary (adds `deliberation`, `triage`, `confirm`, `ranking`,
-  `assumption_review`), typed object-array extras (`progress_items`,
-  `triage_items`, `consequences`, `assumptions`), a multi-type
-  `default` (incl. object for triage rulings), `inferred_from`
-  provenance, and `additionalProperties: false` strictness on both the
-  form and field objects. The v1 AskUserQuestion surface stays a
-  deliberate 4-type schema (D10 enum-honesty). A drift test pins
-  attune-ai's v2 schema to the library's, retiring the recurring
-  hand-sync obligation. Closes the forms 0.7.0 D3 mirror gate. (#2131)
+- **Dependency floor raised to `attune-forms>=0.7.0,<1.0`.** The MCP
+  elicitation tool schema
+  (`attune.mcp.tool_schemas.get_elicitation_tools`) is now sourced from
+  `attune_forms.mcp_server` instead of a hand-declared copy, with
+  `additionalProperties: false` strictness on both the form and field
+  objects and a drift test pinning attune-ai's schema to the library's —
+  retiring the recurring hand-sync. (The v1 AskUserQuestion surface stays
+  a deliberate 4-type schema, D10 enum-honesty.) The capability this
+  unlocks is under **Added** above (interactive forms). (#2131)
 
 ### Removed — BREAKING: dormant in-package hook-execution engine
 
