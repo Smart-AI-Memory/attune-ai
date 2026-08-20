@@ -1,22 +1,22 @@
 # Upgrading to 13.0.0
 
-13.0.0 is mostly a **hardening** release — failure paths that only
-matter when something goes wrong now behave correctly (see the
-[changelog](../../CHANGELOG.md)). Most projects upgrade with **no code
-changes**. The major version marks a handful of breaking or
-behavior-changing items; the table below tells you in one glance whether
-any apply to you.
+13.0.0 mostly makes things you already rely on more dependable — the
+failure paths that only matter when something goes wrong now behave
+correctly (see the [changelog](../../CHANGELOG.md)). **Most projects
+upgrade with no code changes.** A few items change observable behavior
+or a public surface; the table below is a 30-second check for whether
+any touch you.
 
-## Are you affected?
+## Do you need to change anything?
 
-| If you… | What changed | Action |
+| Situation | What's different in 13.0.0 | What to do |
 |---|---|---|
-| import `attune.hooks.HookRegistry` / `HookExecutor` / `HookConfig` (or `HookDefinition` / `HookEvent` / `HookMatcher` / `HookRule` / `HookType`), or `attune.commands.CommandContext` / `CommandExecutor` / `create_command_context` | **Removed** (§1) | switch to Claude Code's own hooks |
-| relied on a memory pattern staying visible **across projects** | INTERNAL scoping is now enforced (§2a) | expect cross-project reads to be denied |
-| treated a memory store as **fire-and-forget** (ignored its return value) | durability is now truthful (§2b) | check the return; a `False`/failure is now real |
-| assumed `memory_search` results were **scope-filtered** | search is documented as ungoverned (§2c) | don't rely on search for isolation |
-| pin `attune-forms` **below 0.7.0** | dependency floor raised (§3) | allow `attune-forms>=0.7.0,<1.0` |
-| call the `doc_gen` MCP tool with `doc_type`/`audience`, `attune_set_level` with a boolean, or `memory_store` with `classification` | MCP tool-schema tightening (§4) | drop the dropped params; pass an int level |
+| You import `attune.hooks.*` or `attune.commands.*` internals — `HookRegistry` / `HookExecutor` / `HookConfig` / `HookDefinition` / `HookEvent` / `HookMatcher` / `HookRule` / `HookType`, `CommandContext` / `CommandExecutor` / `create_command_context` (§1) | a dead engine was removed | use Claude Code's hooks |
+| You share `INTERNAL` memory across projects (§2a) | `INTERNAL` is now scoped to its workspace | classify shared patterns `PUBLIC` |
+| You ignore a memory store's return value (§2b) | writes now report failure truthfully | check the return value |
+| You treat `memory_search` as an access boundary (§2c) | search is (and always was) unscoped — now documented | use `memory_retrieve` for isolation |
+| You pin `attune-forms` below 0.7.0 (§3) | floor raised to `>=0.7.0,<1.0` | widen the pin |
+| You call `doc_gen` with `doc_type`/`audience`, `attune_set_level` with a boolean, or `memory_store` with `classification` (§4) | schemas dropped inputs that did nothing | drop the dropped params; pass an int level |
 
 **If none of these describe you, you're done — upgrade normally.** The
 common case (file-based memory, the plugin's hooks, `attune-forms`
@@ -24,119 +24,113 @@ unpinned or already ≥0.7.0) needs nothing.
 
 ---
 
-## 1. Removed: the dormant in-package hook-execution engine
+## 1. A dead in-package hook engine was removed
 
-**Affected if** your code imports any of: `attune.hooks.HookRegistry`,
-`HookExecutor`, `HookConfig`, `HookDefinition`, `HookEvent`,
-`HookMatcher`, `HookRule`, `HookType`, or `attune.commands.CommandContext`,
-`CommandExecutor`, `create_command_context`.
+**This touches you only if** your own code imports
+`attune.hooks.HookRegistry`, `HookExecutor`, `HookConfig`,
+`HookDefinition`, `HookEvent`, `HookMatcher`, `HookRule`, `HookType`, or
+`attune.commands.CommandContext`, `CommandExecutor`,
+`create_command_context`.
 
-This in-package engine (`attune/hooks/executor.py`, `registry.py`,
-`config.py`, `commands/context.py`) had **no live caller** inside attune
-— it never ran the hooks Claude Code actually executes. Those are the
+The reassuring part: this engine never actually ran anything. It had
+**no live caller** inside attune — the hooks Claude Code executes are the
 scripts under `attune/hooks/scripts/`, wired through the plugin's
-`hooks.json`. The engine was removed under the removing-dead-code gate
+`hooks.json`, which never touched it. It was removed as dead code
 (chair-ruled DELETE, #2125).
 
 **What to do:** use Claude Code's own hook system — the plugin
-`hooks.json` plus scripts under `attune/hooks/scripts/`. See
-[docs/hooks.md](../hooks.md). If you had built your own runner on top of
-the removed classes, it was running against dead code and produced no
-effect; there is nothing to preserve.
+`hooks.json` plus the scripts under `attune/hooks/scripts/`. See
+[docs/hooks.md](../hooks.md). If you had built a runner on the removed
+classes, it was running against dead code and had no effect, so there is
+nothing to preserve.
 
-## 2. Changed: memory durability & scoping
+## 2. Memory is more dependable — and a little stricter
 
-The library-review memory tier changed behavior code may have relied on.
-Review anything that assumed the old (permissive) scoping or treated a
-write as fire-and-forget.
+The library-review memory tier makes writes honest and scoping real.
+Both are improvements; each has one narrow case where you'd adjust.
 
-### 2a. INTERNAL workspace scoping is now enforced (#2129)
+### 2a. INTERNAL memory is now scoped to its workspace (#2129)
 
-**Affected if** you relied on an `INTERNAL`-classified pattern created in
-one project being visible from another.
+Scoping that was documented but never enforced is now real: an
+`INTERNAL`-classified pattern is visible only inside the project that
+created it, closing a quiet cross-project leak.
 
-Scoping that was *documented but not enforced* is now enforced: an
-`INTERNAL` pattern is visible only within the workspace that created it.
-Cross-workspace reads that previously succeeded will now be denied.
+**You only need to act if** you were relying on that cross-project
+visibility — classify patterns you mean to share as `PUBLIC` (visible
+everywhere). `SENSITIVE` stays creator-only; `PUBLIC` stays everyone.
 
-**What to do:** if you intentionally shared patterns across projects,
-classify them `PUBLIC` (visible everywhere) rather than relying on the
-old leak. `SENSITIVE` remains creator-only; `PUBLIC` remains everyone.
+### 2b. Memory writes are now honest about failure (#2128)
 
-### 2b. Memory writes are truthfully durable (#2128)
+Your writes now either land or tell you they didn't. A store that
+returns `False` (or raises) means the write did not persist — where
+before, that same call could silently drop and still look successful.
+Your data is safer, and failures are visible instead of hidden.
 
-**Affected if** you call a memory store and ignore its result.
+**You only need to act if** your code ignores store return values: start
+checking them and handle a failed write.
 
-A write that reported success without actually landing now either
-persists or surfaces the failure. A store that returns `False` (or
-raises) is telling you the write did **not** land — previously that same
-call could silently drop and still look successful.
+### 2c. `memory_search` is documented as an unscoped read (#2129)
 
-**What to do:** check the return value of store operations; handle a
-falsy/failed result instead of assuming success.
-
-### 2c. `memory_search` is documented as ungoverned (#2129)
-
-**Affected if** you used `memory_search` and assumed its results were
-access-scoped.
-
-Search is a raw read path: it is **not** classification- or
-workspace-filtered, so it can surface `SENSITIVE` or cross-workspace
-records that `memory_retrieve` would deny. This is now documented
-explicitly so callers don't assume isolation search never provided.
+One thing to know rather than a change: `memory_search` is a raw read —
+it is not classification- or workspace-filtered, so it can surface
+`SENSITIVE` or cross-workspace records that `memory_retrieve` would deny.
+It always worked this way; 13.0.0 documents it so no one assumes an
+isolation it never provided.
 
 **What to do:** don't use `memory_search` as an authorization boundary.
-Use `memory_retrieve` (which enforces ownership) when isolation matters.
+Reach for `memory_retrieve` (which enforces ownership) when isolation
+matters.
 
-### 2d. Contended/unreachable stores degrade instead of hanging (#2130)
+### 2d. Contended or unreachable stores degrade instead of hanging (#2130)
 
-**No action needed** — lock acquisition is now atomic and recall
-connection attempts are bounded, so a contended or unreachable store
-degrades gracefully rather than hanging. This only removes failure
-modes.
+**Nothing to do** — lock acquisition is now atomic and recall connection
+attempts are bounded, so a busy or unreachable store fails fast and
+degrades gracefully instead of hanging. This only removes failure modes.
 
-## 3. Dependency floor: `attune-forms >= 0.7.0`
+## 3. `attune-forms` now requires 0.7.0+
 
-**Affected if** you pin `attune-forms` below `0.7.0`.
+**This touches you only if** you pin `attune-forms` below `0.7.0`.
 
-The floor is raised to `attune-forms>=0.7.0,<1.0` (#2131). The MCP
-elicitation schema is now sourced from the library, so the server
+The floor is raised to `attune-forms>=0.7.0,<1.0` (#2131), and the MCP
+elicitation schema is now sourced from the library — so the server
 advertises 0.7.0's full construct vocabulary (adds `deliberation`,
-`triage`, `confirm`, `ranking`, `assumption_review`).
+`triage`, `confirm`, `ranking`, `assumption_review`) with no
+hand-maintained mirror to drift.
 
-**What to do:** allow `attune-forms>=0.7.0,<1.0` in your environment.
-A plain `pip install -U attune-ai` resolves it for you.
+**What to do:** allow `attune-forms>=0.7.0,<1.0`. A plain
+`pip install -U attune-ai` resolves it for you.
 
-## 4. MCP tool-schema tightening
+## 4. MCP tool schemas dropped inputs that never worked
 
-**Affected if** you call these MCP tools with the named inputs:
+**This touches you only if** you call these MCP tools with the named
+inputs:
 
-- **`doc_gen`** no longer accepts `doc_type` / `audience` — both were
+- **`doc_gen`** no longer accepts `doc_type` / `audience`. Both were
   dropped from the underlying workflow in the v4.2.0 SDK migration and
-  had been silently ignored. Remove them from your calls; the generated
-  shape is chosen from the source.
-- **`attune_set_level`** rejects a boolean `level`. `True`/`False`
+  had been silently ignored ever since — removing them just stops
+  advertising inputs that did nothing. The generated shape is chosen
+  from the source.
+- **`attune_set_level`** now rejects a boolean `level`. `True`/`False`
   previously slipped through as `1`/`0`; pass an integer `1`–`5`.
 - **`memory_store`** now honors an explicit `classification` on the
-  persisted long-term pattern (previously ignored). Omit it to keep
-  automatic classification — passing a value **overrides** auto-detection,
-  so don't send `PUBLIC` on content that should stay `SENSITIVE`.
+  persisted long-term pattern (it was ignored before). Omit it to keep
+  automatic classification — an explicit value **overrides**
+  auto-detection, so don't send `PUBLIC` on content that should stay
+  `SENSITIVE`.
 
 **What to do:** drop the removed `doc_gen` params, pass an integer level,
-and set `memory_store`'s `classification` only when you mean to override
-auto-classification.
+and set `memory_store`'s `classification` only when you deliberately want
+to override auto-classification.
 
 ---
 
-## Not sure whether you're affected?
+## Not sure whether anything applies?
 
-- Grep your code for the removed symbols in §1 — no hits means §1
-  doesn't apply.
+- Grep your code for the symbols in §1 — no hits means §1 is moot.
 - If you only use file-based memory through the CLI/plugin and never
   import `attune.memory` directly, §2 is transparent to you.
 - If you don't pin `attune-forms`, §3 is automatic.
-- If you don't call the MCP tools in §4 with those inputs, §4 doesn't
-  apply.
+- If you don't call the MCP tools in §4 with those inputs, §4 is moot.
 
 ## See also
 
