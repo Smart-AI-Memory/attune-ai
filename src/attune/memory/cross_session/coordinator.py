@@ -367,10 +367,12 @@ class CrossSessionCoordinator:
             return False
 
         lock_key = f"empathy:lock:{resource_key}"
-        acquired = client.setnx(lock_key, self._agent_id)
+        # SET nx+ex is ONE command. SETNX followed by EXPIRE is two, and a
+        # crash in the window leaves an immortal lock with no reaper —
+        # acquire_lock() then returns False forever (library-review H2).
+        acquired = client.set(lock_key, self._agent_id, nx=True, ex=timeout_seconds)
 
         if acquired:
-            client.expire(lock_key, timeout_seconds)
             logger.debug(
                 "lock_acquired",
                 resource_key=resource_key,

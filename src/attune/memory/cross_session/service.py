@@ -150,10 +150,11 @@ class BackgroundService:
         if client is None:
             return False
 
-        # Use SETNX for atomic lock acquisition
-        acquired = client.setnx(KEY_SERVICE_LOCK, os.getpid())
-        if acquired:
-            client.expire(KEY_SERVICE_LOCK, SERVICE_LOCK_TTL_SECONDS)
+        # SET nx+ex — genuinely atomic. SETNX then EXPIRE is two commands,
+        # and a crash in the window left this singleton lock immortal, so
+        # the background service could never start again (library-review H2:
+        # the comment here used to claim SETNX was the atomic form).
+        acquired = client.set(KEY_SERVICE_LOCK, os.getpid(), nx=True, ex=SERVICE_LOCK_TTL_SECONDS)
         return bool(acquired)
 
     def _release_service_lock(self) -> None:

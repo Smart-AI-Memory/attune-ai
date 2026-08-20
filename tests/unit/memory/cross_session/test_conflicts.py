@@ -115,25 +115,32 @@ class TestResolveFirstWrite:
         r = resolve_first_write("me", None, "res", None)
         assert r.loser_agent_id == "unknown"
 
-    def test_lock_acquired_self_wins_and_sets_expiry(self):
+    def test_lock_acquired_self_wins_with_the_ttl_in_one_command(self):
+        """The TTL rides on the acquisition, not on a follow-up EXPIRE.
+
+        Library-review H2: a crash between SETNX and EXPIRE left the lock
+        immortal. That the TTL is *reached* through a single command is
+        proven server-side in ``test_lock_liveness.py``; here it is the
+        call shape that must not regress.
+        """
         client = MagicMock()
-        client.setnx.return_value = True
+        client.set.return_value = True
         other = session("other", AccessTier.CONTRIBUTOR)
         r = resolve_first_write("me", client, "res", other)
         assert (r.winner_agent_id, r.loser_agent_id) == ("me", "other")
         assert r.reason == "First to acquire lock"
-        client.setnx.assert_called_once_with("empathy:lock:res", "me")
-        client.expire.assert_called_once_with("empathy:lock:res", 300)
+        client.set.assert_called_once_with("empathy:lock:res", "me", nx=True, ex=300)
+        client.expire.assert_not_called()
 
     def test_lock_acquired_no_other_session_loser_unknown(self):
         client = MagicMock()
-        client.setnx.return_value = True
+        client.set.return_value = True
         r = resolve_first_write("me", client, "res", None)
         assert (r.winner_agent_id, r.loser_agent_id) == ("me", "unknown")
 
     def test_lock_held_bytes_owner_decoded(self):
         client = MagicMock()
-        client.setnx.return_value = False
+        client.set.return_value = None
         client.get.return_value = b"owner_agent"
         r = resolve_first_write("me", client, "res", None)
         assert (r.winner_agent_id, r.loser_agent_id) == ("owner_agent", "me")
@@ -141,14 +148,14 @@ class TestResolveFirstWrite:
 
     def test_lock_held_str_owner(self):
         client = MagicMock()
-        client.setnx.return_value = False
+        client.set.return_value = None
         client.get.return_value = "owner_agent"
         r = resolve_first_write("me", client, "res", None)
         assert r.winner_agent_id == "owner_agent"
 
     def test_lock_held_missing_owner_defaults_unknown(self):
         client = MagicMock()
-        client.setnx.return_value = False
+        client.set.return_value = None
         client.get.return_value = None
         r = resolve_first_write("me", client, "res", None)
         assert r.winner_agent_id == "unknown"
