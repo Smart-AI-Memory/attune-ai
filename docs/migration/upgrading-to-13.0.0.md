@@ -67,18 +67,21 @@ matters.
 attempts are bounded, so a busy or unreachable store fails fast and
 degrades gracefully instead of hanging. This only removes failure modes.
 
-## 2. `attune-forms` now requires 0.7.0+
+## 2. Interactive forms (and a small dependency bump)
 
-**This touches you only if** you pin `attune-forms` below `0.7.0`.
+13.0.0 gives agents **interactive forms** — decision cards with
+per-option tradeoffs, a pushback card for disagreement, progress
+reports, plus ranking, triage, confirm, deliberation, and
+assumption-review — each rendered to whatever surface your client
+supports (native dialog, HTML widget, or multiple-choice). The full set
+is in the changelog's Added entry. This rides on `attune-forms` 0.7.0
+(#2131), which the MCP server now sources its elicitation schema from
+directly (retiring the hand-maintained mirror).
 
-The floor is raised to `attune-forms>=0.7.0,<1.0` (#2131), and the MCP
-elicitation schema is now sourced from the library — so the server
-advertises 0.7.0's full construct vocabulary (adds `deliberation`,
-`triage`, `confirm`, `ranking`, `assumption_review`) with no
-hand-maintained mirror to drift.
-
-**What to do:** allow `attune-forms>=0.7.0,<1.0`. A plain
-`pip install -U attune-ai` resolves it for you.
+**You only need to act if** you pin `attune-forms` below `0.7.0`: widen
+the pin to `attune-forms>=0.7.0,<1.0` (a plain `pip install -U
+attune-ai` resolves it). The capability itself is additive — nothing
+else to change.
 
 ## 3. MCP tool schemas dropped inputs that never worked
 

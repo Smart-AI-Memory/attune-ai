@@ -135,9 +135,12 @@ landing now actually persist or surface the failure; telemetry and
 security-gate state a single malformed record could corrupt are
 locked down; external input that could crash a parse now degrades
 instead. Shared stores (`AgentStateStore`, `ComplianceDatabase`) write
-atomically under a lock. The MCP elicitation schema is re-sourced from
-`attune-forms` 0.7.0 — a strict `additionalProperties` contract, no
-more hand-maintained mirror to drift. The major bump is the removal of
+atomically under a lock. And agents gain **interactive forms** — richer
+than yes/no: a decision card with per-option tradeoffs, a pushback card
+for disagreement, progress reports, plus ranking, triage, and more, each
+rendered to whatever surface your client supports — a native dialog, an
+HTML widget, or multiple-choice (via `attune-forms` 0.7.0). The major
+bump is the removal of
 the dormant in-package hook-execution engine — dead code with no live
 caller (the hooks Claude Code runs are unchanged); the
 memory-durability and schema changes alter observable behavior, so
