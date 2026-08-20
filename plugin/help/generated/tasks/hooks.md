@@ -30,9 +30,9 @@ if not isinstance(payload, dict):
 tool_name = payload.get("tool_name", "")
 ```
 
-**Verify:** the script exits `0` on any malformed stdin (non-JSON,
-non-dict, wrong-typed fields) so a hook bug can never block a real
-tool call.
+**Verify:** the script exits `0` on non-JSON or non-dict stdin, and
+reads fields with `.get()` (never a raising index), so a hook bug can
+never block a real tool call.
 
 ### Block a tool from a PreToolUse hook
 

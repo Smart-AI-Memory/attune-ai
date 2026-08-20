@@ -240,9 +240,17 @@ exit-code contract — see [Hooks](hooks.md)):
 import json
 import sys
 
-payload = json.load(sys.stdin)
+from attune.agents_md import AgentRegistry
+
+try:
+    payload = json.load(sys.stdin)
+except (json.JSONDecodeError, ValueError):
+    sys.exit(0)                          # fail open on malformed input
+
 registry = AgentRegistry.get_instance()
 agent = registry.get(payload.get("agent_name", "default"))
+if agent is not None:
+    print(f"agent ready: {agent.name}", file=sys.stderr)
 sys.exit(0)
 ```
 

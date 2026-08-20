@@ -65,4 +65,4 @@ with a per-hook timeout.
 - **React to a session:** a `SessionStart` / `Stop` script that performs
   its side effect and exits `0`.
 
-<!-- attune-generated: source_hash=6a74897099089de928581379ad010c61f7449b270204090c659e122d08d62c1c feature=hooks kind=architecture generated_at=2026-08-20 -->
+<!-- attune-generated: source_hash=5aba5457cc740ed70cb22f0f6e950c97d47eeeac8faabd7f0a716459b548cb13 feature=hooks kind=architecture generated_at=2026-08-20 -->

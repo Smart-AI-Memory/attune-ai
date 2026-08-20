@@ -13,4 +13,4 @@
 Wiring: the plugin's `hooks.json` maps events → scripts under
 `attune/hooks/scripts/`, each with a timeout.
 
-<!-- attune-generated: source_hash=6a74897099089de928581379ad010c61f7449b270204090c659e122d08d62c1c feature=hooks kind=reference generated_at=2026-08-20 -->
+<!-- attune-generated: source_hash=5aba5457cc740ed70cb22f0f6e950c97d47eeeac8faabd7f0a716459b548cb13 feature=hooks kind=reference generated_at=2026-08-20 -->

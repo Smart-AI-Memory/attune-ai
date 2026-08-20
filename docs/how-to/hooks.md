@@ -2,14 +2,18 @@
 
 ## Quickstart
 
-Read the payload, decide, exit. A minimal `PreToolUse` guard:
+Read the payload, decide, exit — failing open on anything malformed:
 
 ```python
 import json
 import sys
 
-payload = json.load(sys.stdin)          # {"tool_name": ..., "tool_input": ...}
-if payload.get("tool_name") == "Bash":
+try:
+    payload = json.load(sys.stdin)       # {"tool_name": ..., "tool_input": ...}
+except (json.JSONDecodeError, ValueError):
+    sys.exit(0)                          # fail open on malformed input
+
+if isinstance(payload, dict) and payload.get("tool_name") == "Bash":
     print("Bash blocked by policy", file=sys.stderr)
     sys.exit(2)                          # 2 = block
 sys.exit(0)                             # 0 = allow
@@ -34,9 +38,9 @@ if not isinstance(payload, dict):
 tool_name = payload.get("tool_name", "")
 ```
 
-**Verify:** the script exits `0` on any malformed stdin (non-JSON,
-non-dict, wrong-typed fields) so a hook bug can never block a real
-tool call.
+**Verify:** the script exits `0` on non-JSON or non-dict stdin, and
+reads fields with `.get()` (never a raising index), so a hook bug can
+never block a real tool call.
 
 ### Block a tool from a PreToolUse hook
 
@@ -69,4 +73,4 @@ stderr message; exit `0` lets it proceed.
 Wiring: the plugin's `hooks.json` maps events → scripts under
 `attune/hooks/scripts/`, each with a timeout.
 
-<!-- attune-generated: source_hash=6a74897099089de928581379ad010c61f7449b270204090c659e122d08d62c1c feature=hooks kind=how-to generated_at=2026-08-20 -->
+<!-- attune-generated: source_hash=5aba5457cc740ed70cb22f0f6e950c97d47eeeac8faabd7f0a716459b548cb13 feature=hooks kind=how-to generated_at=2026-08-20 -->

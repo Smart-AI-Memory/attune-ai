@@ -58,14 +58,18 @@ with a per-hook timeout.
 
 ## Quickstart
 
-Read the payload, decide, exit. A minimal `PreToolUse` guard:
+Read the payload, decide, exit — failing open on anything malformed:
 
 ```python
 import json
 import sys
 
-payload = json.load(sys.stdin)          # {"tool_name": ..., "tool_input": ...}
-if payload.get("tool_name") == "Bash":
+try:
+    payload = json.load(sys.stdin)       # {"tool_name": ..., "tool_input": ...}
+except (json.JSONDecodeError, ValueError):
+    sys.exit(0)                          # fail open on malformed input
+
+if isinstance(payload, dict) and payload.get("tool_name") == "Bash":
     print("Bash blocked by policy", file=sys.stderr)
     sys.exit(2)                          # 2 = block
 sys.exit(0)                             # 0 = allow
@@ -90,9 +94,9 @@ if not isinstance(payload, dict):
 tool_name = payload.get("tool_name", "")
 ```
 
-**Verify:** the script exits `0` on any malformed stdin (non-JSON,
-non-dict, wrong-typed fields) so a hook bug can never block a real
-tool call.
+**Verify:** the script exits `0` on non-JSON or non-dict stdin, and
+reads fields with `.get()` (never a raising index), so a hook bug can
+never block a real tool call.
 
 ### Block a tool from a PreToolUse hook
 

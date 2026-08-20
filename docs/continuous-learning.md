@@ -275,10 +275,10 @@ summary = storage.get_summary("user123")
 
 ### Session End Evaluation
 
-Session-end evaluation runs as a `SessionEnd` hook **script** under
-`attune/hooks/scripts/` (Claude Code invokes it over the stdin / exit-
-code contract — see [Hooks](hooks.md)). The evaluation logic is plain
-Python:
+The evaluation logic is plain Python. It can be driven from a
+`SessionEnd` hook **script** under `attune/hooks/scripts/` (Claude Code
+invokes hook scripts over the stdin / exit-code contract — see
+[Hooks](hooks.md)):
 
 ```python
 def evaluate_session(context: dict) -> dict:
