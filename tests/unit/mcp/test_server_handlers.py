@@ -346,7 +346,8 @@ async def test_level_and_context_handlers_round_trip(tmp_path):
     app = _make_server(tmp_path)
     assert (await app._handle_attune_get_level())["level"] == 3
     assert (await app._handle_attune_set_level({"level": 4}))["current_level"] == 4
-    assert (await app._handle_attune_set_level({"level": True}))["success"] is True
+    # bool is an int subclass — `True` must be rejected, not treated as 1.
+    assert (await app._handle_attune_set_level({"level": True}))["success"] is False
     set_result = await app._handle_context_set({"key": "focus", "value": "tests"})
     get_result = await app._handle_context_get({"key": "focus"})
     assert set_result["value"] == "tests"

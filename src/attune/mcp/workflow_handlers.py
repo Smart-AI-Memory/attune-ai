@@ -252,8 +252,9 @@ class WorkflowHandlersMixin:
         """Run documentation generation workflow.
 
         Args:
-            args: ``source_path`` (required), optional ``doc_type``
-                and ``audience``.
+            args: ``source_path`` (required). (``doc_type``/``audience``
+                were dropped in the v4.2.0 SDK migration — see below — so
+                they are no longer accepted.)
 
         Returns:
             Dict with success and generated document content.

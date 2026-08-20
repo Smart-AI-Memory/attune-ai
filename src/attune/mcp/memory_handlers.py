@@ -75,7 +75,13 @@ class MemoryHandlersMixin:
             memory = self._get_memory()
             key = args["key"]
             value = args["value"]
-            classification = args.get("classification", "PUBLIC")
+            # Explicit classification (None when the caller omits it). The
+            # short-term stash + result keep the PUBLIC-defaulted label, but
+            # the persist path forwards only the EXPLICIT value — passing the
+            # default "PUBLIC" would override auto-classification and downgrade
+            # content that auto-classify would flag SENSITIVE (a silent leak).
+            explicit_classification = args.get("classification")
+            classification = explicit_classification or "PUBLIC"
             pattern_type = args.get("pattern_type")
 
             memory.stash(
@@ -97,6 +103,8 @@ class MemoryHandlersMixin:
                     persist_result = memory.persist_pattern(
                         content=value,
                         pattern_type=pattern_type,
+                        # None -> auto-classify; explicit -> honored.
+                        classification=explicit_classification,
                     )
                     result["pattern_id"] = persist_result.get("pattern_id")
                 except Exception as e:  # noqa: BLE001

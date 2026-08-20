@@ -211,6 +211,18 @@ class TestHandleAttuneSetLevel:
         assert "error" in result
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize("bad_bool", [True, False])
+    async def test_set_level_rejects_bool(self, bad_bool):
+        """bool is an int subclass, so True/False would otherwise pass the
+        isinstance(int) check and be used as 1/0 — they must be rejected."""
+        server = _make_server(attune_level=2)
+        result = await server._handle_attune_set_level({"level": bad_bool})
+
+        assert result["success"] is False
+        assert "error" in result
+        assert server._attune_level == 2  # unchanged
+
+    @pytest.mark.asyncio
     async def test_set_level_missing_level_key_returns_error(self):
         """Missing level key (returns None from .get()) returns error."""
         server = _make_server(attune_level=1)

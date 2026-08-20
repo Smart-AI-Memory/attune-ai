@@ -137,7 +137,9 @@ class TestHandleMemoryStore:
 
     @pytest.mark.asyncio
     async def test_store_with_pattern_type_persists_pattern(self):
-        """When pattern_type is given, persist_pattern is called."""
+        """When pattern_type is given, persist_pattern is called. With no
+        explicit classification, it forwards None so the backend
+        auto-classifies (never a forced default that could downgrade)."""
         mem = _make_unified_memory()
         server = _make_server(memory=mem)
 
@@ -146,8 +148,24 @@ class TestHandleMemoryStore:
         )
 
         assert result["success"] is True
-        mem.persist_pattern.assert_called_once_with(content="v", pattern_type="bug_fix")
+        mem.persist_pattern.assert_called_once_with(
+            content="v", pattern_type="bug_fix", classification=None
+        )
         assert result.get("pattern_id") == "pat-123"
+
+    @pytest.mark.asyncio
+    async def test_store_forwards_explicit_classification_to_persist(self):
+        """An explicit classification is honored on the persisted pattern."""
+        mem = _make_unified_memory()
+        server = _make_server(memory=mem)
+
+        await server._handle_memory_store(
+            {"key": "k", "value": "v", "pattern_type": "note", "classification": "SENSITIVE"},
+        )
+
+        mem.persist_pattern.assert_called_once_with(
+            content="v", pattern_type="note", classification="SENSITIVE"
+        )
 
     @pytest.mark.asyncio
     async def test_store_without_pattern_type_skips_persist(self):
