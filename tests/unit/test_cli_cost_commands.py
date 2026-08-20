@@ -272,6 +272,39 @@ class TestCmdCosts:
         assert "Error reading cost data" in captured.out
         assert "disk read error" in captured.out
 
+    @patch(_COST_TRACKER)
+    def test_non_oserror_returns_1(self, MockTracker, capsys) -> None:
+        """Regression (library-review R5): corrupt tracker data returns 1.
+
+        The docstring promises exit 1 on failure, but the handler used to
+        catch OSError only — a record missing "timestamp" raised KeyError
+        straight through to a traceback.
+        """
+        mock_tracker = MockTracker.return_value
+        mock_tracker._load_requests = MagicMock()
+        mock_tracker._buffer = []
+        mock_tracker.data = {"requests": [{"task_type": "code-review"}]}
+
+        args = Namespace(days=365, json=False, workflow="code-review")
+        result = cmd_costs(args)
+
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "Error generating cost report" in captured.out
+
+    @patch(_COST_TRACKER)
+    def test_json_dump_typeerror_returns_1(self, MockTracker, capsys) -> None:
+        """Regression (library-review R5): unserializable summary returns 1."""
+        mock_tracker = MockTracker.return_value
+        mock_tracker.get_summary.return_value = {"bad": object()}
+
+        args = Namespace(days=7, json=True, workflow=None)
+        result = cmd_costs(args)
+
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "Error generating cost report" in captured.out
+
 
 # ---------------------------------------------------------------------------
 # Handler tests - cmd_costs_today
@@ -338,6 +371,30 @@ class TestCmdCostsToday:
         captured = capsys.readouterr()
         assert "Error reading cost data" in captured.out
         assert "cannot read costs.json" in captured.out
+
+    @patch(_COST_TRACKER)
+    def test_non_oserror_returns_1(self, MockTracker, capsys) -> None:
+        """Regression (library-review R5): corrupt today-record returns 1.
+
+        Non-numeric cost fields raise ValueError/TypeError in the format
+        expression — previously an unhandled traceback.
+        """
+        mock_tracker = MockTracker.return_value
+        mock_tracker.get_today.return_value = {
+            "requests": 5,
+            "actual_cost": "corrupt",
+            "baseline_cost": 0.1,
+            "savings": 0.05,
+        }
+
+        from attune.cli_commands.cost_commands import cmd_costs_today
+
+        args = Namespace()
+        result = cmd_costs_today(args)
+
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "Error reading cost data" in captured.out
 
 
 # ---------------------------------------------------------------------------
@@ -459,6 +516,29 @@ class TestCmdCostsExport:
         captured = capsys.readouterr()
         assert "Error exporting cost data" in captured.out
         assert "disk full" in captured.out
+
+    @patch(_COST_TRACKER)
+    def test_export_non_oserror_returns_1(self, MockTracker, tmp_path, capsys) -> None:
+        """Regression (library-review R5): unserializable summary returns 1.
+
+        json.dump of corrupt tracker data raises TypeError, not OSError —
+        previously an unhandled traceback.
+        """
+        mock_tracker = MockTracker.return_value
+        mock_tracker.get_summary.return_value = {"bad": object()}
+
+        from attune.cli_commands.cost_commands import cmd_costs_export
+
+        out_file = tmp_path / "costs.json"
+        args = Namespace(output=str(out_file), format="json", days=30)
+        result = cmd_costs_export(args)
+
+        assert result == 1
+        captured = capsys.readouterr()
+        assert "Error exporting cost data" in captured.out
+        # Codex cross-review finding: serialization failure must not
+        # leave a truncated/partial export file behind.
+        assert not out_file.exists()
 
 
 # ---------------------------------------------------------------------------
