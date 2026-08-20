@@ -155,7 +155,7 @@ def write_sibling(sibling: Path, registry: dict) -> list[str]:
         entry = {
             "type": "command",
             "command": registry["settings_command"],
-            "timeout": registry.get("settings_timeout", 4000),
+            "timeout": registry.get("settings_timeout", 4),
         }
         hooks = settings.setdefault("hooks", {})
         hooks.setdefault("SessionStart", []).append({"hooks": [entry]})
