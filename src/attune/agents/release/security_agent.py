@@ -155,7 +155,12 @@ class SecurityAuditorAgent(ReleaseAgent):
 
         try:
             data = json.loads(stdout)
-        except json.JSONDecodeError:
+            if not isinstance(data, dict):
+                # A bandit build that emits an array or scalar takes the
+                # same degrade path as unparseable output — data.get()
+                # below is outside this try (library-review C3).
+                raise ValueError("bandit output was not a JSON object")
+        except ValueError:  # includes json.JSONDecodeError
             return {
                 "critical_issues": 0,
                 "high_issues": 0,

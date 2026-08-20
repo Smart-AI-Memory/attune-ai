@@ -48,7 +48,10 @@ def _load_bug_predict_config() -> dict:
             try:
                 with open(config_path) as f:
                     config = yaml.safe_load(f)
-                    if config and "bug_predict" in config:
+                    # A scalar config makes `"bug_predict" in config`
+                    # raise TypeError; only a mapping can carry the key
+                    # (library-review C3).
+                    if isinstance(config, dict) and "bug_predict" in config:
                         bug_config = config["bug_predict"]
                         return {
                             "risk_threshold": bug_config.get(

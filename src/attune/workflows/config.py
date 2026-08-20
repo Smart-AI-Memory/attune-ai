@@ -231,6 +231,15 @@ class WorkflowConfig:
         if data is None:
             data = {}
 
+        if not isinstance(data, dict):
+            # A list or scalar config reaches `data.get(...)` below and
+            # raises AttributeError; the YAML branch above already
+            # reports malformed config as ValueError, so match it
+            # (library-review C3).
+            raise ValueError(
+                f"Invalid config in {path}: expected a mapping, got {type(data).__name__}"
+            )
+
         result: dict[str, Any] = {}
 
         # Handle root-level provider from attune.config.yml
