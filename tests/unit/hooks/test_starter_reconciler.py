@@ -901,22 +901,11 @@ class TestSharedDeadline:
         monkeypatch.setattr(hook_module, "_DEADLINE", None)
         assert hook_module._remaining(4) == 4
 
-    def test_remaining_zero_when_deadline_passed(self, hook_module, monkeypatch):
-        monkeypatch.setattr(hook_module, "_DEADLINE", time.monotonic() - 1)
-        assert hook_module._remaining(4) == 0.0
-
     def test_remaining_clamps_to_time_left(self, hook_module, monkeypatch):
         monkeypatch.setattr(hook_module, "_DEADLINE", time.monotonic() + 0.5)
         remaining = hook_module._remaining(hook_module.SUBPROC_TIMEOUT)
         assert 0 < remaining <= 0.5
         assert remaining < hook_module.SUBPROC_TIMEOUT
-
-    def test_run_skips_subprocess_once_budget_spent(self, hook_module, monkeypatch):
-        calls: list = []
-        monkeypatch.setattr(hook_module.subprocess, "run", lambda *a, **k: calls.append(1))
-        monkeypatch.setattr(hook_module, "_DEADLINE", time.monotonic() - 1)
-        assert hook_module._run(["git", "status"], None) is None
-        assert calls == []  # never spawned — the deadline already passed
 
     def test_run_clamps_timeout_to_remaining_budget(self, hook_module, monkeypatch):
         captured: dict = {}
@@ -999,20 +988,13 @@ class TestSharedDeadlineSkipPaths:
     These pin the *skip* half of the shared-deadline contract: once the
     global budget is spent, remaining work is not started at all (rather
     than started with a fresh per-call ceiling, which is what pushed the
-    hook past its registered SessionStart timeout).
+    hook past its registered SessionStart timeout). The clamp/passthrough
+    half of ``_remaining`` is covered by ``TestSharedDeadline`` above.
     """
-
-    def test_remaining_returns_ceiling_when_no_deadline(self, hook_module):
-        hook_module._DEADLINE = None
-        assert hook_module._remaining(4.0) == 4.0
 
     def test_remaining_is_zero_once_deadline_passed(self, hook_module, monkeypatch):
         monkeypatch.setattr(hook_module, "_DEADLINE", hook_module.time.monotonic() - 1)
         assert hook_module._remaining(4.0) == 0.0
-
-    def test_remaining_clamps_to_time_left(self, hook_module, monkeypatch):
-        monkeypatch.setattr(hook_module, "_DEADLINE", hook_module.time.monotonic() + 1)
-        assert 0 < hook_module._remaining(4.0) <= 1.0
 
     def test_pypi_lookup_skipped_when_budget_spent(self, hook_module, monkeypatch):
         """The PyPI call must be SKIPPED, not started, past the deadline."""
