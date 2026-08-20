@@ -56,6 +56,16 @@ HANDOFFS_RELPATH = Path("docs") / "handoffs"
 #: Non-handoff files living in docs/handoffs/ to skip.
 HANDOFF_SKIP_NAMES = frozenset({"readme.md", "template.md"})
 
+#: Timeout for the single ``git branch --show-current`` call (seconds).
+#: The registered SessionStart timeout is 3s (``.claude/settings.json``);
+#: this sits BELOW it so interpreter start-up, file stats, and the print
+#: still fit before the harness SIGKILLs the hook. At the boundary (git
+#: timeout == registered timeout) a wedged git — index.lock contention, a
+#: hung filesystem — consumes the whole budget and the handoff banner is
+#: lost. ``git branch --show-current`` is a local, near-instant read, so
+#: 2s never truncates a healthy call; it only bounds a stuck one.
+GIT_TIMEOUT = 2
+
 
 def _repo_root(start: Path | None = None) -> Path | None:
     """Return the git toplevel walking up from ``start`` (default cwd)."""
@@ -76,7 +86,7 @@ def _current_branch(repo_root: Path) -> str | None:
             text=True,
             encoding="utf-8",
             errors="replace",
-            timeout=3,
+            timeout=GIT_TIMEOUT,
             cwd=str(repo_root),
         )
     except (subprocess.TimeoutExpired, OSError):

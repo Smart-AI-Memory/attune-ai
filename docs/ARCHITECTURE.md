@@ -548,7 +548,7 @@ print(report.passed, report.blockers, report.warnings, report.cost)
 
 ## Hook System
 
-Event-driven automation for Claude Code integration.
+Concrete scripts that Claude Code runs on lifecycle events.
 
 ### Hook Events
 
@@ -560,25 +560,23 @@ Event-driven automation for Claude Code integration.
 | SessionEnd | Session ends | Save state, cleanup |
 | Stop | Agent stops | Reminder hooks, save |
 
-### Executor Architecture
+### Architecture
 
 ```text
-HookRegistry
-    │ (event fires)
+Claude Code (event fires)
+    │  stdin: {"tool_name": ..., "tool_input": ...}
     ▼
-HookExecutor
-    ├── _execute_python()
-    │     └── Module prefix allowlist: ("attune.",)
-    │         └── importlib.import_module → handler()
-    ├── _execute_shell()
-    │     └── shlex.split → asyncio.create_subprocess_exec
-    └── _execute_webhook()
-          └── aiohttp.ClientSession.post(url, json)
+attune/hooks/scripts/<hook>.py   (wired via the plugin's hooks.json)
+    ├── read + validate stdin JSON  (fail open → exit 0 on bad input)
+    ├── PreToolUse:  exit 0 = allow, exit 2 = block
+    └── other events: perform side effect, exit 0
 ```
 
-**Security:** Python hooks restricted to `attune.*` module
-prefix. Shell hooks use `create_subprocess_exec` (no
-`shell=True`). Rate limiting on all hook invocations.
+**Security:** guards fail **open** (exit 0) on malformed input so a
+hook defect degrades to a no-op instead of blocking a real tool call.
+Each script runs under a `hooks.json` timeout on the critical path.
+(The former in-process engine — `HookRegistry` / `HookExecutor` — was
+removed in v13.0.0.)
 
 ---
 

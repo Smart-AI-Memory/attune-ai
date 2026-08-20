@@ -130,8 +130,12 @@ class TestPushbackWidget:
         assert 'data-ftype="pushback"' in html
 
     def test_submit_script_handles_pushback(self) -> None:
+        # forms 0.7.0: pushback answers like a single-select, so it reads
+        # through the "checked-one" mode (the reader dispatches on
+        # data-collect, not construct type).
         html = form_to_widget_html(form_from_dict(_pushback()))
-        assert "ftype === 'pushback'" in html
+        assert 'data-collect="checked-one"' in html
+        assert "mode === 'checked-one'" in html
         assert "[data-control]:checked" in html
 
     def test_static_fallback_guard_present(self) -> None:

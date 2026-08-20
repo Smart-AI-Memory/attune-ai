@@ -363,54 +363,6 @@ class TestAgentRegistryIntegration:
         assert registry.has("loaded-agent")
 
 
-class TestAgentRegistryWithHooks:
-    """Test agent registry integration with hooks."""
-
-    @pytest.fixture(autouse=True)
-    def reset_registry(self):
-        """Reset singleton registry."""
-        AgentRegistry.reset_instance()
-        yield
-        AgentRegistry.reset_instance()
-
-    def test_hook_on_agent_loaded(self):
-        """Test that agents can be loaded with hook notification."""
-        from attune.hooks.config import HookEvent
-        from attune.hooks.registry import HookRegistry
-
-        hook_registry = HookRegistry()
-        loaded_agents = []
-
-        def on_agent_load(agent_name=None, **kwargs):
-            if agent_name:
-                loaded_agents.append(agent_name)
-            return {"success": True}
-
-        hook_registry.register(
-            event=HookEvent.SESSION_START,  # Using session start as proxy
-            handler=on_agent_load,
-        )
-
-        # Simulate agent load with hook
-        registry = AgentRegistry()
-        config = UnifiedAgentConfig(
-            name="hooked-agent",
-            description="Agent with hook",
-            role="worker",
-            empathy_level=3,
-            system_prompt="Test",
-        )
-        registry.register(config)
-
-        # Fire hook to simulate notification
-        hook_registry.fire_sync(
-            HookEvent.SESSION_START,
-            {"agent_name": config.name},
-        )
-
-        assert "hooked-agent" in loaded_agents
-
-
 class TestAgentConfigValidation:
     """Test agent configuration validation."""
 

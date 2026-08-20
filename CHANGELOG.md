@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — attune-forms 0.7.0: elicitation schema sync (D3 mirror)
+
+- **Dependency floor raised to `attune-forms>=0.7.0,<1.0`** and the
+  hand-maintained MCP elicitation tool schema
+  (`attune.mcp.tool_schemas.get_elicitation_tools`) re-sourced from the
+  library. The v2 rich field/form schema now derives from
+  `attune_forms.mcp_server` instead of a hand-declared copy, so the MCP
+  server advertises 0.7.0's contract to end users: the full construct
+  vocabulary (adds `deliberation`, `triage`, `confirm`, `ranking`,
+  `assumption_review`), typed object-array extras (`progress_items`,
+  `triage_items`, `consequences`, `assumptions`), a multi-type
+  `default` (incl. object for triage rulings), `inferred_from`
+  provenance, and `additionalProperties: false` strictness on both the
+  form and field objects. The v1 AskUserQuestion surface stays a
+  deliberate 4-type schema (D10 enum-honesty). A drift test pins
+  attune-ai's v2 schema to the library's, retiring the recurring
+  hand-sync obligation. Closes the forms 0.7.0 D3 mirror gate.
+
+### Removed — BREAKING: dormant in-package hook-execution engine
+
+- **`attune.hooks.HookRegistry` / `HookExecutor` / `HookConfig`
+  (+ `HookDefinition` / `HookEvent` / `HookMatcher` / `HookRule` /
+  `HookType`) and `attune.commands.CommandContext` /
+  `CommandExecutor` / `create_command_context` deleted.** The
+  in-package hook-execution engine (`src/attune/hooks/executor.py`,
+  `registry.py`, `config.py`, `commands/context.py`) had **no live
+  caller** in attune — the hooks Claude Code actually runs are the
+  scripts under `attune/hooks/scripts/`, wired via the plugin's
+  `hooks.json`, which never touched this engine. Removed under the
+  removing-dead-code gate (5/5 removal signals: zero live usage,
+  fake-success stub tell, orphaned motivation — its originating
+  use-case was retired in 9.0.0 — never-worked with six ledgered
+  bugs, and a fix trip-wire). Chair-ruled DELETE.
+  Migrating? Use Claude Code's own hooks (plugin `hooks.json` +
+  scripts) — see `docs/hooks.md`.
+
 ## [12.0.0] - 2026-08-18
 
 **A sharper core you can trust.** The dormant context-compaction

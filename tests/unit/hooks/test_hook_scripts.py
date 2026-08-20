@@ -445,15 +445,16 @@ class TestRunFormatter:
     """Tests for _run_formatter() in format_on_save."""
 
     def test_runs_subprocess_with_cmd_and_path(self) -> None:
-        from attune.hooks.scripts.format_on_save import _run_formatter
+        from attune.hooks.scripts.format_on_save import WALL_BUDGET, _run_formatter
 
         with patch("subprocess.run") as mock_run:
             _run_formatter(["black", "--quiet"], "src/foo.py")
 
+        # With no shared deadline set, the per-call ceiling is WALL_BUDGET.
         mock_run.assert_called_once_with(
             ["black", "--quiet", "src/foo.py"],
             capture_output=True,
-            timeout=10,
+            timeout=WALL_BUDGET,
         )
 
     def test_swallows_timeout_expired(self) -> None:
@@ -485,6 +486,102 @@ class TestRunFormatter:
 
         args = mock_run.call_args[0][0]
         assert args == ["ruff", "check", "--fix", "--quiet", "myfile.py"]
+
+
+# ---------------------------------------------------------------------------
+# format_on_save.py — shared wall-clock budget across both formatters
+# ---------------------------------------------------------------------------
+
+
+def _find_hook_timeout(obj, needle: str):
+    """Recursively find the ``timeout`` of the hook whose command names
+    ``needle`` in a settings.json / hooks.json config tree."""
+    if isinstance(obj, dict):
+        if needle in obj.get("command", ""):
+            return obj.get("timeout")
+        for value in obj.values():
+            found = _find_hook_timeout(value, needle)
+            if found is not None:
+                return found
+    elif isinstance(obj, list):
+        for value in obj:
+            found = _find_hook_timeout(value, needle)
+            if found is not None:
+                return found
+    return None
+
+
+class TestFormatOnSaveSharedBudget:
+    """black + ruff share ONE wall-clock budget so their combined runtime
+    can't sum past the registered PostToolUse timeout (was 2×10s vs 10s)."""
+
+    def test_run_formatter_skips_once_budget_spent(self, monkeypatch) -> None:
+        import time as _time
+
+        import attune.hooks.scripts.format_on_save as fos
+
+        calls: list = []
+        monkeypatch.setattr(fos.subprocess, "run", lambda *a, **k: calls.append(1))
+        monkeypatch.setattr(fos, "_DEADLINE", _time.monotonic() - 1)
+        fos._run_formatter(["black", "--quiet"], "x.py")
+        assert calls == []  # never spawned — the shared budget is spent
+
+    def test_run_formatter_clamps_timeout_to_remaining(self, monkeypatch) -> None:
+        import time as _time
+
+        import attune.hooks.scripts.format_on_save as fos
+
+        captured: dict = {}
+
+        def fake_run(cmd, capture_output=False, timeout=None):
+            captured["timeout"] = timeout
+
+        monkeypatch.setattr(fos.subprocess, "run", fake_run)
+        monkeypatch.setattr(fos, "_DEADLINE", _time.monotonic() + 0.5)
+        fos._run_formatter(["black", "--quiet"], "x.py")
+        assert 0 < captured["timeout"] <= 0.5
+        assert captured["timeout"] < fos.WALL_BUDGET
+
+    def test_main_shares_one_deadline_across_both_formatters(
+        self, tmp_path: Path, monkeypatch
+    ) -> None:
+        import attune.hooks.scripts.format_on_save as fos
+
+        # Let the sibling ``_bootstrap`` import inside main() resolve.
+        monkeypatch.syspath_prepend(str(Path(fos.__file__).parent))
+        target = tmp_path / "x.py"
+        target.write_text("x = 1\n", encoding="utf-8")
+        monkeypatch.setattr("attune.security.path_validation._validate_file_path", lambda p: target)
+
+        seen: list = []
+        monkeypatch.setattr(
+            fos, "_run_formatter", lambda cmd, path: seen.append((cmd[0], fos._DEADLINE))
+        )
+        payload = json.dumps({"tool_name": "Write", "tool_input": {"file_path": str(target)}})
+        with patch("sys.stdin", io.StringIO(payload)):
+            fos.main()
+
+        assert [name for name, _ in seen] == ["black", "ruff"]
+        # Both formatters ran under the SAME non-None deadline (one budget).
+        assert seen[0][1] is not None
+        assert seen[0][1] == seen[1][1]
+        # Reset after the pair so nothing leaks between invocations.
+        assert fos._DEADLINE is None
+
+    def test_wall_budget_under_registered_timeout(self) -> None:
+        import attune.hooks.scripts.format_on_save as fos
+
+        # Guard against the surface where the timeout unit is certain:
+        # .claude/settings.json is in seconds (the dev-repo registration
+        # this hook runs under, where the 2x10s>10s overrun was measured).
+        # The plugin hooks.json value (10000) is deliberately NOT asserted
+        # here — its unit (seconds, vs the author's likely-intended ms) is
+        # unverified, so a divisor would encode a guess. Tracked separately.
+        repo = Path(__file__).resolve().parents[3]
+        settings = json.loads((repo / ".claude" / "settings.json").read_text(encoding="utf-8"))
+        settings_s = _find_hook_timeout(settings, "format_on_save.py")
+        assert settings_s is not None
+        assert fos.WALL_BUDGET < settings_s
 
 
 # ---------------------------------------------------------------------------

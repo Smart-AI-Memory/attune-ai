@@ -327,59 +327,6 @@ class TestLearnedSkillIntegration:
         assert restored.tags == ["python", "async", "advanced"]
 
 
-class TestLearningWithHooksIntegration:
-    """Test learning module integration with hooks."""
-
-    def test_session_end_triggers_pattern_save(self, tmp_path):
-        """Test that session end hook can save patterns to storage."""
-        from attune.hooks.config import HookEvent
-        from attune.hooks.registry import HookRegistry
-
-        storage = LearnedSkillsStorage(storage_dir=tmp_path / "skills")
-        hook_registry = HookRegistry()
-
-        saved_patterns = []
-
-        def session_end_handler(user_id="unknown", session_id="", **kwargs):
-            # Manually create a pattern (in real use, would come from extractor)
-            pattern = ExtractedPattern(
-                category=PatternCategory.USER_CORRECTION,
-                trigger="hook test",
-                context="testing hooks with learning",
-                resolution="hook saves pattern correctly",
-                confidence=0.9,
-                source_session=session_id,
-            )
-            storage.save_pattern(user_id, pattern)
-            saved_patterns.append(pattern)
-
-            return {
-                "success": True,
-                "patterns_saved": len(saved_patterns),
-            }
-
-        hook_registry.register(
-            event=HookEvent.SESSION_END,
-            handler=session_end_handler,
-        )
-
-        # Fire session end
-        hook_registry.fire_sync(
-            HookEvent.SESSION_END,
-            {
-                "user_id": "learning_user",
-                "session_id": "learning_session",
-            },
-        )
-
-        # Verify pattern was saved
-        assert len(saved_patterns) == 1
-
-        # Verify pattern is in storage
-        patterns = storage.get_all_patterns("learning_user")
-        assert len(patterns) >= 1
-
-
 class TestEdgeCases:
     """Test edge cases and error handling."""
 

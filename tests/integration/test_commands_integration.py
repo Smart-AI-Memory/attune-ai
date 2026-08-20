@@ -1,7 +1,6 @@
 """Integration tests for the commands module.
 
-Tests command loading, parsing, and registry integration with
-hooks, context, and learning modules.
+Tests command loading, parsing, and registry integration.
 """
 
 from pathlib import Path
@@ -10,14 +9,9 @@ import pytest
 
 from attune.commands import (
     CommandCategory,
-    CommandConfig,
-    CommandContext,
-    CommandExecutor,
     CommandLoader,
-    CommandMetadata,
     CommandParser,
     CommandRegistry,
-    create_command_context,
 )
 
 
@@ -112,128 +106,6 @@ class TestCommandsWithRealFiles:
             search_results = registry.search(search_term)
             # May or may not find results depending on search implementation
             assert isinstance(search_results, list)
-
-
-class TestCommandContextIntegration:
-    """Integration tests for CommandContext with framework components."""
-
-    def test_create_context_with_all_components(self):
-        """Test creating context with hooks, learning, context modules."""
-        ctx = create_command_context(
-            user_id="test_user",
-            enable_hooks=True,
-            enable_learning=True,
-        )
-
-        assert ctx.user_id == "test_user"
-        # Components may or may not be available depending on imports
-        # but the function should not fail
-
-    def test_context_fire_hook_without_registry(self):
-        """Test that fire_hook handles missing registry gracefully."""
-        ctx = CommandContext(
-            user_id="test",
-            hook_registry=None,
-        )
-
-        # Should not raise
-        results = ctx.fire_hook("SessionStart", {"test": True})
-        assert results == []
-
-    def test_context_patterns_without_storage(self):
-        """Test pattern methods with no storage."""
-        ctx = CommandContext(
-            user_id="test",
-            learning_storage=None,
-        )
-
-        # Should return empty results
-        patterns = ctx.get_patterns_for_context()
-        assert patterns == ""
-
-        results = ctx.search_patterns("test")
-        assert results == []
-
-
-class TestCommandExecutorIntegration:
-    """Integration tests for CommandExecutor."""
-
-    def test_execute_command_returns_body(self):
-        """Test that executor returns command body."""
-        ctx = CommandContext(user_id="test")
-        executor = CommandExecutor(ctx)
-
-        config = CommandConfig(
-            name="test-cmd",
-            description="Test",
-            body="## Instructions\n\nDo something.",
-            metadata=CommandMetadata(name="test-cmd"),
-        )
-
-        result = executor.execute(config)
-
-        assert result.success is True
-        assert "## Instructions" in result.output
-        assert result.command_name == "test-cmd"
-
-    def test_execute_with_hooks_configured(self):
-        """Test execution with hook configuration."""
-        from attune.hooks.config import HookEvent
-        from attune.hooks.registry import HookRegistry
-
-        hook_registry = HookRegistry()
-        hooks_fired = []
-
-        # Register hooks - handlers receive keyword arguments
-        hook_registry.register(
-            event=HookEvent.PRE_COMMAND,
-            handler=lambda **kw: hooks_fired.append("pre") or {"success": True},
-        )
-        hook_registry.register(
-            event=HookEvent.POST_COMMAND,
-            handler=lambda **kw: hooks_fired.append("post") or {"success": True},
-        )
-
-        ctx = CommandContext(
-            user_id="test",
-            hook_registry=hook_registry,
-        )
-        executor = CommandExecutor(ctx)
-
-        config = CommandConfig(
-            name="hooked-cmd",
-            description="Test",
-            body="Body",
-            metadata=CommandMetadata(
-                name="hooked-cmd",
-                hooks={"pre": HookEvent.PRE_COMMAND.value, "post": HookEvent.POST_COMMAND.value},
-            ),
-        )
-
-        result = executor.execute(config)
-
-        assert result.success is True
-        # Hooks may or may not fire depending on executor implementation
-        # Just verify execution succeeded
-
-    def test_prepare_command(self):
-        """Test preparing command context."""
-        ctx = CommandContext(user_id="test_user")
-        executor = CommandExecutor(ctx)
-
-        config = CommandConfig(
-            name="prep-test",
-            description="Prepare test",
-            body="Test body content",
-            metadata=CommandMetadata(name="prep-test"),
-        )
-
-        prepared = executor.prepare_command(config, args={"key": "value"})
-
-        assert prepared["command"] == "prep-test"
-        assert prepared["body"] == "Test body content"
-        assert prepared["args"]["key"] == "value"
-        assert prepared["user_id"] == "test_user"
 
 
 class TestCommandParserIntegration:

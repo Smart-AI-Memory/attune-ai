@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Hooks FAQ — faq</title>
-  <meta name="description" content="The `HookEvent` enum — `PRE_TOOL_USE`, `POST_TOOL_USE`, `SESSION_START`/`SESSION_END`, `PRE_COMPACT`, `PRE_COMMAND`/`POST_COMMAND`, `STOP`. Their values are the Claude Code event names." />
+  <meta name="description" content="Under `attune/hooks/scripts/` (e.g. `security_guard`, `worktree_path_guard`, `lessons_reminder`), wired via the plugin&#x27;s `hooks.json`." />
   <meta property="og:title" content="Hooks FAQ — faq" />
-  <meta property="og:description" content="The `HookEvent` enum — `PRE_TOOL_USE`, `POST_TOOL_USE`, `SESSION_START`/`SESSION_END`, `PRE_COMPACT`, `PRE_COMMAND`/`POST_COMMAND`, `STOP`. Their values are the Claude Code event names." />
+  <meta property="og:description" content="Under `attune/hooks/scripts/` (e.g. `security_guard`, `worktree_path_guard`, `lessons_reminder`), wired via the plugin&#x27;s `hooks.json`." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/hooks/faq" />
   <style>
@@ -273,20 +273,18 @@
   </nav>
   <article class="markdown-body">
 <h1>Hooks FAQ</h1>
-<h2>What events can I hook?</h2>
-<p>The <code>HookEvent</code> enum — <code>PRE_TOOL_USE</code>, <code>POST_TOOL_USE</code>,
-<code>SESSION_START</code>/<code>SESSION_END</code>, <code>PRE_COMPACT</code>,
-<code>PRE_COMMAND</code>/<code>POST_COMMAND</code>, <code>STOP</code>. Their values are the Claude Code
-event names.</p>
-<h2>How should a handler be written?</h2>
-<p>It receives the context unpacked as kwargs — <code>def handler(**context): ...</code>. Register it with
-<code>HookRegistry.register(event, handler)</code>.</p>
-<h2>Sync or async?</h2>
-<p><code>fire_sync</code> is synchronous; <code>fire</code> and <code>HookExecutor.execute</code>
-are async.</p>
 <h2>Where are the hooks the plugin actually runs?</h2>
 <p>Under <code>attune/hooks/scripts/</code> (e.g. <code>security_guard</code>,
-<code>worktree_path_guard</code>, <code>lessons_reminder</code>).</p>
+<code>worktree_path_guard</code>, <code>lessons_reminder</code>), wired via the plugin's
+<code>hooks.json</code>.</p>
+<h2>How does a hook block a tool?</h2>
+<p>A <code>PreToolUse</code> script exits <code>2</code> to block and <code>0</code> to allow.</p>
+<h2>Is there a Python API to register hooks in-process?</h2>
+<p>No — that engine was removed in v13.0.0. Attune ships hook
+scripts and lets Claude Code fire them.</p>
+<h2>What happens on malformed input?</h2>
+<p>Scripts fail open (exit <code>0</code>) so a hook bug never blocks a real
+tool call.</p>
 
   </article>
   <footer>

@@ -105,11 +105,12 @@ class TestLLMToolkit:
     """Test LLM toolkit modules."""
 
     def test_hooks_import(self):
-        """Test hooks module."""
-        from attune.hooks import HookRegistry
+        """Test hooks module — the live bundled scripts."""
+        import attune.hooks  # package imports
+        from attune.hooks.scripts import security_guard
 
-        registry = HookRegistry()
-        assert registry is not None
+        assert attune.hooks is not None
+        assert security_guard is not None
 
     def test_commands_import(self):
         """Test commands module."""

@@ -2,84 +2,67 @@
 
 ## Overview
 
-`attune.hooks` is an **event system**: it lets code (and config) react
-to lifecycle events — before/after a tool runs, at session start/end,
-before compaction, and on stop. The public surface, exported from
-`attune.hooks`, is five symbols:
-
-- **`HookEvent`** — the events you can hook (`PRE_TOOL_USE`,
-  `POST_TOOL_USE`, `SESSION_START`, `SESSION_END`, `PRE_COMPACT`,
-  `PRE_COMMAND`, `POST_COMMAND`, `STOP`).
-- **`HookRegistry`** — register Python handlers for events and fire
-  them in-process.
-- **`HookExecutor`** — run a configured `HookDefinition` (command,
-  Python, or webhook).
-- **`HookConfig`** / **`HookDefinition`** — the declarative,
-  config-driven hooks (loaded from YAML).
-
-The plugin also ships concrete hook scripts under
+Attune's hooks are **concrete scripts that Claude Code runs** on
+session and tool lifecycle events. They live under
 `attune/hooks/scripts/` (e.g. `security_guard`, `worktree_path_guard`,
-`lessons_reminder`) — these are the hooks Claude Code actually runs.
+`lessons_reminder`, `starter_reconciler`) and are wired to events
+through the plugin's `hooks.json`. Claude Code invokes each script over
+a **stdin-JSON / exit-code contract** — the script reads an event
+payload on stdin and signals its verdict through its exit code.
+
+There is no in-process Python hook API: attune registers its scripts
+with Claude Code and lets Claude Code fire them. (An earlier
+programmatic engine — `HookRegistry` / `HookExecutor` / `HookConfig` —
+was removed in v13.0.0; it had no caller, and its originating use-case
+was retired in 9.0.0.)
 
 ## Concepts
 
-### `HookEvent`
+### Lifecycle events
 
-The lifecycle events. Their **values are the Claude Code event names** —
-e.g. `HookEvent.PRE_TOOL_USE.value == "PreToolUse"` — so the same enum
-labels in-process registration and the Claude Code hook contract.
+Claude Code fires hooks at named lifecycle points — `PreToolUse`,
+`PostToolUse`, `SessionStart`, `SessionEnd`, `PreCompact`, and `Stop`.
+Each event carries a JSON payload (for tool events, `tool_name` and
+`tool_input`).
 
-### `HookRegistry` — in-process handlers
+### The stdin / exit-code contract
 
-`HookRegistry(config=None)` is the programmatic surface.
-`register(event, handler, description="", matcher=None, priority=0)`
-adds a handler and returns a hook id. **Handlers receive the context
-dict unpacked as keyword arguments** — write `def handler(**context)`,
-not `def handler(context)`. Fire with `fire(event, context=None)`
-(async) or `fire_sync(event, context=None)` (sync); both return a list
-of per-hook result dicts — a success record carries `event`, `hook`,
-`description`, `success`, `output`, `error`, `duration_ms`; an error
-record is a subset (`event`, `hook`, `success`, `error`). `get_matching_hooks`, `unregister`,
-`get_execution_log`, `get_stats`, and `load_config` round it out.
+A hook script reads the event JSON from stdin and exits:
 
-### `HookExecutor` and `HookDefinition`
+- **`PreToolUse`** — exit `0` to allow the tool, exit `2` to block it.
+  A non-blocking script that only observes should still exit `0`.
+- **`PostToolUse` / `SessionStart` / `Stop`** — exit `0`; the script's
+  job is a side effect (a banner, a stashed note, a telemetry write),
+  not a verdict.
 
-`HookDefinition` (a pydantic model) describes a configured hook: `type`
-(`HookType.COMMAND` / `PYTHON` / `WEBHOOK`, default `PYTHON`),
-`command`, `description`, `timeout` (1–300 s, default 30),
-`async_execution` (default `False`), `on_error` (default `"log"`).
-`HookExecutor(python_handlers=None).execute(hook, context)` (async) runs
-one.
+Scripts fail **open** (exit `0`) on malformed input so a bug in a hook
+never blocks the user's real tool call.
 
-### `HookConfig` — declarative, config-driven hooks
+### Where the scripts live
 
-`HookConfig` (pydantic) holds the declarative rules: `hooks` (a dict of
-event → list of `HookRule`), plus `enabled`, `log_executions`, and
-`default_timeout`. Load it with `HookConfig.from_yaml(yaml_path)`, build
-it with `add_hook(event, hook, matcher=None, priority=0)`, and query it
-with `get_hooks_for_event(event)`. A `HookRule` carries a `matcher`, its
-`hooks`, `enabled`, `priority`, and `description`.
+Every hook is a module under `attune/hooks/scripts/`. The plugin's
+`hooks.json` maps each event to the script(s) that run for it, along
+with a per-hook timeout.
 
 ## Design & extension
 
 ### Design decisions
 
-- **One enum, two worlds.** `HookEvent` labels both in-process
-  registration and the Claude Code hook contract (its values are the
-  Claude Code event names).
-- **Registry vs config.** Imperative `HookRegistry` and declarative
-  `HookConfig`/`HookExecutor` are separate surfaces over the same
-  events.
-- **Bounded, typed definitions.** `HookDefinition` is a pydantic model
-  with a `timeout` bounded to 1–300 s and an `on_error` policy.
+- **Scripts, not an API.** Attune ships concrete hook scripts and
+  registers them with Claude Code, rather than exposing an in-process
+  hook engine.
+- **Fail open.** Guards default to allowing the tool on any input they
+  can't parse, so a hook defect degrades to a no-op instead of a block.
+- **Bounded by timeout.** Each hook runs under a `hooks.json` timeout on
+  the critical path.
 
 ### Extension points
 
-- **Add an in-process hook:** `HookRegistry.register(event, handler,
-  priority=...)`.
-- **Add a declarative hook:** a `HookDefinition` in `HookConfig`
-  (`add_hook` or YAML), run by `HookExecutor`.
-- **Ship a script:** add a module under `attune/hooks/scripts/` and
-  register it in the plugin's hook config.
+- **Ship a script:** add a module under `attune/hooks/scripts/` and map
+  it to an event in the plugin's `hooks.json`.
+- **Guard a tool:** a `PreToolUse` script that exits `2` on the
+  disallowed case and `0` otherwise.
+- **React to a session:** a `SessionStart` / `Stop` script that performs
+  its side effect and exits `0`.
 
-<!-- attune-generated: source_hash=135910a198c946084ebe186e1f9f9879826026c95886aa2c85c739e52893fee8 feature=hooks kind=architecture generated_at=2026-08-19 -->
+<!-- attune-generated: source_hash=5aba5457cc740ed70cb22f0f6e950c97d47eeeac8faabd7f0a716459b548cb13 feature=hooks kind=architecture generated_at=2026-08-20 -->

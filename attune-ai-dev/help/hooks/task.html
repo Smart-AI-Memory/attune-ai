@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — task</title>
-  <meta name="description" content="```python from attune.hooks import HookRegistry, HookEvent" />
-  <meta property="og:title" content="The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — task" />
-  <meta property="og:description" content="```python from attune.hooks import HookRegistry, HookEvent" />
+  <title>The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events — task</title>
+  <meta name="description" content="```python import json import sys" />
+  <meta property="og:title" content="The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events — task" />
+  <meta property="og:description" content="```python import json import sys" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/hooks/task" />
   <style>
@@ -272,53 +272,39 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config</h1>
+<h1>The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events</h1>
 <h2>Tasks</h2>
-<h3>Register and fire an in-process hook</h3>
-<pre><code class="language-python">from attune.hooks import HookRegistry, HookEvent
+<h3>Read the event payload safely</h3>
+<pre><code class="language-python">import json
+import sys
 
-registry = HookRegistry()
+try:
+    payload = json.load(sys.stdin)
+except (json.JSONDecodeError, ValueError):
+    sys.exit(0)                          # fail open — never block on bad input
 
+if not isinstance(payload, dict):
+    sys.exit(0)
 
-def guard(**context) -&gt; dict:
-    return {&quot;blocked&quot;: context.get(&quot;tool_name&quot;) == &quot;Bash&quot;}
-
-
-hook_id = registry.register(HookEvent.PRE_TOOL_USE, guard, priority=10)
-results = registry.fire_sync(HookEvent.PRE_TOOL_USE, {&quot;tool_name&quot;: &quot;Bash&quot;})
-print(hook_id, results[0][&quot;success&quot;], results[0][&quot;output&quot;])
+tool_name = payload.get(&quot;tool_name&quot;, &quot;&quot;)
 </code></pre>
-<p><strong>Verify:</strong> <code>register(...)</code> returns a hook id (a <code>str</code>). <code>fire_sync</code>
-runs every matching handler — calling each as <code>handler(**context)</code> — and
-returns a list of result dicts (a success record carries <code>event</code>,
-<code>hook</code>, <code>description</code>, <code>success</code>, <code>output</code>, <code>error</code>, <code>duration_ms</code>; an
-error record is a subset). <code>fire(...)</code> is the async variant.</p>
-<h3>Load hooks from YAML config</h3>
-<p><strong>Goal:</strong> declare hooks in a file instead of code.</p>
-<p><strong>Steps:</strong> <code>HookConfig.from_yaml(path)</code> returns a <code>HookConfig</code>;
-<code>get_hooks_for_event(event)</code> lists the <code>HookRule</code>s for an event. Each
-rule's <code>hooks</code> are <code>HookDefinition</code>s an executor can run.</p>
-<pre><code class="language-python">from attune.hooks import HookConfig, HookEvent
+<p><strong>Verify:</strong> the script exits <code>0</code> on non-JSON or non-dict stdin, and
+reads fields with <code>.get()</code> (never a raising index), so a hook bug can
+never block a real tool call.</p>
+<h3>Block a tool from a PreToolUse hook</h3>
+<pre><code class="language-python">import json
+import sys
 
-config = HookConfig.from_yaml(&quot;hooks.yaml&quot;)
-for rule in config.get_hooks_for_event(HookEvent.PRE_TOOL_USE):
-    print(rule.description, rule.priority)
+payload = json.load(sys.stdin)
+if payload.get(&quot;tool_name&quot;) == &quot;Write&quot; and &quot;/etc/&quot; in str(
+    payload.get(&quot;tool_input&quot;, {}).get(&quot;file_path&quot;, &quot;&quot;)
+):
+    print(&quot;refusing to write under /etc&quot;, file=sys.stderr)
+    sys.exit(2)
+sys.exit(0)
 </code></pre>
-<p><strong>Verify:</strong> <code>from_yaml</code> is a constructor returning <code>HookConfig</code>;
-<code>get_hooks_for_event</code> returns <code>list[HookRule]</code>.</p>
-<h3>Execute a configured hook</h3>
-<pre><code class="language-python">import asyncio
-
-from attune.hooks import HookExecutor, HookDefinition
-from attune.hooks.config import HookType
-
-hook = HookDefinition(type=HookType.COMMAND, command=&quot;echo hi&quot;, timeout=5)
-executor = HookExecutor()
-result = asyncio.run(executor.execute(hook, {&quot;tool_name&quot;: &quot;Bash&quot;}))
-print(result)
-</code></pre>
-<p><strong>Verify:</strong> <code>HookExecutor.execute(hook, context)</code> is <strong>async</strong> — await
-it; it returns a result dict.</p>
+<p><strong>Verify:</strong> exit <code>2</code> blocks the tool and Claude Code surfaces the
+stderr message; exit <code>0</code> lets it proceed.</p>
 
   </article>
   <footer>

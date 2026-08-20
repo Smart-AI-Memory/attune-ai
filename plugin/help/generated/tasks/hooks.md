@@ -9,65 +9,45 @@ tags:
 type: task
 ---
 
-# The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config
+# The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events
 
 ## Tasks
 
-### Register and fire an in-process hook
+### Read the event payload safely
 
 ```python
-from attune.hooks import HookRegistry, HookEvent
+import json
+import sys
 
-registry = HookRegistry()
+try:
+    payload = json.load(sys.stdin)
+except (json.JSONDecodeError, ValueError):
+    sys.exit(0)                          # fail open — never block on bad input
 
+if not isinstance(payload, dict):
+    sys.exit(0)
 
-def guard(**context) -> dict:
-    return {"blocked": context.get("tool_name") == "Bash"}
-
-
-hook_id = registry.register(HookEvent.PRE_TOOL_USE, guard, priority=10)
-results = registry.fire_sync(HookEvent.PRE_TOOL_USE, {"tool_name": "Bash"})
-print(hook_id, results[0]["success"], results[0]["output"])
+tool_name = payload.get("tool_name", "")
 ```
 
-**Verify:** `register(...)` returns a hook id (a `str`). `fire_sync`
-runs every matching handler — calling each as `handler(**context)` — and
-returns a list of result dicts (a success record carries `event`,
-`hook`, `description`, `success`, `output`, `error`, `duration_ms`; an
-error record is a subset). `fire(...)` is the async variant.
+**Verify:** the script exits `0` on non-JSON or non-dict stdin, and
+reads fields with `.get()` (never a raising index), so a hook bug can
+never block a real tool call.
 
-### Load hooks from YAML config
-
-**Goal:** declare hooks in a file instead of code.
-
-**Steps:** `HookConfig.from_yaml(path)` returns a `HookConfig`;
-`get_hooks_for_event(event)` lists the `HookRule`s for an event. Each
-rule's `hooks` are `HookDefinition`s an executor can run.
+### Block a tool from a PreToolUse hook
 
 ```python
-from attune.hooks import HookConfig, HookEvent
+import json
+import sys
 
-config = HookConfig.from_yaml("hooks.yaml")
-for rule in config.get_hooks_for_event(HookEvent.PRE_TOOL_USE):
-    print(rule.description, rule.priority)
+payload = json.load(sys.stdin)
+if payload.get("tool_name") == "Write" and "/etc/" in str(
+    payload.get("tool_input", {}).get("file_path", "")
+):
+    print("refusing to write under /etc", file=sys.stderr)
+    sys.exit(2)
+sys.exit(0)
 ```
 
-**Verify:** `from_yaml` is a constructor returning `HookConfig`;
-`get_hooks_for_event` returns `list[HookRule]`.
-
-### Execute a configured hook
-
-```python
-import asyncio
-
-from attune.hooks import HookExecutor, HookDefinition
-from attune.hooks.config import HookType
-
-hook = HookDefinition(type=HookType.COMMAND, command="echo hi", timeout=5)
-executor = HookExecutor()
-result = asyncio.run(executor.execute(hook, {"tool_name": "Bash"}))
-print(result)
-```
-
-**Verify:** `HookExecutor.execute(hook, context)` is **async** — await
-it; it returns a result dict.
+**Verify:** exit `2` blocks the tool and Claude Code surfaces the
+stderr message; exit `0` lets it proceed.

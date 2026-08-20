@@ -2,94 +2,75 @@
 
 ## Quickstart
 
-Register an in-process handler and fire it:
+Read the payload, decide, exit — failing open on anything malformed:
 
 ```python
-from attune.hooks import HookRegistry, HookEvent
+import json
+import sys
 
-registry = HookRegistry()
+try:
+    payload = json.load(sys.stdin)       # {"tool_name": ..., "tool_input": ...}
+except (json.JSONDecodeError, ValueError):
+    sys.exit(0)                          # fail open on malformed input
 
-
-def on_pre_tool(**context) -> dict:        # context arrives as kwargs
-    return {"blocked": False, "tool": context.get("tool_name")}
-
-
-registry.register(HookEvent.PRE_TOOL_USE, on_pre_tool)
-results = registry.fire_sync(HookEvent.PRE_TOOL_USE, {"tool_name": "Bash"})
-print(results)
+if isinstance(payload, dict) and payload.get("tool_name") == "Bash":
+    print("Bash blocked by policy", file=sys.stderr)
+    sys.exit(2)                          # 2 = block
+sys.exit(0)                             # 0 = allow
 ```
 
 ## Tasks
 
-### Register and fire an in-process hook
+### Read the event payload safely
 
 ```python
-from attune.hooks import HookRegistry, HookEvent
+import json
+import sys
 
-registry = HookRegistry()
+try:
+    payload = json.load(sys.stdin)
+except (json.JSONDecodeError, ValueError):
+    sys.exit(0)                          # fail open — never block on bad input
 
+if not isinstance(payload, dict):
+    sys.exit(0)
 
-def guard(**context) -> dict:
-    return {"blocked": context.get("tool_name") == "Bash"}
-
-
-hook_id = registry.register(HookEvent.PRE_TOOL_USE, guard, priority=10)
-results = registry.fire_sync(HookEvent.PRE_TOOL_USE, {"tool_name": "Bash"})
-print(hook_id, results[0]["success"], results[0]["output"])
+tool_name = payload.get("tool_name", "")
 ```
 
-**Verify:** `register(...)` returns a hook id (a `str`). `fire_sync`
-runs every matching handler — calling each as `handler(**context)` — and
-returns a list of result dicts (a success record carries `event`,
-`hook`, `description`, `success`, `output`, `error`, `duration_ms`; an
-error record is a subset). `fire(...)` is the async variant.
+**Verify:** the script exits `0` on non-JSON or non-dict stdin, and
+reads fields with `.get()` (never a raising index), so a hook bug can
+never block a real tool call.
 
-### Load hooks from YAML config
-
-**Goal:** declare hooks in a file instead of code.
-
-**Steps:** `HookConfig.from_yaml(path)` returns a `HookConfig`;
-`get_hooks_for_event(event)` lists the `HookRule`s for an event. Each
-rule's `hooks` are `HookDefinition`s an executor can run.
+### Block a tool from a PreToolUse hook
 
 ```python
-from attune.hooks import HookConfig, HookEvent
+import json
+import sys
 
-config = HookConfig.from_yaml("hooks.yaml")
-for rule in config.get_hooks_for_event(HookEvent.PRE_TOOL_USE):
-    print(rule.description, rule.priority)
+payload = json.load(sys.stdin)
+if payload.get("tool_name") == "Write" and "/etc/" in str(
+    payload.get("tool_input", {}).get("file_path", "")
+):
+    print("refusing to write under /etc", file=sys.stderr)
+    sys.exit(2)
+sys.exit(0)
 ```
 
-**Verify:** `from_yaml` is a constructor returning `HookConfig`;
-`get_hooks_for_event` returns `list[HookRule]`.
-
-### Execute a configured hook
-
-```python
-import asyncio
-
-from attune.hooks import HookExecutor, HookDefinition
-from attune.hooks.config import HookType
-
-hook = HookDefinition(type=HookType.COMMAND, command="echo hi", timeout=5)
-executor = HookExecutor()
-result = asyncio.run(executor.execute(hook, {"tool_name": "Bash"}))
-print(result)
-```
-
-**Verify:** `HookExecutor.execute(hook, context)` is **async** — await
-it; it returns a result dict.
+**Verify:** exit `2` blocks the tool and Claude Code surfaces the
+stderr message; exit `0` lets it proceed.
 
 ## Reference
 
-| Symbol | Kind | Purpose |
-|--------|------|---------|
-| `HookEvent` | enum | `PRE_TOOL_USE`/`POST_TOOL_USE`/`SESSION_START`/`SESSION_END`/`PRE_COMPACT`/`PRE_COMMAND`/`POST_COMMAND`/`STOP`; values are Claude Code event names. |
-| `HookRegistry(config=None)` | class | `register(event, handler, description="", matcher=None, priority=0) -> str`, `fire` (async) / `fire_sync`, `get_matching_hooks`, `unregister`, `get_execution_log`, `get_stats`, `load_config`. |
-| `HookExecutor(python_handlers=None)` | class | `execute(hook, context)` — **async**. |
-| `HookDefinition(type=HookType.PYTHON, command, description="", timeout=30, async_execution=False, on_error="log")` | pydantic model | A configured hook. |
-| `HookConfig(hooks={}, enabled=True, log_executions=True, default_timeout=30)` | pydantic model | `from_yaml(path)`, `add_hook(event, hook, matcher=None, priority=0)`, `get_hooks_for_event(event)`, `to_yaml`. |
-| `HookType` (`attune.hooks.config`) | enum | `COMMAND` / `PYTHON` / `WEBHOOK`. |
-| `HookRule` (`attune.hooks.config`) | pydantic model | `matcher`, `hooks`, `enabled`, `priority`, `description`. |
+| Event | Exit contract | Typical use |
+|-------|---------------|-------------|
+| `PreToolUse` | `0` allow / `2` block | policy guards (`security_guard`, `worktree_path_guard`) |
+| `PostToolUse` | `0` | formatting, telemetry |
+| `SessionStart` | `0` | orientation banners (`starter_reconciler`) |
+| `SessionEnd` / `Stop` | `0` | stash notes, lesson reminders |
+| `PreCompact` | `0` | pre-compaction side effects |
 
-<!-- attune-generated: source_hash=135910a198c946084ebe186e1f9f9879826026c95886aa2c85c739e52893fee8 feature=hooks kind=how-to generated_at=2026-08-19 -->
+Wiring: the plugin's `hooks.json` maps events → scripts under
+`attune/hooks/scripts/`, each with a timeout.
+
+<!-- attune-generated: source_hash=5aba5457cc740ed70cb22f0f6e950c97d47eeeac8faabd7f0a716459b548cb13 feature=hooks kind=how-to generated_at=2026-08-20 -->

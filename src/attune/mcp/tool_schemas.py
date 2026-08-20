@@ -385,7 +385,37 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
     and returns batched question payloads; ``collect_response`` validates
     the answers. The agent calls the real ``AskUserQuestion`` tool in
     between — the surface mapping rules live in the driving skill (D6).
+
+    The v2 rich field/form schema is sourced from
+    ``attune_forms.mcp_server`` rather than hand-declared, so a forms
+    release that grows the construct vocabulary or the field contract
+    arrives without a mirror edit (the recurring D3 mirror obligation,
+    retired at forms 0.7.0). The v1 schema stays hand-declared and
+    minimal — see the inline notes.
     """
+    # v2 rich surface — SOURCED FROM attune-forms, not hand-declared. The
+    # field/form contract (construct type enum, typed object-array extras,
+    # additionalProperties, the multi-type `default`, `inferred_from`) is
+    # the library's, so a forms release that grows it flows through here
+    # automatically — no mirror to drift. This retired the recurring D3
+    # mirror obligation (forms 0.7.0, 2026-08-20). The boolean -> Yes/No
+    # projection rides the imported form_to_elicitation_schema, not this
+    # declarative enum, so "boolean" stays a valid field type here.
+    # Localized import: a forms API reshape breaks only the elicitation
+    # tools, loudly, at server startup — never the whole schema module.
+    from attune_forms.mcp_server import _form_schema
+
+    # _form_schema() embeds _field_schema() as its fields' items, so the
+    # field contract rides along — no separate field-schema local needed.
+    rich_form_schema = _form_schema()
+
+    # v1 stable surface — AskUserQuestion's four native controls. Hand-
+    # declared and kept minimal on purpose: AskUserQuestion has no native
+    # number/date/construct control, so v1 must NOT advertise types it
+    # would silently degrade to free text (D10 enum-honesty). This enum
+    # won't grow, so there is nothing here to drift. additionalProperties
+    # mirrors form_from_dict's strict definition contract (an unknown key
+    # is a typo that would silently drop the constraint it meant to set).
     field_schema = {
         "type": "object",
         "properties": {
@@ -406,6 +436,7 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
             "required": {"type": "boolean", "description": "Defaults to true"},
         },
         "required": ["id", "text", "type"],
+        "additionalProperties": False,
     }
     form_schema = {
         "type": "object",
@@ -420,100 +451,7 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
             },
         },
         "required": ["title", "fields"],
-    }
-    # The v2 rich surfaces (elicitation_ask, render_widget) render all 7
-    # controls, so their field schema exposes the full type enum + the
-    # v2.1 numeric/length bounds. v1 (render_form/collect_response) stays on
-    # the 4-type schema above — AskUserQuestion has no native number/date,
-    # so it would only degrade them to free text (D10 enum-honesty fix).
-    rich_field_schema = {
-        "type": "object",
-        "properties": {
-            **field_schema["properties"],
-            "type": {
-                "type": "string",
-                "enum": [
-                    "text_input",
-                    "textarea",
-                    "single_select",
-                    "multi_select",
-                    "boolean",
-                    "number",
-                    "date",
-                    "decision",
-                    "pushback",
-                    "progress",
-                ],
-                "description": (
-                    "Control type. v1: text_input/single_select/multi_select/"
-                    "boolean. v2.1 rich: textarea, number (min/max), date "
-                    "(YYYY-MM-DD). v3: decision (a recommended single-select "
-                    "with rationale + per-option tradeoffs, widget surface). "
-                    "v4: pushback (decision framed as dissent — the user's "
-                    "approach vs the agent's alternative, widget surface). "
-                    "v5: progress (a done/in_flight/blocked status report whose "
-                    "blocked items are a single-select picker, widget surface)."
-                ),
-            },
-            "minimum": {"type": "number", "description": "Lower bound for number"},
-            "maximum": {"type": "number", "description": "Upper bound for number"},
-            "max_length": {
-                "type": "integer",
-                "description": "Max length for text_input/textarea",
-            },
-            "rationale": {
-                "type": "string",
-                "description": "decision: the 'why this recommendation' callout",
-            },
-            "recommended": {
-                "type": "string",
-                "description": "decision: option to badge recommended (must be in options)",
-            },
-            "option_notes": {
-                "type": "object",
-                "description": "decision: {option: one-line tradeoff} shown under each card",
-            },
-            "user_position": {
-                "type": "string",
-                "description": "pushback: the option that is the user's stated approach "
-                "(tagged 'your approach'; must be in options)",
-            },
-            "progress_items": {
-                "type": "array",
-                "description": "progress: reported items as {label, status, detail?} dicts, "
-                "status in done/in_flight/blocked; the blocked subset must equal options. "
-                "With progress_style 'report': status is a free-form category tag and "
-                "options may be any subset of item labels",
-            },
-            "progress_style": {
-                "type": "string",
-                "enum": ["report"],
-                "description": "progress only: 'report' renders a neutral digest (status = "
-                "category tag, no task semantics; options = 'go deeper' picker). "
-                "Presentation only; answer unchanged.",
-            },
-            "list_style": {
-                "type": "string",
-                "enum": ["ordered", "unordered"],
-                "description": "single/multi_select only: render options as an ordered "
-                "(numbered) or unordered (bulleted) selectable list instead of the "
-                "default dropdown/checkboxes. Presentation only; answer unchanged.",
-            },
-        },
-        "required": ["id", "text", "type"],
-    }
-    rich_form_schema = {
-        "type": "object",
-        "description": "Declarative form artifact (data, not code — D3).",
-        "properties": {
-            **form_schema["properties"],
-            "fields": {
-                "type": "array",
-                "items": rich_field_schema,
-                "description": "The form's fields (alias: 'questions')",
-            },
-        },
-        "required": ["title", "fields"],
+        "additionalProperties": False,
     }
     return {
         "elicitation_render_form": {
@@ -544,13 +482,13 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
             "input_schema": {
                 "type": "object",
                 "properties": {
-                    # rich_form_schema (7 types): collect_response is the
-                    # shared validator for BOTH the v1 AskUserQuestion path
-                    # (4-type forms) AND the widget round-trip, which posts
+                    # rich_form_schema (full construct set): collect_response
+                    # is the shared validator for BOTH the v1 AskUserQuestion
+                    # path (4-type forms) AND the widget round-trip, which posts
                     # back number/date/textarea answers — so its input enum
                     # must accept the rich controls or the round-trip breaks
                     # at the validation step (the underlying
-                    # collect_form_response already validates all 7).
+                    # collect_form_response already validates every control).
                     "form": rich_form_schema,
                     "answers": {
                         "type": "object",
@@ -637,7 +575,7 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
                 "show_widget (the v2 rich surface for clients that render "
                 "widgets, e.g. Cowork/claude.ai). Returns {success, html, "
                 "title, field_ids} — pass 'html' straight to "
-                "mcp__visualize__show_widget. The form renders ALL 7 controls "
+                "mcp__visualize__show_widget. The form renders every control "
                 "richly (number spinner, date picker, multi-line textarea, "
                 "multi-select checkboxes) and posts answers back via "
                 "sendPrompt as a sentinel-marked JSON block "

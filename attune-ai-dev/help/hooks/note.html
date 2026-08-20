@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — note</title>
-  <meta name="description" content="`attune.hooks` is an **event system**: it lets code (and config) react to lifecycle events — before/after a tool runs, at session start/end, before compaction, and on stop. The public surface, exporte" />
-  <meta property="og:title" content="The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — note" />
-  <meta property="og:description" content="`attune.hooks` is an **event system**: it lets code (and config) react to lifecycle events — before/after a tool runs, at session start/end, before compaction, and on stop. The public surface, exporte" />
+  <title>The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events — note</title>
+  <meta name="description" content="Attune&#x27;s hooks are **concrete scripts that Claude Code runs** on session and tool lifecycle events. They live under `attune/hooks/scripts/` (e.g. `security_guard`, `worktree_path_guard`, `lessons_remi" />
+  <meta property="og:title" content="The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events — note" />
+  <meta property="og:description" content="Attune&#x27;s hooks are **concrete scripts that Claude Code runs** on session and tool lifecycle events. They live under `attune/hooks/scripts/` (e.g. `security_guard`, `worktree_path_guard`, `lessons_remi" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/hooks/note" />
   <style>
@@ -272,65 +272,49 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config</h1>
+<h1>The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events</h1>
 <h2>Overview</h2>
-<p><code>attune.hooks</code> is an <strong>event system</strong>: it lets code (and config) react
-to lifecycle events — before/after a tool runs, at session start/end,
-before compaction, and on stop. The public surface, exported from
-<code>attune.hooks</code>, is five symbols:</p>
-<ul>
-<li><strong><code>HookEvent</code></strong> — the events you can hook (<code>PRE_TOOL_USE</code>,
-<code>POST_TOOL_USE</code>, <code>SESSION_START</code>, <code>SESSION_END</code>, <code>PRE_COMPACT</code>,
-<code>PRE_COMMAND</code>, <code>POST_COMMAND</code>, <code>STOP</code>).</li>
-<li><strong><code>HookRegistry</code></strong> — register Python handlers for events and fire
-them in-process.</li>
-<li><strong><code>HookExecutor</code></strong> — run a configured <code>HookDefinition</code> (command,
-Python, or webhook).</li>
-<li><strong><code>HookConfig</code></strong> / <strong><code>HookDefinition</code></strong> — the declarative,
-config-driven hooks (loaded from YAML).</li>
-</ul>
-<p>The plugin also ships concrete hook scripts under
+<p>Attune's hooks are <strong>concrete scripts that Claude Code runs</strong> on
+session and tool lifecycle events. They live under
 <code>attune/hooks/scripts/</code> (e.g. <code>security_guard</code>, <code>worktree_path_guard</code>,
-<code>lessons_reminder</code>) — these are the hooks Claude Code actually runs.</p>
+<code>lessons_reminder</code>, <code>starter_reconciler</code>) and are wired to events
+through the plugin's <code>hooks.json</code>. Claude Code invokes each script over
+a <strong>stdin-JSON / exit-code contract</strong> — the script reads an event
+payload on stdin and signals its verdict through its exit code.</p>
+<p>There is no in-process Python hook API: attune registers its scripts
+with Claude Code and lets Claude Code fire them. (An earlier
+programmatic engine — <code>HookRegistry</code> / <code>HookExecutor</code> / <code>HookConfig</code> —
+was removed in v13.0.0; it had no caller, and its originating use-case
+was retired in 9.0.0.)</p>
 <h2>Concepts</h2>
-<h3><code>HookEvent</code></h3>
-<p>The lifecycle events. Their <strong>values are the Claude Code event names</strong> —
-e.g. <code>HookEvent.PRE_TOOL_USE.value == &quot;PreToolUse&quot;</code> — so the same enum
-labels in-process registration and the Claude Code hook contract.</p>
-<h3><code>HookRegistry</code> — in-process handlers</h3>
-<p><code>HookRegistry(config=None)</code> is the programmatic surface.
-<code>register(event, handler, description=&quot;&quot;, matcher=None, priority=0)</code>
-adds a handler and returns a hook id. <strong>Handlers receive the context
-dict unpacked as keyword arguments</strong> — write <code>def handler(**context)</code>,
-not <code>def handler(context)</code>. Fire with <code>fire(event, context=None)</code>
-(async) or <code>fire_sync(event, context=None)</code> (sync); both return a list
-of per-hook result dicts — a success record carries <code>event</code>, <code>hook</code>,
-<code>description</code>, <code>success</code>, <code>output</code>, <code>error</code>, <code>duration_ms</code>; an error
-record is a subset (<code>event</code>, <code>hook</code>, <code>success</code>, <code>error</code>). <code>get_matching_hooks</code>, <code>unregister</code>,
-<code>get_execution_log</code>, <code>get_stats</code>, and <code>load_config</code> round it out.</p>
-<h3><code>HookExecutor</code> and <code>HookDefinition</code></h3>
-<p><code>HookDefinition</code> (a pydantic model) describes a configured hook: <code>type</code>
-(<code>HookType.COMMAND</code> / <code>PYTHON</code> / <code>WEBHOOK</code>, default <code>PYTHON</code>),
-<code>command</code>, <code>description</code>, <code>timeout</code> (1–300 s, default 30),
-<code>async_execution</code> (default <code>False</code>), <code>on_error</code> (default <code>&quot;log&quot;</code>).
-<code>HookExecutor(python_handlers=None).execute(hook, context)</code> (async) runs
-one.</p>
-<h3><code>HookConfig</code> — declarative, config-driven hooks</h3>
-<p><code>HookConfig</code> (pydantic) holds the declarative rules: <code>hooks</code> (a dict of
-event → list of <code>HookRule</code>), plus <code>enabled</code>, <code>log_executions</code>, and
-<code>default_timeout</code>. Load it with <code>HookConfig.from_yaml(yaml_path)</code>, build
-it with <code>add_hook(event, hook, matcher=None, priority=0)</code>, and query it
-with <code>get_hooks_for_event(event)</code>. A <code>HookRule</code> carries a <code>matcher</code>, its
-<code>hooks</code>, <code>enabled</code>, <code>priority</code>, and <code>description</code>.</p>
+<h3>Lifecycle events</h3>
+<p>Claude Code fires hooks at named lifecycle points — <code>PreToolUse</code>,
+<code>PostToolUse</code>, <code>SessionStart</code>, <code>SessionEnd</code>, <code>PreCompact</code>, and <code>Stop</code>.
+Each event carries a JSON payload (for tool events, <code>tool_name</code> and
+<code>tool_input</code>).</p>
+<h3>The stdin / exit-code contract</h3>
+<p>A hook script reads the event JSON from stdin and exits:</p>
+<ul>
+<li><strong><code>PreToolUse</code></strong> — exit <code>0</code> to allow the tool, exit <code>2</code> to block it.
+A non-blocking script that only observes should still exit <code>0</code>.</li>
+<li><strong><code>PostToolUse</code> / <code>SessionStart</code> / <code>Stop</code></strong> — exit <code>0</code>; the script's
+job is a side effect (a banner, a stashed note, a telemetry write),
+not a verdict.</li>
+</ul>
+<p>Scripts fail <strong>open</strong> (exit <code>0</code>) on malformed input so a bug in a hook
+never blocks the user's real tool call.</p>
+<h3>Where the scripts live</h3>
+<p>Every hook is a module under <code>attune/hooks/scripts/</code>. The plugin's
+<code>hooks.json</code> maps each event to the script(s) that run for it, along
+with a per-hook timeout.</p>
 <h2>Notes &amp; tips</h2>
 <ul>
-<li><strong><code>def handler(**context)</code>.</strong> The single most common mistake is a
-positional <code>context</code> parameter.</li>
-<li><strong><code>fire_sync</code> for synchronous code.</strong> <code>fire</code> / <code>execute</code> are async.</li>
-<li><strong><code>HookEvent</code> values are the Claude Code names.</strong> One enum spans the
-in-process and Claude Code contracts.</li>
-<li><strong>Declarative vs imperative.</strong> <code>HookConfig</code>/<code>from_yaml</code> for config;
-<code>HookRegistry</code> for embedded Python.</li>
+<li><strong>Fail open on bad input.</strong> Exit <code>0</code> on any non-JSON / non-dict
+stdin; only a deliberate policy decision should exit <code>2</code>.</li>
+<li><strong>Only <code>2</code> blocks.</strong> Every other exit code allows the tool.</li>
+<li><strong>Keep hooks fast.</strong> They run on the critical path under a timeout.</li>
+<li><strong>One event name space.</strong> The event names (<code>PreToolUse</code>, …) are the
+Claude Code names.</li>
 </ul>
 
   </article>

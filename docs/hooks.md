@@ -1,274 +1,69 @@
 ---
-description: Hook System: The Attune AI hook system provides event-driven extensibility for session lifecycle management.
+description: Hook System: Attune ships hook scripts that Claude Code runs on session and tool lifecycle events.
 ---
 
 # Hook System
 
-The Attune AI hook system provides event-driven extensibility for session lifecycle management.
+Attune's hooks are **concrete scripts that Claude Code runs** on
+session and tool lifecycle events. They live under
+`attune/hooks/scripts/` (e.g. `security_guard`, `worktree_path_guard`,
+`lessons_reminder`, `starter_reconciler`) and are wired to events
+through the plugin's `hooks.json`.
 
-## Overview
+There is no in-process Python hook API. An earlier programmatic engine
+(`HookRegistry` / `HookExecutor` / `HookConfig`) was removed in
+v13.0.0 — it had no caller, and its originating use-case was retired
+in 9.0.0.
 
-Hooks allow you to execute custom code at specific points in the session lifecycle:
+## Lifecycle events
 
-- **SessionStart/SessionEnd**: Initialize or cleanup session state
-- **PreToolUse/PostToolUse**: Intercept tool calls
-- **PreCompact**: React before Claude Code compacts the context window
-- **PreCommand/PostCommand**: Wrap command execution
+| Event | When fired | Typical use |
+|-------|------------|-------------|
+| `SessionStart` | Session begins | Orientation banners, state restore |
+| `SessionEnd` / `Stop` | Session ends | Save state, lesson reminders |
+| `PreToolUse` | Before a tool runs | Policy guards (block or allow) |
+| `PostToolUse` | After a tool runs | Formatting, telemetry |
+| `PreCompact` | Before context compaction | Pre-compaction side effects |
 
-## Quick Start
+Event names are the Claude Code hook names.
 
-```python
-from attune.hooks import HookRegistry, HookEvent
+## The stdin / exit-code contract
 
-# Create registry
-registry = HookRegistry()
+Claude Code invokes each script with the event payload as JSON on
+stdin. The script signals its verdict through its exit code:
 
-# Register a hook
-def on_session_start(context):
-    print(f"Session started for user: {context.get('user_id')}")
-    return {"success": True}
+- **`PreToolUse`** — exit `0` to allow the tool, exit `2` to block it.
+- **`PostToolUse` / `SessionStart` / `Stop` / `PreCompact`** — exit `0`;
+  the script's job is a side effect, not a verdict.
 
-registry.register(
-    event=HookEvent.SESSION_START,
-    handler=on_session_start,
-    description="Log session start"
-)
-
-# Fire the hook
-results = registry.fire_sync(
-    HookEvent.SESSION_START,
-    context={"user_id": "user123"}
-)
-```
-
-## Hook Events
-
-| Event | When Fired | Typical Use Case |
-|-------|------------|------------------|
-| `SESSION_START` | Session begins | Restore state, initialize |
-| `SESSION_END` | Session ends | Save state, cleanup |
-| `PRE_TOOL_USE` | Before tool executes | Validation, logging |
-| `POST_TOOL_USE` | After tool executes | Post-processing |
-| `PRE_COMPACT` | Before compaction | React before the context window is compacted |
-| `PRE_COMMAND` | Before command runs | Setup, validation |
-| `POST_COMMAND` | After command runs | Cleanup, logging |
-| `STOP` | Session terminated | Emergency cleanup |
-
-## Configuration
-
-### YAML Configuration
-
-```yaml
-# hooks.yaml
-hooks:
-  SessionStart:
-    - matcher:
-        match_all: true
-      hooks:
-        - type: python
-          command: attune.hooks.scripts.first_time_init:main
-          description: Restore previous context
-
-  PostToolUse:
-    - matcher:
-        tool: Edit
-        file_pattern: "\\.py$"
-      hooks:
-        - type: command
-          command: "ruff format {file_path}"
-          description: Auto-format Python files
-
-enabled: true
-log_executions: true
-```
-
-### Loading Configuration
+Scripts **fail open** (exit `0`) on malformed input, so a bug in a hook
+never blocks the user's real tool call.
 
 ```python
-from attune.hooks import HookConfig
+import json
+import sys
 
-config = HookConfig.from_yaml("hooks.yaml")
-registry = HookRegistry(config=config)
+try:
+    payload = json.load(sys.stdin)       # {"tool_name": ..., "tool_input": ...}
+except (json.JSONDecodeError, ValueError):
+    sys.exit(0)                          # fail open
+
+if isinstance(payload, dict) and payload.get("tool_name") == "Bash":
+    print("Bash blocked by policy", file=sys.stderr)
+    sys.exit(2)                          # 2 = block
+sys.exit(0)                             # 0 = allow
 ```
 
-## Hook Matchers
+## Wiring
 
-Matchers determine when hooks fire:
-
-```python
-from attune.hooks.config import HookMatcher
-
-# Match specific tool
-tool_matcher = HookMatcher(tool="Edit")
-
-# Match file patterns
-py_matcher = HookMatcher(file_pattern=r"\.py$")
-
-# Match everything
-wildcard = HookMatcher(match_all=True)
-
-# Combined matching
-combined = HookMatcher(
-    tool="Edit",
-    file_pattern=r"\.py$"
-)
-```
-
-## Hook Types
-
-### Python Hooks
-
-```python
-def my_handler(context: dict) -> dict:
-    # Process context
-    return {"success": True, "output": "processed"}
-
-registry.register(
-    event=HookEvent.SESSION_START,
-    handler=my_handler,
-)
-```
-
-### Command Hooks
-
-Execute shell commands:
-
-```yaml
-hooks:
-  PostToolUse:
-    - hooks:
-        - type: command
-          command: "echo 'Tool used: {tool}'"
-```
-
-### Webhook Hooks
-
-Call external APIs:
-
-```yaml
-hooks:
-  SessionEnd:
-    - hooks:
-        - type: webhook
-          command: "https://api.example.com/session-end"
-```
-
-## Priority and Order
-
-Hooks execute in priority order (higher first):
-
-```python
-registry.register(
-    event=HookEvent.SESSION_START,
-    handler=high_priority_handler,
-    priority=100,  # Runs first
-)
-
-registry.register(
-    event=HookEvent.SESSION_START,
-    handler=low_priority_handler,
-    priority=0,  # Runs last
-)
-```
-
-## Error Handling
-
-Configure error behavior per hook:
-
-```python
-HookDefinition(
-    type=HookType.PYTHON,
-    command="handler",
-    on_error="log",    # Log and continue (default)
-    # on_error="raise", # Raise exception
-    # on_error="ignore", # Silent ignore
-)
-```
-
-## Execution Logging
-
-Track hook executions:
-
-```python
-registry = HookRegistry(config=HookConfig(log_executions=True))
-
-# After some hooks fire...
-log = registry.get_execution_log(limit=10)
-for entry in log:
-    print(f"{entry['event']}: {entry['success']}")
-```
-
-## Statistics
-
-```python
-stats = registry.get_stats()
-print(f"Total hooks: {stats['total_hooks']}")
-print(f"Executions: {stats['total_executions']}")
-print(f"Success rate: {stats['success_rate']:.1f}%")
-```
-
-## Built-in Hook Scripts
-
-The framework includes pre-built hook scripts:
-
-| Script | Event | Purpose |
-|--------|-------|---------|
-| `session_start.py` | SessionStart | Restore context state |
-| `session_end.py` | SessionEnd | Save state, trigger evaluation |
-| `evaluate_session.py` | SessionEnd | Extract learning patterns |
-
-## Integration with Commands
-
-Commands can specify hooks in their metadata:
-
-```yaml
----
-name: review
-hooks:
-  pre: PreCommand
-  post: PostCommand
----
-```
-
-The `CommandExecutor` automatically fires these hooks:
-
-```python
-executor = CommandExecutor(context)
-result = executor.execute(command)
-# The pre hook fires before execution, the post hook after
-```
-
-## API Reference
-
-### HookRegistry
-
-```python
-class HookRegistry:
-    def register(event, handler, description="", matcher=None, priority=0) -> str
-    def unregister(handler_id) -> bool
-    def fire(event, context=None) -> list[dict]  # async
-    def fire_sync(event, context=None) -> list[dict]
-    def get_matching_hooks(event, context) -> list[tuple]
-    def get_execution_log(limit=100, event_filter=None) -> list[dict]
-    def get_stats() -> dict
-```
-
-### HookConfig
-
-```python
-class HookConfig:
-    hooks: dict[str, list[HookRule]]
-    enabled: bool = True
-    log_executions: bool = True
-    default_timeout: int = 30
-
-    @classmethod
-    def from_yaml(yaml_path) -> HookConfig
-    def to_yaml(yaml_path) -> None
-    def add_hook(event, hook, matcher=None, priority=0) -> None
-```
+The plugin's `hooks.json` maps each event to the script(s) that run for
+it, with a per-hook timeout. To add a hook, add a module under
+`attune/hooks/scripts/` and map it to an event in `hooks.json`.
 
 ## See Also
 
-- [Continuous Learning](continuous-learning.md) - Pattern extraction
-- [CLI Reference](reference/cli-reference.md#slash-command-system) - Slash command system
+- [Hooks — how-to](how-to/hooks.md) — task recipes
+- [Hooks — architecture](architecture/hooks.md) — design and contract
+- [Hooks — reference](reference/hooks.md) — event/exit-code table
+- [Continuous Learning](continuous-learning.md) — pattern extraction
+- [CLI Reference](reference/cli-reference.md#slash-command-system) — slash command system

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — reference</title>
-  <meta name="description" content="| Symbol | Kind | Purpose | |--------|------|---------| | `HookEvent` | enum | `PRE_TOOL_USE`/`POST_TOOL_USE`/`SESSION_START`/`SESSION_END`/`PRE_COMPACT`/`PRE_COMMAND`/`POST_COMMAND`/`STOP`; values ar" />
-  <meta property="og:title" content="The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — reference" />
-  <meta property="og:description" content="| Symbol | Kind | Purpose | |--------|------|---------| | `HookEvent` | enum | `PRE_TOOL_USE`/`POST_TOOL_USE`/`SESSION_START`/`SESSION_END`/`PRE_COMPACT`/`PRE_COMMAND`/`POST_COMMAND`/`STOP`; values ar" />
+  <title>The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events — reference</title>
+  <meta name="description" content="| Event | Exit contract | Typical use | |-------|---------------|-------------| | `PreToolUse` | `0` allow / `2` block | policy guards (`security_guard`, `worktree_path_guard`) | | `PostToolUse` | `0`" />
+  <meta property="og:title" content="The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events — reference" />
+  <meta property="og:description" content="| Event | Exit contract | Typical use | |-------|---------------|-------------| | `PreToolUse` | `0` allow / `2` block | policy guards (`security_guard`, `worktree_path_guard`) | | `PostToolUse` | `0`" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/hooks/reference" />
   <style>
@@ -272,54 +272,46 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config</h1>
+<h1>The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events</h1>
 <h2>Reference</h2>
 <table>
 <thead>
 <tr>
-<th>Symbol</th>
-<th>Kind</th>
-<th>Purpose</th>
+<th>Event</th>
+<th>Exit contract</th>
+<th>Typical use</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>HookEvent</code></td>
-<td>enum</td>
-<td><code>PRE_TOOL_USE</code>/<code>POST_TOOL_USE</code>/<code>SESSION_START</code>/<code>SESSION_END</code>/<code>PRE_COMPACT</code>/<code>PRE_COMMAND</code>/<code>POST_COMMAND</code>/<code>STOP</code>; values are Claude Code event names.</td>
+<td><code>PreToolUse</code></td>
+<td><code>0</code> allow / <code>2</code> block</td>
+<td>policy guards (<code>security_guard</code>, <code>worktree_path_guard</code>)</td>
 </tr>
 <tr>
-<td><code>HookRegistry(config=None)</code></td>
-<td>class</td>
-<td><code>register(event, handler, description=&quot;&quot;, matcher=None, priority=0) -&gt; str</code>, <code>fire</code> (async) / <code>fire_sync</code>, <code>get_matching_hooks</code>, <code>unregister</code>, <code>get_execution_log</code>, <code>get_stats</code>, <code>load_config</code>.</td>
+<td><code>PostToolUse</code></td>
+<td><code>0</code></td>
+<td>formatting, telemetry</td>
 </tr>
 <tr>
-<td><code>HookExecutor(python_handlers=None)</code></td>
-<td>class</td>
-<td><code>execute(hook, context)</code> — <strong>async</strong>.</td>
+<td><code>SessionStart</code></td>
+<td><code>0</code></td>
+<td>orientation banners (<code>starter_reconciler</code>)</td>
 </tr>
 <tr>
-<td><code>HookDefinition(type=HookType.PYTHON, command, description=&quot;&quot;, timeout=30, async_execution=False, on_error=&quot;log&quot;)</code></td>
-<td>pydantic model</td>
-<td>A configured hook.</td>
+<td><code>SessionEnd</code> / <code>Stop</code></td>
+<td><code>0</code></td>
+<td>stash notes, lesson reminders</td>
 </tr>
 <tr>
-<td><code>HookConfig(hooks={}, enabled=True, log_executions=True, default_timeout=30)</code></td>
-<td>pydantic model</td>
-<td><code>from_yaml(path)</code>, <code>add_hook(event, hook, matcher=None, priority=0)</code>, <code>get_hooks_for_event(event)</code>, <code>to_yaml</code>.</td>
-</tr>
-<tr>
-<td><code>HookType</code> (<code>attune.hooks.config</code>)</td>
-<td>enum</td>
-<td><code>COMMAND</code> / <code>PYTHON</code> / <code>WEBHOOK</code>.</td>
-</tr>
-<tr>
-<td><code>HookRule</code> (<code>attune.hooks.config</code>)</td>
-<td>pydantic model</td>
-<td><code>matcher</code>, <code>hooks</code>, <code>enabled</code>, <code>priority</code>, <code>description</code>.</td>
+<td><code>PreCompact</code></td>
+<td><code>0</code></td>
+<td>pre-compaction side effects</td>
 </tr>
 </tbody>
 </table>
+<p>Wiring: the plugin's <code>hooks.json</code> maps events → scripts under
+<code>attune/hooks/scripts/</code>, each with a timeout.</p>
 
   </article>
   <footer>
