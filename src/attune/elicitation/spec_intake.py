@@ -159,6 +159,28 @@ def compose_spec_contract(answers: dict[str, Any], taken_slugs: list[str]) -> st
     return "\n".join(lines) + "\n"
 
 
+def _read_answers() -> dict[str, Any] | None:
+    """Read the answers object from stdin, or None when unusable.
+
+    The compose seam is fed agent-authored JSON. Unparseable input, or
+    valid JSON that is not an object, previously crashed the ``.get``
+    chain with a traceback against a documented return-0 contract
+    (library-review E2); both now report cleanly on stderr.
+    """
+    try:
+        answers = json.load(sys.stdin)
+    except (json.JSONDecodeError, ValueError, RecursionError) as exc:
+        print(f"error: could not parse answers JSON: {exc}", file=sys.stderr)
+        return None
+    if not isinstance(answers, dict):
+        print(
+            f"error: answers must be a JSON object, got {type(answers).__name__}",
+            file=sys.stderr,
+        )
+        return None
+    return answers
+
+
 def _main(argv: list[str]) -> int:
     """CLI seam for the /spec skill (mirrors fix_intake's contract).
 
@@ -168,7 +190,9 @@ def _main(argv: list[str]) -> int:
     """
     repo_root = Path.cwd()
     if "--compose" in argv:
-        answers = json.load(sys.stdin)
+        answers = _read_answers()
+        if answers is None:
+            return 2
         print(compose_spec_contract(answers, existing_spec_slugs(repo_root)))
         return 0
     areas = area_candidates(repo_root)

@@ -311,6 +311,15 @@ def _load_cross_links(generated_dir: Path) -> dict[str, Any]:
             data = json.loads(
                 index_path.read_text(encoding="utf-8"),
             )
+            # Callers (_resolve_related) .get this straight away, so a
+            # valid-JSON non-dict from a corrupt/partial write would
+            # crash template rendering (library-review F4).
+            if not isinstance(data, dict):
+                logger.warning(
+                    "cross_links.json is %s, expected mapping — ignoring",
+                    type(data).__name__,
+                )
+                return {}
             _CROSS_LINKS_CACHE[cache_key] = data
             return data
         except (json.JSONDecodeError, OSError) as e:
