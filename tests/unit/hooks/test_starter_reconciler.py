@@ -991,3 +991,51 @@ class TestSharedDeadline:
             f"hook took {elapsed:.1f}s ≥ registered {registered}s timeout "
             f"(stderr: {proc.stderr!r})"
         )
+
+
+class TestSharedDeadlineSkipPaths:
+    """The clamp helper and the budget-exhausted skip paths.
+
+    These pin the *skip* half of the shared-deadline contract: once the
+    global budget is spent, remaining work is not started at all (rather
+    than started with a fresh per-call ceiling, which is what pushed the
+    hook past its registered SessionStart timeout).
+    """
+
+    def test_remaining_returns_ceiling_when_no_deadline(self, hook_module):
+        hook_module._DEADLINE = None
+        assert hook_module._remaining(4.0) == 4.0
+
+    def test_remaining_is_zero_once_deadline_passed(self, hook_module, monkeypatch):
+        monkeypatch.setattr(hook_module, "_DEADLINE", hook_module.time.monotonic() - 1)
+        assert hook_module._remaining(4.0) == 0.0
+
+    def test_remaining_clamps_to_time_left(self, hook_module, monkeypatch):
+        monkeypatch.setattr(hook_module, "_DEADLINE", hook_module.time.monotonic() + 1)
+        assert 0 < hook_module._remaining(4.0) <= 1.0
+
+    def test_pypi_lookup_skipped_when_budget_spent(self, hook_module, monkeypatch):
+        """The PyPI call must be SKIPPED, not started, past the deadline."""
+        opened: list[str] = []
+        monkeypatch.setattr(
+            hook_module.urllib.request,
+            "urlopen",
+            lambda *a, **k: opened.append("called"),
+        )
+        monkeypatch.setattr(hook_module, "_DEADLINE", hook_module.time.monotonic() - 1)
+
+        assert hook_module.pypi_latest("attune-ai") is None
+        assert opened == []
+
+    def test_subprocess_skipped_when_budget_spent(self, hook_module, monkeypatch):
+        """_run must not spawn a process once the budget is spent."""
+        spawned: list[list[str]] = []
+        monkeypatch.setattr(
+            hook_module.subprocess,
+            "run",
+            lambda cmd, **k: spawned.append(cmd),
+        )
+        monkeypatch.setattr(hook_module, "_DEADLINE", hook_module.time.monotonic() - 1)
+
+        assert hook_module._run(["git", "status"], None) is None
+        assert spawned == []
