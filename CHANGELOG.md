@@ -19,7 +19,9 @@ killed mid-run. The major version marks two things to check before you
 upgrade — a dormant in-package hook-execution engine was removed (dead
 code, no live caller), and the memory durability & scoping changes alter
 observable behavior — both detailed under **Changed** and **Removed**
-below.
+below. Upgrading? The
+[13.0.0 upgrade guide](docs/migration/upgrading-to-13.0.0.md) has a
+one-glance "are you affected?" table.
 
 ### Added
 
