@@ -13,8 +13,11 @@ Covers:
 from __future__ import annotations
 
 import importlib.util
+import json
+import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -868,3 +871,123 @@ class TestStampMainDefaultTargets:
         assert global_starter.is_file()
         assert "written_at:" in global_starter.read_text(encoding="utf-8")
         assert f"stamped {global_starter}" in capsys.readouterr().out
+
+
+# --- Shared wall-clock budget (L5 regression) ------------------------
+#
+# repo_slug + merged_prs_on_main run synchronously OUTSIDE the concurrent
+# executor, once per reconcile pass, and there are two passes (project +
+# global). With each git/gh call bounded only by SUBPROC_TIMEOUT (4s),
+# the hook could take 12-32s against its registered 12s SessionStart
+# timeout and get SIGKILLed mid-banner. The fix threads one shared
+# ``_DEADLINE`` (GLOBAL_WALL_BUDGET) through ``_run`` / ``pypi_latest`` /
+# the executor wait so total wall-clock stays under the registered
+# timeout even when every git call blocks to its ceiling.
+
+
+def _registered_session_start_timeout() -> int:
+    """The starter_reconciler SessionStart timeout from settings.json."""
+    settings = Path(__file__).resolve().parents[3] / ".claude" / "settings.json"
+    data = json.loads(settings.read_text(encoding="utf-8"))
+    for group in data.get("hooks", {}).get("SessionStart", []):
+        for hook in group.get("hooks", []):
+            if "starter_reconciler.py" in hook.get("command", ""):
+                return hook["timeout"]
+    raise AssertionError("no starter_reconciler.py SessionStart hook in settings.json")
+
+
+class TestSharedDeadline:
+    def test_remaining_passthrough_without_deadline(self, hook_module, monkeypatch):
+        monkeypatch.setattr(hook_module, "_DEADLINE", None)
+        assert hook_module._remaining(4) == 4
+
+    def test_remaining_zero_when_deadline_passed(self, hook_module, monkeypatch):
+        monkeypatch.setattr(hook_module, "_DEADLINE", time.monotonic() - 1)
+        assert hook_module._remaining(4) == 0.0
+
+    def test_remaining_clamps_to_time_left(self, hook_module, monkeypatch):
+        monkeypatch.setattr(hook_module, "_DEADLINE", time.monotonic() + 0.5)
+        remaining = hook_module._remaining(hook_module.SUBPROC_TIMEOUT)
+        assert 0 < remaining <= 0.5
+        assert remaining < hook_module.SUBPROC_TIMEOUT
+
+    def test_run_skips_subprocess_once_budget_spent(self, hook_module, monkeypatch):
+        calls: list = []
+        monkeypatch.setattr(hook_module.subprocess, "run", lambda *a, **k: calls.append(1))
+        monkeypatch.setattr(hook_module, "_DEADLINE", time.monotonic() - 1)
+        assert hook_module._run(["git", "status"], None) is None
+        assert calls == []  # never spawned — the deadline already passed
+
+    def test_run_clamps_timeout_to_remaining_budget(self, hook_module, monkeypatch):
+        captured: dict = {}
+
+        def fake_run(cmd, **kwargs):
+            captured.update(kwargs)
+            return _FakeProc("ok", 0)
+
+        monkeypatch.setattr(hook_module.subprocess, "run", fake_run)
+        monkeypatch.setattr(hook_module, "_DEADLINE", time.monotonic() + 0.5)
+        hook_module._run(["git", "status"], None)
+        assert captured["timeout"] <= 0.5
+        assert captured["timeout"] < hook_module.SUBPROC_TIMEOUT
+
+    def test_global_budget_under_registered_timeout(self, hook_module):
+        # The whole point: the combined budget must leave the hook room to
+        # finish (and print) before the harness SIGKILLs it.
+        assert hook_module.GLOBAL_WALL_BUDGET < _registered_session_start_timeout()
+
+    def test_hook_completes_under_registered_timeout_with_slow_git(self, hook_module, tmp_path):
+        """End-to-end receipt: with git/gh sleeping far past their ceiling
+        on PATH, and BOTH passes (project + global) active, the real hook
+        script finishes well under its registered SessionStart timeout.
+
+        Before the fix this same setup measured 24-32s (> 12s → SIGKILL,
+        banner lost); after it, ~GLOBAL_WALL_BUDGET seconds.
+        """
+        fakebin = tmp_path / "bin"
+        fakebin.mkdir()
+        for name in ("git", "gh"):
+            stub = fakebin / name
+            stub.write_text("#!/bin/sh\nexec sleep 60\n", encoding="utf-8")
+            stub.chmod(0o755)
+
+        # Distinct project + global starters → BOTH reconcile passes run.
+        repo = tmp_path / "repo"
+        (repo / ".git").mkdir(parents=True)
+        (repo / ".attune").mkdir(parents=True)
+        (repo / ".attune" / "next_session_starter.md").write_text(
+            "Merged PR #1118 and #1121; branch claude/foo. Ship 9.0.0.\n",
+            encoding="utf-8",
+        )
+        home = tmp_path / "home"
+        (home / ".attune").mkdir(parents=True)
+        (home / ".attune" / "next_session_starter.md").write_text(
+            "Merged PR #1200 and #1201; branch claude/bar. Ship 9.1.0.\n",
+            encoding="utf-8",
+        )
+
+        env = dict(os.environ)
+        env["PATH"] = f"{fakebin}{os.pathsep}{env.get('PATH', '')}"
+        env["HOME"] = str(home)
+        # Force the SDK gate off so the hook body always runs (benchmark
+        # escape hatch), regardless of the test runner's own env.
+        env["ATTUNE_SDK_GATE_OVERRIDE"] = "1"
+        env.pop("ATTUNE_SDK_SUBPROCESS", None)
+
+        registered = _registered_session_start_timeout()
+        start = time.monotonic()
+        proc = subprocess.run(
+            [sys.executable, str(SCRIPT_PATH)],
+            cwd=str(repo),
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=registered * 3,  # generous: catch a hang, not the SLA
+        )
+        elapsed = time.monotonic() - start
+
+        assert proc.returncode == 0
+        assert elapsed < registered, (
+            f"hook took {elapsed:.1f}s ≥ registered {registered}s timeout "
+            f"(stderr: {proc.stderr!r})"
+        )
