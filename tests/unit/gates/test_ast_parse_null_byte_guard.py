@@ -142,3 +142,87 @@ def test_ast_analyzer_records_error_instead_of_raising() -> None:
     # test): ValueError on <= 3.11, SyntaxError on 3.12+.
     assert analyzer.last_error
     assert ("ValueError" in analyzer.last_error) or ("SyntaxError" in analyzer.last_error)
+
+
+# ---------------------------------------------------------------------------
+# Behavioural coverage at the fixed sites
+#
+# The gate above proves the handler SHAPE at every site; these prove the
+# resulting BEHAVIOUR — a corrupt file is skipped and its clean siblings
+# still get processed, which is the property the fix exists to protect.
+# ---------------------------------------------------------------------------
+
+NULL_BYTE_SOURCE = b"x = 1\x00y = 2\n"
+GOOD_SOURCE = "def good():\n    return 1\n"
+
+
+def _corpus(tmp_path: Path) -> tuple[Path, Path]:
+    """A clean module beside a null-byte-corrupt one."""
+    good = tmp_path / "good.py"
+    good.write_text(GOOD_SOURCE, encoding="utf-8")
+    bad = tmp_path / "corrupt.py"
+    bad.write_bytes(NULL_BYTE_SOURCE)
+    return good, bad
+
+
+def test_extract_public_api_skips_corrupt_module(tmp_path: Path) -> None:
+    from attune.authoring.ground_truth.public_api import extract_public_api
+
+    good, bad = _corpus(tmp_path)
+    out = extract_public_api([good, bad])
+
+    # The clean sibling still contributes; the corrupt file is skipped.
+    assert "good" in out
+
+
+def test_extract_dataclasses_skips_corrupt_module(tmp_path: Path) -> None:
+    from attune.authoring.ground_truth.dataclass_refs import extract_dataclasses
+
+    good = tmp_path / "good.py"
+    good.write_text(
+        "from dataclasses import dataclass\n\n\n@dataclass\nclass Thing:\n    a: int\n",
+        encoding="utf-8",
+    )
+    bad = tmp_path / "corrupt.py"
+    bad.write_bytes(NULL_BYTE_SOURCE)
+
+    assert "Thing" in extract_dataclasses([good, bad])
+
+
+def test_architecture_import_scan_skips_corrupt_module(tmp_path: Path) -> None:
+    from attune.orchestration.tools.architecture import RealArchitectureAnalyzer
+
+    _, bad = _corpus(tmp_path)
+    analyzer = RealArchitectureAnalyzer.__new__(RealArchitectureAnalyzer)
+
+    assert analyzer._extract_imports(bad) == set()
+
+
+def test_python_refs_check_survives_corrupt_fence(tmp_path: Path) -> None:
+    """A null byte inside a ```python fence must not abort the check."""
+    from attune.authoring.fact_check import python_refs
+
+    doc = tmp_path / "polished.md"
+    doc.write_bytes(b"# Doc\n\n```python\nx = 1\x00y = 2\n```\n")
+
+    python_refs.check(doc)  # must not raise
+
+
+def test_tutorial_static_check_reports_corrupt_fence(tmp_path: Path) -> None:
+    """The fence is REPORTED, not raised past — and without .msg/.lineno."""
+    from attune.authoring.fact_check import tutorial_static_check
+
+    doc = tmp_path / "polished.md"
+    doc.write_bytes(b"# Doc\n\n```python\nx = 1\x00y = 2\n```\n")
+
+    tutorial_static_check.check(doc)  # must not raise
+
+
+def test_doc_examples_parse_block_returns_error_not_raise() -> None:
+    """_parse_block reports the failure in its error slot."""
+    from attune.authoring.fact_check.doc_examples import _parse_block
+
+    tree, error = _parse_block("x = 1\x00y = 2\n")
+
+    assert tree is None
+    assert error
