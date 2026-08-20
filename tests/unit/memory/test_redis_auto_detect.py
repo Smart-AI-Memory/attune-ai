@@ -567,8 +567,10 @@ class TestCheckServerReachable:
         closed_port = sock.getsockname()[1]
         sock.close()
 
-        for var in ("REDIS_PRIVATE_URL", "REDIS_PUBLIC_URL", "REDIS_HOST", "REDIS_PASSWORD"):
-            monkeypatch.delenv(var, raising=False)
+        # The other six connection vars are cleared for every test by
+        # conftest's _scrub_redis_connection_env, so setting REDIS_URL is
+        # enough to pin the endpoint; REDIS_HOST is suite-pinned to
+        # loopback and loses to a URL var on precedence either way.
         monkeypatch.setenv("REDIS_URL", f"redis://127.0.0.1:{closed_port}/0")
 
         detector = RedisAutoDetector(config_path=tmp_path / "config.yml")
@@ -576,7 +578,12 @@ class TestCheckServerReachable:
         assert detector._check_server_reachable() is False
 
     def test_returns_false_on_a_malformed_configured_url(self, tmp_path, monkeypatch):
-        """A bad REDIS_URL degrades to "unreachable", it does not raise."""
+        """A bad REDIS_URL degrades to "unreachable", it does not raise.
+
+        Hermetic via the same conftest fixture as the test above — checked
+        by running this file with hostile REDIS_PRIVATE_URL / REDIS_HOST /
+        REDIS_PASSWORD exported (codex D11 lane, 2026-08-20).
+        """
         monkeypatch.setenv("REDIS_URL", "redis://127.0.0.1:not-a-port/0")
 
         detector = RedisAutoDetector(config_path=tmp_path / "config.yml")

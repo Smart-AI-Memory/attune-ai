@@ -112,9 +112,16 @@ def file_lock(path: Path, *, timeout: float = DEFAULT_LOCK_TIMEOUT) -> Iterator[
         path: The file being protected (the lock lives alongside it).
         timeout: Seconds to wait for a peer to release.
     """
-    lock_path = _validate_file_path(str(path)).with_name(path.name + ".lock")
+    path = _validate_file_path(str(path))
+    lock_path = path.with_name(path.name + ".lock")
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     deadline = time.monotonic() + timeout
+    # Our claim on the lock. Written into the file and re-read before we
+    # release: without it, a slow holder whose lock was broken as stale
+    # would delete whichever lock exists at release time — including a
+    # NEW owner's, letting two writers into the critical section at once
+    # (the ABA race; codex D11 lane, 2026-08-20).
+    token = f"{os.getpid()}:{os.urandom(8).hex()}"
     fd: int | None = None
 
     while True:
@@ -138,13 +145,28 @@ def file_lock(path: Path, *, timeout: float = DEFAULT_LOCK_TIMEOUT) -> Iterator[
 
     try:
         with contextlib.suppress(OSError):
-            os.write(fd, str(os.getpid()).encode("ascii"))
+            os.write(fd, token.encode("ascii"))
         yield True
     finally:
         with contextlib.suppress(OSError):
             os.close(fd)
-        with contextlib.suppress(OSError):
-            lock_path.unlink()
+        _release_if_owner(lock_path, token)
+
+
+def _release_if_owner(lock_path: Path, token: str) -> None:
+    """Unlink the lock only while it still carries OUR token.
+
+    A lock broken as stale while we were slow now belongs to someone
+    else; deleting it would drop a peer's mutual exclusion on the floor.
+    """
+    try:
+        if lock_path.read_text(encoding="ascii") != token:
+            logger.warning("file_lock_lost path=%s", lock_path)
+            return
+    except OSError:
+        return  # already gone, or unreadable — nothing of ours to remove
+    with contextlib.suppress(OSError):
+        lock_path.unlink()
 
 
 def _break_if_stale(lock_path: Path) -> bool:

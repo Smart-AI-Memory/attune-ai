@@ -14,6 +14,7 @@ import time
 
 import pytest
 
+from attune.memory.atomic_io import file_lock
 from attune.memory.file_stash import DEFAULT_TTL_DAYS, FileStashBackend
 
 
@@ -518,7 +519,11 @@ def test_eperm_through_public_stash_entry_returns_false(backend, monkeypatch):
     )
     with capture_logs() as logs, _writes_denied(backend):
         assert stash_entry(entry, backend=backend) is False
-    assert any(rec.get("event") == "file_stash_remember_failed" for rec in logs)
+    # Either failure reason is correct — the store may be refused at the
+    # lock or at the append, depending on which the filesystem denies
+    # first. What R1 requires is that the refusal is VISIBLE.
+    reasons = {"file_stash_remember_failed", "file_stash_remember_locked"}
+    assert any(rec.get("event") in reasons for rec in logs)
 
 
 @_needs_write_denial
@@ -613,3 +618,36 @@ def test_recall_entries_survives_a_poison_record(backend):
     entries = session_stash.recall_entries("redis", backend=backend)
 
     assert [r["id"] for r in entries] == ["ok1"]
+
+
+# --------------------------------------------------------------------------
+# Codex D11 lane: an append during a prune must not be erased
+# --------------------------------------------------------------------------
+
+
+def test_every_findings_writer_participates_in_the_lock(backend):
+    """prune/forget/remember must all decline while a peer holds the lock.
+
+    The first G1 fix made ``remember`` append and locked the KV store,
+    but left ``prune``/``forget`` rewriting the whole findings file
+    unsynchronised, so an append landing between their read and their
+    replace still vanished under a success receipt (codex D11 lane).
+
+    Asserted as a MECHANISM, not as a race: a timing test here passed
+    against the broken code on most runs, which makes it no guard at
+    all. Holding the real lock and requiring each writer to decline is
+    deterministic and still fully real — the same correction the H2
+    lock tests needed.
+    """
+    backend.remember("keeper", memory_id="keep-1")
+
+    with file_lock(backend._findings) as held:
+        assert held, "test could not take the lock it means to hold"
+        assert backend.remember("late", memory_id="late-1") is False
+        assert backend.prune(max_age_days=30) == 0
+        assert backend.forget(["keep-1"]) == 0
+
+    # The record the locked-out forget() failed to remove is still there,
+    # and normal service resumes once the lock is released.
+    assert [r["id"] for r in backend.recent()] == ["keep-1"]
+    assert backend.remember("after", memory_id="after-1") is True

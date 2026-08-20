@@ -200,7 +200,16 @@ class FileStashBackend:
             # add one record is what let concurrent writers erase each
             # other while both reported success (library-review G1).
             # Expired records are pruned lazily on read and by prune().
-            append_line(self._findings, json.dumps(record, ensure_ascii=False))
+            #
+            # Still under the lock: prune/forget DO rewrite the whole file,
+            # and an append landing between their read and their replace is
+            # erased just the same (codex D11 lane, 2026-08-20). Appends are
+            # small and rare, so serialising them costs nothing.
+            with file_lock(self._findings) as locked:
+                if not locked:
+                    logger.warning("file_stash_remember_locked")
+                    return False
+                append_line(self._findings, json.dumps(record, ensure_ascii=False))
             return True
         except Exception as e:  # noqa: BLE001
             # INTENTIONAL: stash is best-effort; never break the host session.
@@ -288,6 +297,18 @@ class FileStashBackend:
         cutoff = time.time() - ttl_seconds
         if not self._findings.exists():
             return 0
+        try:
+            with file_lock(self._findings) as locked:
+                if not locked:
+                    logger.warning("file_stash_prune_locked")
+                    return 0
+                return self._sweep(cutoff)
+        except OSError as e:
+            logger.warning("file_stash_prune_failed", error=str(e))
+            return 0
+
+    def _sweep(self, cutoff: float) -> int:
+        """Drop records older than ``cutoff``. Caller holds the lock."""
         kept: list[dict[str, Any]] = []
         dropped = 0
         try:
@@ -323,6 +344,18 @@ class FileStashBackend:
         if not ids or not self._findings.exists():
             return 0
         targets = set(ids)
+        try:
+            with file_lock(self._findings) as locked:
+                if not locked:
+                    logger.warning("file_stash_forget_locked")
+                    return 0
+                return self._drop(targets)
+        except OSError as e:
+            logger.warning("file_stash_forget_failed", error=str(e))
+            return 0
+
+    def _drop(self, targets: set[str]) -> int:
+        """Remove records whose id is in ``targets``. Caller holds the lock."""
         kept: list[dict[str, Any]] = []
         dropped = 0
         try:

@@ -17,7 +17,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from attune.memory.atomic_io import atomic_write_text
+from attune.memory.atomic_io import atomic_write_text, file_lock
 from attune.memory.curated_audit import (
     format_age_annotation,
     format_status_annotation,
@@ -514,30 +514,45 @@ class PersonalMemory:
         atomic_write_text(dest, text)
 
     def _update_summaries(self, root: Path, path: Path, text: str) -> None:
-        """Upsert the path-keyed summaries_by_path.json sidecar."""
+        """Upsert the path-keyed summaries_by_path.json sidecar.
+
+        Held under the lock across read-modify-write: a unique temp name
+        stops writers destroying each other's temp file, but two
+        concurrent upserts still lose one entry without mutual exclusion
+        (codex D11 lane, 2026-08-20).
+        """
         sidecar = root / _SUMMARIES_FILE
-        summaries: dict[str, str] = {}
-        if sidecar.exists():
-            try:
-                summaries = json.loads(sidecar.read_text(encoding="utf-8"))
-            except (json.JSONDecodeError, OSError):
-                summaries = {}
-
         key = path.relative_to(root).as_posix()
-        summaries[key] = _extract_summary(text)
+        with file_lock(sidecar) as locked:
+            if not locked:
+                logger.warning("personal_summaries_locked: %s", key)
+                return
+            summaries = self._read_summaries(sidecar)
+            summaries[key] = _extract_summary(text)
+            atomic_write_text(sidecar, json.dumps(summaries, indent=2, ensure_ascii=False))
 
-        atomic_write_text(sidecar, json.dumps(summaries, indent=2, ensure_ascii=False))
+    @staticmethod
+    def _read_summaries(sidecar: Path) -> dict[str, str]:
+        """The sidecar's current contents; a corrupt file reads as empty."""
+        if not sidecar.exists():
+            return {}
+        try:
+            data = json.loads(sidecar.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            return {}
+        return data if isinstance(data, dict) else {}
 
     def _remove_from_summaries(self, root: Path, path: Path) -> None:
         """Remove a path key from the summaries sidecar if present."""
         sidecar = root / _SUMMARIES_FILE
         if not sidecar.exists():
             return
-        try:
-            summaries = json.loads(sidecar.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
-            return
         key = path.relative_to(root).as_posix()
-        if key in summaries:
-            summaries.pop(key)
-            atomic_write_text(sidecar, json.dumps(summaries, indent=2, ensure_ascii=False))
+        with file_lock(sidecar) as locked:
+            if not locked:
+                logger.warning("personal_summaries_locked: %s", key)
+                return
+            summaries = self._read_summaries(sidecar)
+            if key in summaries:
+                summaries.pop(key)
+                atomic_write_text(sidecar, json.dumps(summaries, indent=2, ensure_ascii=False))

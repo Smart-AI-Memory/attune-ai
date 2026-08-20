@@ -370,12 +370,23 @@ def ensure_redis(
     """
     from attune.memory.config import resolved_redis_endpoint
 
+    # Probe the RESOLVED CONNECTION, not a host/port pair derived from
+    # it: host+port cannot carry the scheme, db or username, so a
+    # `rediss://` target would be probed over a plain socket, `/3` would
+    # be read as `/0`, and an ACL username would be dropped — the H1
+    # split-brain, reintroduced one layer up (codex D11 lane, 2026-08-20).
+    # host/port stay resolved for STATUS and for the start methods, which
+    # genuinely need a port number to bind a local server to.
+    caller_named_endpoint = host is not None or port is not None
     resolved_host, resolved_port = resolved_redis_endpoint()
     host = resolved_host if host is None else host
     port = resolved_port if port is None else port
 
+    def _running() -> bool:
+        return _check_redis_running(host, port) if caller_named_endpoint else _check_redis_running()
+
     # Check if already running
-    if _check_redis_running(host, port):
+    if _running():
         status = RedisStatus(
             available=True,
             method=RedisStartMethod.ALREADY_RUNNING,
@@ -453,6 +464,8 @@ def _try_start_methods(
 
     for method, start_func in start_methods:
         try:
+            # Explicit host/port here is correct: we are probing the local
+            # server this method just started on that port.
             if start_func() and _check_redis_running(host, port):
                 if verbose:
                     print(f"✓ Redis started via {method.value}")
