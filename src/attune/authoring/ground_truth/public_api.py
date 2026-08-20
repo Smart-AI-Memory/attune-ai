@@ -161,7 +161,10 @@ def extract_public_api(source_paths: list[Path]) -> str:
             continue
         try:
             tree = ast.parse(source, filename=str(path))
-        except SyntaxError as exc:
+        except (
+            SyntaxError,
+            ValueError,
+        ) as exc:  # ast.parse: null bytes -> ValueError, not SyntaxError
             logger.debug("ground_truth.public_api: parse failed for %s (%s)", path, exc)
             continue
 

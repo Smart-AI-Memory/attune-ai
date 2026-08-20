@@ -116,7 +116,12 @@ class PostSimplificationMixin:
                     source = py_file.read_text(encoding="utf-8")
                     tree = ast.parse(source)
                     files_scanned += 1
-                except (SyntaxError, UnicodeDecodeError, OSError):
+                except (
+                    SyntaxError,
+                    UnicodeDecodeError,
+                    OSError,
+                    ValueError,
+                ):  # ast.parse: null bytes -> ValueError, not SyntaxError
                     continue
 
                 for node in ast.walk(tree):

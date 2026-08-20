@@ -76,7 +76,7 @@ def check(polished_path: Path) -> list[Finding]:
     for fence_line, body in _extract_code_fences(text):
         try:
             tree = ast.parse(body)
-        except SyntaxError:
+        except (SyntaxError, ValueError):  # ast.parse: null bytes -> ValueError, not SyntaxError
             # Not all python fences are valid stand-alone modules
             # (snippets often omit imports or use ``...``); skip
             # silently. Tutorial static checks belong to Phase 4.

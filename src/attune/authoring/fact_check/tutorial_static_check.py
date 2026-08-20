@@ -209,6 +209,19 @@ def check(polished_path: Path) -> list[Finding]:
                 )
             )
             continue
+        except ValueError as exc:
+            # ast.parse rejects a null byte with ValueError, which
+            # carries no .msg/.lineno — report the fence without them
+            # rather than aborting the whole tutorial check.
+            findings.append(
+                Finding(
+                    check=CHECK_TUTORIAL_STATIC,
+                    severity="error",
+                    location=f"Line {body_start_line} (python fence)",
+                    message=f"Unparseable source: {exc}",
+                )
+            )
+            continue
 
         findings.extend(_run_mypy(stripped, base_line=body_start_line))
 

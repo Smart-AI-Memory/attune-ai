@@ -200,7 +200,12 @@ class RealArchitectureAnalyzer:
         try:
             source = py_file.read_text(encoding="utf-8")
             tree = ast.parse(source, filename=str(py_file))
-        except (SyntaxError, UnicodeDecodeError, OSError) as exc:
+        except (
+            SyntaxError,
+            UnicodeDecodeError,
+            OSError,
+            ValueError,
+        ) as exc:  # ast.parse: null bytes -> ValueError, not SyntaxError
             logger.debug("Skipping %s: %s", py_file, exc)
             return set()
 

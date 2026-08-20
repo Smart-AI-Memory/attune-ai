@@ -38,7 +38,10 @@ class ASTSkeletonGenerator:
 
         try:
             tree = ast.parse(source_code)
-        except SyntaxError as exc:
+        except (
+            SyntaxError,
+            ValueError,
+        ) as exc:  # ast.parse: null bytes -> ValueError, not SyntaxError
             logger.debug("skeleton: source does not parse, passing through: %s", exc)
             return source_code
 
