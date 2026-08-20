@@ -313,7 +313,16 @@ class TestGetPrompts:
 
 
 class TestGetElicitationTools:
-    """Field-type enum surfaces: v2 rich tools expose 10, v1 stays at 4."""
+    """Field-type enum surfaces: v2 rich tools mirror the library, v1 stays at 4.
+
+    The v2 rich field/form schema is SOURCED FROM
+    ``attune_forms.mcp_server`` (not hand-declared), so these tests pin
+    that mirror against the library — the D3 drift guard that retired
+    the recurring hand-sync obligation (forms 0.7.0). A forms release
+    that grows the field contract flows through automatically; a
+    regression that severs the wiring (someone re-hand-declares the
+    schema) fails here loudly.
+    """
 
     def test_v2_tools_present(self) -> None:
         tools = get_elicitation_tools()
@@ -329,46 +338,57 @@ class TestGetElicitationTools:
             "boolean",
         ]
 
-    def test_v2_tools_expose_all_ten_types(self) -> None:
-        # D10 enum-honesty fix + V3 decision + V4 pushback + V5 progress
-        # constructs: render_widget / ask accept the rich controls plus
-        # decision, pushback, and progress.
-        tools = get_elicitation_tools()
-        expected = {
-            "text_input",
-            "textarea",
-            "single_select",
-            "multi_select",
-            "boolean",
-            "number",
-            "date",
-            "decision",
-            "pushback",
-            "progress",
-        }
-        assert set(_field_types(tools, "elicitation_render_widget")) == expected
-        assert set(_field_types(tools, "elicitation_ask")) == expected
+    def test_v2_rich_schema_is_sourced_from_forms(self) -> None:
+        # D3 drift guard: the v2 rich field+form schema is the library's,
+        # verbatim. The rich tools (render_widget, ask, collect_response)
+        # all embed it; if any drifts from attune_forms, this fails.
+        from attune_forms.mcp_server import _field_schema, _form_schema
 
-    def test_collect_response_accepts_rich_controls(self) -> None:
-        # collect_response is the shared validator for the widget round-trip,
-        # which posts back number/date/textarea — its input enum must accept
-        # the rich controls or the round-trip breaks at validation. Regression
-        # guard for the gap found dogfooding the v2 demo.
-        expected = {
-            "text_input",
-            "textarea",
-            "single_select",
-            "multi_select",
-            "boolean",
-            "number",
-            "date",
-            "decision",
-            "pushback",
-            "progress",
-        }
-        assert (
-            set(_field_types(get_elicitation_tools(), "elicitation_collect_response")) == expected
-        )
+        lib_field = _field_schema()
+        lib_form = _form_schema()
+        tools = get_elicitation_tools()
+        for name in (
+            "elicitation_render_widget",
+            "elicitation_ask",
+            "elicitation_collect_response",
+        ):
+            form = tools[name]["input_schema"]["properties"]["form"]
+            assert form == lib_form, f"{name} form schema drifted from attune_forms"
+            assert form["properties"]["fields"]["items"] == lib_field
+
+    def test_v2_absorbs_forms_070_field_contract(self) -> None:
+        # Regression guard for the forms 0.7.0 sync: the mirror must carry
+        # the 0.7.0 additions (would fail against the old hand-declared
+        # schema or a pre-0.7.0 library floor).
+        items = get_elicitation_tools()["elicitation_render_widget"]["input_schema"]["properties"][
+            "form"
+        ]["properties"]["fields"]["items"]
+        props = items["properties"]
+        # additionalProperties: false on the field object (forms #50).
+        assert items["additionalProperties"] is False
+        # Multi-type `default` incl. object (triage dict) — forms #42/#47.
+        assert "object" in props["default"]["type"]
+        # `inferred_from` declared alongside `default` (forms #40).
+        assert "inferred_from" in props
+        # Typed object-array extras (forms #52 F5).
+        for key in ("progress_items", "triage_items", "consequences", "assumptions"):
+            assert props[key]["items"] == {"type": "object"}, key
+
+    def test_v2_form_object_is_strict(self) -> None:
+        # additionalProperties: false on the form object too (forms #50).
+        tools = get_elicitation_tools()
+        for name in ("elicitation_render_widget", "elicitation_ask"):
+            form = tools[name]["input_schema"]["properties"]["form"]
+            assert form["additionalProperties"] is False
+
+    def test_v1_schema_is_strict(self) -> None:
+        # v1 is hand-declared but must match form_from_dict's strict
+        # definition contract — an unknown key is a typo, not extra data.
+        form = get_elicitation_tools()["elicitation_render_form"]["input_schema"]["properties"][
+            "form"
+        ]
+        assert form["additionalProperties"] is False
+        assert form["properties"]["fields"]["items"]["additionalProperties"] is False
 
     def test_v2_field_schema_has_numeric_bounds(self) -> None:
         tools = get_elicitation_tools()

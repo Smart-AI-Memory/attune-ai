@@ -3,7 +3,7 @@
 Exercises the real renderer→validator loop the manual live-widget
 ritual guards: ``form_to_widget_html`` emits the DOM + submit script;
 a small DOM simulator reads the emitted HTML the way the submit
-script's reader does (by ``data-fid`` / ``data-ftype`` /
+script's reader does (by ``data-fid`` / ``data-collect`` /
 ``data-control``); the resulting payload is validated through
 ``collect_form_response``, asserting the ``__elicitation_response__``
 sentinel contract and the field-id round trip.
@@ -35,20 +35,26 @@ from attune.elicitation import (
 )
 from attune.elicitation.reference_form import EXAMPLE_ANSWERS, REFERENCE_FORM
 
-#: data-ftype values the submit script special-cases (read from a
-#: checked control rather than the generic first-control tail).
-_CHECKED_FTYPES = {"decision", "pushback", "progress", "deliberation", "confirm"}
-
-#: data-ftype values whose answer is a collection the script rebuilds
-#: from several controls (checked boxes, per-row radios, ranked rows,
-#: per-row radios + a paired text box).
-_COLLECTION_FTYPES = {"multi_select", "triage", "ranking", "assumption_review"}
+#: The full ``data-collect`` vocabulary the renderer can emit — HOW the
+#: submit script reads each field's answer out of the DOM (mirrors
+#: ``widget._COLLECT_MODES`` plus its ``value`` default). The script
+#: switches on the attribute, never on the construct type; ``value`` is
+#: the switch's else-tail (read the field's one control directly), so it
+#: never appears as a literal case in the script.
+_COLLECT_VOCABULARY = {
+    "value",
+    "checked-one",
+    "checked-many",
+    "rulings",
+    "ranked",
+    "rulings-with-text",
+}
 
 
 class _WidgetDOM(HTMLParser):
     """Parse the emitted widget HTML into fields the way the submit
     script sees them: ``.ae-field`` wrappers carrying ``data-fid`` /
-    ``data-ftype``, each holding its ``[data-control]`` elements."""
+    ``data-collect``, each holding its ``[data-control]`` elements."""
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
@@ -68,7 +74,15 @@ class _WidgetDOM(HTMLParser):
         elif tag == "script":
             self._in_script = True
         if "data-fid" in a:
-            self.fields.append({"fid": a["data-fid"], "ftype": a.get("data-ftype"), "controls": []})
+            self.fields.append(
+                {
+                    "fid": a["data-fid"],
+                    "ftype": a.get("data-ftype"),
+                    "collect": a.get("data-collect"),
+                    "required": "data-required" in a,
+                    "controls": [],
+                }
+            )
             self._item = None
         if "data-rank-n" in a and self.fields:
             # The ranking's slot budget, which the script reads off the
@@ -85,8 +99,11 @@ class _WidgetDOM(HTMLParser):
             self._in_ranked = False
         if "data-item" in a and self.fields:
             # A triage row: subsequent controls belong to this item, the
-            # way the submit script scopes its per-row query.
+            # way the submit script scopes its per-row query. The row
+            # count is what the gate's completeness check divides by
+            # (`f.querySelectorAll('[data-item]').length`).
             self._item = a["data-item"]
+            self.fields[-1]["rows"] = self.fields[-1].get("rows", 0) + 1
         if "data-control" in a and self.fields:
             controls = self.fields[-1]["controls"]
             if self._in_ranked and tag == "input":
@@ -146,7 +163,7 @@ def _fill(dom: _WidgetDOM, answers: dict[str, Any]) -> None:
                     ctl["value"] = ruling.get("edit", "")
             continue
         wanted = [str(v) for v in (value if isinstance(value, list) else [value])]
-        if field["ftype"] == "ranking":
+        if field["collect"] == "ranked":
             # Ranking: the user moves rows into the ranked list in the
             # answer's order — the DOM order the script reads at submit.
             # The script refuses an "add" past the slot budget, so the
@@ -167,21 +184,22 @@ def _fill(dom: _WidgetDOM, answers: dict[str, Any]) -> None:
 
 
 def _submit(dom: _WidgetDOM) -> dict[str, Any]:
-    """Build the payload the submit script posts, per its reader logic."""
+    """Build the payload the submit script posts, per its reader logic:
+    a switch on each field's ``data-collect`` mode."""
     answers: dict[str, Any] = {}
     for field in dom.fields:
-        fid, ftype, controls = field["fid"], field["ftype"], field["controls"]
-        if ftype == "multi_select":
+        fid, mode, controls = field["fid"], field["collect"], field["controls"]
+        if mode == "checked-many":
             answers[fid] = [c["value"] for c in controls if c.get("checked")]
-        elif ftype == "triage":
+        elif mode == "checked-one":
+            picked = next((c for c in controls if c.get("checked")), None)
+            if picked:
+                answers[fid] = picked["value"]
+        elif mode == "rulings":
             rulings = {c["item"]: c["value"] for c in controls if c.get("checked")}
             if rulings:
                 answers[fid] = rulings
-        elif ftype == "ranking":
-            # The ranked list's rows in DOM order; untouched posts nothing.
-            if field.get("ranked"):
-                answers[fid] = list(field["ranked"])
-        elif ftype == "assumption_review":
+        elif mode == "rulings-with-text":
             rulings: dict[str, Any] = {}
             texts = {c["item"]: c["value"] for c in controls if c["type"] == "text"}
             for c in controls:
@@ -192,23 +210,74 @@ def _submit(dom: _WidgetDOM) -> dict[str, Any]:
                     )
             if rulings:
                 answers[fid] = rulings
-        elif ftype in _CHECKED_FTYPES:
-            picked = next((c for c in controls if c.get("checked")), None)
-            if picked:
-                answers[fid] = picked["value"]
+        elif mode == "ranked":
+            # The ranked list's rows in DOM order; untouched posts nothing.
+            if field.get("ranked"):
+                answers[fid] = list(field["ranked"])
         else:
+            # 'value': the field's one control, read directly; a number
+            # input posts a Number (the control type, not the construct,
+            # decides).
             if not controls:
                 continue
             el = controls[0]
-            if el["type"] == "radio":
-                picked = next((c for c in controls if c.get("checked")), None)
-                if picked:
-                    answers[fid] = picked["value"]
-            elif el["value"] != "":
-                answers[fid] = float(el["value"]) if ftype == "number" else el["value"]
+            if el["value"] != "":
+                answers[fid] = float(el["value"]) if el["type"] == "number" else el["value"]
     payload = {WIDGET_RESPONSE_MARKER: True, "title": dom.title, "answers": answers}
     # The payload must survive the JSON.stringify → agent-parse hop.
     return json.loads(json.dumps(payload))
+
+
+def _gate(dom: _WidgetDOM, answers: dict[str, Any]) -> tuple[list[str], list[str]]:
+    """Port of the submit script's required-field gate, rule for rule.
+
+    Mirrors the two gate passes the script runs before posting: the
+    required-field check (empty answer, incomplete rulings board, an
+    unfilled ranking slot, an ``edit`` ruling with blank replacement
+    text) and the all-or-nothing check for OPTIONAL partially-filled
+    rankings. Returns ``(missing, partial)`` field-id lists — the
+    script blocks the post when either is non-empty.
+    """
+    missing: list[str] = []
+    for field in dom.fields:
+        if not field.get("required"):
+            continue
+        v = answers.get(field["fid"])
+        rows = field.get("rows", 0)
+        slots = field.get("slots", 0)
+        blank_edit = False
+        if isinstance(v, dict):
+            for ruling in v.values():
+                if isinstance(ruling, dict) and not str(ruling.get("edit") or "").strip():
+                    blank_edit = True
+        empty = (
+            v is None
+            or v == ""
+            or (isinstance(v, list) and not v)
+            or (rows > 0 and (not v or len(v) < rows))
+            or (slots > 0 and (not v or len(v) < slots))
+            or blank_edit
+        )
+        if empty:
+            missing.append(field["fid"])
+    partial: list[str] = []
+    for field in dom.fields:
+        if field.get("required"):
+            continue
+        slots = field.get("slots", 0)
+        if not slots:
+            continue
+        v = answers.get(field["fid"])
+        if not isinstance(v, list) or len(v) == 0 or len(v) >= slots:
+            continue
+        partial.append(field["fid"])
+    return missing, partial
+
+
+def _gate_allows(dom: _WidgetDOM) -> bool:
+    """True iff the gate would let the current DOM state post."""
+    missing, partial = _gate(dom, _submit(dom)["answers"])
+    return not missing and not partial
 
 
 def _render_reference() -> tuple[Any, _WidgetDOM]:
@@ -231,12 +300,17 @@ class TestSentinelContract:
         assert payload[WIDGET_RESPONSE_MARKER] is True
         assert payload["title"] == form.title
 
-    def test_script_special_cases_cover_the_construct_types(self) -> None:
-        """Drift catcher: every ftype the script must read from a checked
-        control is actually special-cased in the emitted reader."""
+    def test_script_switch_covers_the_emitted_collect_modes(self) -> None:
+        """Drift catcher: the ``data-collect`` modes the renderer emits
+        and the cases the emitted reader switches on are both exactly
+        the pinned vocabulary (``value`` is the switch's else-tail, so
+        it never appears as a literal case). A new construct type must
+        reuse a handled mode — or add its case to the script AND here."""
         _, dom = _render_reference()
-        handled = set(re.findall(r"ftype === '(\w+)'", dom.script))
-        assert _CHECKED_FTYPES | _COLLECTION_FTYPES <= handled
+        handled = set(re.findall(r"mode === '([\w-]+)'", dom.script)) | {"value"}
+        emitted = {f["collect"] for f in dom.fields}
+        assert emitted == _COLLECT_VOCABULARY  # reference form spans it
+        assert handled == _COLLECT_VOCABULARY
 
 
 class TestFieldIdRoundTrip:
@@ -293,6 +367,34 @@ class TestFieldIdRoundTrip:
         response = collect_form_response(form, payload["answers"])
         assert response.responses["route"] == spicy
 
+    def test_list_style_single_select_collects_as_checked_one(self) -> None:
+        """A ``list_style`` SINGLE_SELECT renders radios, not a native
+        ``<select>`` — its field must emit ``data-collect="checked-one"``
+        so the reader picks the checked radio (the render-time mode
+        switch is what replaced the reader's old radio sniffing), and
+        the answer must round-trip."""
+        form = form_from_dict(
+            {
+                "title": "List pick",
+                "fields": [
+                    {
+                        "id": "route",
+                        "type": "single_select",
+                        "text": "Which route?",
+                        "options": ["a", "b"],
+                        "list_style": "ordered",
+                    }
+                ],
+            }
+        )
+        dom = _WidgetDOM()
+        dom.feed(form_to_widget_html(form, instance_id="ls"))
+        assert dom.fields[0]["collect"] == "checked-one"
+        _fill(dom, {"route": "b"})
+        payload = _submit(dom)
+        response = collect_form_response(form, payload["answers"])
+        assert response.responses["route"] == "b"
+
     def test_unanswered_required_fields_fail_validation_by_name(self) -> None:
         """R4 seam: an empty submit must be rejected naming the missing
         required fields — never silently accepted."""
@@ -326,3 +428,230 @@ class TestReviewFindings:
         _fill(dom, {"rollout_order": ["us-prod", "eu-prod", "canary", "staging"]})
         field = next(f for f in dom.fields if f["fid"] == "rollout_order")
         assert field["ranked"] == ["us-prod", "eu-prod", "canary"]
+
+
+def _gate_form(field: dict[str, Any]) -> tuple[Any, _WidgetDOM]:
+    form = form_from_dict({"title": "Gate parity", "fields": [field]})
+    dom = _WidgetDOM()
+    dom.feed(form_to_widget_html(form, instance_id="gate"))
+    return form, dom
+
+
+#: One fixture per construct type × fill state: ``(case id, field dict,
+#: fill)`` — ``fill=None`` leaves the rendered DOM untouched. No case
+#: hardcodes an expected verdict: the parity assertion is the property
+#: itself (gate blocks ⇔ validator rejects), so a fixture whose two
+#: sides disagree fails no matter which side is "right".
+_TRIAGE_FIELD: dict[str, Any] = {
+    "id": "board",
+    "type": "triage",
+    "text": "Rule each finding.",
+    "triage_items": [{"id": "a", "label": "Finding A"}, {"id": "b", "label": "Finding B"}],
+    "dispositions": ["fix", "dismiss"],
+}
+_ASSUME_FIELD: dict[str, Any] = {
+    "id": "review",
+    "type": "assumption_review",
+    "text": "Rule each assumption.",
+    "assumptions": [{"id": "a1", "label": "Py 3.10 floor"}, {"id": "a2", "label": "CI on push"}],
+}
+_RANK_FIELD: dict[str, Any] = {
+    "id": "order",
+    "type": "ranking",
+    "text": "Ship order?",
+    "options": ["staging", "canary", "prod"],
+    "top_n": 2,
+}
+_GATE_CASES: list[tuple[str, dict[str, Any], Any]] = [
+    ("text-empty", {"id": "f", "type": "text_input", "text": "Name?"}, None),
+    ("text-filled", {"id": "f", "type": "text_input", "text": "Name?"}, "Dark mode"),
+    (
+        "select-empty",
+        {"id": "f", "type": "single_select", "text": "?", "options": ["a", "b"]},
+        None,
+    ),
+    (
+        "select-filled",
+        {"id": "f", "type": "single_select", "text": "?", "options": ["a", "b"]},
+        "b",
+    ),
+    ("multi-empty", {"id": "f", "type": "multi_select", "text": "?", "options": ["a", "b"]}, None),
+    (
+        "multi-filled",
+        {"id": "f", "type": "multi_select", "text": "?", "options": ["a", "b"]},
+        ["a"],
+    ),
+    ("boolean-empty", {"id": "f", "type": "boolean", "text": "?"}, None),
+    ("boolean-filled", {"id": "f", "type": "boolean", "text": "?"}, "Yes"),
+    ("number-empty", {"id": "f", "type": "number", "text": "?", "minimum": 0}, None),
+    ("number-zero", {"id": "f", "type": "number", "text": "?", "minimum": 0}, 0),
+    ("date-empty", {"id": "f", "type": "date", "text": "?"}, None),
+    ("date-filled", {"id": "f", "type": "date", "text": "?"}, "2026-08-01"),
+    ("textarea-empty", {"id": "f", "type": "textarea", "text": "?"}, None),
+    ("textarea-filled", {"id": "f", "type": "textarea", "text": "?"}, "notes"),
+    (
+        "decision-empty",
+        {
+            "id": "f",
+            "type": "decision",
+            "text": "?",
+            "options": ["flag", "all at once"],
+            "recommended": "flag",
+            "rationale": "safer",
+        },
+        None,
+    ),
+    (
+        "decision-filled",
+        {
+            "id": "f",
+            "type": "decision",
+            "text": "?",
+            "options": ["flag", "all at once"],
+            "recommended": "flag",
+            "rationale": "safer",
+        },
+        "flag",
+    ),
+    (
+        "pushback-empty",
+        {
+            "id": "f",
+            "type": "pushback",
+            "text": "?",
+            "options": ["branch", "stacked PRs"],
+            "user_position": "branch",
+            "recommended": "stacked PRs",
+            "rationale": "drift",
+        },
+        None,
+    ),
+    (
+        "deliberation-filled",
+        {
+            "id": "f",
+            "type": "deliberation",
+            "text": "?",
+            "options": ["lru", "redis"],
+            "endorsements": {"lru": ["claude"]},
+            "recommended": "lru",
+            "rationale": "one consumer",
+        },
+        "lru",
+    ),
+    (
+        "progress-empty",
+        {
+            "id": "f",
+            "type": "progress",
+            "text": "?",
+            "options": ["Design sign-off"],
+            "progress_items": [
+                {"label": "Prototype", "status": "done"},
+                {"label": "Design sign-off", "status": "blocked"},
+            ],
+        },
+        None,
+    ),
+    (
+        "progress-filled",
+        {
+            "id": "f",
+            "type": "progress",
+            "text": "?",
+            "options": ["Design sign-off"],
+            "progress_items": [
+                {"label": "Prototype", "status": "done"},
+                {"label": "Design sign-off", "status": "blocked"},
+            ],
+        },
+        "Design sign-off",
+    ),
+    (
+        "confirm-empty",
+        {"id": "f", "type": "confirm", "text": "Flip the flag?", "consequences": [{"label": "x"}]},
+        None,
+    ),
+    (
+        "confirm-approved",
+        {"id": "f", "type": "confirm", "text": "Flip the flag?", "consequences": [{"label": "x"}]},
+        "Approve",
+    ),
+    ("triage-empty", _TRIAGE_FIELD, None),
+    ("triage-partial", _TRIAGE_FIELD, {"a": "fix"}),
+    ("triage-full", _TRIAGE_FIELD, {"a": "fix", "b": "dismiss"}),
+    ("triage-optional-partial", {**_TRIAGE_FIELD, "required": False}, {"a": "fix"}),
+    ("ranking-empty", _RANK_FIELD, None),
+    ("ranking-partial", _RANK_FIELD, ["staging"]),
+    ("ranking-full", _RANK_FIELD, ["staging", "prod"]),
+    ("ranking-optional-empty", {**_RANK_FIELD, "required": False}, None),
+    ("ranking-optional-partial", {**_RANK_FIELD, "required": False}, ["staging"]),
+    ("assume-empty", _ASSUME_FIELD, None),
+    ("assume-partial", _ASSUME_FIELD, {"a1": "accept"}),
+    ("assume-blank-edit", _ASSUME_FIELD, {"a1": {"edit": ""}, "a2": "accept"}),
+    ("assume-edit-text", _ASSUME_FIELD, {"a1": {"edit": "3.11 floor"}, "a2": "accept"}),
+    ("assume-full", _ASSUME_FIELD, {"a1": "accept", "a2": "reject"}),
+]
+
+
+class TestGateParity:
+    """The submit script's client-side gate re-implements the server
+    validators' completeness rules (required boards fully ruled, ranking
+    all-or-nothing, blank ``edit`` text). Nothing in production keeps the
+    two in sync — this class is the sync test (architecture review
+    finding F2, 2026-08-20): for every construct × fill state, the gate
+    blocks the post exactly when ``collect_form_response`` would reject
+    the posted payload.
+    """
+
+    @pytest.mark.parametrize(
+        ("field", "fill"),
+        [pytest.param(f, v, id=cid) for cid, f, v in _GATE_CASES],
+    )
+    def test_gate_blocks_iff_validator_rejects(self, field: dict[str, Any], fill: Any) -> None:
+        form, dom = _gate_form(field)
+        if fill is not None:
+            _fill(dom, {field["id"]: fill})
+        payload = _submit(dom)
+        try:
+            collect_form_response(form, payload["answers"])
+            validator_clean = True
+        except FormValidationError:
+            validator_clean = False
+        assert _gate_allows(dom) == validator_clean
+
+    def test_untouched_reference_form_gate_matches_validator(self) -> None:
+        """The all-construct form, untouched: the gate must block for
+        the same reason the validator names required fields."""
+        form, dom = _render_reference()
+        payload = _submit(dom)
+        with pytest.raises(FormValidationError):
+            collect_form_response(form, payload["answers"])
+        assert not _gate_allows(dom)
+
+    def test_filled_reference_form_gate_matches_validator(self) -> None:
+        """The all-construct form, fully filled: both sides pass."""
+        form, dom = _render_reference()
+        _fill(dom, EXAMPLE_ANSWERS)
+        payload = _submit(dom)
+        collect_form_response(form, payload["answers"])  # no problems
+        assert _gate_allows(dom)
+
+    def test_gate_reads_the_anchors_the_renderer_emits(self) -> None:
+        """Structural drift catcher, gate edition (extends the reader's
+        collect-mode pin at :meth:`TestSentinelContract`): every DOM
+        anchor the gate JS queries must appear in the emitted script,
+        and the ``data-required`` flags the renderer emits must match
+        the form's required questions — a renamed attribute on either
+        side fails here before it silently disables a gate rule."""
+        form, dom = _render_reference()
+        for anchor in (
+            "data-required",
+            "[data-item]",
+            "data-rank-n",
+            ".ae-rank",
+            "ae-field-missing",
+        ):
+            assert anchor in dom.script, f"gate anchor {anchor!r} missing from script"
+        required_fids = {f["fid"] for f in dom.fields if f.get("required")}
+        assert required_fids == {q.id for q in form.questions if q.required}
