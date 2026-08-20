@@ -122,6 +122,10 @@ _BASELINE: dict[str, int] = {
     "src/attune/commands/parser.py": 2,
     "src/attune/config/legacy.py": 1,
     "src/attune/config/xml_config.py": 1,
+    # allocator.py added 1 for library-review R5 (PR #2112): the
+    # context-fit telemetry's never-raises docstring must hold for a
+    # TypeError from an unserializable payload, not only OSError.
+    "src/attune/context/allocator.py": 1,
     "src/attune/cost_tracker.py": 1,
     "src/attune/curator/core.py": 3,
     "src/attune/curator/sources/bulletin.py": 2,
@@ -245,6 +249,10 @@ _BASELINE: dict[str, int] = {
     "src/attune/resilience/health.py": 4,
     "src/attune/roundtable/producing.py": 1,
     "src/attune/roundtable/review.py": 1,
+    # role_telemetry.py added 1 for library-review R5 (PR #2112):
+    # the logged-and-swallowed record() contract must hold for a
+    # TypeError from an unserializable field, not only OSError.
+    "src/attune/roundtable/role_telemetry.py": 1,
     "src/attune/roundtable/solutions.py": 1,
     "src/attune/roundtable/triage_appendix.py": 2,
     "src/attune/routing/classifier.py": 1,

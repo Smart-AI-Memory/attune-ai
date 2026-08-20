@@ -125,6 +125,15 @@ class TestFitEventStream:
         TokenBudgetAllocator().fit_source(PY_SOURCE, token_limit=4000)
         assert not path.exists()
 
+    def test_unserializable_payload_never_raises(self, tmp_path, monkeypatch):
+        """Regression (library-review R5): a TypeError from an
+        unserializable payload is swallowed like an OSError — the
+        docstring's never-raises promise holds for both."""
+        self._stream(tmp_path, monkeypatch)
+        from attune.context.allocator import _append_fit_event
+
+        _append_fit_event({"rung": object()})  # must not raise
+
     def test_append_failure_never_breaks_fit(self, tmp_path, monkeypatch):
         """An unwritable stream degrades to the log line, never raises."""
         self._stream(tmp_path, monkeypatch)
