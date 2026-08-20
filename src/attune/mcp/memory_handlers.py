@@ -216,6 +216,15 @@ class MemoryHandlersMixin:
         Returns:
             Dict with success status, results list, and count.
 
+        Warning:
+            Search is an UNGOVERNED read path: it does not apply
+            ``check_access``, decryption, or retention, so it can return
+            SENSITIVE and cross-workspace records that ``memory_retrieve``
+            would deny (library-review I-1, chair-ruled 2026-08-20 to be
+            documented rather than enforced — ``user_id`` is the OS login
+            on a local developer tool). Anything multi-user consuming this
+            tool must route search through the governed accessor first.
+
         """
         try:
             memory = self._get_memory()

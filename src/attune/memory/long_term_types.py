@@ -78,6 +78,10 @@ class PatternMetadata:
     sanitization_applied: bool
     pii_removed: int
     secrets_detected: int
+    #: The workspace the pattern was created in — the operand INTERNAL
+    #: access scoping compares against the reading process's workspace.
+    #: Empty means "unknown", which never denies (legacy patterns).
+    workspace: str = ""
     access_control: dict[str, Any] = field(default_factory=dict)
     custom_metadata: dict[str, Any] = field(default_factory=dict)
 
