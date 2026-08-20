@@ -3857,10 +3857,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#executor-architecture" class="md-nav__link">
+  <a href="#architecture_1" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Executor Architecture
+        Architecture
       
     </span>
   </a>
@@ -5753,10 +5753,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#executor-architecture" class="md-nav__link">
+  <a href="#architecture_1" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Executor Architecture
+        Architecture
       
     </span>
   </a>
@@ -6522,7 +6522,7 @@ two-phase, or DAG topology and no strategy parameter.</p>
 </ul>
 <hr />
 <h2 id="hook-system">Hook System<a class="headerlink" href="#hook-system" title="Permanent link">&para;</a></h2>
-<p>Event-driven automation for Claude Code integration.</p>
+<p>Concrete scripts that Claude Code runs on lifecycle events.</p>
 <h3 id="hook-events">Hook Events<a class="headerlink" href="#hook-events" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -6560,22 +6560,20 @@ two-phase, or DAG topology and no strategy parameter.</p>
 </tr>
 </tbody>
 </table>
-<h3 id="executor-architecture">Executor Architecture<a class="headerlink" href="#executor-architecture" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>HookRegistry
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>    │ (event fires)
+<h3 id="architecture_1">Architecture<a class="headerlink" href="#architecture_1" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>Claude Code (event fires)
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>    │  stdin: {"tool_name": ..., "tool_input": ...}
 <a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a>    ▼
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>HookExecutor
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>    ├── _execute_python()
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>    │     └── Module prefix allowlist: ("attune.",)
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>    │         └── importlib.import_module → handler()
-<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>    ├── _execute_shell()
-<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>    │     └── shlex.split → asyncio.create_subprocess_exec
-<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>    └── _execute_webhook()
-<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a>          └── aiohttp.ClientSession.post(url, json)
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>attune/hooks/scripts/&lt;hook&gt;.py   (wired via the plugin's hooks.json)
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>    ├── read + validate stdin JSON  (fail open → exit 0 on bad input)
+<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a>    ├── PreToolUse:  exit 0 = allow, exit 2 = block
+<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>    └── other events: perform side effect, exit 0
 </code></pre></div>
-<p><strong>Security:</strong> Python hooks restricted to <code>attune.*</code> module
-prefix. Shell hooks use <code>create_subprocess_exec</code> (no
-<code>shell=True</code>). Rate limiting on all hook invocations.</p>
+<p><strong>Security:</strong> guards fail <strong>open</strong> (exit 0) on malformed input so a
+hook defect degrades to a no-op instead of blocking a real tool call.
+Each script runs under a <code>hooks.json</code> timeout on the critical path.
+(The former in-process engine — <code>HookRegistry</code> / <code>HookExecutor</code> — was
+removed in v13.0.0.)</p>
 <hr />
 <h2 id="caching-strategy">Caching Strategy<a class="headerlink" href="#caching-strategy" title="Permanent link">&para;</a></h2>
 <p>The framework uses a hybrid caching approach: hash-only (fast, exact matches) and semantic (similar prompts).</p>
