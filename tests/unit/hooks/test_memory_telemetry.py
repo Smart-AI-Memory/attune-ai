@@ -72,6 +72,21 @@ def test_log_writes_one_json_line_with_schema_fields(telem_mod, tmp_path, monkey
     assert e["ts"].endswith("Z")
 
 
+def test_log_reserved_keys_cannot_be_clobbered(telem_mod, tmp_path, monkeypatch):
+    """Regression: library review checkpoint-1 R2 hit — **fields must not
+    overwrite the reserved v/ts/event/session_id schema keys."""
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / ".attune"))
+    telem_mod.log_memory_event(
+        "jit_recall", session_id="real", v="FORGED", ts="1970-01-01T00:00:00Z", tool="Bash"
+    )
+    (e,) = _events(tmp_path)
+    assert e["v"] == "1.0"
+    assert e["ts"] != "1970-01-01T00:00:00Z"
+    assert e["event"] == "jit_recall"
+    assert e["session_id"] == "real"
+    assert e["tool"] == "Bash"
+
+
 def test_log_appends_multiple_events(telem_mod, tmp_path, monkeypatch):
     monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / ".attune"))
     telem_mod.log_memory_event("session_recall", entries=3)
