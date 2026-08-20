@@ -9,7 +9,7 @@ source: src/attune/mcp/tool_schemas.py
 
 # Reference: Tool: Memory Search
 
-Search attune-ai memory for patterns matching a query.
+Search attune-ai memory for patterns matching a query. UNSCOPED read: results are NOT classification- or workspace-filtered and can include SENSITIVE or cross-workspace records that memory_retrieve would deny — do not use as an authorization boundary.
 
 **Group:** memory
 

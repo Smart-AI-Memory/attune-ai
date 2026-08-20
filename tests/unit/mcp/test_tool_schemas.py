@@ -126,6 +126,15 @@ class TestGetWorkflowTools:
         assert "budget_usd" in props
         assert "no_llm" in props
 
+    def test_doc_gen_does_not_advertise_dropped_params(self) -> None:
+        """doc_type/audience were dropped in the v4.2.0 SDK migration; the
+        schema must not advertise params the handler ignores."""
+        schema = get_workflow_tools()["doc_gen"]["input_schema"]
+        props = schema["properties"]
+        assert "source_path" in props
+        assert "doc_type" not in props
+        assert "audience" not in props
+
     def test_test_generation_has_module_required(self) -> None:
         """test_generation requires 'module' param."""
         schema = get_workflow_tools()["test_generation"]["input_schema"]

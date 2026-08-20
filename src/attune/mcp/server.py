@@ -687,7 +687,9 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandle
 
         """
         level = args.get("level")
-        if not isinstance(level, int) or level < 1 or level > 5:
+        # bool is an int subclass, so `True`/`False` would otherwise slip
+        # through isinstance(int) and be used as 1/0 — reject them explicitly.
+        if isinstance(level, bool) or not isinstance(level, int) or level < 1 or level > 5:
             return {
                 "success": False,
                 "error": "Level must be an integer between 1 and 5",

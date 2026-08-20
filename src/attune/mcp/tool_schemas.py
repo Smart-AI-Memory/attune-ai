@@ -115,7 +115,7 @@ def get_workflow_tools() -> dict[str, dict[str, Any]]:
             param_desc="Project root path",
         ),
         "doc_gen": {
-            "description": "Generate new documentation from source code. Produces API references, guides, or READMEs.",
+            "description": "Generate documentation from a source file.",
             "input_schema": {
                 "type": "object",
                 "properties": {
@@ -123,16 +123,11 @@ def get_workflow_tools() -> dict[str, dict[str, Any]]:
                         "type": "string",
                         "description": "Path to source file to document",
                     },
-                    "doc_type": {
-                        "type": "string",
-                        "description": "Type of documentation (api_reference, guide, readme)",
-                        "default": "api_reference",
-                    },
-                    "audience": {
-                        "type": "string",
-                        "description": "Target audience (developers, users, contributors)",
-                        "default": "developers",
-                    },
+                    # `doc_type`/`audience` were advertised here but the
+                    # DocumentGenerationWorkflow dropped both kwargs in the
+                    # v4.2.0 SDK migration (see _run_doc_gen) — the SDK
+                    # subagents choose the shape from the source. Removed
+                    # rather than left as no-ops that silently do nothing.
                 },
                 "required": ["source_path"],
             },
@@ -926,7 +921,13 @@ def get_memory_tools() -> dict[str, dict[str, Any]]:
             },
         },
         "memory_search": {
-            "description": "Search attune-ai memory for patterns matching a query.",
+            "description": (
+                "Search attune-ai memory for patterns matching a query. "
+                "UNSCOPED read: results are NOT classification- or "
+                "workspace-filtered and can include SENSITIVE or "
+                "cross-workspace records that memory_retrieve would deny — "
+                "do not use as an authorization boundary."
+            ),
             "input_schema": {
                 "type": "object",
                 "properties": {
