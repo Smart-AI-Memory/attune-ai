@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_Next release: **13.0.0** (major). The breaking removal of the dormant
+in-package hook-execution engine below forces the major bump; the
+attune-forms 0.7.0 schema sync ships alongside it._
+
 ### Changed — attune-forms 0.7.0: elicitation schema sync (D3 mirror)
 
 - **Dependency floor raised to `attune-forms>=0.7.0,<1.0`** and the
