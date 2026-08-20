@@ -18,9 +18,38 @@ import json
 import logging
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+#: Total wall-clock budget SHARED across both formatters (black + ruff),
+#: seconds. The registered PostToolUse timeout is 10s (10000ms in
+#: ``plugin/hooks/hooks.json``, 10s in ``.claude/settings.json``); this
+#: sits below it so the two formatters COMBINED — plus interpreter
+#: start-up and the src-path import — finish before the harness SIGKILLs
+#: the hook. Each formatter previously carried its own 10s ceiling, so a
+#: hung black + hung ruff could run ~20s (> the 10s timeout) and be
+#: killed mid-format. Kept under the registered timeout by
+#: ``tests/unit/hooks/test_hook_scripts.py``.
+WALL_BUDGET = 8
+
+#: Monotonic instant by which both formatters must finish, set once in
+#: ``main()`` around the formatter pair and shared between them. ``None``
+#: (the default) means unbounded — a standalone ``_run_formatter`` call
+#: uses ``WALL_BUDGET`` as its per-call ceiling.
+_DEADLINE: float | None = None
+
+
+def _remaining(ceiling: float) -> float:
+    """Clamp ``ceiling`` to the time left before the shared ``_DEADLINE``.
+
+    Returns ``ceiling`` when no deadline is set, ``0.0`` once it has
+    passed (caller skips the formatter), or the seconds remaining.
+    """
+    if _DEADLINE is None:
+        return ceiling
+    return max(0.0, min(ceiling, _DEADLINE - time.monotonic()))
 
 
 def _get_file_path(data: dict) -> str | None:
@@ -58,11 +87,14 @@ def _run_formatter(cmd: list[str], path: str) -> None:
         path: File path to format.
 
     """
+    timeout = _remaining(WALL_BUDGET)
+    if timeout <= 0:
+        return  # shared budget already spent — skip, don't start a run
     try:
         subprocess.run(
             [*cmd, path],
             capture_output=True,
-            timeout=10,
+            timeout=timeout,
         )
     except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
         pass
@@ -108,13 +140,24 @@ def main() -> None:
     if not validated.exists():
         return
 
-    _run_formatter(["black", "--quiet", "--line-length=100"], str(validated))
-    # `--ignore F401,F811`: never strip "unused" imports on save. An agent
-    # editing in two steps (import first, usage next) loses the import to
-    # this hook in the gap — hit 4x in one session (2026-08-09) despite a
-    # same-edit discipline rule. Genuinely dead imports are still caught
-    # at commit time by pre-commit ruff, where the file is complete.
-    _run_formatter(["ruff", "check", "--fix", "--quiet", "--ignore", "F401,F811"], str(validated))
+    # One budget shared by both formatters, so a hung black + hung ruff
+    # can't sum past the registered PostToolUse timeout. Reset in the
+    # finally so nothing leaks between invocations (or test runs); real
+    # runs are one-shot processes either way.
+    global _DEADLINE
+    _DEADLINE = time.monotonic() + WALL_BUDGET
+    try:
+        _run_formatter(["black", "--quiet", "--line-length=100"], str(validated))
+        # `--ignore F401,F811`: never strip "unused" imports on save. An agent
+        # editing in two steps (import first, usage next) loses the import to
+        # this hook in the gap — hit 4x in one session (2026-08-09) despite a
+        # same-edit discipline rule. Genuinely dead imports are still caught
+        # at commit time by pre-commit ruff, where the file is complete.
+        _run_formatter(
+            ["ruff", "check", "--fix", "--quiet", "--ignore", "F401,F811"], str(validated)
+        )
+    finally:
+        _DEADLINE = None
 
 
 if __name__ == "__main__":
