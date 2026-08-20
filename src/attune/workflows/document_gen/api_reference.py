@@ -41,7 +41,10 @@ class APIReferenceMixin:
 
         try:
             tree = ast.parse(source_code)
-        except SyntaxError as e:
+        except (
+            SyntaxError,
+            ValueError,
+        ) as e:  # ast.parse: null bytes -> ValueError, not SyntaxError
             logger.warning(f"Failed to parse source code: {e}")
             return functions
 

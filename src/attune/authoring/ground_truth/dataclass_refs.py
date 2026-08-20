@@ -105,7 +105,10 @@ def extract_dataclasses(source_paths: list[Path]) -> str:
             continue
         try:
             tree = ast.parse(source, filename=str(path))
-        except SyntaxError as exc:
+        except (
+            SyntaxError,
+            ValueError,
+        ) as exc:  # ast.parse: null bytes -> ValueError, not SyntaxError
             logger.debug("ground_truth.dataclass_refs: parse failed for %s (%s)", path, exc)
             continue
 

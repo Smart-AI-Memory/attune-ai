@@ -60,6 +60,13 @@ class ASTFunctionAnalyzer(ast.NodeVisitor):
             file_info = f" in {file_path}" if file_path else ""
             self.last_error = f"SyntaxError{file_info}{location}: {e.msg}"
             return [], []
+        except ValueError as e:
+            # ast.parse rejects a null byte with ValueError, which
+            # carries no .msg/.lineno — record it the same way rather
+            # than letting it escape to the caller.
+            file_info = f" in {file_path}" if file_path else ""
+            self.last_error = f"ValueError{file_info}: {e}"
+            return [], []
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         """Extract function signature."""

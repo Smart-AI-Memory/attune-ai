@@ -456,9 +456,10 @@ def _extract_source_info(
             source = full_path.read_text(encoding="utf-8")
             tree = ast.parse(source, filename=rel_path)
         except (OSError, SyntaxError, ValueError) as e:
-            # ast.parse raises ValueError (not SyntaxError) on a source
-            # containing a null byte; without it one corrupt file aborts
-            # the whole batch instead of being skipped (library-review F5).
+            # A null-byte source is rejected as ValueError on CPython
+            # <= 3.11 and SyntaxError on 3.12+, so both are named:
+            # otherwise one corrupt file aborts the whole batch on part
+            # of the supported range (library-review F5 / C4a).
             logger.debug("Cannot parse %s: %s", rel_path, e)
             continue
 

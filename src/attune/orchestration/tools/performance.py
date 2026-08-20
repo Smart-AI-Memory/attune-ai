@@ -77,7 +77,11 @@ class RealPerformanceProfiler:
                 source = py_file.read_text()
                 tree = ast.parse(source)
                 total_files += 1
-            except (SyntaxError, OSError) as e:
+            except (
+                SyntaxError,
+                OSError,
+                ValueError,
+            ) as e:  # ast.parse: null bytes -> ValueError, not SyntaxError
                 logger.warning(f"Failed to parse {py_file}: {e}")
                 continue
 

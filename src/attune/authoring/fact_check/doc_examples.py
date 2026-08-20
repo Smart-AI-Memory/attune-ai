@@ -49,12 +49,17 @@ def _parse_block(src: str) -> tuple[ast.AST | None, str | None]:
     """
     try:
         return ast.parse(src), None
-    except SyntaxError:
+    except (SyntaxError, ValueError):  # ast.parse: null bytes -> ValueError, not SyntaxError
         indented = "\n".join("    " + line for line in src.splitlines())
         try:
             return ast.parse("async def __frag__():\n" + indented), None
         except SyntaxError as exc:
             return None, f"{exc.msg} (line {exc.lineno})"
+        except ValueError as exc:
+            # ast.parse rejects a null byte with ValueError, which
+            # carries no .msg/.lineno — report it without them rather
+            # than letting it escape and abort the whole fact-check.
+            return None, str(exc)
 
 
 def _collect_async_names(trees: list[ast.AST]) -> tuple[set[str], set[str]]:
