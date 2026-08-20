@@ -498,6 +498,7 @@ def test_remember_returns_false_when_write_denied(backend):
     assert backend.recent() == []  # nothing durable — and we said so
 
 
+@_needs_write_denial
 def test_eperm_through_public_stash_entry_returns_false(backend, monkeypatch):
     """R1 regression at the PUBLIC boundary: stash_entry propagates the
     backend's durable-write result and the failure reason is visible."""

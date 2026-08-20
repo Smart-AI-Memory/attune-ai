@@ -46,6 +46,12 @@ def test_lock_is_exclusive_between_processes(tmp_path):
     assert "REFUSED" in peer.stdout, peer.stdout + peer.stderr
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="POSIX-only: Windows can't unlink a lock file file_lock holds open "
+    "(WinError 32), so a peer can never break-and-retake it — the ABA race "
+    "this guards against cannot occur on Windows.",
+)
 def test_release_does_not_delete_a_lock_we_no_longer_own(tmp_path):
     """The ABA race: a broken-as-stale holder must not free the new owner.
 
