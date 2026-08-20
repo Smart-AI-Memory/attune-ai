@@ -118,7 +118,8 @@ async def test_collect_response_returns_validated_answers_and_hint(tmp_path):
     log_submission.assert_called_once_with()
     assert result["success"] is True
     assert result["responses"] == {"target": "src", "depth": "quick"}
-    assert re.fullmatch(r"resp-\d{8}-\d{6}", result["response_id"])
+    # forms 0.7.0 appends an 8-hex uniqueness suffix to the response id.
+    assert re.fullmatch(r"resp-\d{8}-\d{6}-[0-9a-f]{8}", result["response_id"])
     assert result["hint"] == "Press K"
 
 
@@ -293,4 +294,5 @@ async def test_ask_accept_returns_validated_response(tmp_path):
     assert result["success"] is True
     assert result["action"] == "accept"
     assert result["responses"] == {"target": "src", "depth": "quick"}
-    assert re.fullmatch(r"resp-\d{8}-\d{6}", result["response_id"])
+    # forms 0.7.0 appends an 8-hex uniqueness suffix to the response id.
+    assert re.fullmatch(r"resp-\d{8}-\d{6}-[0-9a-f]{8}", result["response_id"])

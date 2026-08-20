@@ -43,8 +43,11 @@ class TestTypeMapping:
         assert "minItems" not in p
 
     def test_boolean(self):
+        # forms 0.7.0 (#46): boolean projects to a two-value string enum,
+        # not a JSON boolean — the validator accepts only "Yes"/"No" and
+        # every surface renders those.
         p = _prop({"id": "b", "text": "Ship?", "type": "boolean"})
-        assert p == {"title": "Ship?", "type": "boolean"}
+        assert p == {"title": "Ship?", "type": "string", "enum": ["Yes", "No"]}
 
     def test_number_with_bounds(self):
         p = _prop({"id": "n", "text": "Age", "type": "number", "minimum": 0, "maximum": 120})

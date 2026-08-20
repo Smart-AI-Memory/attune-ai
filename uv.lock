@@ -533,7 +533,7 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'enterprise'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'full'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40.0" },
-    { name = "attune-forms", specifier = ">=0.6.0,<1.0" },
+    { name = "attune-forms", specifier = ">=0.7.0,<1.0" },
     { name = "attune-help", marker = "extra == 'dev'", specifier = ">=0.10.0" },
     { name = "attune-rag", specifier = ">=0.1.5,<2.0" },
     { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.5,<2.0" },
@@ -713,14 +713,14 @@ dev = [
 
 [[package]]
 name = "attune-forms"
-version = "0.6.0"
+version = "0.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "structlog" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ed/39/16c7f46d9db12f9edb7b76deecd0de5bc76fa23a074e2bd21acb3935f27b/attune_forms-0.6.0.tar.gz", hash = "sha256:7dc9eaf93bb0a0d1a0839a30147a50bcad0906f59f7a12719b9f80718814b0cf", size = 142561, upload-time = "2026-08-16T07:22:09.482Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d6/7c/4df7a53b8120d64d920043bc2aad553c2c21965d302228906fcbee3c7ac8/attune_forms-0.7.0.tar.gz", hash = "sha256:306ad93a95083c563c32b8aafbfe2595ce666d66b8baa2dbafb420139502e3f4", size = 176365, upload-time = "2026-08-20T15:06:18.44Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/82/a6/f4a3fe148d753084da4c8830c33d0bdec4f707dc6e25126c6a104c5d139c/attune_forms-0.6.0-py3-none-any.whl", hash = "sha256:50736523f82cd96c04926605e4a6854af02ff571cb5c44b1e3a579b930691d26", size = 87787, upload-time = "2026-08-16T07:22:08.156Z" },
+    { url = "https://files.pythonhosted.org/packages/53/e8/ab5318a987addde3d38408195cba54cf01b668b4f06fdb0880837c3856c9/attune_forms-0.7.0-py3-none-any.whl", hash = "sha256:b07bf0b0238c134848853c7a2c475284bb3f7ae3c41a0148d9d2f3aa58c0b08b", size = 99028, upload-time = "2026-08-20T15:06:17.265Z" },
 ]
 
 [[package]]
