@@ -571,17 +571,27 @@ class TestFormatOnSaveSharedBudget:
     def test_wall_budget_under_registered_timeout(self) -> None:
         import attune.hooks.scripts.format_on_save as fos
 
-        # Guard against the surface where the timeout unit is certain:
-        # .claude/settings.json is in seconds (the dev-repo registration
-        # this hook runs under, where the 2x10s>10s overrun was measured).
-        # The plugin hooks.json value (10000) is deliberately NOT asserted
-        # here — its unit (seconds, vs the author's likely-intended ms) is
-        # unverified, so a divisor would encode a guess. Tracked separately.
+        # The ``timeout`` field is SECONDS on BOTH registration surfaces —
+        # ``.claude/settings.json`` and the plugin ``hooks/hooks.json``
+        # share the same hook schema and unit (Claude Code hooks guide:
+        # "Override per hook with the ``timeout`` field in seconds"). So
+        # WALL_BUDGET (seconds) must sit below BOTH registered timeouts,
+        # or the two black+ruff formatters combined can outrun the harness
+        # SIGKILL. Asserting both closes the surface the plugin value was
+        # once (pending unit verification) skipped on.
         repo = Path(__file__).resolve().parents[3]
+
         settings = json.loads((repo / ".claude" / "settings.json").read_text(encoding="utf-8"))
         settings_s = _find_hook_timeout(settings, "format_on_save.py")
         assert settings_s is not None
         assert fos.WALL_BUDGET < settings_s
+
+        plugin_hooks = json.loads(
+            (repo / "plugin" / "hooks" / "hooks.json").read_text(encoding="utf-8")
+        )
+        plugin_s = _find_hook_timeout(plugin_hooks, "format_on_save.py")
+        assert plugin_s is not None
+        assert fos.WALL_BUDGET < plugin_s
 
 
 # ---------------------------------------------------------------------------

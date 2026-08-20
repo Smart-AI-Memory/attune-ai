@@ -24,8 +24,9 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 #: Total wall-clock budget SHARED across both formatters (black + ruff),
-#: seconds. The registered PostToolUse timeout is 10s (10000ms in
-#: ``plugin/hooks/hooks.json``); this sits below it so the two formatters
+#: seconds. The registered PostToolUse timeout is 10s (``timeout: 10`` in
+#: ``plugin/hooks/hooks.json`` — the field is SECONDS); this sits below it
+#: so the two formatters
 #: COMBINED — plus interpreter start-up — finish before the harness
 #: SIGKILLs the hook. Each formatter previously carried its own 10s
 #: ceiling, so a hung black + hung ruff could run ~20s (> the 10s

@@ -7,7 +7,7 @@
     "_sdk_gate.py"
   ],
   "settings_command": "python .claude/hooks/spec_orient.py",
-  "settings_timeout": 4000,
+  "settings_timeout": 4,
   "siblings": [
     "~/attune-help",
     "~/attune-author",

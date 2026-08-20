@@ -147,15 +147,25 @@ class TestHooksJson:
                         )
 
     def test_timeouts_are_reasonable(self) -> None:
-        """Test that hook timeouts are between 1s and 60s."""
+        """Test that hook timeouts are between 1s and 60s.
+
+        The ``timeout`` field is in SECONDS — plugin ``hooks.json`` shares
+        the same hook schema (and unit) as ``.claude/settings.json``. See
+        the Claude Code hooks guide: "Override per hook with the ``timeout``
+        field in seconds." A value like ``10000`` would be read as 10000
+        SECONDS (~2.8 hours), so the plugin's hooks effectively never hit
+        the harness SIGKILL — the latent bug this guard now catches.
+        """
         path = PLUGIN_ROOT / "hooks" / "hooks.json"
         data = json.loads(path.read_text(encoding="utf-8"))
         for _event, entries in data["hooks"].items():
             for entry in entries:
                 for hook in entry["hooks"]:
                     if "timeout" in hook:
-                        assert 1000 <= hook["timeout"] <= 60000, (
-                            f"Timeout {hook['timeout']}ms outside " f"reasonable range (1-60s)"
+                        assert 1 <= hook["timeout"] <= 60, (
+                            f"Timeout {hook['timeout']}s outside reasonable "
+                            f"range (1-60s). The field is SECONDS, not ms — "
+                            f"a value like 10000 means ~2.8 hours."
                         )
 
 

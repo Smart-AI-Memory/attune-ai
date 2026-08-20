@@ -6,7 +6,7 @@
           {
             "type": "command",
             "command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/welcome.py",
-            "timeout": 3000
+            "timeout": 3
           }
         ]
       },
@@ -15,7 +15,7 @@
           {
             "type": "command",
             "command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/usage_consent_notice.py",
-            "timeout": 2000
+            "timeout": 2
           }
         ]
       },
@@ -24,7 +24,7 @@
           {
             "type": "command",
             "command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/spec_orient.py",
-            "timeout": 4000
+            "timeout": 4
           }
         ]
       },
@@ -33,7 +33,7 @@
           {
             "type": "command",
             "command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/session_recall.py",
-            "timeout": 3000
+            "timeout": 3
           }
         ]
       }
@@ -44,7 +44,7 @@
           {
             "type": "command",
             "command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/compact_warning.py",
-            "timeout": 4000
+            "timeout": 4
           }
         ]
       },
@@ -53,7 +53,7 @@
           {
             "type": "command",
             "command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/session_stash.py",
-            "timeout": 15000
+            "timeout": 15
           }
         ]
       }
@@ -65,7 +65,7 @@
           {
             "type": "command",
             "command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/jit_recall.py",
-            "timeout": 3000
+            "timeout": 3
           }
         ]
       },
@@ -75,7 +75,7 @@
           {
             "type": "command",
             "command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/security_guard.py",
-            "timeout": 5000
+            "timeout": 5
           }
         ]
       },
@@ -85,7 +85,7 @@
           {
             "type": "command",
             "command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/friction_gate.py",
-            "timeout": 4000
+            "timeout": 4
           }
         ]
       },
@@ -95,7 +95,7 @@
           {
             "type": "command",
             "command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/security_guard.py",
-            "timeout": 5000
+            "timeout": 5
           }
         ]
       }
@@ -107,7 +107,7 @@
           {
             "type": "command",
             "command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/format_on_save.py",
-            "timeout": 10000
+            "timeout": 10
           }
         ]
       },
@@ -117,7 +117,7 @@
           {
             "type": "command",
             "command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/help_on_error.py",
-            "timeout": 3000
+            "timeout": 3
           }
         ]
       },
@@ -127,7 +127,7 @@
           {
             "type": "command",
             "command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/help_post_commit.py",
-            "timeout": 5000
+            "timeout": 5
           }
         ]
       },
@@ -137,7 +137,7 @@
           {
             "type": "command",
             "command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/trap_stash.py",
-            "timeout": 5000
+            "timeout": 5
           }
         ]
       }
@@ -148,7 +148,7 @@
           {
             "type": "command",
             "command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/lesson_recall.py",
-            "timeout": 5000
+            "timeout": 5
           }
         ]
       }

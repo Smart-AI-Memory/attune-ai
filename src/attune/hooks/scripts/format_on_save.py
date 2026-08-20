@@ -24,8 +24,9 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 #: Total wall-clock budget SHARED across both formatters (black + ruff),
-#: seconds. The registered PostToolUse timeout is 10s (10000ms in
-#: ``plugin/hooks/hooks.json``, 10s in ``.claude/settings.json``); this
+#: seconds. The registered PostToolUse timeout is 10s (10 in both
+#: ``plugin/hooks/hooks.json`` and ``.claude/settings.json`` — the
+#: ``timeout`` field is SECONDS on both surfaces); this
 #: sits below it so the two formatters COMBINED — plus interpreter
 #: start-up and the src-path import — finish before the harness SIGKILLs
 #: the hook. Each formatter previously carried its own 10s ceiling, so a

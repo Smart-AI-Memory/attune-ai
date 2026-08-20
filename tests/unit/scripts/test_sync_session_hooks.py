@@ -39,7 +39,7 @@ def fleet(tmp_path, projector, monkeypatch):
         "canonical_dir": "canon",
         "files": ["spec_orient.py", "_state.py"],
         "settings_command": "python .claude/hooks/spec_orient.py",
-        "settings_timeout": 4000,
+        "settings_timeout": 4,
         "siblings": ["~/sib"],
     }
     monkeypatch.setattr(projector, "REPO_ROOT", tmp_path)
