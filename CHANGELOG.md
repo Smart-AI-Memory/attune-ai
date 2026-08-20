@@ -10,66 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [13.0.0] - 2026-08-20
 
 **Correctness you can trust under failure.** A library-wide review
-hardened the paths that only matter when something goes wrong — memory
-writes that reported success but didn't land, telemetry and gate state
-that a malformed record could corrupt, external input that could crash
-a parse instead of degrading. The major bump is forced by removing the
-dormant in-package hook-execution engine (dead code, no live caller);
-the memory-durability and MCP-schema changes below alter observable
-behavior and are called out for migration.
-
-### Removed — BREAKING: dormant in-package hook-execution engine
-
-- **`attune.hooks.HookRegistry` / `HookExecutor` / `HookConfig`
-  (+ `HookDefinition` / `HookEvent` / `HookMatcher` / `HookRule` /
-  `HookType`) and `attune.commands.CommandContext` /
-  `CommandExecutor` / `create_command_context` deleted.** The
-  in-package hook-execution engine (`src/attune/hooks/executor.py`,
-  `registry.py`, `config.py`, `commands/context.py`) had **no live
-  caller** in attune — the hooks Claude Code actually runs are the
-  scripts under `attune/hooks/scripts/`, wired via the plugin's
-  `hooks.json`, which never touched this engine. Removed under the
-  removing-dead-code gate (5/5 removal signals: zero live usage,
-  fake-success stub tell, orphaned motivation — its originating
-  use-case was retired in 9.0.0 — never-worked with six ledgered
-  bugs, and a fix trip-wire). Chair-ruled DELETE.
-  Migrating? Use Claude Code's own hooks (plugin `hooks.json` +
-  scripts) — see `docs/hooks.md`. (#2125)
-
-### Changed — BREAKING-adjacent: memory durability & scoping semantics
-
-The library-review's memory tier changed behavior code may have relied
-on. Review any code that treats a memory write as fire-and-forget or
-assumed the old (permissive) INTERNAL scoping:
-
-- **The durability set (tier 1):** memory writes that reported success
-  without landing now actually persist or surface the failure — a store
-  write no longer silently drops (#2128).
-- **INTERNAL workspace scoping is now real (tier 2):** scoping that was
-  documented but not enforced is enforced; memory search is documented
-  as ungoverned (not scope-filtered) so callers don't assume isolation
-  it never provided (#2129).
-- **Atomic lock acquisition + bounded recall connects (tier 3):** lock
-  acquisition is atomic and recall connection attempts are bounded, so
-  a contended or unreachable store degrades instead of hanging (#2130).
-
-### Changed — attune-forms 0.7.0: elicitation schema sync (D3 mirror)
-
-- **Dependency floor raised to `attune-forms>=0.7.0,<1.0`** and the
-  hand-maintained MCP elicitation tool schema
-  (`attune.mcp.tool_schemas.get_elicitation_tools`) re-sourced from the
-  library. The v2 rich field/form schema now derives from
-  `attune_forms.mcp_server` instead of a hand-declared copy, so the MCP
-  server advertises 0.7.0's contract to end users: the full construct
-  vocabulary (adds `deliberation`, `triage`, `confirm`, `ranking`,
-  `assumption_review`), typed object-array extras (`progress_items`,
-  `triage_items`, `consequences`, `assumptions`), a multi-type
-  `default` (incl. object for triage rulings), `inferred_from`
-  provenance, and `additionalProperties: false` strictness on both the
-  form and field objects. The v1 AskUserQuestion surface stays a
-  deliberate 4-type schema (D10 enum-honesty). A drift test pins
-  attune-ai's v2 schema to the library's, retiring the recurring
-  hand-sync obligation. Closes the forms 0.7.0 D3 mirror gate. (#2131)
+hardened the paths that only matter when something goes wrong. What you
+get: memory writes that actually persist or tell you they didn't; a
+release Security gate a hallucinated LLM count can no longer slip past;
+malformed or hostile input that degrades instead of crashing a parse;
+and hooks that finish inside their timeout budget instead of being
+killed mid-run. The major version marks two things to check before you
+upgrade — a dormant in-package hook-execution engine was removed (dead
+code, no live caller), and the memory durability & scoping changes alter
+observable behavior — both detailed under **Changed** and **Removed**
+below. Upgrading? The
+[13.0.0 upgrade guide](docs/migration/upgrading-to-13.0.0.md) has a
+one-glance "are you affected?" table.
 
 ### Added
 
@@ -130,6 +82,59 @@ MCP correctness:
 - `_check_ownership` reads the pattern owner at the correct nesting
   level (M4) (#2119); `help_init` names are validated before save
   (#2118).
+
+### Changed — BREAKING-adjacent: memory durability & scoping semantics
+
+The library-review's memory tier changed behavior code may have relied
+on. Review any code that treats a memory write as fire-and-forget or
+assumed the old (permissive) INTERNAL scoping:
+
+- **The durability set (tier 1):** memory writes that reported success
+  without landing now actually persist or surface the failure — a store
+  write no longer silently drops (#2128).
+- **INTERNAL workspace scoping is now real (tier 2):** scoping that was
+  documented but not enforced is enforced; memory search is documented
+  as ungoverned (not scope-filtered) so callers don't assume isolation
+  it never provided (#2129).
+- **Atomic lock acquisition + bounded recall connects (tier 3):** lock
+  acquisition is atomic and recall connection attempts are bounded, so
+  a contended or unreachable store degrades instead of hanging (#2130).
+
+### Changed — attune-forms 0.7.0: elicitation schema sync (D3 mirror)
+
+- **Dependency floor raised to `attune-forms>=0.7.0,<1.0`** and the
+  hand-maintained MCP elicitation tool schema
+  (`attune.mcp.tool_schemas.get_elicitation_tools`) re-sourced from the
+  library. The v2 rich field/form schema now derives from
+  `attune_forms.mcp_server` instead of a hand-declared copy, so the MCP
+  server advertises 0.7.0's contract to end users: the full construct
+  vocabulary (adds `deliberation`, `triage`, `confirm`, `ranking`,
+  `assumption_review`), typed object-array extras (`progress_items`,
+  `triage_items`, `consequences`, `assumptions`), a multi-type
+  `default` (incl. object for triage rulings), `inferred_from`
+  provenance, and `additionalProperties: false` strictness on both the
+  form and field objects. The v1 AskUserQuestion surface stays a
+  deliberate 4-type schema (D10 enum-honesty). A drift test pins
+  attune-ai's v2 schema to the library's, retiring the recurring
+  hand-sync obligation. Closes the forms 0.7.0 D3 mirror gate. (#2131)
+
+### Removed — BREAKING: dormant in-package hook-execution engine
+
+- **`attune.hooks.HookRegistry` / `HookExecutor` / `HookConfig`
+  (+ `HookDefinition` / `HookEvent` / `HookMatcher` / `HookRule` /
+  `HookType`) and `attune.commands.CommandContext` /
+  `CommandExecutor` / `create_command_context` deleted.** The
+  in-package hook-execution engine (`src/attune/hooks/executor.py`,
+  `registry.py`, `config.py`, `commands/context.py`) had **no live
+  caller** in attune — the hooks Claude Code actually runs are the
+  scripts under `attune/hooks/scripts/`, wired via the plugin's
+  `hooks.json`, which never touched this engine. Removed under the
+  removing-dead-code gate (5/5 removal signals: zero live usage,
+  fake-success stub tell, orphaned motivation — its originating
+  use-case was retired in 9.0.0 — never-worked with six ledgered
+  bugs, and a fix trip-wire). Chair-ruled DELETE.
+  Migrating? Use Claude Code's own hooks (plugin `hooks.json` +
+  scripts) — see `docs/hooks.md`. (#2125)
 
 ## [12.0.0] - 2026-08-18
 
