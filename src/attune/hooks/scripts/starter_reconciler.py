@@ -49,6 +49,7 @@ import json
 import re
 import subprocess
 import sys
+import time
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -68,10 +69,45 @@ MAIN_LOG_SCAN = 40
 MAX_NEWER_MERGES = 6
 #: Per-subprocess timeout for a single git/gh call (seconds).
 SUBPROC_TIMEOUT = 4
-#: Total wall-clock budget for ALL network checks combined (seconds).
+#: Wall-clock budget for the concurrent executor within ONE reconcile
+#: pass (seconds). Bounds the executor's ``wait``; also clamped by the
+#: shared ``_DEADLINE`` so it can never exceed the remaining global
+#: budget.
 WALL_BUDGET = 8
+#: Total wall-clock budget for the ENTIRE hook invocation — both
+#: reconcile passes (project + global) and every git/gh/PyPI call they
+#: make, combined (seconds). The registered SessionStart timeout is 12s
+#: (``.claude/settings.json``); this stays safely under it even when
+#: every subprocess blocks to its ``SUBPROC_TIMEOUT`` ceiling, so a
+#: slow-but-not-failing git can never push the hook past the harness
+#: SIGKILL — which would silently drop the freshness banner. The gap to
+#: the 12s ceiling is deliberate headroom for interpreter start-up and
+#: process teardown, which are NOT inside the budget: at 8s a loaded CI
+#: runner measured 12.1s end-to-end and tripped the ceiling. Kept in
+#: sync with the registered timeout by
+#: ``tests/unit/hooks/test_starter_reconciler.py``.
+GLOBAL_WALL_BUDGET = 6
 #: urlopen timeout for the single PyPI lookup (seconds).
 HTTP_TIMEOUT = 4
+
+#: Monotonic instant by which all subprocess / network work must finish,
+#: set once at the top of the reconcile path in ``main()`` and shared
+#: across both passes. ``None`` (the default) means unbounded — the
+#: manual ``--stamp`` path and unit tests keep the per-call ceilings.
+_DEADLINE: float | None = None
+
+
+def _remaining(ceiling: float) -> float:
+    """Clamp ``ceiling`` to the time left before ``_DEADLINE``.
+
+    Returns ``ceiling`` unchanged when no global deadline is set, ``0.0``
+    when the deadline has already passed (caller should skip the work),
+    or the smaller of ``ceiling`` and the seconds remaining otherwise.
+    """
+    if _DEADLINE is None:
+        return ceiling
+    return max(0.0, min(ceiling, _DEADLINE - time.monotonic()))
+
 
 # --- Thread extraction patterns --------------------------------------
 #: ``#1121`` PR references (markdown headings always have a space after
@@ -256,7 +292,17 @@ def _package_name(repo_root: Path | None) -> str | None:
 
 
 def _run(cmd: list[str], cwd: Path | None) -> subprocess.CompletedProcess | None:
-    """Run ``cmd``, returning the result or None on timeout / OS error."""
+    """Run ``cmd``, returning the result or None on timeout / OS error.
+
+    The per-call timeout is the smaller of ``SUBPROC_TIMEOUT`` and the
+    time left in the shared ``_DEADLINE``; once the global budget is
+    spent the call is skipped (returns None) rather than started, so the
+    whole hook stays under the registered SessionStart timeout even when
+    every git/gh call would otherwise block to its full ceiling.
+    """
+    timeout = _remaining(SUBPROC_TIMEOUT)
+    if timeout <= 0:
+        return None
     try:
         return subprocess.run(
             cmd,
@@ -264,7 +310,7 @@ def _run(cmd: list[str], cwd: Path | None) -> subprocess.CompletedProcess | None
             text=True,
             encoding="utf-8",
             errors="replace",
-            timeout=SUBPROC_TIMEOUT,
+            timeout=timeout,
             cwd=str(cwd) if cwd else None,
         )
     except (subprocess.TimeoutExpired, OSError):
@@ -379,9 +425,12 @@ def check_specs(text: str, repo_root: Path | None) -> dict[str, str]:
 def pypi_latest(pkg: str) -> str | None:
     """Return the latest version string for ``pkg`` on PyPI, or None."""
     url = f"https://pypi.org/pypi/{pkg}/json"
+    timeout = _remaining(HTTP_TIMEOUT)
+    if timeout <= 0:
+        return None
     try:
         # noqa: S310 / nosec B310 — hardcoded https PyPI URL, scheme is fixed.
-        with urllib.request.urlopen(url, timeout=HTTP_TIMEOUT) as resp:  # noqa: S310  # nosec B310
+        with urllib.request.urlopen(url, timeout=timeout) as resp:  # noqa: S310  # nosec B310
             data = json.load(resp)
         return data["info"]["version"]
     except Exception:  # noqa: BLE001
@@ -430,7 +479,7 @@ def reconcile(text: str, pkg: str | None, cwd: Path | None) -> dict:
     if pkg:
         futures[executor.submit(pypi_latest, pkg)] = ("pypi", None)
 
-    done, _ = concurrent.futures.wait(futures, timeout=WALL_BUDGET)
+    done, _ = concurrent.futures.wait(futures, timeout=_remaining(WALL_BUDGET))
     for future in done:
         kind, key = futures[future]
         try:
@@ -609,11 +658,22 @@ def main() -> int:
         return 0
 
     project_path = _find_project_starter()
-    if project_path is not None:
-        _reconcile_and_emit(project_path, "project", repo_root)
 
-    if project_path is None or STARTER_PATH.resolve() != project_path.resolve():
-        _reconcile_and_emit(STARTER_PATH, "global", repo_root)
+    # One wall-clock budget shared across BOTH passes (project + global),
+    # so total hook time stays under the registered SessionStart timeout
+    # even when every git/gh call blocks to its ceiling. Reset in the
+    # finally so nothing leaks between invocations (or module-scoped test
+    # runs); real runs are one-shot processes either way.
+    global _DEADLINE
+    _DEADLINE = time.monotonic() + GLOBAL_WALL_BUDGET
+    try:
+        if project_path is not None:
+            _reconcile_and_emit(project_path, "project", repo_root)
+
+        if project_path is None or STARTER_PATH.resolve() != project_path.resolve():
+            _reconcile_and_emit(STARTER_PATH, "global", repo_root)
+    finally:
+        _DEADLINE = None
     return 0
 
 
