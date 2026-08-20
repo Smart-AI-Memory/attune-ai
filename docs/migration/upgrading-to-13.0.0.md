@@ -2,7 +2,7 @@
 
 13.0.0 mostly makes things you already rely on more dependable — the
 failure paths that only matter when something goes wrong now behave
-correctly (see the [changelog](../../CHANGELOG.md)). **Most projects
+correctly (see the [changelog](https://github.com/Smart-AI-Memory/attune-ai/blob/main/CHANGELOG.md)). **Most projects
 upgrade with no code changes.** A few items change observable behavior
 or a public surface; the table below is a 30-second check for whether
 any touch you.
@@ -134,5 +134,5 @@ nothing to preserve.
 
 ## See also
 
-- [CHANGELOG.md](../../CHANGELOG.md) — the full 13.0.0 entry
+- [CHANGELOG.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/CHANGELOG.md) — the full 13.0.0 entry
 - [docs/hooks.md](../hooks.md) — Claude Code hooks (the §4 replacement)
