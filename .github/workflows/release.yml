@@ -70,15 +70,24 @@ jobs:
         echo "---" >> RELEASE_NOTES.md
         echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$(git describe --tags --abbrev=0 HEAD^)...v${{ steps.version.outputs.version }}" >> RELEASE_NOTES.md
 
-    - name: Create GitHub Release
+    - name: Create or update GitHub Release
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        gh release create v${{ steps.version.outputs.version }} \
-          dist/* \
-          --title "v${{ steps.version.outputs.version }}" \
-          --notes-file RELEASE_NOTES.md \
-          --verify-tag
+        VER="v${{ steps.version.outputs.version }}"
+        if gh release view "$VER" >/dev/null 2>&1; then
+          # Release already exists (created manually, or a re-run) —
+          # attach the built artifacts to it instead of hard-failing on
+          # a duplicate. Leaves any hand-written notes untouched.
+          echo "Release $VER exists — uploading artifacts to it"
+          gh release upload "$VER" dist/* --clobber
+        else
+          gh release create "$VER" \
+            dist/* \
+            --title "$VER" \
+            --notes-file RELEASE_NOTES.md \
+            --verify-tag
+        fi
 
     # PyPI publishing is handled by publish-pypi.yml via OIDC trusted publishing
     # which triggers when this release is created
