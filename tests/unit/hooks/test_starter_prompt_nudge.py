@@ -12,6 +12,7 @@ Covers:
 from __future__ import annotations
 
 import importlib.util
+import json
 import subprocess
 import sys
 import time
@@ -19,14 +20,18 @@ from pathlib import Path
 
 import pytest
 
-SCRIPT_PATH = (
-    Path(__file__).resolve().parents[3]
-    / "src"
-    / "attune"
-    / "hooks"
-    / "scripts"
-    / "starter_prompt_nudge.py"
-)
+REPO_ROOT = Path(__file__).resolve().parents[3]
+SCRIPT_PATH = REPO_ROOT / "src" / "attune" / "hooks" / "scripts" / "starter_prompt_nudge.py"
+
+
+def _registered_session_start_timeout() -> int:
+    """The starter_prompt_nudge SessionStart timeout from settings.json."""
+    data = json.loads((REPO_ROOT / ".claude" / "settings.json").read_text(encoding="utf-8"))
+    for group in data.get("hooks", {}).get("SessionStart", []):
+        for hook in group.get("hooks", []):
+            if "starter_prompt_nudge.py" in hook.get("command", ""):
+                return hook["timeout"]
+    raise AssertionError("no starter_prompt_nudge.py SessionStart hook in settings.json")
 
 
 @pytest.fixture(scope="module")
@@ -346,6 +351,24 @@ class TestCurrentBranch:
 
         monkeypatch.setattr(hook_module.subprocess, "run", raise_timeout)
         assert hook_module._current_branch(Path("/repo")) is None
+
+    def test_git_timeout_leaves_headroom_under_registered(self, hook_module, monkeypatch):
+        # A single git call at exactly the registered SessionStart timeout
+        # leaves no room for interpreter start-up + I/O + print, so a
+        # wedged git consumes the whole budget and the banner is SIGKILLed
+        # away. The per-call timeout must sit strictly below the registered
+        # timeout — and that is the value actually handed to subprocess.run.
+        assert hook_module.GIT_TIMEOUT < _registered_session_start_timeout()
+
+        captured: dict = {}
+
+        def fake_run(*a, **k):
+            captured.update(k)
+            return self._Proc(0, "claude/x\n")
+
+        monkeypatch.setattr(hook_module.subprocess, "run", fake_run)
+        hook_module._current_branch(Path("/repo"))
+        assert captured["timeout"] == hook_module.GIT_TIMEOUT
 
 
 class TestStatDegrade:
