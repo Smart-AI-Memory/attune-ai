@@ -1,11 +1,12 @@
 """Gate: every guarded ``ast.parse`` must also catch ``ValueError``.
 
-``ast.parse`` raises ``ValueError`` — not ``SyntaxError`` — when the
-source contains a null byte::
-
-    >>> ast.parse("x = 1\\x00")
-    Traceback (most recent call last):
-    ValueError: source code string cannot contain null bytes
+``ast.parse`` rejects a source containing a null byte — but WHICH
+exception it raises depends on the interpreter: CPython <= 3.11 raises
+``ValueError``, newer versions raise ``SyntaxError``. This repo's CI
+matrix spans 3.10-3.14, so a handler must cover BOTH to behave the same
+way on every supported interpreter. Catching only ``SyntaxError`` is
+silently correct on 3.12+ and broken on 3.10/3.11 — the worst shape of
+bug to find by hand.
 
 Every AST-analysis path in this tree (doc generators, fact-checkers,
 test generators, architecture tools) walks a *set* of files and intends
@@ -102,17 +103,22 @@ def test_guarded_ast_parse_also_catches_value_error() -> None:
     )
 
 
-def test_null_byte_source_raises_value_error_not_syntax_error() -> None:
-    """Pin the premise the gate rests on (a CPython behaviour, not ours)."""
-    with pytest.raises(ValueError):
+def test_null_byte_rejection_is_covered_by_both_handlers() -> None:
+    """Pin the premise: the exception CLASS is interpreter-dependent.
+
+    CPython <= 3.11 raises ValueError; 3.12+ raises SyntaxError. Only a
+    handler naming both behaves identically across the supported range,
+    which is exactly what the gate above enforces.
+    """
+    with pytest.raises((ValueError, SyntaxError)):
         ast.parse("x = 1\x00y = 2\n")
 
-    # And specifically NOT a SyntaxError, which is what the old handlers
-    # were written for.
+    # A (SyntaxError, ValueError) handler catches it on ANY interpreter.
     try:
         ast.parse("x = 1\x00y = 2\n")
-    except ValueError as exc:  # noqa: BLE001 - asserting the concrete type
-        assert not isinstance(exc, SyntaxError)
+    except (SyntaxError, ValueError):
+        caught = True
+    assert caught
 
 
 def test_skeleton_passes_through_null_byte_source() -> None:
@@ -132,4 +138,7 @@ def test_ast_analyzer_records_error_instead_of_raising() -> None:
 
     assert functions == []
     assert classes == []
-    assert analyzer.last_error and "ValueError" in analyzer.last_error
+    # The recorded class follows the interpreter (see the premise
+    # test): ValueError on <= 3.11, SyntaxError on 3.12+.
+    assert analyzer.last_error
+    assert ("ValueError" in analyzer.last_error) or ("SyntaxError" in analyzer.last_error)
