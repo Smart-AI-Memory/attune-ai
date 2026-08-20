@@ -399,8 +399,14 @@ def _read_stdin_context() -> dict[str, Any]:
             else sys.stdin.read()
         ).strip()
         if raw:
-            return json.loads(raw)
-    except (json.JSONDecodeError, ValueError) as e:
+            parsed = json.loads(raw)
+            # A successfully-parsed non-dict (list/int/str/null) has no
+            # tool fields to validate; treat it as a parse error so the
+            # fail-open path below fires instead of crashing main()
+            # (library-review L1: a blocking guard must not exit 1).
+            if isinstance(parsed, dict):
+                return parsed
+    except (json.JSONDecodeError, ValueError, RecursionError) as e:
         logger.warning("Could not parse stdin JSON (fail-closed): %s", e)
     return {"_parse_error": True}
 
@@ -419,7 +425,19 @@ if __name__ == "__main__":
     if context.get("_parse_error"):
         sys.exit(0)
 
-    result = main(context)
+    try:
+        result = main(context)
+    except Exception as exc:  # noqa: BLE001
+        # Wrong-typed fields inside an otherwise-valid dict (e.g.
+        # tool_name=123) leave no parseable command to guard; a crash
+        # here exits 1, which the harness treats as non-blocking anyway
+        # — so fail open EXPLICITLY, consistent with the parse-error
+        # path and worktree_path_guard (library-review L1).
+        print(
+            f"[security-guard] hook error (allowing): {type(exc).__name__}: {exc}",
+            file=sys.stderr,
+        )
+        sys.exit(0)
 
     if not result.get("allowed", False):
         # Block: print reason to stderr, exit 2

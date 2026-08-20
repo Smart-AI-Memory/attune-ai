@@ -141,10 +141,22 @@ _BASELINE: dict[str, int] = {
     "src/attune/hooks/executor.py": 2,
     "src/attune/hooks/registry.py": 1,
     "src/attune/hooks/scripts/evaluate_session.py": 3,
+    # format_on_save added 1 for library-review L3 (PR #2117): the
+    # PostToolUse exit-0-always contract must survive wrong-typed
+    # nested fields (tool_input/file_path), not only OSError.
+    "src/attune/hooks/scripts/format_on_save.py": 1,
     "src/attune/hooks/scripts/help_freshness_nudge.py": 1,
     "src/attune/hooks/scripts/lessons_reminder.py": 1,
+    # security_guard added 1 for library-review L1 (PR #2117): a
+    # blocking guard must fail OPEN on wrong-typed fields, so main()
+    # is wrapped to exit 0 instead of crashing to a non-blocking 1.
+    "src/attune/hooks/scripts/security_guard.py": 1,
     "src/attune/hooks/scripts/starter_prompt_nudge.py": 1,
     "src/attune/hooks/scripts/starter_reconciler.py": 3,
+    # telemetry_hook added 1 for library-review L2 (PR #2117): the
+    # PostToolUse exit-0-always contract must survive a non-dict
+    # payload reaching record_telemetry, not only OSError.
+    "src/attune/hooks/scripts/telemetry_hook.py": 1,
     "src/attune/hooks/scripts/worktree_path_guard.py": 1,
     "src/attune/llm/fable_call.py": 2,
     "src/attune/llm/interaction.py": 1,

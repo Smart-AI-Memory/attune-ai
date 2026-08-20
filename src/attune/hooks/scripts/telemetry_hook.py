@@ -53,8 +53,13 @@ def _read_stdin_context() -> dict[str, Any]:
         _buf = getattr(sys.stdin, "buffer", None)  # None when tests patch stdin
         raw = (_buf.read().decode("utf-8", errors="replace") if _buf else sys.stdin.read()).strip()
         if raw:
-            return json.loads(raw)
-    except (json.JSONDecodeError, ValueError) as e:
+            parsed = json.loads(raw)
+            # A non-dict payload (list/int/str/null) has no telemetry
+            # fields; degrade to {} so record_telemetry's .get calls
+            # can't crash the exit-0 contract (library-review L2).
+            if isinstance(parsed, dict):
+                return parsed
+    except (json.JSONDecodeError, ValueError, RecursionError) as e:
         logger.debug("Could not parse stdin JSON: %s", e)
     return {}
 
@@ -68,6 +73,10 @@ if __name__ == "__main__":
     exit_if_sdk_subprocess()
     logging.basicConfig(level=logging.WARNING, format="%(message)s")
     ctx = _read_stdin_context()
-    record_telemetry(ctx)
-    # Telemetry is fire-and-forget — always exit 0
+    try:
+        record_telemetry(ctx)
+    except Exception as e:  # noqa: BLE001
+        # Telemetry is fire-and-forget; the PostToolUse contract is
+        # exit-0-always, so no internal error may crash it (L2).
+        logger.debug("telemetry_hook error (ignored): %s", e)
     sys.exit(0)

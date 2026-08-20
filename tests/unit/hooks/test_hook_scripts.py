@@ -824,3 +824,27 @@ class TestFormatOnSaveNeverStripsImports:
         assert ruff_calls, f"ruff was not invoked; calls={calls}"
         joined = " ".join(ruff_calls[0])
         assert "--ignore" in joined and "F401" in joined and "F811" in joined
+
+
+def test_format_on_save_malformed_stdin_exits_0():
+    """Library-review L3: non-dict top-level or non-dict tool_input /
+    non-str file_path must not crash format_on_save's exit-0 contract."""
+    import subprocess
+    import sys
+
+    for payload in (
+        "[1,2,3]",
+        "42",
+        "null",
+        '"hi"',
+        '{"tool_name":"Edit","tool_input":[1]}',
+        '{"tool_name":"Write","tool_input":null}',
+        '{"tool_name":"Edit","tool_input":{"file_path":5}}',
+    ):
+        result = subprocess.run(
+            [sys.executable, "src/attune/hooks/scripts/format_on_save.py"],
+            input=payload,
+            capture_output=True,
+            text=True,
+        )
+        assert result.returncode == 0, f"{payload!r} -> exit {result.returncode}"
