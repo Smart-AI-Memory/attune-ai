@@ -96,23 +96,34 @@ Degrade, never crash, on malformed or hostile input:
   exit-code contract on non-`OSError` failures (#2113); telemetry/agent
   save paths keep cleanup-parity on non-`OSError` failures (#2114).
 
-Durability and atomicity of shared state:
+Concurrency & durability of shared state:
 
-- Atomic writes plus a write lock in `AgentStateStore` (#2101);
-  `ComplianceDatabase` writes serialized behind a shared per-path lock
-  (#2116); one wall-clock budget shared across `starter_reconciler`
-  passes (L5) (#2120); `SessionStart`/`PostToolUse` hooks given timeout
-  headroom (#2127).
+- Atomic writes plus a write lock in `AgentStateStore` — a crash
+  mid-write can no longer corrupt the state file, and concurrent
+  in-process writers no longer lose updates (#2101);
+  `ComplianceDatabase` writes serialized behind a shared per-path lock,
+  fixing a race that dropped 3 of 10 concurrent writes (#2116).
 
-Telemetry and gate integrity — one bad record can't corrupt shared
-state:
+Hook subprocess timeout budgets:
 
-- Reserved telemetry keys can no longer be clobbered via
-  `log_memory_event` fields (#2111); an LLM response can no longer
-  overwrite bandit severity counts in the Security gate (#2100); the
-  path-validation gate now recognizes the `path.open()` write idiom
-  (#2104) and `context/allocator.py` is allowlisted under the widened
-  `path.open` scan (#2107).
+- One wall-clock budget shared across the `starter_reconciler`
+  SessionStart hook's passes so their timeouts can't sum past the
+  deadline (L5) (#2120); `SessionStart`/`PostToolUse` hooks given
+  timeout headroom (#2127).
+
+Security & telemetry integrity:
+
+- **The release Security gate can no longer be bypassed by a
+  hallucinated LLM count.** `SecurityAuditorAgent` merged the
+  LLM-enhancement response over the bandit-parsed findings, so a
+  hallucinated low/zero `critical_issues` value could overwrite the
+  real bandit count before the `critical == 0` gate decision — a run
+  with genuine critical/high findings could pass. Both the agent gate
+  and the team-level `max_critical_issues` read were exposed (#2100).
+- Reserved telemetry keys can no longer be clobbered by caller fields
+  via `log_memory_event` (#2111).
+- Internal: the CI path-validation gate now recognizes the
+  `path.open()` write idiom it was blind to (#2104).
 
 MCP correctness:
 
