@@ -119,14 +119,22 @@ class MemoryHandlersMixin:
     # Ownership check
     # ------------------------------------------------------------------
 
-    def _check_ownership(self, metadata: dict[str, Any]) -> bool:
+    def _check_ownership(self, pattern: dict[str, Any]) -> bool:
         """Check if the current user owns a pattern.
 
-        Returns True if ownership cannot be determined (no
-        ``created_by`` field) so that legacy data remains
-        accessible.
+        ``recall_pattern`` returns ``{"content": ..., "metadata": {...}}``,
+        so ``created_by`` lives under ``metadata`` — not at the top level.
+        Read the nested value first, falling back to a top-level key for any
+        flat backend shape. Returns True only when ownership genuinely cannot
+        be determined (no ``created_by`` anywhere) so legacy data without
+        ownership info stays accessible.
         """
-        created_by = metadata.get("created_by", "")
+        nested = pattern.get("metadata")
+        created_by = ""
+        if isinstance(nested, dict):
+            created_by = nested.get("created_by") or ""
+        if not created_by:
+            created_by = pattern.get("created_by") or ""
         if not created_by:
             return True  # Legacy data without ownership info
         return str(created_by) == getattr(self, "_user_id", "mcp-session")
