@@ -44,6 +44,7 @@ from attune.memory.redis_bootstrap import (
     get_redis_or_mock,
     stop_redis,
 )
+from tests.support.redis_stub import RespStub, closed_port
 
 
 class TestRedisStatus:
@@ -80,59 +81,40 @@ class TestRedisStatus:
 
 @pytest.mark.skipif(not REDIS_AVAILABLE, reason="redis package not installed")
 class TestCheckRedisRunning:
-    """Test _check_redis_running function"""
+    """Test _check_redis_running against real endpoints.
 
-    @patch("redis.Redis")
-    def test_redis_running(self, mock_redis_class, monkeypatch):
-        """Test when Redis is running and responding"""
-        monkeypatch.delenv("REDIS_PASSWORD", raising=False)  # R3: unset ⇒ password=None
-        mock_client = Mock()
-        mock_client.ping.return_value = True
-        mock_redis_class.return_value = mock_client
+    These previously patched ``redis.Redis`` and asserted the kwargs it
+    was called with — which proved the mock got the arguments the test
+    handed it, and said nothing about which endpoint was dialled. That
+    is how library-review H1 (a probe hard-coded to 127.0.0.1:6379 while
+    clients connect to the resolved endpoint) survived. Real sockets
+    now; the resolver-default path is covered in
+    ``tests/unit/memory/test_probe_endpoint_agreement.py``.
+    """
 
-        result = _check_redis_running("localhost", 6379)
-        assert result is True
-        mock_redis_class.assert_called_once_with(
-            host="localhost",
-            port=6379,
-            socket_connect_timeout=1,
-            password=None,
-        )
+    def test_explicit_endpoint_that_answers_is_reported_running(self):
+        """An explicit host/port — how ensure_redis probes a server it starts."""
+        stub = RespStub()
+        try:
+            assert _check_redis_running("127.0.0.1", stub.port) is True
+        finally:
+            stub.close()
 
-    @patch("redis.Redis")
-    def test_redis_not_running(self, mock_redis_class):
-        """Test when Redis is not running"""
-        mock_redis_class.side_effect = Exception("Connection refused")
+    def test_explicit_endpoint_with_nothing_listening_is_reported_down(self):
+        assert _check_redis_running("127.0.0.1", closed_port()) is False
 
-        result = _check_redis_running("localhost", 6379)
-        assert result is False
+    def test_an_explicit_endpoint_overrides_the_resolved_one(self, monkeypatch):
+        """The override must actually win, in both directions."""
+        stub = RespStub()
+        dead = closed_port()
+        try:
+            monkeypatch.setenv("REDIS_URL", f"redis://127.0.0.1:{dead}/0")
+            assert _check_redis_running("127.0.0.1", stub.port) is True
 
-    @patch("redis.Redis")
-    def test_redis_ping_fails(self, mock_redis_class):
-        """Test when Redis connection succeeds but ping fails"""
-        mock_client = Mock()
-        mock_client.ping.side_effect = Exception("PONG failed")
-        mock_redis_class.return_value = mock_client
-
-        result = _check_redis_running("localhost", 6379)
-        assert result is False
-
-    @patch("redis.Redis")
-    def test_redis_custom_host_port(self, mock_redis_class, monkeypatch):
-        """Test with custom host and port"""
-        monkeypatch.delenv("REDIS_PASSWORD", raising=False)  # R3: unset ⇒ password=None
-        mock_client = Mock()
-        mock_client.ping.return_value = True
-        mock_redis_class.return_value = mock_client
-
-        result = _check_redis_running("192.168.1.100", 6380)
-        assert result is True
-        mock_redis_class.assert_called_once_with(
-            host="192.168.1.100",
-            port=6380,
-            socket_connect_timeout=1,
-            password=None,
-        )
+            monkeypatch.setenv("REDIS_URL", f"redis://127.0.0.1:{stub.port}/0")
+            assert _check_redis_running("127.0.0.1", dead) is False
+        finally:
+            stub.close()
 
 
 class TestFindCommand:
