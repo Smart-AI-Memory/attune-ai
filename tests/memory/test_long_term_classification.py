@@ -22,6 +22,8 @@ Design notes (why these assertions, not coverage padding):
   short-circuit mutants die.
 """
 
+import sys
+
 import pytest
 
 from attune.memory.long_term_classification import (
@@ -208,6 +210,12 @@ def test_internal_defaults_the_reader_workspace_to_the_running_process(tmp_path,
     )
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="POSIX-only: Windows forbids deleting the current working directory "
+    "(WinError 32), so a process can never be left with a deleted cwd — the "
+    "bypass this reproduces cannot occur on Windows.",
+)
 def test_a_deleted_working_directory_cannot_bypass_isolation(tmp_path, monkeypatch):
     """The bypass, reproduced against a really-deleted cwd.
 
