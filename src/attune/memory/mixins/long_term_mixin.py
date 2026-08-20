@@ -308,6 +308,20 @@ class LongTermOperationsMixin:
         Returns:
             List of matching patterns with metadata, sorted by relevance
 
+        Warning:
+            **This is an UNGOVERNED read path.** It reads the pattern
+            files directly via :meth:`_iter_all_patterns` and does NOT
+            apply ``check_access``, decryption, or retention — unlike
+            ``retrieve_pattern``, which routes through the governed
+            accessor. A SENSITIVE pattern belonging to another
+            ``user_id``, and an INTERNAL pattern from another workspace,
+            are both returned here (library-review I-1). The chair ruled
+            2026-08-20 to state this plainly rather than build enforcement
+            this local developer tool does not need: ``user_id`` is the
+            OS login, so these are identities within one install, not
+            tenants. Do not put this behind a multi-user facade without
+            routing it through the governed accessor first.
+
         Example:
             >>> patterns = memory.search_patterns(
             ...     query="successful workflows",
@@ -374,6 +388,13 @@ class LongTermOperationsMixin:
         Note:
             This is O(1) memory vs O(n) for _get_all_patterns().
             Use this for large datasets or when streaming is acceptable.
+
+        Warning:
+            **Raw, ungoverned reads.** Records are yielded straight off
+            disk: no ``check_access``, no decryption, no retention check.
+            Every caller inherits that (library-review I-1) — a caller
+            that must be governed has to route through the accessor
+            rather than through here.
 
         """
         storage_dir = self._get_storage_dir()

@@ -7,23 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed — attune-forms 0.7.0: elicitation schema sync (D3 mirror)
+## [13.0.0] - 2026-08-20
 
-- **Dependency floor raised to `attune-forms>=0.7.0,<1.0`** and the
-  hand-maintained MCP elicitation tool schema
-  (`attune.mcp.tool_schemas.get_elicitation_tools`) re-sourced from the
-  library. The v2 rich field/form schema now derives from
-  `attune_forms.mcp_server` instead of a hand-declared copy, so the MCP
-  server advertises 0.7.0's contract to end users: the full construct
-  vocabulary (adds `deliberation`, `triage`, `confirm`, `ranking`,
-  `assumption_review`), typed object-array extras (`progress_items`,
-  `triage_items`, `consequences`, `assumptions`), a multi-type
-  `default` (incl. object for triage rulings), `inferred_from`
-  provenance, and `additionalProperties: false` strictness on both the
-  form and field objects. The v1 AskUserQuestion surface stays a
-  deliberate 4-type schema (D10 enum-honesty). A drift test pins
-  attune-ai's v2 schema to the library's, retiring the recurring
-  hand-sync obligation. Closes the forms 0.7.0 D3 mirror gate.
+**Correctness you can trust under failure.** A library-wide review
+hardened the paths that only matter when something goes wrong — memory
+writes that reported success but didn't land, telemetry and gate state
+that a malformed record could corrupt, external input that could crash
+a parse instead of degrading. The major bump is forced by removing the
+dormant in-package hook-execution engine (dead code, no live caller);
+the memory-durability and MCP-schema changes below alter observable
+behavior and are called out for migration.
 
 ### Removed — BREAKING: dormant in-package hook-execution engine
 
@@ -41,7 +34,102 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   use-case was retired in 9.0.0 — never-worked with six ledgered
   bugs, and a fix trip-wire). Chair-ruled DELETE.
   Migrating? Use Claude Code's own hooks (plugin `hooks.json` +
-  scripts) — see `docs/hooks.md`.
+  scripts) — see `docs/hooks.md`. (#2125)
+
+### Changed — BREAKING-adjacent: memory durability & scoping semantics
+
+The library-review's memory tier changed behavior code may have relied
+on. Review any code that treats a memory write as fire-and-forget or
+assumed the old (permissive) INTERNAL scoping:
+
+- **The durability set (tier 1):** memory writes that reported success
+  without landing now actually persist or surface the failure — a store
+  write no longer silently drops (#2128).
+- **INTERNAL workspace scoping is now real (tier 2):** scoping that was
+  documented but not enforced is enforced; memory search is documented
+  as ungoverned (not scope-filtered) so callers don't assume isolation
+  it never provided (#2129).
+- **Atomic lock acquisition + bounded recall connects (tier 3):** lock
+  acquisition is atomic and recall connection attempts are bounded, so
+  a contended or unreachable store degrades instead of hanging (#2130).
+
+### Changed — attune-forms 0.7.0: elicitation schema sync (D3 mirror)
+
+- **Dependency floor raised to `attune-forms>=0.7.0,<1.0`** and the
+  hand-maintained MCP elicitation tool schema
+  (`attune.mcp.tool_schemas.get_elicitation_tools`) re-sourced from the
+  library. The v2 rich field/form schema now derives from
+  `attune_forms.mcp_server` instead of a hand-declared copy, so the MCP
+  server advertises 0.7.0's contract to end users: the full construct
+  vocabulary (adds `deliberation`, `triage`, `confirm`, `ranking`,
+  `assumption_review`), typed object-array extras (`progress_items`,
+  `triage_items`, `consequences`, `assumptions`), a multi-type
+  `default` (incl. object for triage rulings), `inferred_from`
+  provenance, and `additionalProperties: false` strictness on both the
+  form and field objects. The v1 AskUserQuestion surface stays a
+  deliberate 4-type schema (D10 enum-honesty). A drift test pins
+  attune-ai's v2 schema to the library's, retiring the recurring
+  hand-sync obligation. Closes the forms 0.7.0 D3 mirror gate. (#2131)
+
+### Added
+
+- **Durable fit-outcome stream** — a minimal measurement of context
+  ladder fit outcomes on `fit_source`, so the allocator's behavior is
+  observable rather than assumed (D3 ruling B) (#2103, #2095).
+- **Roundtable review briefs pack masters before projections** — the
+  review workflow assembles source masters ahead of surface
+  projections (#2109).
+
+### Fixed — library-review remediation
+
+Degrade, never crash, on malformed or hostile input:
+
+- Dict-guarded the 7 external-input parse sites so a non-dict payload
+  degrades instead of raising (C3) (#2126); the guarded `ast.parse`
+  now catches `ValueError` on null-byte sources (#2122); triaged the 8
+  `yaml.safe_load` widening sites — 3 tightened, 5 dismissed with
+  reasons (#2123); malformed input degrades rather than crashing across
+  the batch-2 sites (#2121); ambient hook scripts fail open on
+  malformed stdin (#2117).
+- Two never-raises holes and a corrupt-store crash closed
+  (confirmation-pass-1) (#2112); `cli` cost commands honor their
+  exit-code contract on non-`OSError` failures (#2113); telemetry/agent
+  save paths keep cleanup-parity on non-`OSError` failures (#2114).
+
+Concurrency & durability of shared state:
+
+- Atomic writes plus a write lock in `AgentStateStore` — a crash
+  mid-write can no longer corrupt the state file, and concurrent
+  in-process writers no longer lose updates (#2101);
+  `ComplianceDatabase` writes serialized behind a shared per-path lock,
+  fixing a race that dropped 3 of 10 concurrent writes (#2116).
+
+Hook subprocess timeout budgets:
+
+- One wall-clock budget shared across the `starter_reconciler`
+  SessionStart hook's passes so their timeouts can't sum past the
+  deadline (L5) (#2120); `SessionStart`/`PostToolUse` hooks given
+  timeout headroom (#2127).
+
+Security & telemetry integrity:
+
+- **The release Security gate can no longer be bypassed by a
+  hallucinated LLM count.** `SecurityAuditorAgent` merged the
+  LLM-enhancement response over the bandit-parsed findings, so a
+  hallucinated low/zero `critical_issues` value could overwrite the
+  real bandit count before the `critical == 0` gate decision — a run
+  with genuine critical/high findings could pass. Both the agent gate
+  and the team-level `max_critical_issues` read were exposed (#2100).
+- Reserved telemetry keys can no longer be clobbered by caller fields
+  via `log_memory_event` (#2111).
+- Internal: the CI path-validation gate now recognizes the
+  `path.open()` write idiom it was blind to (#2104).
+
+MCP correctness:
+
+- `_check_ownership` reads the pattern owner at the correct nesting
+  level (M4) (#2119); `help_init` names are validated before save
+  (#2118).
 
 ## [12.0.0] - 2026-08-18
 

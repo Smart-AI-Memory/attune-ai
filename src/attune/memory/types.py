@@ -15,10 +15,68 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
+import json
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Protocol, TypeVar
+
+logger = logging.getLogger(__name__)
+
+
+class _FromDict(Protocol):
+    """A model that can be rebuilt from its stored dict form."""
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Any: ...
+
+
+_Model = TypeVar("_Model", bound=_FromDict)
+
+
+def parse_stored_record(model: type[_Model], raw: Any, *, key: str = "") -> _Model | None:
+    """Rebuild a stored record, or None when the bytes cannot be read.
+
+    Library-review I-4: stores did ``Model.from_dict(json.loads(raw))``
+    with the parse and the subscripting in different functions, so
+    neither the caller's ``except`` nor the dict-guard gate could see
+    the hazard. One legacy or hand-edited value then raised out of a
+    read, and since the read backs promotion, *every* promotion was
+    blocked by one bad key — a P15 violation (the memory layer degrades,
+    it never blocks).
+
+    Three failure modes collapse to None here: unparseable JSON, a
+    parsed value that is not a mapping (a list subscripted by string key
+    raises ``TypeError``, which callers' except-tuples missed), and a
+    record whose fields ``from_dict`` rejects.
+
+    Args:
+        model: The dataclass to rebuild; must expose ``from_dict``.
+        raw: The stored JSON text (``str`` or ``bytes``).
+        key: Storage key, for the log line only.
+
+    Returns:
+        The rebuilt model, or None — never raises.
+    """
+    try:
+        data = json.loads(raw)
+    except (TypeError, ValueError) as exc:  # ValueError covers JSONDecodeError
+        logger.warning("stored_record_unparseable model=%s key=%s: %s", model.__name__, key, exc)
+        return None
+    if not isinstance(data, dict):
+        logger.warning(
+            "stored_record_not_a_mapping model=%s key=%s got=%s",
+            model.__name__,
+            key,
+            type(data).__name__,
+        )
+        return None
+    try:
+        return model.from_dict(data)
+    except (KeyError, TypeError, ValueError) as exc:
+        logger.warning("stored_record_rejected model=%s key=%s: %s", model.__name__, key, exc)
+        return None
 
 
 class AccessTier(Enum):

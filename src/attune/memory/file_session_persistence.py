@@ -16,6 +16,7 @@ from pathlib import Path
 
 import structlog
 
+from attune.memory.atomic_io import atomic_write_text
 from attune.security.path_validation import _validate_file_path
 
 from .file_session_models import FileSessionConfig, SessionState
@@ -159,16 +160,10 @@ class PersistenceMixin:
         # Validate path
         validated_path = _validate_file_path(str(path))
 
-        # Write to temp file first
-        tmp_path = validated_path.with_suffix(".tmp")
-        tmp_path.write_text(
-            json.dumps(data, indent=2, default=str),
-            encoding="utf-8",
-        )
-
-        # Atomic rename (use replace() for cross-platform
-        # support - rename() fails on Windows when target exists)
-        tmp_path.replace(validated_path)
+        # Per-process temp file + replace: a shared, deterministically
+        # named temp lets a peer's replace move ours out from under us
+        # (library-review G1).
+        atomic_write_text(validated_path, json.dumps(data, indent=2, default=str))
 
     def _archive_session(self, state: SessionState) -> Path:
         """Archive a session to compressed storage.

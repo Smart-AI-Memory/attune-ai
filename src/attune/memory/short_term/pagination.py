@@ -28,7 +28,6 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
-import json
 import time
 from datetime import datetime
 from typing import TYPE_CHECKING
@@ -39,6 +38,7 @@ from attune.memory.types import (
     AgentCredentials,
     PaginatedResult,
     StagedPattern,
+    parse_stored_record,
 )
 
 if TYPE_CHECKING:
@@ -124,7 +124,9 @@ class Pagination:
             for key in page_keys:
                 raw_value, expires = self._base._mock_storage[key]
                 if expires is None or datetime.now().timestamp() < expires:
-                    patterns.append(StagedPattern.from_dict(json.loads(str(raw_value))))
+                    staged = parse_stored_record(StagedPattern, str(raw_value), key=str(key))
+                    if staged is not None:
+                        patterns.append(staged)
 
             new_cursor = str(end_idx) if end_idx < len(all_keys) else "0"
             has_more = end_idx < len(all_keys)
@@ -149,8 +151,9 @@ class Pagination:
         patterns = []
         for key in keys:
             raw = self._base._client.get(key)
-            if raw:
-                patterns.append(StagedPattern.from_dict(json.loads(raw)))
+            staged = parse_stored_record(StagedPattern, raw, key=str(key)) if raw else None
+            if staged is not None:
+                patterns.append(staged)
 
         has_more = new_cursor != 0
 

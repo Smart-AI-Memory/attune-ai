@@ -127,16 +127,21 @@ memory storage and recall, and every local transform.
      release with the headline feature; the displaced content moves to
      a permanent section below. Don't stack a second "New in" here. -->
 
-## New in 12.0.0 — a sharper core you can trust
+## New in 13.0.0 — correctness you can trust under failure
 
-Every public surface is one that demonstrably works: `attune.context`
-now exports exactly its two proven tools behind a regression guard (a
-dormant compaction stack with zero live consumers is retired — the
-breaking change behind the major version; session-continuity hooks
-are live and unchanged), and a new dead-suite guard fails CI whenever
-a test module's dependency is missing — the gap class that used to
-let whole suites skip silently. Closing what it found brought 41
-auth-security tests back into every run.
+The code paths that only matter when something goes wrong got a
+library-wide review. Memory writes that reported success without
+landing now actually persist or surface the failure; telemetry and
+security-gate state a single malformed record could corrupt are
+locked down; external input that could crash a parse now degrades
+instead. Shared stores (`AgentStateStore`, `ComplianceDatabase`) write
+atomically under a lock. The MCP elicitation schema is re-sourced from
+`attune-forms` 0.7.0 — a strict `additionalProperties` contract, no
+more hand-maintained mirror to drift. The major bump is the removal of
+the dormant in-package hook-execution engine — dead code with no live
+caller (the hooks Claude Code runs are unchanged); the
+memory-durability and schema changes alter observable behavior, so
+check the CHANGELOG's migration notes if you depend on them.
 
 ---
 

@@ -101,10 +101,12 @@ def resolve_first_write(
 
     # Try to get lock on resource
     lock_key = f"empathy:lock:{resource_key}"
-    acquired = client.setnx(lock_key, agent_id)
+    # One atomic command: a crash between SETNX and EXPIRE would leave an
+    # immortal lock and hand every later conflict to a dead agent
+    # (library-review H2).
+    acquired = client.set(lock_key, agent_id, nx=True, ex=300)  # 5 minute lock
 
     if acquired:
-        client.expire(lock_key, 300)  # 5 minute lock
         winner = agent_id
         loser = other_session.agent_id if other_session else "unknown"
         reason = "First to acquire lock"

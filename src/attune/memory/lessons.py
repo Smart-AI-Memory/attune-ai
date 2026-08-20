@@ -23,6 +23,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from attune.memory.atomic_io import append_line
 from attune.security.path_validation import _validate_file_path
 
 logger = logging.getLogger(__name__)
@@ -150,15 +151,21 @@ class LessonsManager:
         # Create directory and file if needed
         validated_path.parent.mkdir(parents=True, exist_ok=True)
 
-        if not validated_path.exists():
-            validated_path.write_text(f"# Attune Lessons\n\n{lesson_line}")
-        else:
-            content = validated_path.read_text()
-            # Ensure trailing newline before appending
-            if content and not content.endswith("\n"):
-                content += "\n"
-            content += lesson_line
-            validated_path.write_text(content)
+        # APPEND, always: reading the whole file, adding a line and
+        # writing it back loses a concurrent session's lesson
+        # (library-review G1). The header is created with O_EXCL so two
+        # first writers cannot both see "absent" and both write_text,
+        # dropping one lesson (codex D11 lane, 2026-08-20) — the loser of
+        # that race just appends to the header the winner created.
+        try:
+            with open(validated_path, "x", encoding="utf-8") as handle:
+                handle.write("# Attune Lessons\n\n")
+        except FileExistsError:
+            pass
+        content = validated_path.read_text()
+        if content and not content.endswith("\n"):
+            append_line(validated_path, "")
+        append_line(validated_path, lesson_line)
 
         # Sync to CLAUDE.md if enabled (project lessons only)
         if not global_ and self._sync_to_claude_md:

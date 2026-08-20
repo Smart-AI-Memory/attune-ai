@@ -36,7 +36,7 @@ def _mock_memory() -> RedisShortTermMemory:
     """
     memory = RedisShortTermMemory(use_mock=True)
     mock_client = MagicMock()
-    mock_client.setnx.return_value = True
+    mock_client.set.return_value = True
     mock_client.get.return_value = None
     mock_client.hgetall.return_value = {}
     mock_client.hget.return_value = None
@@ -149,7 +149,7 @@ class TestBackgroundServiceStart:
     def test_start_fails_when_lock_not_acquired(self):
         """start() returns False when the service lock is already held."""
         memory = _mock_memory()
-        memory._base._client.setnx.return_value = False  # lock held
+        memory._base._client.set.return_value = None  # lock held
         service = BackgroundService(memory=memory)
         result = service.start()
         assert result is False
@@ -158,7 +158,7 @@ class TestBackgroundServiceStart:
     def test_start_succeeds_when_lock_acquired(self):
         """start() returns True and sets is_running when lock is free."""
         memory = _mock_memory()
-        memory._base._client.setnx.return_value = True
+        memory._base._client.set.return_value = True
 
         with patch.object(threading.Thread, "start"), patch.object(threading.Thread, "join"):
             service = BackgroundService(memory=memory)
@@ -170,7 +170,7 @@ class TestBackgroundServiceStart:
     def test_start_returns_false_when_already_running(self):
         """Calling start() twice returns False on the second call."""
         memory = _mock_memory()
-        memory._base._client.setnx.return_value = True
+        memory._base._client.set.return_value = True
 
         with patch.object(threading.Thread, "start"), patch.object(threading.Thread, "join"):
             service = BackgroundService(memory=memory)
@@ -224,7 +224,7 @@ class TestGetOrStartService:
     def test_returns_none_when_lock_held(self):
         """Returns None when service lock is already held by another process."""
         memory = _mock_memory()
-        memory._base._client.setnx.return_value = False  # lock held
+        memory._base._client.set.return_value = None  # lock held
 
         result = get_or_start_service(memory)
         assert result is None
@@ -232,7 +232,7 @@ class TestGetOrStartService:
     def test_returns_service_when_started(self):
         """Returns a BackgroundService when the lock is successfully acquired."""
         memory = _mock_memory()
-        memory._base._client.setnx.return_value = True
+        memory._base._client.set.return_value = True
 
         with patch.object(threading.Thread, "start"), patch.object(threading.Thread, "join"):
             result = get_or_start_service(memory)

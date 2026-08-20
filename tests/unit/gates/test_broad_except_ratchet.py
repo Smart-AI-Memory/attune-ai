@@ -166,13 +166,20 @@ _BASELINE: dict[str, int] = {
     "src/attune/mcp/version_check.py": 2,
     "src/attune/mcp/workflow_handlers.py": 2,
     "src/attune/memory/claude_memory.py": 2,
-    "src/attune/memory/config.py": 1,
+    # config.py 1 -> 2 for library-review H1: ping_redis is THE Redis
+    # availability oracle and a P15 never-block path — no package, a bad
+    # URL, a refused connection and an auth error all mean "not reachable"
+    # to every caller. Net for H1 is -2: features, redis_auto_detect and
+    # redis_bootstrap each lost one when their probes collapsed into it.
+    "src/attune/memory/config.py": 2,
     "src/attune/memory/control_panel.py": 4,
     "src/attune/memory/cross_session/service.py": 1,
-    # features.py raised 1 -> 2 for rct-2 (PR #1985): classify_redis_health's
+    # features.py: 1 -> 2 for rct-2 (PR #1985): classify_redis_health's
     # probe is a P15 never-block path — ANY unexpected exception must degrade
     # to degraded_connectivity, pinned by TestNeverBlock's RuntimeError case.
-    "src/attune/memory/features.py": 2,
+    # 2 -> 1 for library-review H1: the three per-module ping probes collapsed
+    # into config.ping_redis, so their broad excepts collapsed with them.
+    "src/attune/memory/features.py": 1,
     "src/attune/memory/file_stash.py": 1,
     "src/attune/memory/lessons.py": 2,
     "src/attune/memory/long_term_integration.py": 2,
@@ -182,8 +189,9 @@ _BASELINE: dict[str, int] = {
     "src/attune/memory/mixins/long_term_mixin.py": 4,
     "src/attune/memory/mixins/short_term_mixin.py": 2,
     "src/attune/memory/personal.py": 5,
-    "src/attune/memory/redis_auto_detect.py": 1,
-    "src/attune/memory/redis_bootstrap.py": 8,
+    # Both lowered by library-review H1 — see features.py above.
+    "src/attune/memory/redis_auto_detect.py": 0,
+    "src/attune/memory/redis_bootstrap.py": 7,
     "src/attune/memory/security/audit_logger.py": 4,
     "src/attune/memory/security/query.py": 1,
     "src/attune/memory/session_stash.py": 14,

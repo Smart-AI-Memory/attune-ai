@@ -17,12 +17,15 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
+import logging
 import os
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from urllib.parse import ParseResult, quote, unquote, urlparse
 
 from .short_term import RedisShortTermMemory
+
+logger = logging.getLogger(__name__)
 
 _URL_VARS = ("REDIS_URL", "REDIS_PRIVATE_URL", "REDIS_PUBLIC_URL")
 #: Public alias for consumers that gate on "did a URL var supply the
@@ -253,6 +256,88 @@ def _resolve_default(password: str | None, user: str | None) -> ResolvedRedisCon
     else:
         url = _DEFAULT_URL
     return ResolvedRedisConnection(url, _redact(url), source_map, ())
+
+
+def resolved_redis_endpoint(env: Mapping[str, str] | None = None) -> tuple[str, int]:
+    """The (host, port) of THE resolved connection — for display and for
+    callers that must name a port to a local server they are starting.
+
+    Falls back to the loopback default when the resolved URL carries no
+    host or port (a ``unix://`` socket, for instance) so status lines
+    stay printable; use :func:`ping_redis` for reachability, which
+    honours the full URL.
+    """
+    parsed = urlparse(resolve_redis_connection(env).url)
+    return (parsed.hostname or "127.0.0.1", parsed.port or 6379)
+
+
+def redis_probe_client(
+    host: str | None = None,
+    port: int | None = None,
+    *,
+    timeout: float = 1.0,
+    env: Mapping[str, str] | None = None,
+):
+    """Build a short-timeout client aimed at THE configured Redis.
+
+    With neither ``host`` nor ``port`` supplied the full resolved URL is
+    used, so scheme (``rediss``, ``unix``), db, user and password all
+    match what real clients connect with. Supply them only when probing
+    a server you are yourself starting on a named port.
+
+    Args:
+        host: Override the resolved host.
+        port: Override the resolved port.
+        timeout: Connect and read timeout in seconds.
+        env: Environment mapping (injectable for tests).
+
+    Returns:
+        A ``redis.Redis`` instance. Nothing has connected yet.
+    """
+    import redis
+
+    conn = resolve_redis_connection(env)
+    if host is None and port is None:
+        return redis.Redis.from_url(
+            conn.url,
+            socket_connect_timeout=timeout,
+            socket_timeout=timeout,
+        )
+    resolved_host, resolved_port = resolved_redis_endpoint(env)
+    return redis.Redis(
+        host=resolved_host if host is None else host,
+        port=resolved_port if port is None else port,
+        password=conn.password,
+        socket_connect_timeout=timeout,
+        socket_timeout=timeout,
+    )
+
+
+def ping_redis(
+    host: str | None = None,
+    port: int | None = None,
+    *,
+    timeout: float = 1.0,
+    env: Mapping[str, str] | None = None,
+) -> bool:
+    """Is THE configured Redis answering?
+
+    The availability oracle and the client must name the same target.
+    A probe hard-coded to loopback answers a different question than
+    "can the store reach its Redis", and when the two disagree the
+    caller silently falls back to an in-process mock while reporting
+    success — writes are accepted and lost (library-review H1).
+
+    Returns:
+        True only if the endpoint replied to PING.
+    """
+    try:
+        return bool(redis_probe_client(host, port, timeout=timeout, env=env).ping())
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: every failure mode — no package, bad URL, refused
+        # connection, auth error — means "not reachable" to every caller.
+        logger.debug("redis_ping_failed", exc_info=True)
+        return False
 
 
 def parse_redis_url(url: str) -> dict:

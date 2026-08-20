@@ -19,7 +19,11 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
-from .long_term_classification import check_access, classify_pattern
+from .long_term_classification import (
+    check_access,
+    classify_pattern,
+    resolve_current_workspace,
+)
 from .long_term_types import (
     Classification,
     ClassificationRules,
@@ -250,6 +254,10 @@ class PatternPipelineMixin:
             sanitization_applied=True,
             pii_removed=pii_count,
             secrets_detected=0,
+            # Stamped at write time so INTERNAL scoping has something to
+            # compare against — before library-review I-3 nothing wrote
+            # this, so the rule could never fire.
+            workspace=resolve_current_workspace(),
             access_control={
                 "access_level": rules.access_level,
                 "audit_required": rules.audit_all_access,

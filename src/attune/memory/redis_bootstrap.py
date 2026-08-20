@@ -64,30 +64,16 @@ class RedisStatus:
     pid: int | None = None
 
 
-def _check_redis_running(host: str = "127.0.0.1", port: int = 6379) -> bool:
-    """Check if Redis is responding to ping."""
-    try:
-        import redis
+def _check_redis_running(host: str | None = None, port: int | None = None) -> bool:
+    """Check if THE configured Redis is responding to ping.
 
-        client = redis.Redis(
-            host=host,
-            port=port,
-            socket_connect_timeout=1,
-            # R3: authenticate so `requirepass` isn't misread as "Redis
-            # down". rct-4: the effective password comes from the resolver.
-            password=_resolved_password(),
-        )
-        return bool(client.ping())
-    except Exception:  # noqa: BLE001
-        # INTENTIONAL: Redis connectivity check — any failure means not available
-        return False
+    Endpoint defaults come from the canonical resolver, never from a
+    literal (library-review H1); pass host/port explicitly only when
+    probing a server this module is itself starting on a named port.
+    """
+    from attune.memory.config import ping_redis
 
-
-def _resolved_password() -> "str | None":
-    """The canonical resolver's effective password (rct-4)."""
-    from attune.memory.config import resolve_redis_connection
-
-    return resolve_redis_connection().password
+    return ping_redis(host, port, timeout=1)
 
 
 def _find_command(cmd: str) -> str | None:
@@ -358,16 +344,16 @@ def _start_via_wsl() -> bool:
 
 
 def ensure_redis(
-    host: str = "127.0.0.1",
-    port: int = 6379,
+    host: str | None = None,
+    port: int | None = None,
     auto_start: bool = True,
     verbose: bool = True,
 ) -> RedisStatus:
     """Ensure Redis is available, starting it if necessary.
 
     Args:
-        host: Redis host
-        port: Redis port
+        host: Redis host (defaults to the resolved connection's host)
+        port: Redis port (defaults to the resolved connection's port)
         auto_start: Attempt to start Redis if not running
         verbose: Print status messages to console
 
@@ -382,8 +368,25 @@ def ensure_redis(
         ...     print(f"Redis unavailable: {status.message}")
 
     """
+    from attune.memory.config import resolved_redis_endpoint
+
+    # Probe the RESOLVED CONNECTION, not a host/port pair derived from
+    # it: host+port cannot carry the scheme, db or username, so a
+    # `rediss://` target would be probed over a plain socket, `/3` would
+    # be read as `/0`, and an ACL username would be dropped — the H1
+    # split-brain, reintroduced one layer up (codex D11 lane, 2026-08-20).
+    # host/port stay resolved for STATUS and for the start methods, which
+    # genuinely need a port number to bind a local server to.
+    caller_named_endpoint = host is not None or port is not None
+    resolved_host, resolved_port = resolved_redis_endpoint()
+    host = resolved_host if host is None else host
+    port = resolved_port if port is None else port
+
+    def _running() -> bool:
+        return _check_redis_running(host, port) if caller_named_endpoint else _check_redis_running()
+
     # Check if already running
-    if _check_redis_running(host, port):
+    if _running():
         status = RedisStatus(
             available=True,
             method=RedisStartMethod.ALREADY_RUNNING,
@@ -461,6 +464,8 @@ def _try_start_methods(
 
     for method, start_func in start_methods:
         try:
+            # Explicit host/port here is correct: we are probing the local
+            # server this method just started on that port.
             if start_func() and _check_redis_running(host, port):
                 if verbose:
                     print(f"✓ Redis started via {method.value}")

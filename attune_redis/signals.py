@@ -40,7 +40,16 @@ class RedisSignalBus:
         """
         import redis
 
-        self._redis = redis.from_url(redis_url, decode_responses=True)
+        # Explicit bounds: without them the never-block contract is
+        # decided by the installed redis-py, and the declared pin floor
+        # (5.0.1) supplies none — a blackholed host blocks ~75s
+        # (library-review H5).
+        self._redis = redis.from_url(
+            redis_url,
+            decode_responses=True,
+            socket_connect_timeout=2.0,
+            socket_timeout=5.0,
+        )
         self._closed = False
 
     def send(self, channel: str, message: dict[str, Any]) -> int:

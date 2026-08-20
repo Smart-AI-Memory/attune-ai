@@ -28,6 +28,8 @@ from typing import Any
 
 import structlog
 
+from attune.memory.atomic_io import append_line, atomic_write_text, file_lock
+
 logger = structlog.get_logger(__name__)
 
 #: Default working-stash retention (days); keep in sync with
@@ -61,6 +63,26 @@ def _cwd_from_topics(topics: list[str]) -> str | None:
         if t.startswith("cwd:"):
             return t[len("cwd:") :]
     return None
+
+
+def _record_ts(rec: dict[str, Any]) -> float | None:
+    """The record's epoch timestamp, or None when it cannot be read.
+
+    Library-review G2: the per-record ``try`` caught ``JSONDecodeError``
+    but the coercion that follows it — ``float(rec["ts"])`` — sat
+    OUTSIDE it. One hand-edited timestamp therefore escaped to store
+    level, where the best-effort excepts turned it into ``search`` and
+    ``recent`` returning nothing and ``remember`` returning False
+    forever: a permanently bricked store with no error surfaced.
+
+    Returning None instead lets one poison record be skipped like an
+    expired one while the rest of the store keeps working.
+    """
+    try:
+        return float(rec.get("ts", 0) or 0)
+    except (TypeError, ValueError):
+        logger.warning("file_stash_unreadable_ts", record_id=rec.get("id"))
+        return None
 
 
 def _iso_from_ts(ts: Any) -> str | None:
@@ -124,7 +146,10 @@ class FileStashBackend:
                     rec = json.loads(line)
                 except json.JSONDecodeError:
                     continue
-                if isinstance(rec, dict) and float(rec.get("ts", 0)) >= cutoff:
+                if not isinstance(rec, dict):
+                    continue
+                ts = _record_ts(rec)
+                if ts is not None and ts >= cutoff:
                     records.append(rec)
         except OSError as e:
             logger.warning("file_stash_read_failed", error=str(e))
@@ -138,13 +163,11 @@ class FileStashBackend:
         persisted is the false-success data-loss bug this guards against
         (cross-provider-memory-transport R1).
         """
-        tmp = self._findings.with_suffix(".jsonl.tmp")
         try:
-            tmp.write_text(
+            atomic_write_text(
+                self._findings,
                 "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in records),
-                encoding="utf-8",
             )
-            tmp.replace(self._findings)  # Path.replace: cross-platform overwrite
             return True
         except OSError as e:
             logger.warning("file_stash_write_failed", error=str(e))
@@ -173,9 +196,21 @@ class FileStashBackend:
             "ts": time.time(),
         }
         try:
-            kept = self._load_records()  # already TTL-pruned
-            kept.append(record)
-            return self._rewrite(kept)
+            # APPEND, never read-modify-write: rewriting the whole file to
+            # add one record is what let concurrent writers erase each
+            # other while both reported success (library-review G1).
+            # Expired records are pruned lazily on read and by prune().
+            #
+            # Still under the lock: prune/forget DO rewrite the whole file,
+            # and an append landing between their read and their replace is
+            # erased just the same (codex D11 lane, 2026-08-20). Appends are
+            # small and rare, so serialising them costs nothing.
+            with file_lock(self._findings) as locked:
+                if not locked:
+                    logger.warning("file_stash_remember_locked")
+                    return False
+                append_line(self._findings, json.dumps(record, ensure_ascii=False))
+            return True
         except Exception as e:  # noqa: BLE001
             # INTENTIONAL: stash is best-effort; never break the host session.
             logger.warning("file_stash_remember_failed", error=str(e))
@@ -196,7 +231,7 @@ class FileStashBackend:
             overlap = len(terms & doc_terms)
             if overlap == 0:
                 continue
-            age = max(0.0, now - float(rec.get("ts", now)))
+            age = max(0.0, now - (_record_ts(rec) or now))
             recency = 0.5 ** (age / _RECENCY_HALFLIFE_SECONDS)
             score = overlap + recency
             if cwd and rec.get("cwd") == cwd:
@@ -228,7 +263,7 @@ class FileStashBackend:
         """
         cwd = filters.get("cwd")
         records = self._load_records()  # already TTL-pruned
-        records.sort(key=lambda r: float(r.get("ts", 0) or 0), reverse=True)
+        records.sort(key=lambda r: _record_ts(r) or 0.0, reverse=True)
         if cwd:
             # Stable secondary sort: cwd matches first, recency preserved within.
             records.sort(key=lambda r: 0 if r.get("cwd") == cwd else 1)
@@ -262,6 +297,18 @@ class FileStashBackend:
         cutoff = time.time() - ttl_seconds
         if not self._findings.exists():
             return 0
+        try:
+            with file_lock(self._findings) as locked:
+                if not locked:
+                    logger.warning("file_stash_prune_locked")
+                    return 0
+                return self._sweep(cutoff)
+        except OSError as e:
+            logger.warning("file_stash_prune_failed", error=str(e))
+            return 0
+
+    def _sweep(self, cutoff: float) -> int:
+        """Drop records older than ``cutoff``. Caller holds the lock."""
         kept: list[dict[str, Any]] = []
         dropped = 0
         try:
@@ -273,7 +320,8 @@ class FileStashBackend:
                     rec = json.loads(line)
                 except json.JSONDecodeError:
                     continue
-                if isinstance(rec, dict) and float(rec.get("ts", 0)) >= cutoff:
+                ts = _record_ts(rec) if isinstance(rec, dict) else None
+                if ts is not None and ts >= cutoff:
                     kept.append(rec)
                 else:
                     dropped += 1
@@ -296,6 +344,18 @@ class FileStashBackend:
         if not ids or not self._findings.exists():
             return 0
         targets = set(ids)
+        try:
+            with file_lock(self._findings) as locked:
+                if not locked:
+                    logger.warning("file_stash_forget_locked")
+                    return 0
+                return self._drop(targets)
+        except OSError as e:
+            logger.warning("file_stash_forget_failed", error=str(e))
+            return 0
+
+    def _drop(self, targets: set[str]) -> int:
+        """Remove records whose id is in ``targets``. Caller holds the lock."""
         kept: list[dict[str, Any]] = []
         dropped = 0
         try:
@@ -336,11 +396,15 @@ class FileStashBackend:
     ) -> bool:
         """Store a key/value pair (separate from the searchable findings)."""
         try:
-            data = self._load_kv()
-            data[key] = value
-            tmp = self._kv.with_suffix(".json.tmp")
-            tmp.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-            tmp.replace(self._kv)
+            with file_lock(self._kv) as locked:
+                if not locked:
+                    logger.warning("file_stash_kv_set_locked", key=key)
+                    return False
+                # Re-read INSIDE the lock: a value read before it would be
+                # a lost update the moment a peer wrote (library-review G1).
+                data = self._load_kv()
+                data[key] = value
+                atomic_write_text(self._kv, json.dumps(data, ensure_ascii=False))
             return True
         except (OSError, TypeError) as e:
             logger.warning("file_stash_kv_set_failed", key=key, error=str(e))
@@ -361,14 +425,16 @@ class FileStashBackend:
 
     def delete(self, key: str) -> bool:
         """Delete a key/value pair. Returns False if absent."""
-        data = self._load_kv()
-        if key not in data:
-            return False
-        del data[key]
         try:
-            tmp = self._kv.with_suffix(".json.tmp")
-            tmp.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-            tmp.replace(self._kv)
+            with file_lock(self._kv) as locked:
+                if not locked:
+                    logger.warning("file_stash_kv_delete_locked", key=key)
+                    return False
+                data = self._load_kv()
+                if key not in data:
+                    return False
+                del data[key]
+                atomic_write_text(self._kv, json.dumps(data, ensure_ascii=False))
             return True
         except OSError as e:
             logger.warning("file_stash_kv_delete_failed", key=key, error=str(e))
