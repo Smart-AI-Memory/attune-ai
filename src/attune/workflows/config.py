@@ -208,6 +208,11 @@ class WorkflowConfig:
         Raises:
             ImportError: If YAML file is given but PyYAML is not
                 installed.
+            ValueError: If the file is not parseable. The JSON branch
+                raises ``json.JSONDecodeError`` (a ``ValueError``); the
+                YAML branch normalizes ``yaml.YAMLError`` — which is NOT
+                a ``ValueError`` subclass — to the same class, so one
+                ``except ValueError`` covers a broken config either way.
 
         """
         content = path.read_text()
@@ -215,7 +220,10 @@ class WorkflowConfig:
         if path.suffix in (".yaml", ".yml"):
             if not YAML_AVAILABLE:
                 raise ImportError("PyYAML required for YAML config. Install: pip install pyyaml")
-            data = yaml.safe_load(content)
+            try:
+                data = yaml.safe_load(content)
+            except yaml.YAMLError as exc:
+                raise ValueError(f"Invalid YAML config in {path}: {exc}") from exc
         else:
             data = json.loads(content)
 

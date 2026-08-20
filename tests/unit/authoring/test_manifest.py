@@ -471,3 +471,36 @@ def test_save_manifest_omits_empty_docs_bucket(tmp_path):
     save_manifest(manifest, help_dir)
     raw = (help_dir / "features.yaml").read_text(encoding="utf-8")
     assert "_docs" not in raw
+
+
+def test_load_manifest_malformed_yaml_raises_valueerror(tmp_path):
+    """A syntactically-broken features.yaml raises the DOCUMENTED ValueError.
+
+    Regression guard: ``yaml.YAMLError`` is not a ``ValueError`` subclass,
+    so before the fix it escaped ``load_manifest``'s documented contract
+    and defeated ``ops/help_data.py``'s ``except (OSError, ValueError)``
+    degrade path (library-review batch-2 F2 twin).
+    """
+    help_dir = tmp_path / ".help"
+    help_dir.mkdir()
+    (help_dir / "features.yaml").write_text(
+        "features:\n  - foo: [unclosed\n bad: : :\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="Invalid manifest YAML"):
+        load_manifest(help_dir)
+
+
+def test_load_manifest_malformed_yaml_caught_by_degrade_callers(tmp_path):
+    """The (OSError, ValueError) degrade shape used by callers holds."""
+    help_dir = tmp_path / ".help"
+    help_dir.mkdir()
+    (help_dir / "features.yaml").write_text("a: [1, 2\nb: : :\n", encoding="utf-8")
+
+    try:
+        load_manifest(help_dir)
+    except (OSError, ValueError):
+        pass  # degrade path reached, as ops/help_data.py expects
+    else:
+        pytest.fail("malformed manifest did not raise")

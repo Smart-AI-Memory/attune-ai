@@ -162,7 +162,14 @@ def load_manifest(help_dir: str | Path) -> FeatureManifest:
     if not manifest_path.exists():
         raise FileNotFoundError(f"No {_MANIFEST_FILENAME} in {help_dir}")
 
-    raw = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    try:
+        raw = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    except yaml.YAMLError as exc:
+        # The docstring promises ValueError for a malformed manifest, and
+        # ops/help_data.py degrades on (OSError, ValueError). yaml raises
+        # its own class, which is not a ValueError subclass and defeated
+        # that caller (library-review F2 twin).
+        raise ValueError(f"Invalid manifest YAML in {manifest_path}: {exc}") from exc
     if not isinstance(raw, dict):
         raise ValueError(
             f"Invalid manifest at {manifest_path}: expected mapping, " f"got {type(raw).__name__}"
