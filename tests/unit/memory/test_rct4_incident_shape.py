@@ -88,17 +88,15 @@ def test_board_connects_with_merged_url(incident_env):
     assert call.args[0] == INCIDENT_URL_MERGED
 
 
-@pytest.mark.parametrize(
-    "module_name",
-    [
-        "attune.memory.features",
-        "attune.memory.redis_auto_detect",
-        "attune.memory.redis_bootstrap",
-    ],
-)
-def test_probe_helpers_resolve_password(incident_env, module_name):
-    """The three ping probes source their password from the resolver."""
-    import importlib
+def test_probe_client_resolves_password(incident_env):
+    """The one probe client the three oracles share carries the merged
+    credential — and the resolved endpoint with it (library-review H1
+    collapsed the three per-module helpers into this single path).
+    """
+    from attune.memory.config import redis_probe_client
 
-    mod = importlib.import_module(module_name)
-    assert mod._resolved_password() == INCIDENT_PW
+    kwargs = redis_probe_client().connection_pool.connection_kwargs
+
+    assert kwargs["password"] == INCIDENT_PW
+    assert kwargs["host"] == "127.0.0.1"
+    assert kwargs["port"] == 6379

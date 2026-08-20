@@ -36,6 +36,7 @@ from attune.memory.types import (
     AgentCredentials,
     StagedPattern,
     TTLStrategy,
+    parse_stored_record,
 )
 
 if TYPE_CHECKING:
@@ -156,7 +157,7 @@ class PatternStaging:
         if raw is None:
             return None
 
-        return StagedPattern.from_dict(json.loads(raw))
+        return parse_stored_record(StagedPattern, raw, key=key)
 
     def list_staged_patterns(
         self,
@@ -181,8 +182,11 @@ class PatternStaging:
         patterns = []
 
         for raw in self._base._mget(keys):
-            if raw:
-                patterns.append(StagedPattern.from_dict(json.loads(raw)))
+            # Skip a record we cannot read; one bad key must not block
+            # the listing that backs every promotion (library-review I-4).
+            staged = parse_stored_record(StagedPattern, raw, key=pattern) if raw else None
+            if staged is not None:
+                patterns.append(staged)
 
         return patterns
 

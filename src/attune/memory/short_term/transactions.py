@@ -26,7 +26,6 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
-import json
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -44,6 +43,7 @@ except ImportError:
 from attune.memory.types import (
     AgentCredentials,
     StagedPattern,
+    parse_stored_record,
 )
 
 if TYPE_CHECKING:
@@ -141,7 +141,9 @@ class TransactionManager:
             value, expires = self._base._mock_storage[key]
             if expires and datetime.now().timestamp() >= expires:
                 return False, None, "Pattern expired"
-            pattern = StagedPattern.from_dict(json.loads(str(value)))
+            pattern = parse_stored_record(StagedPattern, str(value), key=key)
+            if pattern is None:
+                return False, None, "Pattern could not be read"
             if pattern.confidence < min_confidence:
                 return (
                     False,
@@ -166,7 +168,10 @@ class TransactionManager:
                 self._base._client.unwatch()
                 return False, None, "Pattern not found"
 
-            pattern = StagedPattern.from_dict(json.loads(raw))
+            pattern = parse_stored_record(StagedPattern, raw, key=key)
+            if pattern is None:
+                self._base._client.unwatch()
+                return False, None, "Pattern could not be read"
 
             if pattern.confidence < min_confidence:
                 self._base._client.unwatch()

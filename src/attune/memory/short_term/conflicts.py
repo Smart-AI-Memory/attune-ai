@@ -38,6 +38,7 @@ from attune.memory.types import (
     AgentCredentials,
     ConflictContext,
     TTLStrategy,
+    parse_stored_record,
 )
 
 if TYPE_CHECKING:
@@ -190,7 +191,7 @@ class ConflictNegotiation:
         if raw is None:
             return None
 
-        return ConflictContext.from_dict(json.loads(raw))
+        return parse_stored_record(ConflictContext, raw, key=key)
 
     def resolve_conflict(
         self,
@@ -263,9 +264,8 @@ class ConflictNegotiation:
         conflicts = []
 
         for raw in self._base._mget(keys):
-            if raw:
-                context = ConflictContext.from_dict(json.loads(raw))
-                if not context.resolved:
-                    conflicts.append(context)
+            context = parse_stored_record(ConflictContext, raw, key=pattern) if raw else None
+            if context is not None and not context.resolved:
+                conflicts.append(context)
 
         return conflicts
