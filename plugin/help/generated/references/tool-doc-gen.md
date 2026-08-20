@@ -9,7 +9,7 @@ source: src/attune/mcp/tool_schemas.py
 
 # Reference: Tool: Doc Gen
 
-Generate new documentation from source code. Produces API references, guides, or READMEs.
+Generate documentation from a source file.
 
 **Group:** workflow
 
@@ -18,8 +18,6 @@ Generate new documentation from source code. Produces API references, guides, or
 | Parameter | Type | Description | Constraints | Default |
 | --------- | ---- | ----------- | ----------- | ------- |
 | `source_path` | string | Path to source file to document |  | required |
-| `doc_type` | string | Type of documentation (api_reference, guide, readme) |  | api_reference |
-| `audience` | string | Target audience (developers, users, contributors) |  | developers |
 
 ## Usage
 
