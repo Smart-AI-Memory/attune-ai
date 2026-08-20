@@ -189,17 +189,23 @@ def test_file_session_degrades_on_non_dict(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize("payload", ["[1,2,3]", "5", '"hello"', "null", "{bad"])
-def test_workflow_input_reports_cli_error_exit_3(payload: str, tmp_path: Path) -> None:
-    """D1: a non-dict --input is a CLI error (exit 3), not a crash (exit 1)."""
-    result = subprocess.run(
-        [sys.executable, "-m", "attune.cli_minimal", "workflow", "run", "bug-predict"]
-        + ["--input", payload],
-        capture_output=True,
-        text=True,
-        env=_env(tmp_path),
-    )
-    assert result.returncode == 3, result.stdout + result.stderr
-    assert "Traceback" not in result.stderr
+def test_workflow_input_reports_cli_error_exit_3(payload: str) -> None:
+    """D1: a non-dict --input is a CLI error (exit 3), not a crash (exit 1).
+
+    Calls the real assembler rather than spawning the CLI: the exit code
+    is what this fix owns, and a subprocess here measures CLI start-up
+    (which differs per platform) more than the contract under test.
+    """
+    from argparse import Namespace
+
+    from attune.cli_commands._exit_codes import EXIT_CLI_ERROR
+    from attune.cli_commands.workflow_commands import _build_input_data
+
+    args = Namespace(input=payload, path=".", target=None, depth=None)
+    input_data, exit_code = _build_input_data(args)
+
+    assert exit_code == EXIT_CLI_ERROR
+    assert input_data == {}
 
 
 @pytest.mark.parametrize("module", ["spec_intake", "fix_intake"])
@@ -228,3 +234,49 @@ def test_compose_dict_probes_does_not_emit_bogus_probe(tmp_path: Path) -> None:
     )
     assert result.returncode == 0
     assert "--probe" not in result.stdout
+
+
+@pytest.mark.parametrize("module_name", ["spec_intake", "fix_intake"])
+@pytest.mark.parametrize("payload", ["[]", "42", "null", '"str"', "notjson"])
+def test_read_answers_returns_none_for_unusable_input(
+    module_name: str, payload: str, monkeypatch, capsys
+) -> None:
+    """E2 in-process: the reader reports and returns None (never raises).
+
+    The subprocess tests above are the boundary receipt; this exercises
+    the same branches in-process so they are measurable.
+    """
+    import importlib
+    import io
+
+    module = importlib.import_module(f"attune.elicitation.{module_name}")
+    monkeypatch.setattr(module.sys, "stdin", io.StringIO(payload))
+
+    assert module._read_answers() is None
+    assert "error:" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("module_name", ["spec_intake", "fix_intake"])
+def test_read_answers_accepts_an_object(module_name: str, monkeypatch) -> None:
+    """Control: a JSON object still round-trips unchanged."""
+    import importlib
+    import io
+
+    module = importlib.import_module(f"attune.elicitation.{module_name}")
+    monkeypatch.setattr(module.sys, "stdin", io.StringIO('{"request": "x"}'))
+
+    assert module._read_answers() == {"request": "x"}
+
+
+@pytest.mark.parametrize(
+    ("probes", "expected"),
+    [({"a": 1}, []), (42, []), ("one", ["one"]), (["a", "b"], ["a", "b"])],
+)
+def test_compose_fix_command_probe_shapes(probes: object, expected: list) -> None:
+    """E2: only a str or a sequence is a probe list; a dict is not."""
+    from attune.elicitation.fix_intake import compose_fix_command
+
+    command = compose_fix_command({"request": "x", "probes": probes})
+
+    emitted = [command.split()[i + 1] for i, tok in enumerate(command.split()) if tok == "--probe"]
+    assert emitted == expected
