@@ -177,20 +177,35 @@ class TestCollectMetricsMalformedLines:
 
         assert result == dict(_EMPTY_METRICS)
 
-    def test_entry_with_non_dict_tokens_raises_and_is_skipped(self, temp_telemetry_dir):
-        # tokens as a plain int (not a dict) breaks `.get("total", 0)` with
-        # an AttributeError -- not caught by (JSONDecodeError, KeyError), so
-        # collect_metrics propagates it. This documents current behavior
-        # (production bug candidate: non-dict `tokens` crashes aggregation
-        # instead of being skipped like other malformed rows).
+    def test_entry_with_non_dict_tokens_is_skipped(self, temp_telemetry_dir):
+        # A non-dict `tokens` used to break `.get("total", 0)` with an
+        # AttributeError that escaped (JSONDecodeError, KeyError) and
+        # killed the whole aggregation. This test previously PINNED that
+        # crash as "current behavior (production bug candidate)"; the
+        # library review confirmed and fixed it, so the row is now
+        # skipped like every other malformed shape.
         now = datetime.now().isoformat()
         _write_usage_lines(
             temp_telemetry_dir,
-            [json.dumps({"timestamp": now, "cost": 1.0, "tokens": 5, "duration_ms": 10})],
+            [
+                json.dumps({"timestamp": now, "cost": 1.0, "tokens": 5, "duration_ms": 10}),
+                json.dumps(
+                    {
+                        "timestamp": now,
+                        "cost": 2.0,
+                        "tokens": {"total": 7},
+                        "duration_ms": 20,
+                    }
+                ),
+            ],
         )
 
-        with pytest.raises(AttributeError):
-            collect_metrics(temp_telemetry_dir)
+        result = collect_metrics(temp_telemetry_dir)
+
+        # The bad row contributes no tokens but does not abort the read;
+        # the good row is still aggregated.
+        assert result["token_usage"] == 7
+        assert result["daily_cost"] == 3.0
 
 
 class TestCollectMetricsReadError:

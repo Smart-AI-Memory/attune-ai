@@ -70,6 +70,12 @@ class PersistenceMixin:
         if current_file.exists():
             try:
                 data = json.loads(current_file.read_text(encoding="utf-8"))
+                # A valid-JSON non-dict would reach from_dict and raise
+                # AttributeError/TypeError past the handler below,
+                # crashing session load instead of starting a fresh
+                # session (library-review E1 widening).
+                if not isinstance(data, dict):
+                    raise ValueError("session file is not a JSON object")
                 state = SessionState.from_dict(data)
 
                 # Check if session is stale
@@ -90,7 +96,7 @@ class PersistenceMixin:
                 )
                 self._archive_session(state)
 
-            except (json.JSONDecodeError, KeyError) as e:
+            except (json.JSONDecodeError, KeyError, ValueError, TypeError) as e:
                 logger.warning("session_load_failed", error=str(e))
 
         # Create new session

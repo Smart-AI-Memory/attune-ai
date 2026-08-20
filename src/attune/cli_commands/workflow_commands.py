@@ -158,7 +158,14 @@ def _build_input_data(args: Namespace) -> tuple[dict, int | None]:
             input_data = json.loads(args.input)
         except json.JSONDecodeError as e:
             print(f"❌ Invalid JSON input: {e}")
-            return input_data, EXIT_CLI_ERROR
+            return {}, EXIT_CLI_ERROR
+        if not isinstance(input_data, dict):
+            # Valid JSON of a non-dict type parses fine, then the
+            # item-assignment below raises an uncaught TypeError and
+            # exits 1 — colliding with EXIT_PLANNED_FAILURE. A CLI
+            # input error is EXIT_CLI_ERROR (library-review D1).
+            print(f"❌ Invalid JSON input: expected an object, got {type(input_data).__name__}")
+            return {}, EXIT_CLI_ERROR
 
     # Add common options with validation
     if args.path:

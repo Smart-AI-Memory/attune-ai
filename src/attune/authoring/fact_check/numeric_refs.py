@@ -53,7 +53,11 @@ def _count_features(project_root: Path) -> int | None:
         return None
     try:
         data = yaml.safe_load(features_yaml.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
+    except (OSError, ValueError, yaml.YAMLError):
+        # yaml.YAMLError is NOT a ValueError subclass: without it a
+        # syntactically-broken features.yaml aborts the whole
+        # fact-check run instead of leaving this count unverifiable
+        # (library-review F1).
         return None
     if not isinstance(data, dict):
         return None

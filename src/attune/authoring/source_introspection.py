@@ -455,7 +455,10 @@ def _extract_source_info(
         try:
             source = full_path.read_text(encoding="utf-8")
             tree = ast.parse(source, filename=rel_path)
-        except (OSError, SyntaxError) as e:
+        except (OSError, SyntaxError, ValueError) as e:
+            # ast.parse raises ValueError (not SyntaxError) on a source
+            # containing a null byte; without it one corrupt file aborts
+            # the whole batch instead of being skipped (library-review F5).
             logger.debug("Cannot parse %s: %s", rel_path, e)
             continue
 

@@ -139,8 +139,18 @@ class MetricsTracker:
             with open(self.metrics_file) as f:
                 for line in f:
                     if line.strip():
-                        data = json.loads(line)
-                        metric = PromptMetrics.from_dict(data)
+                        # Per-row isolation: without it a single
+                        # malformed row hit the outer handler and
+                        # silently truncated the whole read to whatever
+                        # had accumulated (library-review E1 widening).
+                        try:
+                            data = json.loads(line)
+                            if not isinstance(data, dict):
+                                continue
+                            metric = PromptMetrics.from_dict(data)
+                        except (json.JSONDecodeError, TypeError, ValueError, KeyError):
+                            logger.warning("Skipping malformed prompt-metrics row")
+                            continue
 
                         # Apply filters
                         if workflow and metric.workflow != workflow:

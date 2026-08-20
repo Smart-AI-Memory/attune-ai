@@ -43,6 +43,12 @@ def _load_session() -> dict[str, Any]:
             data = json.loads(
                 _SESSION_FILE.read_text(encoding="utf-8"),
             )
+            # A valid-JSON non-dict (externally corrupted cache) would
+            # crash the .get chain below — and _load_session() runs at
+            # module import, so that crash hits every importer
+            # (library-review F3). The docstring promises defaults.
+            if not isinstance(data, dict):
+                return defaults
             ts = data.get("timestamp", 0)
             if time.time() - ts > _SESSION_TTL_SECONDS:
                 return defaults

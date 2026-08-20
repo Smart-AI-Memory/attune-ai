@@ -82,6 +82,16 @@ class AuditQueryMixin:
                     try:
                         event = json.loads(line.strip())
 
+                        # A valid-JSON non-dict row is not an audit
+                        # event: unfiltered it was APPENDED to results
+                        # as-is (garbage in a security query), and
+                        # filtered it raised AttributeError into the
+                        # outer handler, truncating the whole query
+                        # (library-review E1 widening).
+                        if not isinstance(event, dict):
+                            logger.warning("Skipping non-object audit log line")
+                            continue
+
                         # Apply filters
                         if event_type and event.get("event_type") != event_type:
                             continue

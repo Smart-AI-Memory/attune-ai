@@ -284,7 +284,15 @@ def compose_fix_command(answers: dict[str, Any]) -> str:
     request = str(answers.get("request", "")).strip()
     scope = str(answers.get("scope", "")).strip()
     probes_raw = answers.get("probes", [])
-    probes = [probes_raw] if isinstance(probes_raw, str) else list(probes_raw)
+    if isinstance(probes_raw, str):
+        probes: list[Any] = [probes_raw]
+    elif isinstance(probes_raw, list | tuple):
+        probes = list(probes_raw)
+    else:
+        # A dict used to be iterated to its KEYS, silently emitting a
+        # wrong --probe at exit 0; a scalar raised TypeError. Neither
+        # is a probe list (library-review E2).
+        probes = []
     parts = ["attune", "fix", shlex.quote(request), "--workflow", "fix"]
     for probe in probes:
         probe_text = str(probe).strip()
@@ -321,6 +329,28 @@ def list_subdirectories(repo_root: Path, raw: str) -> dict[str, Any]:
     return {"path": rel.as_posix(), "dirs": dirs}
 
 
+def _read_answers() -> dict[str, Any] | None:
+    """Read the answers object from stdin, or None when unusable.
+
+    Mirrors ``spec_intake._read_answers``: unparseable input, or valid
+    JSON that is not an object, previously crashed the ``.get`` chain
+    with a traceback against a documented return-0 contract
+    (library-review E2).
+    """
+    try:
+        answers = json.load(sys.stdin)
+    except (json.JSONDecodeError, ValueError, RecursionError) as exc:
+        print(f"error: could not parse answers JSON: {exc}", file=sys.stderr)
+        return None
+    if not isinstance(answers, dict):
+        print(
+            f"error: answers must be a JSON object, got {type(answers).__name__}",
+            file=sys.stderr,
+        )
+        return None
+    return answers
+
+
 def _main(argv: list[str]) -> int:
     """CLI seam for the /fix skill.
 
@@ -331,7 +361,9 @@ def _main(argv: list[str]) -> int:
     "Other path" folder picker.
     """
     if "--compose" in argv:
-        answers = json.load(sys.stdin)
+        answers = _read_answers()
+        if answers is None:
+            return 2
         print(compose_fix_command(answers))
         return 0
     if "--list-dirs" in argv:
