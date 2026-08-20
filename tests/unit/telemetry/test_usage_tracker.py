@@ -1337,6 +1337,27 @@ class TestFlushOsErrorBranch:
         # Entries should be back in buffer
         assert len(tracker._buffer) >= 1
 
+    def test_flush_non_oserror_restores_buffer(self, temp_dir):
+        """A non-OSError during write (TypeError from json.dump on an
+        unserializable entry) must also restore the buffer.
+
+        Library-review R5 finding (2026-08-20): the restore path only
+        covered OSError, so a serialization failure silently dropped
+        every buffered entry.
+        """
+        tracker = UsageTracker(telemetry_dir=temp_dir)
+        good_entry = {"ts": "2026-08-20T00:00:00", "workflow": "wf"}
+        bad_entry = {"ts": "2026-08-20T00:00:01", "payload": object()}
+        with tracker._lock:
+            tracker._buffer.extend([good_entry, bad_entry])
+
+        with pytest.raises(TypeError):
+            tracker.flush()
+
+        # Both entries restored — including the good one flushed alongside
+        assert good_entry in tracker._buffer
+        assert bad_entry in tracker._buffer
+
 
 @pytest.mark.unit
 class TestBufferFullExceptionBranches:

@@ -501,3 +501,29 @@ class TestAgentStateStoreConcurrency:
         assert state is not None
         assert state.total_executions == 1  # the failed second start is gone
         assert state.last_checkpoint == {"step": 9}
+
+    def test_failed_serialization_evicts_cache(self, tmp_path: Path) -> None:
+        """A TypeError from json.dumps must run the same cache cleanup
+        as an OSError.
+
+        Library-review R5 finding (2026-08-20): only OSError popped the
+        mutated record from the cache, so an unserializable checkpoint
+        stayed cached and cached reads served the failed update.
+        """
+        store = AgentStateStore(storage_dir=str(tmp_path))
+        store.record_start("serial-agent", "Auditor")
+
+        with pytest.raises(TypeError):
+            store.save_checkpoint("serial-agent", {"bad": object()})
+
+        # A cached read must not see the failed checkpoint
+        state = store.get_agent_state("serial-agent")
+        assert state is not None
+        assert state.last_checkpoint == {}  # on-disk default, not the bad dict
+
+        # And a later successful mutation must not resurrect it
+        store.save_checkpoint("serial-agent", {"step": 1})
+        fresh = AgentStateStore(storage_dir=str(tmp_path))
+        persisted = fresh.get_agent_state("serial-agent")
+        assert persisted is not None
+        assert persisted.last_checkpoint == {"step": 1}

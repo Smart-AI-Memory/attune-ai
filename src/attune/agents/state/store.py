@@ -417,11 +417,13 @@ class AgentStateStore:
         validated_path.parent.mkdir(parents=True, exist_ok=True)
         try:
             _atomic_write_text(validated_path, json.dumps(record.to_dict(), indent=2))
-        except OSError:
+        except Exception:  # noqa: BLE001
             # The record was mutated in place before this save. Dropping
             # the cache entry forces the next load to re-read the last
             # good on-disk state, so the failed update can't be silently
-            # persisted by a later successful mutation.
+            # persisted by a later successful mutation. Not just OSError:
+            # a TypeError from json.dumps on an unserializable value needs
+            # the same cleanup.
             self._cache.pop(record.agent_id, None)
             raise
 
