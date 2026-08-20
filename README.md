@@ -66,6 +66,7 @@ maintained by Attune's own stack.
 [Receipts](#receipts-not-promises) ·
 [Multi-LLM](#multi-llm-collaboration) ·
 [Workflows & tools](#workflows-and-mcp-tools) ·
+[Forms](#interactive-forms--the-agent-asks-with-structure) ·
 [Accuracy](#accuracy--faithfulness) ·
 [Install options](#installation-options) ·
 [Privacy](#privacy--telemetry)
@@ -300,11 +301,26 @@ memory tools registered by the bundled Redis plugin</summary>
 
 </details>
 
-Structured communication is built in: multi-part questions render as
-one form, recommendations as weighable cards, disagreements
-side-by-side so you can overrule in one tap — degrading gracefully to
-a text menu on plain surfaces. Chart specs render through a sealed
-SVG kernel (`chart_render_widget`, nine chart types).
+---
+
+## Interactive forms — the agent asks with structure
+
+Agent↔you exchanges are interactive forms, not prose Q&A. The agent
+presents a **decision** with its recommendation, rationale, and
+per-option tradeoffs; disagrees through a **pushback** card (your
+approach vs. its alternative, side by side); reports **progress** as
+done / in-flight / blocked; and has you **rank**, **triage**,
+**confirm**, deliberate, or review its **assumptions** — one tap each.
+Every question is validated on the way back, so a malformed answer is
+re-asked, not silently accepted.
+
+One declarative form, written once, renders to the richest surface your
+client supports — a native dialog, a rich HTML widget, or a plain
+multiple-choice menu on a text-only surface — so the same question
+works everywhere and degrades gracefully. The full construct vocabulary
+ships via `attune-forms` 0.7.0 (new in 13.0.0). Chart specs render
+through the same sealed SVG kernel (`chart_render_widget`, nine chart
+types).
 
 ---
 
