@@ -243,6 +243,12 @@ class DependencyParserMixin:
             with open(path) as f:
                 data = json.load(f)
 
+            # An npm manifest that is not an object reaches data.get()
+            # below and raises AttributeError past this method's
+            # (OSError, JSONDecodeError) handler (library-review C3).
+            if not isinstance(data, dict):
+                return deps
+
             for dep_type in ["dependencies", "devDependencies"]:
                 for name, version in data.get(dep_type, {}).items():
                     deps.append(
@@ -300,6 +306,11 @@ class DependencyParserMixin:
         try:
             with open(path) as f:
                 data = json.load(f)
+
+            # Same guard as _parse_package_json: a non-object lock file
+            # would escape the handler below (library-review C3).
+            if not isinstance(data, dict):
+                return deps
 
             # npm v7+ format (packages)
             packages = data.get("packages", {})

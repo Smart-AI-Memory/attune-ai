@@ -195,8 +195,15 @@ Respond with JSON only:
                 max_tokens=self.max_tokens,
             )
             result = json.loads(llm_response.content)
-        except json.JSONDecodeError:
-            logger.warning("SemanticEvaluator: evaluator response was not valid JSON")
+            if not isinstance(result, dict):
+                # An evaluator that answers with a JSON array or scalar
+                # is an evaluator failure, not a verdict: the .get calls
+                # below sit outside this try, so without the guard a
+                # non-object answer breaks the chain that the handler
+                # right here promises never to block (library-review C3).
+                raise ValueError(f"evaluator returned {type(result).__name__}, not an object")
+        except ValueError:  # includes json.JSONDecodeError
+            logger.warning("SemanticEvaluator: evaluator response was not a JSON object")
             return True, None  # Don't block on evaluator failure
         except Exception:  # noqa: BLE001
             # INTENTIONAL: Evaluator errors should not block the chain.

@@ -69,6 +69,15 @@ def parse_coverage_json(json_path: str) -> list[ModuleCoverage]:
     except json.JSONDecodeError as exc:
         raise ValueError(f"Invalid coverage JSON at {json_path}: {exc}") from exc
 
+    if not isinstance(data, dict):
+        # The docstring promises ValueError for invalid coverage JSON;
+        # without this a non-object file raised AttributeError from the
+        # .get below instead (library-review C3).
+        raise ValueError(
+            f"Unexpected coverage JSON structure in {json_path}: "
+            f"expected an object, got {type(data).__name__}"
+        )
+
     files = data.get("files", {})
     if not isinstance(files, dict):
         raise ValueError(
