@@ -32,6 +32,7 @@ from attune.memory.long_term_classification import (
     SENSITIVE_PATTERN_TYPES,
     check_access,
     classify_pattern,
+    resolve_current_workspace,
 )
 from attune.memory.long_term_types import Classification
 
@@ -143,32 +144,112 @@ def test_public_ignores_workspace_mismatch():
 
 
 def test_internal_same_workspace_grants_access():
-    """INTERNAL access granted when workspaces match."""
-    meta = {"workspace": "proj-x", "current_workspace": "proj-x"}
-    assert check_access("alice", Classification.INTERNAL, meta) is True
+    """INTERNAL access granted when the reader is in the pattern's workspace."""
+    meta = {"workspace": "proj-x"}
+    assert check_access("alice", Classification.INTERNAL, meta, current_workspace="proj-x") is True
 
 
 def test_internal_different_workspace_denies_access():
     """INTERNAL access denied across distinct workspaces (kills != -> ==)."""
-    meta = {"workspace": "proj-x", "current_workspace": "proj-y"}
-    assert check_access("alice", Classification.INTERNAL, meta) is False
+    meta = {"workspace": "proj-x"}
+    assert check_access("alice", Classification.INTERNAL, meta, current_workspace="proj-y") is False
+
+
+def test_internal_ignores_a_workspace_planted_in_the_record():
+    """The reader's workspace comes from the CALLER, never the record.
+
+    Library-review I-3: both operands used to be read from ``metadata``,
+    so a record could name the workspace it was checked against and the
+    branch could never deny. A planted ``current_workspace`` must have
+    no effect now.
+    """
+    meta = {"workspace": "proj-x", "current_workspace": "proj-x"}
+    assert check_access("alice", Classification.INTERNAL, meta, current_workspace="proj-y") is False
 
 
 def test_internal_missing_both_workspaces_grants_legacy_access():
     """Legacy patterns with no workspace metadata stay accessible."""
-    assert check_access("alice", Classification.INTERNAL, {}) is True
+    assert check_access("alice", Classification.INTERNAL, {}, current_workspace="proj-x") is True
 
 
-def test_internal_only_pattern_workspace_present_grants_access():
-    """Only one workspace field set -> the `and` chain short-circuits open."""
-    meta = {"workspace": "proj-x"}  # no current_workspace
-    assert check_access("alice", Classification.INTERNAL, meta) is True
+def test_internal_unknown_reader_workspace_denies_a_stamped_record():
+    """The two unknowns are not symmetric (codex D11 lane).
+
+    A STAMPED record whose reader cannot name its own workspace is the
+    case the rule exists for: granting would assert a match nobody can
+    verify, and made the isolation bypassable by running from a deleted
+    working directory.
+    """
+    meta = {"workspace": "proj-x"}
+    assert check_access("alice", Classification.INTERNAL, meta, current_workspace="") is False
 
 
-def test_internal_only_current_workspace_present_grants_access():
-    """Symmetric: current set, pattern workspace absent -> access granted."""
-    meta = {"current_workspace": "proj-y"}  # no workspace
-    assert check_access("alice", Classification.INTERNAL, meta) is True
+def test_internal_unknown_reader_workspace_still_grants_a_legacy_record():
+    """The other half of the asymmetry: nothing stamped, nothing to enforce."""
+    assert check_access("alice", Classification.INTERNAL, {}, current_workspace="") is True
+
+
+def test_internal_defaults_the_reader_workspace_to_the_running_process(tmp_path, monkeypatch):
+    """With no argument, the reader's REAL workspace decides — for real.
+
+    Runs in an actual directory (a real git checkout marker), because the
+    defect this replaces was precisely a comparison that never touched
+    anything outside the record.
+    """
+    checkout = tmp_path / "other-project"
+    (checkout / ".git").mkdir(parents=True)
+    monkeypatch.chdir(checkout)
+
+    assert resolve_current_workspace() == str(checkout.resolve())
+    assert check_access("alice", Classification.INTERNAL, {"workspace": "proj-x"}) is False
+    assert (
+        check_access("alice", Classification.INTERNAL, {"workspace": str(checkout.resolve())})
+        is True
+    )
+
+
+def test_a_deleted_working_directory_cannot_bypass_isolation(tmp_path, monkeypatch):
+    """The bypass, reproduced against a really-deleted cwd.
+
+    Not a patched resolver: the process is genuinely left with a working
+    directory that no longer exists, which is how the finding was
+    confirmed.
+    """
+    import os
+    import shutil
+
+    doomed = tmp_path / "gone"
+    doomed.mkdir()
+    original = os.getcwd()
+    os.chdir(doomed)
+    try:
+        shutil.rmtree(doomed)
+        assert resolve_current_workspace() == ""
+        assert (
+            check_access("bob", Classification.INTERNAL, {"workspace": "/projects/alice"}) is False
+        )
+    finally:
+        os.chdir(original)
+
+
+def test_resolve_current_workspace_walks_up_to_the_checkout_root(tmp_path, monkeypatch):
+    """Any cwd inside one checkout resolves to a single identity."""
+    checkout = tmp_path / "proj"
+    (checkout / ".git").mkdir(parents=True)
+    nested = checkout / "src" / "deep"
+    nested.mkdir(parents=True)
+    monkeypatch.chdir(nested)
+
+    assert resolve_current_workspace() == str(checkout.resolve())
+
+
+def test_resolve_current_workspace_falls_back_to_cwd_without_a_marker(tmp_path, monkeypatch):
+    """No .git anywhere above -> the working directory itself."""
+    plain = tmp_path / "not-a-checkout"
+    plain.mkdir()
+    monkeypatch.chdir(plain)
+
+    assert resolve_current_workspace() == str(plain.resolve())
 
 
 # ===========================================================================
