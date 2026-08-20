@@ -6,7 +6,7 @@ convergence. Chair-promoted sections only; full transcript is
 machine-local (`~/.attune/reports/roundtable/`).
 
 Adapts the attune-forms process-v2
-([q-forms-review-process-v2-001](q-forms-review-process-v2-001.md),
+(`q-forms-review-process-v2-001`, transcript machine-local,
 outcome: 23 confirmed act-now defects fixed across 13 modules) to
 attune-ai scale: 741 Python files, ~192k LOC, ~70 packages, plus
 `attune_redis`. Scale-independent parts of process-v2 carry over
