@@ -146,7 +146,10 @@ _BASELINE: dict[str, int] = {
     # nested fields (tool_input/file_path), not only OSError.
     "src/attune/hooks/scripts/format_on_save.py": 1,
     "src/attune/hooks/scripts/help_freshness_nudge.py": 1,
-    "src/attune/hooks/scripts/lessons_reminder.py": 1,
+    # lessons_reminder raised 1 -> 2: the Stop-hook __main__ block now
+    # wraps main() to exit 0 on any unexpected error (it must never crash
+    # the session with a traceback), matching every sibling hook here.
+    "src/attune/hooks/scripts/lessons_reminder.py": 2,
     # security_guard added 1 for library-review L1 (PR #2117): a
     # blocking guard must fail OPEN on wrong-typed fields, so main()
     # is wrapped to exit 0 instead of crashing to a non-blocking 1.

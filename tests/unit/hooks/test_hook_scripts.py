@@ -168,6 +168,25 @@ class TestMarkReminded:
         mock_parent.mkdir.assert_called_once_with(parents=True, exist_ok=True)
         mock_sentinel.touch.assert_called_once()
 
+    def test_swallows_oserror_on_unwritable_home(self) -> None:
+        """An unwritable home must not raise — the Stop hook stays alive."""
+        mock_sentinel = MagicMock(spec=Path)
+        mock_sentinel.parent.mkdir.side_effect = OSError("read-only file system")
+
+        with patch("attune.hooks.scripts.lessons_reminder.SENTINEL", mock_sentinel):
+            from attune.hooks.scripts.lessons_reminder import mark_reminded
+
+            mark_reminded()  # must not raise
+
+    def test_swallows_oserror_from_touch(self) -> None:
+        mock_sentinel = MagicMock(spec=Path)
+        mock_sentinel.touch.side_effect = OSError("permission denied")
+
+        with patch("attune.hooks.scripts.lessons_reminder.SENTINEL", mock_sentinel):
+            from attune.hooks.scripts.lessons_reminder import mark_reminded
+
+            mark_reminded()  # must not raise
+
 
 class TestHasSessionWork:
     """Tests for has_session_work() in lessons_reminder."""
@@ -299,6 +318,29 @@ class TestLessonsReminderMain:
 
         assert result == 2
         mock_mark.assert_called_once()
+
+    def test_reminds_even_when_sentinel_unwritable(self, capsys: pytest.CaptureFixture) -> None:
+        """With the REAL mark_reminded and an unwritable sentinel, the
+        reminder still fires (return 2) — the write failure is swallowed."""
+        mock_sentinel = MagicMock(spec=Path)
+        mock_sentinel.parent.mkdir.side_effect = OSError("read-only file system")
+        with (
+            patch(
+                "attune.hooks.scripts.lessons_reminder.already_reminded",
+                return_value=False,
+            ),
+            patch(
+                "attune.hooks.scripts.lessons_reminder.has_session_work",
+                return_value=True,
+            ),
+            patch("attune.hooks.scripts.lessons_reminder.SENTINEL", mock_sentinel),
+        ):
+            from attune.hooks.scripts.lessons_reminder import main
+
+            result = main()
+
+        assert result == 2
+        assert "attune.docs_outbox write" in capsys.readouterr().err
 
     def test_reminder_printed_to_stderr(self, capsys: pytest.CaptureFixture) -> None:
         with (
