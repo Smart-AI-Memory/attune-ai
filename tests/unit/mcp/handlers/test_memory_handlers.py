@@ -738,6 +738,32 @@ class TestMixinDeletePattern:
         mem = UnifiedMemory(user_id="owner@corp.com")
         assert mem.delete_pattern("pat_missing_xyz") is False
 
+    def test_returns_false_when_long_term_unavailable(self, _isolated_store):
+        """Degrade gracefully: no long-term backend -> False, never raises."""
+        from attune.memory import UnifiedMemory
+
+        mem = UnifiedMemory(user_id="owner@corp.com")
+        mem._long_term = None
+        assert mem.delete_pattern("pat_anything") is False
+
+
+class TestForgetPermissionErrorFromDelete:
+    """The handler's PermissionError branch: a foreign SENSITIVE pattern
+    recalls as None, so the pre-check is skipped and the core delete is
+    what raises — the handler must translate that into a clean denial."""
+
+    @pytest.mark.asyncio
+    async def test_permission_error_from_delete_denies(self):
+        mem = _make_unified_memory()
+        mem.recall_pattern.return_value = None  # foreign SENSITIVE recalls as None
+        mem.delete_pattern.side_effect = PermissionError("cannot delete")
+        server = _make_server(memory=mem)
+
+        result = await server._handle_memory_forget({"key": "pat-x", "scope": "persistent"})
+
+        assert result["success"] is False
+        assert result["error"] == "Not authorized to delete this key"
+
 
 # ---------------------------------------------------------------------------
 # Personal cross-session memory handlers
