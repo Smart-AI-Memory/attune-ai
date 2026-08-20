@@ -57,6 +57,12 @@ def cmd_costs(args: Namespace) -> int:
         logger.error("Failed to read cost data: %s", e)
         print(f"Error reading cost data: {e}")
         return 1
+    except Exception as e:  # noqa: BLE001
+        # Broad by contract: the docstring promises exit 1 on failure, and
+        # corrupt tracker data raises KeyError/TypeError, not OSError.
+        logger.exception("Unexpected error generating cost report")
+        print(f"Error generating cost report: {e}")
+        return 1
 
 
 def _costs_by_workflow(
@@ -156,6 +162,12 @@ def cmd_costs_today(args: Namespace) -> int:
         logger.error("Failed to read cost data: %s", e)
         print(f"Error reading cost data: {e}")
         return 1
+    except Exception as e:  # noqa: BLE001
+        # Broad by contract: the docstring promises exit 1 on failure, and
+        # corrupt tracker data raises KeyError/TypeError, not OSError.
+        logger.exception("Unexpected error reading today's cost data")
+        print(f"Error reading cost data: {e}")
+        return 1
 
 
 def cmd_costs_export(args: Namespace) -> int:
@@ -195,6 +207,12 @@ def cmd_costs_export(args: Namespace) -> int:
         return 1
     except OSError as e:
         logger.error("Failed to export cost data: %s", e)
+        print(f"Error exporting cost data: {e}")
+        return 1
+    except Exception as e:  # noqa: BLE001
+        # Broad by contract: the docstring promises exit 1 on failure, and
+        # corrupt tracker data raises KeyError/TypeError, not OSError.
+        logger.exception("Unexpected error exporting cost data")
         print(f"Error exporting cost data: {e}")
         return 1
 

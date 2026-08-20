@@ -103,6 +103,12 @@ _BASELINE: dict[str, int] = {
     "src/attune/authoring/spec_runner.py": 1,
     "src/attune/authoring/spec_workflow.py": 1,
     "src/attune/cli_commands/_exit_codes.py": 2,
+    # cost_commands.py added at 3 (library-review R5, 2026-08-20): the
+    # costs/today/export handlers promise "0 on success, 1 on failure" but
+    # caught OSError only, so corrupt tracker data (KeyError/TypeError)
+    # crashed the CLI with a raw traceback. Each site logs via
+    # logger.exception and returns 1.
+    "src/attune/cli_commands/cost_commands.py": 3,
     "src/attune/cli_commands/diagnosis_commands.py": 1,
     "src/attune/cli_commands/fix_commands.py": 1,
     "src/attune/cli_commands/memory_agent.py": 2,
