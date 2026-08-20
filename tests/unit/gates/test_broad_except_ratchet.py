@@ -86,7 +86,10 @@ _BASELINE: dict[str, int] = {
     "src/attune/agents/release/quality_agent.py": 1,
     "src/attune/agents/release/release_prep_team.py": 2,
     "src/attune/agents/release/security_agent.py": 1,
-    "src/attune/agents/state/store.py": 1,
+    # store.py raised 1 -> 2 for the library-review R5 cleanup-parity
+    # chip (PR #2114): _save's cache-pop cleanup must run for a
+    # TypeError from an unserializable record, not only OSError.
+    "src/attune/agents/state/store.py": 2,
     "src/attune/agents/team.py": 1,
     "src/attune/agents_md/loader.py": 1,
     "src/attune/authoring/fact_check/cli_refs.py": 1,
@@ -278,7 +281,10 @@ _BASELINE: dict[str, int] = {
     "src/attune/telemetry/lessons/__init__.py": 1,
     "src/attune/telemetry/memory_events.py": 1,
     "src/attune/telemetry/usage_ping.py": 4,
-    "src/attune/telemetry/usage_tracker.py": 3,
+    # usage_tracker raised 3 -> 4 for the library-review R5
+    # cleanup-parity chip (PR #2114): flush must restore the buffer
+    # on ANY exception before re-raising, not only OSError.
+    "src/attune/telemetry/usage_tracker.py": 4,
     "src/attune/tools.py": 1,
     "src/attune/utils/tokens.py": 4,
     "src/attune/validation/xml_validator.py": 2,

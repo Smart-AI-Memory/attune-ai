@@ -514,7 +514,9 @@ class UsageTracker:
 
         Raises:
             OSError: If writing to disk fails. Entries are returned to the
-                    buffer so no data is lost.
+                    buffer so no data is lost. Any other exception (e.g. a
+                    TypeError from an unserializable entry) also restores
+                    the buffer before propagating.
 
         """
         with self._lock:
@@ -528,8 +530,10 @@ class UsageTracker:
                 for entry in entries:
                     json.dump(entry, f, separators=(",", ":"))
                     f.write("\n")
-        except OSError:
-            # Restore entries to buffer so they are not lost
+        except Exception:  # noqa: BLE001
+            # Restore entries to buffer so they are not lost — not just
+            # OSError: a TypeError/ValueError from json.dump on an
+            # unserializable entry must not silently drop the buffer.
             with self._lock:
                 self._buffer = entries + self._buffer
             raise
