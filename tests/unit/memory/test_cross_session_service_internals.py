@@ -21,18 +21,17 @@ class _FakeClient:
     def __init__(self):
         self.calls: list = []
 
-    def setnx(self, key, value):
-        self.calls.append(("setnx", key))
-        return True
-
     def expire(self, key, ttl):
         self.calls.append(("expire", key, ttl))
 
     def delete(self, key):
         self.calls.append(("delete", key))
 
-    def set(self, key, value):
-        self.calls.append(("set", key))
+    def set(self, key, value, **kwargs):
+        # nx/ex ride along on the acquisition — library-review H2 removed
+        # the follow-up EXPIRE, so this fake must accept them.
+        self.calls.append(("set", key, kwargs))
+        return True
 
 
 class _FakeMemory:
@@ -108,7 +107,7 @@ def test_refresh_lock_extends_ttl_and_writes_heartbeat():
     names = [c[0] for c in client.calls]
     assert "expire" in names and "set" in names
     assert any(c == ("expire", KEY_SERVICE_LOCK, c[2]) for c in client.calls if c[0] == "expire")
-    assert ("set", KEY_SERVICE_HEARTBEAT) in client.calls
+    assert any(c[0] == "set" and c[1] == KEY_SERVICE_HEARTBEAT for c in client.calls)
 
 
 def test_refresh_lock_without_client_is_noop():

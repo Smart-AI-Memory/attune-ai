@@ -37,7 +37,7 @@ def _mock_memory() -> RedisShortTermMemory:
     """
     memory = RedisShortTermMemory(use_mock=True)
     mock_client = MagicMock()
-    mock_client.setnx.return_value = True
+    mock_client.set.return_value = True
     mock_client.get.return_value = None
     mock_client.hgetall.return_value = {}
     mock_client.hget.return_value = None
@@ -363,7 +363,7 @@ class TestCrossSessionCoordinatorConflictResolution:
         """FIRST_WRITE_WINS: current writer wins when lock is available."""
         memory = _mock_memory()
         memory._base._client.hget.return_value = None
-        memory._base._client.setnx.return_value = True  # lock available
+        memory._base._client.set.return_value = True  # lock available
 
         coord = CrossSessionCoordinator(
             memory=memory,
@@ -406,18 +406,20 @@ class TestCrossSessionCoordinatorLocking:
     """acquire_lock / release_lock / check_lock with mocked Redis client."""
 
     def test_acquire_lock_success(self):
-        """acquire_lock returns True when setnx succeeds."""
+        """acquire_lock returns True when the atomic SET nx+ex succeeds."""
         memory = _mock_memory()
-        memory._base._client.setnx.return_value = True
+        memory._base._client.set.return_value = True
 
         coord = CrossSessionCoordinator(memory=memory, auto_announce=False)
         assert coord.acquire_lock("resource_x") is True
-        memory._base._client.expire.assert_called()
+        # The TTL rides on the acquisition — a second EXPIRE is the H2
+        # crash window this fix closed.
+        memory._base._client.expire.assert_not_called()
 
     def test_acquire_lock_failure(self):
-        """acquire_lock returns False when setnx fails (lock held)."""
+        """acquire_lock returns False when the atomic SET nx+ex is refused (lock held)."""
         memory = _mock_memory()
-        memory._base._client.setnx.return_value = False
+        memory._base._client.set.return_value = None
 
         coord = CrossSessionCoordinator(memory=memory, auto_announce=False)
         assert coord.acquire_lock("resource_x") is False

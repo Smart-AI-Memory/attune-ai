@@ -39,6 +39,14 @@ def resolve_url(url: str | None = None) -> str:
     return resolve_redis_connection().url
 
 
+#: Seconds to wait for the TCP connect. A recall reader that cannot
+#: reach Redis promptly must degrade, not stall the caller.
+DEFAULT_CONNECT_TIMEOUT = 2.0
+
+#: Seconds to wait for a reply once connected.
+DEFAULT_SOCKET_TIMEOUT = 5.0
+
+
 def connect_recall_redis(url: str | None = None, **kwargs: Any) -> Any:
     """Construct an auth-aware ``redis.Redis`` for a recall/ops reader.
 
@@ -48,6 +56,10 @@ def connect_recall_redis(url: str | None = None, **kwargs: Any) -> Any:
     an explicit kwarg. ``decode_responses`` defaults to True (the
     readers expect ``str``). Extra ``kwargs`` (e.g.
     ``socket_connect_timeout``) pass straight through to ``from_url``.
+
+    Connect and read timeouts default to
+    :data:`DEFAULT_CONNECT_TIMEOUT` / :data:`DEFAULT_SOCKET_TIMEOUT`
+    rather than to whatever the installed redis-py happens to use.
 
     Raises:
         ImportError: If the ``redis`` package is not installed — the caller
@@ -67,4 +79,13 @@ def connect_recall_redis(url: str | None = None, **kwargs: Any) -> Any:
         if password:
             kwargs.setdefault("password", password)
     kwargs.setdefault("decode_responses", True)
+    # Bound the connect and the read HERE, not in each caller. Every
+    # consumer of this factory is on a documented never-block path, and
+    # without an explicit value the contract is decided by whichever
+    # redis-py happens to be installed: on the project's declared pin
+    # floor (redis 5.0.1) there is no default at all, and a blackholed
+    # endpoint blocks ~75s (library-review H5). A caller needing tighter
+    # bounds still passes its own — setdefault never overrides.
+    kwargs.setdefault("socket_connect_timeout", DEFAULT_CONNECT_TIMEOUT)
+    kwargs.setdefault("socket_timeout", DEFAULT_SOCKET_TIMEOUT)
     return redis.Redis.from_url(resolved, **kwargs)
