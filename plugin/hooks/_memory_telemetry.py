@@ -104,6 +104,8 @@ def log_memory_event(event: str, session_id: str | None = None, **fields: object
         }
         if session_id:
             record["session_id"] = str(session_id)[:64]
+        for reserved in ("v", "ts", "event", "session_id"):
+            fields.pop(reserved, None)
         record.update(fields)
         chars = record.get("injected_chars")
         if isinstance(chars, int) and "est_tokens" not in record:

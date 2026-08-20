@@ -45,6 +45,23 @@ class TestAppend:
         assert record["count"] == 2
         assert record["ts"].endswith("Z")
 
+    def test_reserved_keys_cannot_be_clobbered_by_fields(self, home: Path) -> None:
+        """Regression: library review checkpoint-1 R2 hit (forms form_events
+        sibling class) — **fields must not overwrite v/ts/event/session_id."""
+        log_memory_event(
+            "memory_feedback",
+            session_id="real",
+            v="FORGED",
+            ts="1970-01-01T00:00:00Z",
+            verdict="keep",
+        )
+        (record,) = _lines(home)
+        assert record["v"] == "1.0"
+        assert record["ts"] != "1970-01-01T00:00:00Z"
+        assert record["event"] == "memory_feedback"
+        assert record["session_id"] == "real"
+        assert record["verdict"] == "keep"
+
     def test_lines_are_compact_json(self, home: Path) -> None:
         log_memory_event("memory_feedback", source="review")
         raw = _events_file(home).read_text(encoding="utf-8")
