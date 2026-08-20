@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Pinned `attune-forms` below 0.7.** 0.7.0 changes the elicitation
+  schema for `boolean` fields from `{"type": "boolean"}` to
+  `{"type": "string", "enum": ["Yes", "No"]}`. The previous range
+  (`>=0.6.0,<1.0`) let CI resolve it while local environments held
+  0.6.0, so the tree was green locally and red on every lane — 11
+  failures across `tests/unit/elicitation/` and
+  `tests/unit/mcp/test_server_elicitation.py`, on branches that had not
+  touched either surface. Pinned to `>=0.6.0,<0.7` to restore a
+  reproducible resolve; adopting the 0.7 contract is a separate,
+  deliberate change.
+
 ### Removed — BREAKING: dormant in-package hook-execution engine
 
 - **`attune.hooks.HookRegistry` / `HookExecutor` / `HookConfig`
