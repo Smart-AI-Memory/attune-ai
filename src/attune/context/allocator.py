@@ -51,7 +51,10 @@ def _append_fit_event(payload: dict[str, int | str]) -> None:
         line = json.dumps(record, separators=(",", ":")) + "\n"
         with path.open("a", encoding="utf-8") as fh:
             fh.write(line)
-    except OSError as e:
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: the docstring promises never-raises — a TypeError
+        # from an unserializable payload must not block a fit any more
+        # than an OSError from the filesystem (library-review R5).
         logger.debug("context_fit telemetry append failed: %s", e)
 
 

@@ -64,7 +64,10 @@ def record(
         dest.parent.mkdir(parents=True, exist_ok=True)
         with dest.open("a", encoding="utf-8") as f:
             f.write(json.dumps(row) + "\n")
-    except OSError as exc:
+    except Exception as exc:  # noqa: BLE001
+        # INTENTIONAL: the docstring promises logged-and-swallowed — a
+        # TypeError from an unserializable field must not break the pass
+        # being observed any more than an OSError (library-review R5).
         logger.warning("role-telemetry: write failed (%s); event dropped", exc)
     return dest
 

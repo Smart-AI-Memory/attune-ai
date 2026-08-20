@@ -24,6 +24,20 @@ from typing import Any
 from .short_term import RedisShortTermMemory
 
 
+def _loads_list(raw: str) -> list:
+    """Parse a stored JSON list field; corrupt data degrades to ``[]``.
+
+    Principle 15: the memory layer degrades, it never blocks — a corrupt
+    or hand-edited hash field must not crash recall (library-review R1,
+    confirmed via representative repro 2026-08-20).
+    """
+    try:
+        data = json.loads(raw)
+    except (json.JSONDecodeError, TypeError):
+        return []
+    return data if isinstance(data, list) else []
+
+
 @dataclass
 class AgentContext:
     """Compact context package for sub-agent handoff.
@@ -322,25 +336,25 @@ class ConversationSummaryIndex:
 
         # Append to decisions list
         if event_type == "decision":
-            decisions = json.loads(summary.get("decisions", "[]"))
+            decisions = _loads_list(summary.get("decisions", "[]"))
             decisions.append(content)
             summary["decisions"] = json.dumps(decisions[-20:])  # Keep last 20
 
         # Append to open questions
         if event_type == "question":
-            questions = json.loads(summary.get("open_questions", "[]"))
+            questions = _loads_list(summary.get("open_questions", "[]"))
             questions.append(content)
             summary["open_questions"] = json.dumps(questions[-10:])
 
         # Clear question if answered
         if event_type == "answered":
-            questions = json.loads(summary.get("open_questions", "[]"))
+            questions = _loads_list(summary.get("open_questions", "[]"))
             questions = [q for q in questions if content.lower() not in q.lower()]
             summary["open_questions"] = json.dumps(questions)
 
         # Update files list
         if event_type == "file_modified":
-            files = json.loads(summary.get("key_files", "[]"))
+            files = _loads_list(summary.get("key_files", "[]"))
             if content not in files:
                 files.append(content)
             summary["key_files"] = json.dumps(files[-20:])
@@ -348,7 +362,7 @@ class ConversationSummaryIndex:
         # Extract and index topics
         topics = self._extract_topics(content)
         if topics:
-            existing_topics = json.loads(summary.get("topics", "[]"))
+            existing_topics = _loads_list(summary.get("topics", "[]"))
             for topic in topics:
                 if topic not in existing_topics:
                     existing_topics.append(topic)
@@ -408,10 +422,10 @@ class ConversationSummaryIndex:
 
         # Parse summary fields
         working_on = summary.get("working_on", "")
-        decisions = json.loads(summary.get("decisions", "[]"))
-        open_questions = json.loads(summary.get("open_questions", "[]"))
-        key_files = json.loads(summary.get("key_files", "[]"))
-        topics = json.loads(summary.get("topics", "[]"))
+        decisions = _loads_list(summary.get("decisions", "[]"))
+        open_questions = _loads_list(summary.get("open_questions", "[]"))
+        key_files = _loads_list(summary.get("key_files", "[]"))
+        topics = _loads_list(summary.get("topics", "[]"))
         updated_at = summary.get("updated_at", "")
 
         # Filter by focus topics if provided
@@ -481,7 +495,7 @@ class ConversationSummaryIndex:
                     pass
 
             # Get decisions
-            decisions = json.loads(summary.get("decisions", "[]"))
+            decisions = _loads_list(summary.get("decisions", "[]"))
 
             for decision in decisions:
                 if topic.lower() in decision.lower():
@@ -490,7 +504,7 @@ class ConversationSummaryIndex:
                             "session": session_id,
                             "decision": decision,
                             "date": updated_at,
-                            "topics": json.loads(summary.get("topics", "[]")),
+                            "topics": _loads_list(summary.get("topics", "[]")),
                         },
                     )
 
@@ -524,7 +538,7 @@ class ConversationSummaryIndex:
 
         # Get topics to clean up topic indexes
         summary = self._hgetall(summary_key)
-        topics = json.loads(summary.get("topics", "[]"))
+        topics = _loads_list(summary.get("topics", "[]"))
 
         # Remove from topic indexes
         for topic in topics:
