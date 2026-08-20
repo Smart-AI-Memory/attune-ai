@@ -226,3 +226,20 @@ def test_doc_examples_parse_block_returns_error_not_raise() -> None:
 
     assert tree is None
     assert error
+
+
+def test_api_reference_extraction_returns_empty_on_corrupt_source() -> None:
+    """A corrupt source yields no functions rather than raising."""
+    from attune.workflows.document_gen.api_reference import APIReferenceMixin
+
+    mixin = APIReferenceMixin.__new__(APIReferenceMixin)
+
+    assert mixin._extract_functions_from_source("x = 1\x00y = 2\n") == []
+
+
+def test_source_introspection_skips_corrupt_module(tmp_path: Path) -> None:
+    """The originally-confirmed site (F5) keeps its behavioural check."""
+    from attune.authoring.source_introspection import _extract_source_info
+
+    _corpus(tmp_path)
+    _extract_source_info(["good.py", "corrupt.py"], tmp_path)  # must not raise
