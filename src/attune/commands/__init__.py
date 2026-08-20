@@ -14,11 +14,6 @@ Licensed under the Apache License, Version 2.0
 
 from pathlib import Path
 
-from attune.commands.context import (
-    CommandContext,
-    CommandExecutor,
-    create_command_context,
-)
 from attune.commands.loader import (
     CommandLoader,
     get_default_commands_directory,
@@ -48,7 +43,6 @@ __all__ = [
     # Models
     "CommandCategory",
     "CommandConfig",
-    "CommandContext",
     "CommandMetadata",
     "CommandResult",
     # Parser
@@ -59,7 +53,4 @@ __all__ = [
     "load_commands_from_paths",
     # Registry
     "CommandRegistry",
-    # Context & Executor
-    "CommandExecutor",
-    "create_command_context",
 ]

@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed — BREAKING: dormant in-package hook-execution engine
+
+- **`attune.hooks.HookRegistry` / `HookExecutor` / `HookConfig`
+  (+ `HookDefinition` / `HookEvent` / `HookMatcher` / `HookRule` /
+  `HookType`) and `attune.commands.CommandContext` /
+  `CommandExecutor` / `create_command_context` deleted.** The
+  in-package hook-execution engine (`src/attune/hooks/executor.py`,
+  `registry.py`, `config.py`, `commands/context.py`) had **no live
+  caller** in attune — the hooks Claude Code actually runs are the
+  scripts under `attune/hooks/scripts/`, wired via the plugin's
+  `hooks.json`, which never touched this engine. Removed under the
+  removing-dead-code gate (5/5 removal signals: zero live usage,
+  fake-success stub tell, orphaned motivation — its originating
+  use-case was retired in 9.0.0 — never-worked with six ledgered
+  bugs, and a fix trip-wire). Chair-ruled DELETE.
+  Migrating? Use Claude Code's own hooks (plugin `hooks.json` +
+  scripts) — see `docs/hooks.md`.
+
 ## [12.0.0] - 2026-08-18
 
 **A sharper core you can trust.** The dormant context-compaction

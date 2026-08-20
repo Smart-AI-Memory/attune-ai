@@ -213,21 +213,14 @@ When: Explaining code
 Do: Prefer code examples over prose
 ```
 
-### With Command Context
+### Formatting patterns for context
 
 ```python
-from attune.commands import CommandContext
-
-ctx = CommandContext(
-    user_id="user123",
-    learning_storage=storage,
-)
-
-# Get patterns for current task
-patterns_text = ctx.get_patterns_for_context(max_patterns=5)
+# Get patterns for the current task, formatted for context injection
+patterns_text = storage.format_patterns_for_context("user123", max_patterns=5)
 
 # Search relevant patterns
-relevant = ctx.search_patterns("authentication")
+relevant = storage.search_patterns("user123", "authentication")
 ```
 
 ## Learned Skills
@@ -282,10 +275,13 @@ summary = storage.get_summary("user123")
 
 ### Session End Evaluation
 
-```python
-from attune.hooks import HookRegistry, HookEvent
+Session-end evaluation runs as a `SessionEnd` hook **script** under
+`attune/hooks/scripts/` (Claude Code invokes it over the stdin / exit-
+code contract — see [Hooks](hooks.md)). The evaluation logic is plain
+Python:
 
-def evaluate_session_handler(context):
+```python
+def evaluate_session(context: dict) -> dict:
     evaluator = SessionEvaluator()
     extractor = PatternExtractor()
     storage = LearnedSkillsStorage()
@@ -307,12 +303,6 @@ def evaluate_session_handler(context):
         storage.save_patterns(context.get("user_id"), patterns)
 
     return {"success": True, "quality": quality.name}
-
-registry = HookRegistry()
-registry.register(
-    event=HookEvent.SESSION_END,
-    handler=evaluate_session_handler,
-)
 ```
 
 ## The `/evaluate` Command

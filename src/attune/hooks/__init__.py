@@ -1,24 +1,16 @@
-"""Hook System for Attune AI
+"""Hook scripts for Attune AI.
 
-Event-driven automation system for Attune AI.
-Supports PreToolUse, PostToolUse, SessionStart, SessionEnd, PreCompact, and Stop events.
+The plugin ships concrete hook scripts under ``attune/hooks/scripts/``
+(e.g. ``security_guard``, ``worktree_path_guard``, ``lessons_reminder``)
+— these are the hooks Claude Code actually runs, wired via the
+plugin's ``hooks.json`` and invoked over the stdin/exit-code contract.
 
-Architectural patterns inspired by everything-claude-code by Affaan Mustafa.
-See: https://github.com/affaan-m/everything-claude-code (MIT License)
-See: ACKNOWLEDGMENTS.md for full attribution.
+The former in-process hook-execution engine (``HookRegistry``,
+``HookExecutor``, ``HookConfig``) was removed in v13.0.0: it had no
+live caller in attune, its originating use-case was retired in 9.0.0,
+and it carried unfixed bugs. See the removing-dead-code gate reversal
+for the rationale.
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
-
-from attune.hooks.config import HookConfig, HookDefinition, HookEvent
-from attune.hooks.executor import HookExecutor
-from attune.hooks.registry import HookRegistry
-
-__all__ = [
-    "HookConfig",
-    "HookDefinition",
-    "HookEvent",
-    "HookExecutor",
-    "HookRegistry",
-]

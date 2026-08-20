@@ -3,33 +3,34 @@ type: troubleshooting
 name: hooks-troubleshooting
 feature: hooks
 depth: troubleshooting
-generated_at: 2026-08-19T15:41:55.951394+00:00
-source_hash: 135910a198c946084ebe186e1f9f9879826026c95886aa2c85c739e52893fee8
+generated_at: 2026-08-20T12:28:08.536306+00:00
+source_hash: 6a74897099089de928581379ad010c61f7449b270204090c659e122d08d62c1c
 status: generated
 ---
 
-# The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config
+# The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events
 
 ## Failure modes
 
 | Symptom | Cause | Fix | Severity |
 |---|---|---|---|
-| `handler() got an unexpected keyword argument` | handler written as `def handler(context)` | context is unpacked as kwargs — use `def handler(**context)` | high |
-| `RuntimeWarning: coroutine 'fire' was never awaited` | `fire`/`execute` called without `await` | use `fire_sync`, or `await` the async ones | high |
-| Hook never fires | wrong `HookEvent`, or a `matcher` excludes the context | check the event; inspect `get_matching_hooks(event, context)` | medium |
-| `ValidationError` building a `HookDefinition` | `timeout` outside 1–300, or missing `command` | supply a valid `command` and `timeout` | medium |
+| Hook blocks a real tool on odd input | script raised / exited non-zero on malformed stdin | parse defensively and exit `0` on any non-dict / non-JSON payload | high |
+| Tool not blocked when it should be | wrong exit code (only `2` blocks a `PreToolUse`) | `sys.exit(2)` to block | high |
+| Banner or side effect missing | script exceeded its `hooks.json` timeout and was killed | keep the script fast; move slow work off the critical path | medium |
+| Hook never fires | event not wired in `hooks.json`, or wrong event name | check the mapping and the Claude Code event name | medium |
 
 ### Risk areas
 
-- **Handlers take kwargs.** `def handler(**context)`, not
-  `def handler(context)`.
-- **`fire` and `execute` are async; `fire_sync` is sync.**
-- **Priority + matcher decide what runs.** A `matcher` can exclude a
-  handler even for the right event.
+- **Fail open.** A `PreToolUse` guard must exit `0` on malformed input,
+  never crash — a crashing guard silently stops blocking.
+- **Only `2` blocks.** Any other exit code from a `PreToolUse` hook
+  lets the tool through.
+- **Timeouts are real.** A script slower than its `hooks.json` timeout
+  is killed and its effect is lost.
 
 ### Diagnosis order
 
-1. Did it fire? `registry.get_matching_hooks(event, context)`.
-2. Handler signature — `**context`?
-3. Async-not-awaited? Use `fire_sync` or `await`.
-4. For config hooks, `HookConfig.get_hooks_for_event(event)`.
+1. Is the event wired to the script in `hooks.json`?
+2. What exit code does the script return for this payload?
+3. Does it fail open on malformed stdin?
+4. Is it finishing inside its timeout?

@@ -3,19 +3,18 @@ type: tip
 name: hooks-tip
 feature: hooks
 depth: tip
-generated_at: 2026-08-19T15:41:55.951394+00:00
-source_hash: 135910a198c946084ebe186e1f9f9879826026c95886aa2c85c739e52893fee8
+generated_at: 2026-08-20T12:28:08.536306+00:00
+source_hash: 6a74897099089de928581379ad010c61f7449b270204090c659e122d08d62c1c
 status: generated
 ---
 
-# The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config
+# The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events
 
 ## Notes & tips
 
-- **`def handler(**context)`.** The single most common mistake is a
-  positional `context` parameter.
-- **`fire_sync` for synchronous code.** `fire` / `execute` are async.
-- **`HookEvent` values are the Claude Code names.** One enum spans the
-  in-process and Claude Code contracts.
-- **Declarative vs imperative.** `HookConfig`/`from_yaml` for config;
-  `HookRegistry` for embedded Python.
+- **Fail open on bad input.** Exit `0` on any non-JSON / non-dict
+  stdin; only a deliberate policy decision should exit `2`.
+- **Only `2` blocks.** Every other exit code allows the tool.
+- **Keep hooks fast.** They run on the critical path under a timeout.
+- **One event name space.** The event names (`PreToolUse`, …) are the
+  Claude Code names.

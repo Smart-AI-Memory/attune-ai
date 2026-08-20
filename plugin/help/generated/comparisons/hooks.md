@@ -9,16 +9,15 @@ tags:
 type: comparison
 ---
 
-# The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config
+# The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events
 
 ## Comparison
 
-| | `HookRegistry` | `HookConfig` + `HookExecutor` | bundled scripts |
-|--|----------------|------------------------------|-----------------|
-| Style | imperative, in-process Python handlers | declarative YAML rules | shipped Claude Code hooks |
-| Define | `register(event, fn)` | `HookDefinition` / `from_yaml` | files in `attune/hooks/scripts/` |
-| Run | `fire` / `fire_sync` | `HookExecutor.execute` | invoked by Claude Code |
+| | attune bundled scripts | ad-hoc project hook |
+|--|------------------------|---------------------|
+| Define | module in `attune/hooks/scripts/` | any executable |
+| Wire | plugin `hooks.json` | your `settings.json` hooks |
+| Run | invoked by Claude Code | invoked by Claude Code |
 
-The registry is for embedding hooks in Python; the config + executor are
-for declarative hooks; the scripts are the concrete hooks the plugin
-registers with Claude Code.
+Both are Claude Code hooks over the same stdin/exit-code contract;
+attune's ship with the plugin and are maintained in-tree.

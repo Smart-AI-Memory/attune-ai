@@ -1,7 +1,7 @@
 ---
 feature: hooks
-summary: The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config
-tags: [hooks, webhooks, events, automation]
+summary: The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events
+tags: [hooks, events, automation, lifecycle]
 source_globs:
   - src/attune/hooks/**
 nav:
@@ -14,241 +14,197 @@ nav:
 
 ## Overview
 
-`attune.hooks` is an **event system**: it lets code (and config) react
-to lifecycle events — before/after a tool runs, at session start/end,
-before compaction, and on stop. The public surface, exported from
-`attune.hooks`, is five symbols:
-
-- **`HookEvent`** — the events you can hook (`PRE_TOOL_USE`,
-  `POST_TOOL_USE`, `SESSION_START`, `SESSION_END`, `PRE_COMPACT`,
-  `PRE_COMMAND`, `POST_COMMAND`, `STOP`).
-- **`HookRegistry`** — register Python handlers for events and fire
-  them in-process.
-- **`HookExecutor`** — run a configured `HookDefinition` (command,
-  Python, or webhook).
-- **`HookConfig`** / **`HookDefinition`** — the declarative,
-  config-driven hooks (loaded from YAML).
-
-The plugin also ships concrete hook scripts under
+Attune's hooks are **concrete scripts that Claude Code runs** on
+session and tool lifecycle events. They live under
 `attune/hooks/scripts/` (e.g. `security_guard`, `worktree_path_guard`,
-`lessons_reminder`) — these are the hooks Claude Code actually runs.
+`lessons_reminder`, `starter_reconciler`) and are wired to events
+through the plugin's `hooks.json`. Claude Code invokes each script over
+a **stdin-JSON / exit-code contract** — the script reads an event
+payload on stdin and signals its verdict through its exit code.
+
+There is no in-process Python hook API: attune registers its scripts
+with Claude Code and lets Claude Code fire them. (An earlier
+programmatic engine — `HookRegistry` / `HookExecutor` / `HookConfig` —
+was removed in v13.0.0; it had no caller, and its originating use-case
+was retired in 9.0.0.)
 
 ## Concepts
 
-### `HookEvent`
+### Lifecycle events
 
-The lifecycle events. Their **values are the Claude Code event names** —
-e.g. `HookEvent.PRE_TOOL_USE.value == "PreToolUse"` — so the same enum
-labels in-process registration and the Claude Code hook contract.
+Claude Code fires hooks at named lifecycle points — `PreToolUse`,
+`PostToolUse`, `SessionStart`, `SessionEnd`, `PreCompact`, and `Stop`.
+Each event carries a JSON payload (for tool events, `tool_name` and
+`tool_input`).
 
-### `HookRegistry` — in-process handlers
+### The stdin / exit-code contract
 
-`HookRegistry(config=None)` is the programmatic surface.
-`register(event, handler, description="", matcher=None, priority=0)`
-adds a handler and returns a hook id. **Handlers receive the context
-dict unpacked as keyword arguments** — write `def handler(**context)`,
-not `def handler(context)`. Fire with `fire(event, context=None)`
-(async) or `fire_sync(event, context=None)` (sync); both return a list
-of per-hook result dicts — a success record carries `event`, `hook`,
-`description`, `success`, `output`, `error`, `duration_ms`; an error
-record is a subset (`event`, `hook`, `success`, `error`). `get_matching_hooks`, `unregister`,
-`get_execution_log`, `get_stats`, and `load_config` round it out.
+A hook script reads the event JSON from stdin and exits:
 
-### `HookExecutor` and `HookDefinition`
+- **`PreToolUse`** — exit `0` to allow the tool, exit `2` to block it.
+  A non-blocking script that only observes should still exit `0`.
+- **`PostToolUse` / `SessionStart` / `Stop`** — exit `0`; the script's
+  job is a side effect (a banner, a stashed note, a telemetry write),
+  not a verdict.
 
-`HookDefinition` (a pydantic model) describes a configured hook: `type`
-(`HookType.COMMAND` / `PYTHON` / `WEBHOOK`, default `PYTHON`),
-`command`, `description`, `timeout` (1–300 s, default 30),
-`async_execution` (default `False`), `on_error` (default `"log"`).
-`HookExecutor(python_handlers=None).execute(hook, context)` (async) runs
-one.
+Scripts fail **open** (exit `0`) on malformed input so a bug in a hook
+never blocks the user's real tool call.
 
-### `HookConfig` — declarative, config-driven hooks
+### Where the scripts live
 
-`HookConfig` (pydantic) holds the declarative rules: `hooks` (a dict of
-event → list of `HookRule`), plus `enabled`, `log_executions`, and
-`default_timeout`. Load it with `HookConfig.from_yaml(yaml_path)`, build
-it with `add_hook(event, hook, matcher=None, priority=0)`, and query it
-with `get_hooks_for_event(event)`. A `HookRule` carries a `matcher`, its
-`hooks`, `enabled`, `priority`, and `description`.
+Every hook is a module under `attune/hooks/scripts/`. The plugin's
+`hooks.json` maps each event to the script(s) that run for it, along
+with a per-hook timeout.
 
 ## Quickstart
 
-Register an in-process handler and fire it:
+Read the payload, decide, exit. A minimal `PreToolUse` guard:
 
 ```python
-from attune.hooks import HookRegistry, HookEvent
+import json
+import sys
 
-registry = HookRegistry()
-
-
-def on_pre_tool(**context) -> dict:        # context arrives as kwargs
-    return {"blocked": False, "tool": context.get("tool_name")}
-
-
-registry.register(HookEvent.PRE_TOOL_USE, on_pre_tool)
-results = registry.fire_sync(HookEvent.PRE_TOOL_USE, {"tool_name": "Bash"})
-print(results)
+payload = json.load(sys.stdin)          # {"tool_name": ..., "tool_input": ...}
+if payload.get("tool_name") == "Bash":
+    print("Bash blocked by policy", file=sys.stderr)
+    sys.exit(2)                          # 2 = block
+sys.exit(0)                             # 0 = allow
 ```
 
 ## Tasks
 
-### Register and fire an in-process hook
+### Read the event payload safely
 
 ```python
-from attune.hooks import HookRegistry, HookEvent
+import json
+import sys
 
-registry = HookRegistry()
+try:
+    payload = json.load(sys.stdin)
+except (json.JSONDecodeError, ValueError):
+    sys.exit(0)                          # fail open — never block on bad input
 
+if not isinstance(payload, dict):
+    sys.exit(0)
 
-def guard(**context) -> dict:
-    return {"blocked": context.get("tool_name") == "Bash"}
-
-
-hook_id = registry.register(HookEvent.PRE_TOOL_USE, guard, priority=10)
-results = registry.fire_sync(HookEvent.PRE_TOOL_USE, {"tool_name": "Bash"})
-print(hook_id, results[0]["success"], results[0]["output"])
+tool_name = payload.get("tool_name", "")
 ```
 
-**Verify:** `register(...)` returns a hook id (a `str`). `fire_sync`
-runs every matching handler — calling each as `handler(**context)` — and
-returns a list of result dicts (a success record carries `event`,
-`hook`, `description`, `success`, `output`, `error`, `duration_ms`; an
-error record is a subset). `fire(...)` is the async variant.
+**Verify:** the script exits `0` on any malformed stdin (non-JSON,
+non-dict, wrong-typed fields) so a hook bug can never block a real
+tool call.
 
-### Load hooks from YAML config
-
-**Goal:** declare hooks in a file instead of code.
-
-**Steps:** `HookConfig.from_yaml(path)` returns a `HookConfig`;
-`get_hooks_for_event(event)` lists the `HookRule`s for an event. Each
-rule's `hooks` are `HookDefinition`s an executor can run.
+### Block a tool from a PreToolUse hook
 
 ```python
-from attune.hooks import HookConfig, HookEvent
+import json
+import sys
 
-config = HookConfig.from_yaml("hooks.yaml")
-for rule in config.get_hooks_for_event(HookEvent.PRE_TOOL_USE):
-    print(rule.description, rule.priority)
+payload = json.load(sys.stdin)
+if payload.get("tool_name") == "Write" and "/etc/" in str(
+    payload.get("tool_input", {}).get("file_path", "")
+):
+    print("refusing to write under /etc", file=sys.stderr)
+    sys.exit(2)
+sys.exit(0)
 ```
 
-**Verify:** `from_yaml` is a constructor returning `HookConfig`;
-`get_hooks_for_event` returns `list[HookRule]`.
-
-### Execute a configured hook
-
-```python
-import asyncio
-
-from attune.hooks import HookExecutor, HookDefinition
-from attune.hooks.config import HookType
-
-hook = HookDefinition(type=HookType.COMMAND, command="echo hi", timeout=5)
-executor = HookExecutor()
-result = asyncio.run(executor.execute(hook, {"tool_name": "Bash"}))
-print(result)
-```
-
-**Verify:** `HookExecutor.execute(hook, context)` is **async** — await
-it; it returns a result dict.
+**Verify:** exit `2` blocks the tool and Claude Code surfaces the
+stderr message; exit `0` lets it proceed.
 
 ## Reference
 
-| Symbol | Kind | Purpose |
-|--------|------|---------|
-| `HookEvent` | enum | `PRE_TOOL_USE`/`POST_TOOL_USE`/`SESSION_START`/`SESSION_END`/`PRE_COMPACT`/`PRE_COMMAND`/`POST_COMMAND`/`STOP`; values are Claude Code event names. |
-| `HookRegistry(config=None)` | class | `register(event, handler, description="", matcher=None, priority=0) -> str`, `fire` (async) / `fire_sync`, `get_matching_hooks`, `unregister`, `get_execution_log`, `get_stats`, `load_config`. |
-| `HookExecutor(python_handlers=None)` | class | `execute(hook, context)` — **async**. |
-| `HookDefinition(type=HookType.PYTHON, command, description="", timeout=30, async_execution=False, on_error="log")` | pydantic model | A configured hook. |
-| `HookConfig(hooks={}, enabled=True, log_executions=True, default_timeout=30)` | pydantic model | `from_yaml(path)`, `add_hook(event, hook, matcher=None, priority=0)`, `get_hooks_for_event(event)`, `to_yaml`. |
-| `HookType` (`attune.hooks.config`) | enum | `COMMAND` / `PYTHON` / `WEBHOOK`. |
-| `HookRule` (`attune.hooks.config`) | pydantic model | `matcher`, `hooks`, `enabled`, `priority`, `description`. |
+| Event | Exit contract | Typical use |
+|-------|---------------|-------------|
+| `PreToolUse` | `0` allow / `2` block | policy guards (`security_guard`, `worktree_path_guard`) |
+| `PostToolUse` | `0` | formatting, telemetry |
+| `SessionStart` | `0` | orientation banners (`starter_reconciler`) |
+| `SessionEnd` / `Stop` | `0` | stash notes, lesson reminders |
+| `PreCompact` | `0` | pre-compaction side effects |
+
+Wiring: the plugin's `hooks.json` maps events → scripts under
+`attune/hooks/scripts/`, each with a timeout.
 
 ## Comparison
 
-| | `HookRegistry` | `HookConfig` + `HookExecutor` | bundled scripts |
-|--|----------------|------------------------------|-----------------|
-| Style | imperative, in-process Python handlers | declarative YAML rules | shipped Claude Code hooks |
-| Define | `register(event, fn)` | `HookDefinition` / `from_yaml` | files in `attune/hooks/scripts/` |
-| Run | `fire` / `fire_sync` | `HookExecutor.execute` | invoked by Claude Code |
+| | attune bundled scripts | ad-hoc project hook |
+|--|------------------------|---------------------|
+| Define | module in `attune/hooks/scripts/` | any executable |
+| Wire | plugin `hooks.json` | your `settings.json` hooks |
+| Run | invoked by Claude Code | invoked by Claude Code |
 
-The registry is for embedding hooks in Python; the config + executor are
-for declarative hooks; the scripts are the concrete hooks the plugin
-registers with Claude Code.
+Both are Claude Code hooks over the same stdin/exit-code contract;
+attune's ship with the plugin and are maintained in-tree.
 
 ## Failure modes
 
 | Symptom | Cause | Fix | Severity |
 |---|---|---|---|
-| `handler() got an unexpected keyword argument` | handler written as `def handler(context)` | context is unpacked as kwargs — use `def handler(**context)` | high |
-| `RuntimeWarning: coroutine 'fire' was never awaited` | `fire`/`execute` called without `await` | use `fire_sync`, or `await` the async ones | high |
-| Hook never fires | wrong `HookEvent`, or a `matcher` excludes the context | check the event; inspect `get_matching_hooks(event, context)` | medium |
-| `ValidationError` building a `HookDefinition` | `timeout` outside 1–300, or missing `command` | supply a valid `command` and `timeout` | medium |
+| Hook blocks a real tool on odd input | script raised / exited non-zero on malformed stdin | parse defensively and exit `0` on any non-dict / non-JSON payload | high |
+| Tool not blocked when it should be | wrong exit code (only `2` blocks a `PreToolUse`) | `sys.exit(2)` to block | high |
+| Banner or side effect missing | script exceeded its `hooks.json` timeout and was killed | keep the script fast; move slow work off the critical path | medium |
+| Hook never fires | event not wired in `hooks.json`, or wrong event name | check the mapping and the Claude Code event name | medium |
 
 ### Risk areas
 
-- **Handlers take kwargs.** `def handler(**context)`, not
-  `def handler(context)`.
-- **`fire` and `execute` are async; `fire_sync` is sync.**
-- **Priority + matcher decide what runs.** A `matcher` can exclude a
-  handler even for the right event.
+- **Fail open.** A `PreToolUse` guard must exit `0` on malformed input,
+  never crash — a crashing guard silently stops blocking.
+- **Only `2` blocks.** Any other exit code from a `PreToolUse` hook
+  lets the tool through.
+- **Timeouts are real.** A script slower than its `hooks.json` timeout
+  is killed and its effect is lost.
 
 ### Diagnosis order
 
-1. Did it fire? `registry.get_matching_hooks(event, context)`.
-2. Handler signature — `**context`?
-3. Async-not-awaited? Use `fire_sync` or `await`.
-4. For config hooks, `HookConfig.get_hooks_for_event(event)`.
+1. Is the event wired to the script in `hooks.json`?
+2. What exit code does the script return for this payload?
+3. Does it fail open on malformed stdin?
+4. Is it finishing inside its timeout?
 
 ## FAQ seeds
 
 > **Channel-4 input, not a rendered FAQ.** Author-curated seeds, merged
 > by the FAQ Generator with live signals. Not projected verbatim.
 
-- **Q:** What events can I hook?
-  **A:** The `HookEvent` enum — `PRE_TOOL_USE`, `POST_TOOL_USE`,
-  `SESSION_START`/`SESSION_END`, `PRE_COMPACT`,
-  `PRE_COMMAND`/`POST_COMMAND`, `STOP`. Their values are the Claude Code
-  event names.
-- **Q:** How should a handler be written?
-  **A:** It receives the context unpacked as kwargs — `def
-  handler(**context): ...`. Register it with
-  `HookRegistry.register(event, handler)`.
-- **Q:** Sync or async?
-  **A:** `fire_sync` is synchronous; `fire` and `HookExecutor.execute`
-  are async.
 - **Q:** Where are the hooks the plugin actually runs?
   **A:** Under `attune/hooks/scripts/` (e.g. `security_guard`,
-  `worktree_path_guard`, `lessons_reminder`).
+  `worktree_path_guard`, `lessons_reminder`), wired via the plugin's
+  `hooks.json`.
+- **Q:** How does a hook block a tool?
+  **A:** A `PreToolUse` script exits `2` to block and `0` to allow.
+- **Q:** Is there a Python API to register hooks in-process?
+  **A:** No — that engine was removed in v13.0.0. Attune ships hook
+  scripts and lets Claude Code fire them.
+- **Q:** What happens on malformed input?
+  **A:** Scripts fail open (exit `0`) so a hook bug never blocks a real
+  tool call.
 
 ## Notes & tips
 
-- **`def handler(**context)`.** The single most common mistake is a
-  positional `context` parameter.
-- **`fire_sync` for synchronous code.** `fire` / `execute` are async.
-- **`HookEvent` values are the Claude Code names.** One enum spans the
-  in-process and Claude Code contracts.
-- **Declarative vs imperative.** `HookConfig`/`from_yaml` for config;
-  `HookRegistry` for embedded Python.
+- **Fail open on bad input.** Exit `0` on any non-JSON / non-dict
+  stdin; only a deliberate policy decision should exit `2`.
+- **Only `2` blocks.** Every other exit code allows the tool.
+- **Keep hooks fast.** They run on the critical path under a timeout.
+- **One event name space.** The event names (`PreToolUse`, …) are the
+  Claude Code names.
 
 ## Design & extension
 
 ### Design decisions
 
-- **One enum, two worlds.** `HookEvent` labels both in-process
-  registration and the Claude Code hook contract (its values are the
-  Claude Code event names).
-- **Registry vs config.** Imperative `HookRegistry` and declarative
-  `HookConfig`/`HookExecutor` are separate surfaces over the same
-  events.
-- **Bounded, typed definitions.** `HookDefinition` is a pydantic model
-  with a `timeout` bounded to 1–300 s and an `on_error` policy.
+- **Scripts, not an API.** Attune ships concrete hook scripts and
+  registers them with Claude Code, rather than exposing an in-process
+  hook engine.
+- **Fail open.** Guards default to allowing the tool on any input they
+  can't parse, so a hook defect degrades to a no-op instead of a block.
+- **Bounded by timeout.** Each hook runs under a `hooks.json` timeout on
+  the critical path.
 
 ### Extension points
 
-- **Add an in-process hook:** `HookRegistry.register(event, handler,
-  priority=...)`.
-- **Add a declarative hook:** a `HookDefinition` in `HookConfig`
-  (`add_hook` or YAML), run by `HookExecutor`.
-- **Ship a script:** add a module under `attune/hooks/scripts/` and
-  register it in the plugin's hook config.
+- **Ship a script:** add a module under `attune/hooks/scripts/` and map
+  it to an event in the plugin's `hooks.json`.
+- **Guard a tool:** a `PreToolUse` script that exits `2` on the
+  disallowed case and `0` otherwise.
+- **React to a session:** a `SessionStart` / `Stop` script that performs
+  its side effect and exits `0`.
