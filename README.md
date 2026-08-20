@@ -23,8 +23,8 @@
 
 ---
 
-Your agent stops starting from zero, and its word stops being the
-evidence.
+Your agent stops starting from zero, its word stops being the
+evidence, and it asks you with structure instead of prose.
 
 **Memory:** a stash → recall → promote loop carries decisions, bugs,
 and hard-won lessons from one session into the next, and surfaces the
@@ -50,6 +50,13 @@ attune fix "imports resolve after the rename" \
 The probes are re-run *independently* of the workflow that claims it
 finished. Exit 0 means the probes passed — not that the agent felt
 good about it.
+
+**Interactive forms:** the agent asks with structure, not prose — a
+decision card with its recommendation and tradeoffs, a pushback card
+when it disagrees, a progress report, a ranking or triage — one tap
+each, validated on the way back. One form renders to whatever surface
+your client draws: a native dialog, a rich widget, or a plain menu
+([the vocabulary](#interactive-forms--the-agent-asks-with-structure)).
 
 Around that core: 21 workflows and <!-- cap:mcp_registered_tool_count -->61 MCP tools<!-- /cap -->
 dispatching 2–6 domain-specific subagents behind Socratic quality
