@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — tip</title>
-  <meta name="description" content="- **`def handler(**context)`.** The single most common mistake is a positional `context` parameter. - **`fire_sync` for synchronous code.** `fire` / `execute` are async. - **`HookEvent` values are the" />
-  <meta property="og:title" content="The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — tip" />
-  <meta property="og:description" content="- **`def handler(**context)`.** The single most common mistake is a positional `context` parameter. - **`fire_sync` for synchronous code.** `fire` / `execute` are async. - **`HookEvent` values are the" />
+  <title>The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events — tip</title>
+  <meta name="description" content="- **Fail open on bad input.** Exit `0` on any non-JSON / non-dict stdin; only a deliberate policy decision should exit `2`. - **Only `2` blocks.** Every other exit code allows the tool. - **Keep hooks" />
+  <meta property="og:title" content="The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events — tip" />
+  <meta property="og:description" content="- **Fail open on bad input.** Exit `0` on any non-JSON / non-dict stdin; only a deliberate policy decision should exit `2`. - **Only `2` blocks.** Every other exit code allows the tool. - **Keep hooks" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/hooks/tip" />
   <style>
@@ -272,16 +272,15 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config</h1>
+<h1>The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events</h1>
 <h2>Notes &amp; tips</h2>
 <ul>
-<li><strong><code>def handler(**context)</code>.</strong> The single most common mistake is a
-positional <code>context</code> parameter.</li>
-<li><strong><code>fire_sync</code> for synchronous code.</strong> <code>fire</code> / <code>execute</code> are async.</li>
-<li><strong><code>HookEvent</code> values are the Claude Code names.</strong> One enum spans the
-in-process and Claude Code contracts.</li>
-<li><strong>Declarative vs imperative.</strong> <code>HookConfig</code>/<code>from_yaml</code> for config;
-<code>HookRegistry</code> for embedded Python.</li>
+<li><strong>Fail open on bad input.</strong> Exit <code>0</code> on any non-JSON / non-dict
+stdin; only a deliberate policy decision should exit <code>2</code>.</li>
+<li><strong>Only <code>2</code> blocks.</strong> Every other exit code allows the tool.</li>
+<li><strong>Keep hooks fast.</strong> They run on the critical path under a timeout.</li>
+<li><strong>One event name space.</strong> The event names (<code>PreToolUse</code>, …) are the
+Claude Code names.</li>
 </ul>
 
   </article>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — comparison</title>
-  <meta name="description" content="| | `HookRegistry` | `HookConfig` + `HookExecutor` | bundled scripts | |--|----------------|------------------------------|-----------------| | Style | imperative, in-process Python handlers | declara" />
-  <meta property="og:title" content="The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — comparison" />
-  <meta property="og:description" content="| | `HookRegistry` | `HookConfig` + `HookExecutor` | bundled scripts | |--|----------------|------------------------------|-----------------| | Style | imperative, in-process Python handlers | declara" />
+  <title>The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events — comparison</title>
+  <meta name="description" content="| | attune bundled scripts | ad-hoc project hook | |--|------------------------|---------------------| | Define | module in `attune/hooks/scripts/` | any executable | | Wire | plugin `hooks.json` | yo" />
+  <meta property="og:title" content="The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events — comparison" />
+  <meta property="og:description" content="| | attune bundled scripts | ad-hoc project hook | |--|------------------------|---------------------| | Define | module in `attune/hooks/scripts/` | any executable | | Wire | plugin `hooks.json` | yo" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/hooks/comparison" />
   <style>
@@ -272,41 +272,36 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config</h1>
+<h1>The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events</h1>
 <h2>Comparison</h2>
 <table>
 <thead>
 <tr>
 <th></th>
-<th><code>HookRegistry</code></th>
-<th><code>HookConfig</code> + <code>HookExecutor</code></th>
-<th>bundled scripts</th>
+<th>attune bundled scripts</th>
+<th>ad-hoc project hook</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Style</td>
-<td>imperative, in-process Python handlers</td>
-<td>declarative YAML rules</td>
-<td>shipped Claude Code hooks</td>
+<td>Define</td>
+<td>module in <code>attune/hooks/scripts/</code></td>
+<td>any executable</td>
 </tr>
 <tr>
-<td>Define</td>
-<td><code>register(event, fn)</code></td>
-<td><code>HookDefinition</code> / <code>from_yaml</code></td>
-<td>files in <code>attune/hooks/scripts/</code></td>
+<td>Wire</td>
+<td>plugin <code>hooks.json</code></td>
+<td>your <code>settings.json</code> hooks</td>
 </tr>
 <tr>
 <td>Run</td>
-<td><code>fire</code> / <code>fire_sync</code></td>
-<td><code>HookExecutor.execute</code></td>
+<td>invoked by Claude Code</td>
 <td>invoked by Claude Code</td>
 </tr>
 </tbody>
 </table>
-<p>The registry is for embedding hooks in Python; the config + executor are
-for declarative hooks; the scripts are the concrete hooks the plugin
-registers with Claude Code.</p>
+<p>Both are Claude Code hooks over the same stdin/exit-code contract;
+attune's ship with the plugin and are maintained in-tree.</p>
 
   </article>
   <footer>

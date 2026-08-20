@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — warning</title>
-  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `handler() got an unexpected keyword argument` | handler written as `def handler(context)` | context is unpacked as kwargs — use `def handler(*" />
-  <meta property="og:title" content="The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — warning" />
-  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `handler() got an unexpected keyword argument` | handler written as `def handler(context)` | context is unpacked as kwargs — use `def handler(*" />
+  <title>The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | Hook blocks a real tool on odd input | script raised / exited non-zero on malformed stdin | parse defensively and exit `0` on any non-dict / no" />
+  <meta property="og:title" content="The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | Hook blocks a real tool on odd input | script raised / exited non-zero on malformed stdin | parse defensively and exit `0` on any non-dict / no" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/hooks/warning" />
   <style>
@@ -272,7 +272,7 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config</h1>
+<h1>The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events</h1>
 <h2>Failure modes</h2>
 <table>
 <thead>
@@ -285,45 +285,46 @@
 </thead>
 <tbody>
 <tr>
-<td><code>handler() got an unexpected keyword argument</code></td>
-<td>handler written as <code>def handler(context)</code></td>
-<td>context is unpacked as kwargs — use <code>def handler(**context)</code></td>
+<td>Hook blocks a real tool on odd input</td>
+<td>script raised / exited non-zero on malformed stdin</td>
+<td>parse defensively and exit <code>0</code> on any non-dict / non-JSON payload</td>
 <td>high</td>
 </tr>
 <tr>
-<td><code>RuntimeWarning: coroutine 'fire' was never awaited</code></td>
-<td><code>fire</code>/<code>execute</code> called without <code>await</code></td>
-<td>use <code>fire_sync</code>, or <code>await</code> the async ones</td>
+<td>Tool not blocked when it should be</td>
+<td>wrong exit code (only <code>2</code> blocks a <code>PreToolUse</code>)</td>
+<td><code>sys.exit(2)</code> to block</td>
 <td>high</td>
 </tr>
 <tr>
-<td>Hook never fires</td>
-<td>wrong <code>HookEvent</code>, or a <code>matcher</code> excludes the context</td>
-<td>check the event; inspect <code>get_matching_hooks(event, context)</code></td>
+<td>Banner or side effect missing</td>
+<td>script exceeded its <code>hooks.json</code> timeout and was killed</td>
+<td>keep the script fast; move slow work off the critical path</td>
 <td>medium</td>
 </tr>
 <tr>
-<td><code>ValidationError</code> building a <code>HookDefinition</code></td>
-<td><code>timeout</code> outside 1–300, or missing <code>command</code></td>
-<td>supply a valid <code>command</code> and <code>timeout</code></td>
+<td>Hook never fires</td>
+<td>event not wired in <code>hooks.json</code>, or wrong event name</td>
+<td>check the mapping and the Claude Code event name</td>
 <td>medium</td>
 </tr>
 </tbody>
 </table>
 <h3>Risk areas</h3>
 <ul>
-<li><strong>Handlers take kwargs.</strong> <code>def handler(**context)</code>, not
-<code>def handler(context)</code>.</li>
-<li><strong><code>fire</code> and <code>execute</code> are async; <code>fire_sync</code> is sync.</strong></li>
-<li><strong>Priority + matcher decide what runs.</strong> A <code>matcher</code> can exclude a
-handler even for the right event.</li>
+<li><strong>Fail open.</strong> A <code>PreToolUse</code> guard must exit <code>0</code> on malformed input,
+never crash — a crashing guard silently stops blocking.</li>
+<li><strong>Only <code>2</code> blocks.</strong> Any other exit code from a <code>PreToolUse</code> hook
+lets the tool through.</li>
+<li><strong>Timeouts are real.</strong> A script slower than its <code>hooks.json</code> timeout
+is killed and its effect is lost.</li>
 </ul>
 <h3>Diagnosis order</h3>
 <ol>
-<li>Did it fire? <code>registry.get_matching_hooks(event, context)</code>.</li>
-<li>Handler signature — <code>**context</code>?</li>
-<li>Async-not-awaited? Use <code>fire_sync</code> or <code>await</code>.</li>
-<li>For config hooks, <code>HookConfig.get_hooks_for_event(event)</code>.</li>
+<li>Is the event wired to the script in <code>hooks.json</code>?</li>
+<li>What exit code does the script return for this payload?</li>
+<li>Does it fail open on malformed stdin?</li>
+<li>Is it finishing inside its timeout?</li>
 </ol>
 
   </article>

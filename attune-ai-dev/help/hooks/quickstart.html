@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — quickstart</title>
-  <meta name="description" content="Register an in-process handler and fire it:" />
-  <meta property="og:title" content="The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config — quickstart" />
-  <meta property="og:description" content="Register an in-process handler and fire it:" />
+  <title>The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events — quickstart</title>
+  <meta name="description" content="Read the payload, decide, exit — failing open on anything malformed:" />
+  <meta property="og:title" content="The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events — quickstart" />
+  <meta property="og:description" content="Read the payload, decide, exit — failing open on anything malformed:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/hooks/quickstart" />
   <style>
@@ -272,21 +272,21 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>The hook system — register handlers for lifecycle events, fire them in-process, or drive them from config</h1>
+<h1>The hook system — shipped scripts that Claude Code runs on session and tool lifecycle events</h1>
 <h2>Quickstart</h2>
-<p>Register an in-process handler and fire it:</p>
-<pre><code class="language-python">from attune.hooks import HookRegistry, HookEvent
+<p>Read the payload, decide, exit — failing open on anything malformed:</p>
+<pre><code class="language-python">import json
+import sys
 
-registry = HookRegistry()
+try:
+    payload = json.load(sys.stdin)       # {&quot;tool_name&quot;: ..., &quot;tool_input&quot;: ...}
+except (json.JSONDecodeError, ValueError):
+    sys.exit(0)                          # fail open on malformed input
 
-
-def on_pre_tool(**context) -&gt; dict:        # context arrives as kwargs
-    return {&quot;blocked&quot;: False, &quot;tool&quot;: context.get(&quot;tool_name&quot;)}
-
-
-registry.register(HookEvent.PRE_TOOL_USE, on_pre_tool)
-results = registry.fire_sync(HookEvent.PRE_TOOL_USE, {&quot;tool_name&quot;: &quot;Bash&quot;})
-print(results)
+if isinstance(payload, dict) and payload.get(&quot;tool_name&quot;) == &quot;Bash&quot;:
+    print(&quot;Bash blocked by policy&quot;, file=sys.stderr)
+    sys.exit(2)                          # 2 = block
+sys.exit(0)                             # 0 = allow
 </code></pre>
 
   </article>
