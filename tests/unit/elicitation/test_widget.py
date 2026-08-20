@@ -222,14 +222,18 @@ class TestRequiredGate:
         html = _render(self._FIELDS)
         # scope + probes are required (the default); notes is not.
         assert html.count('data-required="1"') == 2
-        assert 'data-fid="notes" data-ftype="text_input">' in html
+        # Match the fid/ftype pair without pinning what follows — forms
+        # 0.7.0 also stamps data-collect on the field wrapper.
+        assert 'data-fid="notes" data-ftype="text_input"' in html
 
     def test_multi_select_checked_boxes_post_as_array(self):
         html = _render(self._FIELDS)
         script = html[html.index("<script>") :]
-        # The multi_select branch collects every checked control into an
-        # array and posts it under the field id.
-        assert "ftype === 'multi_select'" in script
+        # forms 0.7.0: the reader dispatches on the data-collect read-mode,
+        # not the construct type. multi_select registers "checked-many",
+        # whose branch collects every checked control into an array.
+        assert 'data-collect="checked-many"' in html
+        assert "mode === 'checked-many'" in script
         assert "[data-control]:checked" in script
         assert "answers[fid] = vals" in script
 

@@ -279,10 +279,10 @@ class TestControlHtmlDefaultRendering:
 class TestControlHtmlMultiSelectDefaultQuirk:
     """``FormQuestion.default`` is a single scalar (str), never a list —
     there is no plural "defaults" field. For MULTI_SELECT, ``_checked``
-    still runs per-option, so at most ONE checkbox can ever be
-    pre-checked via ``default``, no matter how many options exist. This
-    is a real quirk (an author reaching for "pre-check several boxes"
-    cannot do it via ``default``) worth pinning explicitly."""
+    pre-checks each option named in ``default``. forms 0.7.0 requires a
+    multi_select ``default`` to be a LIST (a bare string is rejected),
+    so several boxes CAN now be pre-checked — the one-box quirk this
+    class pinned under the old string-default is gone."""
 
     def test_exactly_one_checkbox_prechecked(self):
         html = _render(
@@ -291,7 +291,7 @@ class TestControlHtmlMultiSelectDefaultQuirk:
                 "text": "M",
                 "type": "multi_select",
                 "options": ["x", "y", "z"],
-                "default": "y",
+                "default": ["y"],
             }
         )
         assert 'value="x">' in html  # unchecked
@@ -327,7 +327,7 @@ class TestControlHtmlListStyleDefaultChecked:
                 "type": "multi_select",
                 "options": ["x", "y"],
                 "list_style": "unordered",
-                "default": "x",
+                "default": ["x"],
             }
         )
         assert 'value="x" checked>' in html

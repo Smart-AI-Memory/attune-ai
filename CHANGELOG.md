@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — attune-forms 0.7.0: elicitation schema sync (D3 mirror)
+
+- **Dependency floor raised to `attune-forms>=0.7.0,<1.0`** and the
+  hand-maintained MCP elicitation tool schema
+  (`attune.mcp.tool_schemas.get_elicitation_tools`) re-sourced from the
+  library. The v2 rich field/form schema now derives from
+  `attune_forms.mcp_server` instead of a hand-declared copy, so the MCP
+  server advertises 0.7.0's contract to end users: the full construct
+  vocabulary (adds `deliberation`, `triage`, `confirm`, `ranking`,
+  `assumption_review`), typed object-array extras (`progress_items`,
+  `triage_items`, `consequences`, `assumptions`), a multi-type
+  `default` (incl. object for triage rulings), `inferred_from`
+  provenance, and `additionalProperties: false` strictness on both the
+  form and field objects. The v1 AskUserQuestion surface stays a
+  deliberate 4-type schema (D10 enum-honesty). A drift test pins
+  attune-ai's v2 schema to the library's, retiring the recurring
+  hand-sync obligation. Closes the forms 0.7.0 D3 mirror gate.
+
 ### Removed — BREAKING: dormant in-package hook-execution engine
 
 - **`attune.hooks.HookRegistry` / `HookExecutor` / `HookConfig`
