@@ -568,18 +568,20 @@ class TestFormatOnSaveSharedBudget:
         # Reset after the pair so nothing leaks between invocations.
         assert fos._DEADLINE is None
 
-    def test_wall_budget_under_registered_timeouts(self) -> None:
+    def test_wall_budget_under_registered_timeout(self) -> None:
         import attune.hooks.scripts.format_on_save as fos
 
+        # Guard against the surface where the timeout unit is certain:
+        # .claude/settings.json is in seconds (the dev-repo registration
+        # this hook runs under, where the 2x10s>10s overrun was measured).
+        # The plugin hooks.json value (10000) is deliberately NOT asserted
+        # here — its unit (seconds, vs the author's likely-intended ms) is
+        # unverified, so a divisor would encode a guess. Tracked separately.
         repo = Path(__file__).resolve().parents[3]
         settings = json.loads((repo / ".claude" / "settings.json").read_text(encoding="utf-8"))
-        plugin = json.loads((repo / "plugin" / "hooks" / "hooks.json").read_text(encoding="utf-8"))
-        # settings.json is in SECONDS; plugin hooks.json is in MILLISECONDS.
         settings_s = _find_hook_timeout(settings, "format_on_save.py")
-        plugin_s = _find_hook_timeout(plugin, "format_on_save.py") / 1000
         assert settings_s is not None
         assert fos.WALL_BUDGET < settings_s
-        assert fos.WALL_BUDGET < plugin_s
 
 
 # ---------------------------------------------------------------------------
