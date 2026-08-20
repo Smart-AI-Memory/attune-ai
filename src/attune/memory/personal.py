@@ -17,6 +17,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+from attune.memory.atomic_io import atomic_write_text
 from attune.memory.curated_audit import (
     format_age_annotation,
     format_status_annotation,
@@ -509,10 +510,8 @@ class PersonalMemory:
             return text
 
     def _atomic_write_text(self, dest: Path, text: str) -> None:
-        """Write text atomically using a temp file + Path.replace()."""
-        tmp = dest.with_suffix(".tmp")
-        tmp.write_text(text, encoding="utf-8")
-        tmp.replace(dest)
+        """Write text atomically (per-process temp file + replace)."""
+        atomic_write_text(dest, text)
 
     def _update_summaries(self, root: Path, path: Path, text: str) -> None:
         """Upsert the path-keyed summaries_by_path.json sidecar."""
@@ -527,9 +526,7 @@ class PersonalMemory:
         key = path.relative_to(root).as_posix()
         summaries[key] = _extract_summary(text)
 
-        tmp = sidecar.with_suffix(".tmp")
-        tmp.write_text(json.dumps(summaries, indent=2, ensure_ascii=False), encoding="utf-8")
-        tmp.replace(sidecar)
+        atomic_write_text(sidecar, json.dumps(summaries, indent=2, ensure_ascii=False))
 
     def _remove_from_summaries(self, root: Path, path: Path) -> None:
         """Remove a path key from the summaries sidecar if present."""
@@ -543,6 +540,4 @@ class PersonalMemory:
         key = path.relative_to(root).as_posix()
         if key in summaries:
             summaries.pop(key)
-            tmp = sidecar.with_suffix(".tmp")
-            tmp.write_text(json.dumps(summaries, indent=2, ensure_ascii=False), encoding="utf-8")
-            tmp.replace(sidecar)
+            atomic_write_text(sidecar, json.dumps(summaries, indent=2, ensure_ascii=False))

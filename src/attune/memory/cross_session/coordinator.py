@@ -26,6 +26,7 @@ from attune.memory.short_term import (
     AgentCredentials,
     RedisShortTermMemory,
 )
+from attune.memory.types import parse_stored_record
 
 from .conflicts import (
     resolve_by_priority,
@@ -215,7 +216,9 @@ class CrossSessionCoordinator:
                 if isinstance(session_data, bytes):
                     session_data = session_data.decode()
 
-                info = SessionInfo.from_dict(json.loads(session_data))
+                info = parse_stored_record(SessionInfo, session_data, key=str(agent_id))
+                if info is None:
+                    continue
 
                 if info.is_stale:
                     client.hdel(KEY_ACTIVE_AGENTS, agent_id)
@@ -253,8 +256,8 @@ class CrossSessionCoordinator:
         try:
             if isinstance(session_data, bytes):
                 session_data = session_data.decode()
-            info = SessionInfo.from_dict(json.loads(session_data))
-            return info if not info.is_stale else None
+            info = parse_stored_record(SessionInfo, session_data, key=agent_id)
+            return info if info is not None and not info.is_stale else None
         except (json.JSONDecodeError, KeyError, ValueError):
             return None
 

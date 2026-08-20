@@ -547,43 +547,41 @@ class TestCheckPythonPackageImportError:
     reason="redis not installed",
 )
 class TestCheckServerReachable:
-    """Test _check_server_reachable paths."""
+    """Test _check_server_reachable paths.
 
-    def test_check_server_reachable_returns_false_on_exception(self, tmp_path):
-        """Test that any exception during ping returns False."""
-        from unittest.mock import MagicMock
-        from unittest.mock import patch as up
+    Real endpoints only. These previously patched ``redis.Redis``, which
+    made them pass no matter which host and port the probe dialled —
+    the mock defined the contract, and that is how library-review H1
+    (probe hard-coded to 127.0.0.1:6379 while clients connect to the
+    resolved endpoint) survived 23 references to this method. The
+    reachable-endpoint direction is covered against a real listening
+    socket in ``test_probe_endpoint_agreement.py``.
+    """
 
-        config_path = tmp_path / "config.yml"
-        detector = RedisAutoDetector(config_path=config_path)
+    def test_returns_false_when_configured_endpoint_is_not_listening(self, tmp_path, monkeypatch):
+        """Nothing listening on the resolved endpoint means unreachable."""
+        import socket
 
-        mock_client = MagicMock()
-        mock_client.ping.side_effect = Exception("connection refused")
+        sock = socket.socket()
+        sock.bind(("127.0.0.1", 0))
+        closed_port = sock.getsockname()[1]
+        sock.close()
 
-        mock_redis_mod = MagicMock()
-        mock_redis_mod.Redis.return_value = mock_client
+        for var in ("REDIS_PRIVATE_URL", "REDIS_PUBLIC_URL", "REDIS_HOST", "REDIS_PASSWORD"):
+            monkeypatch.delenv(var, raising=False)
+        monkeypatch.setenv("REDIS_URL", f"redis://127.0.0.1:{closed_port}/0")
 
-        # redis is imported inside the method body, patch at redis module level
-        with up("redis.Redis", return_value=mock_client):
-            result = detector._check_server_reachable()
+        detector = RedisAutoDetector(config_path=tmp_path / "config.yml")
 
-        assert result is False
+        assert detector._check_server_reachable() is False
 
-    def test_check_server_reachable_returns_true_on_success(self, tmp_path):
-        """Test that a successful ping returns True."""
-        from unittest.mock import MagicMock
-        from unittest.mock import patch as up
+    def test_returns_false_on_a_malformed_configured_url(self, tmp_path, monkeypatch):
+        """A bad REDIS_URL degrades to "unreachable", it does not raise."""
+        monkeypatch.setenv("REDIS_URL", "redis://127.0.0.1:not-a-port/0")
 
-        config_path = tmp_path / "config.yml"
-        detector = RedisAutoDetector(config_path=config_path)
+        detector = RedisAutoDetector(config_path=tmp_path / "config.yml")
 
-        mock_client = MagicMock()
-        mock_client.ping.return_value = True
-
-        with up("redis.Redis", return_value=mock_client):
-            result = detector._check_server_reachable()
-
-        assert result is True
+        assert detector._check_server_reachable() is False
 
 
 class TestPromptInstall:

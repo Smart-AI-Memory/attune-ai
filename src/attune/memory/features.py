@@ -34,13 +34,6 @@ def _scrub_secrets(text: str) -> str:
     return _CRED_RE.sub(r"://\1:***@", text)
 
 
-def _resolved_password() -> "str | None":
-    """The canonical resolver's effective password (rct-4)."""
-    from attune.memory.config import resolve_redis_connection
-
-    return resolve_redis_connection().password
-
-
 def _warn_once(report: "RedisHealthReport") -> None:
     """Emit ONE structured warning per session for loud states (R3)."""
     state = report.state.value
@@ -158,15 +151,20 @@ class MemoryFeatures:
             return False
 
     @staticmethod
-    def is_redis_running(host: str = "127.0.0.1", port: int = 6379) -> bool:
-        """Check if Redis server is running and accessible.
+    def is_redis_running(host: str | None = None, port: int | None = None) -> bool:
+        """Check if THE configured Redis server is running and accessible.
+
+        The endpoint comes from the canonical resolver, never from a
+        literal — an oracle that probes one endpoint while clients
+        connect to another reports availability for a server nobody
+        uses (library-review H1).
 
         Args:
-            host: Redis host (default: 127.0.0.1 — literal loopback, not
+            host: Override the resolved host. Prefer a literal IP over
                 "localhost": getaddrinfo runs before socket timeouts
                 apply and has wedged Windows CI workers for 20 minutes;
-                see docs/specs/windows-exit139-segfault/)
-            port: Redis port (default: 6379)
+                see docs/specs/windows-exit139-segfault/
+            port: Override the resolved port.
 
         Returns:
             True if Redis server responds to ping, False otherwise.
@@ -175,25 +173,9 @@ class MemoryFeatures:
         if not MemoryFeatures.is_redis_available():
             return False
 
-        try:
-            import redis
+        from attune.memory.config import ping_redis
 
-            client = redis.Redis(
-                host=host,
-                port=port,
-                socket_connect_timeout=1,
-                # R3: authenticate so `requirepass` isn't misread as "Redis
-                # down". rct-4: the effective password comes from the resolver.
-                password=_resolved_password(),
-            )
-            return bool(client.ping())
-        except ImportError:
-            logger.debug("redis module not installed")
-            return False
-        except Exception:  # noqa: BLE001
-            # INTENTIONAL: Redis availability is optional; any failure means unavailable
-            logger.debug("Redis ping failed", exc_info=True)
-            return False
+        return ping_redis(host, port, timeout=1)
 
     @staticmethod
     def get_feature_status(feature: str) -> FeatureInfo:

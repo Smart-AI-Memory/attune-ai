@@ -25,13 +25,6 @@ from attune.security.path_validation import _validate_file_path
 logger = logging.getLogger(__name__)
 
 
-def _resolved_password() -> "str | None":
-    """The canonical resolver's effective password (rct-4)."""
-    from attune.memory.config import resolve_redis_connection
-
-    return resolve_redis_connection().password
-
-
 # Platform detection (reuse redis_bootstrap constants when imported there)
 IS_MACOS = platform.system() == "Darwin"
 IS_LINUX = platform.system() == "Linux"
@@ -177,34 +170,28 @@ class RedisAutoDetector:
         except ImportError:
             return False
 
-    def _check_server_reachable(self, host: str = "127.0.0.1", port: int = 6379) -> bool:
-        """Check if Redis server responds to ping.
+    def _check_server_reachable(self, host: str | None = None, port: int | None = None) -> bool:
+        """Check if THE configured Redis server responds to ping.
 
         Uses a short timeout to avoid slowing down CLI startup.
 
+        The endpoint comes from the canonical resolver, never from a
+        literal: this result decides whether callers use the real store
+        or an in-process mock, so probing loopback while the client
+        connects elsewhere loses every write silently (library-review
+        H1).
+
         Args:
-            host: Redis host.
-            port: Redis port.
+            host: Override the resolved host (leave unset in normal use).
+            port: Override the resolved port (leave unset in normal use).
 
         Returns:
             True if Redis server responds to ping.
 
         """
-        try:
-            import redis
+        from attune.memory.config import ping_redis
 
-            client = redis.Redis(
-                host=host,
-                port=port,
-                socket_connect_timeout=0.5,
-                # R3: authenticate so `requirepass` isn't misread as "Redis
-                # down". rct-4: the effective password comes from the resolver.
-                password=_resolved_password(),
-            )
-            return bool(client.ping())
-        except Exception:  # noqa: BLE001
-            # INTENTIONAL: Any failure means server is not reachable
-            return False
+        return ping_redis(host, port, timeout=0.5)
 
     def should_prompt(self) -> bool:
         """Check whether to prompt the user to install Redis.

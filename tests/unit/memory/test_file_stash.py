@@ -7,7 +7,9 @@ path, and the SearchableMemoryBackend protocol surface. All isolated to
 
 from __future__ import annotations
 
+import contextlib
 import json
+import os
 import time
 
 import pytest
@@ -20,6 +22,41 @@ def backend(tmp_path):
     be = FileStashBackend(base_dir=tmp_path / "stash")
     yield be
     be.close()
+
+
+#: Chmod-based denial does nothing for root, and Windows ignores the
+#: POSIX mode bits entirely.
+_CAN_DENY_WRITES = os.name == "posix" and os.geteuid() != 0
+_needs_write_denial = pytest.mark.skipif(
+    not _CAN_DENY_WRITES,
+    reason="write denial needs POSIX mode bits and a non-root user",
+)
+
+
+@contextlib.contextmanager
+def _writes_denied(backend):
+    """Really deny writes to the findings store — no patched call sites.
+
+    The R1 contract ("True only when the write landed") is about the
+    filesystem refusing us, so the test makes the filesystem refuse:
+    patching ``Path.replace`` proved only that the mock raised, and it
+    silently stopped exercising anything once the write path changed
+    (library-review class M).
+    """
+    findings = backend._findings
+    findings.parent.mkdir(parents=True, exist_ok=True)
+    had_file = findings.exists()
+    dir_mode = findings.parent.stat().st_mode
+    file_mode = findings.stat().st_mode if had_file else None
+    if had_file:
+        findings.chmod(0o400)
+    findings.parent.chmod(0o500)
+    try:
+        yield
+    finally:
+        findings.parent.chmod(dir_mode)
+        if had_file and file_mode is not None:
+            findings.chmod(file_mode)
 
 
 # --------------------------------------------------------------------------
@@ -185,11 +222,11 @@ def test_is_fallback_and_protocol_surface(backend):
     assert stats["backend"] == "file"
 
 
-def test_remember_returns_false_on_unexpected_error(backend, monkeypatch):
-    monkeypatch.setattr(
-        backend, "_load_records", lambda: (_ for _ in ()).throw(RuntimeError("boom"))
-    )
-    assert backend.remember("x y z") is False
+@_needs_write_denial
+def test_remember_never_raises_when_the_store_is_unwritable(backend):
+    """The never-raises contract, exercised against a real refusal."""
+    with _writes_denied(backend):
+        assert backend.remember("x y z") is False
 
 
 def test_search_handles_read_error(backend):
@@ -453,24 +490,10 @@ def test_forget_swallows_read_error(backend, monkeypatch):
 # --------------------------------------------------------------------------
 
 
-def _deny_tmp_replace(monkeypatch):
-    """Simulate EPERM on the findings temp file's durable replace only."""
-    import errno
-    from pathlib import Path
-
-    real_replace = Path.replace
-
-    def _eperm(self, target):
-        if self.name.endswith(".jsonl.tmp"):
-            raise PermissionError(errno.EPERM, "Operation not permitted")
-        return real_replace(self, target)
-
-    monkeypatch.setattr(Path, "replace", _eperm)
-
-
-def test_remember_returns_false_when_replace_denied(backend, monkeypatch):
-    _deny_tmp_replace(monkeypatch)
-    assert backend.remember("finding that never lands", memory_id="m1") is False
+@_needs_write_denial
+def test_remember_returns_false_when_write_denied(backend):
+    with _writes_denied(backend):
+        assert backend.remember("finding that never lands", memory_id="m1") is False
     assert backend.recent() == []  # nothing durable — and we said so
 
 
@@ -490,31 +513,31 @@ def test_eperm_through_public_stash_entry_returns_false(backend, monkeypatch):
             return (d, 0)
 
     monkeypatch.setattr(security_mod, "DataSanitizer", _PassThroughGate)
-    _deny_tmp_replace(monkeypatch)
     entry = SessionStashEntry.create(
         session_id="s1", cwd="/proj", type="note", content="sandbox canary"
     )
-    with capture_logs() as logs:
+    with capture_logs() as logs, _writes_denied(backend):
         assert stash_entry(entry, backend=backend) is False
-    assert any(rec.get("event") == "file_stash_write_failed" for rec in logs)
+    assert any(rec.get("event") == "file_stash_remember_failed" for rec in logs)
 
 
-def test_forget_returns_zero_when_replace_denied(backend, monkeypatch):
+@_needs_write_denial
+def test_forget_returns_zero_when_write_denied(backend):
     backend.remember("to delete", memory_id="m1")
-    _deny_tmp_replace(monkeypatch)
-    assert backend.forget(["m1"]) == 0  # deletion never landed
-    monkeypatch.undo()
+    with _writes_denied(backend):
+        assert backend.forget(["m1"]) == 0  # deletion never landed
     assert [r["id"] for r in backend.recent()] == ["m1"]
 
 
-def test_prune_returns_zero_when_replace_denied(backend, monkeypatch):
+@_needs_write_denial
+def test_prune_returns_zero_when_write_denied(backend):
     now = time.time()
     _write_records(
         backend,
         [{"id": "old", "text": "x", "topics": [], "cwd": None, "ts": now - 5 * 86400}],
     )
-    _deny_tmp_replace(monkeypatch)
-    assert backend.prune(max_age_days=1) == 0  # sweep never landed
+    with _writes_denied(backend):
+        assert backend.prune(max_age_days=1) == 0  # sweep never landed
 
 
 # --------------------------------------------------------------------------
@@ -533,3 +556,60 @@ def test_probe_write_false_when_dir_is_a_file(tmp_path):
     blocked.write_text("not a directory", encoding="utf-8")
     be = FileStashBackend(base_dir=blocked)  # mkdir + probe both fail
     assert be.probe_write() is False
+
+
+# --------------------------------------------------------------------------
+# G2 — one poison record must not brick the store
+# --------------------------------------------------------------------------
+
+
+def test_one_unreadable_timestamp_does_not_brick_the_store(backend):
+    """A single bad ``ts`` on disk used to kill every read and write.
+
+    Library-review G2: the per-record ``try`` caught ``JSONDecodeError``
+    while the ``float(rec["ts"])`` coercion sat outside it, so one
+    hand-edited record made ``search``/``recent`` raise, ``remember``
+    return False forever, and the public API return ``[]`` in silence.
+    Written straight to the real file — the corruption this guards
+    against arrives as bytes on disk, not as a patched call.
+    """
+    backend.remember("redis findings before", memory_id="ok1", topics=["redis"])
+    poisoned = {
+        "id": "bad",
+        "text": "redis findings poisoned",
+        "topics": ["redis"],
+        "cwd": None,
+        "ts": "2026-08-20",  # a date string where an epoch float belongs
+    }
+    with open(backend._findings, "a", encoding="utf-8") as handle:
+        handle.write(json.dumps(poisoned) + "\n")
+
+    assert [r["id"] for r in backend.search("redis")] == ["ok1"]
+    assert [r["id"] for r in backend.recent()] == ["ok1"]
+
+    # ...and the store still accepts new writes.
+    assert backend.remember("redis findings after", memory_id="ok2", topics=["redis"]) is True
+    assert {r["id"] for r in backend.search("redis")} == {"ok1", "ok2"}
+
+
+def test_prune_drops_an_unreadable_record_instead_of_raising(backend):
+    """The poison record is swept like an expired one."""
+    backend.remember("keeper", memory_id="ok1")
+    with open(backend._findings, "a", encoding="utf-8") as handle:
+        handle.write(json.dumps({"id": "bad", "text": "x", "ts": None}) + "\n")
+
+    assert backend.prune(max_age_days=30) == 1
+    assert [r["id"] for r in backend.recent()] == ["ok1"]
+
+
+def test_recall_entries_survives_a_poison_record(backend):
+    """Through the public P15 recall API, not the backend internals."""
+    from attune.memory import session_stash
+
+    backend.remember("redis stash finding", memory_id="ok1", topics=["redis"])
+    with open(backend._findings, "a", encoding="utf-8") as handle:
+        handle.write(json.dumps({"id": "bad", "text": "redis", "ts": "not-a-time"}) + "\n")
+
+    entries = session_stash.recall_entries("redis", backend=backend)
+
+    assert [r["id"] for r in entries] == ["ok1"]

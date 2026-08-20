@@ -23,6 +23,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from attune.memory.atomic_io import append_line
 from attune.security.path_validation import _validate_file_path
 
 logger = logging.getLogger(__name__)
@@ -153,12 +154,12 @@ class LessonsManager:
         if not validated_path.exists():
             validated_path.write_text(f"# Attune Lessons\n\n{lesson_line}")
         else:
+            # APPEND: reading the whole file, adding a line and writing it
+            # back loses a concurrent session's lesson (library-review G1).
             content = validated_path.read_text()
-            # Ensure trailing newline before appending
             if content and not content.endswith("\n"):
-                content += "\n"
-            content += lesson_line
-            validated_path.write_text(content)
+                append_line(validated_path, "")
+            append_line(validated_path, lesson_line)
 
         # Sync to CLAUDE.md if enabled (project lessons only)
         if not global_ and self._sync_to_claude_md:
