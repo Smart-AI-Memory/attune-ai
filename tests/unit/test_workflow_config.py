@@ -558,3 +558,46 @@ class TestModelConfig:
         assert config.max_tokens == 4096
         assert config.supports_vision is False
         assert config.supports_tools is True
+
+
+@pytest.mark.unit
+@pytest.mark.skipif(not YAML_AVAILABLE, reason="PyYAML not installed")
+class TestWorkflowConfigMalformedFile:
+    """Regression: both _load_file branches fail with the same class.
+
+    JSON raises ``json.JSONDecodeError`` (a ``ValueError``); YAML raised
+    ``yaml.YAMLError``, which is NOT a ``ValueError`` subclass, so no
+    single ``except`` clause covered "the config file is broken"
+    (library-review batch-2 widening triage).
+    """
+
+    def test_malformed_yaml_raises_valueerror(self, tmp_path):
+        """Broken YAML config surfaces as ValueError, not yaml.YAMLError."""
+        path = tmp_path / "workflows.yaml"
+        path.write_text("features:\n  - foo: [unclosed\n bad: : :\n")
+
+        with pytest.raises(ValueError, match="Invalid YAML config"):
+            WorkflowConfig.load(path)
+
+    def test_malformed_json_raises_valueerror(self, tmp_path):
+        """The JSON branch already raised a ValueError subclass."""
+        path = tmp_path / "workflows.json"
+        path.write_text("{ not json ")
+
+        with pytest.raises(ValueError):
+            WorkflowConfig.load(path)
+
+    def test_both_branches_share_one_except_clause(self, tmp_path):
+        """One ``except ValueError`` covers a broken config either way."""
+        bad_yaml = tmp_path / "a.yaml"
+        bad_yaml.write_text("a: [1, 2\nb: : :\n")
+        bad_json = tmp_path / "a.json"
+        bad_json.write_text("{ nope ")
+
+        caught = []
+        for path in (bad_yaml, bad_json):
+            try:
+                WorkflowConfig.load(path)
+            except ValueError:
+                caught.append(path.suffix)
+        assert caught == [".yaml", ".json"]

@@ -184,7 +184,13 @@ class ConfigDrivenWizard(BaseWizard):
             raise FileNotFoundError(f"Wizard definition not found: {yaml_path}")
 
         with path.open() as f:
-            data = yaml.safe_load(f)
+            try:
+                data = yaml.safe_load(f)
+            except yaml.YAMLError as exc:
+                # The docstring promises ValueError for invalid YAML;
+                # yaml.YAMLError is not a ValueError subclass, so without
+                # this the documented contract is violated.
+                raise ValueError(f"Invalid wizard YAML in {yaml_path}: {exc}") from exc
 
         if not isinstance(data, dict):
             raise ValueError(f"Invalid wizard YAML: expected a mapping, got {type(data).__name__}")

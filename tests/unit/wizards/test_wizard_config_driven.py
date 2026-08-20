@@ -1075,3 +1075,21 @@ class TestSessionVariableInterpolationNested:
         assert "Review auth.py" in ctx.instructions
         assert "Focus on security" in ctx.instructions
         assert "Plain instruction" in ctx.instructions
+
+
+@pytest.mark.unit
+class TestConfigDrivenWizardMalformedYAML:
+    """Regression: the documented ValueError contract covers bad YAML."""
+
+    def test_from_yaml_malformed_raises_valueerror(self, tmp_path):
+        """Syntactically-broken YAML raises the DOCUMENTED ValueError.
+
+        ``yaml.YAMLError`` is not a ``ValueError`` subclass, so before the
+        fix ``from_yaml`` violated its own ``Raises: ValueError: If the
+        YAML is invalid`` contract (library-review batch-2 widening).
+        """
+        yaml_path = tmp_path / "broken.yaml"
+        yaml_path.write_text("features:\n  - foo: [unclosed\n bad: : :\n")
+
+        with pytest.raises(ValueError, match="Invalid wizard YAML"):
+            ConfigDrivenWizard.from_yaml(str(yaml_path))
