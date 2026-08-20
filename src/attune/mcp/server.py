@@ -336,6 +336,10 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandle
         """
         if not self._rate_limiter.check(tool_name):
             return {
+                # Every other dispatch error path carries `success`;
+                # clients key on it, so the rate-limit branch must too
+                # (library-review M3).
+                "success": False,
                 "error": f"Rate limit exceeded for '{tool_name}'. " "Try again shortly.",
             }
 
@@ -1263,6 +1267,17 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandle
                     return {
                         "success": False,
                         "error": "Each accepted proposal must have 'name' and 'description'.",
+                    }
+                # Validate the name BEFORE save_manifest writes to disk;
+                # otherwise one bad entry poisons the persisted manifest
+                # and every later status/update run drags it, while
+                # generate_feature_templates' own guard raises after the
+                # write has already landed (library-review M1). Mirrors
+                # the generator's guard (help/generator.py).
+                if "/" in name or "\\" in name or ".." in name or "\x00" in name:
+                    return {
+                        "success": False,
+                        "error": f"Invalid feature name: {name!r}",
                     }
                 proposals.append(
                     ProposedFeature(

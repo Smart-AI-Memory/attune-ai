@@ -532,3 +532,14 @@ def test_runtime_registered_shapes_match_protocol_contract(tmp_path):
         "test-gen",
         "cost-report",
     }
+
+
+async def test_rate_limited_dispatch_carries_success_key(tmp_path):
+    """Library-review M3: the rate-limit branch of _dispatch_tool must
+    return a dict with success=False, like every other error path."""
+    server = _make_server(tmp_path)
+    # Force the limiter to reject.
+    server._rate_limiter.check = lambda tool_name: False
+    result = await server._dispatch_tool("attune_get_level", {})
+    assert result["success"] is False
+    assert "Rate limit exceeded" in result["error"]

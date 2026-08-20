@@ -491,7 +491,12 @@ class PersonalMemory:
         if polish_fn is None:
             return text
         try:
-            result = polish_fn(text, template_type=kind)
+            # polish_template(content, feature_name, source_summary, ...):
+            # the two positionals are required — omitting them raised
+            # TypeError on every call, silently killing the polish pass
+            # (library-review M2). Personal memories have no feature or
+            # source summary, so pass empty strings.
+            result = polish_fn(text, "", "", template_type=kind)
             if not result:
                 return text
             if not result.endswith("\n"):
