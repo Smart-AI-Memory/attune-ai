@@ -289,23 +289,34 @@ class MemoryHandlersMixin:
                     # INTENTIONAL: Short-term removal is best-effort
                     logger.debug("Short-term removal failed for %s: %s", key, e)
 
-            if scope in ("persistent", "all"):
+            if scope in ("persistent", "all") and hasattr(memory, "delete_pattern"):
+                # Fast, explicit deny for a VISIBLE pattern owned by someone
+                # else (PUBLIC/INTERNAL patterns recall across users). A
+                # foreign SENSITIVE pattern recalls as None, so it is caught
+                # by the PermissionError the core delete raises below —
+                # defense in depth, not a substitute for the pre-check.
+                if hasattr(memory, "recall_pattern"):
+                    existing = memory.recall_pattern(key)
+                    if existing and not self._check_ownership(
+                        existing if isinstance(existing, dict) else {}
+                    ):
+                        return {
+                            "success": False,
+                            "error": "Not authorized to delete this key",
+                        }
                 try:
-                    if hasattr(memory, "delete_pattern"):
-                        # Ownership check before deletion
-                        if hasattr(memory, "recall_pattern"):
-                            existing = memory.recall_pattern(key)
-                            if existing and not self._check_ownership(
-                                existing if isinstance(existing, dict) else {}
-                            ):
-                                return {
-                                    "success": False,
-                                    "error": "Not authorized to delete this key",
-                                }
-                        memory.delete_pattern(key)
+                    # Only claim persistent removal if a pattern was actually
+                    # deleted — delete_pattern returns False for a missing key.
+                    if memory.delete_pattern(key):
                         removed_from.append("persistent")
+                except PermissionError:
+                    logger.warning("memory_forget_denied key=%s", key)
+                    return {
+                        "success": False,
+                        "error": "Not authorized to delete this key",
+                    }
                 except Exception as e:  # noqa: BLE001
-                    # INTENTIONAL: Long-term removal is best-effort
+                    # INTENTIONAL: other long-term removal errors are best-effort
                     logger.debug("Long-term removal failed for %s: %s", key, e)
 
             return {"success": True, "key": key, "removed_from": removed_from}

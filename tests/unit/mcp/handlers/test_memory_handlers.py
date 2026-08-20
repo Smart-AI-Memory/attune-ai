@@ -16,6 +16,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from attune.mcp.memory_handlers import MemoryHandlersMixin
 from attune.mcp.server import EmpathyMCPServer
 
 # ---------------------------------------------------------------------------
@@ -613,6 +614,155 @@ class TestHandleMemoryForget:
         result = await server._handle_memory_forget({"key": "target_key"})
 
         assert result["key"] == "target_key"
+
+
+# ---------------------------------------------------------------------------
+# _handle_memory_forget — non-mocked round trip through a REAL backend
+# (M4 wire-up: before, UnifiedMemory had no delete_pattern, so persistent
+# forget was dead — it never deleted yet reported success. These drive the
+# real persistence boundary, not a mock.)
+# ---------------------------------------------------------------------------
+
+
+class _ForgetHost(MemoryHandlersMixin):
+    """Minimal host exposing the memory handlers over a real backend."""
+
+    def __init__(self, user_id: str) -> None:
+        self._memory = None
+        self._user_id = user_id
+
+
+def _persist_internal(user_id: str, content: str) -> str:
+    """Store an INTERNAL (unencrypted) pattern as ``user_id``, return its id."""
+    from attune.memory import UnifiedMemory
+
+    mem = UnifiedMemory(user_id=user_id)
+    result = mem.persist_pattern(
+        content=content,
+        pattern_type="note",
+        classification="INTERNAL",
+        auto_classify=False,
+    )
+    assert result and result.get("pattern_id")
+    return result["pattern_id"]
+
+
+@pytest.fixture
+def _isolated_store(tmp_path, monkeypatch):
+    """UnifiedMemory writes long-term patterns under ``./memdocs_storage``
+    relative to the cwd; chdir into tmp so each test gets a private store
+    shared only between the users constructed within it."""
+    monkeypatch.chdir(tmp_path)
+    return tmp_path
+
+
+class TestForgetPersistentRealBackend:
+    @pytest.mark.asyncio
+    async def test_owner_forget_actually_deletes(self, _isolated_store):
+        from attune.memory import UnifiedMemory
+
+        pid = _persist_internal("owner@corp.com", "owner note to forget")
+        host = _ForgetHost("owner@corp.com")
+
+        result = await host._handle_memory_forget({"key": pid, "scope": "all"})
+
+        assert result["success"] is True
+        assert "persistent" in result["removed_from"]
+        # Actually gone from storage (fresh instance bypasses any cache).
+        assert UnifiedMemory(user_id="owner@corp.com").recall_pattern(pid) is None
+
+    @pytest.mark.asyncio
+    async def test_foreign_forget_denied_and_data_survives(self, _isolated_store):
+        from attune.memory import UnifiedMemory
+
+        pid = _persist_internal("owner@corp.com", "owner private note")
+        attacker = _ForgetHost("attacker@evil.com")
+
+        result = await attacker._handle_memory_forget({"key": pid, "scope": "persistent"})
+
+        assert result["success"] is False
+        assert result["error"] == "Not authorized to delete this key"
+        # The owner's pattern is untouched.
+        assert UnifiedMemory(user_id="owner@corp.com").recall_pattern(pid) is not None
+
+    @pytest.mark.asyncio
+    async def test_missing_key_forget_is_honest(self, _isolated_store):
+        host = _ForgetHost("owner@corp.com")
+
+        result = await host._handle_memory_forget(
+            {"key": "pat_does_not_exist_000", "scope": "persistent"}
+        )
+
+        # Nothing was deleted, so persistent is NOT claimed (was reported
+        # unconditionally before the fix).
+        assert result["success"] is True
+        assert "persistent" not in result["removed_from"]
+
+
+class TestMixinDeletePattern:
+    """UnifiedMemory.delete_pattern: enforce ownership, translate the
+    memory-internal permission error to the builtin, evict the cache."""
+
+    def test_owner_deletes_and_cache_evicted(self, _isolated_store):
+        from attune.memory import UnifiedMemory
+
+        mem = UnifiedMemory(user_id="owner@corp.com")
+        result = mem.persist_pattern(
+            content="deletable note",
+            pattern_type="note",
+            classification="INTERNAL",
+            auto_classify=False,
+        )
+        pid = result["pattern_id"]
+        mem.recall_pattern(pid)  # warm the cache
+        assert pid in mem._pattern_cache
+
+        assert mem.delete_pattern(pid) is True
+        assert pid not in mem._pattern_cache  # evicted
+        assert mem.recall_pattern(pid) is None
+
+    def test_foreign_delete_raises_builtin_permission_error(self, _isolated_store):
+        from attune.memory import UnifiedMemory
+
+        pid = _persist_internal("owner@corp.com", "not yours")
+        attacker = UnifiedMemory(user_id="attacker@evil.com")
+
+        # The integration layer raises its own MemoryPermissionError; the
+        # mixin must surface the builtin so the MCP layer can catch it.
+        with pytest.raises(PermissionError):
+            attacker.delete_pattern(pid)
+
+    def test_missing_pattern_returns_false(self, _isolated_store):
+        from attune.memory import UnifiedMemory
+
+        mem = UnifiedMemory(user_id="owner@corp.com")
+        assert mem.delete_pattern("pat_missing_xyz") is False
+
+    def test_returns_false_when_long_term_unavailable(self, _isolated_store):
+        """Degrade gracefully: no long-term backend -> False, never raises."""
+        from attune.memory import UnifiedMemory
+
+        mem = UnifiedMemory(user_id="owner@corp.com")
+        mem._long_term = None
+        assert mem.delete_pattern("pat_anything") is False
+
+
+class TestForgetPermissionErrorFromDelete:
+    """The handler's PermissionError branch: a foreign SENSITIVE pattern
+    recalls as None, so the pre-check is skipped and the core delete is
+    what raises — the handler must translate that into a clean denial."""
+
+    @pytest.mark.asyncio
+    async def test_permission_error_from_delete_denies(self):
+        mem = _make_unified_memory()
+        mem.recall_pattern.return_value = None  # foreign SENSITIVE recalls as None
+        mem.delete_pattern.side_effect = PermissionError("cannot delete")
+        server = _make_server(memory=mem)
+
+        result = await server._handle_memory_forget({"key": "pat-x", "scope": "persistent"})
+
+        assert result["success"] is False
+        assert result["error"] == "Not authorized to delete this key"
 
 
 # ---------------------------------------------------------------------------

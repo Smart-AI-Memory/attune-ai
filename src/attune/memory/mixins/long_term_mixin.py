@@ -141,6 +141,45 @@ class LongTermOperationsMixin:
             logger.error("recall_pattern_failed", pattern_id=pattern_id, error=str(e))
             return None
 
+    def delete_pattern(self, pattern_id: str, session_id: str = "") -> bool:
+        """Delete a long-term pattern the current user owns.
+
+        Delegates to the integration layer, which enforces creator-only
+        deletion: it raises ``PermissionError`` when ``created_by`` is a
+        different user and returns ``False`` when the pattern does not
+        exist. The pattern is evicted from the local recall cache on a
+        successful delete so a later ``recall_pattern`` does not serve a
+        stale copy.
+
+        Args:
+            pattern_id: ID of the pattern to delete
+            session_id: Session identifier for audit
+
+        Returns:
+            True if a pattern was deleted, False if none was found.
+
+        Raises:
+            PermissionError: If the current user does not own the pattern.
+            ValueError: If ``pattern_id`` is empty.
+
+        """
+        from ..long_term_types import MemoryPermissionError
+
+        if not self._long_term:
+            logger.error("long_term_memory_unavailable")
+            return False
+        try:
+            deleted = self._long_term.delete_pattern(pattern_id, self.user_id, session_id)
+        except MemoryPermissionError as exc:
+            # The integration layer raises its own (non-builtin) permission
+            # type; surface the stable builtin PermissionError so callers
+            # (e.g. the MCP forget handler) can catch it without importing
+            # memory internals.
+            raise PermissionError(str(exc)) from exc
+        if deleted:
+            self._pattern_cache.pop(pattern_id, None)
+        return bool(deleted)
+
     def clear_pattern_cache(self) -> int:
         """Clear the pattern lookup cache.
 
