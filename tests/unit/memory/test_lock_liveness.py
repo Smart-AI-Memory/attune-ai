@@ -23,7 +23,6 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
-import contextlib
 import os
 import socket
 import time
@@ -57,28 +56,38 @@ class _MemoryStub:
         self._client = client
 
 
-def _command_count(client, command: str) -> int:
-    """How many times the SERVER has executed a command.
+class _Recording:
+    """A pass-through wrapper that records the commands it forwards.
 
-    Server-side truth about what the code actually sent. Asserting the
-    end state (a TTL is present) cannot tell the two implementations
-    apart — ``SETNX`` + ``EXPIRE`` leaves the same TTL when nothing
-    crashes, which is exactly why this class survived review. Asserting
-    that ZERO ``EXPIRE`` commands were sent while the key still came out
-    with a TTL proves the TTL arrived with the SET.
+    NOT a mock: every call reaches the real server and returns the real
+    reply — the wrapper only notes what went past. That distinction is
+    the point. Asserting the END STATE (a TTL is present) cannot tell
+    the two implementations apart, because ``SETNX`` + ``EXPIRE`` leaves
+    exactly the same TTL when nothing crashes, which is why this class
+    survived review in the first place. Asserting that no ``EXPIRE`` was
+    SENT while the key still came out with a TTL proves the TTL arrived
+    with the ``SET``.
+
+    An earlier version read the server's global ``commandstats``, which
+    any unrelated client or concurrent test could perturb into a false
+    failure (codex D11 lane, 2026-08-20). Per-client recording is
+    deterministic and needs no exclusive server.
     """
-    stats = client.info("commandstats") or {}
-    entry = stats.get(f"cmdstat_{command}") or {}
-    return int(entry.get("calls", 0))
 
+    def __init__(self, client):
+        self._client = client
+        self.commands: list[str] = []
 
-@contextlib.contextmanager
-def _expire_calls(client):
-    """Yield a one-element list that receives the EXPIRE delta."""
-    before = _command_count(client, "expire")
-    delta: list[int] = []
-    yield delta
-    delta.append(_command_count(client, "expire") - before)
+    def __getattr__(self, name):
+        attr = getattr(self._client, name)
+        if not callable(attr):
+            return attr
+
+        def _record(*args, **kwargs):
+            self.commands.append(name)
+            return attr(*args, **kwargs)
+
+        return _record
 
 
 def test_acquired_lock_carries_a_ttl_immediately(live_client):
@@ -90,18 +99,18 @@ def test_acquired_lock_carries_a_ttl_immediately(live_client):
     lock_key = f"empathy:lock:{resource}"
     keys.append(lock_key)
 
+    recorder = _Recording(client)
     coordinator = CrossSessionCoordinator.__new__(CrossSessionCoordinator)
-    coordinator._memory = _MemoryStub(client)
+    coordinator._memory = _MemoryStub(recorder)
     coordinator._agent_id = "agent-1"
 
-    with _expire_calls(client) as expires:
-        assert coordinator.acquire_lock(resource, timeout_seconds=30) is True
+    assert coordinator.acquire_lock(resource, timeout_seconds=30) is True
 
     ttl = client.ttl(lock_key)
     assert ttl > 0, f"lock is immortal (TTL={ttl})"
     assert ttl <= 30
     assert (
-        expires[0] == 0
+        "expire" not in recorder.commands
     ), "the TTL came from a SECOND command — crash in between and it is immortal"
 
 
@@ -133,15 +142,17 @@ def test_service_singleton_lock_carries_a_ttl_immediately(live_client):
     client.delete(KEY_SERVICE_LOCK)
     keys.append(KEY_SERVICE_LOCK)
 
+    recorder = _Recording(client)
     service = BackgroundService.__new__(BackgroundService)
-    service._memory = _MemoryStub(client)
+    service._memory = _MemoryStub(recorder)
 
-    with _expire_calls(client) as expires:
-        assert service._acquire_service_lock() is True
+    assert service._acquire_service_lock() is True
 
     ttl = client.ttl(KEY_SERVICE_LOCK)
     assert ttl > 0, f"service lock is immortal (TTL={ttl})"
-    assert expires[0] == 0, "a crash between SETNX and EXPIRE wedges the service permanently"
+    assert (
+        "expire" not in recorder.commands
+    ), "a crash between SETNX and EXPIRE wedges the service permanently"
 
 
 def test_conflict_lock_carries_a_ttl_immediately(live_client):
@@ -153,14 +164,14 @@ def test_conflict_lock_carries_a_ttl_immediately(live_client):
     lock_key = f"empathy:lock:{resource}"
     keys.append(lock_key)
 
-    with _expire_calls(client) as expires:
-        result = resolve_first_write(
-            agent_id="agent-1", client=client, resource_key=resource, other_session=None
-        )
+    recorder = _Recording(client)
+    result = resolve_first_write(
+        agent_id="agent-1", client=recorder, resource_key=resource, other_session=None
+    )
 
     assert result.winner_agent_id == "agent-1"
     assert client.ttl(lock_key) > 0
-    assert expires[0] == 0
+    assert "expire" not in recorder.commands
 
 
 # --------------------------------------------------------------------------
@@ -193,22 +204,33 @@ def test_a_caller_supplied_timeout_still_wins():
     assert kwargs["socket_connect_timeout"] == 0.25
 
 
-def test_connect_to_an_unresponsive_endpoint_gives_up_promptly():
-    """A real listening socket that never completes the handshake.
+def test_the_factory_defaults_bound_an_unresponsive_endpoint():
+    """A real hung endpoint, bounded by OUR defaults — not redis-py's.
 
-    Not a patched clock and not a closed port (which errors instantly):
-    a socket with a full backlog that accepts nothing is what a
-    blackholed endpoint actually looks like, and it is the only shape
-    that distinguishes "we set a timeout" from "we hope redis-py did".
+    The endpoint is a real listening socket with a filled backlog: a
+    blackholed host, not a closed port (which errors instantly and would
+    prove nothing).
+
+    No timeout is passed in, so what is under test is exactly the
+    factory's own defaults. The bound asserted is well under the ~75s an
+    unbounded client blocks for on the project's declared pin floor
+    (redis 5.0.1, which supplies no default at all) and comfortably above
+    the 2s connect + 5s read the factory sets — an earlier version passed
+    an explicit 1s connect timeout and asserted ``elapsed < 15``, which a
+    fallback to redis-py's own 5s read timeout would also satisfy, so it
+    could not tell the two apart (codex D11 lane, 2026-08-20).
     """
     redis = pytest.importorskip("redis")
-    from attune.memory.recall_redis import connect_recall_redis
+    from attune.memory.recall_redis import (
+        DEFAULT_CONNECT_TIMEOUT,
+        DEFAULT_SOCKET_TIMEOUT,
+        connect_recall_redis,
+    )
 
     listener = socket.socket()
     listener.bind(("127.0.0.1", 0))
     listener.listen(0)  # accept nothing; connections queue and stall
     port = listener.getsockname()[1]
-    # Fill the backlog so our own connect cannot be completed.
     fillers = []
     for _ in range(3):
         filler = socket.socket()
@@ -216,7 +238,7 @@ def test_connect_to_an_unresponsive_endpoint_gives_up_promptly():
         filler.connect_ex(("127.0.0.1", port))
         fillers.append(filler)
 
-    client = connect_recall_redis(f"redis://127.0.0.1:{port}/0", socket_connect_timeout=1.0)
+    client = connect_recall_redis(f"redis://127.0.0.1:{port}/0")
     started = time.monotonic()
     try:
         with pytest.raises(redis.RedisError):
@@ -227,4 +249,8 @@ def test_connect_to_an_unresponsive_endpoint_gives_up_promptly():
             filler.close()
         listener.close()
 
-    assert elapsed < 15, f"blocked {elapsed:.1f}s — the connect timeout did not apply"
+    ceiling = DEFAULT_CONNECT_TIMEOUT + DEFAULT_SOCKET_TIMEOUT + 3
+    assert elapsed < ceiling, (
+        f"blocked {elapsed:.1f}s, over the {ceiling:.0f}s the factory's own "
+        f"defaults allow — the never-block contract is not being set here"
+    )
