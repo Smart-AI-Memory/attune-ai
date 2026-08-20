@@ -172,10 +172,21 @@ def test_internal_missing_both_workspaces_grants_legacy_access():
     assert check_access("alice", Classification.INTERNAL, {}, current_workspace="proj-x") is True
 
 
-def test_internal_unknown_reader_workspace_grants_access():
-    """A caller that cannot name its workspace is not denied on that basis."""
+def test_internal_unknown_reader_workspace_denies_a_stamped_record():
+    """The two unknowns are not symmetric (codex D11 lane).
+
+    A STAMPED record whose reader cannot name its own workspace is the
+    case the rule exists for: granting would assert a match nobody can
+    verify, and made the isolation bypassable by running from a deleted
+    working directory.
+    """
     meta = {"workspace": "proj-x"}
-    assert check_access("alice", Classification.INTERNAL, meta, current_workspace="") is True
+    assert check_access("alice", Classification.INTERNAL, meta, current_workspace="") is False
+
+
+def test_internal_unknown_reader_workspace_still_grants_a_legacy_record():
+    """The other half of the asymmetry: nothing stamped, nothing to enforce."""
+    assert check_access("alice", Classification.INTERNAL, {}, current_workspace="") is True
 
 
 def test_internal_defaults_the_reader_workspace_to_the_running_process(tmp_path, monkeypatch):
@@ -195,6 +206,30 @@ def test_internal_defaults_the_reader_workspace_to_the_running_process(tmp_path,
         check_access("alice", Classification.INTERNAL, {"workspace": str(checkout.resolve())})
         is True
     )
+
+
+def test_a_deleted_working_directory_cannot_bypass_isolation(tmp_path, monkeypatch):
+    """The bypass, reproduced against a really-deleted cwd.
+
+    Not a patched resolver: the process is genuinely left with a working
+    directory that no longer exists, which is how the finding was
+    confirmed.
+    """
+    import os
+    import shutil
+
+    doomed = tmp_path / "gone"
+    doomed.mkdir()
+    original = os.getcwd()
+    os.chdir(doomed)
+    try:
+        shutil.rmtree(doomed)
+        assert resolve_current_workspace() == ""
+        assert (
+            check_access("bob", Classification.INTERNAL, {"workspace": "/projects/alice"}) is False
+        )
+    finally:
+        os.chdir(original)
 
 
 def test_resolve_current_workspace_walks_up_to_the_checkout_root(tmp_path, monkeypatch):

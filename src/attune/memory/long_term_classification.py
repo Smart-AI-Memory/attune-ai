@@ -122,8 +122,9 @@ def resolve_current_workspace() -> str:
 
     Walks up for a ``.git`` marker so any working directory inside one
     checkout resolves to a single identity; falls back to the working
-    directory itself. Never raises — an unresolvable cwd yields ``""``,
-    which the INTERNAL rule treats as "unknown, do not deny".
+    directory itself. Never raises — an unresolvable cwd (deleted or
+    unreadable) yields ``""``, which the INTERNAL rule treats as
+    "unknown, cannot prove a match" and refuses for stamped records.
 
     Returns:
         An absolute path string, or ``""`` when the cwd is unreadable.
@@ -165,8 +166,10 @@ def check_access(
         classification: Pattern classification
         metadata: Pattern metadata
         current_workspace: The reading process's workspace. Defaults to
-            :func:`resolve_current_workspace`. Pass ``""`` to mean
-            "unknown", which never denies.
+            :func:`resolve_current_workspace`. ``""`` means "unknown",
+            which DENIES a workspace-stamped record — see the asymmetry
+            note at the INTERNAL branch — while an unstamped (legacy)
+            record is granted regardless.
 
     Returns:
         True if access granted, False otherwise
@@ -178,16 +181,32 @@ def check_access(
 
     # INTERNAL: Workspace-scoped access.
     # Patterns created in one project are invisible from another.
-    # Either side being unknown grants access: legacy patterns carry no
-    # workspace, and a caller that cannot name its own workspace must
-    # not be denied on that basis.
+    #
+    # The two "unknowns" here are NOT symmetric (codex D11 lane,
+    # 2026-08-20). An UNSTAMPED record predates the stamp and there is
+    # nothing to enforce, so it is granted for backward compatibility.
+    # A STAMPED record whose reader cannot name its own workspace is the
+    # opposite case: the claim "invisible from another project" is
+    # precisely what cannot be verified, so granting would assert
+    # something unproven — and made the whole rule bypassable by running
+    # from a deleted or unreadable working directory. That is refused.
     if classification == Classification.INTERNAL:
         pattern_workspace = str(metadata.get("workspace", ""))
+        if not pattern_workspace:
+            return True  # legacy record, nothing stamped to scope against
+
         reader_workspace = (
             resolve_current_workspace() if current_workspace is None else str(current_workspace)
         )
+        if not reader_workspace:
+            logger.warning(
+                "internal_access_denied_unknown_workspace",
+                user_id=user_id,
+                pattern_workspace=pattern_workspace,
+            )
+            return False
 
-        if pattern_workspace and reader_workspace and pattern_workspace != reader_workspace:
+        if pattern_workspace != reader_workspace:
             logger.warning(
                 "internal_access_denied",
                 user_id=user_id,
