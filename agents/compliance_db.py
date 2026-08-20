@@ -9,6 +9,7 @@ Licensed under the Apache License, Version 2.0
 
 import logging
 import sqlite3
+import threading
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import datetime
@@ -16,6 +17,19 @@ from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+# Process-wide locks keyed by resolved db path: serializes access across
+# threads AND across instances pointing at the same file (SQLite's own file
+# locking is not reliable under concurrent writers on Windows).
+_DB_LOCKS: dict[str, threading.Lock] = {}
+_DB_LOCKS_GUARD = threading.Lock()
+
+
+def _lock_for_db(db_path: str) -> threading.Lock:
+    """Return the process-wide lock for a resolved database path."""
+    key = str(Path(db_path).resolve())
+    with _DB_LOCKS_GUARD:
+        return _DB_LOCKS.setdefault(key, threading.Lock())
 
 
 class ComplianceDatabase:
@@ -49,11 +63,22 @@ class ComplianceDatabase:
             db_path = str(data_dir / "compliance.db")
 
         self.db_path = db_path
+        self._lock = _lock_for_db(db_path)
         self._init_schema()
 
     @contextmanager
     def _get_connection(self) -> Generator[sqlite3.Connection, None, None]:
-        """Get database connection with automatic cleanup."""
+        """Get database connection with automatic cleanup.
+
+        Holds the process-wide per-db-path lock for the whole
+        connect-execute-commit cycle so concurrent threads (or instances
+        sharing a path) never contend inside SQLite's file locking.
+        """
+        with self._lock:
+            yield from self._connection_cycle()
+
+    def _connection_cycle(self) -> Generator[sqlite3.Connection, None, None]:
+        """One locked connect-execute-commit-close cycle."""
         conn = None
         try:
             conn = sqlite3.connect(self.db_path, check_same_thread=False)
