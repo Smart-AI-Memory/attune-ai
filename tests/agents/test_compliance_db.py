@@ -241,7 +241,10 @@ class TestThreadSafety:
         # Record 10 audits concurrently
         with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
             futures = [executor.submit(record_audit, i) for i in range(10)]
-            concurrent.futures.wait(futures)
+            # result() re-raises worker exceptions — a failed write must fail
+            # loudly here, not surface later as a bare count mismatch
+            for future in concurrent.futures.as_completed(futures):
+                future.result()
 
         # Verify all 10 audits were recorded
         with temp_compliance_db._get_connection() as conn:
