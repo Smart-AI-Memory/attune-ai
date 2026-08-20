@@ -921,7 +921,13 @@ def get_memory_tools() -> dict[str, dict[str, Any]]:
             },
         },
         "memory_search": {
-            "description": "Search attune-ai memory for patterns matching a query.",
+            "description": (
+                "Search attune-ai memory for patterns matching a query. "
+                "UNSCOPED read: results are NOT classification- or "
+                "workspace-filtered and can include SENSITIVE or "
+                "cross-workspace records that memory_retrieve would deny — "
+                "do not use as an authorization boundary."
+            ),
             "input_schema": {
                 "type": "object",
                 "properties": {
