@@ -28,6 +28,7 @@ from .memory.types import (  # noqa: E402
     AgentCredentials,
     ConflictContext,
     TTLStrategy,
+    parse_stored_record,
 )
 
 
@@ -114,7 +115,11 @@ class ConflictNegotiationMixin:
         if raw is None:
             return None
 
-        return ConflictContext.from_dict(json.loads(raw))
+        # Deserialize-here / subscript-there (library-review I-4): a value
+        # that parses to a LIST makes from_dict raise TypeError from inside
+        # the call, past a caller whose except tuple lists only
+        # JSONDecodeError. parse_stored_record returns None instead.
+        return parse_stored_record(ConflictContext, raw, key=key)
 
     def resolve_conflict(
         self,
