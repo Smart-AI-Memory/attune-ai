@@ -378,8 +378,12 @@ class TestScaffold:
         evidence_dest = pipelines_dir / "rollback-test.evidence.json"
         original_replace = Path.replace
 
+        # Keyed on the DESTINATION, not the temp file's name. The earlier
+        # version matched a deterministic "<dest>.tmp" source name; when
+        # the class-G1 fix moved temp naming to tempfile.mkstemp the fake
+        # stopped firing and the test passed while asserting nothing.
         def fake_replace(self, target):
-            if self.name == evidence_dest.name + ".tmp":
+            if Path(target) == evidence_dest:
                 raise OSError("simulated disk failure")
             return original_replace(self, target)
 
@@ -389,5 +393,5 @@ class TestScaffold:
 
         assert not (pipelines_dir / "rollback-test.yaml").exists()
         assert not evidence_dest.exists()
-        assert not (pipelines_dir / "rollback-test.yaml.tmp").exists()
-        assert not (pipelines_dir / "rollback-test.evidence.json.tmp").exists()
+        # No temp file of any name may survive the rollback.
+        assert not list(pipelines_dir.glob("*.tmp")), "rollback left a temp file"

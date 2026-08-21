@@ -7,8 +7,11 @@ with a 4-hour TTL. Thread-safe for concurrent sessions.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
+import os
+import tempfile
 import threading
 import time
 from pathlib import Path
@@ -72,19 +75,33 @@ def _persist_session(state: dict[str, Any]) -> None:
     with _SESSION_LOCK:
         try:
             _SESSION_FILE.parent.mkdir(parents=True, exist_ok=True)
-            tmp = _SESSION_FILE.with_suffix(".json.tmp")
-            tmp.write_text(
-                json.dumps(
-                    {
-                        "last_topic": state["last_topic"],
-                        "depth_level": state["depth_level"],
-                        "timestamp": time.time(),
-                    }
-                )
-                + "\n",
-                encoding="utf-8",
+            # mkstemp names the temp file uniquely per call: deriving it
+            # from the target lets two sessions pick the same path, so one
+            # truncates the other's partial write before the rename
+            # publishes it (class G1).
+            fd, tmp_name = tempfile.mkstemp(
+                prefix=f".{_SESSION_FILE.name}.",
+                suffix=".tmp",
+                dir=str(_SESSION_FILE.parent),
             )
-            tmp.replace(_SESSION_FILE)
+            tmp = Path(tmp_name)
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                    handle.write(
+                        json.dumps(
+                            {
+                                "last_topic": state["last_topic"],
+                                "depth_level": state["depth_level"],
+                                "timestamp": time.time(),
+                            }
+                        )
+                        + "\n"
+                    )
+                tmp.replace(_SESSION_FILE)
+            finally:
+                if tmp.exists():
+                    with contextlib.suppress(OSError):
+                        tmp.unlink()
         except OSError:
             pass  # Best-effort
 

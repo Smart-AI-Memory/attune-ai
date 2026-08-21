@@ -13,9 +13,12 @@ daily housekeeping the spec calls for.
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import json
 import logging
+import os
+import tempfile
 import time
 from dataclasses import asdict
 from datetime import datetime, timedelta, timezone
@@ -113,13 +116,23 @@ class CuratorCache:
         stamp = result.cached_at or datetime.now(timezone.utc)
         snapshot = _serialise(result, cached_at=stamp)
         path = self._path_for(key)
-        tmp_path = path.with_suffix(path.suffix + ".tmp")
         try:
-            tmp_path.write_text(
-                json.dumps(snapshot, sort_keys=True),
-                encoding="utf-8",
+            # mkstemp names the temp file uniquely per call: deriving it
+            # from the target lets two processes pick the same path, so
+            # one truncates the other's partial write before the rename
+            # publishes it (class G1).
+            fd, tmp_name = tempfile.mkstemp(
+                prefix=f".{path.name}.", suffix=".tmp", dir=str(path.parent)
             )
-            tmp_path.replace(path)
+            tmp_path = Path(tmp_name)
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                    handle.write(json.dumps(snapshot, sort_keys=True))
+                tmp_path.replace(path)
+            finally:
+                if tmp_path.exists():
+                    with contextlib.suppress(OSError):
+                        tmp_path.unlink()
         except OSError as exc:
             logger.warning("curator-cache: write %s failed: %s", path, exc)
 

@@ -14,7 +14,9 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import json
+import os
 import re
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -93,12 +95,24 @@ def scaffold_acceptance(
         "scaffolded_at": datetime.now(timezone.utc).isoformat(),
     }
 
-    yaml_tmp = pipelines_dir / f"{name}.yaml.tmp"
-    evidence_tmp = pipelines_dir / f"{name}.evidence.json.tmp"
+    # mkstemp names each temp file uniquely per call: deriving them from
+    # the pipeline name lets two concurrent scaffolds pick the same paths,
+    # so one truncates the other's partial write before the rename
+    # publishes it (class G1). Rollback below still covers both.
+    yaml_fd, yaml_tmp_name = tempfile.mkstemp(
+        prefix=f".{name}.yaml.", suffix=".tmp", dir=str(pipelines_dir)
+    )
+    evidence_fd, evidence_tmp_name = tempfile.mkstemp(
+        prefix=f".{name}.evidence.json.", suffix=".tmp", dir=str(pipelines_dir)
+    )
+    yaml_tmp = Path(yaml_tmp_name)
+    evidence_tmp = Path(evidence_tmp_name)
     written: list[Path] = []
     try:
-        yaml_tmp.write_text(_pipeline_yaml(name, candidate), encoding="utf-8")
-        evidence_tmp.write_text(json.dumps(evidence, indent=2) + "\n", encoding="utf-8")
+        with os.fdopen(yaml_fd, "w", encoding="utf-8") as handle:
+            handle.write(_pipeline_yaml(name, candidate))
+        with os.fdopen(evidence_fd, "w", encoding="utf-8") as handle:
+            handle.write(json.dumps(evidence, indent=2) + "\n")
         yaml_tmp.replace(yaml_dest)
         written.append(yaml_dest)
         evidence_tmp.replace(evidence_dest)

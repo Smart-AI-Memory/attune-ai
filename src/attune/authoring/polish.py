@@ -34,10 +34,12 @@ Opting out of strict mode is explicit and deliberate:
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import logging
 import os
 import re
+import tempfile
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -148,9 +150,21 @@ def _cache_get(key: str) -> str | None:
 def _cache_put(key: str, content: str) -> None:
     cache = _cache_dir()
     cache.mkdir(parents=True, exist_ok=True)
-    tmp = cache / f"{key}.tmp"
-    tmp.write_text(content, encoding="utf-8")
-    tmp.rename(cache / f"{key}.md")
+    # mkstemp names the temp file uniquely per call: deriving it from the
+    # key lets two processes pick the same path, so one truncates the
+    # other's partial write before the rename publishes it (class G1).
+    # replace() rather than rename() — rename fails on Windows when the
+    # destination already exists, which is the common case for a re-put.
+    fd, tmp_name = tempfile.mkstemp(prefix=f".{key}.", suffix=".tmp", dir=str(cache))
+    tmp = Path(tmp_name)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(content)
+        tmp.replace(cache / f"{key}.md")
+    finally:
+        if tmp.exists():
+            with contextlib.suppress(OSError):
+                tmp.unlink()
     # Lazy disk-space hygiene: piggyback the prune onto write
     # operations so we don't need a separate scheduler. Cost is
     # one stat per entry in the cache dir, which is negligible

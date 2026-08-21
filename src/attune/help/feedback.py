@@ -7,8 +7,11 @@ workflow chain prediction, and precursor warnings.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
+import os
+import tempfile
 from pathlib import Path
 
 from attune.help.templates import (
@@ -56,12 +59,20 @@ def _save_feedback(generated_dir: Path, data: dict) -> None:
         data: Feedback dict to save.
     """
     path = generated_dir / _FEEDBACK_FILE
-    tmp = path.with_suffix(".json.tmp")
-    tmp.write_text(
-        json.dumps(data, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
-    tmp.replace(path)  # replace() is cross-platform; rename() fails on Windows
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # mkstemp names the temp file uniquely per call: deriving it from the
+    # target lets two processes pick the same path, so one truncates the
+    # other's partial write before the rename publishes it (class G1).
+    fd, tmp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=str(path.parent))
+    tmp = Path(tmp_name)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+        tmp.replace(path)  # replace() is cross-platform; rename() fails on Windows
+    finally:
+        if tmp.exists():
+            with contextlib.suppress(OSError):
+                tmp.unlink()
 
 
 def record_template_feedback(
