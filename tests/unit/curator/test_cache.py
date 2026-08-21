@@ -208,8 +208,18 @@ def test_put_swallows_mkdir_failure(cache_root, monkeypatch):
     assert not any(cache_root.glob("*.json"))
 
 
-@pytest.mark.skipif(os.name == "nt", reason="POSIX mode bits; chmod is a no-op on Windows")
-@pytest.mark.skipif(os.geteuid() == 0, reason="root ignores the write bit")
+#: A chmod'd directory only refuses writes on POSIX as a non-root user.
+#: Computed eagerly here on purpose — ``skipif`` conditions are evaluated
+#: at COLLECTION time, so a bare ``os.geteuid()`` in the decorator raises
+#: AttributeError on Windows (no such attribute) and errors the whole
+#: module before any skip can apply. ``getattr`` keeps it safe there.
+_CANNOT_REFUSE_WRITES = os.name == "nt" or getattr(os, "geteuid", lambda: 1)() == 0
+
+
+@pytest.mark.skipif(
+    _CANNOT_REFUSE_WRITES,
+    reason="needs POSIX mode bits as a non-root user",
+)
 def test_put_swallows_write_failure(cache_root):
     """If the atomic write fails, put logs and returns cleanly.
 
