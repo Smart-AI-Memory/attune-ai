@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [13.0.1] - 2026-08-21
+
+**A memory fix worth upgrading for.** Long-term memory storage resolved
+relative to the current working directory, so the MCP server wrote
+patterns under whatever directory it happened to be launched from —
+starting the same install from a different project made prior memory
+look gone. Storage is now anchored to your home directory, and existing
+data is never stranded.
+
+### Fixed
+
+- **Long-term memory no longer splits by launch directory.** The default
+  long-term storage dir was CWD-relative (`./memdocs_storage`), so
+  `UnifiedMemory` built without an explicit `storage_dir` — which is how
+  the MCP server builds it — wrote patterns wherever it was started.
+  Storage now resolves through a new `default_storage_dir()` to a
+  home-anchored `~/.attune/memdocs_storage`, routed through every default
+  site (the `MemoryConfig` dataclass and `from_environment`,
+  `MemDocsStorage`, `SecureMemDocsIntegration`, `ControlPanelConfig`, and
+  the control-panel `--storage` argument). **Already have data?** An
+  existing `./memdocs_storage` in the working directory is still honored
+  and returned as an absolute path, so nothing is stranded, and an
+  explicit `ATTUNE_STORAGE_DIR` still wins. Resolution also degrades to
+  an absolute temp-rooted path when the home directory is unresolvable
+  (minimal Windows accounts), instead of silently reverting to a
+  CWD-relative path. (#2145)
+
+### Changed
+
+- The release workflow's GitHub Release step is now idempotent, so a
+  re-run against an existing tag updates the release instead of
+  failing. (#2144)
+
+
 ## [13.0.0] - 2026-08-20
 
 **Correctness you can trust under failure.** A library-wide review
