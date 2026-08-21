@@ -48,6 +48,7 @@ from .short_term import (
     AccessTier,
     RedisShortTermMemory,
 )
+from .storage_backend import default_storage_dir
 
 logger = structlog.get_logger(__name__)
 
@@ -81,7 +82,7 @@ class MemoryConfig:
     default_ttl_seconds: int = 3600  # 1 hour
 
     # Long-term memory settings
-    storage_dir: str = "./memdocs_storage"
+    storage_dir: str = field(default_factory=default_storage_dir)
     encryption_enabled: bool = True
 
     # Claude memory settings
@@ -140,7 +141,7 @@ class MemoryConfig:
             == "true",
             redis_required=(get_attune_env("REDIS_REQUIRED", "false") or "false").lower() == "true",
             # Long-term storage
-            storage_dir=get_attune_env("STORAGE_DIR", "./memdocs_storage") or "./memdocs_storage",
+            storage_dir=get_attune_env("STORAGE_DIR", "") or default_storage_dir(),
             encryption_enabled=(get_attune_env("ENCRYPTION", "true") or "true").lower() == "true",
             claude_memory_enabled=(get_attune_env("CLAUDE_MEMORY", "true") or "true").lower()
             == "true",

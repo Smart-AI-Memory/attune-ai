@@ -61,7 +61,7 @@ class TestMemoryConfig:
         assert config.redis_mock is False
         assert config.redis_auto_start is False  # File-first: Redis is optional
         assert config.default_ttl_seconds == 3600
-        assert config.storage_dir == "./memdocs_storage"
+        assert config.storage_dir.endswith("memdocs_storage")
         assert config.encryption_enabled is True
         assert config.claude_memory_enabled is True
         # File-first architecture fields

@@ -27,6 +27,29 @@ from attune.security.path_validation import _validate_file_path
 logger = structlog.get_logger(__name__)
 
 
+def default_storage_dir() -> str:
+    """Resolve the default long-term memory storage directory.
+
+    Anchors to ``~/.attune/memdocs_storage`` so long-term patterns do not
+    scatter across whatever directory a process happens to be launched
+    from — a CWD-relative default silently splits (and appears to lose)
+    memory when the same install is started from different projects.
+
+    For backward compatibility, an existing ``memdocs_storage`` directory
+    under the current working directory (the historical default location)
+    is preferred so already-stored data is never stranded; its absolute
+    path is returned so a later ``chdir`` cannot move the target.
+
+    Returns:
+        Absolute path string for the default storage directory.
+
+    """
+    legacy = Path.cwd() / "memdocs_storage"
+    if legacy.is_dir():
+        return str(legacy)
+    return str(Path.home() / ".attune" / "memdocs_storage")
+
+
 class MemDocsStorage:
     """Mock/Simple MemDocs storage backend.
 
@@ -34,14 +57,16 @@ class MemDocsStorage:
     For now, provides a simple file-based storage for testing.
     """
 
-    def __init__(self, storage_dir: str = "./memdocs_storage"):
+    def __init__(self, storage_dir: str | None = None):
         """Initialize storage backend.
 
         Args:
-            storage_dir: Directory for pattern storage
+            storage_dir: Directory for pattern storage. When ``None``,
+                resolves to :func:`default_storage_dir` (home-anchored,
+                with a legacy-CWD fallback).
 
         """
-        self.storage_dir = Path(storage_dir)
+        self.storage_dir = Path(storage_dir if storage_dir is not None else default_storage_dir())
         self.storage_dir.mkdir(parents=True, exist_ok=True)
         logger.info("memdocs_storage_initialized", storage_dir=str(self.storage_dir))
 
