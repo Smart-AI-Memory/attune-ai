@@ -548,3 +548,63 @@ fixable") no longer holds for this class:
 **Monitoring tally: 6 captures** (3 Linux timeout-kill, 1 Windows
 timeout-kill, 2 Windows exit-139 — both now filed under the split
 class, which also claims the #1272 sighting as its first).
+
+---
+
+## Adjacent sighting, 2026-08-21 — NOT this class, and not exit-139
+
+Recorded here because it is an xdist worker failure and this spec is
+where that evidence accumulates, but **deliberately not added to the
+tally above**: it matches neither tracked class, and counting it in
+either would corrupt a signature both specs rely on.
+
+| Field | Value |
+|---|---|
+| Run | `32487572015`, attempt 1 |
+| Lane | `test (windows-latest, 3.13)` |
+| PR | #2151 (class-G2 gate — touches `src/attune/ops/data.py` + new tests) |
+| Job window | 13:35:08 → 13:50:27 UTC (15m19s) |
+| Failure | `worker 'gw0' crashed while running tests/core/test_persistence.py::TestMetricsCollector::test_get_user_stats_by_level` |
+| Progress at crash | 13:42:00, **18%** |
+| pytest summary | 13:50:22 — the run continued and completed normally |
+| Recovery | `gh run rerun <id> --failed` → all 5 Windows lanes success, 0 failed jobs |
+
+### Why it is neither class
+
+- **Not the parent end-of-session wedge.** That shape is exit-124
+  timeout-kill with the controller idle in `dsession.loop_once` at ~99%
+  done. Here the worker died at **18%** and pytest **survived it**,
+  reporting an ordinary `FAILED` and running to a normal summary. The
+  job's nonzero exit is the failed test, not a kill.
+- **Not `windows-exit139-segfault`.** That signature requires the run to
+  wedge, the 20-minute conftest watchdog to fire, faulthandler dumps to
+  be written, and *then* a segfault. None of that happened: no wedge, no
+  watchdog, no dumps, and the job finished inside its normal window.
+
+So this is a **third shape: a mid-run worker loss that the controller
+absorbs.** One sighting is not a class — it is filed as an observation
+so a second one can be recognised instead of re-derived.
+
+### Weak evidence about the fork-Pool hypothesis
+
+`tests/core/test_persistence.py` contains no `multiprocessing`, `Pool`,
+`fork`, or `Thread` reference, and Windows has no `fork` at all. That is
+mild further evidence against the fork-Pool execnet-fd-leak hypothesis
+already marked WEAKENED by capture #4 — though a *worker crash* and a
+*worker wedge* need not share a cause, so it argues only softly.
+
+### Disposition
+
+No action. The tar-pit guard applies: one unreproducible sighting, on a
+lane whose rerun passed, against a spec already `monitoring`. **If a
+second mid-run worker crash appears — especially on
+`test_persistence.py` or another Windows lane — that is the tripwire to
+open a class of its own,** exactly as the third exit-139 triggered the
+split above.
+
+Method note worth keeping: the flake was confirmed by re-running, not
+assumed. Four independent signals pointed to "flake" beforehand
+(untouched file, single lane of five, worker-crash rather than
+assertion, known adjacent class), and the same morning a Windows
+failure that looked equally dismissible turned out to be a real
+collection-time defect. Cheap re-run beats confident classification.
