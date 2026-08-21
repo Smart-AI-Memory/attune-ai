@@ -8,12 +8,14 @@ Licensed under the Apache License, Version 2.0
 """
 
 import atexit
+import contextlib
 import hashlib
 import hmac
 import json
 import logging
 import os
 import secrets
+import tempfile
 import threading
 from collections.abc import Iterator
 from datetime import datetime, timedelta, timezone
@@ -386,10 +388,24 @@ class UsageTracker:
                 "source_sig": source_sig if source_sig is not None else self._source_signature(),
                 "days": self._daily_summary,
             }
-            tmp = self._summary_file.with_suffix(".tmp")
-            with open(tmp, "w", encoding="utf-8") as f:
-                json.dump(data, f, separators=(",", ":"))
-            tmp.replace(self._summary_file)
+            # mkstemp names the temp file uniquely per call: deriving it
+            # from the target lets two processes pick the same path, so one
+            # truncates the other's partial write before the rename
+            # publishes it (class G1).
+            fd, tmp_name = tempfile.mkstemp(
+                prefix=f".{self._summary_file.name}.",
+                suffix=".tmp",
+                dir=str(self._summary_file.parent),
+            )
+            tmp = Path(tmp_name)
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as f:
+                    json.dump(data, f, separators=(",", ":"))
+                tmp.replace(self._summary_file)
+            finally:
+                if tmp.exists():
+                    with contextlib.suppress(OSError):
+                        tmp.unlink()
         except OSError:
             pass  # Best effort — stats still work via slow path
 

@@ -17,8 +17,11 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
+import os
+import tempfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
@@ -153,12 +156,27 @@ def save_envelope(env: Envelope, path: Path | None = None) -> None:
     caller's load path. Uses ``Path.replace`` for a cross-platform
     atomic rename (Windows ``Path.rename`` fails when the target
     exists).
+
+    The temp file is named by :func:`tempfile.mkstemp` rather than
+    derived from the target: two processes saving the same envelope
+    would otherwise pick the same ``<name>.tmp`` and one would
+    truncate the other's partial write before the rename published
+    it (class G1).
     """
     path = path or _default_envelope_path()
     path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.parent / (path.name + ".tmp")
-    tmp.write_text(json.dumps(asdict(env), indent=2) + "\n", encoding="utf-8")
-    tmp.replace(path)
+    fd, tmp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=str(path.parent))
+    tmp = Path(tmp_name)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(json.dumps(asdict(env), indent=2) + "\n")
+        tmp.replace(path)
+    finally:
+        # A successful replace consumes the temp file, so this only
+        # fires on the failure paths — no leftover .tmp either way.
+        if tmp.exists():
+            with contextlib.suppress(OSError):
+                tmp.unlink()
 
 
 def load_or_new(

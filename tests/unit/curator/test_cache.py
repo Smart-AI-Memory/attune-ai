@@ -208,19 +208,30 @@ def test_put_swallows_mkdir_failure(cache_root, monkeypatch):
     assert not any(cache_root.glob("*.json"))
 
 
-def test_put_swallows_write_failure(cache_root, monkeypatch):
-    """If the atomic write fails partway, put logs and returns cleanly."""
+@pytest.mark.skipif(os.name == "nt", reason="POSIX mode bits; chmod is a no-op on Windows")
+@pytest.mark.skipif(os.geteuid() == 0, reason="root ignores the write bit")
+def test_put_swallows_write_failure(cache_root):
+    """If the atomic write fails, put logs and returns cleanly.
+
+    The refusal is a REAL one — the cache directory is chmod'd
+    unwritable — rather than a patched write method. An earlier version
+    of this test monkeypatched ``Path.write_text``; when the class-G1
+    fix moved the write to ``tempfile.mkstemp`` + ``os.fdopen`` the fake
+    stopped firing and the test passed while asserting nothing (the
+    "mock defined the contract" class). A real boundary cannot go stale
+    that way.
+    """
     cache_root.mkdir(parents=True, exist_ok=True)
     cache = CuratorCache(root=cache_root)
 
-    from pathlib import Path as _Path
+    cache_root.chmod(0o500)  # r-x: the dir cannot accept a new entry
+    try:
+        cache.put("abc", _make_result())  # must not raise
+    finally:
+        cache_root.chmod(0o700)
 
-    def boom(self, *a, **kw):  # noqa: ANN001
-        raise OSError("disk full")
-
-    monkeypatch.setattr(_Path, "write_text", boom)
-    cache.put("abc", _make_result())  # must not raise
     assert not (cache_root / "abc.json").is_file()
+    assert not any(cache_root.glob("*.tmp")), "left a temp file behind"
 
 
 def test_sweep_glob_oserror_returns_zero(cache_root, monkeypatch):

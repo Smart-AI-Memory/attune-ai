@@ -40,6 +40,13 @@ _WRITE_ATTRS = {"write_text", "write_bytes"}
 _SHUTIL_FUNCS = {"copy", "copy2", "copyfile", "copytree", "move", "rmtree"}
 #: os.<fn> calls that destroy or rename filesystem entries.
 _OS_FUNCS = {"remove", "unlink", "rename", "replace"}
+#: tempfile.<fn> calls that CREATE a filesystem entry in a caller-supplied
+#: ``dir=``. The atomic-write idiom (mkstemp + os.fdopen + Path.replace)
+#: writes real files without ever calling ``.write_text``, so a scanner
+#: that knows only the write-attr forms goes blind to those modules the
+#: moment they adopt it — which is exactly what happened when the class-G1
+#: sweep-fix landed. Detect the creation call itself.
+_TEMPFILE_FUNCS = {"mkstemp", "mkdtemp", "NamedTemporaryFile", "TemporaryFile"}
 #: Modules with file ops and no path-validation reference, vetted at
 #: seeding (2026-07-29): each writes only internal/derived paths
 #: (state stores, telemetry sinks, generated docs). Remove entries as
@@ -51,6 +58,10 @@ _OS_FUNCS = {"remove", "unlink", "rename", "replace"}
 ALLOWLIST = frozenset(
     {
         "src/attune/authoring/fact_check/__init__.py",
+        # Re-seeded 2026-08-21 with the atomic-write idiom. Reviewed:
+        # NamedTemporaryFile with no caller-supplied dir, so the path is
+        # entirely OS-chosen — nothing to validate.
+        "src/attune/authoring/fact_check/tutorial_static_check.py",
         "src/attune/authoring/faithfulness/__init__.py",
         "src/attune/authoring/generator.py",
         "src/attune/authoring/manifest.py",
@@ -77,6 +88,12 @@ ALLOWLIST = frozenset(
         "src/attune/ops/ops_config_store.py",
         "src/attune/ops/pending_writes.py",
         "src/attune/ops/routes/specs.py",
+        # Re-seeded 2026-08-21 when the scanner learned the atomic-write
+        # idiom (tempfile.mkstemp + os.fdopen), previously invisible.
+        # Reviewed: writes <attune_home>/ops/session_summaries/<id>.json.
+        # NOTE: the <id> component is interpolated unvalidated — tracked
+        # separately as a traversal question, not waved through here.
+        "src/attune/ops/session_summary_cache.py",
         "src/attune/ops/sweep_results.py",
         "src/attune/orchestration/ghosts/worktree.py",
         "src/attune/pipeline_learner/decisions.py",
@@ -153,6 +170,19 @@ def scan_source(source: str) -> tuple[list[str], bool]:
                     and func.attr in _OS_FUNCS
                 ):
                     ops.append(f"os.{func.attr}() at line {node.lineno}")
+                elif (
+                    isinstance(func.value, ast.Name)
+                    and func.value.id == "os"
+                    and func.attr == "fdopen"
+                    and _open_mode_is_write(node, mode_arg_index=1)
+                ):
+                    ops.append(f"os.fdopen()-for-write at line {node.lineno}")
+                elif (
+                    isinstance(func.value, ast.Name)
+                    and func.value.id == "tempfile"
+                    and func.attr in _TEMPFILE_FUNCS
+                ):
+                    ops.append(f"tempfile.{func.attr}() at line {node.lineno}")
     return ops, has_validation
 
 
@@ -228,6 +258,29 @@ def test_scanner_detects_write_text_shutil_and_os_ops() -> None:
         "shutil.rmtree() at line 2",
         "os.remove() at line 3",
     ]
+
+
+def test_scanner_detects_the_atomic_write_idiom() -> None:
+    """mkstemp + os.fdopen writes a real file and must stay visible.
+
+    The class-G1 sweep-fix replaced ``.write_text()`` with this idiom at
+    ten sites. A scanner blind to it would have silently dropped six
+    modules off the offender list while they still wrote files — the
+    ratchet would then have demanded their allowlist entries be removed,
+    making the gate assert something untrue.
+    """
+    source = 'fd, n = tempfile.mkstemp(dir=d)\nwith os.fdopen(fd, "w") as h:\n    h.write(x)\n'
+    ops, _ = scan_source(source)
+    assert ops == [
+        "tempfile.mkstemp() at line 1",
+        "os.fdopen()-for-write at line 2",
+    ]
+
+
+def test_scanner_ignores_fdopen_for_read() -> None:
+    """A read-mode fdopen is not a write op."""
+    ops, _ = scan_source('with os.fdopen(fd, "r") as h:\n    h.read()\n')
+    assert ops == []
 
 
 def test_scanner_validation_reference_clears_module() -> None:

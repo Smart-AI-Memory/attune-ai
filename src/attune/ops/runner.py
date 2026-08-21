@@ -14,9 +14,11 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import re
 import shlex
 import sys
+import tempfile
 import time
 import uuid
 from collections import OrderedDict
@@ -931,15 +933,25 @@ def _persist_run(run: Run, runs_dir: Path) -> Path | None:
 
     workflow_dir = runs_dir / run.workflow
     dest = workflow_dir / f"{run.id}.json"
-    tmp = workflow_dir / f"{run.id}.json.tmp"
+    tmp: Path | None = None
     try:
         workflow_dir.mkdir(parents=True, exist_ok=True)
-        tmp.write_text(json.dumps(record, indent=2), encoding="utf-8")
+        # mkstemp names the temp file uniquely per call: deriving it from
+        # the run id lets two writers for the same run pick the same path,
+        # so one truncates the other's partial write before the rename
+        # publishes it (class G1).
+        fd, tmp_name = tempfile.mkstemp(
+            prefix=f".{run.id}.json.", suffix=".tmp", dir=str(workflow_dir)
+        )
+        tmp = Path(tmp_name)
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, indent=2))
         tmp.replace(dest)
     except OSError as exc:
         logger.warning("ops.persist: write failed for %s/%s: %s", run.workflow, run.id, exc)
-        with _suppress_oserror():
-            tmp.unlink()
+        if tmp is not None:
+            with _suppress_oserror():
+                tmp.unlink()
         return None
     return dest
 

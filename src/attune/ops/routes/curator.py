@@ -16,8 +16,11 @@ Three endpoints:
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
+import os
+import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -115,9 +118,22 @@ async def curator_dismiss(
     try:
         validated = _validate_file_path(str(path))
         validated.parent.mkdir(parents=True, exist_ok=True)
-        tmp = validated.with_suffix(validated.suffix + ".tmp")
-        tmp.write_text(json.dumps(dismissals, sort_keys=True), encoding="utf-8")
-        tmp.replace(validated)
+        # mkstemp names the temp file uniquely per call: deriving it from
+        # the target lets two requests pick the same path, so one truncates
+        # the other's partial write before the rename publishes it
+        # (class G1).
+        fd, tmp_name = tempfile.mkstemp(
+            prefix=f".{validated.name}.", suffix=".tmp", dir=str(validated.parent)
+        )
+        tmp = Path(tmp_name)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                handle.write(json.dumps(dismissals, sort_keys=True))
+            tmp.replace(validated)
+        finally:
+            if tmp.exists():
+                with contextlib.suppress(OSError):
+                    tmp.unlink()
     except (OSError, ValueError) as exc:
         logger.warning("curator: dismiss write failed for %s: %s", path, exc)
         return JSONResponse({"ok": False, "error": "write failed"}, status_code=500)
