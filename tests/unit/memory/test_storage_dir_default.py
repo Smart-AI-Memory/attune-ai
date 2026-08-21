@@ -72,3 +72,21 @@ def test_env_override_wins(clean_env, monkeypatch, tmp_path):
     monkeypatch.setenv("ATTUNE_STORAGE_DIR", str(override))
     config = MemoryConfig.from_environment()
     assert config.storage_dir == str(override)
+
+
+def test_degrades_when_home_unresolvable(clean_env, monkeypatch):
+    """No resolvable home (Windows env cleared) must not crash resolution.
+
+    Mirrors the ``patch.dict(os.environ, {}, clear=True)`` env-parsing tests,
+    which strip USERPROFILE/HOMEDRIVE so ``Path.home()`` raises on Windows.
+    """
+
+    def _raise():
+        raise RuntimeError("Could not determine home directory.")
+
+    monkeypatch.setattr("attune.memory.storage_backend.Path.home", staticmethod(_raise))
+    got = Path(default_storage_dir())
+    assert got.is_absolute()
+    assert got.name == "memdocs_storage"
+    # from_environment (the live source) must also survive it.
+    assert Path(MemoryConfig.from_environment().storage_dir).is_absolute()

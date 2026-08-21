@@ -47,7 +47,17 @@ def default_storage_dir() -> str:
     legacy = Path.cwd() / "memdocs_storage"
     if legacy.is_dir():
         return str(legacy)
-    return str(Path.home() / ".attune" / "memdocs_storage")
+    try:
+        home = Path.home()
+    except (RuntimeError, OSError):
+        # No resolvable home directory — e.g. a Windows account or CI env
+        # with USERPROFILE/HOMEDRIVE unset (POSIX falls back to pwd; Windows
+        # does not). Degrade to an absolute temp-based root so storage still
+        # works and never silently reverts to a CWD-relative path.
+        import tempfile
+
+        home = Path(tempfile.gettempdir())
+    return str(home / ".attune" / "memdocs_storage")
 
 
 class MemDocsStorage:
