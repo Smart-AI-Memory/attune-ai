@@ -1043,7 +1043,7 @@ def read_memory_summary(path: Path | None = None) -> dict[str, Any]:
                     continue
 
                 name = str(event.get("event") or "unknown")
-                tokens = int(event.get("est_tokens", 0) or 0)
+                tokens = _as_int(event.get("est_tokens"))
                 # Memory events use the ``ts`` key (v1.0 schema in
                 # _memory_telemetry.log_memory_event); ``timestamp`` is a
                 # defensive fallback. Without it every event misses the
@@ -1316,11 +1316,11 @@ def estimate_feedback_signal(path: Path | None = None) -> dict[str, Any]:
                         continue
                     name = event.get("event")
                     if name == "memory_feedback":
-                        count = int(event.get("count", 0) or 0)
+                        count = _as_int(event.get("count"))
                         rejected += count
                         by_source[str(event.get("source") or "unknown")] += count
                     elif name == "session_stash":
-                        findings_written += int(event.get("written", 0) or 0)
+                        findings_written += _as_int(event.get("written"))
         except OSError:
             return {
                 "rejected": 0,
@@ -1602,7 +1602,7 @@ def read_daily_spend(
                 ordinal = _ordinal(day)
                 if ordinal is None or ordinal < cutoff:
                     continue
-                out[day] += float(event.get("total_cost", event.get("cost", 0.0)) or 0.0)
+                out[day] += _as_float(event.get("total_cost", event.get("cost")))
     except OSError:
         return {}
     return {d: round(c, 4) for d, c in out.items()}
@@ -1737,6 +1737,34 @@ def env_health(config: Config) -> dict[str, Any]:
         "project_root": str(config.project_root),
         "anthropic_api_key": bool(_env("ANTHROPIC_API_KEY")),
     }
+
+
+def _as_int(value: Any, default: int = 0) -> int:
+    """Coerce a record field to int, TOTALLY — never raises (class G2).
+
+    A reader loop that skips malformed JSON has declared per-record
+    tolerance; coercing a field with a bare ``int()`` right after breaks
+    that promise, because well-formed JSON can still carry
+    ``{"est_tokens": "abc"}`` and ``int()`` raises ``ValueError`` past
+    the loop's ``except json.JSONDecodeError``. One bad line then costs
+    every good record in the file, not just its own.
+    """
+    if value is None or value == "":
+        return default
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _as_float(value: Any, default: float = 0.0) -> float:
+    """Coerce a record field to float, TOTALLY — never raises. See _as_int."""
+    if value is None or value == "":
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
 
 
 def _to_day(ts: str) -> str | None:
