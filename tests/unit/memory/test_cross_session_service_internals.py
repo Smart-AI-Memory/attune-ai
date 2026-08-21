@@ -33,6 +33,13 @@ class _FakeClient:
         self.calls.append(("set", key, kwargs))
         return True
 
+    def eval(self, script, numkeys, *args):
+        # Owner-checked release/refresh are ONE server-side script — a bare
+        # EXPIRE or DELETE would re-arm or remove a lock this process may no
+        # longer hold (library-review H6).
+        self.calls.append(("eval", args[0], args[1:]))
+        return 1
+
 
 class _FakeMemory:
     def __init__(self, client, use_mock=False):
@@ -105,8 +112,11 @@ def test_refresh_lock_extends_ttl_and_writes_heartbeat():
     s = BackgroundService(_FakeMemory(client))
     s._refresh_service_lock()
     names = [c[0] for c in client.calls]
-    assert "expire" in names and "set" in names
-    assert any(c == ("expire", KEY_SERVICE_LOCK, c[2]) for c in client.calls if c[0] == "expire")
+    assert "eval" in names and "set" in names
+    # The TTL is re-armed only if this process still owns the key, inside
+    # one script — a bare EXPIRE keeps ANOTHER service's lock alive.
+    assert "expire" not in names
+    assert any(c[0] == "eval" and c[1] == KEY_SERVICE_LOCK for c in client.calls)
     assert any(c[0] == "set" and c[1] == KEY_SERVICE_HEARTBEAT for c in client.calls)
 
 
