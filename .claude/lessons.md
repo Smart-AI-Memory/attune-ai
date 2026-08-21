@@ -22768,3 +22768,467 @@ format assumption before concluding the corpus lacks the field.
 - **A shipped spec whose status header still reads "draft" is a live status-truth bug — flip the header in the same PR that executes the spec, or the next reviewer inherits a false premise**: hit 2026-08-19 on context-compaction-retirement: the removal merged in PR #2093 (12.0.0) but requirements.md still opened with "Status: draft (2026-08-18) — no code changes are authorized until the chair reads and merges the spec PR" — a sentence that was false for a full day and would have misdirected any agent recalling the spec. The execute-PR checklist should treat the status header as part of the diff: if the PR completes a phase or the whole spec, the header flips in that PR, not in a later sweep. Fixed in the post-retirement review's residue PR (#2102, spec D3).
 
 - **The path-validation gate's AST scan does not count `Path.open()` as a file op — a module writing via `path.open("a")` is invisible to the enforcer that exists for exactly that pattern**: discovered live 2026-08-19 adding the context_fit telemetry append (PR #2103): an ALLOWLIST entry added for `src/attune/context/allocator.py` FAILED `test_allowlist_entries_are_still_needed` as "no longer needed" because `scan_source` in `tests/unit/gates/test_path_validation_gate.py` only matches the builtin `open()` call with a write mode, `.write_text()`/`.write_bytes()`, and mutating `shutil.*`/`os.*` — an `ast.Attribute` call named `open` (the `Path.open` idiom) never matches. Consequence: the gate's coverage claim ("modules with write-capable file ops must reference a validation helper or hold an allowlist entry") is narrower than its prose; any module can adopt write-capable `Path.open` without tripping it. When citing the gate as a receipt ("the module is a non-offender"), say which constructs the scan actually covers. Tightening the scan to include attribute-`open` with a write mode is pickable work — it would pull several currently-invisible writers into the ratchet, so land it with a re-seeded allowlist, not as a drive-by.
+
+- **A PR that RE-SEEDS a ratchet baseline (gate allowlist, count pin, snapshot) computes that baseline from its own branch tree — a sibling PR merging a new offender in between lands red MAIN even though both PRs were individually green**: hit 2026-08-19: the Path.open gate-widening chip re-seeded the path-validation ALLOWLIST from a branch cut before PR #2103 merged allocator.py's `path.open("a")` telemetry write; both PRs passed their own CI, the merged tree failed `test_no_new_unvalidated_file_op_modules` on every unit-suite lane, and main stayed red until hotfix #2107 added the missing entry. The baseline is a function of the WHOLE tree at merge time, not branch time — and PR CI can't catch it because each run merges with whatever main was at run start. Rule for any baseline-reseeding PR: immediately before merging, rebase onto latest origin/main and RE-RUN the derivation that produced the baseline (here `_current_offenders()`), diffing it against the seeded set; if siblings are in flight touching the scanned surface, sequence the reseed LAST. Same family as the receipts.md append-collision chain, but here the conflict is semantic (no textual conflict, so nothing goes DIRTY — the first warning is red main).
+
+  **Chip-prompt addendum (retro pushback, same day):** the spawning session is the only party that knows the in-flight siblings at spawn time — a chip prompt that commissions a ratchet reseed MUST enumerate unmerged PRs touching the scanned surface (or sequence the chip after they land). The 2026-08-19 red main traces to a chip prompt authored while its author's own offender (#2103) was still in flight and unmentioned.
+
+- **`gh run rerun --failed` re-tests the run's FROZEN merge snapshot — after fixing red main, the recovery for inherited-failure PRs is `gh pr update-branch`, never a rerun**: 2026-08-19: hotfix #2107 restored main, then reruns of #2105/#2106's failed Tests runs failed IDENTICALLY on the gate test the hotfix had just fixed — a rerun keeps the original run's merge commit, so it can never see the new main. `gh pr update-branch <n>` (or any push) triggers a fresh synchronize run against current main; when-green arms survive it. Cost when learned: one full CI cycle per PR plus diagnosis time.
+
+- **`mergeable: MERGEABLE` / `mergeStateStatus: CLEAN` read seconds after a sibling merges is a STALE pre-recompute value — the merge call itself is the truth**: 2026-08-19 union-merge probe: after merging PR 1, PR 2 polled CLEAN/MERGEABLE, then the actual `gh pr merge` refused with "Pull Request has merge conflicts", and a re-read settled to DIRTY/CONFLICTING. GitHub recomputes mergeability lazily; the first post-sibling-merge read can serve the old answer WITHOUT the UNKNOWN sentinel. Never gate a decision on a mergeability read taken within ~a minute of the base moving — re-read after a delay, or treat the merge attempt's own error as the authoritative signal. Extends the mergeStateStatus-first diagnosis lesson with its freshness caveat.
+
+- **Fail-open / never-raises contract fixes trip the broad-except
+  ratchet — register the new sites in the SAME PR or CI fails after
+  green local tests.** During the attune-ai library review, the R5
+  finding class is "a never-raises / logged-and-swallowed / fail-open
+  contract enforced with a too-narrow `except OSError`." The fix is to
+  widen it to `except Exception` (so a TypeError from an unserializable
+  payload, or a wrong-typed field, degrades like an OSError instead of
+  crashing). Every such fix ADDS a broad-except site, and
+  `tests/unit/gates/test_broad_except_ratchet.py::test_no_new_broad_except_sites`
+  fails on any new file not in its `_BASELINE` dict — even though the
+  local unit suite for the fix is fully green (the ratchet is a
+  separate gate). Hit twice in one session: PR #2112 (allocator.py,
+  role_telemetry.py) and PR #2117 (security_guard.py, telemetry_hook.py,
+  format_on_save.py) both went BLOCKED on `test (macos-*)` /
+  `coverage` / `build` with `AssertionError: New file(s) use
+  'except Exception'`. Fix: add each repo-relative posix path to
+  `_BASELINE` with the count (usually 1) and a one-line rationale
+  comment, in alphabetical position; the baseline is shrink-only, so a
+  raise needs a stated reason. Forward-looking: the remaining review
+  batches (2-5) will generate more of this exact class — grep the
+  touched files for `except Exception|except BaseException`, diff the
+  count against origin/main, and register any NEW file in the ratchet
+  baseline as part of the same fix commit, rather than eating a CI
+  round-trip. Diagnostic when a fix PR is BLOCKED with broad failures
+  (build + coverage + all test lanes fail fast): pull one lane's
+  `--log-failed`, grep for `short test summary|AssertionError`, and if
+  it names `test_no_new_broad_except_sites`, it's the ratchet, not a
+  code bug. (Related: worktree_path_guard blocks the Edit TOOL on a
+  scratch-worktree path when the session worktree differs — use Bash/
+  python to edit files in a cherry-picked fix worktree under the
+  scratchpad.)
+
+- **A dual-format loader (YAML *or* JSON in one function) usually has
+  two INCOMPATIBLE exception types for the identical failure — check
+  that both branches fail with the same class**: found 2026-08-20 in
+  `workflows/config.py:_load_file`, which picks a parser off the file
+  suffix: the JSON branch raises `json.JSONDecodeError`, which IS a
+  `ValueError` subclass; the YAML branch raised `yaml.YAMLError`, which
+  is NOT. Same function, same failure mode ("this config file is
+  syntactically broken"), two unrelated classes — so **no caller can
+  write a single `except` clause for it**, and any caller that tries
+  (`except ValueError`) silently handles the JSON half and crashes on
+  the YAML half. Neither branch is "wrong" in isolation, which is why
+  reading one branch at a time misses it; the defect only appears when
+  you line the branches up.
+  **Review heuristic**: at any format-dispatching parse
+  (`if path.suffix in (".yaml", ".yml"): ... else: json.loads(...)`,
+  or tomllib/configparser/pickle variants), enumerate what each branch
+  raises and require them to share a base class. The cheap fix is to
+  normalize the odd one out at the parse and document it
+  (`raise ValueError(f"Invalid YAML config in {path}: {exc}") from exc`),
+  which is a TYPE fix and leaves propagate-vs-degrade policy untouched —
+  worth keeping separate, because whether the loader should degrade at
+  all is usually a behavior call for the owner, and normalizing first
+  makes either answer a one-line change.
+  The regression test that proves it is the one asserting BOTH branches
+  fall out of ONE `except ValueError` — and note that the JSON case
+  passes even pre-fix, which is the control, not a weak test.
+
+- **A "same-class widening" list from a defect sweep OVER-COUNTS —
+  `grep` for the risky call with no ADJACENT catch is not the same as
+  "no catch", and per-site triage is what separates them**: 2026-08-20,
+  library-review batch 2 handed over 8 `yaml.safe_load`-with-no-adjacent-
+  `YAMLError`-catch sites for triage. **Two of the eight were already
+  fully correct**: `workflows/bug_predict_patterns.py:50` and
+  `routing/chain_executor.py:106` each sit inside a `try` whose
+  `except (yaml.YAMLError, OSError)` lives 17 and 31 lines BELOW the
+  parse, past an intervening loop body — far enough that a
+  proximity-window grep (and the R7a sweep rule, which requires an
+  enclosing `try` it can see) never associated them. A bulk "add the
+  catch everywhere" sweep would have added dead handlers at those two,
+  and flipped propagate-by-design behavior at two more
+  (`config/legacy.py`, `hooks/config.py`) where raising is the
+  established contract — 4 of 8 wrong, on a list where every entry
+  looked identical. Final triage: 3 fixed, 5 dismissed.
+  **The mechanics that make triage cheap and decisive**: for each site
+  (1) read the docstring's `Raises:` block — a documented class the
+  parser doesn't raise IS the bug, no further argument needed;
+  (2) grep the CALLERS' except sets — a caller catching
+  `(OSError, ValueError)` to degrade is a defeated contract, a caller
+  with a broad `except Exception` is a site that already degrades;
+  (3) check what the SAME function already does with a neighbouring
+  invalid input — if a wrong-schema file already raises uncaught
+  (e.g. pydantic `ValidationError` in `hooks/config.py`), then
+  "present but invalid → raise" is the site's established behavior and
+  a parse error propagating is consistent, not a hole;
+  (4) look for a sibling reading the SAME file — `_load_bug_predict_config`
+  and `WorkflowConfig._load_file` both auto-discover `attune.config.yml`
+  and disagreed about degrading, which is the finding worth escalating
+  rather than silently picking a side.
+  Generalizes beyond YAML: any class-widening list produced by pattern
+  match is a list of CANDIDATES, and the per-site contract read is the
+  work. Same family as the "spec-named work-scope drifts from code
+  reality — grep the actual instances" lesson, one layer down: there the
+  spec's named list was stale, here the sweep's generated list is
+  imprecise, and in both the code is the contract.
+
+- **zsh does NOT word-split unquoted parameters — a `$FILES` variable
+  holding a space-separated file list arrives at the pre-flight tools as
+  ONE argument, and both failure modes are quiet**: hit 2026-08-20 while
+  pre-flighting the pinned hooks on a 6-file diff (the dance CLAUDE.md
+  mandates before `git add`). `FILES="a.py b.py c.py"` then:
+  - `uv run ruff check $FILES` → `E902 No such file or directory` with
+    the ENTIRE space-joined string echoed back as a single path. Reads
+    like a missing file, not a quoting bug.
+  - `uv run --with pre-commit pre-commit run black --files $FILES` →
+    `black...(no files to check) Skipped`. **This one is the trap**: it
+    exits 0 and looks like "nothing to format", so the pre-flight appears
+    to have run clean when it never inspected a single file. You then
+    `git add` and let the real commit hooks discover the formatting,
+    which is exactly the stash/re-stage dance the pre-flight exists to
+    avoid.
+  This is bash muscle memory misfiring: bash/sh split unquoted `$FILES`
+  on IFS, zsh does not (POSIX-incompatible by design; `SH_WORD_SPLIT`
+  turns it on). **Use an array** — `FILES=(a.py b.py c.py)` then
+  `"${FILES[@]}"` — which is correct in both shells and survives paths
+  with spaces. `${=FILES}` also works but is zsh-only and unreadable.
+  Diagnostic tell: any tool reporting a path that visibly contains
+  spaces and multiple `.py` extensions is receiving one joined argument.
+  Companion tell for pre-commit specifically: `(no files to check)` on a
+  hook you KNOW matches your files means the paths didn't resolve — never
+  read it as a pass. Pairs with the existing `=word` PATH-lookup zsh
+  lesson (same shell, same class: zsh's parameter handling differs from
+  bash at exactly the spots the repo's mandated command recipes touch).
+
+- **`ast.parse` on a null-byte source raises a DIFFERENT exception
+  class per Python version — `ValueError` on CPython ≤3.11,
+  `SyntaxError` on 3.12+ — so a `SyntaxError`-only handler is silently
+  correct on new interpreters and broken on old ones; and the only
+  reason we caught it was a test that pinned the gate's own premise.**
+  2026-08-20, library-review C4a (PR #2122). Every AST-analysis path in
+  the tree (doc generators, fact-checkers, test generators,
+  architecture/performance tools) walks a SET of files and intends to
+  SKIP the unparseable ones — `except (OSError, SyntaxError): continue`.
+  On 3.10/3.11 a single corrupt or binary file with a `.py` extension
+  raises `ValueError`, escapes that handler, and **aborts the entire
+  batch** instead of skipping one file. 15 sites had it. Verify with:
+  `python3 -c "import ast; ast.parse('x=1\x00')"` — 3.10 prints
+  `ValueError: source code string cannot contain null bytes`, 3.12+
+  prints `SyntaxError: ...` with the same message text (the message is
+  identical, only the CLASS differs, which is why reading a traceback
+  from one version misleads you about the other). Fix: name BOTH,
+  `except (OSError, SyntaxError, ValueError)`. Where the handler body
+  reads `SyntaxError`-only attributes (`.msg`, `.lineno` — 3 of the 15
+  sites did), a blanket addition CRASHES INSIDE THE HANDLER; those need
+  a separate `except ValueError` branch that reports without them.
+  **Two generalizations bigger than this bug:** (1) an
+  exception-class-by-version difference is nearly invisible to review
+  and to a single-version local run — a repo whose CI matrix spans
+  several Pythons (this one spans 3.10-3.14) should treat "which class
+  does this raise?" as version-dependent until checked on the ends of
+  the range; (2) **when you write a gate, write a test that pins the
+  PREMISE the gate rests on.** My gate asserted "handlers must name
+  ValueError"; the separate premise test asserted "a null byte raises
+  ValueError, not SyntaxError" — and CI failed THAT test, not the gate,
+  which is the only reason the version split surfaced before a 3.10
+  user hit it. A gate whose premise is unpinned can enforce a rule that
+  is locally true and globally wrong.
+
+- **A sweep rule's hit list is a starting set, not a work list —
+  score it on a SECOND mechanical axis (does the exception actually
+  escape?) before triaging by judgment, and the list collapses.**
+  2026-08-20, library-review C3 (64 R7b hits → 7 worth fixing). The
+  rule found "a parsed name reaches `.get`/`[]` with no `isinstance`
+  guard". That says a defect is POSSIBLE, not that one exists, and
+  hand-triaging 64 sites by reading each one is a session's work.
+  Cheaper: add a second AST pass asking **"is the use inside a `try`
+  whose handlers include `Exception`/`BaseException`?"** That split 60
+  hits into 12 that already degrade (dismissed as a CLASS, with the
+  reason recorded — they do exactly what the guard would make them do)
+  and 47 that genuinely escape. Only then does human judgment run, on a
+  third axis, provenance: external/untrusted bytes (fix), stored-and-
+  replayed-later (hand to the batch that owns that surface), or
+  internal same-process writes (dismiss — a non-dict there means the
+  WRITER is broken, and a guard would hide that rather than fix it).
+  **Provenance alone is not enough and neither is the handler alone:**
+  `mcp/version_check.py` parses a live PyPI network response — the most
+  external source in the tree — and is correctly DISMISSED because
+  every `.get` sits inside its try behind a catch-all; meanwhile
+  `workflows/escalation/evaluator.py` parses LLM output and is a
+  CONFIRMED defect because its `.get` calls sit OUTSIDE the try, so a
+  JSON array from the evaluator breaks the chain in exactly the way the
+  handler's own comment ("Don't block on evaluator failure") says it
+  must not. Two mechanical axes then one judgment axis; never judgment
+  first. Corollary: **re-run the sweep against CURRENT head before
+  triaging** — the list generated before your own fixes merged
+  overstates the backlog (mine had 4 stale hits), and reporting it
+  would have been a self-inflicted false finding.
+
+- **"Atomic write" means atomic REPLACE, not atomic UPDATE — a fixed temp
+  filename plus a whole-file read-modify-write loses ~45% of concurrent
+  writes and reports success for every one of them** (library-review G1,
+  measured 2026-08-20): `file_stash.py` wrote `findings.jsonl.tmp` then
+  `.replace(findings.jsonl)`, which is a correct atomic replace and was
+  documented as the durability guarantee. Two OS processes × 20
+  `remember()` calls: **18 of 40 records lost**, `remember()` returned True
+  22 more times than records survived, and the log showed
+  `ENOENT: findings.jsonl.tmp -> findings.jsonl` — the peer's replace had
+  moved the SHARED, deterministically-named temp out from under this
+  process mid-write. Two independent defects wearing one costume: (1) the
+  temp name is shared, so writers destroy each other's temp files; (2) even
+  with unique temps, read-all → modify → write-all is a lost update, and
+  the loss happens AFTER a successful replace, so no error path can catch
+  it — the "never claim a write that did not land" guard is real but
+  strictly narrower than its comment implied. **Fixes, in order of
+  preference:** (a) for an append-only log, don't read-modify-write at all —
+  `open(path, "a")` and write one line; concurrent appends cannot erase each
+  other, and lazy TTL pruning on read makes the whole rewrite unnecessary;
+  (b) for a whole-dict store, hold a cross-process advisory lock and re-read
+  INSIDE it (`os.open(..., O_CREAT|O_EXCL)` is atomic on POSIX and Windows
+  alike, unlike `flock`/`msvcrt`; break locks older than a bounded age so a
+  crashed holder cannot wedge the store; a timed-out acquire must return
+  "did not write", never "proceed unsynchronized"); (c) always
+  `tempfile.mkstemp(dir=target.parent)` — never `with_suffix(".tmp")`.
+  **Where to look for the same shape:** `grep -rn 'with_suffix("\.tmp")'`
+  next to a `.replace(`. This tree had ~17; the `ops/` modules that already
+  use `mkstemp` are the reference implementation. **Severity calibration
+  worth copying:** the file backend is the FALLBACK — it becomes the active
+  writer exactly when Redis/AMS is down, i.e. in the degraded mode P15
+  exists to make safe, so "45% loss" is a degraded-mode property, not a
+  today-property. Check which backend `resolve_backend()` actually returns
+  before writing the severity line.
+
+- **A test that patches the boundary stops testing anything the moment the
+  code moves — and it stays green while it does** ("the mock defined the
+  contract", library-review class M, ruled 2026-08-20): three separate
+  green suites in `tests/unit/memory/` were guarding code paths that could
+  not work against the real system, and each failure had the same shape —
+  the test patched the exact seam the code under test crosses, so the
+  assertion measured the mock, not the code. Concrete instances, all three
+  hit in one session: (a) `test_redis_auto_detect.py` referenced
+  `_check_server_reachable` **23 times**, patching it throughout, so the
+  endpoint the probe actually dials was never exercised — which is how a
+  probe hard-coded to `127.0.0.1:6379` shipped while clients connected to
+  the resolved endpoint (silent mock fallback, total write loss under a
+  success receipt); when the fix switched the probe to `Redis.from_url`,
+  a sibling test patching `redis.Redis` silently stopped matching and
+  started passing against the developer's real local server. (b)
+  `test_unified.py` mocked `_iter_all_patterns` to yield FLAT records, a
+  shape the writer has never produced (it nests under `metadata`) — green
+  against a 100%-non-functional path AND enshrining the wrong nesting.
+  (c) `test_file_stash.py` simulated EPERM by patching `Path.replace` and
+  matching on a `.jsonl.tmp` suffix, which stopped matching the instant the
+  temp names were made per-process unique. **Rule:** name the boundary the
+  defect crosses — an endpoint, a filesystem, a stored record's shape, a
+  process boundary — and exercise THAT for real; patch only what is
+  demonstrably not the subject. **Cheap real substitutes exist and are
+  usually smaller than the mock**: a real listening socket answering RESP
+  (~25 lines, no redis-server needed, and asserted in both polarities so it
+  fails whether or not the machine happens to run a Redis on 6379); a real
+  `chmod` refusal (skipped for Windows and root, honestly, rather than
+  faked); records built from the writer's own `to_dict()` and then damaged,
+  never hand-written fixtures. **Diagnostic that finds these fast:**
+  `grep -c` the patch target in a suite — a double-digit count for one
+  internal seam means the suite is asserting intentions. **Acceptance bar:**
+  a fix whose test mocks the boundary it is fixing has not been fixed.
+
+- **When a defect is about HOW a result was reached, an end-state
+  assertion cannot see it — and the test will pass against the broken
+  code** (library-review H2, caught on my own test 2026-08-20): the
+  three distributed locks acquired with `SETNX` and then set a TTL with a
+  SECOND `EXPIRE` command; a crash in the window leaves an immortal key
+  with no reaper (the background-service singleton lock means the service
+  can never start again). My first regression test asserted the obvious
+  thing — "after `acquire_lock`, `TTL > 0`" — with a REAL Redis, a REAL
+  client and no mocks anywhere, and it **passed against the pre-fix
+  code**, because `SETNX`+`EXPIRE` leaves exactly the same TTL whenever
+  nothing crashes. A fully-real test can still be blind: this is a
+  sibling of "the mock defined the contract", not an instance of it, and
+  the failure is the ASSERTION's, not the fixture's. **Rule:** name what
+  distinguishes the fixed code from the broken code, and check whether
+  your assertion can observe THAT. If the two implementations produce
+  identical end states on the happy path, the assertion must reach for
+  the mechanism. **Ways to observe a mechanism for real, cheapest
+  first:** (a) server- or OS-side counters — Redis `INFO commandstats`
+  deltas proved zero `EXPIRE` calls were sent while the key still came
+  out with a TTL, which means the TTL arrived with the `SET`; (b) a
+  subprocess killed with `os._exit(9)` at the exact point of interest
+  (the live-fire receipt: pre-fix `exists=1 ttl=-1`, post-fix `ttl=30`);
+  (c) strace/dtrace-class tracing, when nothing cheaper exists. The
+  counter-delta form is preferable to a raw total: it tolerates
+  background traffic on a shared test server. **Smell that should
+  trigger this check:** a regression test that passes on the first run
+  before you have applied the fix. Always run a new regression test
+  against pre-fix source — if it does not go red, it is not guarding the
+  class.
+
+- **`pytest tests/unit` is a DIFFERENT experiment from what CI runs —
+  verify with the tree `testpaths` names, or ship green and go red on
+  every lane** (hit 2026-08-20, library-review tier 1): a memory-layer
+  fix was verified with `pytest tests/unit` (20832 passed), committed,
+  pushed — and CI failed **all 16 test matrix lanes plus `coverage` and
+  both `clock-tz` lanes**. The fix was fine; the command was wrong. This
+  repo keeps memory tests in TWO trees — `tests/unit/memory/` AND
+  `tests/memory/` — and `pyproject.toml` sets `testpaths = ["tests"]`, so
+  CI collects both. Two files under `tests/memory/` asserted the exact
+  kwargs the old code passed to `redis.Redis` and were invisible to the
+  narrower run. **Rule: read `testpaths` (and `norecursedirs`) once, and
+  make the local verification command match it** — `pytest tests/ -n auto`
+  with the known-environmental suites `--ignore`d is the honest local
+  equivalent, not a subtree that happens to be where you were working.
+  **Cheap pre-push check when a change touches a widely-imported symbol:**
+  `grep -rln "<symbol>" tests/ | grep -v "^tests/unit/"` — anything
+  outside the tree you ran is a lane you have not tested. **Related smell
+  worth naming:** the surviving `tests/<area>/` vs `tests/unit/<area>/`
+  split is itself a trap — two homes for tests of one module means every
+  contributor's habitual command covers only half of them. Prefer one
+  home; where the split must stay, the divergence is a standing reason to
+  run the full tree.
+
+- **Bumping the `attune-forms` dependency floor drags in the FULL library behavior delta, and three elicitation test files are BYTE-MIRRORS of attune-forms' own tests — hand-editing a mirrored file is the wrong fix; re-sync it from the forms source via `scripts/sync_forms_mirrors.py`**: hit 2026-08-20 doing the forms 0.7.0 D3 MCP-schema mirror sync (PR #2131). The task was framed as "sync the hand-maintained MCP schema in `src/attune/mcp/tool_schemas.py::get_elicitation_tools()`" — a contained change — but raising the floor to `attune-forms>=0.7.0` (mandatory for the sync) broke **11** attune-ai tests that pin the OLD library's behavior (all green on 0.6.0 baseline → purely bump-induced, not the refactor). Two durable takeaways:
+
+1. **Scope the bump, not just the named surface.** Before scoping a forms-floor bump, `grep -rln "attune_forms\|form_to_widget_html\|form_from_dict\|form_to_elicitation_schema\|collect_form_response" tests/` — every hit characterizes library behavior that the bump may change. The 0.6.0→0.7.0 deltas that broke tests: boolean projects to `{"type":"string","enum":["Yes","No"]}` not `{"type":"boolean"}` (forms #46); `response_id` gained an 8-hex uniqueness suffix; `multi_select` `default` now must be a LIST (a bare string is rejected); the widget submit JS dispatches on a `data-collect` read-mode (`checked-one`/`checked-many`/`rulings`/`ranked`/`rulings-with-text`) instead of `ftype === '<construct>'`; the field/form JSON schema gained `additionalProperties:false`, typed object-array extras, a multi-type `default`, and `inferred_from`.
+
+2. **`tests/unit/elicitation/{test_widget_roundtrip,test_needs_widget,test_widget_css_families}.py` are BYTE-MIRRORS** of attune-forms' own test files, kept in sync by `scripts/sync_forms_mirrors.py` (only the import block is swapped to `attune.elicitation` aliases; `MIRRORED_FILES` names them). I hand-edited `test_widget_roundtrip.py` to re-characterize it, then discovered the mirror mechanism (via `tests/unit/scripts/test_sync_forms_mirrors.py`) and reverted — the correct fix is `python scripts/sync_forms_mirrors.py --source <attune-forms 0.7.0 checkout>` (default `~/attune-forms`; or unpack the published sdist — the wheel has no tests — and point `--source` at it), then `--check` to confirm clean. The synced source version is richer and correct; a hand-edit both drifts from the source AND is inferior. There is NO CI drift-guard that runs `--check` (CI has no forms checkout), so the mirror parity is a manual/release-prep step — easy to miss.
+
+  **The permanent fix for the MCP-schema half:** stop hand-declaring the v2 rich schema — import it (`from attune_forms.mcp_server import _form_schema`) so the whole field/form contract flows through on every future forms release. Keep the v1 4-type AskUserQuestion schema hand-declared (D10 enum-honesty: AskUserQuestion has no native number/date/construct control). A drift test pinning attune-ai's v2 schema to the library's `_field_schema()`/`_form_schema()` retires the recurring D3 hand-sync gate. Pairs with the "spec-named work-scope drifts from code reality — grep the actual instances" lesson (same family: the stated scope understates the real surface; the code is the contract).
+
+- **A PR's CI runs against the head+base MERGE ref, so a broken `main`
+(from a parallel PR that merged between your pushes) surfaces as
+failures on YOUR PR in tests that don't exist on your branch — diagnose
+that before suspecting your diff.** Diagnostic order: (1) extract the
+failing test node IDs from the job log; (2) `grep` them under your
+branch's `tests/` — any that are ABSENT came in via the merge with
+`main`, not your code; (3) check `main`'s own latest COMPLETED run
+(`gh run list --workflow=tests.yml --branch=main --status=completed
+--limit=1 --json conclusion,headSha`) — if it's `failure` on the same
+tests, `main` is broken and your PR merely inherits it. Do NOT merge
+past it and do NOT "fix" your diff; the fix belongs on `main`.
+
+Concrete hit 2026-08-20 (#2135): the FIRST head passed all 12 required
+checks incl. `test (windows-latest, 3.12)`; a SECOND, coverage-only push
+failed all 5 Windows lanes — but on
+`test_a_deleted_working_directory_cannot_bypass_isolation` /
+`test_release_does_not_delete_a_lock_we_no_longer_own` /
+`test_eperm_through_public_stash_entry_returns_false`, none of which were
+on the branch. Between the two pushes the memory-durability wave
+(#2128/#2129/#2130) admin-merged and broke `main`'s Windows lanes, and
+the second run's merge ref inherited the breakage. The "coverage commit
+broke Windows" hypothesis was wrong; the merge ref was the culprit.
+
+Extends the existing "check main's Windows lane BEFORE diagnosing your
+diff" lesson with two additions: the **merge-ref-inheritance** mechanism
+and the **"failing test absent from your branch" tell** as the fast
+disambiguator. Pairs with "admin-merging before Windows lanes complete
+buries a real bug on main" — this is the downstream cost that trap
+imposes on every other in-flight PR, not just the next one.
+
+- **Wiring a previously-no-op API param has two non-obvious traps —
+  a test that codified the bug, and a defaulted forward that downgrades
+  a safer backend-computed default.** Both hit in one PR (#2140, the MCP
+  no-op-params cluster, batch-1 review). (1) **The bug may be a passing
+  test.** `attune_set_level` accepted `level=True` (bool is an `int`
+  subclass, so `isinstance(True, int)` is True → used as 1), and
+  `test_server_handlers.py` literally asserted `set_level({"level":
+  True})["success"] is True`. Fixing the validation (`isinstance(x, bool)
+  or not isinstance(x, int)`) breaks that test — so when you fix a
+  validation gap, GREP the tests for one asserting the old (buggy)
+  behavior and FLIP it, don't just add a new one; a green suite can be
+  pinning the bug open. (2) **A defaulted param forwarded to a
+  security-sensitive backend can override a safer auto-computed default.**
+  `memory_store`'s `classification` defaults to `"PUBLIC"`; forwarding
+  that default into `persist_pattern` would set `explicit_classification=
+  PUBLIC`, which `_resolve_classification` honors OVER auto-classify —
+  silently downgrading content auto-classify would have flagged
+  SENSITIVE (a cross-user-read leak, since check_access PUBLIC=everyone).
+  The safe wiring is EXPLICIT-ONLY: forward `args.get("classification")`
+  (None when absent → auto-classify) rather than the defaulted local.
+  General rule: before forwarding a param that has a default to a
+  backend, ask "does the backend compute a safer default when this is
+  absent?" — if yes, forward only the explicitly-provided value, never
+  the caller-side default. Verify with a non-mocked round trip (absent →
+  still SENSITIVE; explicit PUBLIC → PUBLIC), because a mocked
+  `assert_called_with` proves the kwarg is passed, not that the security
+  outcome is right.
+
+- **A source edit's blast radius includes PROJECTED and VALIDATED
+  surfaces you never touched — two of them each fired a gate in one
+  13.0.0 release-polish stretch (#2140/#2141), on a downstream I didn't
+  anticipate.** (1) **`src/attune/mcp/tool_schemas.py` is a projection
+  source for generated help templates.** The MCP tool schemas render to
+  `plugin/help/generated/references/tool-*.md` via
+  `scripts/generate_reference_templates.py` (deterministic jinja2, NO
+  LLM). Editing a tool's schema or `description` drifts its own template
+  AND — through the "Related Topics" section that embeds neighboring
+  tools' descriptions — the templates of every tool that lists it as
+  related (changing `memory_search`'s description drifted
+  `tool-memory-retrieve/forget/store` too).
+  `tests/unit/help/test_generated_help_drift.py::
+  test_generated_templates_in_sync` then fails on EVERY test lane —
+  one failure × 15 lanes READS AS "a lot of failing tests" but is a
+  single projection-drift. Fix:
+  `python scripts/generate_reference_templates.py --write` and commit
+  the regenerated `plugin/help/generated/references/` in the SAME PR as
+  the schema edit. Before assuming a schema edit is self-contained,
+  `grep -rl <file-or-symbol> scripts/` for a projector. (2) **A `.md`
+  under `docs/` cannot relative-link to a repo-ROOT file.**
+  `docs/migration/upgrading-to-13.0.0.md` linking `../../CHANGELOG.md`
+  (CHANGELOG lives at the repo root, OUTSIDE the `docs/` tree) aborts
+  the `build` check: mkdocs strict only resolves links within `docs/`
+  and raises WARNING "target ... not found among documentation files",
+  and strict mode turns any warning into exit 1. Use the absolute
+  GitHub blob URL — it resolves in repo browsing, on the rendered
+  mkdocs site, AND passes strict (external URLs aren't validated).
+  Verify locally with `uv run --extra docs mkdocs build --strict`
+  (exit 0) before pushing. Trap: `build` (mkdocs strict) is NOT in the
+  branch-protection required set, so a required-checks-only CI poller is
+  blind to it — add `build` to the poll set for any docs-touching PR.
+
+- **In Claude Code the enhanced interactive-form surface that
+  round-trips is `elicitation_render_widget` → `mcp__visualize__
+  show_widget`, NOT the native `elicitation_ask` (which declines in this
+  client) — stop defaulting to bare `AskUserQuestion` (the D21 failure
+  mode).** Proven live 2026-08-20 naming the 13.0.0 forms capability:
+  `elicitation_ask` (native MCP `elicitation/create`) returned
+  `{success:false, action:"decline"}` here, but the widget path worked
+  end-to-end. The working D21 fallback ORDER in Claude Code: (1) try
+  `elicitation_ask` — declines/unsupported in this client; (2)
+  `elicitation_render_widget(form)` returns self-contained HTML (its own
+  `<style>`+`<script>`, submit wired to the global `sendPrompt`), pass
+  its `html` verbatim to `show_widget` (call `mcp__visualize__read_me`
+  once first, silently) — it renders the rich `decision`/`pushback`/
+  `progress`/`ranking`/`triage`/… cards and the user's pick posts back a
+  fenced ```json {"__elicitation_response__":true,"answers":{…}}``` block
+  as their next message; (3) parse that block and validate it with
+  `elicitation_collect_response` (R4 — never silently accept); the
+  AskUserQuestion batch (`elicitation_render_form`) is the plain-surface
+  FLOOR, not the starting point. Live receipt: a `decision` card
+  (recommended badge + rationale + per-option tradeoffs) rendered, the
+  user submitted, `{"headline":"Enhanced forms"}` came back and
+  validated. Build the `FormSchema` as data (`form_from_dict` shape:
+  `{title, fields:[{id, text, type, options, recommended, rationale,
+  option_notes}]}`) and let the surface be chosen — the widget path is
+  available in the primary client and is the higher-efficiency surface,
+  so a multi-dimension ask should render as one of these, not as prose
+  or a bare button-turn.
+
+- **When the format-on-save hook strips an import before its usage
+  lands, and the import + first usage are in DIFFERENT file regions
+  (top-of-file import vs. a usage 50 lines down — so they can't be one
+  Edit), add the USAGE first, then the import.** The existing lesson
+  ("add import + first usage in the same edit") only works when both
+  fit one contiguous `old_string`. For a new dataclass `field(...)`
+  default, a helper reference in a function body, etc., the two sites
+  are far apart. The fix exploits what the hook actually auto-fixes:
+  ruff/black auto-remove UNUSED imports (F401) but do NOT auto-fix
+  UNDEFINED names (F821). So: (1) Edit the usage site first, referencing
+  the not-yet-imported name (file is briefly F821-broken, but the format
+  hook leaves it alone); (2) Edit the import in — now the name is "used",
+  so the next hook pass keeps it. Proven live 2026-08-20 wiring
+  `default_storage_dir` + `field` into `control_panel.py` (import at
+  line 39/77, usage at line 95): adding `field` to the dataclasses
+  import first got it stripped on the very next hook pass; adding the
+  `field(default_factory=...)` usage first, then the two imports, stuck.
+  Verify after with a grep that both the import and the usage survived.
