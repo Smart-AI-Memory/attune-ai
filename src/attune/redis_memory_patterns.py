@@ -24,7 +24,12 @@ warnings.warn(
 import json  # noqa: E402
 from typing import TYPE_CHECKING  # noqa: E402
 
-from .memory.types import AgentCredentials, StagedPattern, TTLStrategy  # noqa: E402
+from .memory.types import (  # noqa: E402
+    AgentCredentials,
+    StagedPattern,
+    TTLStrategy,
+    parse_stored_record,
+)
 
 
 class PatternStagingMixin:
@@ -97,7 +102,12 @@ class PatternStagingMixin:
         if raw is None:
             return None
 
-        return StagedPattern.from_dict(json.loads(raw))
+        # Deserialize-here / subscript-there (library-review I-4): a
+        # legacy or hand-edited value that parses to a LIST makes
+        # from_dict raise TypeError from inside the call, past a caller
+        # whose except tuple lists only JSONDecodeError. parse_stored_record
+        # collapses all three failure modes to None.
+        return parse_stored_record(StagedPattern, raw, key=key)
 
     def list_staged_patterns(
         self,
@@ -118,8 +128,14 @@ class PatternStagingMixin:
 
         for key in keys:
             raw = self._get(key)
-            if raw:
-                patterns.append(StagedPattern.from_dict(json.loads(raw)))
+            if not raw:
+                continue
+            # One unreadable key must not block the listing that backs
+            # every promotion (library-review I-4, P15: degrade, never
+            # block).
+            staged = parse_stored_record(StagedPattern, raw, key=key)
+            if staged is not None:
+                patterns.append(staged)
 
         return patterns
 
