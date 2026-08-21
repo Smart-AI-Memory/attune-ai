@@ -1,0 +1,64 @@
+{
+  "attempts": [
+    {
+      "at": "2026-08-20T11:30:03.030180+00:00",
+      "captured": 5,
+      "outcome": "complete"
+    }
+  ],
+  "date": "2026-08-20",
+  "github": {
+    "clones_14d": 127943,
+    "forks": 0,
+    "stars": 10,
+    "views_14d": 553
+  },
+  "manifest": {
+    "captured": [
+      "attune-ai",
+      "attune-rag",
+      "attune-help",
+      "attune-author",
+      "attune-verify"
+    ],
+    "complete": true,
+    "expected": [
+      "attune-ai",
+      "attune-rag",
+      "attune-help",
+      "attune-author",
+      "attune-verify"
+    ],
+    "missing": [],
+    "observed_at": "2026-08-20T11:30:03.030914+00:00",
+    "source": "pypistats.org/api/recent"
+  },
+  "pypi_recent": {
+    "attune-ai": {
+      "last_day": 95,
+      "last_month": 2079,
+      "last_week": 150
+    },
+    "attune-author": {
+      "last_day": 0,
+      "last_month": 222,
+      "last_week": 34
+    },
+    "attune-help": {
+      "last_day": 433,
+      "last_month": 28609,
+      "last_week": 1032
+    },
+    "attune-rag": {
+      "last_day": 138,
+      "last_month": 50345,
+      "last_week": 302
+    },
+    "attune-verify": {
+      "last_day": 144,
+      "last_month": 2317,
+      "last_week": 478
+    }
+  },
+  "taken_at": "2026-08-20T11:30:03.030914+00:00"
+}
