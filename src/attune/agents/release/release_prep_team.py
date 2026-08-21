@@ -122,11 +122,17 @@ class ReleasePrepTeam:
                 logger.info(f"Redis not available (non-fatal): {e}")
                 self.redis = None
         elif REDIS_AVAILABLE:
-            # Try default localhost Redis
+            # No URL passed: fall back to THE CONFIGURED endpoint, not a
+            # literal localhost:6379. A hardcoded pair ignores REDIS_URL
+            # entirely, so a team running against rediss://cache:6380/3
+            # would silently coordinate through a different server (or
+            # none) — class H1.
             try:
-                self.redis = redis_lib.Redis(host="localhost", port=6379, decode_responses=True)
+                from attune.memory.recall_redis import connect_recall_redis
+
+                self.redis = connect_recall_redis(decode_responses=True)
                 self.redis.ping()
-                logger.info("Release team connected to local Redis")
+                logger.info("Release team connected to configured Redis")
             except Exception:  # noqa: BLE001
                 # INTENTIONAL: Redis is optional
                 self.redis = None

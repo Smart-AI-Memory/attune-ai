@@ -410,12 +410,21 @@ def cmd_doctor(args: Namespace) -> int:
             _warn(f"{pkg_name} not installed", "optional")
 
     # 5. Redis connectivity
+    #
+    # Probe THE CONFIGURED endpoint, via the canonical resolver. A bare
+    # ``redis.Redis(...)`` defaults to localhost:6379 no matter what
+    # REDIS_URL says, so `attune doctor` used to report reachability for
+    # a server the user does not run — the H1 split-brain oracle, in the
+    # one command whose entire job is telling the truth about the
+    # environment.
     try:
-        import redis as _redis_mod
+        from attune.memory.config import resolve_redis_connection
+        from attune.memory.recall_redis import connect_recall_redis
 
-        client = _redis_mod.Redis(socket_connect_timeout=2)
+        resolved = resolve_redis_connection()
+        client = connect_recall_redis(socket_connect_timeout=2, socket_timeout=2)
         client.ping()
-        _ok("Redis server reachable")
+        _ok(f"Redis server reachable ({resolved.redacted_url})")
     except ImportError:
         _warn("Redis connectivity", "redis package not installed")
     except Exception:  # noqa: BLE001

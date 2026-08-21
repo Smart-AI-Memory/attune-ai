@@ -178,18 +178,40 @@ class TestRedisOptionalInit:
         team = rpt.ReleasePrepTeam(redis_url="redis://example:6379/0")
         assert team.redis is None
 
-    def test_no_url_tries_localhost(self, monkeypatch):
-        client = FakeRedisClient()
-        fake_lib = type("L", (), {"Redis": staticmethod(lambda **kw: client)})
-        monkeypatch.setattr(rpt, "REDIS_AVAILABLE", True)
-        monkeypatch.setattr(rpt, "redis_lib", fake_lib)
-        team = rpt.ReleasePrepTeam()
-        assert team.redis is client
+    # The two no-URL cases below use a REAL listening socket rather than a
+    # patched ``redis_lib``. They previously asserted that a fake lib's
+    # ``Redis(**kw)`` was called and were named "tries_localhost" —
+    # pinning a literal endpoint, which is class H1: a team configured
+    # against rediss://cache:6380/3 would have coordinated through a
+    # different server, or none. Patching the lib also proved only that
+    # the test handed itself its own fake (class M), never which endpoint
+    # was dialled. The contract is now "no URL → the CONFIGURED endpoint".
 
-    def test_no_url_localhost_down_degrades_to_none(self, monkeypatch):
-        fake_lib = type("L", (), {"Redis": staticmethod(lambda **kw: FakeRedisClient(False))})
+    def test_no_url_uses_configured_endpoint(self, monkeypatch):
+        from tests.support.redis_stub import RespStub
+
+        stub = RespStub()
         monkeypatch.setattr(rpt, "REDIS_AVAILABLE", True)
-        monkeypatch.setattr(rpt, "redis_lib", fake_lib)
+        for name in ("ATTUNE_REDIS_URL", "REDIS_PASSWORD", "REDIS_HOST", "REDIS_PORT"):
+            monkeypatch.delenv(name, raising=False)
+        monkeypatch.setenv("REDIS_URL", f"redis://127.0.0.1:{stub.port}/0")
+        try:
+            team = rpt.ReleasePrepTeam()
+            assert team.redis is not None, (
+                "no-URL init did not reach the CONFIGURED endpoint, which a "
+                "real server was answering on"
+            )
+            assert all(agent.redis is team.redis for agent in team.agents)
+        finally:
+            stub.close()
+
+    def test_no_url_configured_endpoint_down_degrades_to_none(self, monkeypatch):
+        from tests.support.redis_stub import closed_port
+
+        monkeypatch.setattr(rpt, "REDIS_AVAILABLE", True)
+        for name in ("ATTUNE_REDIS_URL", "REDIS_PASSWORD", "REDIS_HOST", "REDIS_PORT"):
+            monkeypatch.delenv(name, raising=False)
+        monkeypatch.setenv("REDIS_URL", f"redis://127.0.0.1:{closed_port()}/0")
         team = rpt.ReleasePrepTeam()
         assert team.redis is None
 
