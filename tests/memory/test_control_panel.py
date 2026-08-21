@@ -75,7 +75,7 @@ class TestControlPanelConfig:
         config = ControlPanelConfig()
         assert config.redis_host == "127.0.0.1"
         assert config.redis_port == 6379
-        assert config.storage_dir == "./memdocs_storage"
+        assert config.storage_dir.endswith("memdocs_storage")
         assert config.audit_dir == "./logs"
         assert config.auto_start_redis is True
 

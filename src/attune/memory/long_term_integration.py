@@ -74,7 +74,7 @@ class SecureMemDocsIntegration(PatternPipelineMixin, PatternOperationsMixin):
     def __init__(
         self,
         claude_memory_config=None,
-        storage_dir: str = "./memdocs_storage",
+        storage_dir: str | None = None,
         audit_log_dir: str | None = None,
         classification_rules: dict[Classification, ClassificationRules] | None = None,
         enable_encryption: bool = True,
@@ -84,7 +84,8 @@ class SecureMemDocsIntegration(PatternPipelineMixin, PatternOperationsMixin):
 
         Args:
             claude_memory_config: Configuration for Claude memory
-            storage_dir: Directory for MemDocs storage
+            storage_dir: Directory for MemDocs storage. When None,
+                resolves to the home-anchored default store.
             audit_log_dir: Directory for audit logs
             classification_rules: Custom rules (defaults if None)
             enable_encryption: Enable encryption for SENSITIVE patterns
@@ -122,7 +123,7 @@ class SecureMemDocsIntegration(PatternPipelineMixin, PatternOperationsMixin):
         logger.info(
             "secure_memdocs_initialized",
             encryption_enabled=self.encryption_enabled,
-            storage_dir=storage_dir,
+            storage_dir=str(self.storage.storage_dir),
             audit_dir=audit_log_dir,
         )
 

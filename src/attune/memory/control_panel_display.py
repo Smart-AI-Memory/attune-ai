@@ -17,6 +17,8 @@ from typing import TYPE_CHECKING, Any
 
 import structlog
 
+from .storage_backend import default_storage_dir
+
 if TYPE_CHECKING:
     from .control_panel import MemoryControlPanel
 
@@ -188,7 +190,7 @@ Quick Start:
     )
     parser.add_argument(
         "--storage",
-        default="./memdocs_storage",
+        default=default_storage_dir(),
         help="Long-term storage directory",
     )
     parser.add_argument(

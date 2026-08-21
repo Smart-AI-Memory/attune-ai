@@ -36,7 +36,7 @@ from __future__ import annotations
 import json
 import time
 import warnings
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -74,6 +74,7 @@ from .redis_bootstrap import (
     stop_redis,
 )
 from .short_term import RedisShortTermMemory
+from .storage_backend import default_storage_dir
 from .types import AccessTier, AgentCredentials
 
 # Suppress noisy warnings in CLI mode
@@ -91,7 +92,7 @@ class ControlPanelConfig:
 
     redis_host: str = "127.0.0.1"
     redis_port: int = 6379
-    storage_dir: str = "./memdocs_storage"
+    storage_dir: str = field(default_factory=default_storage_dir)
     audit_dir: str = "./logs"
     auto_start_redis: bool = True
 
