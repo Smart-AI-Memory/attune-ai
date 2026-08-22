@@ -1187,28 +1187,17 @@ this section only if core-worthy (and then keep both copies in sync).
   — authoritative and immune to the local stale-object trap that
   muddied diagnosis; (4) when archaeology spirals, stop theorizing and
   fact-check trees directly (`git diff <ref-a> <ref-b> --stat` — an
-  empty diff settles arguments instantly). Pairs with the "harness
+  empty diff settles arguments instantly); (5) the SAME reconciliation
+  applies to a rejected or interrupted **Edit** — `grep` the exact
+  target line before re-applying, because the rejection message is not
+  proof that nothing was written (an append that reported "NOT
+  written" was already on disk, and re-applying duplicated the
+  suffix); (6) prefer an `old_string` that is NOT a strict prefix of
+  the intended `new_string`, so an accidental double-apply fails
+  loudly instead of silently duplicating. Pairs with the "harness
   safety classifier blocks bundled-destructive scripts" lesson — same
   root cause family (compound commands + interruption), this one is
   the state-reconciliation half.
-
-- **A user-rejected Edit tool call may have PARTIALLY landed —
-  grep the target region before re-applying after any
-  interruption/rejection**: 2026-06-11, an Edit appending
-  `, score` to a return statement was interrupted ("user doesn't
-  want to proceed… new_string was NOT written"), yet the change
-  WAS on disk; re-applying the same Edit on resume then matched
-  `return findings, suggestions, summary` as a PREFIX of the
-  already-updated line and produced `..., score, score` (caught
-  by a `ValueError: too many values to unpack` test failure, not
-  by the edit itself). Two rules: (1) after ANY
-  rejected/interrupted Edit, `grep` the exact target line before
-  re-applying — the rejection message is not proof nothing was
-  written; (2) prefer old_strings that are not a strict prefix
-  of the intended new_string (include trailing context), so an
-  accidental double-apply fails loudly instead of duplicating
-  the suffix. Extends the "interrupted compound Bash command may
-  have partially executed" lesson to the Edit-tool surface.
 
 - **Teaching a scanner a new safe idiom can make its gate go BLIND —
   and a shrink-only allowlist ratchet then demands you delete the
