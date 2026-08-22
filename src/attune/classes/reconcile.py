@@ -117,6 +117,51 @@ def gh_runs_provider(repo: str, head_sha: str) -> list[dict[str, Any]]:
     return data if isinstance(data, list) else []
 
 
+def _runs_for_sha(runs: list[dict[str, Any]], head_sha: str) -> list[dict[str, Any]]:
+    """Keep only runs for ``head_sha``. The binding is ours to enforce."""
+    for_this_sha = [r for r in runs if str(r.get("headSha", head_sha)) == head_sha]
+    if for_this_sha:
+        return for_this_sha
+    others = sorted({str(r.get("headSha", ""))[:9] for r in runs if r.get("headSha")})
+    raise ReconcileError(
+        "sha-mismatch",
+        f"runs exist for {others} but none for {head_sha[:9]} — "
+        "a green run for an earlier commit does not authorize",
+    )
+
+
+def _allowlisted_runs(
+    runs: list[dict[str, Any]], allowed_workflows: tuple[str, ...]
+) -> list[dict[str, Any]]:
+    """Keep only runs whose success means the gate suite actually ran."""
+    allowed = [r for r in runs if str(r.get("name", "")) in allowed_workflows]
+    if allowed:
+        return allowed
+    seen = sorted({str(r.get("name", "?")) for r in runs})
+    raise ReconcileError(
+        "workflow-not-allowlisted",
+        f"no run from {list(allowed_workflows)}; saw {seen}",
+    )
+
+
+def _first_green(runs: list[dict[str, Any]], head_sha: str) -> dict[str, Any]:
+    """The authorizing run, or a refusal naming why none qualifies."""
+    green = [r for r in runs if str(r.get("conclusion", "")) == _GREEN]
+    if green:
+        return green[0]
+    in_flight = [r for r in runs if str(r.get("status", "")) != "completed"]
+    if in_flight:
+        raise ReconcileError(
+            "still-running",
+            f"{len(in_flight)} allowlisted run(s) not yet complete for {head_sha[:9]}",
+        )
+    conclusions = sorted({str(r.get("conclusion", "?")) for r in runs})
+    raise ReconcileError(
+        "not-green",
+        f"allowlisted run(s) concluded {conclusions}; only {_GREEN!r} authorizes",
+    )
+
+
 def reconcile(
     repo: str,
     head_sha: str,
@@ -125,6 +170,10 @@ def reconcile(
     allowed_workflows: tuple[str, ...] = ALLOWED_WORKFLOWS,
 ) -> ReconcileReceipt:
     """Prove an allowlisted workflow succeeded for exactly ``head_sha``.
+
+    A short pipeline of refusals: each helper either narrows the candidate
+    runs or raises with the reason. Every path fails CLOSED — an
+    unprovable reconcile is never treated as green.
 
     Args:
         repo: ``owner/name`` of the repository being released.
@@ -136,55 +185,21 @@ def reconcile(
         A :class:`ReconcileReceipt` naming the run that authorizes.
 
     Raises:
-        ReconcileError: No run, none from an allowlisted workflow, none
-            still in flight resolved, a run for a different commit, or
-            no successful conclusion. Every path fails CLOSED — an
-            unprovable reconcile is never treated as green.
+        ReconcileError: Bad SHA, no run, a run only for another commit,
+            none from an allowlisted workflow, none complete, or none
+            successful.
 
     """
     if not head_sha or len(head_sha) < 40:
         raise ReconcileError("bad-head-sha", f"{head_sha!r} is not a full 40-char SHA")
 
-    provider = runs_provider or gh_runs_provider
-    runs = provider(repo, head_sha)
+    runs = (runs_provider or gh_runs_provider)(repo, head_sha)
     if not runs:
         raise ReconcileError("no-run", f"no workflow run found for {head_sha[:9]} in {repo}")
 
-    # A provider may return runs for other commits; the binding is ours
-    # to enforce, not the provider's to promise.
-    for_this_sha = [r for r in runs if str(r.get("headSha", head_sha)) == head_sha]
-    if not for_this_sha:
-        others = sorted({str(r.get("headSha", ""))[:9] for r in runs if r.get("headSha")})
-        raise ReconcileError(
-            "sha-mismatch",
-            f"runs exist for {others} but none for {head_sha[:9]} — "
-            "a green run for an earlier commit does not authorize",
-        )
+    candidates = _allowlisted_runs(_runs_for_sha(runs, head_sha), allowed_workflows)
+    run = _first_green(candidates, head_sha)
 
-    allowed = [r for r in for_this_sha if str(r.get("name", "")) in allowed_workflows]
-    if not allowed:
-        seen = sorted({str(r.get("name", "?")) for r in for_this_sha})
-        raise ReconcileError(
-            "workflow-not-allowlisted",
-            f"no run from {list(allowed_workflows)}; saw {seen}",
-        )
-
-    in_flight = [r for r in allowed if str(r.get("status", "")) != "completed"]
-    green = [r for r in allowed if str(r.get("conclusion", "")) == _GREEN]
-
-    if not green:
-        if in_flight:
-            raise ReconcileError(
-                "still-running",
-                f"{len(in_flight)} allowlisted run(s) not yet complete for {head_sha[:9]}",
-            )
-        conclusions = sorted({str(r.get("conclusion", "?")) for r in allowed})
-        raise ReconcileError(
-            "not-green",
-            f"allowlisted run(s) concluded {conclusions}; only {_GREEN!r} authorizes",
-        )
-
-    run = green[0]
     return ReconcileReceipt(
         run_id=str(run.get("databaseId", "")),
         workflow=str(run.get("name", "")),
