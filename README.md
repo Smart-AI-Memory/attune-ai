@@ -135,28 +135,33 @@ memory storage and recall, and every local transform.
      release with the headline feature; the displaced content moves to
      a permanent section below. Don't stack a second "New in" here. -->
 
-## New in 14.0.0 — a status column that can't lie to you
+## New in 14.0.0 — the release checks its own diff
 
-The class register now **derives** its status instead of carrying one
-someone typed. Each class resolves to CLOSED, BROKEN-GATE,
-FIXED-BUT-UNGATED, OPEN, or DEFERRED from three facts: whether its gate
-actually resolves, how many calibrated hits remain, and whether an
-active deferral covers it. The payoff is that the register cannot drift
-into a comfortable lie — the usual failure of a hand-maintained status
-table is that a gate gets renamed or repointed and the row keeps
-reading CLOSED. Mapping is checked by **identity**, not existence: the
-gate file must exist, define the named test, *and* carry a matching
-`Register-Class:` tag, so a reassigned gate goes loud. And a class with
-no calibrated rule derives UNMECHANIZED rather than inventing a verdict
-it has no evidence for.
+`/release audit` answers a question the other release checks don't ask:
+**what class of defect could *this* release have introduced?** It
+resolves the range from your last release tag, proves the gates that
+were green are still green *on this exact commit*, sweeps the changed
+package surface with a calibrated rule pack, and hands you a capped
+one-page residual — never a diff dump. Three models then sit on it for
+a single round and either accept or amend a pre-filled disposition per
+item. You rule; `/release publish` refuses to tag until every item
+carries a ruling, and records that ruling next to the commit it was
+made about.
 
-Background alerting got solid in the same pass: `attune alerts watch
---daemon` keeps a firm hold on its database across the fork, and writes
-owner-only files while it runs. The ops client token is compared in
-constant time, git refs are validated before they reach the command
-line, and telemetry listings are markedly lighter on Redis — a scan and
-its records now cost a single round trip instead of one per record,
-chunked so a big scan stays responsive.
+It also knows what it didn't look at. The packet states how many files
+were swept against how many changed, so an empty result can never be
+mistaken for a clean one. And the class register behind it **derives**
+each status from evidence — whether the gate resolves, what it still
+finds, whether a deferral covers it — so a gate that gets renamed goes
+loud instead of quietly reading CLOSED.
+
+The rest you can see from the outside. Background alerting is solid:
+`attune alerts watch --daemon` keeps a firm hold on its database across
+the fork and writes owner-only files. The ops client token is compared
+in constant time, git refs are validated before they reach the command
+line, and telemetry listings cost a single Redis round trip instead of
+one per record. The repo's own whole-tree scanners now survive a file
+with a null byte in it rather than stopping at the first one.
 
 The major bump is a removal: `attune.exceptions` — the nine-class tree
 rooted at `EmpathyFrameworkError` — was the final unremoved surface of
