@@ -7,6 +7,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [13.0.2] - 2026-08-22
+
+**Four correctness classes, closed at the gate.** The library review had
+already fixed these shapes where it found them; this release fixes the
+rest and adds an AST gate per class so none of them can come back in a
+module nobody has written yet. The one you can see from the outside:
+`attune doctor` was reporting on a Redis server you may not run.
+
+### Fixed
+
+- **`attune doctor` no longer lies about Redis.** The probe constructed
+  `redis.Redis(socket_connect_timeout=2)` — no host, no port — so it
+  dialled an implicit `localhost:6379` regardless of `REDIS_URL`, and
+  printed "Redis server reachable" for a server that was not the one
+  your clients use. With `REDIS_URL` naming a reachable server on
+  another port, the old probe hit the local socket, failed
+  authentication there, and reported NOT REACHABLE while the real client
+  was connected and working. `doctor` now resolves and probes the same
+  endpoint recall uses, and NAMES the endpoint it probed (password
+  redacted) — a bare "reachable" with no endpoint is what let the split
+  brain hide. The release-prep team's coordination fallback had the same
+  literal `localhost:6379` and now falls back to the configured
+  endpoint. (#2150)
+- **One malformed record no longer costs the whole file.** Four
+  telemetry readers behind the ops dashboard skipped records that failed
+  to parse, then coerced fields out of the records that did — so a
+  well-formed `{"est_tokens": "abc"}` raised `ValueError` past a handler
+  that only caught `JSONDecodeError`, and one bad line silently killed
+  every good record in the file. Coercion is now total: the poison
+  record degrades to zero and the rest survive. (#2151)
+- **Concurrent atomic writes no longer publish half a file.** Ten sites
+  derived their temp path from the target (`with_suffix(".tmp")` and
+  friends), so two processes writing the same file picked the *same*
+  temp path — one truncated the other's partial write, and the rename
+  published whichever half won. All ten now use `tempfile.mkstemp` in
+  the target's own directory, each keeping its existing error contract.
+  `authoring/polish.py` also moves `rename()` to `replace()`, which
+  fixes a Windows failure when the destination already exists — the
+  common case for a cache re-put. (#2147)
+- **One legacy-shaped key no longer blocks every memory promotion.** The
+  deprecated `redis_memory_{patterns,coordination}` readers passed
+  `json.loads(raw)` straight into a reconstructor, so a stored value of
+  the wrong shape raised `TypeError` from inside the consumer, past a
+  caller catching only `JSONDecodeError` — and a single hand-edited or
+  legacy key blocked the entire listing. These reads now degrade per
+  record, as the memory layer is meant to. (#2152)
+
+### Changed
+
+- Four new AST gates ship with the test suite — deterministic temp-file
+  publish, reachability-oracle endpoints, per-record guard scope, and
+  reconstructor deserialization. Three of the four carry an **empty**
+  allowlist. The path-validation gate's scanner also learned
+  `tempfile.mkstemp` and `os.fdopen`, which it did not know before: six
+  modules had dropped off its offender list purely by adopting the safer
+  idiom, and it surfaced two file writers it had never seen. (#2147,
+  #2150, #2151, #2152)
+- The always-loaded lessons core is now capped by a byte budget
+  (46,000 B), not just an entry count — a promotion that costs real
+  context now has to argue for it. (#2158)
+- README badge floor raised to 25,000 tests, the next step its own
+  maintenance note documents. (#2154)
+
 ## [13.0.1] - 2026-08-21
 
 **A memory fix worth upgrading for.** Long-term memory storage resolved
