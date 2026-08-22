@@ -31,7 +31,7 @@ CORE_HEADING = "## Lessons — core"
 # A count cap is a poor ceiling: at the observed ~1,690 B/entry mean, the
 # <= 30 cap silently authorises ~51 KB nobody ratified. This budget binds
 # BEFORE the count cap, so a promotion that costs real context trips here
-# and forces the eviction conversation. Seeded at 43,969 (26 entries,
+# and forces the eviction conversation. Seeded at 44,951 (26 entries,
 # 2026-08-22). SHRINK-ONLY: demote something rather than widening it.
 CORE_BUDGET_BYTES = 46_000
 
