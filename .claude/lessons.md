@@ -23786,3 +23786,183 @@ imposes on every other in-flight PR, not just the next one.
   same value also appeared correct-looking in a `diff` I ran with the
   same broken mask, so the "empty diff" I reported proved nothing.
   **Never trust a redaction you have not tested.**
+- **A digest MISMATCH is more often your EXTRACTION than the data —
+  suspect the regex before reporting drift**: 2026-08-22. Verifying a
+  Redis rotation, I compared `sha256($REDIS_PASSWORD)` against the conf
+  file's `requirepass` value, captured with `re.search(r"^\s*requirepass\s+(\S+)")`.
+  It reported MISMATCH, and I escalated that into a finding: "the
+  persisted config is stale, a restart would load a dead password,"
+  complete with a table and a remediation (`CONFIG REWRITE`). All of it
+  was wrong. The conf stores the value QUOTED — `requirepass "abc123"` —
+  so `(\S+)` captured `"abc123"` **including the quote characters**, and
+  hashing a different string naturally produced a different digest. The
+  config had been correct the entire time. **The tell I ignored:** the
+  runtime `requirepass` matched, the ACL hash matched, and PING worked —
+  three signals saying "correct" against one saying "stale," and I
+  reported the one. When a comparison disagrees with everything around
+  it, the comparison is the outlier and deserves the scrutiny.
+  Practices: (1) **round-trip the extractor** — print `len(captured)`
+  and compare to the expected secret length, or assert the captured
+  value re-authenticates, BEFORE concluding drift; (2) strip the
+  container — quotes, trailing commas, `export ` prefixes, CRLF — and
+  test both stripped and raw when a config format may quote;
+  (3) **a mismatch is a hypothesis, not a finding** — the same
+  verify-the-claim bar applied to review findings applies to your own
+  tooling's output. Cost here was not just a false report: chasing it
+  led to printing the conf, which is how the live password leaked
+  ([[never-print-a-secret-bearing-file-with-a-mask]]). A false finding
+  is not free; it drags you toward riskier diagnostics.
+
+- **A rotation script that reads the secret from `$ENV` persists
+  whatever the RUNNING SHELL holds — not what the rotation just wrote to
+  the file — so a same-shell `rotate && store` chain re-stores the DEAD
+  value**: 2026-08-22, verifying a local-Redis rotation. The documented
+  order is `rotate_redis.py` (flips `requirepass`, `CONFIG REWRITE`,
+  updates `~/.zshenv`) then `store_redis_secret.py` (re-stores to
+  Keychain + GPG, reading `$REDIS_PASSWORD` from the environment). The
+  first updates the `.zshenv` FILE; it cannot update the already-running
+  shell's exported variable. So a `rotate && store` chain in one shell
+  hands the second script the PRE-rotation value, and both backup stores
+  end up holding a dead secret — while every freshness signal looks
+  right: the script prints `verified YES` (it verified against the env
+  it was given), and the GPG file's mtime is current. Observed exactly
+  this: post-rotation the live server, conf `requirepass`, and conf ACL
+  hash all agreed, while the Keychain held a THIRD value matching
+  neither the live nor the previously-leaked one. Fix: run the store
+  step from a shell that has **re-sourced** the file
+  (`zsh -c 'source ~/.zshenv; store_redis_secret.py'`), and afterwards
+  **verify each store INDEPENDENTLY** — read Keychain back with
+  `security find-generic-password -w`, sha256 it, compare to the live
+  env. Do not accept the script's own `verified YES`: it proves internal
+  consistency with its input, never that its input was current. Two
+  riders: (1) a stale KEYCHAIN fails silently — nothing reads it in
+  normal operation, so the drift surfaces only the day you need it as a
+  recovery path, which is exactly when you cannot afford it wrong;
+  (2) `mtime` is not freshness — the file was rewritten on time, with
+  the wrong contents. Same family as the "install receipt is not a
+  running receipt" and "registered ≠ working" lessons: the artifact
+  existing proves less than the artifact being CURRENT.
+
+- **An LLM audit finding's ABSOLUTE QUANTIFIER ("zero usages anywhere",
+  "no callers", "never referenced") is the least reliable part of it —
+  verify the quantifier specifically, because it is what sets the
+  disposition**: 2026-08-22, the 13.0.2 post-release code-review. It
+  reported `src/attune/exceptions.py` as "Orphaned Empathy exception
+  hierarchy re-exported from `__init__.py` with **zero usages anywhere**;
+  dead code from the 9.0.0 Empathy removal", High severity. One grep:
+
+      grep -rn "from attune.exceptions import\|attune\.exceptions" src tests
+
+  showed `src/attune/__init__.py:69` re-exporting it (which the finding
+  itself acknowledged one clause earlier, contradicting its own
+  quantifier) AND `tests/unit/test_coverage_batch19.py` importing all nine
+  classes across a dozen tests. The defensible claim was "**no production
+  consumer**" — still real, still worth removing, but a materially
+  different job: "zero usages" implies deletion is free, while the truth
+  is that deletion breaks a test file which exists only to cover the dead
+  module. Acting on the finding as written would have produced a PR that
+  fails CI immediately and looks like a botched cleanup.
+  The generalisation is narrower and more useful than "verify findings":
+  a finding has a **shape** (this code is dead / this loop is N+1 / this
+  guard is too narrow) and a **quantifier** (nowhere / every / always).
+  The shape is what the model actually inspected; the quantifier is
+  usually an inference from an incomplete search, and it is what a reader
+  converts into an action. Verify the quantifier first — it is one grep,
+  and it is the half that decides whether the fix is a deletion, a
+  migration, or a no-op. Pairs with the existing "research subagents
+  confabulate SDK signatures — introspect before coding" and
+  "verify-first applies to infra/config diagnoses" lessons: same
+  discipline, applied to the audit surface that most looks like it has
+  already done the checking for you.
+
+- **A release cut from an EMPTY `[Unreleased]` section means the changelog
+  is being reconstructed from commit bodies by whoever happens to cut it —
+  that is luck, not process**: 2026-08-22, cutting 13.0.2. Thirteen
+  commits had landed since `v13.0.1`, including four gate PRs and one that
+  fixed a live user-facing bug (`attune doctor` probing an implicit
+  `localhost:6379` regardless of `REDIS_URL` and reporting reachability
+  for a server the user may not run). CHANGELOG's `[Unreleased]` section
+  was **completely empty** — not one of the four had added a line. The
+  release section was therefore written during prep by reading all
+  thirteen `git log -1 --format='%s%n%b'` bodies, which worked only
+  because those bodies happened to be unusually detailed.
+  Two ways this fails quietly. If the cutter skims, a user-visible fix
+  ships undocumented — the H1 doctor fix is precisely the entry a user
+  scanning the changelog for "should I upgrade?" needs, and it would have
+  been the easiest to miss among three internal-sounding gate PRs. And if
+  commit bodies are terse (the normal case), there is nothing to
+  reconstruct FROM, so the release note degrades to a list of PR titles.
+  Candidate enforcer, in the repo's own idiom: a CI check that a PR
+  touching `src/` with a `fix:`/`feat:` subject also adds a line under
+  `[Unreleased]`, with an explicit `no-changelog` label as the documented
+  hatch for genuinely internal changes. Cheap, mechanical, and it moves
+  the writing to the moment the author still remembers the user-visible
+  effect. Until then, the release-prep step "promote the changelog" should
+  be read as "WRITE the changelog", and budget for it.
+
+- **Launching an ops-dashboard workflow run from the API: the runner
+  router has NO `/api` prefix, the token header is `X-Attune-Client`,
+  and the runner is SINGLE-RUN**: 2026-08-22, the 13.0.2 post-release
+  self-review. The chair-adopted precedent says run the self-review
+  dashboard-launched "so the runs record" — the 13.0.1 pass could not,
+  and its report carries that as a deviation. The blocker both times was
+  not the dashboard being down but not knowing how to launch through it.
+  Recipe, verified end to end:
+
+      TOKEN=$(curl -s localhost:8765/api/session/token | ...)   # GET, not POST
+      curl -X POST localhost:8765/workflows/code-review/run \
+        -H "X-Attune-Client: $TOKEN" -H 'Content-Type: application/json' \
+        -d '{"path":"src/attune","trigger":"manual"}'
+      # -> {"run_id":"...","stream_url":"/runs/<id>/stream","status_url":"/runs/<id>"}
+
+  Four traps, each of which cost a probe: (1) **`/api/workflows/{name}/run`
+  404s** — most routers mount under `/api`, but `runner_routes.router` is
+  included with no prefix, so the real path is `/workflows/{name}/run`
+  while `/api/workflows/discovery-sweep/chips` (a different router) does
+  carry it. (2) **Grepping `openapi.json` for `"/api/…"` HIDES the route**
+  for exactly that reason — grep for the verb or the word `run`, not for
+  the prefix you expect. (3) **`/api/session/token` is GET**; POSTing it
+  returns `{"detail":"Method Not Allowed"}`, which reads like an auth
+  failure. (4) **The header is `X-Attune-Client`** (`require_client_token`
+  in `ops/security.py`), not `Authorization: Bearer`.
+  Two behaviours worth planning around: the runner serialises — a second
+  `start()` while one is live raises `RunnerBusyError` -> HTTP 409, so
+  queue code-review and bug-predict, never fire them together — and
+  `cfg.project_root` anchors relative scopes to the MAIN checkout, not the
+  worktree the dashboard was launched from, so `{"path":"src/attune"}`
+  reviews main's tree. Fine when `src/` is identical across the two
+  (verify), wrong when it is not. Runs land at
+  `~/.attune/ops/runs/<workflow>/<run_id>.json`; confirm the file exists
+  rather than trusting a 201.
+
+- **Run the pre-tag recall gate from a WORKTREE reset to the merge SHA —
+  not by fast-forwarding the main checkout, which is chronically dirty and
+  will refuse the pull**: 2026-08-22, the 13.0.2 ship. The existing 13.0.1
+  lesson (`release_recall_gate.py` builds its wheel from the checkout it
+  runs in) prescribes the sequence "merge -> fast-forward the main checkout
+  (stash unrelated dirty files) -> re-run the gate -> tag". That
+  prescription is the part that rots: the main checkout here has carried
+  uncommitted usage-digest work (`website/vercel.json` plus untracked
+  `website/app/api/cron/`, `website/lib/usage/`) across many sessions, and
+  `git pull --ff-only` refuses to run with ANY unstaged tracked change —
+  so following the lesson means stashing someone else's in-flight work at
+  the most safety-critical moment of a release, which is exactly when you
+  should be touching the fewest things.
+  The better route needs no stash and no main checkout at all: the release
+  worktree is already on the merged branch, so after the squash lands,
+
+      git fetch origin && git reset --hard origin/main
+      python scripts/release_recall_gate.py
+
+  puts the worktree AT the merge SHA (verify `git rev-parse HEAD` equals
+  the `mergeCommit` oid) and the gate builds from there. The receipt is
+  unchanged and still mandatory — read the `wheel:` line it prints and
+  confirm it names the version being tagged (`attune_ai-13.0.2-…whl`), not
+  the previous one. Safe because the branch is already merged, so a hard
+  reset discards nothing; the working tree was clean and the commit is on
+  main.
+  Generalises past this gate: when a release step's documented sequence
+  requires mutating a shared checkout, check whether a worktree already
+  standing on the right branch can host the step instead. The shared
+  checkout is shared state, and release steps should not be the thing that
+  perturbs it.
