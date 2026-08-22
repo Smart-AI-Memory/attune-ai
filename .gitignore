@@ -125,7 +125,9 @@ site/
 
 # Local runtime data (session state)
 .empathy/
-.attune/
+.attune/*
+!.attune/defers/
+!.attune/class-dispositions.yaml
 
 # Pattern storage (generated runtime data)
 patterns/debugging_demo/
