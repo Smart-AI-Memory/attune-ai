@@ -14,6 +14,8 @@ import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from attune.patterns.git_extractor import GitPatternExtractor
 
 
@@ -854,3 +856,46 @@ class TestGitExtractorMain:
 
         out = capsys.readouterr().out
         assert "Saved to:" not in out
+
+
+class TestOptionLikeRefIsRefused:
+    """A ref starting with "-" is parsed by git as an OPTION, not a revision.
+
+    `git log -1 --format=X --help` prints usage instead of resolving a
+    commit, so an attacker-influenced ref could change what the command
+    does. The guard is in _get_commit_info itself, not only at its call
+    sites, so a future caller inherits it.
+    """
+
+    @pytest.mark.parametrize("ref", ["--help", "-n5", "--output=/tmp/x", "-"])
+    def test_option_like_ref_returns_none_without_running_git(self, ref):
+        extractor = GitPatternExtractor()
+
+        with patch("subprocess.run") as mock_run:
+            assert extractor._get_commit_info(ref) is None
+
+        assert not mock_run.called, f"git was invoked with an option-like ref: {ref!r}"
+
+    def test_normal_refs_still_resolve(self):
+        """The guard must not break the shape the real caller uses."""
+        extractor = GitPatternExtractor()
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(
+                returncode=0,
+                stdout="abcdef1234567890\nsubject\nauthor\n2026-01-01T00:00:00Z\n",
+            )
+            assert extractor._get_commit_info("HEAD~3") is not None
+
+        assert mock_run.called
+
+    def test_command_pins_end_of_revisions(self):
+        """The trailing "--" stops a ref that also names a file being a path."""
+        extractor = GitPatternExtractor()
+
+        with patch("subprocess.run") as mock_run:
+            mock_run.return_value = MagicMock(returncode=1, stdout="")
+            extractor._get_commit_info("HEAD")
+
+        argv = mock_run.call_args[0][0]
+        assert argv[-1] == "--", f"expected a trailing '--' separator, got {argv}"

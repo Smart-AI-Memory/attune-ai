@@ -51,7 +51,36 @@ def require_client_token(
     route. A missing or mismatched header is rejected before the route
     body runs.
     """
-    if x_attune_client != _SESSION_TOKEN:
+    # Constant-time compare: ``!=`` short-circuits on the first differing
+    # byte, so response latency leaks a matching prefix and the token can
+    # be recovered byte by byte. Compared as BYTES because
+    # ``compare_digest`` raises TypeError on non-ASCII str — a header the
+    # caller controls — which would surface as a 500 instead of a 403.
+    expected = _SESSION_TOKEN
+    if expected is None:
+        # No token minted. Unreachable in production — the module global
+        # is set at import — but the ops route tests null it to disable
+        # the gate. Historical semantics preserved EXACTLY: only a
+        # header-less request passes. Making this deny outright is a
+        # defensible tightening (principle #7) but is a test-fixture
+        # change, not part of the timing fix, and moves 92 tests.
+        if x_attune_client is None:
+            return
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "invalid_client",
+                "message": "Missing or invalid X-Attune-Client header.",
+            },
+        )
+
+    # errors="replace", NOT "surrogateescape": the latter only round-trips
+    # surrogates in U+DC80–U+DCFF (the ones it produces itself), so a
+    # caller-controlled lone surrogate outside that range (U+D800, say)
+    # raises UnicodeEncodeError — a 500 from the very branch that exists
+    # to return 403. "replace" cannot raise for any str.
+    supplied = (x_attune_client or "").encode("utf-8", "replace")
+    if not secrets.compare_digest(supplied, expected.encode("utf-8")):
         raise HTTPException(
             status_code=403,
             detail={
