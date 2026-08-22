@@ -23757,3 +23757,32 @@ imposes on every other in-flight PR, not just the next one.
   taught that a peer owning a FILE is the same hazard class as one
   owning a worktree, and that authority is a third thing peers cannot
   hand each other.
+
+- **NEVER print a secret-bearing file "with a mask" — a masking regex
+  that fails matches NOTHING and prints the secret verbatim, and BSD
+  sed silently ignores `\S`, `\d`, `\w`**: 2026-08-22, live incident. To
+  show a Redis conf's structure I ran
+  `sed -E 's/(requirepass )\S+/\1<PW>/'` over the file and printed the
+  result. On macOS that substitution matched **nothing** — `\S` is a GNU
+  extension BSD sed does not implement, and sed does not error on an
+  unknown escape, it just fails to match — so the line printed as
+  `requirepass "<the live password>"` into a permanent transcript. The
+  password had to be rotated again. **A failed mask is
+  indistinguishable from a successful one in the output you are about to
+  emit, because the thing that proves it worked is the thing you cannot
+  see until it is too late.** Three rules, in order of preference:
+  (1) **Do not print the file.** Print KEY NAMES only —
+  `grep -oE '^[A-Z_]+' .env`, `grep -nvE '^\s*$' conf | cut -d' ' -f1` —
+  or answer the question with a boolean/digest instead of content.
+  (2) If a masked print is genuinely needed, **prove the mask on that
+  exact line first** by asserting the output does NOT contain the
+  secret, and only then emit. (3) Prefer Python's `re` over `sed` for
+  masking: it implements `\S`/`\d`/`\w` portably, and you can assert the
+  substitution count (`re.subn` returns it — a count of 0 is the alarm).
+  Note this repo's corpus already carries three secret-leak lessons
+  (untracked `.txt` reads, editor settings-sync, pasted PyPI tokens);
+  this is the fourth vector and the first where the LEAK CAME FROM THE
+  DEFENSE — the masking step itself. Corollary that cost extra here: the
+  same value also appeared correct-looking in a `diff` I ran with the
+  same broken mask, so the "empty diff" I reported proved nothing.
+  **Never trust a redaction you have not tested.**
