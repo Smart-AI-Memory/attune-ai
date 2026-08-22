@@ -9,8 +9,6 @@
 ## Table of Contents
 
 - [Overview](#overview)
-- [Core Framework](#core-framework)
-  - [Exceptions](#exceptions)
 - [Configuration](#configuration)
   - [AttuneConfig](#attuneconfig)
   - [ConfigLoader](#configloader)
@@ -104,23 +102,6 @@ pip install attune-ai                # Core
 pip install 'attune-ai[developer]'   # Developer extras
 pip install attune-ai       # Redis-backed memory + AMS plugin
 ```
-
----
-
-## Core Framework
-
-### Exceptions
-
-`attune.exceptions`
-
-| Exception | Base | Description |
-|-----------|------|-------------|
-| `EmpathyFrameworkError` | `Exception` | Base exception |
-| `ValidationError` | `EmpathyFrameworkError` | Input validation failure |
-| `PatternNotFoundError` | `EmpathyFrameworkError` | Pattern lookup miss |
-| `EmpathyLevelError` | `EmpathyFrameworkError` | Invalid empathy level |
-| `TrustThresholdError` | `EmpathyFrameworkError` | Trust check failure |
-| `ConfidenceThresholdError` | `EmpathyFrameworkError` | Below confidence threshold |
 
 ---
 

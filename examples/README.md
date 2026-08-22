@@ -4,22 +4,7 @@ This directory contains examples demonstrating how to use the Attune AI.
 
 ## Available Examples
 
-### 1. Quickstart (Introduction)
-
-The [quickstart.py](quickstart.py) example provides a comprehensive introduction to the framework:
-
-```bash
-python3 examples/quickstart.py
-```
-
-**What it demonstrates:**
-- Initializing EmpathyOS
-- All five empathy levels (1-5)
-- Pattern Library for AI-AI cooperation
-- Feedback loop detection
-- Trust tracking over time
-
-### 2. Debugging Assistant (Level 3 Proactive)
+### 1. Debugging Assistant (Level 3 Proactive)
 
 The [debugging_assistant.py](debugging_assistant.py) shows how to build a proactive debugging AI:
 
@@ -38,7 +23,7 @@ python3 examples/debugging_assistant.py
 
 **Key Insight**: Don't wait to be asked - proactively help when the need is clear and confidence is high.
 
-### 3. Bug Prediction (Level 4 Anticipatory)
+### 2. Bug Prediction (Level 4 Anticipatory)
 
 The [bug_prediction.py](bug_prediction.py) demonstrates predictive bug prevention:
 
@@ -62,7 +47,6 @@ The examples are designed to show increasing empathy levels:
 
 | Example | Level | Focus | Key Behavior |
 |---------|-------|-------|--------------|
-| Quickstart | All (1-5) | Introduction | Overview of all levels |
 | Debugging Assistant | Level 3 | Proactive | Act before being asked |
 | Bug Prediction | Level 4 | Anticipatory | Predict future needs |
 
@@ -83,9 +67,6 @@ pip3 install attune-ai
 ```bash
 cd attune-ai
 
-# Run quickstart
-python3 examples/quickstart.py
-
 # Run debugging assistant
 python3 examples/debugging_assistant.py
 
@@ -94,15 +75,6 @@ python3 examples/bug_prediction.py
 ```
 
 ## Example Output
-
-### Quickstart
-Demonstrates progression through all 5 empathy levels:
-
-1. **Level 1 (Reactive)**: Responds only to explicit requests
-2. **Level 2 (Guided)**: Asks clarifying questions, collaborative exploration
-3. **Level 3 (Proactive)**: Takes initiative on obvious needs
-4. **Level 4 (Anticipatory)**: Predicts and prepares for future needs
-5. **Level 5 (Systems)**: Builds reusable structures that help at scale
 
 ### Debugging Assistant
 Shows Level 3 proactive intervention with real debugging scenarios:
@@ -130,7 +102,7 @@ Shows Level 4 anticipatory analysis:
 Have a great example? We'd love to include it!
 
 1. Create a new Python file in this directory
-2. Follow the quickstart.py structure
+2. Follow the structure of an existing example
 3. Add comprehensive comments
 4. Submit a pull request
 

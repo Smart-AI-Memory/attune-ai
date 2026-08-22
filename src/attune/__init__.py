@@ -39,6 +39,13 @@ REMOVED in 9.0.0 — legacy "Empathy" framework (see CHANGELOG):
     is the Claude Code workflow plugin. StateManager is now deprecated and
     will be removed in a future release.
 
+REMOVED, pending release — the `attune.exceptions` hierarchy. Breaking,
+so it rides the next MAJOR; see CHANGELOG [Unreleased]:
+    EmpathyFrameworkError and its eight subclasses. They were the last
+    unremoved surface of the 9.0.0 retirement — nothing raised them once
+    their throwers were deleted. Note ValidationError went with them;
+    attune.config.validation.ValidationError is a DIFFERENT, live class.
+
 Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
@@ -66,17 +73,6 @@ if TYPE_CHECKING:
     # Type hints for IDE support (not evaluated at runtime)
     from .agent_monitoring import AgentMetrics, AgentMonitor, TeamMetrics
     from .config import AttuneConfig, EmpathyConfig, load_config
-    from .exceptions import (
-        CollaborationStateError,
-        ConfidenceThresholdError,
-        EmpathyFrameworkError,
-        EmpathyLevelError,
-        FeedbackLoopError,
-        LeveragePointError,
-        PatternNotFoundError,
-        TrustThresholdError,
-        ValidationError,
-    )
     from .logging_config import LoggingConfig, get_logger
     from .memory import (
         AccessTier,
@@ -131,16 +127,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "load_config": (".config", "load_config"),
     # coordination — removed in v6.8.0 (see src/attune/coordination.py shim)
     # core — EmpathyOS removed in v9.0.0
-    # exceptions
-    "CollaborationStateError": (".exceptions", "CollaborationStateError"),
-    "ConfidenceThresholdError": (".exceptions", "ConfidenceThresholdError"),
-    "EmpathyFrameworkError": (".exceptions", "EmpathyFrameworkError"),
-    "EmpathyLevelError": (".exceptions", "EmpathyLevelError"),
-    "FeedbackLoopError": (".exceptions", "FeedbackLoopError"),
-    "LeveragePointError": (".exceptions", "LeveragePointError"),
-    "PatternNotFoundError": (".exceptions", "PatternNotFoundError"),
-    "TrustThresholdError": (".exceptions", "TrustThresholdError"),
-    "ValidationError": (".exceptions", "ValidationError"),
+    # exceptions — removed (legacy "Empathy" surface); see CHANGELOG
     # feedback_loops, levels, leverage_points — removed in v9.0.0
     # logging_config
     "LoggingConfig": (".logging_config", "LoggingConfig"),
@@ -257,19 +244,12 @@ __all__ = [
     # Claude Memory
     "ClaudeMemoryConfig",
     "ClaudeMemoryLoader",
-    "CollaborationStateError",
-    "ConfidenceThresholdError",
     "ConflictContext",
     # Configuration
     "AttuneConfig",
     "EmpathyConfig",
-    # Exceptions
-    "EmpathyFrameworkError",
-    "EmpathyLevelError",
     "EncryptionManager",
     "Environment",
-    "FeedbackLoopError",
-    "LeveragePointError",
     "LoggingConfig",
     "MemDocsStorage",
     "MemoryConfig",
@@ -284,7 +264,6 @@ __all__ = [
     "PatternLibrary",
     "PatternMatch",
     "PatternMetadata",
-    "PatternNotFoundError",
     # Persistence
     "PatternPersistence",
     # Redis Short-Term Memory
@@ -303,11 +282,8 @@ __all__ = [
     "StateManager",
     "TTLStrategy",
     "TeamMetrics",
-    # Trust
-    "TrustThresholdError",
     # Unified Memory Interface
     "UnifiedMemory",
-    "ValidationError",
     "check_redis_connection",
     "detect_secrets",
     # Logging

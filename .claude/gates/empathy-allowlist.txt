@@ -55,7 +55,6 @@ src/attune/config/agent_config.py
 src/attune/config/env_compat.py
 src/attune/config/legacy.py
 src/attune/config/xml_config.py
-src/attune/exceptions.py
 src/attune/hooks/scripts/first_time_init.py
 src/attune/learning/evaluator.py
 src/attune/llm/__init__.py
