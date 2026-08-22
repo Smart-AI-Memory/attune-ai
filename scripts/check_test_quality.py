@@ -67,7 +67,7 @@ class TestQualityChecker:
         try:
             content = file_path.read_text()
             tree = ast.parse(content)
-        except (SyntaxError, UnicodeDecodeError):
+        except (SyntaxError, UnicodeDecodeError, ValueError):
             return
 
         for node in ast.walk(tree):

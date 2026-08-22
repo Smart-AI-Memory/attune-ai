@@ -143,7 +143,7 @@ class TestNoActualVulnerabilities:
                         if isinstance(node.func, ast.Name):
                             if node.func.id in ("eval", "exec"):
                                 eval_exec_found.append((py_file, node.lineno, node.func.id))
-            except SyntaxError:
+            except (SyntaxError, ValueError):
                 # Skip files that can't be parsed
                 pass
 

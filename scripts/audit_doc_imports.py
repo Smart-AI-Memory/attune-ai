@@ -163,7 +163,7 @@ def _import_statements(body: str) -> list[tuple[int, str]]:
     out: list[tuple[int, str]] = []
     try:
         tree = ast.parse(body)
-    except SyntaxError:
+    except (SyntaxError, ValueError):
         for idx, ln in enumerate(body.splitlines()):
             if _IMPORT_LINE_RE.match(ln) and "(" not in ln:
                 out.append((idx, ln.strip()))
@@ -302,7 +302,7 @@ def _deep_check_python(body: str) -> list[tuple[int, str, str]]:
     out: list[tuple[int, str, str]] = []
     try:
         tree = ast.parse(body)
-    except SyntaxError:
+    except (SyntaxError, ValueError):
         return out
     objects = _fence_objects(tree)
     if not objects:

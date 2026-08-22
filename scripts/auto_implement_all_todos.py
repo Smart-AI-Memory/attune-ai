@@ -136,7 +136,7 @@ def get_function_signature(source_file: Path, func_name: str) -> dict | None:
                     "has_return": has_return,
                     "docstring": docstring,
                 }
-    except (SyntaxError, OSError) as e:
+    except (SyntaxError, OSError, ValueError) as e:
         console.print(f"[dim]Could not parse function {func_name}: {e}[/dim]")
 
     return None
@@ -155,7 +155,7 @@ def get_class_methods(source_file: Path, class_name: str) -> list[str]:
                     if isinstance(item, ast.FunctionDef) and not item.name.startswith("_"):
                         methods.append(item.name)
                 return methods
-    except (SyntaxError, OSError) as e:
+    except (SyntaxError, OSError, ValueError) as e:
         console.print(f"[dim]Could not get methods for {class_name}: {e}[/dim]")
 
     return []

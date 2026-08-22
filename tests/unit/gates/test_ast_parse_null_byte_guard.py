@@ -32,7 +32,22 @@ from pathlib import Path
 
 import pytest
 
-SRC_ROOT = Path(__file__).resolve().parents[3] / "src" / "attune"
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
+#: Every root that runs ``ast.parse`` over a tree of files. Scoping this
+#: to ``src/attune`` (as it was until 2026-08-22) left the gate blind to
+#: ITSELF and to every other whole-tree scanner: widening it surfaced 14
+#: ValueError-blind sites, four of them in gates or CI scripts, including
+#: this file. A gate that crashes on the input it exists to guard against
+#: is a failed gatekeeper, and absence is not a pass (contract §7).
+SCAN_ROOTS = (
+    REPO_ROOT / "src" / "attune",
+    REPO_ROOT / "scripts",
+    REPO_ROOT / "tests",
+    REPO_ROOT / "plugin",
+)
+
+SRC_ROOT = REPO_ROOT / "src" / "attune"
 
 #: Catching either of these subsumes ``ValueError``.
 _CATCH_ALL = {"Exception", "BaseException"}
@@ -72,7 +87,7 @@ def _unguarded_sites(path: Path) -> list[str]:
     """Return ``file:line`` for each ast.parse under a ValueError-blind try."""
     try:
         tree = ast.parse(path.read_text(encoding="utf-8", errors="replace"))
-    except SyntaxError:
+    except (SyntaxError, ValueError):
         return []
 
     hits: list[str] = []
@@ -86,17 +101,20 @@ def _unguarded_sites(path: Path) -> list[str]:
             caught |= _handler_names(handler)
         if "ValueError" in caught or caught & _CATCH_ALL:
             continue
-        hits.append(f"{path.relative_to(SRC_ROOT.parent.parent)}:{node.lineno}")
+        hits.append(f"{path.relative_to(REPO_ROOT)}:{node.lineno}")
     return hits
 
 
 def test_guarded_ast_parse_also_catches_value_error() -> None:
     """A try/except around ast.parse must cover the null-byte ValueError."""
     offenders: list[str] = []
-    for path in sorted(SRC_ROOT.rglob("*.py")):
-        if "__pycache__" in str(path):
+    for root in SCAN_ROOTS:
+        if not root.exists():
             continue
-        offenders.extend(_unguarded_sites(path))
+        for path in sorted(root.rglob("*.py")):
+            if "__pycache__" in str(path):
+                continue
+            offenders.extend(_unguarded_sites(path))
 
     assert not offenders, (
         "ast.parse guarded by a handler set that misses ValueError — a "

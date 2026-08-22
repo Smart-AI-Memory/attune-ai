@@ -189,7 +189,7 @@ def extract_api_signatures(
         extractor = APIExtractor()
         extractor.visit(tree)
         return extractor.classes, extractor.functions
-    except SyntaxError as e:
+    except (SyntaxError, ValueError) as e:
         raise ValueError(f"Invalid Python syntax: {e}") from e
 
 

@@ -44,7 +44,7 @@ def _enum_value_names(repo_root: Path) -> dict[str, set[str]]:
     for py in repo_root.rglob("*.py"):
         try:
             tree = ast.parse(py.read_text(encoding="utf-8"))
-        except (SyntaxError, UnicodeDecodeError):
+        except (SyntaxError, UnicodeDecodeError, ValueError):
             continue
         for node in ast.walk(tree):
             if not isinstance(node, ast.ClassDef):
@@ -257,7 +257,7 @@ def main() -> int:
             continue
         try:
             tree = ast.parse(py.read_text(encoding="utf-8"))
-        except (SyntaxError, UnicodeDecodeError):
+        except (SyntaxError, UnicodeDecodeError, ValueError):
             continue
         rel = py.relative_to(repo_root)
         hits: list[tuple[int, str]] = []
