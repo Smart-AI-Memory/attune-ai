@@ -119,15 +119,20 @@ class TestCachePrune:
     ) -> None:
         from attune.authoring.polish import _cache_prune, _cache_put
 
-        monkeypatch.setenv("ATTUNE_AUTHOR_POLISH_CACHE_TTL_SECONDS", "1")
+        # The TTL must be comfortably LONGER than this test's own wall
+        # clock: the surviving entry is written here and must still be
+        # fresh at prune time. A 1s TTL raced on loaded runners — any
+        # pause over a second between _cache_put and _cache_prune aged
+        # BOTH entries out and the prune deleted 2, not 1 (seen on
+        # windows-latest mid-suite, "assert 2 == 1"). One hour is far
+        # beyond any plausible scheduling gap while staying well under
+        # the 10,000s backdate below, so exactly one entry is stale.
+        monkeypatch.setenv("ATTUNE_AUTHOR_POLISH_CACHE_TTL_SECONDS", "3600")
         _cache_put("a", "alpha")
         _cache_put("b", "beta")
-        # Backdate one entry past the TTL.
-        for path in cache_dir.glob("*.md"):
-            if "a" in path.name:
-                continue  # leave 'a' fresh — file name is the sha256, so this
-                # branch never matches; we instead pick the first entry below
-        # Pick the first .md and backdate it.
+        # Backdate exactly one entry past the TTL. Entries are named by
+        # sha256 of the key, so pick deterministically by sort order
+        # rather than by matching the key text in the filename.
         targets = sorted(cache_dir.glob("*.md"))
         old_path = targets[0]
         ancient = time.time() - 10_000
