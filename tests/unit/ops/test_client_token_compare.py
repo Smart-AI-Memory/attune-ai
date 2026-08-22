@@ -42,7 +42,13 @@ class TestAcceptsAndRejects:
             ("", "empty header"),
             ("wrong-token", "wrong token"),
             ("токен", "non-ASCII"),
-            ("\udcff", "lone surrogate"),
+            ("\udcff", "lone surrogate in surrogateescape range"),
+            # OUTSIDE U+DC80–U+DCFF, so surrogateescape cannot encode it.
+            # The original test used only \udcff and passed while this
+            # case still 500'd — found by the cross-review lane (codex).
+            ("\ud800", "lone surrogate below the range"),
+            ("\udbff", "lone surrogate above the range"),
+            ("pre\ud800post", "surrogate embedded in ASCII"),
             ("tok\x00en", "embedded NUL"),
         ],
     )

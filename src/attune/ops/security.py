@@ -74,7 +74,12 @@ def require_client_token(
             },
         )
 
-    supplied = (x_attune_client or "").encode("utf-8", "surrogateescape")
+    # errors="replace", NOT "surrogateescape": the latter only round-trips
+    # surrogates in U+DC80–U+DCFF (the ones it produces itself), so a
+    # caller-controlled lone surrogate outside that range (U+D800, say)
+    # raises UnicodeEncodeError — a 500 from the very branch that exists
+    # to return 403. "replace" cannot raise for any str.
+    supplied = (x_attune_client or "").encode("utf-8", "replace")
     if not secrets.compare_digest(supplied, expected.encode("utf-8")):
         raise HTTPException(
             status_code=403,
