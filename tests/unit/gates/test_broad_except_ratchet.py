@@ -279,7 +279,7 @@ _BASELINE: dict[str, int] = {
     "src/attune/roundtable/solutions.py": 1,
     "src/attune/roundtable/triage_appendix.py": 2,
     "src/attune/routing/classifier.py": 1,
-    "src/attune/telemetry/agent_coordination.py": 7,
+    "src/attune/telemetry/agent_coordination.py": 6,
     "src/attune/telemetry/agent_tracking.py": 5,
     "src/attune/telemetry/approval_gates.py": 8,
     "src/attune/telemetry/cli_analysis.py": 1,

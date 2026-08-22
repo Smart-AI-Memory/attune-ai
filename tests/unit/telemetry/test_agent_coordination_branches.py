@@ -10,7 +10,6 @@ Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
-import json
 from datetime import datetime, timezone
 from unittest.mock import Mock, patch
 
@@ -149,29 +148,6 @@ class TestClearSignalsGuard:
     def test_no_agent_id_returns_zero(self, mock_memory):
         coordinator = CoordinationSignals(memory=mock_memory, agent_id=None)
         assert coordinator.clear_signals() == 0
-
-
-class TestRetrieveSignalBranches:
-    def test_no_memory_returns_none(self, coordinator):
-        coordinator.memory = None
-        assert coordinator._retrieve_signal("key") is None
-
-    def test_memory_without_client_returns_none(self):
-        coordinator = CoordinationSignals(memory=Mock(spec=[]), agent_id="test-agent")
-        assert coordinator._retrieve_signal("key") is None
-
-    def test_invalid_json_returns_none(self, coordinator, mock_memory):
-        mock_memory._client.get.return_value = b"not json"
-        assert coordinator._retrieve_signal("key") is None
-
-    def test_bytes_payload_decodes(self, coordinator, mock_memory):
-        payload = {
-            "signal_id": "signal_1",
-            "signal_type": "ready",
-            "source_agent": "a",
-        }
-        mock_memory._client.get.return_value = json.dumps(payload).encode("utf-8")
-        assert coordinator._retrieve_signal("key") == payload
 
 
 class TestDeleteSignalBranches:

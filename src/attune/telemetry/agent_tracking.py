@@ -37,6 +37,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
+from attune.telemetry._redis_batch import mget_json
+
 logger = logging.getLogger(__name__)
 
 
@@ -90,6 +92,19 @@ class AgentHeartbeat:
             metadata=data.get("metadata", {}),
             display_name=data.get("display_name"),
         )
+
+
+def _heartbeat_from_record(key: str, data: dict[str, Any]) -> AgentHeartbeat | None:
+    """Build a heartbeat from one scanned record, or None if it is malformed.
+
+    Per-record tolerance (class G2): one unparseable record is skipped
+    alone rather than raising into the caller's listing-wide handler.
+    """
+    try:
+        return AgentHeartbeat.from_dict(data)
+    except (KeyError, TypeError, ValueError):
+        logger.debug("Skipping malformed heartbeat %s", key, exc_info=True)
+        return None
 
 
 class HeartbeatCoordinator:
@@ -288,13 +303,14 @@ class HeartbeatCoordinator:
                 return []
 
             heartbeats = []
-            for key in keys:
-                if isinstance(key, bytes):
-                    key = key.decode("utf-8")
+            # One MGET for the scanned keys, not one get() per key.
+            for key, data in mget_json(self.memory._client, keys):
+                if not data:
+                    continue
 
-                data = self._retrieve_heartbeat(key)
-                if data:
-                    heartbeats.append(AgentHeartbeat.from_dict(data))
+                heartbeat = _heartbeat_from_record(key, data)
+                if heartbeat is not None:
+                    heartbeats.append(heartbeat)
 
             return heartbeats
         except Exception as e:  # noqa: BLE001
