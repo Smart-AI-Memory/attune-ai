@@ -2,13 +2,18 @@ coverage:
   status:
     project:
       default:
-        target: 80%
+        target: 85%
         threshold: 2%
     patch:
       default:
-        # Chair-ruled 2026-07-20 ("floor 80, local 85" story): the
-        # patch gate enforces the documented 80% changed-code floor.
-        target: 80%
+        # Chair-ruled 2026-08-22, superseding the 2026-07-20 "floor 80,
+        # local 85" split: CI now enforces the same 85 the local
+        # `fail_under` already required, so there is one number rather
+        # than two. Thresholds are KEPT deliberately — they absorb
+        # measurement noise, not intent; zeroing them would fail a PR at
+        # 84.97% on rounding, which is how a gate earns a reputation for
+        # crying wolf. Effective floors: 83% project, 80% patch.
+        target: 85%
         threshold: 5%
 
 ignore:

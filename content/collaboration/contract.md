@@ -50,8 +50,9 @@ as pickable work.
    2026-07-29 with 35 vetted modules, ratchets shrink-only).*
 
 5. **Coverage is a floor, not a goal.** Changed code carries
-   ≥80% coverage; the local bar is 85%.
-   *Enforcers: `codecov.yml` project+patch gates (80%),
+   ≥85% coverage — CI and the local bar are the same number
+   (chair-ruled 2026-08-22, superseding the earlier 80/85 split).
+   *Enforcers: `codecov.yml` project+patch gates (85%),
    `tests/unit/ci/test_workflow_yaml.py::
    test_coverage_threshold_is_at_least_80` (the threshold itself
    is drift-guarded).*
@@ -300,7 +301,7 @@ as pickable work.
   required for file-op code.
 - NEVER use bare `except:` — catch specific exceptions and log them
   before handling.
-- Type hints and docstrings on all public APIs; minimum 80% test
+- Type hints and docstrings on all public APIs; minimum 85% test
   coverage on changed code.
 - Simpler is better: flatten nested conditionals, inline one-use
   helpers, prefer stdlib over custom abstractions.
