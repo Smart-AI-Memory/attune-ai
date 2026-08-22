@@ -7,14 +7,14 @@
   },
   "metadata": {
     "description": "Spec-driven development for Claude Code — /spec plans, reviews, and executes with quality gates; plus security audits, code reviews, test generation, and release prep from /attune.",
-    "version": "13.0.1"
+    "version": "13.0.2"
   },
   "plugins": [
     {
       "name": "attune-ai",
       "description": "Spec-driven development for Claude Code — /spec plans, reviews, and executes with quality gates; plus security audits, code reviews, test generation, and release prep from /attune.",
       "source": "./",
-      "version": "13.0.1",
+      "version": "13.0.2",
       "author": {
         "name": "Smart AI Memory",
         "email": "patrick.roebuck@smartaimemory.com"
