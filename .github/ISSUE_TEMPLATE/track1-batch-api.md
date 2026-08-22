@@ -13,7 +13,7 @@ Enable Anthropic's Batch API for non-urgent tasks to achieve 50% cost reduction.
 - [ ] Batch API client implemented and tested
 - [ ] Successfully process 100+ task batch
 - [ ] Verify 50% cost reduction via telemetry
-- [ ] 85%+ test coverage
+- [ ] 80%+ test coverage
 
 ## Expected Impact
 - **Cost Reduction:** 50% for batch-eligible tasks
