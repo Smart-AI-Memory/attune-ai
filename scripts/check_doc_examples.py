@@ -81,12 +81,12 @@ def _check_block(src: str, funcs: set[str], methods: set[str]) -> list[str]:
     problems: list[str] = []
     try:
         tree = ast.parse(src)
-    except SyntaxError:
+    except (SyntaxError, ValueError):
         # Tolerate top-level-await fragments: retry wrapped in async def.
         indented = "\n".join("    " + line for line in src.splitlines())
         try:
             tree = ast.parse("async def __frag__():\n" + indented)
-        except SyntaxError as exc:
+        except (SyntaxError, ValueError) as exc:
             return [f"does not compile: {exc.msg} (line {exc.lineno})"]
     awaited = _awaited_or_scheduled(tree)
     for node in ast.walk(tree):

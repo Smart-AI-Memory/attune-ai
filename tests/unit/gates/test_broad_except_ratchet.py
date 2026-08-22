@@ -388,7 +388,7 @@ def _handler_is_broad(handler: ast.ExceptHandler) -> bool:
 def _count_in_file(path: Path) -> int:
     try:
         tree = ast.parse(path.read_text(encoding="utf-8", errors="replace"))
-    except (OSError, SyntaxError):
+    except (OSError, SyntaxError, ValueError):
         # Unparseable/unreadable files cannot be audited; skip rather than
         # fail the gate on something that is not a broad-except problem.
         return 0

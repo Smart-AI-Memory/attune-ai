@@ -71,7 +71,7 @@ def test_no_module_level_binding_freezes_a_resolver_result():
     for path in (repo_root / "src" / "attune").rglob("*.py"):
         try:
             tree = ast.parse(path.read_text(encoding="utf-8", errors="ignore"))
-        except SyntaxError:  # pragma: no cover - unparseable file
+        except (SyntaxError, ValueError):  # pragma: no cover - unparseable file
             continue
         for node in tree.body:  # module level only
             if isinstance(node, ast.Assign | ast.AnnAssign):
