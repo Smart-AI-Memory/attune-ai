@@ -23,6 +23,7 @@ from attune.classes.rules import (
     canonical_repo_id,
 )
 from attune.classes.scan import scan_paths
+from attune.classes.teeth import decide, re_exposed
 
 __all__ = [
     "GATES",
@@ -39,5 +40,7 @@ __all__ = [
     "canonical_repo_id",
     "check_commit",
     "check_range",
+    "decide",
+    "re_exposed",
     "scan_paths",
 ]
