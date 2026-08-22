@@ -346,10 +346,10 @@ if age > SENIOR_AGE_THRESHOLD:
 
 ## Testing Requirements
 
-### 1. Test Coverage: Minimum 80%
+### 1. Test Coverage: Minimum 85%
 
 **All new features must include:**
-- ✅ Unit tests (80%+ coverage)
+- ✅ Unit tests (85%+ coverage)
 - ✅ Edge case tests
 - ✅ Error handling tests
 
@@ -478,7 +478,7 @@ pre-commit install
 - [ ] All file paths validated with `_validate_file_path()`
 - [ ] Type hints on all functions
 - [ ] Docstrings on public APIs
-- [ ] Test coverage ≥80%
+- [ ] Test coverage ≥85%
 - [ ] Security tests for file operations
 - [ ] CHANGELOG.md updated
 - [ ] Pre-commit hooks passing
@@ -512,7 +512,7 @@ pre-commit install
 **HIGH** (Must fix before merge):
 - Bare `except:` clauses
 - Missing type hints on public APIs
-- Test coverage <80%
+- Test coverage <85%
 
 **MEDIUM** (Should fix):
 - Missing docstrings

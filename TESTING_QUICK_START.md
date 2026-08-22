@@ -51,12 +51,12 @@ pytest tests/behavioral/ -v -m "not slow"
 6. [ ] Test error paths (invalid input, edge cases)
 7. [ ] Run tests locally: `pytest <file> -v`
 8. [ ] Check coverage: `pytest <file> --cov=<module> --cov-report=term-missing`
-9. [ ] Aim for 80%+ coverage
+9. [ ] Aim for 85%+ coverage
 10. [ ] Commit with clear message
 
 ### After Implementation
 - [ ] All tests pass (100% pass rate)
-- [ ] Coverage ≥80%
+- [ ] Coverage ≥85%
 - [ ] Clear test names
 - [ ] Good docstrings
 - [ ] No skipped tests (unless documented)
@@ -638,7 +638,7 @@ Copy this for each module you implement:
 
 ### Validation
 - [ ] All tests pass
-- [ ] Coverage ≥80%
+- [ ] Coverage ≥85%
 - [ ] Clear test names
 - [ ] Good docstrings
 - [ ] No skipped tests

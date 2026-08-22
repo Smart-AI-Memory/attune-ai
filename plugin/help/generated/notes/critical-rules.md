@@ -18,7 +18,7 @@ Non-negotiable security and quality rules for the attune-ai codebase.
 - NEVER use bare except: - catch specific exceptions
 - ALWAYS log exceptions before handling
 - Type hints and docstrings required on all public APIs
-- Minimum 80% test coverage
+- Minimum 85% test coverage
 - Security tests required for file operations
 - When creating a detailed plan with 3+ tasks or touching
   3+ files, use XML-enhanced prompt format (see

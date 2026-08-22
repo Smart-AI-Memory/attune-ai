@@ -217,7 +217,7 @@ evolved. xdist is now the standard.)
 
 ### Coverage Requirements
 
-- Minimum **80% overall coverage**
+- Minimum **85% overall coverage**
 - New modules should have **90%+ coverage**
 - Critical modules (core, workflows, security) should have **95%+ coverage**
 
@@ -451,7 +451,7 @@ if __name__ == "__main__":
 ### Before Submitting
 
 1. **Run all tests**: `pytest tests/ --cov=src/attune`
-2. **Check coverage**: Ensure 80%+ coverage
+2. **Check coverage**: Ensure 85%+ coverage
 3. **Update documentation**: Add/update relevant docs
 4. **Add examples**: If adding features, add example
 5. **Self-review**: Read through your changes
@@ -459,7 +459,7 @@ if __name__ == "__main__":
 ### PR Checklist
 
 - [ ] Tests pass locally
-- [ ] Coverage is 80%+ overall
+- [ ] Coverage is 85%+ overall
 - [ ] New code has tests (90%+ coverage for new modules)
 - [ ] Documentation updated
 - [ ] Examples added/updated if relevant

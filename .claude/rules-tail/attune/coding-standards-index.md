@@ -438,7 +438,7 @@ def process_data(input_file: str, output_file: str, transform: Callable[[dict], 
 
 ## Testing Requirements
 
-### Minimum 80% Test Coverage
+### Minimum 85% Test Coverage
 
 ```bash
 # Check coverage
@@ -1036,7 +1036,7 @@ class TestPathTraversalProtection:
 
 ### Testing
 
-- [ ] Test coverage ≥80%
+- [ ] Test coverage ≥85%
 - [ ] Security tests for file operations
 - [ ] Edge case tests
 - [ ] Error handling tests
@@ -1076,7 +1076,7 @@ class TestPathTraversalProtection:
 - Bare `except:` clauses
 - Unjustified `except Exception:`
 - Missing type hints on public APIs
-- Test coverage <80%
+- Test coverage <85%
 - Missing security tests for file operations
 
 **Fix within:** Same PR/commit
