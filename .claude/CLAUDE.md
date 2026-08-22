@@ -973,6 +973,35 @@ this section only if core-worthy (and then keep both copies in sync).
   "Never paste PyPI tokens into chat" lesson (transcripts are
   permanent).
 
+- **NEVER print a secret-bearing file "with a mask" — a masking regex
+  that fails matches NOTHING and prints the secret verbatim, and BSD
+  sed silently ignores `\S`, `\d`, `\w`**: 2026-08-22, live incident. To
+  show a Redis conf's structure I ran
+  `sed -E 's/(requirepass )\S+/\1<PW>/'` over the file and printed the
+  result. On macOS that substitution matched **nothing** — `\S` is a GNU
+  extension BSD sed does not implement, and sed does not error on an
+  unknown escape, it just fails to match — so the line printed as
+  `requirepass "<the live password>"` into a permanent transcript. The
+  password had to be rotated again. **A failed mask is
+  indistinguishable from a successful one in the output you are about to
+  emit, because the thing that proves it worked is the thing you cannot
+  see until it is too late.** Three rules, in order of preference:
+  (1) **Do not print the file.** Print KEY NAMES only —
+  `grep -oE '^[A-Z_]+' .env`, `grep -nvE '^\s*$' conf | cut -d' ' -f1` —
+  or answer the question with a boolean/digest instead of content.
+  (2) If a masked print is genuinely needed, **prove the mask on that
+  exact line first** by asserting the output does NOT contain the
+  secret, and only then emit. (3) Prefer Python's `re` over `sed` for
+  masking: it implements `\S`/`\d`/`\w` portably, and you can assert the
+  substitution count (`re.subn` returns it — a count of 0 is the alarm).
+  Note this repo's corpus already carries three secret-leak lessons
+  (untracked `.txt` reads, editor settings-sync, pasted PyPI tokens);
+  this is the fourth vector and the first where the LEAK CAME FROM THE
+  DEFENSE — the masking step itself. Corollary that cost extra here: the
+  same value also appeared correct-looking in a `diff` I ran with the
+  same broken mask, so the "empty diff" I reported proved nothing.
+  **Never trust a redaction you have not tested.**
+
 - **`Write` to an absolute `/Users/patrickroebuck/attune-ai/...`
   path from a worktree session lands the file on the PARENT
   MAIN checkout, not the worktree** — extends the existing
@@ -1095,32 +1124,6 @@ this section only if core-worthy (and then keep both copies in sync).
   "registered" / "smoke-exits-0" are necessary-not-sufficient — dogfood
   the actual end-to-end before declaring done. The receipt beats the
   promise (§7).
-
-- **The `.help` whole-feature LLM RE-POLISH fired from the POST-commit
-  hook, not pre-commit — both hook paths are now check-only (fixed
-  2026-07-20)**: this lesson originally blamed the pre-commit
-  `regenerate-help-templates` hook for rewriting
-  `.help/templates/memory/{concept,reference,task}.md` (net −207/+149,
-  a whole-feature re-polish with hallucination risk, reappearing
-  unstaged on the next commit). Premise corrected by
-  docs/specs/post-commit-help-check-only: the PRE-commit path was
-  already check-only (polish-cost-reduction lever 1, ratified
-  2026-06-10 — `scripts/regenerate_help_templates.py` warns which
-  features lag, never regenerates, never spends LLM); the live
-  re-polish surface was `plugin/hooks/help_post_commit.py` →
-  `attune.help.maintenance.run_hook()` calling `run_maintenance(...)`
-  in regenerate mode after every `git commit` (this is what rewrote
-  the plugin templates during the 8.7.1 ship). Fixed 2026-07-20:
-  `run_hook` passes `dry_run=True`, so the post-commit hook only
-  warns "N feature(s) are stale — run /coach maintain"; drift-guard
-  tests in `tests/unit/help/test_maintenance.py` and
-  `tests/unit/hooks/test_help_hooks.py` raise if the regenerating
-  branch is ever reachable from the hook path again. Still-true
-  guidance: if an unstaged LLM rewrite of `.help/templates/
-  <feature>/` ever appears in a focused PR, don't commit it —
-  `git checkout -- .help/templates/<feature>/`; polish-bearing regen
-  belongs at release-prep cadence (`/coach maintain` /
-  `attune-author regenerate`), never per-commit.
 
 - **Keyless-CI-faithful local runs need `ANTHROPIC_API_KEY=""`
   (EMPTY), not `env -u` (UNSET) — unset lets `load_dotenv` inject the
