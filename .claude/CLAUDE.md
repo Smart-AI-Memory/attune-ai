@@ -1201,3 +1201,130 @@ this section only if core-worthy (and then keep both copies in sync).
   accidental double-apply fails loudly instead of duplicating
   the suffix. Extends the "interrupted compound Bash command may
   have partially executed" lesson to the Edit-tool surface.
+
+- **Teaching a scanner a new safe idiom can make its gate go BLIND —
+  and a shrink-only allowlist ratchet then demands you delete the
+  entries that were still load-bearing**: 2026-08-21, closing
+  library-review class G1. The sweep-fix replaced ten `path.write_text()`
+  atomic-publish sites with `tempfile.mkstemp` + `os.fdopen` + `replace`.
+  The path-validation gate's scanner knew `.write_text` / `.write_bytes` /
+  `.open(mode="w")` / `shutil.*` / `os.remove|unlink|rename|replace` — it
+  did **not** know `os.fdopen` or `tempfile.mkstemp`. So six modules
+  dropped OFF its offender list the moment they adopted the SAFER idiom,
+  while still writing files exactly as before. Then
+  `test_allowlist_entries_are_still_needed` (correctly, by its own logic)
+  failed demanding those six ALLOWLIST entries be removed as stale —
+  which would have made the gate assert something untrue: "these modules
+  have no unvalidated file ops." The gate would have gone quiet on six
+  real writers and looked *healthier* for it. **The tell is an allowlist
+  ratchet firing "no longer needed" on modules you did not make safer —
+  if a shrink-only list suddenly wants to shrink right after a
+  refactor, suspect the SCANNER lost sight of the code, not that the
+  code improved.** Fix: teach the scanner the new idiom in the SAME PR
+  as the migration (`tempfile.{mkstemp,mkdtemp,NamedTemporaryFile,
+  TemporaryFile}` + `os.fdopen`-for-write), with unit tests pinning both
+  directions (write mode detected, read mode ignored). The widening then
+  surfaced **two pre-existing writers the scanner had NEVER seen**
+  (`authoring/fact_check/tutorial_static_check.py`,
+  `ops/session_summary_cache.py`) — one of which interpolates an
+  unvalidated id into a path; allowlisted with the traversal question
+  recorded in the comment and chipped separately rather than waved
+  through. Generalizes beyond this gate: **any AST scanner encodes a
+  vocabulary of the idioms in use when it was written, so every idiom
+  migration is a silent recall regression for every gate that scans for
+  the old one.** Pairs with the existing "reviewing gate allowlist
+  entries — the escape hatch is the actual attack surface" prior.
+- **`os.geteuid()` inside a `pytest.mark.skipif` condition errors the
+  WHOLE MODULE at collection time on Windows — skipif conditions are
+  evaluated eagerly, so a second `skipif(os.name == "nt")` above it
+  never gets a chance**: 2026-08-21, all five Windows lanes on PR #2147
+  went red on a tests-only change. The decorator stack read:
+  ```python
+  @pytest.mark.skipif(os.name == "nt", reason="POSIX mode bits")
+  @pytest.mark.skipif(os.geteuid() == 0, reason="root ignores the write bit")
+  ```
+  which looks defensive and is not: `os.geteuid` **does not exist** on
+  Windows, so the condition expression raises `AttributeError: module
+  'os' has no attribute 'geteuid'` while pytest is COLLECTING the file —
+  before any skip logic runs, taking every test in the module with it
+  (`ERROR tests/unit/curator/test_cache.py`). The nt-skip is dead code:
+  a decorator cannot protect an expression that is evaluated to build
+  the decorator below it. Fix: collapse to one module-level constant
+  computed with a safe accessor —
+  `_CANNOT_REFUSE_WRITES = os.name == "nt" or getattr(os, "geteuid", lambda: 1)() == 0`
+  — then a single `skipif(_CANNOT_REFUSE_WRITES, ...)`. The repo's three
+  pre-existing uses already short-circuit correctly
+  (`os.name == "posix" and os.geteuid() != 0` in
+  `tests/unit/memory/test_file_stash.py`; `hasattr(os, "geteuid") and ...`
+  in `tests/unit/telemetry/test_form_events.py` and
+  `tests/unit/workflows/discovery_sweep/test_pattern_scan_source.py`) —
+  **grep for an existing safe spelling before writing a new
+  platform-gated skip**. Generalizes to any POSIX-only `os` member in a
+  skipif condition (`geteuid`, `getuid`, `setuid`, `fork`, `getpriority`)
+  and to `pytest.mark.parametrize` argument expressions, which are also
+  evaluated at collection. Diagnostic tell: a tests-only diff that fails
+  EVERY Windows lane as `ERROR` (collection) rather than `FAILED`.
+- **Calibrate a new gate rule on the real tree BEFORE writing it, and
+  report the precision — a first-draft rule is routinely 60-70% precise,
+  and the discriminator that fixes it must be pinned as a fixture**:
+  2026-08-21, across four library-review gates. Every rule was probed as
+  a throwaway script first, and every one moved after seeing its hits.
+  G2's naive form ("any `int()`/`float()` after a per-record skip
+  guard") found 6 sites, 4 real: the lookalikes were
+  `int(elapsed * 1000)` on floats and `int(m.group(1))` on a `(\d+)`
+  capture, neither of which can raise. Requiring the coerced value to
+  come from a parsed record (a `.get(...)` or a subscript) took it to
+  4/4/0. I-4's naive form found 12, narrowed to 3. H1's FIRST form was
+  worse than imprecise — it was **wrong**: keyed on literal `host=`/
+  `port=` arguments, it found one site and MISSED the live user-facing
+  bug entirely, because `redis.Redis(socket_connect_timeout=2)` has no
+  endpoint argument at all and defaults to localhost:6379 implicitly.
+  A rule that finds one already-defensible hit is evidence the QUESTION
+  is wrong, not that the tree is clean. Three durable practices: (1)
+  **probe first, in a scratch script, and look at every hit by hand** —
+  the triage is where the rule gets designed; (2) **state the precision
+  in the PR** (hits / real / false positives) so a reviewer can judge
+  whether the gate will cry wolf, since a noisy gate gets allowlisted
+  into uselessness; (3) **pin each false positive you eliminated as a
+  passing test fixture** — the discriminator is the most fragile part of
+  the rule and the easiest thing for a later "simplification" to drop.
+  Matches the class register's own pipeline (confirm -> mechanize ->
+  CALIBRATE -> gate -> sweep-fix -> close) and its standing line that
+  "uncalibrated rules do not gate anything".
+- **A required check failing on a PR that cannot possibly affect it means
+  MAIN is red — check main's last run BEFORE debugging the PR; and
+  `strict: false` does NOT mean "no rebase needed"**: 2026-08-21. A
+  docs-only PR (#2153, one markdown file in an archived spec) failed the
+  required `coverage` check. Nothing in that diff can move coverage, and
+  that impossibility is the diagnostic: one `gh run list --branch main
+  --limit 6 --workflow=tests.yml` showed main itself failing since
+  `ced39888a`. The PR was inheriting main's breakage, so debugging the
+  PR would have found nothing. **Order of operations: a check that the
+  diff cannot influence is a signal about the BASE, not the branch.**
+  Root cause was `scripts/check_badge_freshness.py` (it runs inside the
+  coverage job, so its failure is reported as "coverage"): the README
+  carries a manually-maintained round FLOOR for the tests badge and
+  `MARGIN = 5000`, so it trips once actual exceeds floor + 5,000. The
+  floor had drifted ~4,970 stale on its own; four gate PRs merged that
+  afternoon added the tests that crossed it. Fix was a one-line bump to
+  the next round number — which the README's own maintenance comment had
+  already named ("bump once the suite clears 25,000"), so **read the
+  maintenance comment before inventing a value**.
+  **The correction worth carrying:** I first reasoned the follow-up PR
+  needed no rebase, because branch protection has `strict: false` and
+  the two PRs touched different files. Wrong in effect — `strict`
+  governs merge ELIGIBILITY (may a behind-branch merge), not whether a
+  check PASSES. The follow-up branched before the fix, so its own tree
+  still held the stale floor and `coverage` genuinely failed on its own
+  content. It needed the rebase regardless of strictness. **Ask "does
+  this branch's TREE contain the fix?", never "is this branch allowed to
+  merge behind?"** (rebase re-signed cleanly; verify `%G?` before
+  force-pushing, per the existing GPG lesson.)
+  Rider on the same episode: merging four PRs inside ~15 minutes made
+  `cancel-in-progress` kill an earlier main run's `test (ubuntu-latest,
+  3.13)`, and cancelled-but-required also blocks — the known
+  rapid-PUSH lesson applies identically to rapid MERGES. No code fixes
+  that half; it clears on the next full main run, so verify the two
+  previously-red JOB conclusions directly rather than trusting the
+  run-level green (a cancelled-but-required check that stays cancelled
+  looks the same from a distance and needs `gh run rerun`).
