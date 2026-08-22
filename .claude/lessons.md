@@ -24159,3 +24159,166 @@ imposes on every other in-flight PR, not just the next one.
   properly also surfaced the real nuance: the sibling covered the CLASS
   but NOT the Edit-specific remedies, which changed the design from a
   plain eviction into a fold.
+
+- **`git stash push -- <paths>` on files that are ALREADY COMMITTED saves
+  nothing, so the `git stash pop` you pair with it pops somebody ELSE'S
+  stash**: 2026-08-22, re-running a gate calibration. The intent was
+  "temporarily set my fixes aside, re-scan, restore" — but the fixes were
+  already committed, so the working tree was clean for those paths and
+  `stash push` created NO entry (it prints "No local changes to save",
+  easy to miss when the command is `-q` or its output is tailed). The
+  paired `git stash pop` then applied `stash@{0}`, which was a
+  PRE-EXISTING `autostash` belonging to an interrupted operation in
+  another worktree, and conflicted (`UU tests/unit/test_mcp_memory_tools.py`).
+  Nothing was lost only because the CONFLICT made git keep the entry —
+  a clean apply would have silently consumed someone else's stash and
+  dropped it. Two symptoms also made the calibration meaningless
+  (it scanned the already-fixed files and reported 0, which I nearly
+  read as "the rule is broken"). **Rules**: (1) `stash push` and
+  `stash pop` are only a pair if the push actually created an entry —
+  check `git stash list` (or the push's output) BEFORE popping, never
+  assume; (2) prefer `git stash pop stash@{N}` naming the entry, or
+  better, avoid stash entirely for "look at an older version" — use
+  `git archive <ref> <path> | tar -x -C <scratchdir>` or
+  `git show <ref>:<path>`, which cannot touch the working tree or the
+  stash stack at all; (3) a repo shared with other worktrees/sessions may
+  carry stashes that are not yours — `git stash list` before any
+  stash operation, and never `stash drop` an entry you did not create.
+  Extends the existing `git stash pop` gotchas lesson (inverted
+  --ours/--theirs, silent skips) with the "wrong stash entirely" case.
+
+- **`errors="surrogateescape"` only round-trips U+DC80–U+DCFF, so it
+  still raises on caller-controlled lone surrogates — and parametrizing
+  ONE representative of a class hides exactly that**: 2026-08-22, PR
+  #2168, caught by the cross-review lane (codex), not by me. Making the
+  ops client-token check constant-time meant encoding a caller-supplied
+  header to bytes (`compare_digest` raises `TypeError` on non-ASCII
+  `str`). I reached for `surrogateescape`, which only encodes the
+  surrogates it PRODUCES ITSELF from undecodable bytes — U+DC80 through
+  U+DCFF. A lone surrogate outside that range raises `UnicodeEncodeError`
+  from the very branch whose purpose is returning 403, so the endpoint
+  500s instead. Verified: `\ud800` -> `UnicodeEncodeError`; `\udcff` ->
+  403. **The meta-lesson is the expensive half: my own test masked it.**
+  I had parametrized exactly one surrogate and happened to pick
+  `\udcff` — the top of the covered range — so the case passed and I
+  reported "non-ASCII and surrogate headers return 403, not 500" as a
+  verified receipt. Mutation-testing did not catch it either, because I
+  mutated the FIX and not the test's coverage of the INPUT SPACE.
+  **Rules**: (1) when the property is "never raises", pick the error
+  handler by that property — `replace` / `backslashreplace` /
+  `surrogatepass` cannot raise for any `str`; `surrogateescape` and
+  `strict` can; (2) when parametrizing a class of hostile input, include
+  values from BOTH sides of every internal boundary the implementation
+  has (here: inside and outside the surrogateescape window) — one
+  representative proves only that one representative works; (3) a
+  boundary you did not know existed is precisely what a different-model
+  review lane is for.
+
+- **A transport migration silently converts every emptiness-asserting
+  test into a vacuous one — and the suite CANNOT report it, because the
+  failure mode satisfies the assertion**: 2026-08-22, the telemetry
+  scan-then-`get()` -> `MGET` migration (#2162). Tests that stubbed only
+  `client.get` then handed the listing a bare `Mock` for `mget`, which is
+  not iterable; the `TypeError` was swallowed by each listing's
+  function-wide `except Exception` and the call returned `[]` / `0` /
+  `None`. Any `assert x == []` therefore passed **for the wrong reason**:
+  the payload the test set up was never read (`get()` call count 0) and
+  the logic under test never ran. The cost, measured: disabling
+  `get_pending_approvals`' "only pending" status filter ENTIRELY left the
+  whole telemetry suite green (646 passed) — that filter's only guard was
+  one of the vacuous tests. **The selection effect is the point, and it
+  was perfectly clean across the 13 tests touching those listings:
+  POSITIVE-assertion tests (`assert len(x) == 1`) go red instantly and
+  get fixed during the migration — 3/3 were wired; emptiness-asserting
+  tests are satisfied by the very failure they should catch — 0/10 were.**
+  Nobody was careless; the suite emitted no signal, so no amount of care
+  would have caught it. Generalizes to ANY mock-stubbed transport swap
+  (sync->async, single->batch, REST->GraphQL, one client method ->
+  another) wherever the caller has a broad `except` that degrades to an
+  empty result. **Diagnostics**: (1) mutation-test the logic the tests
+  claim to guard — if breaking a filter leaves the suite green, its
+  coverage is fiction; (2) count `get()` calls — a stubbed payload that
+  is never read is the tell; (3) grep for tests that stub the OLD method
+  and assert emptiness. **Fix**: define the new method in terms of the
+  old (`client.mget.side_effect = lambda ks: [client.get(k) for k in ks]`
+  — literally the Redis contract), so each test keeps configuring
+  payloads the way it already does. **Gate it**: a static check that any
+  test feeding a non-empty scan must also serve the batched read
+  (`tests/unit/gates/test_listing_mock_transport_gate.py`), since this
+  class is invisible by construction and vigilance cannot cover it.
+
+- **Anchoring a path against a later `chdir` needs `.absolute()`, NOT
+  `.resolve()` — resolve additionally rewrites the caller's own absolute
+  path through symlinks**: 2026-08-22, PR #2170. `AlertEngine` stored a
+  CWD-relative default (`.attune/alerts.db`) unresolved while
+  `alerts_cli._daemonize()` does `os.chdir("/")`, so every query after
+  the fork looked for `/.attune/alerts.db` and raised
+  `sqlite3.OperationalError: unable to open database file` — daemon mode
+  could not reach the database it had just created. The fix is to anchor
+  at construction; the trap is WHICH anchor. `.resolve()` also
+  canonicalizes symlinks, so a caller passing `/var/...` on macOS reads
+  back `/private/var/...`; two existing tests failed instantly by
+  asserting the absolute path they had passed in, and those assertions
+  were RIGHT — the fix moved, not the tests. `.absolute()` achieves the
+  entire goal (a later chdir cannot move the target) with zero collateral,
+  and matches the in-repo precedent: `storage_backend.default_storage_dir`
+  anchors via `Path.cwd() / ...` for the identical stated reason and
+  likewise does not resolve. **Generalization**: "make it absolute" and
+  "canonicalize it" are different operations with different blast radii —
+  reach for the weaker one that satisfies the requirement. **Detection
+  for the underlying bug class**: any long-lived object that stores a
+  relative path and any code path that later changes the process CWD
+  (daemonize, `os.chdir` in a test, a subprocess with `cwd=`) — grep for
+  `os.chdir` and ask what relative paths were captured before it.
+
+- **When a review is requested on a PR that is ALREADY armed with
+  auto-merge, disarm BEFORE anything else — and do not trust the label
+  removal alone, it disarms asynchronously**: 2026-08-22, PR #2168. The
+  chair said "merge it when CI goes green", the `auto-merge-when-green`
+  label was applied and verified armed, and then the chair changed their
+  mind and asked for the D11 cross-model lane. A review that can be
+  overtaken by its own subject is worthless, so the protective act runs
+  first (D11d PROTECT-THEN-ASK: reversible protective acts against the
+  lead's OWN prior actions execute before any elicitation). **The
+  mechanic that matters**: `gh pr edit <n> --remove-label
+  auto-merge-when-green` fires the workflow's `unlabeled` disarm path,
+  but that is a workflow run — checking immediately after showed the
+  label gone and `autoMergeRequest` STILL non-null. Waiting on it is a
+  race against required checks going green. `gh pr merge <n>
+  --disable-auto` is synchronous and takes effect at once; run it and
+  verify `autoMergeRequest == null` as the post-condition. Re-arming
+  afterwards binds to the NEW head SHA (the review's own fix commit),
+  which is the correct read-receipt semantics — report the SHA being
+  armed so the chair knows what they authorized. **Companion**: the lane
+  found a real 500-instead-of-403 that my own test had masked, so the
+  mind-change was right and the disarm bought the whole value.
+
+- **A parallel session can ship YOUR fix while you are writing it —
+  branching off `origin/main` is what catches it, so fetch at the branch
+  point, not just before the PR**: 2026-08-22. Working an N+1 Redis fix
+  from the 13.0.2 review, I finished the code and then ran
+  `git fetch origin main` to branch — and `origin/main`'s HEAD was
+  literally `perf(telemetry): batch scan-then-fetch Redis listings into
+  one MGET (#2162)`, merged ~15 minutes earlier by another session. **The
+  tell is the HEAD subject naming your own work**; had I branched from a
+  stale local ref I would have opened a duplicate PR. Their version was
+  strictly better on every axis (5 sites vs my 4 — they caught
+  `clear_expired_requests`; chunked MGET at 500 vs my unbounded one,
+  which would block the Redis server on a large scan; total per-record
+  degradation vs mine, which still let one field-missing record empty the
+  whole listing). Correct disposition per the standing convention: drop
+  mine, do not ask, do not push it "for comparison". Two durable points:
+  (1) **fetch at the moment you create the branch**, and re-check
+  `git rev-list --count HEAD..origin/main` right before opening the PR —
+  in this session `main` moved three times in under an hour; (2) when
+  two sessions independently reach the SAME judgment calls (both deleted
+  `_retrieve_signal`, both kept `_retrieve_heartbeat`, both hit the
+  broad-except ratchet 7->6), that convergence is real corroboration the
+  reasoning was sound even though the work is discarded — say so rather
+  than pretending the duplicate cost nothing.
+
+- **macOS default shell has no `timeout` command — a compound `timeout 200 codex ... ; echo EXIT=$?` reports EXIT=127 with 0-byte output, which is indistinguishable from the CLI being absent**: hit 2026-08-22 invoking roundtable seats. `timeout`/`gtimeout` is a coreutils-ism; on stock macOS zsh/bash the whole command fails with 127 before the seat CLI ever runs, and because the invocation redirects stderr to a file the `command not found` is buried there, not on screen. Diagnostic tell: EXIT=127 + DUR=0s + empty output file = the WRAPPER failed, not the seat — check `cat <errfile>` before concluding the CLI is missing/unauthenticated (an R6 ABSENT verdict here would have wrongly degraded the table to one seat). Fix: drop `timeout` and rely on the Bash tool's own `timeout:` parameter for bounding, or use `gtimeout` only if coreutils is confirmed installed. Also from the same session: seat CLIs may live outside the interactive PATH (`~/.npm-global/bin/codex`, `~/.local/bin/agy`) — resolve absolute paths once and reuse.
+
+- **The roundtable Board's FCALL rejects a `draft` message kind — spec-authoring rounds post drafts as `kind='position'` with `role='drafter'` extras**: hit 2026-08-22 running the V2-P1 spec-authoring loop interactively (thread `q-release-audit-roundtable-stage-001`). The skill's spec-authoring section says round outputs are lint-gated drafts/critiques, but `rt_post_message` enforces `question|position|synthesis|ruling|suggestion|halt` — `Board().post_message(..., 'draft', ...)` raises `ResponseError` from the Redis function, after the draft already lint-checked clean. Working recipe: post as `position` carrying `role='drafter'` / `role='critic'` and `reply_to=<draft id>` extras; the compiler lints (`lint_draft`/`lint_critique`) don't care about board kind, only body shape (`**XX-N — title**` items, cited critique items, VERDICT line). Same loop also needs the critique brief to state the lint contract explicitly (item ids in bold, pack/file citation per item, exact VERDICT line) — both external CLI seats produced lint-clean critiques on the first pass when the brief carried the contract verbatim.
+
+- **A derived status column's first honest output can be CONFIDENTLY WRONG where a gate asserts a deliberately-scoped subset — pair every hits-vs-gate derivation with a machine-readable dispositions ledger, or BROKEN-GATE becomes the new false alarm**: 2026-08-22, first live run of `attune.classes.register` (release-audit-stage R2). The derivation table (gate present + hits > 0 = BROKEN-GATE, loud) immediately reported C3 and C4a broken. Both gates are fine: the C3 gate deliberately asserts only the REACHABLE external-input subset (the review dismissed 25 internal sites with reasons and carried 15 stored-data sites), while the R7b rule hits the whole tree — 52 hits vs a gate that intentionally covers ~12. The seat's OQ3 warning materialized on contact: "a hand-maintained column that is KNOWN stale is safer than a derived one that is CONFIDENTLY wrong." The fix is not weakening the loud quadrant — it is making the review's dismissed-with-reason discipline machine-readable (`.attune/class-dispositions.yaml`, `{rule_id, path, reason}` subtracted before derivation, invalid entries reported never silently applied). Rider from the same run: the derivation also caught the hand register stale in the GOOD direction (H1/G1/G2/I-4 gates existed that the register still called fixed-but-ungated) — a derived column drifts loud in both directions, which is the whole argument for deriving; the dispositions ledger is what keeps the loud direction truthful.
