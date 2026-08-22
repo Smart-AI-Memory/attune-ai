@@ -82,6 +82,14 @@ metadata `{id, invariant, calibration, fixtures}`.
   normalized repo-relative paths; deleted files are skipped, renames
   scan the new path, binary/generated files are excluded by the same
   filters the sweep suite used.
+- **Sweep scope** (D10, chair-ruled 2026-08-22): the per-release sweep
+  scans `src/` only, because the calibration receipts were measured
+  against package sites. Deleted paths are still tracked separately —
+  the sweep skips them, but the packet's §0 symbol delta must not, since
+  a deleted module is the clearest public-surface removal there is.
+  The packet reports `files_swept` and `files_not_swept` so a narrowed
+  sweep cannot read as a clean one. This governs the SWEEP only;
+  continuous gates keep scanning the whole tree.
 - **Fail closed** (Agy#7): a rule callable crash or timeout marks the
   class `SCAN-ERROR`, lands in packet §2, and aborts the stage unless
   the chair explicitly waives — a failed gatekeeper fails the gate
