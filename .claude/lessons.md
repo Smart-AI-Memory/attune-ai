@@ -7769,7 +7769,14 @@ files.
   — authoritative and immune to the local stale-object trap that
   muddied diagnosis; (4) when archaeology spirals, stop theorizing and
   fact-check trees directly (`git diff <ref-a> <ref-b> --stat` — an
-  empty diff settles arguments instantly). Pairs with the "harness
+  empty diff settles arguments instantly); (5) the SAME reconciliation
+  applies to a rejected or interrupted **Edit** — `grep` the exact
+  target line before re-applying, because the rejection message is not
+  proof that nothing was written (an append that reported "NOT
+  written" was already on disk, and re-applying duplicated the
+  suffix); (6) prefer an `old_string` that is NOT a strict prefix of
+  the intended `new_string`, so an accidental double-apply fails
+  loudly instead of silently duplicating. Pairs with the "harness
   safety classifier blocks bundled-destructive scripts" lesson — same
   root cause family (compound commands + interruption), this one is
   the state-reconciliation half.
