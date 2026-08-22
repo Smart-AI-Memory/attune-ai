@@ -135,24 +135,44 @@ memory storage and recall, and every local transform.
      release with the headline feature; the displaced content moves to
      a permanent section below. Don't stack a second "New in" here. -->
 
-## New in 13.0.0 — correctness you can trust under failure
+## New in 14.0.0 — the release checks its own diff
 
-The code paths that only matter when something goes wrong got a
-library-wide review. Memory writes that reported success without
-landing now actually persist or surface the failure; telemetry and
-security-gate state a single malformed record could corrupt are
-locked down; external input that could crash a parse now degrades
-instead. Shared stores (`AgentStateStore`, `ComplianceDatabase`) write
-atomically under a lock. And agents gain **interactive forms** — richer
-than yes/no: a decision card with per-option tradeoffs, a pushback card
-for disagreement, progress reports, plus ranking, triage, and more, each
-rendered to whatever surface your client supports — a native dialog, an
-HTML widget, or multiple-choice (via `attune-forms` 0.7.0). The major
-bump is the removal of
-the dormant in-package hook-execution engine — dead code with no live
-caller (the hooks Claude Code runs are unchanged); the
-memory-durability and schema changes alter observable behavior, so
-check the CHANGELOG's migration notes if you depend on them.
+`/release audit` answers a question the other release checks don't ask:
+**what class of defect could *this* release have introduced?** It
+resolves the range from your last release tag, proves the gates that
+were green are still green *on this exact commit*, sweeps the changed
+package surface with a calibrated rule pack, and hands you a capped
+one-page residual — never a diff dump. Three models then sit on it for
+a single round and either accept or amend a pre-filled disposition per
+item. You rule; `/release publish` refuses to tag until every item
+carries a ruling, and records that ruling next to the commit it was
+made about.
+
+It also knows what it didn't look at. The packet states how many files
+were swept against how many changed, so an empty result can never be
+mistaken for a clean one. And the class register behind it **derives**
+each status from evidence — whether the gate resolves, what it still
+finds, whether a deferral covers it — so a gate that gets renamed goes
+loud instead of quietly reading CLOSED.
+
+The rest you can see from the outside. Background alerting is solid:
+`attune alerts watch --daemon` keeps a firm hold on its database across
+the fork and writes owner-only files. The ops client token is compared
+in constant time, git refs are validated before they reach the command
+line, and telemetry listings cost a single Redis round trip instead of
+one per record. The repo's own whole-tree scanners now survive a file
+with a null byte in it rather than stopping at the first one.
+
+The major bump is a removal: `attune.exceptions` — the nine-class tree
+rooted at `EmpathyFrameworkError` — was the final unremoved surface of
+the "Empathy" framework retired in 9.0.0, and nothing in the library
+raised any of them once their throwers were deleted. **The migration is
+to delete the handler, not repoint the import**: a `try/except` naming
+one of these was already dead code, and there is deliberately no shim
+for an exception that can never be caught. One trap worth naming —
+`attune.config.validation.ValidationError` is a *different, live* class
+(a dataclass describing a config problem, not an exception), so
+repointing there gets you something you cannot catch.
 
 ---
 

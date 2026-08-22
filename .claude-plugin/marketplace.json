@@ -7,14 +7,14 @@
   },
   "metadata": {
     "description": "Persistent memory and receipt-verified workflows for Claude Code. Spec-driven development with an approval loop, plus 28 auto-triggering skills: security audits, code review, test generation, release prep.",
-    "version": "13.0.2"
+    "version": "14.0.0"
   },
   "plugins": [
     {
       "name": "attune-ai",
       "description": "Persistent memory and receipt-verified workflows for Claude Code. /spec carries an idea through brainstorm, requirements, design, and task execution with quality gates and your approval at each stage. Backed by 28 auto-triggering skills — security audits, code reviews, test generation, bug prediction, and release preparation. For help content tools, also install attune-help from this marketplace; authoring ships built in via the attune.authoring module.",
       "source": "./plugin",
-      "version": "13.0.2",
+      "version": "14.0.0",
       "author": {
         "name": "Smart AI Memory",
         "email": "patrick.roebuck@smartaimemory.com"
