@@ -83,9 +83,9 @@ class TestBlastRadiusClassifier:
         def cross_drive(path, start):
             raise ValueError("path is on mount 'D:', start on mount 'C:'")
 
-        monkeypatch.setattr(
-            "attune.orchestration.friction.blast_radius.os.path.relpath", cross_drive
-        )
+        # Patch the module-level alias, NOT os.path.relpath — patching
+        # the global os.path races other xdist tests in this process.
+        monkeypatch.setattr("attune.orchestration.friction.blast_radius._relpath", cross_drive)
         assert classifier.evaluate_file_path("src/attune/auth/login.py") >= 4
 
     def test_normal_file_edit(self) -> None:
