@@ -16,13 +16,14 @@ from unittest.mock import Mock, patch
 import pytest
 
 from attune.telemetry.agent_coordination import CoordinationSignal, CoordinationSignals
+from tests.unit.telemetry.conftest import serve_mget_from_get
 
 
 @pytest.fixture
 def mock_memory():
     """Memory backend double exposing only _client."""
     memory = Mock(spec=["_client"])
-    memory._client = Mock()
+    memory._client = serve_mget_from_get(Mock())
     return memory
 
 

@@ -412,6 +412,7 @@ class TestApprovalGate:
         import json
 
         mock_client.get.return_value = json.dumps(request_data).encode()
+        serve_mget_from_get(mock_client)
 
         mock_memory = Mock()
         mock_memory._client = mock_client
@@ -872,6 +873,7 @@ class TestGetPendingApprovalsBranches:
         mock_client = Mock()
         mock_client.scan_iter.return_value = [b"approval_request:r_gone"]
         mock_client.get.return_value = None
+        serve_mget_from_get(mock_client)
 
         mock_memory = Mock(spec=["_client"])
         mock_memory._client = mock_client
@@ -914,6 +916,7 @@ class TestClearExpiredRequestsBranches:
         mock_client = Mock()
         mock_client.scan_iter.return_value = [b"approval_request:r_gone"]
         mock_client.get.return_value = None
+        serve_mget_from_get(mock_client)
 
         mock_memory = Mock(spec=["_client"])
         mock_memory._client = mock_client
