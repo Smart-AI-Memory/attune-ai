@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **The legacy `attune.exceptions` hierarchy.** The nine-class tree
+  rooted at `EmpathyFrameworkError` (`ValidationError`,
+  `PatternNotFoundError`, `TrustThresholdError`,
+  `ConfidenceThresholdError`, `EmpathyLevelError`, `LeveragePointError`,
+  `FeedbackLoopError`, `CollaborationStateError`) was the last unremoved
+  surface of the "Empathy" framework retired in 9.0.0. Nothing in the
+  library raised any of them — the classes that did were deleted in
+  9.0.0, leaving the exceptions with no thrower and no catcher. The
+  module, its nine top-level re-exports from `attune`, and its
+  documentation in the API reference are gone.
+
+  **This is a breaking change for anyone importing these names**, even
+  though no attune code path could produce them. `from attune import
+  ValidationError` and `from attune.exceptions import ...` now raise.
+  There is no shim: an exception that is never raised cannot be caught,
+  so a `try/except` naming one was already dead code — delete the
+  handler rather than repointing the import. Note `ValidationError` is
+  ambiguous: `attune.config.validation.ValidationError` is a *different,
+  live* class (a dataclass describing a config problem, not an
+  exception) and is unaffected.
+
+- **`examples/quickstart.py`.** Already broken since 9.0.0 — it failed
+  on its own import line (`EmpathyOS`, `Level1Reactive`…`Level5Systems`,
+  `FeedbackLoopDetector` were all removed then), so the `python3
+  examples/quickstart.py` that `examples/README.md` advertised had been
+  crashing with `ImportError` for four majors. Removed along with its
+  README references rather than left as a broken invitation.
+
+
 ## [13.0.2] - 2026-08-22
 
 **Four correctness classes, closed at the gate.** The library review had
