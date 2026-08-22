@@ -23966,3 +23966,91 @@ imposes on every other in-flight PR, not just the next one.
   standing on the right branch can host the step instead. The shared
   checkout is shared state, and release steps should not be the thing that
   perturbs it.
+
+- **Parsing `gh pr checks` TABULAR output with positional `awk` fields
+  silently misreads the bucket — check NAMES contain spaces, so `$2` is a
+  name fragment, not the status; use `--json name,bucket`**: 2026-08-22,
+  watching two PRs to green with a standing "admin-merge if auto-merge
+  stalls" authorization. The watcher counted pending work with
+  `awk '$2=="pending"'`. On the row `test (windows-latest, 3.12)  pending`
+  field 2 is `(windows-latest,` — so a RUNNING Windows lane counted as
+  zero-pending. The watcher printed `pend=0 fail=[]` while the PR sat
+  `OPEN/BLOCKED`, which its own stall detector read as "all checks
+  terminal, still open" = auto-merge stalled. Acting on that would have
+  admin-merged a PR whose Windows lane had not yet reported — precisely
+  the failure the existing "admin-merging a PR before Windows lanes
+  complete buries a real bug on main" lesson warns about, reached through
+  a parsing bug rather than impatience. The same break hides bad news:
+  `fail=[]` is indistinguishable from "I could not see the failures," so
+  the watcher's clean bill of health carried no information at all.
+  Fix: `gh pr checks <n> --json name,bucket` piped through `jq`, never
+  positional `awk` — EVERY multi-word check name breaks column
+  assumptions and `gh` does not quote them (`test (ubuntu-latest, 3.12)`,
+  `Analyze (python)`, `clock-tz (America/Anchorage)`, `Vercel – website`).
+  Diagnostic tell, and it is free: a bucket tally that CONTRADICTS the
+  PR's own `mergeStateStatus`. `BLOCKED` with zero pending and zero fails
+  is not a stall, it is an impossibility — and the impossible half is
+  your parser, not GitHub. Extends "CI watchers report ABSENCE as
+  success" one layer down (mis-parse rendering as absence, absence
+  rendering as success) and pairs with "`gh pr checks --json` field is
+  `bucket`, NOT `conclusion`" — same command, and the JSON path avoids
+  both traps at once.
+
+- **The docs-outbox is a DOCS queue, not a work queue — `report`/`draft`/
+  `plan` kinds CREATE a new `.md` target and cannot carry an edit to a
+  `.py`; queue non-doc follow-ups somewhere else**: 2026-08-22, asked to
+  "batch this one-line comment fix with the next PR." The outbox looked
+  like the obvious home — it is the repo's own mechanism for pending
+  small work, and it surfaces automatically in the next digest. Reading
+  `routing.py` and `sweep.py` first showed why it does not fit:
+  `OUTBOX_TARGETS` maps `lesson -> .claude/lessons.md` and
+  `report`/`draft`/`plan -> None`, but a `None` default does NOT mean
+  "queued and inert" — it means the artifact must name its OWN target,
+  which is then validated as repo-relative, `.md`-suffixed, and
+  **non-existent** ("refusing overwrite"), and `apply` CREATES that file.
+  So routing a `.py` one-liner through a `draft` would have produced a
+  stray markdown file, not the fix. General shape: a queue's ROUTING
+  TABLE is its type signature — read it before adopting the queue,
+  because a mechanism that accepts your artifact is not the same as a
+  mechanism that will DO the right thing with it. What worked instead:
+  a ready-to-apply patch file under `~/.attune/queued-edits/` carrying
+  the verification command, the exact `sed`, the post-apply gate check,
+  AND the decision that produced it (here: do NOT raise
+  `CORE_BUDGET_BYTES`, it is shrink-only) — machine-local, survives
+  sessions, and reusable by whoever picks it up. Dry-run the queued patch
+  against a scratch copy before filing it: a `sed` that matches nothing
+  files as a confident no-op and is discovered only much later.
+
+- **A squash-merge REBASES the sibling PR's base, so a clean
+  `git merge-tree` between branch TIPS does not predict post-merge
+  mergeability — and GitHub's `CONFLICTING` right after that merge can
+  itself be stale; rebase and LOOK before believing either**: 2026-08-22,
+  two same-day PRs both appending to the tail of `.claude/lessons.md`.
+  Before either landed I ran `git merge-tree --write-tree <A> <B>`, got a
+  clean tree and exit 0, and told the chair no rebase would be needed.
+  When #2160 squash-merged, #2161 immediately read
+  `mergeStateStatus=DIRTY mergeable=CONFLICTING`. BOTH readings were
+  wrong, in opposite directions: the merge-tree probe compared two tips
+  against their shared base, which is not the situation after a squash
+  rewrites main's tail into one new commit; and the `CONFLICTING` was
+  stale — `git rebase origin/main` then replayed the branch with ZERO
+  conflicts. Practices: (1) treat a clean tip-to-tip merge-tree as
+  evidence about the CURRENT bases only, never as a forecast across a
+  sibling merge — squash AND rebase merge strategies both invalidate it,
+  and squash is the repo default; (2) when GitHub reports CONFLICTING,
+  run the rebase before reporting a conflict to anyone — the field is
+  computed asynchronously and lags the true state by minutes; (3) verify
+  `%G?` after the rebase (the existing rebase-drops-GPG-signature
+  lesson) — here it survived as `G`, but the check is one command and the
+  failure is silent.
+  Companion technique worth keeping: to learn whether two in-flight PRs
+  are JOINTLY safe before either lands — the state neither PR's own CI
+  ever exercises, and the gap behind "a drift guard merged in one PR
+  won't catch drift from a sibling content-PR" — materialize the combined
+  tree and run the gates on it. `git merge-tree --write-tree A B` prints
+  a TREE oid, and `git worktree add` rejects it (`is a tree, not a
+  commit`); the working move is
+  `git archive <oid> <paths> | tar -x -C <scratch>`, then copy those
+  files over a scratch worktree and run the suite there. It found nothing
+  this time — the honest outcome most of the time — but it is the only
+  probe that answers the both-merged question BEFORE it is irreversible.
