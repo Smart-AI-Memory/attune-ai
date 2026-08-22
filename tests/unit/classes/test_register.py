@@ -268,3 +268,14 @@ class TestDispositionPathSeparators:
         dispositions = [{"rule_id": "R7b", "path": "src/mod.py", "reason": "dismissed"}]
 
         assert _subtract_dispositions(hits, dispositions, Path.cwd()) == []
+
+
+class TestShippedDispositions:
+    def test_shipped_dispositions_file_is_schema_valid(self):
+        valid, problems = load_dispositions(REPO_ROOT)
+        assert problems == []
+        assert len(valid) >= 45  # populated 2026-08-22 from the review ledgers
+
+    def test_shipped_dispositions_reasons_are_never_empty(self):
+        valid, _ = load_dispositions(REPO_ROOT)
+        assert all(d["reason"].strip() for d in valid)

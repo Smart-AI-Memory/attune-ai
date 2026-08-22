@@ -1,0 +1,161 @@
+# Class dispositions — the review's dismissed-with-reason discipline,
+# machine-readable (release-audit-stage R2). Each entry subtracts a
+# reviewed finding from status derivation; the reason cites the ledger
+# it came from. Sources: C3-triage-2026-08-20.md (machine-local,
+# ~/.attune/reports/attune-ai-review/), PR #2123 C4b triage.
+# Paths are posix, repo-relative. Entries are per (rule_id, path).
+
+# --- C3 group C: internal, self-written, same-process (~25 sites,
+# --- dismissed as a class: "a non-dict is not reachable without the
+# --- writer being broken first; the guard would hide the real bug").
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/cost_tracker.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/patterns/confidence.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/patterns/contextual.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/patterns/resolver.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/patterns/summary.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/state_manager.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/project_index/index.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/pattern_persistence.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/telemetry/usage_ping.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/telemetry/usage_tracker.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/workflows/migration.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/workflows/suggestions.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/workflows/tier_tracking.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/workflows/health_check_tracking.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/workflows/progressive/reports.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/diagnosis/evidence.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/gates/envelope.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/pipeline_learner/decisions.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/meta_workflows/models.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/cli_commands/help_commands.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/hooks/scripts/starter_reconciler.py
+  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
+
+# --- C3 verified dismissal (spot-checked in the ledger).
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/mcp/version_check.py
+  reason: "verified dismissal - every .get inside catch-all try, degrades to None (C3-triage-2026-08-20)"
+
+# --- C3 group B: stored/replayed-later - OUTSIDE the C3 gate's
+# --- asserted scope (gate covers group A external-input only) and
+# --- carried into the batch-3 stored-data review. These are open
+# --- work items, not gate breaks; recorded here so the derivation
+# --- does not report the group-A gate broken for them.
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/memory/short_term/batch.py
+  reason: "C3 group B (stored data, batch-3 thesis) - outside gate scope, carried work"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/memory/short_term/sessions.py
+  reason: "C3 group B (stored data, batch-3 thesis) - outside gate scope, carried work"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/memory/short_term/working.py
+  reason: "C3 group B (stored data, batch-3 thesis) - outside gate scope, carried work"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/redis_memory_coordination.py
+  reason: "C3 group B (stored data, batch-3 thesis) - outside gate scope, carried work"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/redis_memory_storage.py
+  reason: "C3 group B (stored data, batch-3 thesis) - outside gate scope, carried work"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/memory/cross_session/coordinator.py
+  reason: "C3 group B (stored data, batch-3 thesis) - outside gate scope, carried work"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/ops/memory_data.py
+  reason: "C3 group B (stored data, batch-3 thesis) - outside gate scope, carried work"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/memory/file_session.py
+  reason: "C3 group B (stored data, batch-3 thesis) - outside gate scope, carried work"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/memory/simple_storage.py
+  reason: "C3 group B (stored data, batch-3 thesis) - outside gate scope, carried work"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/memory/verdict_log.py
+  reason: "C3 group B (stored data, batch-3 thesis) - outside gate scope, carried work"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/models/telemetry/storage.py
+  reason: "C3 group B (stored data, batch-3 thesis) - outside gate scope, carried work"
+
+# --- C4a: the gate asserts ast.parse+ValueError only; these two hits
+# --- are fromisoformat sites (C4b family), not gate breaks.
+- rule_id: R7a-parse-under-narrow-except
+  path: src/attune/memory/security/query.py
+  reason: "outside C4a gate scope (fromisoformat, not ast.parse) - C4b-family, triage pending"
+- rule_id: R7a-parse-under-narrow-except
+  path: src/attune/monitoring/metrics.py
+  reason: "outside C4a gate scope (fromisoformat, not ast.parse) - C4b-family, triage pending"
+
+# --- Post-ledger residual (files the 2026-08-20 triage never saw;
+# --- tree moved). Triaged 2026-08-22 by the ledger's own ruled
+# --- mechanical axis: use-inside-catch-all-try = DEGRADES, dismissed
+# --- as a class ("they already do what the guard would make them do").
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/config/xml_config.py
+  reason: "DEGRADES - catch-all try absorbs (mechanical axis, 2026-08-22 residual triage)"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/memory/storage_backend.py
+  reason: "DEGRADES - catch-all try absorbs (mechanical axis, 2026-08-22 residual triage)"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/orchestration/pattern_learner.py
+  reason: "DEGRADES - catch-all try absorbs (mechanical axis, 2026-08-22 residual triage)"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/orchestration/tools/security.py
+  reason: "DEGRADES - catch-all try absorbs (mechanical axis, 2026-08-22 residual triage)"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/orchestration/tools/testing.py
+  reason: "DEGRADES - catch-all try absorbs (mechanical axis, 2026-08-22 residual triage)"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/routing/classifier.py
+  reason: "DEGRADES - catch-all try absorbs (mechanical axis, 2026-08-22 residual triage)"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/tools.py
+  reason: "DEGRADES - catch-all try absorbs (mechanical axis, 2026-08-22 residual triage)"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/workflows/dependency_check_audit.py
+  reason: "DEGRADES - catch-all try absorbs (mechanical axis, 2026-08-22 residual triage)"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/workflows/test_gen_parallel.py
+  reason: "DEGRADES - catch-all try absorbs (mechanical axis, 2026-08-22 residual triage)"
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/memory/file_session_persistence.py
+  reason: "C3 group B (stored current.json, non-dict escapes documented ValueError contract) - outside gate scope, batch-3-family carried work"
