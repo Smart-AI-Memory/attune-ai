@@ -62,7 +62,19 @@ class AlertEngine:
             telemetry_dir: Path to telemetry directory (default: ~/.attune/telemetry)
 
         """
-        self.db_path = Path(db_path)
+        # Resolved to an ABSOLUTE path so a later ``chdir`` cannot move the
+        # target. The default is CWD-relative (".attune/alerts.db"), and
+        # ``alerts watch --daemon`` calls ``os.chdir("/")`` while
+        # daemonizing — every query after that point would otherwise look
+        # for "/.attune/alerts.db" and fail with "unable to open database
+        # file". Same anchoring rule as
+        # ``attune.memory.storage_backend.default_storage_dir``, which
+        # likewise anchors via ``Path.cwd()`` rather than ``resolve()``:
+        # making the path absolute is what the fix needs, and resolving
+        # symlinks on top would silently rewrite a caller's own absolute
+        # path (a caller passing /var/... on macOS would read back
+        # /private/var/...).
+        self.db_path = Path(db_path).expanduser().absolute()
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
 
         self.telemetry_dir = (
