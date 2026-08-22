@@ -46,6 +46,8 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
+from attune.telemetry._redis_batch import mget_json
+
 logger = logging.getLogger(__name__)
 
 
@@ -151,6 +153,20 @@ class ApprovalResponse:
             reason=data.get("reason", ""),
             timestamp=timestamp,
         )
+
+
+def _request_from_record(key: str, data: dict[str, Any]) -> ApprovalRequest | None:
+    """Build a request from one scanned record, or None if it is malformed.
+
+    Per-record tolerance (class G2): a record missing a required field or
+    carrying an unparseable timestamp is skipped alone. Raising here would
+    hit the caller's listing-wide handler and cost every good record too.
+    """
+    try:
+        return ApprovalRequest.from_dict(data)
+    except (KeyError, TypeError, ValueError):
+        logger.debug("Skipping malformed approval request %s", key, exc_info=True)
+        return None
 
 
 class ApprovalGate:
@@ -480,29 +496,18 @@ class ApprovalGate:
             return []
 
         try:
-            # Scan for approval_request:* keys
+            # Scan for approval_request:* keys, then fetch every record in
+            # ONE round trip - a get() per key cost N of them.
             keys = list(self.memory._client.scan_iter(match="approval_request:*", count=100))
 
             requests = []
-            for key in keys:
-                if isinstance(key, bytes):
-                    key = key.decode("utf-8")
-
-                # Retrieve request - use direct Redis access (approval keys are stored without prefix)
-                import json
-
-                raw_data = self.memory._client.get(key)
-                if raw_data:
-                    if isinstance(raw_data, bytes):
-                        raw_data = raw_data.decode("utf-8")
-                    data = json.loads(raw_data)
-                else:
-                    data = None
-
+            for key, data in mget_json(self.memory._client, keys):
                 if not data:
                     continue
 
-                request = ApprovalRequest.from_dict(data)
+                request = _request_from_record(key, data)
+                if request is None:
+                    continue
 
                 # Filter by status (only pending)
                 if request.status != "pending":
@@ -537,25 +542,14 @@ class ApprovalGate:
             now = datetime.now(timezone.utc)
             cleared = 0
 
-            for key in keys:
-                if isinstance(key, bytes):
-                    key = key.decode("utf-8")
-
-                # Retrieve request - use direct Redis access (approval keys are stored without prefix)
-                import json
-
-                raw_data = self.memory._client.get(key)
-                if raw_data:
-                    if isinstance(raw_data, bytes):
-                        raw_data = raw_data.decode("utf-8")
-                    data = json.loads(raw_data)
-                else:
-                    data = None
-
+            # One MGET for the whole scan, not one get() per key.
+            for key, data in mget_json(self.memory._client, keys):
                 if not data:
                     continue
 
-                request = ApprovalRequest.from_dict(data)
+                request = _request_from_record(key, data)
+                if request is None:
+                    continue
 
                 # Check if expired
                 elapsed = (now - request.timestamp).total_seconds()

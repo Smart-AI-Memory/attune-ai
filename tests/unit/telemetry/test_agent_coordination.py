@@ -13,6 +13,7 @@ import pytest
 
 from attune.memory.types import AccessTier, AgentCredentials
 from attune.telemetry.agent_coordination import CoordinationSignal, CoordinationSignals
+from tests.unit.telemetry.conftest import serve_mget_from_get
 
 
 class TestCoordinationSignal:
@@ -123,7 +124,7 @@ class TestCoordinationSignalsWithMemory:
         # Use spec to prevent Mock from having stash attribute
         # This makes hasattr(memory, "stash") return False
         memory = Mock(spec=["_client"])
-        memory._client = Mock()
+        memory._client = serve_mget_from_get(Mock())
         return memory
 
     @pytest.fixture

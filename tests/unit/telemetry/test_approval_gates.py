@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from unittest.mock import MagicMock, Mock, patch
 
 from attune.telemetry.approval_gates import ApprovalGate, ApprovalRequest, ApprovalResponse
+from tests.unit.telemetry.conftest import serve_mget_from_get
 
 
 class TestApprovalRequest:
@@ -325,6 +326,7 @@ class TestApprovalGate:
             return None
 
         mock_client.get.side_effect = mock_get
+        serve_mget_from_get(mock_client)
 
         mock_memory = Mock(spec=["_client"])
         mock_memory._client = mock_client
@@ -378,6 +380,7 @@ class TestApprovalGate:
             return None
 
         mock_client.get.side_effect = mock_get
+        serve_mget_from_get(mock_client)
 
         mock_memory = Mock(spec=["_client"])
         mock_memory._client = mock_client
@@ -440,6 +443,7 @@ class TestApprovalGate:
         import json
 
         mock_client.get.return_value = json.dumps(request_data).encode()
+        serve_mget_from_get(mock_client)
 
         mock_memory = Mock(spec=["_client"])
         mock_memory._client = mock_client
@@ -472,6 +476,7 @@ class TestApprovalGateIntegration:
 
         mock_client.setex.side_effect = mock_setex
         mock_client.get.side_effect = mock_get
+        serve_mget_from_get(mock_client)
 
         # Pipeline mock: respond_to_approval() uses pipeline for batching
         mock_pipe = Mock()

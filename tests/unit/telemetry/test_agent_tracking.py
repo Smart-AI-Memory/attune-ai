@@ -10,6 +10,7 @@ from unittest.mock import Mock, patch
 import pytest
 
 from attune.telemetry.agent_tracking import AgentHeartbeat, HeartbeatCoordinator
+from tests.unit.telemetry.conftest import serve_mget_from_get
 
 
 class TestAgentHeartbeat:
@@ -122,7 +123,7 @@ class TestHeartbeatCoordinatorWithMemory:
         # Use spec to prevent Mock from having stash attribute
         # This makes hasattr(memory, "stash") return False
         memory = Mock(spec=["_client"])
-        memory._client = Mock()
+        memory._client = serve_mget_from_get(Mock())
         return memory
 
     @pytest.fixture

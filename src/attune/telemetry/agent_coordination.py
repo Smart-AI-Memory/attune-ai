@@ -42,6 +42,8 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
+from attune.telemetry._redis_batch import mget_json
+
 if TYPE_CHECKING:
     from attune.memory.types import AgentCredentials
 
@@ -97,6 +99,19 @@ class CoordinationSignal:
             timestamp=timestamp,
             ttl_seconds=data.get("ttl_seconds", 60),
         )
+
+
+def _signal_from_record(key: str, data: dict[str, Any]) -> CoordinationSignal | None:
+    """Build a signal from one scanned record, or None if it is malformed.
+
+    Per-record tolerance (class G2): one unparseable record is skipped
+    alone rather than raising into the caller's listing-wide handler.
+    """
+    try:
+        return CoordinationSignal.from_dict(data)
+    except (KeyError, TypeError, ValueError):
+        logger.debug("Skipping malformed coordination signal %s", key, exc_info=True)
+        return None
 
 
 class CoordinationSignals:
@@ -360,16 +375,14 @@ class CoordinationSignals:
                 else:
                     continue
 
-                for key in keys:
-                    if isinstance(key, bytes):
-                        key = key.decode("utf-8")
-
-                    # Retrieve signal
-                    data = self._retrieve_signal(key)
+                # One MGET for the scanned keys, not one get() per key.
+                for key, data in mget_json(self.memory._client, keys):
                     if not data:
                         continue
 
-                    signal = CoordinationSignal.from_dict(data)
+                    signal = _signal_from_record(key, data)
+                    if signal is None:
+                        continue
 
                     # Filter by source if specified
                     if source_agent and signal.source_agent != source_agent:
@@ -413,15 +426,14 @@ class CoordinationSignals:
                 else:
                     continue
 
-                for key in keys:
-                    if isinstance(key, bytes):
-                        key = key.decode("utf-8")
-
-                    data = self._retrieve_signal(key)
+                # One MGET for the scanned keys, not one get() per key.
+                for key, data in mget_json(self.memory._client, keys):
                     if not data:
                         continue
 
-                    signal = CoordinationSignal.from_dict(data)
+                    signal = _signal_from_record(key, data)
+                    if signal is None:
+                        continue
 
                     # Filter by type if specified
                     if signal_type and signal.signal_type != signal_type:
@@ -458,26 +470,6 @@ class CoordinationSignals:
                 count += 1
 
         return count
-
-    def _retrieve_signal(self, key: str) -> dict[str, Any] | None:
-        """Retrieve signal data from memory."""
-        if not self.memory:
-            return None
-
-        try:
-            # Use direct Redis access (signal keys are stored without prefix)
-            if hasattr(self.memory, "_client"):
-                import json
-
-                data = self.memory._client.get(key)
-                if data:
-                    if isinstance(data, bytes):
-                        data = data.decode("utf-8")
-                    return json.loads(data)
-            return None
-        except Exception as e:  # noqa: BLE001
-            logger.debug(f"Failed to retrieve signal {key}: {e}")
-            return None
 
     def _delete_signal(self, key: str) -> bool:
         """Delete signal from memory."""
