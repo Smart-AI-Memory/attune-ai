@@ -21,6 +21,8 @@ the shipped tree rather than pinning a list of known sites.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
+
+Register-Class: C4a
 """
 
 from __future__ import annotations

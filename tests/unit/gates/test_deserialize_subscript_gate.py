@@ -33,6 +33,8 @@ another gate already owns. Two classes, two gates, no overlap.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
+
+Register-Class: I-4
 """
 
 from __future__ import annotations

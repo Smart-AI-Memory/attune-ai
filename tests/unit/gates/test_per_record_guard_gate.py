@@ -39,6 +39,8 @@ rule to 4 hits, 4 real, zero false positives.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
+
+Register-Class: G2
 """
 
 from __future__ import annotations

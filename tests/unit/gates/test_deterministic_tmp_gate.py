@@ -23,6 +23,8 @@ Reference implementation: :func:`attune.memory.atomic_io.atomic_write_text`.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
+
+Register-Class: G1
 """
 
 from __future__ import annotations

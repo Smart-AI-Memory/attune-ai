@@ -30,6 +30,8 @@ Canonical factories, which every caller should prefer:
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
+
+Register-Class: H1
 """
 
 from __future__ import annotations
