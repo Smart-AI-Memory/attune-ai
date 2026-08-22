@@ -24,6 +24,17 @@ LESSONS_MD = REPO_ROOT / ".claude" / "lessons.md"
 
 CORE_HEADING = "## Lessons — core"
 
+# Hard ceiling for the always-loaded core section, in bytes. Core is the
+# single largest eagerly-loaded block in the repo — it dwarfs the 20,000
+# byte budget that tests/unit/rules/test_rules_residency_budget.py pins on
+# eager rules, yet was governed only by an entry COUNT until 2026-08-22.
+# A count cap is a poor ceiling: at the observed ~1,690 B/entry mean, the
+# <= 30 cap silently authorises ~51 KB nobody ratified. This budget binds
+# BEFORE the count cap, so a promotion that costs real context trips here
+# and forces the eviction conversation. Seeded at 43,969 (26 entries,
+# 2026-08-22). SHRINK-ONLY: demote something rather than widening it.
+CORE_BUDGET_BYTES = 46_000
+
 
 def _core_section_text() -> str:
     text = CLAUDE_MD.read_text(encoding="utf-8")
@@ -60,6 +71,16 @@ def test_every_core_lesson_mirrors_lessons_md_verbatim() -> None:
             f"core lesson {title[:60]!r} DIVERGED from its lessons.md canon "
             "— re-sync both copies"
         )
+
+
+def test_core_section_within_byte_budget() -> None:
+    """The always-loaded core stays under its context budget."""
+    total = len(_core_section_text().encode("utf-8"))
+    assert total <= CORE_BUDGET_BYTES, (
+        f"core section is {total:,} bytes > {CORE_BUDGET_BYTES:,} budget — "
+        "demote a core lesson to the lessons.md tail rather than widening "
+        "the budget (it is shrink-only). Core is always-loaded context."
+    )
 
 
 def test_lessons_md_is_the_index_source() -> None:
