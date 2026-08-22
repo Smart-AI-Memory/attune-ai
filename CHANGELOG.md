@@ -9,15 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [14.0.0] - 2026-08-22
 
-**A cleanup major.** The breaking change is the removal of dead API —
-`attune.exceptions`, the last unremoved surface of the "Empathy"
-framework retired in 9.0.0. Nothing in the library raised those
-exceptions, so the migration is to delete the handler rather than
-repoint the import. Alongside it: three security findings closed, a
-daemon that could not reach its own database fixed, an N+1 against Redis
-batched away, and a tracked rule pack behind the class register.
+**The release checks its own diff.** `/release audit` asks a question
+the other release surfaces do not: what class of defect could *this*
+release have introduced? It resolves the range from the last release
+tag, proves the previously-green gates are still green on this exact
+commit, sweeps the changed package surface with a calibrated rule pack,
+and produces a capped one-page residual for a three-model sitting.
+`/release publish` then refuses to tag until every residual item carries
+a chair ruling. The major version is a removal — `attune.exceptions`,
+the last surface of the "Empathy" framework retired in 9.0.0 — and the
+migration is to delete the handler rather than repoint the import.
 
 ### Added
+
+- **The release-audit stage (`/release audit`).** Six steps: baseline
+  (merge-base vs the last release tag, failing closed rather than
+  guessing a range), reconcile (an allowlisted CI workflow green on
+  THIS head SHA — a green run for an earlier commit does not
+  authorize), sweep, residual packet, sitting, chair ruling. The packet
+  is capped at 1500 words / 12 items / 20 sweep rows and carries no diff
+  hunks; exceeding a cap is a **refusal with exit code 2**, never a
+  truncation, because a packet that quietly dropped an item would let a
+  chair rule on a subset believing they ruled on the whole. It reports
+  how many files were swept against how many changed, so an empty
+  residual can never be mistaken for a clean one. The sitting is one
+  round of three seats that amend pre-filled dispositions per item —
+  an absent or malformed seat is recorded as such, never read as
+  agreement. Rulings are written to an immutable, SHA-bound manifest at
+  `.attune/release-manifests/<tag>.json`, and `publish` verifies one
+  exists for the tag being cut. (#2180)
 
 - **Class register — tracked rule pack with a derived status column.**
   The register's status is computed, never authored: a class derives
@@ -32,6 +52,14 @@ batched away, and a tracked rule pack behind the class register.
 
 ### Fixed
 
+- **Whole-tree scanners survive a null byte.** `ast.parse` raises
+  `ValueError`, not `SyntaxError`, on a source string containing a null
+  byte. Fourteen sites across the repo's gates and CI scripts caught
+  only `SyntaxError`, so a single such file would abort an entire scan
+  instead of skipping that file — including the gate that exists to
+  enforce this rule, which had been scoped to `src/attune` and so never
+  examined itself. Widening that scope surfaced all fourteen; twelve
+  were long-standing. (#2179)
 - **`attune alerts watch --daemon` could not reach its own database.**
   `_daemonize()` calls `os.chdir("/")` while the alert engine held a
   CWD-relative default (`.attune/alerts.db`), so every query issued
