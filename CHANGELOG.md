@@ -39,6 +39,18 @@ migration is to delete the handler rather than repoint the import.
   `.attune/release-manifests/<tag>.json`, and `publish` verifies one
   exists for the tag being cut. (#2180)
 
+- **The blocking decision, computed but NOT armed (Phase 2, R5).**
+  Given a baseline and HEAD, the stage now decides which findings
+  BLOCK, WARN, or ride an active DEFER — and deliberately stops there.
+  It does not enforce: the CLI reports and exits 0 unless `--armed`,
+  and arming requires a chair-recorded promotion naming the validated
+  rule-pack version. Re-exposure is judged by IDENTITY, not line
+  numbers — (rule id, rename-tracked posix path, nearest enclosing
+  symbol) — so reformatting a file cannot re-block a release, and a
+  pre-existing finding stays register debt rather than becoming a
+  release block. An expired DEFER stops suppressing; the block
+  resuming is the convergence mechanism, not a reminder. (#2182)
+
 - **Class register — tracked rule pack with a derived status column.**
   The register's status is computed, never authored: a class derives
   CLOSED / BROKEN-GATE / FIXED-BUT-UNGATED / OPEN / DEFERRED from
@@ -49,6 +61,16 @@ migration is to delete the handler rather than repoint the import.
   reassigned gate goes loud instead of silently preserving CLOSED. A
   class with no calibrated rule derives UNMECHANIZED rather than
   fabricating a status. (#2173, #2172)
+
+### Changed
+
+- **Changed-code coverage floor raised from 80% to 85%.** Both codecov
+  targets move; the thresholds are kept, so the effective floors are
+  83% (project) and 80% (patch). This replaces the earlier "floor 80,
+  local 85" split — `pyproject.toml`'s `fail_under` had been 85 all
+  along, so CI and local now enforce one number instead of two that had
+  to be remembered separately. Contributors will see PRs below 80%
+  changed-code coverage fail the patch gate. (#2183)
 
 ### Fixed
 
