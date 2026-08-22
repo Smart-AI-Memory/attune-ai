@@ -338,7 +338,14 @@ def _daemonize():
     # Decouple from parent environment
     os.chdir("/")
     os.setsid()
-    os.umask(0)
+    # 0o077, NOT 0o000. The conventional daemon umask(0) means "inherit
+    # nothing, let each caller pick its own mode" — but nothing downstream
+    # here passes an explicit mode, so creations land wide open. Measured:
+    # under umask(0) a created directory is 0o777 (world-WRITABLE) and the
+    # SQLite database 0o644 (world-readable); under 0o077 they are 0o700
+    # and 0o600. The alert database and its journal/WAL siblings are
+    # created without an explicit mode, so this keeps them owner-only.
+    os.umask(0o077)
 
     # Second fork
     try:

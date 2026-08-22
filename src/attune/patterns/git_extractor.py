@@ -204,9 +204,19 @@ class GitPatternExtractor:
 
     def _get_commit_info(self, ref: str) -> dict[str, str] | None:
         """Get info about a specific commit."""
+        # A ref starting with "-" is parsed by git as an OPTION, not a
+        # revision: `git log -1 --format=X --help` prints usage instead of
+        # a commit. Rejected rather than passed through, and the trailing
+        # "--" pins the remainder as "no pathspec follows" so a ref that
+        # also names a file cannot be read as a path. Checked here (not
+        # only at the call sites) so a future caller inherits it.
+        if ref.startswith("-"):
+            logger.warning("Refusing option-like git ref: %r", ref)
+            return None
+
         try:
             result = subprocess.run(
-                ["git", "log", "-1", "--format=%H%n%s%n%an%n%aI", ref],
+                ["git", "log", "-1", "--format=%H%n%s%n%an%n%aI", ref, "--"],
                 check=False,
                 capture_output=True,
                 text=True,
