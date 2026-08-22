@@ -39,8 +39,7 @@ REMOVED in 9.0.0 — legacy "Empathy" framework (see CHANGELOG):
     is the Claude Code workflow plugin. StateManager is now deprecated and
     will be removed in a future release.
 
-REMOVED, pending release — the `attune.exceptions` hierarchy. Breaking,
-so it rides the next MAJOR; see CHANGELOG [Unreleased]:
+REMOVED in 14.0.0 — the `attune.exceptions` hierarchy (see CHANGELOG):
     EmpathyFrameworkError and its eight subclasses. They were the last
     unremoved surface of the 9.0.0 retirement — nothing raised them once
     their throwers were deleted. Note ValidationError went with them;

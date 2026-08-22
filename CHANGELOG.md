@@ -7,6 +7,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [14.0.0] - 2026-08-22
+
+**A cleanup major.** The breaking change is the removal of dead API —
+`attune.exceptions`, the last unremoved surface of the "Empathy"
+framework retired in 9.0.0. Nothing in the library raised those
+exceptions, so the migration is to delete the handler rather than
+repoint the import. Alongside it: three security findings closed, a
+daemon that could not reach its own database fixed, an N+1 against Redis
+batched away, and a tracked rule pack behind the class register.
+
+### Added
+
+- **Class register — tracked rule pack with a derived status column.**
+  The register's status is computed, never authored: a class derives
+  CLOSED / BROKEN-GATE / FIXED-BUT-UNGATED / OPEN / DEFERRED from
+  whether its gate resolves, how many calibrated hits remain, and
+  whether an active DEFER covers it. Gate mapping is checked by
+  IDENTITY, not existence — a gate file must exist, define the named
+  test, AND carry a matching `Register-Class:` tag, so a renamed or
+  reassigned gate goes loud instead of silently preserving CLOSED. A
+  class with no calibrated rule derives UNMECHANIZED rather than
+  fabricating a status. (#2173, #2172)
+
+### Fixed
+
+- **`attune alerts watch --daemon` could not reach its own database.**
+  `_daemonize()` calls `os.chdir("/")` while the alert engine held a
+  CWD-relative default (`.attune/alerts.db`), so every query issued
+  after the fork looked for `/.attune/alerts.db` and raised
+  `unable to open database file` for any non-root user. The engine
+  created its database correctly, then lost it. The path is now
+  anchored absolute at construction, so a later chdir cannot move the
+  target. (#2170)
+- **Three security findings from the 13.0.2 post-release review.** The
+  ops client-token check compared with `!=`, which short-circuits on
+  the first differing byte and leaks a matching prefix through response
+  latency — it now uses `secrets.compare_digest` over bytes, so a
+  hostile header returns 403 rather than crashing the comparison. A git
+  ref beginning with `-` was passed straight to `git log`, where it
+  parses as an OPTION rather than a revision, and is now refused before
+  git runs. The alert daemon ran with `umask(0)`, which left a created
+  directory world-writable; it now uses `0o077`. (#2168)
+
+### Performance
+
+- **Five telemetry listings no longer pay a round trip per record.**
+  Each scanned a Redis key pattern and then read every record with its
+  own `get()` — the N+1 shape. They now fetch the whole scan in one
+  `MGET`, chunked so a large scan does not become a single
+  server-blocking command, with per-record decoding kept total so one
+  malformed value cannot cost the whole listing. (#2162)
+
 ### Removed
 
 - **The legacy `attune.exceptions` hierarchy.** The nine-class tree
