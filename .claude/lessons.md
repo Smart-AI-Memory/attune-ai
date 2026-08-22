@@ -24061,3 +24061,101 @@ imposes on every other in-flight PR, not just the next one.
   files over a scratch worktree and run the suite there. It found nothing
   this time — the honest outcome most of the time — but it is the only
   probe that answers the both-merged question BEFORE it is irreversible.
+
+- **`Run Security Scanner` red has THREE distinct shapes and the check
+  NAME distinguishes none of them — read the STEP list
+  (`gh api .../actions/jobs/<id> --jq '.steps[]|"\(.conclusion) \(.name)"'`)
+  before believing any prior about it**: 2026-08-22, a parallel session's
+  PR showed the familiar scary-red `Run Security Scanner`. The corpus
+  already carries one shape — a **cancelled** job with ZERO steps, the
+  dependabot-only guard skipping on a regular PR, purely cosmetic — and
+  reaching for that prior would have been wrong twice over. The job here
+  was `conclusion=failure` with **15 steps executed**, so the cancelled
+  prior did not apply; and it was not a security finding either. The step
+  list settled it in one call: `Run security audit` **success**, `Parse
+  and analyze results` **success**, `Block on critical findings`
+  **skipped** (nothing to block on), and the ONLY failure was
+  `Upload scan results` — `##[error]The server is busy.` from Azure blob
+  storage inside `actions/upload-artifact`. A GitHub INFRA flake in a
+  post-scan step, cosmetic, cleared by one `gh run rerun <id> --failed`
+  (green in 45s). So the three shapes are: **cancelled/0-steps** (guard
+  skip, cosmetic), **failure in an audit step** (real finding, act on
+  it), and **failure in a post-scan step** (infra, rerun). Two durable
+  rules: (1) the `bucket`/`conclusion` of a JOB tells you it went red,
+  the STEP list tells you WHY, and only the latter picks the response —
+  one `gh api` call, cheaper than any theory; (2) a rerun is the right
+  recovery ONLY when the cause is infra or nondeterminism — for an
+  inherited failure from a red main a rerun re-tests the same frozen
+  merge snapshot and fails identically, where `gh pr update-branch` is
+  the move. Pairs with the "`Failed to resolve action download info` is
+  a GitHub INFRA failure" lesson (same infra-vs-real split, different
+  step) and with "verify-first applies to infra/config diagnoses" — here
+  the required-contexts read (`Run Security Scanner` is NOT required, so
+  it never blocked) was the other half of the answer.
+
+- **When a byte budget forces an eviction, check whether the victim's
+  OPERATIVE content folds into an adjacent same-class entry — folding
+  keeps the guidance resident for a fraction of the bytes, and a
+  `<=` budget landed on EXACTLY is a tripwire, not a win**: 2026-08-22,
+  promoting a lesson into the always-loaded core under
+  `CORE_BUDGET_BYTES = 46_000` (shrink-only). Promotion (+1,941 B) minus
+  the chosen eviction (-1,210 B) landed core at **exactly 46,000 /
+  46,000**. That PASSES — the assertion is `<=` — and it is the worst
+  place to stop: the next character added to ANY core entry fails CI,
+  including a typo fix, for a reason unrelated to promotion cost. The
+  naive follow-up was to evict a second entry (-1,053 B, headroom
+  1,054 B), but probing first showed the retained sibling covered the
+  CLASS ("interruption leaves partial state") while NOT carrying the
+  victim's two operative remedies. So the better move was a FOLD: demote
+  the standalone entry and graft its two rules onto the sibling as (5)
+  and (6) — ~470 B instead of ~1,053 B, guidance still resident, and one
+  consolidated entry per failure class instead of two describing one
+  class across two tool surfaces. Mechanics worth keeping: a fold edits
+  BOTH files identically (core entries are verbatim mirrors, so touching
+  only `CLAUDE.md` fails the mirror guard), and the receipt is the mirror
+  test passing plus normalized-substring probes proving the folded text
+  is PRESENT and the standalone ABSENT — never a byte count alone, which
+  cannot tell a fold from a deletion. General shape: **eviction is the
+  crude form of the operation and consolidation is the refined one** —
+  ask "what does this entry uniquely say?" before "how many bytes does
+  it cost?", because the answer is often "two sentences", and two
+  sentences fit where an entry does not.
+
+- **`grep` for a multi-word phrase in a wrapped markdown corpus gives
+  FALSE NEGATIVES — the phrase spans a line break, so normalize
+  whitespace before probing, or you will report content missing that is
+  right there**: 2026-08-22, justifying a core-lesson eviction. The
+  argument was "the sibling entry directly above already covers this
+  class", and the check was
+  `grep -c "interrupted/rejected compound Bash command may have PARTIALLY executed" .claude/CLAUDE.md`
+  -> **0**. Taken at face value that meant I had justified an eviction
+  on an entry that did not exist. It existed: `.claude/lessons.md` and
+  `CLAUDE.md` hard-wrap at ~72 chars with a 2-space continuation indent,
+  so the phrase actually reads `...may have PARTIALLY\n  executed` and no
+  single-line regex can match it. The probe that works:
+  `flat = re.sub(r"\s+", " ", text)` then plain substring tests — and
+  because it is a substring test, it also survives the indent. Three
+  riders: (1) this bites EVERY phrase probe against this repo's prose
+  corpora (lessons, CLAUDE.md, specs, handoffs) — `grep -c` returning 0
+  on prose you are fairly sure exists is a wrap artifact until proven
+  otherwise, not evidence; (2) it cuts both ways — a `grep` that
+  SUCCEEDS is trustworthy, so the failure mode is one-directional and
+  therefore easy to miss when you only probe for presence; (3) when the
+  probe backs a CLAIM you are about to make to someone (a PR body, a
+  recommendation, an eviction rationale), re-run it in the normalized
+  form before writing the sentence — and note that normalizing is
+  NECESSARY BUT NOT SUFFICIENT: a prose corpus CITES its own entries by
+  name, so a flattened substring search happily matches "extends the
+  existing '<title>' lesson" inside a NEIGHBOURING entry and reports a
+  deleted entry as present. Verified this live minutes after writing the
+  first half: `grep` said 0 (wrap false-negative) and the flattened
+  probe said True (citation false-positive) for the SAME entry, which
+  had in fact been correctly evicted. The probe that is actually right
+  for membership parses ENTRY LEADS —
+  `re.finditer(r"^- \*\*(.+?)\*\*:", core, re.M|re.S)` — and tests
+  titles against that list; bare-phrase search answers "is this string
+  anywhere", which is a different question from "is this an entry" — I nearly shipped "the sibling
+  covers this" and, separately, nearly shipped the opposite. Checking
+  properly also surfaced the real nuance: the sibling covered the CLASS
+  but NOT the Edit-specific remedies, which changed the design from a
+  plain eviction into a fold.
