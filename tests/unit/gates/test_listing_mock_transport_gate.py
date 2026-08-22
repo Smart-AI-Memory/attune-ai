@@ -87,14 +87,22 @@ def _fixture_sources(scope: ast.AST, source: str) -> dict[str, str]:
     return out
 
 
-def _violations() -> list[str]:
-    conftest = _TELEMETRY_TESTS / "conftest.py"
+def _violations(root: Path | None = None) -> list[str]:
+    """Scan ``root`` (default: the telemetry tests) for the vacuity shape.
+
+    ``root`` is a parameter so the self-check below can scan a throwaway
+    directory. A test that wrote its fixture INTO the scanned tree would
+    be mutating a directory pytest is collecting from — a race under
+    xdist and a stray file if the run is killed mid-test.
+    """
+    root = root or _TELEMETRY_TESTS
+    conftest = root / "conftest.py"
     conftest_src = conftest.read_text(encoding="utf-8") if conftest.exists() else ""
     conftest_tree = ast.parse(conftest_src) if conftest_src else ast.parse("")
     conftest_fixtures = _fixture_sources(conftest_tree, conftest_src)
 
     found: list[str] = []
-    for path in sorted(_TELEMETRY_TESTS.glob("test_*.py")):
+    for path in sorted(root.glob("test_*.py")):
         source = path.read_text(encoding="utf-8")
         tree = ast.parse(source)
         # Module-level fixtures only; class fixtures are added per class
@@ -156,10 +164,9 @@ def test_listing_tests_serve_the_batched_transport():
     )
 
 
-def test_gate_detects_a_planted_violation():
+def test_gate_detects_a_planted_violation(tmp_path):
     """The gate must actually fire — a green run should mean a clean tree."""
-    planted = _TELEMETRY_TESTS / "test_gate_selfcheck_tmp.py"
-    planted.write_text(
+    (tmp_path / "test_planted_vacuous.py").write_text(
         "from unittest.mock import Mock\n\n\n"
         "def test_planted():\n"
         "    c = Mock()\n"
@@ -167,7 +174,21 @@ def test_gate_detects_a_planted_violation():
         "    c.get.return_value = None\n",
         encoding="utf-8",
     )
-    try:
-        assert any("test_gate_selfcheck_tmp.py" in v for v in _violations())
-    finally:
-        planted.unlink()
+
+    assert any("test_planted_vacuous.py" in v for v in _violations(tmp_path))
+
+
+def test_gate_accepts_a_wired_test(tmp_path):
+    """The counterpart: serving the transport clears the violation."""
+    (tmp_path / "test_planted_wired.py").write_text(
+        "from unittest.mock import Mock\n\n"
+        "from tests.unit.telemetry.conftest import serve_mget_from_get\n\n\n"
+        "def test_planted():\n"
+        "    c = Mock()\n"
+        '    c.scan_iter.return_value = [b"k:1"]\n'
+        "    c.get.return_value = None\n"
+        "    serve_mget_from_get(c)\n",
+        encoding="utf-8",
+    )
+
+    assert _violations(tmp_path) == []
