@@ -698,6 +698,35 @@ this section only if core-worthy (and then keep both copies in sync).
     --limit=1 --json status` — if `in_progress`, wait ~5-7 min
     or accept the re-run.
 
+- **Parsing `gh pr checks` TABULAR output with positional `awk` fields
+  silently misreads the bucket — check NAMES contain spaces, so `$2` is a
+  name fragment, not the status; use `--json name,bucket`**: 2026-08-22,
+  watching two PRs to green with a standing "admin-merge if auto-merge
+  stalls" authorization. The watcher counted pending work with
+  `awk '$2=="pending"'`. On the row `test (windows-latest, 3.12)  pending`
+  field 2 is `(windows-latest,` — so a RUNNING Windows lane counted as
+  zero-pending. The watcher printed `pend=0 fail=[]` while the PR sat
+  `OPEN/BLOCKED`, which its own stall detector read as "all checks
+  terminal, still open" = auto-merge stalled. Acting on that would have
+  admin-merged a PR whose Windows lane had not yet reported — precisely
+  the failure the existing "admin-merging a PR before Windows lanes
+  complete buries a real bug on main" lesson warns about, reached through
+  a parsing bug rather than impatience. The same break hides bad news:
+  `fail=[]` is indistinguishable from "I could not see the failures," so
+  the watcher's clean bill of health carried no information at all.
+  Fix: `gh pr checks <n> --json name,bucket` piped through `jq`, never
+  positional `awk` — EVERY multi-word check name breaks column
+  assumptions and `gh` does not quote them (`test (ubuntu-latest, 3.12)`,
+  `Analyze (python)`, `clock-tz (America/Anchorage)`, `Vercel – website`).
+  Diagnostic tell, and it is free: a bucket tally that CONTRADICTS the
+  PR's own `mergeStateStatus`. `BLOCKED` with zero pending and zero fails
+  is not a stall, it is an impossibility — and the impossible half is
+  your parser, not GitHub. Extends "CI watchers report ABSENCE as
+  success" one layer down (mis-parse rendering as absence, absence
+  rendering as success) and pairs with "`gh pr checks --json` field is
+  `bucket`, NOT `conclusion`" — same command, and the JSON path avoids
+  both traps at once.
+
 - **The editable install's MAPPING points `attune` at the MAIN
   checkout, not your worktree — so code/deps resolve wrong when run
   from a worktree.** `.venv/.../__editable___attune_ai_*_finder.py`
@@ -785,30 +814,6 @@ this section only if core-worthy (and then keep both copies in sync).
   above and the "Audits with 'possibly delete if X'
   qualifiers" lesson — same family (spec/audit text goes
   stale; verify against current code before acting).
-
-- **Admin-merging a deletion PR without checking the
-  `build` docs check breaks main**: PR #279 deleted
-  `attune.coordination` and was admin-merged with all
-  tests green, but `docs/reference/multi-agent.md`
-  had `::: attune.coordination.ConflictResolver`
-  mkdocstrings autogen blocks. Main's `mkdocs build`
-  failed immediately, blocking the next PR in the
-  stack. When admin-merging a `feat!:` or any deletion
-  PR, **read each failure by name** — `build`,
-  `test (...)`, `Analyze (...)` are fail-real.
-  Concrete rule: before admin-merging a deletion, also
-  `grep -rn "::: <removed.module>" docs/` and
-  `grep -rn "<RemovedClass>" docs/` to catch
-  mkdocstrings autogen refs that won't resolve. Fixing
-  main mid-session via a hotfix branch (\`hotfix/...\`)
-  and a focused PR is the right recovery path — don't
-  try to bundle the fix into the next stacked PR.
-  (Historical note: pre-2026-05-14, this repo carried a
-  permanent `Vercel – attune-ai` failure from a legacy
-  Vercel project; agents had to learn to ignore it.
-  The project was deleted on 2026-05-14, so this trap
-  is now resolved — see [docs/specs/vercel-noise-cleanup/](../docs/specs/vercel-noise-cleanup/)
-  for the spec.)
 
 - **`security_guard.py` pre-commit hook blocks
   `eval(` / `exec(` inside `git commit -m` heredocs
