@@ -121,3 +121,69 @@ are outside the per-release audit and rely on continuous gates instead.
 like a clean one, the packet's §0 reports `files_changed`,
 `files_swept`, `files_not_swept`, and `sweep_scope`. An empty residual
 is never ambiguous between "no defects here" and "did not look here".
+
+## D11 — Manifest durability: release asset primary, tracked history optional (RATIFIED chair 2026-08-22)
+
+**Basis, stated so a later reader can weigh it.** The chair asked where
+the manifest should live after the lead flagged that `.attune/` is
+gitignored; the lead recommended the shape below; the chair directed it
+be written up as a decision. The chair has NOT yet ruled on the optional
+tracked-history half — that is marked OPEN at the foot of this entry.
+
+**The problem.** R7 puts the manifest at
+`.attune/release-manifests/<tag>.json`, and `.gitignore` carries
+`.attune/*` with explicit negations for `!.attune/defers/` and
+`!.attune/class-dispositions.yaml`. The manifest matches neither, so it
+is machine-local. Consequences: the receipt cannot be verified by anyone
+who was not at the keyboard, a release cut from CI or a second machine
+finds no manifest and `require_manifest` refuses, and the artifact that
+records WHY a release was authorized does not survive the machine that
+produced it. For something whose stated job is connecting the audit to
+deployment, that is thinner than it reads.
+
+**Why the obvious fix does not work.** Adding
+`!.attune/release-manifests/` is one line and matches how defers are
+already treated (D6 tracks defers precisely because an escape hatch must
+be auditable). But the manifest is SHA-BOUND, and committing it changes
+the SHA:
+
+    audit SHA X  ->  manifest records head_sha = X
+    commit the manifest  ->  creates SHA Y
+    tag Y  ->  require_manifest(Y) REFUSES: the ruling names X
+
+Tracking it naively breaks the binding that gives it its value. Noted
+because it is the kind of thing that looks like a one-line change right
+up until the gate refuses the release it was meant to authorize.
+
+**Ruled.**
+
+1. **Primary durability is a GitHub Release asset.** The manifest is
+   attached to the release it authorized. No circularity — the release
+   is created after the tag, so the artifact lands on the thing it
+   ruled on. It is publicly verifiable, immutable by virtue of the
+   release, and readable without access to the producing machine.
+2. **The local file stays the gate's input.** `require_manifest` reads
+   `.attune/release-manifests/<tag>.json` pre-tag, which is the only
+   moment it needs to exist locally. No change to the gate's read path.
+3. **Binding to the tree instead of the commit is REJECTED.** It would
+   dodge the circularity, but a tree hash does not say which release it
+   authorized, and "a ruling on an earlier commit does not authorize
+   this tag" is the property the binding exists to enforce.
+
+**OPEN — for the chair, not settled here.** Whether to ALSO track a
+post-tag history under `.attune/release-manifests/` (`git log` over past
+rulings). It requires one substantive change: `require_manifest` would
+have to accept a manifest whose `head_sha` is an ANCESTOR of the tag
+rather than strictly equal, or the post-tag commit invalidates it for
+later re-verification. Loosening a binding to gain a convenience is
+exactly the trade that deserves a chair read rather than a lead's
+judgement, so it is left open.
+
+*Recorded 2026-08-22: the chair stated a LEAN toward adopting it
+("I'm leaning toward your suggestion"). Recorded as a lean and not
+promoted to a ruling — the ancestor-binding change weakens a security
+property, and a lean stated in passing is not the read that trade
+deserves. It stays OPEN until ruled explicitly.*
+
+**Not yet implemented.** 14.0.0 ships R7 as written (local file, gate
+reads it). The release-asset upload is follow-on work.
