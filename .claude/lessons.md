@@ -23232,3 +23232,459 @@ imposes on every other in-flight PR, not just the next one.
   import first got it stripped on the very next hook pass; adding the
   `field(default_factory=...)` usage first, then the two imports, stuck.
   Verify after with a grep that both the import and the usage survived.
+
+- **The docs-outbox lesson lint and the corpus orphan gate check
+  DIFFERENT things, so an artifact can clear `write` + `sweep` and still
+  fail CI — and the checker's own `--fix` is the wrong repair.** Hit
+  2026-08-21 applying the 19-artifact outbox digest. `store.py`'s
+  `lesson_body_problem()` (shared by the author-time `write_artifact`
+  gate and the sweep lint) inspects only the FIRST non-blank line:
+  `if not first.startswith("- **")`. But
+  `scripts/check_lessons_corpus.py::find_orphans` — the pre-commit hook
+  AND `tests/unit/lessons/test_corpus_entry_form.py::
+  test_corpus_has_no_orphan_entries` — flags EVERY column-0 `**` line
+  that opens a block (i.e. is preceded by a blank line), anywhere in the
+  body. A long artifact whose body has a well-formed `- **` opener but
+  later starts a paragraph with `**Bold lead-in:**` at column 0 passes
+  both outbox gates and then fails the corpus gate on apply. Concretely:
+  the `attune-forms-floor-bump` artifact had `**The permanent fix for
+  the MCP-schema half:**` at column 0 after a blank line; `apply`
+  accepted it and the lessons suite went red.
+  **The repair is indent, not `--fix`.** `find_orphans` matches
+  `lines[i].startswith("**")` — column-0 only — so prefixing two spaces
+  clears the gate and keeps the paragraph as continuation prose of its
+  own lesson. `check_lessons_corpus.py --fix` instead prefixes `- `,
+  which promotes a mid-body paragraph into a SEPARATE top-level corpus
+  entry — semantically wrong (it is not a standalone lesson), and it
+  silently splits the parent lesson's body in the recall index. Reach
+  for `--fix` only when the flagged line really is a swallowed entry
+  title.
+  **Authoring rule that avoids the whole class:** inside an outbox
+  lesson body, never begin a line at column 0 with `**` — indent
+  continuation paragraphs two spaces, the same as every other body line.
+  **Verification after any `apply`:** run
+  `python scripts/check_lessons_corpus.py` (rc=0) and
+  `pytest tests/unit/lessons/` BEFORE committing — the apply itself is
+  silent about corpus-shape violations, and the pre-commit
+  `check-lessons-corpus` hook will otherwise catch it only at commit
+  time, after the artifacts are already drained from the outbox.
+  Candidate follow-up: widen `lesson_body_problem` to scan every
+  block-opening line, so the author-time gate and the corpus gate stop
+  disagreeing.
+
+- **A hollow SDK mock that yields NO messages makes
+  `assert result.success is True` unfalsifiable — the adapter's
+  "No results returned." default reports success**: 2026-08-21, while
+  fixing the bug-predict section-contract defect, 11 existing tests
+  failed. Every one was asserting success on output that violated the
+  workflow's own output contract, and 10 of them mocked
+  `claude_agent_sdk.query` as `MagicMock(return_value=MagicMock(
+  text=SAMPLE_OUTPUT))` — a plain MagicMock, not an async iterator. The
+  workflow's `async for message in iter_agent_messages(...)` therefore
+  iterated NOTHING, `run_result` kept its
+  `AgentRunResult(result_text="No results returned.")` default, and
+  because that default carries `subtype=None, is_error=False`, success
+  derived to True. The carefully-written `SAMPLE_OUTPUT` constant sitting
+  right above the assertion was never parsed by anything. **Tells that a
+  mock is hollow:** (a) the failure message shows
+  `summary='No results returned.'` even though the fixture defines real
+  text; (b) the mock's return value is not an async generator while the
+  code under test uses `async for`; (c) the test asserts on
+  `result.success` but its subject is really something else (which
+  AgentDefinitions got built, what `max_turns` was passed) — the success
+  assertion is incidental and was never load-bearing. **Fix:** have the
+  fake `query` return a real async generator yielding a genuine
+  `claude_agent_sdk.ResultMessage(result=<text>, subtype="success", ...)`.
+  Real instances are required because `iter_agent_messages` uses
+  isinstance checks against the UNPATCHED `claude_agent_sdk` imported in
+  `agent_sdk_adapter` — patching
+  `attune.workflows.<wf>.claude_agent_sdk` does not affect them, so real
+  SDK dataclasses pass while duck-typed fakes are silently skipped.
+  **Generalizes:** when a regression guard is added and existing tests
+  break, first ask whether they were asserting a real contract or
+  encoding the defect. Here they encoded it. Related discipline: after
+  writing a regression test, re-introduce each fixed defect one at a
+  time and confirm a SPECIFIC test fails — one of three fixes in this
+  change (`any(findings.values())`) initially had no failing guard at
+  all, and only the fires-on-violation probe exposed that.
+
+- **An LLM-report parser that accepts ONE markdown dialect silently
+  zeroes out whole sections — and a truthy-but-EMPTY container then
+  discards the raw text that still had them**: 2026-08-21, found in the
+  13.0.1 post-release self-review. `attune workflow run bug-predict`
+  rendered only `## Summary` — no `## Bugs`, no `## Suggestions` — and
+  exited 0. Three compounding faults, each worth recognizing on its own:
+  - **Dialect narrowness.** `AgentSDKResultAdapter._parse_findings`
+    collected only flat `-`/`*` bullets sitting directly under an `##`
+    header, and ended the section on any line starting with `##` — which
+    `###` also does. The prompt asks for bugs "**organized by** severity
+    (HIGH, MEDIUM, LOW)", which the model renders as `### HIGH` groups,
+    so every bullet was dropped. Sibling `code-review` was healthy for
+    one reason only: its prompt says "**ordered by** severity" (flat).
+    **The wording of the prompt selects the output dialect** — "organized
+    by", "grouped by", "as a table", "ordered by priority" (→ numbered
+    list) all produce shapes a bullets-only parser cannot see.
+  - **Truthy-empty fallback loss.** `if findings:` was True for
+    `{"bugs": []}` — a header that matched but yielded no items — so the
+    adapter rewrote `final_output` into a sectionless report stub and
+    threw away the agent's complete raw markdown. `any(findings.values())`
+    is the correct test; with it, a failed parse degrades to "user sees
+    the raw report" instead of "user sees a stub". **Any parse-then-
+    replace pipeline needs its fallback keyed on extracted CONTENT, not
+    on container presence.**
+  - **No contract validation.** Nothing compared the synthesized report
+    against the sections its own prompt mandates, so a summary-only
+    report exited 0. Fix shape that avoids twin-drift: derive the
+    required-section list FROM the prompt template
+    (`required_sections_from_prompt(_TASK_PROMPT_TEMPLATE)`) rather than
+    restating it beside the prompt — the contract cannot drift from a
+    list nobody hand-copied. Distinguish two failure modes: header
+    absent = the model under-delivered; header present WITH list markup
+    but zero parsed items = OUR parser is lossy. Both must fail; a
+    header present with prose ("No bugs found.") is a legitimate clean
+    result and must NOT fail.
+  - **The free diagnostic — read the run records BEFORE re-spending the
+    run.** `~/.attune/ops/runs/<wf>/<id>.json` persists the truncated
+    `report` object. A record showing `summary` populated AND
+    `score: 42` AND `sections: []` PROVES the text contained the
+    sections (the score is regex'd out of the report body), so the fault
+    is in parsing/rendering, never synthesis. This settled a question
+    whose stated repro cost one ~3.5-min subscription run, for zero
+    spend. Aggregating all records also sizes the blast radius instantly
+    — here: bug-predict 4/4 zero-section, deep-review 1/2, code-review
+    0/4, every one exit 0, going back to 2026-08-02. Refines the
+    existing "run records persist ONLY the summary" lesson: the
+    truncation is itself evidence, not just an obstacle.
+
+- **Calibrate a new gate rule on the real tree BEFORE writing it, and
+  report the precision — a first-draft rule is routinely 60-70% precise,
+  and the discriminator that fixes it must be pinned as a fixture**:
+  2026-08-21, across four library-review gates. Every rule was probed as
+  a throwaway script first, and every one moved after seeing its hits.
+  G2's naive form ("any `int()`/`float()` after a per-record skip
+  guard") found 6 sites, 4 real: the lookalikes were
+  `int(elapsed * 1000)` on floats and `int(m.group(1))` on a `(\d+)`
+  capture, neither of which can raise. Requiring the coerced value to
+  come from a parsed record (a `.get(...)` or a subscript) took it to
+  4/4/0. I-4's naive form found 12, narrowed to 3. H1's FIRST form was
+  worse than imprecise — it was **wrong**: keyed on literal `host=`/
+  `port=` arguments, it found one site and MISSED the live user-facing
+  bug entirely, because `redis.Redis(socket_connect_timeout=2)` has no
+  endpoint argument at all and defaults to localhost:6379 implicitly.
+  A rule that finds one already-defensible hit is evidence the QUESTION
+  is wrong, not that the tree is clean. Three durable practices: (1)
+  **probe first, in a scratch script, and look at every hit by hand** —
+  the triage is where the rule gets designed; (2) **state the precision
+  in the PR** (hits / real / false positives) so a reviewer can judge
+  whether the gate will cry wolf, since a noisy gate gets allowlisted
+  into uselessness; (3) **pin each false positive you eliminated as a
+  passing test fixture** — the discriminator is the most fragile part of
+  the rule and the easiest thing for a later "simplification" to drop.
+  Matches the class register's own pipeline (confirm -> mechanize ->
+  CALIBRATE -> gate -> sweep-fix -> close) and its standing line that
+  "uncalibrated rules do not gate anything".
+
+- **Gate rules keyed on WHERE DATA COMES FROM need no allowlist; rules
+  keyed on WHICH CALL SITES ARE ALLOWED always do — and every allowlist
+  entry is permanent review debt**: measured across the four
+  library-review gates built 2026-08-21 (G1 #2147, H1 #2150, G2 #2151,
+  I-4 #2152). G1's rule asks "which modules may publish a temp file" —
+  a call-site question — and shipped with 2 allowlist entries. The other
+  three ask data-flow questions and shipped with **empty** allowlists:
+  H1 "is this endpoint literal/implicit, or resolver-derived?", G2 "does
+  this coercion read a parsed record field?", I-4 "is this parse result
+  bound to a name anything could isinstance-check?". The concrete payoff
+  is visible in H1: the class register carries a standing caution that
+  the deprecated `redis_memory_{coordination,storage}.py` twins "trip any
+  rule written for the live code", so an exemption was budgeted for —
+  but they never tripped H1's rule at all, because they take `host` and
+  `port` as **parameters**, and a parameter is not a literal. The
+  exemption the register predicted was simply unnecessary once the
+  question changed shape. **Before adding an allowlist entry, try
+  re-asking the rule as a property of the VALUE rather than a permission
+  of the SITE** — the same defect usually has a data-flow phrasing, and
+  that phrasing tends to exempt the legitimate cases by construction
+  instead of by list. When the twins DID trip a data-flow rule (I-4's,
+  which they genuinely matched), fixing three one-liners beat
+  allowlisting: they already imported the module holding the total
+  helper, so the gate still shipped allowlist-free. Rule of thumb: an
+  allowlist entry is a promise to re-review that module forever;
+  reshaping the question is usually cheaper than keeping that promise.
+
+- **Teaching a scanner a new safe idiom can make its gate go BLIND —
+  and a shrink-only allowlist ratchet then demands you delete the
+  entries that were still load-bearing**: 2026-08-21, closing
+  library-review class G1. The sweep-fix replaced ten `path.write_text()`
+  atomic-publish sites with `tempfile.mkstemp` + `os.fdopen` + `replace`.
+  The path-validation gate's scanner knew `.write_text` / `.write_bytes` /
+  `.open(mode="w")` / `shutil.*` / `os.remove|unlink|rename|replace` — it
+  did **not** know `os.fdopen` or `tempfile.mkstemp`. So six modules
+  dropped OFF its offender list the moment they adopted the SAFER idiom,
+  while still writing files exactly as before. Then
+  `test_allowlist_entries_are_still_needed` (correctly, by its own logic)
+  failed demanding those six ALLOWLIST entries be removed as stale —
+  which would have made the gate assert something untrue: "these modules
+  have no unvalidated file ops." The gate would have gone quiet on six
+  real writers and looked *healthier* for it. **The tell is an allowlist
+  ratchet firing "no longer needed" on modules you did not make safer —
+  if a shrink-only list suddenly wants to shrink right after a
+  refactor, suspect the SCANNER lost sight of the code, not that the
+  code improved.** Fix: teach the scanner the new idiom in the SAME PR
+  as the migration (`tempfile.{mkstemp,mkdtemp,NamedTemporaryFile,
+  TemporaryFile}` + `os.fdopen`-for-write), with unit tests pinning both
+  directions (write mode detected, read mode ignored). The widening then
+  surfaced **two pre-existing writers the scanner had NEVER seen**
+  (`authoring/fact_check/tutorial_static_check.py`,
+  `ops/session_summary_cache.py`) — one of which interpolates an
+  unvalidated id into a path; allowlisted with the traversal question
+  recorded in the comment and chipped separately rather than waved
+  through. Generalizes beyond this gate: **any AST scanner encodes a
+  vocabulary of the idioms in use when it was written, so every idiom
+  migration is a silent recall regression for every gate that scans for
+  the old one.** Pairs with the existing "reviewing gate allowlist
+  entries — the escape hatch is the actual attack surface" prior.
+
+- **`os.geteuid()` inside a `pytest.mark.skipif` condition errors the
+  WHOLE MODULE at collection time on Windows — skipif conditions are
+  evaluated eagerly, so a second `skipif(os.name == "nt")` above it
+  never gets a chance**: 2026-08-21, all five Windows lanes on PR #2147
+  went red on a tests-only change. The decorator stack read:
+  ```python
+  @pytest.mark.skipif(os.name == "nt", reason="POSIX mode bits")
+  @pytest.mark.skipif(os.geteuid() == 0, reason="root ignores the write bit")
+  ```
+  which looks defensive and is not: `os.geteuid` **does not exist** on
+  Windows, so the condition expression raises `AttributeError: module
+  'os' has no attribute 'geteuid'` while pytest is COLLECTING the file —
+  before any skip logic runs, taking every test in the module with it
+  (`ERROR tests/unit/curator/test_cache.py`). The nt-skip is dead code:
+  a decorator cannot protect an expression that is evaluated to build
+  the decorator below it. Fix: collapse to one module-level constant
+  computed with a safe accessor —
+  `_CANNOT_REFUSE_WRITES = os.name == "nt" or getattr(os, "geteuid", lambda: 1)() == 0`
+  — then a single `skipif(_CANNOT_REFUSE_WRITES, ...)`. The repo's three
+  pre-existing uses already short-circuit correctly
+  (`os.name == "posix" and os.geteuid() != 0` in
+  `tests/unit/memory/test_file_stash.py`; `hasattr(os, "geteuid") and ...`
+  in `tests/unit/telemetry/test_form_events.py` and
+  `tests/unit/workflows/discovery_sweep/test_pattern_scan_source.py`) —
+  **grep for an existing safe spelling before writing a new
+  platform-gated skip**. Generalizes to any POSIX-only `os` member in a
+  skipif condition (`geteuid`, `getuid`, `setuid`, `fork`, `getpriority`)
+  and to `pytest.mark.parametrize` argument expressions, which are also
+  evaluated at collection. Diagnostic tell: a tests-only diff that fails
+  EVERY Windows lane as `ERROR` (collection) rather than `FAILED`.
+
+- **A new gate must be NARROWED to exclude the shape an adjacent gate
+  already dispositioned, or it re-litigates rulings it does not own**:
+  2026-08-21, building the I-4 gate ("deserialize here, subscript
+  there"). The first probe asked "is a parse result passed straight to a
+  consumer?" and found 12 sites. But several were
+  `out.append(json.loads(line))` — where the subscript is DEFERRED to a
+  caller — and those belong to class **C3**, whose register row already
+  records "15 stored-data sites carried into batch 3" with per-site
+  dismissal reasons. Gating them here would have re-opened triage
+  decisions another gate owns, and produced two gates disagreeing about
+  the same lines. Narrowing to the RECONSTRUCTOR shape only
+  (`Model.from_dict(json.loads(raw))`, `Model(**json.loads(raw))`, where
+  the consumer subscripts IMMEDIATELY and raises `TypeError` from inside
+  the call) gave 3 hits, all real. That is also what the register meant
+  by naming I-4 "escapes the C3 gate": the class is DEFINED by what C3
+  cannot see, so anything C3 CAN see is out of scope by construction.
+  **Pin the excluded shape as an explicit passing fixture**
+  (`test_rule_ignores_deferred_subscript`) so the boundary between the
+  two gates is asserted rather than remembered — otherwise a later
+  broadening looks like an improvement. Same pass also cleared
+  `gates/lifecycle/ledger.py`, which writes the exact I-4 shape but
+  wraps it in a `try` whose tuple includes `TypeError`; without a guard
+  check the rule would have demanded a change to already-correct code,
+  so that site is pinned as a fixture too. General rule when adding a
+  gate to a corpus that already has several: **read the neighbouring
+  classes' dispositions FIRST and write the exclusion into the rule, not
+  into a reviewer's judgement.**
+
+- **"I approved the publish" + a still-`waiting` job: `pending_deployments`
+  ARRAY LENGTH is the authoritative read, and the neighbouring
+  `release.yml` run on the same tag is green and reads as "done" at a
+  glance**: 2026-08-21, the 13.0.1 ship. Patrick clicked approve; the
+  publish job stayed `waiting` and nothing reached PyPI. The decisive
+  check is
+  `gh api repos/<o>/<r>/actions/runs/<id>/pending_deployments --jq length`
+  — an APPROVED deployment DROPS OUT of that array, so non-empty means
+  the approval did not register, regardless of what the run page looked
+  like. The trap is that a tag push fires **two** workflows in parallel
+  (`release.yml` and `publish-pypi.yml`), and here `release.yml` had
+  already completed/success — so the Actions list showed a green run
+  against `v13.0.1` sitting directly beside the stuck one. On the second
+  attempt the same click worked; the array went to 0 and the job flipped
+  to `in_progress`. Two rules: (1) **verify approval by array length, not
+  by the run list or by the user's report** — and re-verify before
+  concluding anything, since the first read may race a click still in
+  flight; (2) when handing over a gate URL, name the WORKFLOW as well as
+  the run id, because "the green one on that tag" is a different run.
+  Also worth stating plainly rather than guessing: when the gate reads
+  non-empty after a reported click, report the OBSERVATION ("the
+  approval has not registered — `pending_deployments` still returns 1")
+  and offer the likely causes; do not assert which one it was. Never
+  approve via `pending_deployments` POST to route around it — the manual
+  click is chair-ruled (`feedback_pypi_gate_manual_click`) and its whole
+  purpose is the forced human pause. Pairs with the existing "gate
+  ABSENCE is an anomaly" lesson: this is the opposite failure — the gate
+  present and working, the approval simply not landing.
+
+- **`scripts/release_recall_gate.py` builds its wheel from the CHECKOUT
+  IT RUNS IN, so running it before the main checkout has pulled the merge
+  gates the PREVIOUS version and the pass means nothing**: 2026-08-21,
+  the 13.0.1 pre-tag gate. The gate ran green — `hit@3: 3/3`, `RECALL
+  GATE PASSED` — and its own log named the artifact it had just built:
+  `wheel: dist/attune_ai-13.0.0-py3-none-any.whl`. The prep PR had
+  merged, but the MAIN checkout was still at the pre-merge SHA, so the
+  gate proved the recall round trip for **13.0.0**, the version already
+  shipped. This mattered concretely: 13.0.1's entire payload (#2145) was
+  a change to `default_storage_dir()` — the very resolution that
+  `attune memory capture` -> `attune memory recall` exercises — so the
+  one gate that could have caught a regression there was pointed at code
+  without it. **Read the `wheel:` line the gate prints and check the
+  version equals the one being tagged; a PASS is only a receipt for the
+  artifact it names.** Sequence that avoids it: merge -> fast-forward the
+  main checkout (stash unrelated dirty files; a ff does not touch
+  untracked ones, but `pull --ff-only` refuses to run with ANY unstaged
+  tracked change) -> re-run the gate -> confirm the wheel version ->
+  tag. Same class as the pre-existing "editable install's MAPPING points
+  at the MAIN checkout" family: a tool that resolves its own source
+  silently answers about whatever tree it found, and the fix is always
+  to make it NAME the artifact and then verify the name. Generalizes to
+  every pre-tag check that builds or installs — `attune-release-check`'s
+  "CI green on HEAD" step has the same exposure if HEAD is stale.
+
+- **Report a finding WITH its blast radius, or a true statement reads as
+  an emergency — count the callers before you hand it over**: 2026-08-21,
+  post-release self-review of 13.0.1. Two verified defects were reported
+  in quick succession, one described as a TOCTOU in a distributed lock
+  that "admits two writers". Patrick's next message was "I'm alarmed…
+  could this be impacting recent users?" — a reasonable reading of what
+  had been said, and the wrong conclusion. Thirty seconds of checking
+  settled it: `grep -rn "acquire_lock|release_lock" src/ attune_redis/`
+  returns only the DEFINITIONS — `CrossSessionCoordinator`'s lock API is
+  publicly exported but has **zero callers in shipped source**, so the
+  bug is latent debt, not a live incident. The companion finding
+  (bug-predict rendering 1 of its 3 contracted sections) turned out to
+  be three weeks old, verified by reading persisted run records from
+  08-02 and 08-08 that showed the identical shape — so not a regression
+  from the release either. **Every finding handed to a chair should
+  carry: is it reachable (caller count / entry points), is it NEW (check
+  older persisted runs or `git log -S`), and what is the realistic
+  consequence.** Severity language without those three is not
+  informative, it is alarming — and the fix is cheap enough that there is
+  no excuse for deferring it to the follow-up question. Corollary for the
+  reverse direction: when the answer turns out to be reassuring, say so
+  plainly and say what was checked, so the reassurance is auditable
+  rather than soothing.
+
+- **Filing a flake into the nearest tracked class CORRUPTS the signature
+  that class exists to hold — check the signature before adding to a
+  tally, and file a non-match as a new shape with a tripwire instead**:
+  2026-08-21, a `worker 'gw0' crashed` on PR #2151's windows-latest 3.13
+  lane. Two plausible homes existed and both were wrong: the parent
+  `ci-runner-hang` spec (status `monitoring`, "reopen on recurrence",
+  **tally: 6 captures**) and its split child
+  `windows-exit139-segfault`. Reading their stated signatures settled it
+  in a minute — parent = exit-124 timeout-kill with the controller idle
+  in `dsession.loop_once` at ~99% done; child = wedge → 20-minute
+  conftest watchdog → faulthandler dumps → segfault. This event was
+  neither: the worker died at **18%**, pytest **absorbed** the loss,
+  reported an ordinary `FAILED`, and ran to a normal summary inside a
+  normal 15-minute window, so the job's nonzero exit was the failed test
+  and not a kill. A third shape: **a mid-run worker loss the controller
+  survives.** Adding it to either tally would have inflated a count that
+  downstream reasoning depends on — the exit-139 class was SPLIT OUT
+  precisely because its signature diverged, so muddying either one
+  destroys the thing the split bought. Recorded as an explicitly
+  uncounted "adjacent sighting" section with a tripwire ("a SECOND
+  mid-run worker crash opens its own class"), mirroring how the third
+  exit-139 triggered the original split. **General rule: a tracked
+  failure class is a SIGNATURE, not a bucket for anything that failed
+  nearby.** One sighting is never a class — file it so the second can be
+  recognised rather than re-derived, and state the tripwire that would
+  promote it. Two riders from the same episode: (1) **confirm a flake by
+  re-running, not by reasoning** — four independent signals said flake
+  (untouched file, 1 of 5 lanes, worker-crash rather than assertion,
+  known adjacent class) and the rerun was still worth it, because that
+  same morning a Windows failure that looked equally dismissible was a
+  real collection-time defect of mine; (2) **a spec ARCHIVE MOVE
+  silently breaks every memory and doc pointer at it** — the recall
+  memory still named `docs/specs/ci-runner-hang/` months after the
+  2026-07-14 triage moved it under `docs/specs/archive/`, so fix the
+  pointer in the same pass that consumes it.
+
+- **A required check failing on a PR that cannot possibly affect it means
+  MAIN is red — check main's last run BEFORE debugging the PR; and
+  `strict: false` does NOT mean "no rebase needed"**: 2026-08-21. A
+  docs-only PR (#2153, one markdown file in an archived spec) failed the
+  required `coverage` check. Nothing in that diff can move coverage, and
+  that impossibility is the diagnostic: one `gh run list --branch main
+  --limit 6 --workflow=tests.yml` showed main itself failing since
+  `ced39888a`. The PR was inheriting main's breakage, so debugging the
+  PR would have found nothing. **Order of operations: a check that the
+  diff cannot influence is a signal about the BASE, not the branch.**
+  Root cause was `scripts/check_badge_freshness.py` (it runs inside the
+  coverage job, so its failure is reported as "coverage"): the README
+  carries a manually-maintained round FLOOR for the tests badge and
+  `MARGIN = 5000`, so it trips once actual exceeds floor + 5,000. The
+  floor had drifted ~4,970 stale on its own; four gate PRs merged that
+  afternoon added the tests that crossed it. Fix was a one-line bump to
+  the next round number — which the README's own maintenance comment had
+  already named ("bump once the suite clears 25,000"), so **read the
+  maintenance comment before inventing a value**.
+  **The correction worth carrying:** I first reasoned the follow-up PR
+  needed no rebase, because branch protection has `strict: false` and
+  the two PRs touched different files. Wrong in effect — `strict`
+  governs merge ELIGIBILITY (may a behind-branch merge), not whether a
+  check PASSES. The follow-up branched before the fix, so its own tree
+  still held the stale floor and `coverage` genuinely failed on its own
+  content. It needed the rebase regardless of strictness. **Ask "does
+  this branch's TREE contain the fix?", never "is this branch allowed to
+  merge behind?"** (rebase re-signed cleanly; verify `%G?` before
+  force-pushing, per the existing GPG lesson.)
+  Rider on the same episode: merging four PRs inside ~15 minutes made
+  `cancel-in-progress` kill an earlier main run's `test (ubuntu-latest,
+  3.13)`, and cancelled-but-required also blocks — the known
+  rapid-PUSH lesson applies identically to rapid MERGES. No code fixes
+  that half; it clears on the next full main run, so verify the two
+  previously-red JOB conclusions directly rather than trusting the
+  run-level green (a cancelled-but-required check that stays cancelled
+  looks the same from a distance and needs `gh run rerun`).
+
+- **A worktree can be CLEAN, on a MERGED branch, and still be owned by a
+  live session — `git worktree list` cannot show you that, only
+  `ListAgents` can**: 2026-08-21, pre-flighting a 22-worktree prune. The
+  existing guidance excludes the session's OWN worktree and open-PR
+  branches (`prune_worktree_self_deletion_hazard`) and re-verifies
+  branch assignments immediately before removal (the drift lesson).
+  Neither covers this: **four peer sessions were live**, and their
+  worktrees looked exactly like prune candidates —
+  `airheadz-strain-06e355` was clean, and its branch
+  `docs/outbox-sweep-20260821` had ALREADY MERGED as #2149, so every
+  signal the usual checks read said "spent". It was not: the chip
+  session that opened that PR was still running in it. Removing it would
+  have pulled the floor out from under a session mid-work, and the
+  merged-PR check would have cheerfully approved. **Add a third
+  exclusion class to any prune: worktrees owned by a LIVE PEER SESSION,
+  discovered via `ListAgents`, matched by name** — the session names
+  carry the worktree slug (`airheadz-strain-06e355-29` →
+  `.claude/worktrees/airheadz-strain-06e355`), so the join is
+  mechanical. This gets more likely, not less, as chip/subagent sessions
+  become routine: every spawned chip is a peer session holding a
+  worktree that will look spent the moment its PR lands, while the
+  session is still alive to write lessons, answer follow-ups, or push a
+  fix. Same run also re-confirmed the drift lesson with a fresh
+  instance: `airheadz-strain-06e355` was **DETACHED** when first listed
+  a few hours earlier and was on a named branch by prune time — a stale
+  path→branch map would have reasoned about the wrong thing entirely.
+  Mitigating fact worth knowing when judging the blast radius:
+  `git worktree remove` leaves the BRANCH REF intact (only the checkout
+  goes), so the damage is a clobbered working tree, not lost commits —
+  unlike `git branch -D`. Full pre-flight, in order: (1) fresh
+  `git worktree list` + per-path `branch --show-current`, (2) `dirty`
+  count per worktree, (3) open-PR head refs, (4) **live peer sessions**,
+  (5) the current session's own path.
