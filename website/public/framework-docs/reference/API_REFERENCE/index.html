@@ -2922,34 +2922,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#core-framework" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Core Framework
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Core Framework">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#exceptions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Exceptions
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -5857,34 +5829,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#core-framework" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Core Framework
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Core Framework">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#exceptions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Exceptions
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -6885,8 +6829,6 @@
 <h2 id="table-of-contents">Table of Contents<a class="headerlink" href="#table-of-contents" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="#overview">Overview</a></li>
-<li><a href="#core-framework">Core Framework</a></li>
-<li><a href="#exceptions">Exceptions</a></li>
 <li><a href="#configuration">Configuration</a></li>
 <li><a href="#attuneconfig">AttuneConfig</a></li>
 <li><a href="#configloader">ConfigLoader</a></li>
@@ -6996,51 +6938,6 @@ and a unified memory system.</p>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">'attune-ai[developer]'</span><span class="w">   </span><span class="c1"># Developer extras</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>pip<span class="w"> </span>install<span class="w"> </span>attune-ai<span class="w">       </span><span class="c1"># Redis-backed memory + AMS plugin</span>
 </code></pre></div>
-<hr />
-<h2 id="core-framework">Core Framework<a class="headerlink" href="#core-framework" title="Permanent link">&para;</a></h2>
-<h3 id="exceptions">Exceptions<a class="headerlink" href="#exceptions" title="Permanent link">&para;</a></h3>
-<p><code>attune.exceptions</code></p>
-<table>
-<thead>
-<tr>
-<th>Exception</th>
-<th>Base</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>EmpathyFrameworkError</code></td>
-<td><code>Exception</code></td>
-<td>Base exception</td>
-</tr>
-<tr>
-<td><code>ValidationError</code></td>
-<td><code>EmpathyFrameworkError</code></td>
-<td>Input validation failure</td>
-</tr>
-<tr>
-<td><code>PatternNotFoundError</code></td>
-<td><code>EmpathyFrameworkError</code></td>
-<td>Pattern lookup miss</td>
-</tr>
-<tr>
-<td><code>EmpathyLevelError</code></td>
-<td><code>EmpathyFrameworkError</code></td>
-<td>Invalid empathy level</td>
-</tr>
-<tr>
-<td><code>TrustThresholdError</code></td>
-<td><code>EmpathyFrameworkError</code></td>
-<td>Trust check failure</td>
-</tr>
-<tr>
-<td><code>ConfidenceThresholdError</code></td>
-<td><code>EmpathyFrameworkError</code></td>
-<td>Below confidence threshold</td>
-</tr>
-</tbody>
-</table>
 <hr />
 <h2 id="configuration">Configuration<a class="headerlink" href="#configuration" title="Permanent link">&para;</a></h2>
 <h3 id="attuneconfig">AttuneConfig<a class="headerlink" href="#attuneconfig" title="Permanent link">&para;</a></h3>
