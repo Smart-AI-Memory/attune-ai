@@ -80,3 +80,44 @@ release, whether the sitting changed any disposition from the §7
 pre-filled defaults. Zero deltas across ~6 releases puts D2 (the
 every-release sitting) up for review by measurement rather than
 argument — the same retire-by-evidence mechanism ruled for role (b).
+
+## D10 — The sweep is package-scoped (RATIFIED chair 2026-08-22)
+
+The per-release sweep scans `src/` only. Amends R1's scan-path
+semantics, which named no root.
+
+**Why.** The rule pack's calibration receipts were measured against
+PACKAGE sites — the R7 receipt is "11 confirmed sites fixed in PR #2121"
+in `src/attune`. Running those rules over `tests/` is
+out-of-distribution: the recorded recall/precision does not transfer,
+and a test that does `data = json.loads(fixture); data["k"]` is
+controlled input, not the malformed-input class the rule targets.
+
+**The measurement that forced it.** The stage's first live run, on the
+real `v13.0.2..HEAD` release diff, produced **8/8 blocking hits, all in
+test files**. Under D5 that would have held 14.0.0 on eight false
+positives — precisely the failure D5 names, "a noisy gate gets
+allowlisted into uselessness". Rescanning scoped: 53 changed files, 20
+swept, **0 blocking**, and §0 still names all nine removed public
+symbols. The breaking change stays visible; the noise goes.
+
+**Scope of this ruling — narrow, deliberately.** It governs the
+per-release SWEEP only. Continuous gates keep scanning the whole tree,
+and narrowing THEM is the opposite call. Evidence from the same
+session: the `ast.parse` null-byte gate was scoped to `src/attune` and
+therefore never saw ITSELF; widening it surfaced 14 ValueError-blind
+sites, 12 of them long-standing, four in gates or CI scripts. A
+scope exclusion makes a gate blind in a way that looks like health.
+
+**The counter-position, recorded.** The lead argued against scoping by
+path at all, proposing instead that a hit BLOCKS only where the rule's
+calibration matches the surface it was measured on, while everything
+scanned stays visible as an advisory §2 row — same clearing of 14.0.0,
+without buying it by not looking. The chair chose the simpler path
+scope. Consequence accepted: defect shapes in `tests/` and `scripts/`
+are outside the per-release audit and rely on continuous gates instead.
+
+**Anti-blindness requirement.** Because a narrowed sweep must not read
+like a clean one, the packet's §0 reports `files_changed`,
+`files_swept`, `files_not_swept`, and `sweep_scope`. An empty residual
+is never ambiguous between "no defects here" and "did not look here".

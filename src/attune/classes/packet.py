@@ -37,7 +37,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from attune.classes.baseline import Baseline
+from attune.classes.baseline import SWEEP_ROOTS, Baseline
 
 __all__ = [
     "DISPOSITIONS",
@@ -344,6 +344,13 @@ def build_packet(
             "head_sha": baseline.head_sha,
             "baseline_source": baseline.source,
             "files_changed": len(baseline.changed),
+            # D10: the sweep is package-scoped. Stating what was NOT
+            # looked at keeps a narrowed sweep from reading like a clean
+            # one — an empty residual must never be ambiguous between
+            # "no defects here" and "did not look here".
+            "files_swept": len(baseline.to_sweep),
+            "files_not_swept": len(baseline.not_swept),
+            "sweep_scope": list(SWEEP_ROOTS),
             "packages_touched": _packages_touched(baseline.changed),
             "public_symbols": symbol_delta,
         },

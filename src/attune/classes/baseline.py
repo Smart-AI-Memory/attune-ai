@@ -32,6 +32,18 @@ __all__ = ["Baseline", "BaselineError", "resolve_baseline", "changed_files", "de
 #: become one.
 _RELEASE_TAG = re.compile(r"^v\d+\.\d+\.\d+$")
 
+#: Roots the release-audit sweep looks at. Chair-ruled 2026-08-22 (D10):
+#: the rules' calibration receipts were measured against PACKAGE sites,
+#: so running them over tests/ is out-of-distribution — the recorded
+#: recall/precision does not transfer, and the first live run produced
+#: 8/8 blocking hits that were all controlled-input test fixtures.
+#:
+#: This scopes the per-release SWEEP only. Continuous gates deliberately
+#: scan the whole tree: narrowing THEM is how a gate goes blind (the
+#: null-byte gate was scoped to src/attune and so never saw itself —
+#: widening it found 14 sites, 12 of them long-standing).
+SWEEP_ROOTS = ("src/",)
+
 #: Extensions the rule pack cannot parse. Kept in step with the sweep's
 #: own filters (R1: "binary/generated files are excluded by the same
 #: filters the sweep suite used") — the sweep only parses Python.
@@ -70,6 +82,21 @@ class Baseline:
     #: symbol delta — a deleted module is the clearest surface removal
     #: there is, and 14.0.0's own breaking change lives in one.
     deleted: tuple[str, ...] = field(default=())
+
+    @property
+    def to_sweep(self) -> tuple[str, ...]:
+        """Changed paths the release-audit sweep actually scans (D10).
+
+        A subset of :attr:`changed`. The packet reports both counts so a
+        reader can see what was NOT looked at — a narrowed sweep that
+        hides its own narrowing is how a gate goes quietly blind.
+        """
+        return tuple(p for p in self.changed if p.startswith(SWEEP_ROOTS))
+
+    @property
+    def not_swept(self) -> tuple[str, ...]:
+        """Changed paths deliberately outside the sweep (D10)."""
+        return tuple(p for p in self.changed if not p.startswith(SWEEP_ROOTS))
 
     @property
     def tag_range(self) -> str:

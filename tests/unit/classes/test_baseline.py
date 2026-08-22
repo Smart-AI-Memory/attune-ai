@@ -213,3 +213,45 @@ class TestBaselineShape:
 
         with pytest.raises(AttributeError):
             baseline.baseline_sha = "c" * 40  # type: ignore[misc]
+
+
+class TestSweepScopeD10:
+    """D10: the sweep is package-scoped, and says what it did not look at."""
+
+    def test_only_package_paths_are_swept(self, tmp_path):
+        repo = _repo(tmp_path)
+        _commit(repo, "src/attune/mod.py")
+        _git(repo, "tag", "v1.0.0")
+        _commit(repo, "src/attune/other.py")
+        _commit(repo, "tests/unit/test_thing.py")
+        _commit(repo, "scripts/tool.py")
+
+        baseline = resolve_baseline(repo)
+
+        assert baseline.to_sweep == ("src/attune/other.py",)
+        assert set(baseline.not_swept) == {"tests/unit/test_thing.py", "scripts/tool.py"}
+
+    def test_changed_still_reports_everything(self, tmp_path):
+        """The narrowing must be visible, not silent."""
+        repo = _repo(tmp_path)
+        _commit(repo, "src/attune/mod.py")
+        _git(repo, "tag", "v1.0.0")
+        _commit(repo, "tests/unit/test_thing.py")
+
+        baseline = resolve_baseline(repo)
+
+        assert baseline.changed == ("tests/unit/test_thing.py",)
+        assert baseline.to_sweep == ()
+        assert baseline.not_swept == ("tests/unit/test_thing.py",)
+
+    def test_the_two_partition_changed_exactly(self, tmp_path):
+        repo = _repo(tmp_path)
+        _commit(repo, "src/attune/a.py")
+        _git(repo, "tag", "v1.0.0")
+        for name in ("src/attune/b.py", "tests/t.py", "scripts/s.py", "plugin/p.py"):
+            _commit(repo, name)
+
+        baseline = resolve_baseline(repo)
+
+        assert set(baseline.to_sweep) | set(baseline.not_swept) == set(baseline.changed)
+        assert not (set(baseline.to_sweep) & set(baseline.not_swept))
