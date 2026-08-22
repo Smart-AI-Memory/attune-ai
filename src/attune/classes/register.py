@@ -200,6 +200,72 @@ def _defer_expired(record: dict, repo_root: Path) -> bool:
     return releases_since >= allowed
 
 
+def _subtract_dispositions(hits: list[dict], dispositions: list[dict], root: Path) -> list[dict]:
+    """Drop hits the review dismissed with a recorded reason."""
+    dismissed = {(d["rule_id"], d["path"]) for d in dispositions}
+
+    def _rel(path: str) -> str:
+        try:
+            return str(Path(path).resolve().relative_to(root.resolve()))
+        except ValueError:
+            return path
+
+    return [h for h in hits if (h["rule_id"], _rel(h["path"])) not in dismissed]
+
+
+def _count_hits_per_class(hits: list[dict], repo_id: str) -> tuple[dict[str, int], dict[str, int]]:
+    """Per-class hit counts, split calibrated vs advisory (R1)."""
+    calibrated: dict[str, int] = {}
+    advisory: dict[str, int] = {}
+    for rule in RULES:
+        n = sum(1 for h in hits if h["rule_id"] == rule.id)
+        bucket = calibrated if calibrated_here(rule, repo_id) else advisory
+        for class_id in rule.class_ids:
+            bucket[class_id] = bucket.get(class_id, 0) + n
+    return calibrated, advisory
+
+
+def _derive_status(*, gate_ok: bool, hits: int, deferred: bool, mechanized: bool) -> str:
+    """The R2 status table, one decision per row."""
+    if gate_ok:
+        return "BROKEN-GATE" if hits > 0 else "CLOSED"
+    if deferred:
+        return "DEFERRED"
+    if not mechanized:
+        return "UNMECHANIZED"
+    return "OPEN" if hits > 0 else "FIXED-BUT-UNGATED"
+
+
+def _class_row(
+    class_id: str,
+    *,
+    gate: GateRef | None,
+    root: Path,
+    repo_id: str,
+    calibrated_hits: int,
+    advisory_hits: int,
+    defer: dict | None,
+) -> dict:
+    """One derived-register row."""
+    gate_problem = gate.resolution_problem(root) if gate else None
+    mechanized = any(class_id in r.class_ids and calibrated_here(r, repo_id) for r in RULES)
+    status = _derive_status(
+        gate_ok=gate is not None and gate_problem is None,
+        hits=calibrated_hits,
+        deferred=defer is not None,
+        mechanized=mechanized,
+    )
+    return {
+        "class_id": class_id,
+        "status": status,
+        "gate": f"{gate.path}::{gate.test_name}" if gate else None,
+        "gate_problem": gate_problem,
+        "calibrated_hits": calibrated_hits,
+        "advisory_hits": advisory_hits,
+        "defer": (defer or {}).get("chair_receipt"),
+    }
+
+
 def derive_register(
     *,
     repo_root: Path | None = None,
@@ -223,25 +289,8 @@ def derive_register(
     scan = scan_paths(roots, repo_root=root)
 
     dispositions, disposition_problems = load_dispositions(root)
-    dismissed = {(d["rule_id"], d["path"]) for d in dispositions}
-
-    def _kept(h: dict) -> bool:
-        rel = h["path"]
-        try:
-            rel = str(Path(h["path"]).resolve().relative_to(root.resolve()))
-        except ValueError:
-            pass
-        return (h["rule_id"], rel) not in dismissed
-
-    kept_hits = [h for h in scan["hits"] if _kept(h)]
-
-    calibrated_hits: dict[str, int] = {}
-    advisory_hits: dict[str, int] = {}
-    for rule in RULES:
-        n = sum(1 for h in kept_hits if h["rule_id"] == rule.id)
-        bucket = calibrated_hits if calibrated_here(rule, repo_id) else advisory_hits
-        for class_id in rule.class_ids:
-            bucket[class_id] = bucket.get(class_id, 0) + n
+    kept_hits = _subtract_dispositions(scan["hits"], dispositions, root)
+    calibrated_hits, advisory_hits = _count_hits_per_class(kept_hits, repo_id)
 
     defers, defer_problems = load_defers(root)
     active_defers = {str(d["class_id"]): d for d in defers if not _defer_expired(d, root)}
@@ -255,40 +304,24 @@ def derive_register(
         | {cid for r in RULES for cid in r.class_ids}
     )
 
-    rows = []
-    for class_id in sorted(universe):
-        gate = gate_by_class.get(class_id)
-        gate_problem = gate.resolution_problem(root) if gate else None
-        gate_ok = gate is not None and gate_problem is None
-        mechanized = any(class_id in r.class_ids and calibrated_here(r, repo_id) for r in RULES)
-        hits = calibrated_hits.get(class_id, 0)
-        if gate_ok:
-            status = "BROKEN-GATE" if hits > 0 else "CLOSED"
-        elif class_id in active_defers:
-            status = "DEFERRED"
-        elif not mechanized:
-            status = "UNMECHANIZED"
-        elif hits > 0:
-            status = "OPEN"
-        else:
-            status = "FIXED-BUT-UNGATED"
-        rows.append(
-            {
-                "class_id": class_id,
-                "status": status,
-                "gate": f"{gate.path}::{gate.test_name}" if gate else None,
-                "gate_problem": gate_problem,
-                "calibrated_hits": hits,
-                "advisory_hits": advisory_hits.get(class_id, 0),
-                "defer": active_defers.get(class_id, {}).get("chair_receipt"),
-            }
+    rows = [
+        _class_row(
+            class_id,
+            gate=gate_by_class.get(class_id),
+            root=root,
+            repo_id=repo_id,
+            calibrated_hits=calibrated_hits.get(class_id, 0),
+            advisory_hits=advisory_hits.get(class_id, 0),
+            defer=active_defers.get(class_id),
         )
+        for class_id in sorted(universe)
+    ]
     return {
         "repo": repo_id,
         "rows": rows,
         "defer_problems": defer_problems,
         "disposition_problems": disposition_problems,
-        "dispositions_applied": len(dismissed),
+        "dispositions_applied": len(dispositions),
         "scan_errors": scan["scan_errors"],
     }
 

@@ -188,6 +188,14 @@ class _V1Sweep(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Call(self, node: ast.Call) -> None:
+        self._check_r1(node)
+        self._check_r2(node)
+        self._check_r3(node)
+        self._check_r4(node)
+        self._check_r6(node)
+        self.generic_visit(node)
+
+    def _check_r1(self, node: ast.Call) -> None:
         f = node.func
         if (
             self.try_depth == 0
@@ -197,6 +205,9 @@ class _V1Sweep(ast.NodeVisitor):
             and f.value.id == "json"
         ):
             self._hit("R1-json-loads-unguarded", node, "json parse outside try")
+
+    def _check_r2(self, node: ast.Call) -> None:
+        f = node.func
         if (
             self.func_stack
             and isinstance(f, ast.Attribute)
@@ -206,6 +217,9 @@ class _V1Sweep(ast.NodeVisitor):
             and node.args[0].id == self.func_stack[-1]["kwarg"]
         ):
             self._hit("R2-update-kwargs", node, f"update({node.args[0].id}) clobber risk")
+
+    def _check_r3(self, node: ast.Call) -> None:
+        f = node.func
         if (
             self.func_stack
             and isinstance(f, ast.Name)
@@ -220,6 +234,9 @@ class _V1Sweep(ast.NodeVisitor):
                     node,
                     f"'{node.args[0].id}' coalesced at :{line} before isinstance",
                 )
+
+    def _check_r4(self, node: ast.Call) -> None:
+        f = node.func
         if (
             isinstance(f, ast.Attribute)
             and f.attr in _SUBPROC_FNS
@@ -228,6 +245,9 @@ class _V1Sweep(ast.NodeVisitor):
         ):
             if not any(k.arg == "timeout" for k in node.keywords):
                 self._hit("R4-subprocess-no-timeout", node, f"subprocess.{f.attr} without timeout")
+
+    def _check_r6(self, node: ast.Call) -> None:
+        f = node.func
         if (
             isinstance(f, ast.Attribute)
             and f.attr in _REDIS_METHODS
@@ -237,7 +257,6 @@ class _V1Sweep(ast.NodeVisitor):
             and isinstance(node.args[0], ast.JoinedStr)
         ):
             self._hit("R6-redis-fstring-key", node, f"{f.value.id}.{f.attr}(f'...')")
-        self.generic_visit(node)
 
 
 def _v1_only(rule_id: str) -> Callable[[ast.AST, str], list[Hit]]:
@@ -331,7 +350,9 @@ class _R7Visitor(ast.NodeVisitor):
                         )
         self.generic_visit(node)
 
-    def _scan_function(self, node) -> None:
+    @staticmethod
+    def _collect_bindings(node) -> tuple[dict[str, int], set[str]]:
+        """Names bound from parser calls, and names isinstance-guarded."""
         parsed: dict[str, int] = {}
         guarded: set[str] = set()
         for n in ast.walk(node):
@@ -343,17 +364,26 @@ class _R7Visitor(ast.NodeVisitor):
             if isinstance(n, ast.Call) and isinstance(n.func, ast.Name):
                 if n.func.id == "isinstance" and n.args and isinstance(n.args[0], ast.Name):
                     guarded.add(n.args[0].id)
+        return parsed, guarded
+
+    @staticmethod
+    def _access_target(n: ast.AST) -> str | None:
+        """The Name a ``.get(...)`` or subscript reads from, if any."""
+        if (
+            isinstance(n, ast.Call)
+            and isinstance(n.func, ast.Attribute)
+            and n.func.attr == "get"
+            and isinstance(n.func.value, ast.Name)
+        ):
+            return n.func.value.id
+        if isinstance(n, ast.Subscript) and isinstance(n.value, ast.Name):
+            return n.value.id
+        return None
+
+    def _scan_function(self, node) -> None:
+        parsed, guarded = self._collect_bindings(node)
         for n in ast.walk(node):
-            target = None
-            if (
-                isinstance(n, ast.Call)
-                and isinstance(n.func, ast.Attribute)
-                and n.func.attr == "get"
-                and isinstance(n.func.value, ast.Name)
-            ):
-                target = n.func.value.id
-            elif isinstance(n, ast.Subscript) and isinstance(n.value, ast.Name):
-                target = n.value.id
+            target = self._access_target(n)
             if target and target in parsed and target not in guarded:
                 self.hits.append(
                     Hit(
