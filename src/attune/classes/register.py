@@ -28,7 +28,7 @@ import ast
 import json
 import subprocess
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePath
 
 import yaml
 
@@ -202,13 +202,19 @@ def _defer_expired(record: dict, repo_root: Path) -> bool:
 
 def _subtract_dispositions(hits: list[dict], dispositions: list[dict], root: Path) -> list[dict]:
     """Drop hits the review dismissed with a recorded reason."""
-    dismissed = {(d["rule_id"], d["path"]) for d in dispositions}
+    # Both sides normalised to posix separators. ``str()`` on a Path renders
+    # the NATIVE separator, so on Windows a hit became "src\\mod.py" while a
+    # disposition file (authored by hand, and compared verbatim) says
+    # "src/mod.py" — the tuple never matched and every disposition was
+    # silently ignored there. Normalising the disposition side too means a
+    # hand-written backslash path matches on any platform.
+    dismissed = {(d["rule_id"], PurePath(d["path"]).as_posix()) for d in dispositions}
 
     def _rel(path: str) -> str:
         try:
-            return str(Path(path).resolve().relative_to(root.resolve()))
+            return Path(path).resolve().relative_to(root.resolve()).as_posix()
         except ValueError:
-            return path
+            return PurePath(path).as_posix()
 
     return [h for h in hits if (h["rule_id"], _rel(h["path"])) not in dismissed]
 

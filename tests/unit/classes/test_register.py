@@ -210,3 +210,61 @@ class TestLoaders:
 
     def test_absent_dispositions_is_clean(self, tmp_path):
         assert load_dispositions(tmp_path) == ([], [])
+
+
+class TestDispositionPathSeparators:
+    """Disposition matching must not depend on the host's path separator.
+
+    ``_rel`` used ``str(Path(...))``, which renders the NATIVE separator:
+    on Windows a hit became ``src\\mod.py`` while a disposition file —
+    authored by hand and compared verbatim — says ``src/mod.py``, so the
+    tuple never matched and EVERY disposition was silently ignored there.
+
+    The behaviour itself CANNOT be simulated off-Windows: on POSIX a
+    backslash is an ordinary filename character, so ``Path`` will not
+    treat it as a separator and ``as_posix()`` leaves it alone. The
+    behavioural coverage is therefore
+    ``test_dispositions_subtract_dismissed_hits`` running on the Windows
+    lanes; what runs everywhere is this source guard, so a revert fails
+    fast instead of waiting on a lane that is not required to merge.
+    """
+
+    def test_both_sides_are_normalised_with_as_posix(self):
+        """A revert to str(Path(...)) reintroduces the Windows bug."""
+        import ast
+        import inspect
+
+        from attune.classes.register import _subtract_dispositions
+
+        source = textwrap.dedent(inspect.getsource(_subtract_dispositions))
+        tree = ast.parse(source)
+
+        posix_calls = [
+            node
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Attribute) and node.attr == "as_posix"
+        ]
+        assert len(posix_calls) >= 3, (
+            "_subtract_dispositions must normalise BOTH the disposition side "
+            "and both _rel return paths with .as_posix(); found "
+            f"{len(posix_calls)} call(s). str(Path(...)) renders the native "
+            "separator and silently drops every disposition on Windows."
+        )
+
+    def test_unrelated_path_is_still_kept(self):
+        """Normalisation must not make everything match."""
+        from attune.classes.register import _subtract_dispositions
+
+        hits = [{"rule_id": "R7b", "path": "src/other.py"}]
+        dispositions = [{"rule_id": "R7b", "path": "src/mod.py", "reason": "dismissed"}]
+
+        assert _subtract_dispositions(hits, dispositions, Path.cwd()) == hits
+
+    def test_matching_path_is_still_subtracted(self):
+        """The ordinary same-separator case keeps working."""
+        from attune.classes.register import _subtract_dispositions
+
+        hits = [{"rule_id": "R7b", "path": "src/mod.py"}]
+        dispositions = [{"rule_id": "R7b", "path": "src/mod.py", "reason": "dismissed"}]
+
+        assert _subtract_dispositions(hits, dispositions, Path.cwd()) == []
