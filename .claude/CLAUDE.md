@@ -698,35 +698,6 @@ this section only if core-worthy (and then keep both copies in sync).
     --limit=1 --json status` — if `in_progress`, wait ~5-7 min
     or accept the re-run.
 
-- **Parsing `gh pr checks` TABULAR output with positional `awk` fields
-  silently misreads the bucket — check NAMES contain spaces, so `$2` is a
-  name fragment, not the status; use `--json name,bucket`**: 2026-08-22,
-  watching two PRs to green with a standing "admin-merge if auto-merge
-  stalls" authorization. The watcher counted pending work with
-  `awk '$2=="pending"'`. On the row `test (windows-latest, 3.12)  pending`
-  field 2 is `(windows-latest,` — so a RUNNING Windows lane counted as
-  zero-pending. The watcher printed `pend=0 fail=[]` while the PR sat
-  `OPEN/BLOCKED`, which its own stall detector read as "all checks
-  terminal, still open" = auto-merge stalled. Acting on that would have
-  admin-merged a PR whose Windows lane had not yet reported — precisely
-  the failure the existing "admin-merging a PR before Windows lanes
-  complete buries a real bug on main" lesson warns about, reached through
-  a parsing bug rather than impatience. The same break hides bad news:
-  `fail=[]` is indistinguishable from "I could not see the failures," so
-  the watcher's clean bill of health carried no information at all.
-  Fix: `gh pr checks <n> --json name,bucket` piped through `jq`, never
-  positional `awk` — EVERY multi-word check name breaks column
-  assumptions and `gh` does not quote them (`test (ubuntu-latest, 3.12)`,
-  `Analyze (python)`, `clock-tz (America/Anchorage)`, `Vercel – website`).
-  Diagnostic tell, and it is free: a bucket tally that CONTRADICTS the
-  PR's own `mergeStateStatus`. `BLOCKED` with zero pending and zero fails
-  is not a stall, it is an impossibility — and the impossible half is
-  your parser, not GitHub. Extends "CI watchers report ABSENCE as
-  success" one layer down (mis-parse rendering as absence, absence
-  rendering as success) and pairs with "`gh pr checks --json` field is
-  `bucket`, NOT `conclusion`" — same command, and the JSON path avoids
-  both traps at once.
-
 - **The editable install's MAPPING points `attune` at the MAIN
   checkout, not your worktree — so code/deps resolve wrong when run
   from a worktree.** `.venv/.../__editable___attune_ai_*_finder.py`
@@ -1325,3 +1296,36 @@ this section only if core-worthy (and then keep both copies in sync).
   previously-red JOB conclusions directly rather than trusting the
   run-level green (a cancelled-but-required check that stays cancelled
   looks the same from a distance and needs `gh run rerun`).
+
+- **A transport migration silently converts every emptiness-asserting
+  test into a vacuous one — and the suite CANNOT report it, because the
+  failure mode satisfies the assertion**: 2026-08-22, the telemetry
+  scan-then-`get()` -> `MGET` migration (#2162). Tests that stubbed only
+  `client.get` then handed the listing a bare `Mock` for `mget`, which is
+  not iterable; the `TypeError` was swallowed by each listing's
+  function-wide `except Exception` and the call returned `[]` / `0` /
+  `None`. Any `assert x == []` therefore passed **for the wrong reason**:
+  the payload the test set up was never read (`get()` call count 0) and
+  the logic under test never ran. The cost, measured: disabling
+  `get_pending_approvals`' "only pending" status filter ENTIRELY left the
+  whole telemetry suite green (646 passed) — that filter's only guard was
+  one of the vacuous tests. **The selection effect is the point, and it
+  was perfectly clean across the 13 tests touching those listings:
+  POSITIVE-assertion tests (`assert len(x) == 1`) go red instantly and
+  get fixed during the migration — 3/3 were wired; emptiness-asserting
+  tests are satisfied by the very failure they should catch — 0/10 were.**
+  Nobody was careless; the suite emitted no signal, so no amount of care
+  would have caught it. Generalizes to ANY mock-stubbed transport swap
+  (sync->async, single->batch, REST->GraphQL, one client method ->
+  another) wherever the caller has a broad `except` that degrades to an
+  empty result. **Diagnostics**: (1) mutation-test the logic the tests
+  claim to guard — if breaking a filter leaves the suite green, its
+  coverage is fiction; (2) count `get()` calls — a stubbed payload that
+  is never read is the tell; (3) grep for tests that stub the OLD method
+  and assert emptiness. **Fix**: define the new method in terms of the
+  old (`client.mget.side_effect = lambda ks: [client.get(k) for k in ks]`
+  — literally the Redis contract), so each test keeps configuring
+  payloads the way it already does. **Gate it**: a static check that any
+  test feeding a non-empty scan must also serve the batched read
+  (`tests/unit/gates/test_listing_mock_transport_gate.py`), since this
+  class is invisible by construction and vigilance cannot cover it.
