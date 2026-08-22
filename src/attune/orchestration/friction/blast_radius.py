@@ -13,6 +13,11 @@ the same file scores identically on Windows and POSIX.
 import os
 import re
 
+# Module-level alias so tests can monkeypatch this module's relpath
+# without mutating the process-global ``os.path`` (which races other
+# tests under xdist).
+_relpath = os.path.relpath
+
 # Path patterns are anchored to a path segment boundary so that e.g.
 # ``docs/oauth/notes.md`` does NOT match the ``auth/`` rule.
 _CRITICAL_PATH_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
@@ -135,7 +140,7 @@ class BlastRadiusClassifier:
         """Normalizes a path relative to workspace root with '/' separators."""
         abs_path = os.path.abspath(raw_path)
         try:
-            rel = os.path.relpath(abs_path, self.workspace_root)
+            rel = _relpath(abs_path, self.workspace_root)
         except ValueError:
             rel = raw_path
         return rel.replace("\\", "/")
