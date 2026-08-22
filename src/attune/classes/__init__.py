@@ -13,6 +13,7 @@ from attune.classes.class_m import (
     check_commit,
     check_range,
 )
+from attune.classes.register import GATES, GateRef, derive_register
 from attune.classes.rules import (
     RULES,
     Calibration,
@@ -24,6 +25,9 @@ from attune.classes.rules import (
 from attune.classes.scan import scan_paths
 
 __all__ = [
+    "GATES",
+    "GateRef",
+    "derive_register",
     "BOUNDARY_CLASS_IDS",
     "RECEIPT_TYPES",
     "RULES",

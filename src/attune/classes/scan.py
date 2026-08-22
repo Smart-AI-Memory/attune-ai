@@ -67,7 +67,11 @@ def scan_paths(
             continue
         try:
             hits.extend(scan_source(source, str(f), rules))
-        except Exception as exc:  # a crashing rule fails the gate, not silently
+        # Broad by design (evidence collector): an arbitrary rule
+        # callable can raise anything; the crash is RECORDED as a
+        # scan_error and fails the exit code (contract §7 / Agy#7) —
+        # never swallowed. Baselined in test_broad_except_ratchet.
+        except Exception as exc:  # noqa: BLE001
             scan_errors.append({"path": str(f), "error": f"{type(exc).__name__}: {exc}"})
     return {
         "repo": repo_id,

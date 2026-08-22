@@ -19,6 +19,8 @@ was that these contracts are not the same.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
+
+Register-Class: C3
 """
 
 from __future__ import annotations

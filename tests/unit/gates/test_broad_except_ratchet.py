@@ -74,6 +74,7 @@ _BASELINE: dict[str, int] = {
     "backend/services/auth_service.py": 1,
     "backend/services/database/auth_db.py": 1,
     "src/attune/__init__.py": 1,
+    "src/attune/classes/scan.py": 1,  # rule-crash evidence collector; recorded + non-zero exit (2026-08-22)
     "src/attune/agent_factory/adapters/autogen_adapter.py": 2,
     "src/attune/agent_factory/adapters/haystack_adapter.py": 2,
     "src/attune/agent_factory/adapters/langchain_adapter.py": 3,
