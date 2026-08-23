@@ -30,6 +30,17 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
+def _is_option_like(value: str) -> bool:
+    """True when git would parse ``value`` as an OPTION rather than data.
+
+    ``git log -1 --format=X --help`` prints usage instead of a commit, and
+    the same holds for any ref or config key a caller can shape. The rule
+    lived inline in one method and every sibling call site therefore had
+    to remember it; two did not. One definition, applied at each boundary.
+    """
+    return value.startswith("-")
+
+
 class GitPatternExtractor:
     """Extracts bug fix patterns from git commits.
 
@@ -210,7 +221,7 @@ class GitPatternExtractor:
         # "--" pins the remainder as "no pathspec follows" so a ref that
         # also names a file cannot be read as a path. Checked here (not
         # only at the call sites) so a future caller inherits it.
-        if ref.startswith("-"):
+        if _is_option_like(ref):
             logger.warning("Refusing option-like git ref: %r", ref)
             return None
 
@@ -240,10 +251,19 @@ class GitPatternExtractor:
             return None
 
     def _get_commit_diff(self, ref1: str, ref2: str) -> str:
-        """Get diff between two commits."""
+        """Get diff between two commits.
+
+        Mirrors :meth:`_get_commit_info`'s guard: option-like refs are
+        refused and ``--`` pins the remainder as "no pathspec follows",
+        so a ref that also names a file cannot be read as a path.
+        """
+        if _is_option_like(ref1) or _is_option_like(ref2):
+            logger.warning("Refusing option-like git ref: %r, %r", ref1, ref2)
+            return ""
+
         try:
             result = subprocess.run(
-                ["git", "diff", ref1, ref2],
+                ["git", "diff", ref1, ref2, "--"],
                 check=False,
                 capture_output=True,
                 text=True,
@@ -270,7 +290,17 @@ class GitPatternExtractor:
             return ""
 
     def _get_git_config(self, key: str) -> str | None:
-        """Get a git config value."""
+        """Get a git config value.
+
+        Only called with a literal today, so this is a latent gap rather
+        than a live one — but the key is a parameter, and the sibling
+        method's guard was written precisely so a future caller would
+        inherit it.
+        """
+        if _is_option_like(key):
+            logger.warning("Refusing option-like git config key: %r", key)
+            return None
+
         try:
             result = subprocess.run(
                 ["git", "config", key],
