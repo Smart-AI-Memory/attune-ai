@@ -124,6 +124,8 @@ from attune_forms.reference_form import EXAMPLE_ANSWERS, REFERENCE_FORM  # noqa:
 from attune_forms.template_store import form_from_template, list_templates  # noqa: E402
 from attune_forms.widget import WIDGET_RESPONSE_MARKER, form_to_widget_html  # noqa: E402
 
+from attune.elicitation.ask_payload import form_to_ask_payload  # noqa: E402
+
 __all__ = [
     "EXAMPLE_ANSWERS",
     "REFERENCE_FORM",
@@ -133,6 +135,7 @@ __all__ = [
     "form_from_dict",
     "form_from_template",
     "form_response_summary",
+    "form_to_ask_payload",
     "form_to_askuserquestion",
     "form_to_elicitation_schema",
     "form_to_widget_html",
