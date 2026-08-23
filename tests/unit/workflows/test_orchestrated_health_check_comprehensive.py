@@ -328,20 +328,25 @@ class TestCategoryScoreCalculations:
     """Tests for category score calculation edge cases."""
 
     def test_calculate_category_scores_empty_results(self):
-        """Test category score calculation with empty agent results."""
+        """Empty agent results yield unmeasured (N/A) categories, never defaults.
+
+        Regression pin (roundtable q-workflow-fleet-health-001): a missing
+        security agent used to fabricate a perfect 100 — a metric that was
+        not measured must not be a number.
+        """
         workflow = OrchestratedHealthCheckWorkflow(mode="daily")
 
         scores = workflow._calculate_category_scores({})
 
-        # Should still create default scores even with empty results
-        # (Security, Coverage, Quality are always created)
+        # Security, Coverage, Quality entries still exist, but as N/A
         assert len(scores) >= 3
-        # Verify they use defaults when no data
         security = next(s for s in scores if s.name == "Security")
-        assert security.score == 100.0  # No issues = perfect score
+        assert security.measured is False
+        assert security.passed is False
+        assert any("not measured" in issue for issue in security.issues)
 
     def test_calculate_category_scores_missing_output(self):
-        """Test category score calculation with missing output."""
+        """An agent entry with no output produces an unmeasured category."""
         workflow = OrchestratedHealthCheckWorkflow(mode="daily")
 
         agent_results = {
@@ -350,10 +355,10 @@ class TestCategoryScoreCalculations:
 
         scores = workflow._calculate_category_scores(agent_results)
 
-        # Should handle missing output gracefully
         security_score = next((s for s in scores if s.name == "Security"), None)
         assert security_score is not None
-        assert security_score.score == 100.0  # Default when no issues found
+        assert security_score.measured is False
+        assert security_score.score != 100.0  # never default-to-perfect
 
     def test_calculate_category_scores_security_caps_at_zero(self):
         """Test security score can't go below 0."""

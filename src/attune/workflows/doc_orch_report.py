@@ -147,7 +147,12 @@ class DocOrchReportMixin:
             "=" * 60,
             "",
             f"Project: {self.project_root}",
-            f"Status: {'SUCCESS' if result.success else 'PARTIAL'}",
+            "Status: "
+            + (
+                "DEGRADED (scan did not run — gaps not assessed)"
+                if result.degraded
+                else ("SUCCESS" if result.success else "PARTIAL")
+            ),
             "",
             "-" * 60,
             "SCOUT PHASE",

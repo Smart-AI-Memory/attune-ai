@@ -42,9 +42,15 @@ class DocOrchScoutMixin:
     include_missing: bool = True
     max_items: int = 5
     project_root: Path = Path()
+    # True only after a scan (scout or ProjectIndex fallback) actually
+    # ran — zero items with no scan is "not assessed", never "no gaps".
+    _scan_performed: bool = False
 
     async def _run_scout_phase(self) -> tuple[list, float]:
         """Run the scout phase to identify documentation gaps.
+
+        Sets ``self._scan_performed`` so the caller can distinguish an
+        empty result from a scan that never happened.
 
         Returns:
             Tuple of (items found, cost)
@@ -54,12 +60,14 @@ class DocOrchScoutMixin:
 
         items: list[DocumentationItem] = []
         cost = 0.0
+        self._scan_performed = False
 
         if self._scout is None:
             logger.warning("Scout (ManageDocumentationCrew) not available")
             # Fall back to ProjectIndex if available
             if self._project_index is not None:
                 items = self._items_from_index()
+                self._scan_performed = True
             return items, cost
 
         logger.info("Starting scout phase...")
@@ -71,6 +79,7 @@ class DocOrchScoutMixin:
         if not result.success:
             logger.error("Scout phase failed")
             return items, cost
+        self._scan_performed = True
 
         # Parse scout findings into DocumentationItems
         items = self._parse_scout_findings(result)

@@ -298,6 +298,7 @@ class WorkflowHandlersMixin:
         return {
             "success": getattr(result, "phase", "") == "complete",
             "phase": getattr(result, "phase", "unknown"),
+            "degraded": getattr(result, "degraded", False),
             "items_found": getattr(result, "items_found", 0),
             "docs_generated": getattr(result, "docs_generated", []),
             "docs_updated": getattr(result, "docs_updated", []),
@@ -500,6 +501,7 @@ class WorkflowHandlersMixin:
             "success": getattr(result, "success", False),
             "health_score": getattr(result, "overall_health_score", 0),
             "grade": getattr(result, "grade", "unknown"),
+            "degraded": getattr(result, "degraded", False),
             "issues": getattr(result, "issues", []),
             "recommendations": getattr(result, "recommendations", []),
         }

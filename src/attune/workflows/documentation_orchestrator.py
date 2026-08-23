@@ -108,6 +108,9 @@ class OrchestratorResult:
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     summary: str = ""
+    # True when no scan ran (no scout, no ProjectIndex) — gap data was
+    # never collected, so items_found=0 means "not assessed", not "no gaps".
+    degraded: bool = False
 
     def to_dict(self) -> dict:
         """Convert to dictionary for serialization."""
@@ -128,6 +131,7 @@ class OrchestratorResult:
             "errors": self.errors,
             "warnings": self.warnings,
             "summary": self.summary,
+            "degraded": self.degraded,
         }
 
 
@@ -460,8 +464,24 @@ class DocumentationOrchestrator(
         result.phase = "prioritize"
 
         if not items:
+            if not self._scan_performed:
+                # No scout and no ProjectIndex: nothing was scanned, so
+                # zero items is "not assessed" — never "no gaps found".
+                result.degraded = True
+                result.errors = errors + [
+                    "Documentation scan did not run (no scout or "
+                    "ProjectIndex available) — gaps were NOT assessed"
+                ]
+                result.warnings = warning_msgs
+                result.duration_ms = int((datetime.now() - started_at).total_seconds() * 1000)
+                result.total_cost = self._total_cost
+                result.summary = self._generate_summary(result, items)
+                print("\n[!] DEGRADED: documentation scan did not run — gaps were not assessed")
+                return result
             print("\n[✓] No documentation gaps found!")
-            return self._finalize_result(result, started_at, "complete", items)
+            return self._finalize_result(
+                result, started_at, "complete", items, warning_msgs=warning_msgs
+            )
 
         # Phase 2: Prioritize
         print(f"\n[PRIORITIZE] Found {len(items)} items, selecting top {self.max_items}...")
@@ -551,6 +571,7 @@ class DocumentationOrchestrator(
 
         return {
             "success": result.success,
+            "degraded": result.degraded,
             "stats": {
                 "items_found": result.items_found,
                 "stale_docs": result.stale_docs,

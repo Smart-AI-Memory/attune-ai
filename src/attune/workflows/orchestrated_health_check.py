@@ -323,11 +323,16 @@ class OrchestratedHealthCheckWorkflow(BaseWorkflow):
         # Calculate category scores
         category_scores = self._calculate_category_scores(agent_results)
 
-        # Calculate overall health score
+        # A category whose agent produced no measurement is N/A: it is
+        # excluded from the weighted score and the report is DEGRADED.
+        measured_any = any(c.measured for c in category_scores)
+        degraded = any(not c.measured for c in category_scores)
+
+        # Calculate overall health score (measured categories only)
         overall_score = self._calculate_overall_score(category_scores)
 
-        # Assign grade
-        grade = self._assign_grade(overall_score)
+        # Assign grade — a grade needs at least one real measurement
+        grade = self._assign_grade(overall_score) if measured_any else "N/A"
 
         # Collect all issues
         issues: list[str] = []
@@ -350,6 +355,7 @@ class OrchestratedHealthCheckWorkflow(BaseWorkflow):
             mode=self.mode,
             agents_executed=len(agents),
             success=strategy_result.success,
+            degraded=degraded,
         )
 
     def _calculate_category_scores(
