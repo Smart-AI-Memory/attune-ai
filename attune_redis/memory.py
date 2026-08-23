@@ -20,6 +20,7 @@ import hashlib
 import logging
 import re
 import threading
+import time
 from typing import Any
 
 from .config import RedisPluginConfig
@@ -30,6 +31,14 @@ logger = logging.getLogger(__name__)
 #: ``attune.memory.session_stash.DEFAULT_TTL_DAYS`` — kept as a local
 #: constant to avoid a cross-package import into attune-redis.
 _DEFAULT_TTL_DAYS = 30
+
+#: Readback retries after a long-term write (sleep between; each try is
+#: bounded by the client request timeout, not by this constant).
+_READBACK_ATTEMPTS = 3
+_READBACK_DELAY_S = 0.15
+#: Per-attempt ceiling on the readback request; worst case for the whole
+#: readback is ATTEMPTS × TIMEOUT + (ATTEMPTS - 1) × DELAY ≈ 6.3 s.
+_READBACK_TIMEOUT_S = 2.0
 
 #: AMS hard-caps ``search_long_term_memory``'s ``limit`` at 100 — passing a
 #: larger value is a request-validation error that returns nothing, not a
@@ -455,11 +464,53 @@ class AMSMemoryBackend:
                     deduplicate=False,
                 )
             )
-            return True
+            # The receipt beats the promise: AMS acknowledges the create
+            # with 200 BEFORE the Redis write lands (verified 2026-08-23 —
+            # 2,437 acks and zero persisted records while its Redis auth
+            # was dead). Only a readback of the id we just wrote proves
+            # persistence. Runs inside this guard so an unexpected client
+            # or deserialisation error degrades to False like any other.
+            confirmed = self._readback(record_id)
         except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Graceful degradation for AMS HTTP errors
             logger.error("remember_failed: id=%s error=%s", record_id, e)
             return False
+        if confirmed:
+            return True
+        logger.error("remember_unconfirmed: id=%s acknowledged but not readable", record_id)
+        return False
+
+    def _readback(self, record_id: str) -> bool:
+        """Return True once ``record_id`` is readable from AMS.
+
+        AMS indexes long-term memories on a background task, so the first
+        read can race the write; a few short retries cover that lag. Each
+        attempt is capped at ``_READBACK_TIMEOUT_S`` (the client's own
+        30 s default would let a stalled AMS hold a Stop hook past its
+        runner's limit), so the whole readback is bounded at ~6.3 s.
+        """
+        import httpx
+        from agent_memory_client.exceptions import MemoryClientError
+
+        for attempt in range(_READBACK_ATTEMPTS):
+            try:
+                # Bounded per attempt: the client's own timeout is 30 s, and
+                # three of those would hold a Stop hook past its runner's
+                # limit — losing the very stash the readback exists to keep.
+                _run_sync(
+                    asyncio.wait_for(
+                        self._client.get_long_term_memory(record_id),
+                        timeout=_READBACK_TIMEOUT_S,
+                    )
+                )
+                return True
+            except (MemoryClientError, httpx.HTTPError, OSError, asyncio.TimeoutError) as exc:
+                # Not-yet-indexed (404) and hard failures look the same from
+                # here; the retry budget separates them.
+                logger.debug("readback_miss: id=%s attempt=%d %s", record_id, attempt + 1, exc)
+                if attempt + 1 < _READBACK_ATTEMPTS:
+                    time.sleep(_READBACK_DELAY_S)
+        return False
 
     def search(
         self,
