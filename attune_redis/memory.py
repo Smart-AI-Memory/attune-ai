@@ -36,6 +36,9 @@ _DEFAULT_TTL_DAYS = 30
 #: bounded by the client request timeout, not by this constant).
 _READBACK_ATTEMPTS = 3
 _READBACK_DELAY_S = 0.15
+#: Per-attempt ceiling on the readback request; worst case for the whole
+#: readback is ATTEMPTS × TIMEOUT + (ATTEMPTS - 1) × DELAY ≈ 6.3 s.
+_READBACK_TIMEOUT_S = 2.0
 
 #: AMS hard-caps ``search_long_term_memory``'s ``limit`` at 100 — passing a
 #: larger value is a request-validation error that returns nothing, not a
@@ -481,21 +484,27 @@ class AMSMemoryBackend:
         """Return True once ``record_id`` is readable from AMS.
 
         AMS indexes long-term memories on a background task, so the first
-        read can race the write; a few short retries cover that lag. The
-        bound is NOT 0.45 s: each attempt is a request governed by the
-        client's timeout (30 s default), so a stalled AMS can hold the
-        Stop hook for up to three timeouts plus the sleeps. The hook's
-        caller already treats the write as best-effort; a tighter
-        client timeout is the lever if that ever bites.
+        read can race the write; a few short retries cover that lag. Each
+        attempt is capped at ``_READBACK_TIMEOUT_S`` (the client's own
+        30 s default would let a stalled AMS hold a Stop hook past its
+        runner's limit), so the whole readback is bounded at ~6.3 s.
         """
         import httpx
         from agent_memory_client.exceptions import MemoryClientError
 
         for attempt in range(_READBACK_ATTEMPTS):
             try:
-                _run_sync(self._client.get_long_term_memory(record_id))
+                # Bounded per attempt: the client's own timeout is 30 s, and
+                # three of those would hold a Stop hook past its runner's
+                # limit — losing the very stash the readback exists to keep.
+                _run_sync(
+                    asyncio.wait_for(
+                        self._client.get_long_term_memory(record_id),
+                        timeout=_READBACK_TIMEOUT_S,
+                    )
+                )
                 return True
-            except (MemoryClientError, httpx.HTTPError, OSError) as exc:
+            except (MemoryClientError, httpx.HTTPError, OSError, asyncio.TimeoutError) as exc:
                 # Not-yet-indexed (404) and hard failures look the same from
                 # here; the retry budget separates them.
                 logger.debug("readback_miss: id=%s attempt=%d %s", record_id, attempt + 1, exc)
