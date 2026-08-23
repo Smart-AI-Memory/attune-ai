@@ -47,6 +47,7 @@ from .bug_predict_patterns import (
     _should_exclude_file,  # noqa: F401 — re-exported
 )
 from .data_classes import WorkflowResult
+from .output_schemas import WORKFLOW_OUTPUT_SCHEMA
 from .step_config import WorkflowStepConfig
 from .validation import InputSchema
 
@@ -96,7 +97,9 @@ predicted bug hotspots.
 
 ## Bugs
 Predicted bugs organized by severity (HIGH, MEDIUM, LOW). Each entry \
-should include file path, line number, pattern type, and description.
+should include file path, line number, pattern type, and description. \
+In the structured output, key the findings as ``bugs`` and put the \
+severity on each entry's ``severity`` field.
 
 ## Suggestions
 Actionable prevention strategies ordered by priority. Include specific \
@@ -264,6 +267,13 @@ class BugPredictionWorkflow(BaseWorkflow):
                     allowed_tools=["Read", "Glob", "Grep", "Agent"],
                     permission_mode="default",
                     max_turns=max_turns,
+                    # Structured output, same as code-review and
+                    # security-audit. Without it the adapter falls back
+                    # to parsing ``## Bugs`` bullets out of markdown, and
+                    # the severity sub-headers this prompt asks for
+                    # (``### HIGH``) produced scored reports with ZERO
+                    # sections for 6/6 recorded runs (2026-08-22).
+                    output_format=WORKFLOW_OUTPUT_SCHEMA,
                     agents={
                         "pattern-scanner": claude_agent_sdk.AgentDefinition(
                             description=("Pattern scanner that finds common " "bug patterns."),
