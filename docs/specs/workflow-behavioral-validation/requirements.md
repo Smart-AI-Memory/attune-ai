@@ -1,9 +1,10 @@
 # Spec: Workflow Behavioral Validation
 
-**Status**: draft (2026-08-23) — awaiting chair review. The
-Principle 5 carve (§ Public-API / governance impact) is
-governance-affecting and needs an explicit chair ruling before
-any gate/config change lands.
+**Status**: approved (2026-08-23) — chair approved the two-track
+direction and the Principle 5 carve DIRECTION (see `decisions.md`
+D1–D5; Phase 2 design in `design.md`). The carve's mechanical
+contract-text + enforcer edits remain gated to a separate reviewed
+execution PR — no gate/config change lands ahead of that.
 **Created**: 2026-08-23
 **Origin**: The workflow fleet-health roundtable
 (`q-workflow-fleet-health-001`, chair-promoted into
