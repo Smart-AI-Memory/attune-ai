@@ -14,6 +14,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from attune.workflows.data_classes import CostReport, WorkflowResult
 from attune.workflows.secure_release import (
     SecureReleasePipeline,
     SecureReleaseResult,
@@ -243,11 +244,9 @@ class TestSecureReleaseExecution:
     """Test execute flow with mocked sub-workflows."""
 
     @staticmethod
-    def _make_mock_result(final_output: dict) -> MagicMock:
-        """Create a mock WorkflowResult with given final_output."""
+    def _make_mock_result(final_output: dict) -> WorkflowResult:
+        """Create a WorkflowResult for a successful sub-workflow."""
         from datetime import datetime
-
-        from attune.workflows.data_classes import CostReport, WorkflowResult
 
         mock_cost = CostReport(
             total_cost=0.01,
@@ -314,6 +313,162 @@ class TestSecureReleaseExecution:
         assert isinstance(result, SecureReleaseResult)
         assert result.go_no_go == "NO_GO"
         assert any("failed" in b.lower() for b in result.blockers)
+
+    @staticmethod
+    def _make_failed_result(error: str) -> WorkflowResult:
+        """Create a WorkflowResult for a sub-workflow that errored.
+
+        Mirrors the SDK-subprocess failure shape: success=False, no
+        final_output, error set — returned, not raised.
+        """
+        from datetime import datetime
+
+        return WorkflowResult(
+            success=False,
+            stages=[],
+            final_output=None,
+            cost_report=CostReport(
+                total_cost=0.0,
+                baseline_cost=0.0,
+                savings=0.0,
+                savings_percent=0.0,
+            ),
+            started_at=datetime.now(),
+            completed_at=datetime.now(),
+            total_duration_ms=100,
+            error=error,
+            error_type="runtime",
+        )
+
+    @pytest.mark.asyncio
+    async def test_all_gatekeepers_failed_is_no_go(self) -> None:
+        """Regression (roundtable q-workflow-fleet-health-001, Sev1):
+        both sub-workflows fail with an SDK subprocess error → zero
+        findings because nothing ran. Zero findings with zero execution
+        must NOT be a GO — a failed gatekeeper fails the gate.
+        """
+        from unittest.mock import AsyncMock, patch
+
+        wf = SecureReleasePipeline(mode="standard")
+
+        mock_sec_wf = MagicMock()
+        mock_sec_wf.execute = AsyncMock(
+            return_value=self._make_failed_result("SDK subprocess error"),
+        )
+        mock_rel_wf = MagicMock()
+        mock_rel_wf.execute = AsyncMock(
+            return_value=self._make_failed_result("SDK subprocess error"),
+        )
+
+        with (
+            patch(
+                "attune.workflows.security_audit.SecurityAuditWorkflow",
+                return_value=mock_sec_wf,
+            ),
+            patch(
+                "attune.workflows.release_prep.ReleasePreparationWorkflow",
+                return_value=mock_rel_wf,
+            ),
+        ):
+            result = await wf.execute(path=".")
+
+        assert result.go_no_go == "NO_GO"
+        assert result.success is False
+        assert result.total_findings == 0  # nothing ran — and that is why it's NO_GO
+        gatekeeper_blockers = [
+            b for b in result.blockers if b.startswith("GATEKEEPER_EXECUTION_FAILED")
+        ]
+        assert any("security_audit" in b for b in gatekeeper_blockers)
+        assert any("release_prep" in b for b in gatekeeper_blockers)
+        assert not any("ready for release" in r.lower() for r in result.recommendations)
+
+    @pytest.mark.asyncio
+    async def test_one_failed_gatekeeper_is_no_go(self) -> None:
+        """A single failed gatekeeper (release_prep) forces NO_GO even
+        when the security audit ran to completion — and remediation
+        advice derived from the gatekeeper that DID run survives
+        (cross-review finding, PR #2208 D11 lane).
+        """
+        from unittest.mock import AsyncMock, patch
+
+        wf = SecureReleasePipeline(mode="standard")
+
+        sec_result = self._make_mock_result(
+            {"assessment": {"risk_score": 55, "risk_level": "high"}},
+        )
+
+        mock_sec_wf = MagicMock()
+        mock_sec_wf.execute = AsyncMock(return_value=sec_result)
+        mock_rel_wf = MagicMock()
+        mock_rel_wf.execute = AsyncMock(
+            return_value=self._make_failed_result("SDK subprocess error"),
+        )
+
+        with (
+            patch(
+                "attune.workflows.security_audit.SecurityAuditWorkflow",
+                return_value=mock_sec_wf,
+            ),
+            patch(
+                "attune.workflows.release_prep.ReleasePreparationWorkflow",
+                return_value=mock_rel_wf,
+            ),
+        ):
+            result = await wf.execute(path=".")
+
+        assert result.go_no_go == "NO_GO"
+        assert result.success is False
+        assert any(
+            b.startswith("GATEKEEPER_EXECUTION_FAILED") and "release_prep" in b
+            for b in result.blockers
+        )
+        # Advice derived from the completed security audit survives the
+        # sentinel; only the "ready for release" fiction is dropped.
+        assert any("warnings" in r.lower() for r in result.recommendations)
+        assert not any("ready for release" in r.lower() for r in result.recommendations)
+
+    @pytest.mark.asyncio
+    async def test_failed_code_review_with_diff_is_no_go(self) -> None:
+        """When a diff is supplied, code review is a gatekeeper too —
+        its execution failure forces NO_GO.
+        """
+        from unittest.mock import AsyncMock, patch
+
+        wf = SecureReleasePipeline(mode="standard")
+
+        sec_result = self._make_mock_result({"assessment": {"risk_score": 5, "risk_level": "low"}})
+        rel_result = self._make_mock_result({"approved": True, "confidence": "high"})
+
+        mock_sec_wf = MagicMock()
+        mock_sec_wf.execute = AsyncMock(return_value=sec_result)
+        mock_rel_wf = MagicMock()
+        mock_rel_wf.execute = AsyncMock(return_value=rel_result)
+        mock_cr_wf = MagicMock()
+        mock_cr_wf.execute = AsyncMock(
+            return_value=self._make_failed_result("SDK subprocess error"),
+        )
+
+        with (
+            patch(
+                "attune.workflows.security_audit.SecurityAuditWorkflow",
+                return_value=mock_sec_wf,
+            ),
+            patch(
+                "attune.workflows.release_prep.ReleasePreparationWorkflow",
+                return_value=mock_rel_wf,
+            ),
+            patch(
+                "attune.workflows.code_review.CodeReviewWorkflow",
+                return_value=mock_cr_wf,
+            ),
+        ):
+            result = await wf.execute(path=".", diff="--- a/x.py\n+++ b/x.py\n")
+
+        assert result.go_no_go == "NO_GO"
+        assert any(
+            b.startswith("GATEKEEPER_EXECUTION_FAILED") and "code_review" in b
+            for b in result.blockers
+        )
 
     @pytest.mark.asyncio
     async def test_result_contains_mode(self) -> None:
