@@ -24,6 +24,15 @@ from attune.gates.spend_gate import (
 )
 from attune.models.auth_strategy import AuthMode, AuthStrategy, SubscriptionTier
 
+
+@pytest.fixture(autouse=True)
+def _no_ambient_api_key(monkeypatch):
+    """Meter resolution reads the RUNTIME key first (2026-08-23); these
+    tests exercise the preference path, so a developer's ambient key must
+    not leak in — keyless CI sets the var to "" and so do we."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "")
+
+
 # Pinned clock — deterministic window math.
 NOW = 1_700_000_000.0
 
