@@ -1,0 +1,17 @@
+{
+  "workflow": "health-check",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "fail-closed-gate",
+  "verdict": "pass",
+  "cost_usd": 0.0,
+  "duration_s": 2.5,
+  "ran_at": "2026-08-23T23:51:22Z",
+  "runner_version": "0.3.0",
+  "git_sha": "0836ddfac",
+  "evidence": {
+    "degraded": true,
+    "grade": "A",
+    "score": null,
+    "reason": "honest incomplete-data verdict (degraded=True, grade=A)"
+  }
+}

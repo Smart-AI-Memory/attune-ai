@@ -1,0 +1,17 @@
+{
+  "workflow": "doc-orchestrator",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "fail-closed-gate",
+  "verdict": "fail",
+  "cost_usd": 0.0,
+  "duration_s": 4.4,
+  "ran_at": "2026-08-23T23:51:22Z",
+  "runner_version": "0.3.0",
+  "git_sha": "0836ddfac",
+  "evidence": {
+    "degraded": false,
+    "items_found": 0,
+    "reason": "claimed a real scan found no gaps on a fixture with a planted doc gap",
+    "defect_issue": "#2220 \u2014 empty ProjectIndex read counts as a performed scan"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "workflow": "release-prep",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "fail-closed-gate",
+  "verdict": "fail",
+  "cost_usd": 0.0,
+  "duration_s": 1.9,
+  "ran_at": "2026-08-23T23:51:22Z",
+  "runner_version": "0.3.0",
+  "git_sha": "0836ddfac",
+  "evidence": {
+    "gate_success": true,
+    "reason": "PASSED release gates on a fixture with no tests (fabrication)",
+    "defect_issue": "#2221 \u2014 gates PASS a planted failing test"
+  }
+}

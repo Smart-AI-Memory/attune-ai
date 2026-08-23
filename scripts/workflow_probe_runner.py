@@ -82,6 +82,12 @@ _EST_COST_USD: dict[str, float] = {
     "simplify-code": 1.2,
     "test-audit": 0.9,
     "doc-audit": 2.9,
+    # Gate group (D5 batch 2) — secure-release bills its sub-audit;
+    # the others were $0-class in the fleet probe / rule-based.
+    "secure-release": 1.5,
+    "health-check": 0.3,
+    "doc-orchestrator": 0.3,
+    "release-prep": 0.0,
 }
 
 PROBE_ORDER = [
@@ -97,6 +103,10 @@ PROBE_ORDER = [
     "simplify-code",
     "test-audit",
     "doc-audit",
+    "secure-release",
+    "health-check",
+    "doc-orchestrator",
+    "release-prep",
 ]
 
 
@@ -765,6 +775,171 @@ def _make_analytical_probe(name: str) -> Callable[[float], Any]:
     return lambda budget: _probe_analytical(name, budget)
 
 
+# --------------------------------------------------------------------------
+# Gate-group probes (Phase 3, D5 batch 2) — assert the FAIL-CLOSED /
+# DEGRADED behavior #2207-#2209 added. These workflows return their own
+# result objects (not WorkflowResult), so each probe reads the merged
+# result surface directly and the receipt is the honest verdict, never
+# a score. All calls go through _run_gate_workflow so unit tests can
+# stub the workflow without an LLM.
+# --------------------------------------------------------------------------
+
+
+async def _run_gate_workflow(name: str, **kwargs: Any) -> Any:
+    from attune.workflows import get_workflow
+
+    return await get_workflow(name)().execute(**kwargs)
+
+
+async def probe_secure_release(budget: float) -> ProbeResult:
+    """A planted-critical fixture must NOT get a GO (P7, #2208)."""
+    import time
+
+    _budget_env(budget)
+    with tempfile.TemporaryDirectory() as tmp:
+        work = Path(tmp)
+        shutil.copy(
+            FIXTURES / "security" / "vulnerable_service.py",
+            work / "vulnerable_service.py",
+        )
+        t0 = time.monotonic()
+        result = await _run_gate_workflow("secure-release", path=str(work))
+        dur = time.monotonic() - t0
+
+    go_no_go = getattr(result, "go_no_go", "?")
+    passed = go_no_go != "GO"
+    reason = (
+        f"fail-closed: planted-critical fixture yielded {go_no_go}"
+        if passed
+        else "returned GO on a planted-critical fixture (fail-open)"
+    )
+    return ProbeResult(
+        name="secure-release",
+        passed=passed,
+        reason=reason,
+        cost_usd=float(getattr(result, "total_cost", 0.0) or 0.0),
+        duration_s=dur,
+        evidence={
+            "go_no_go": go_no_go,
+            "critical_count": getattr(result, "critical_count", None),
+            "high_count": getattr(result, "high_count", None),
+            "blockers": len(getattr(result, "blockers", []) or []),
+        },
+    )
+
+
+async def probe_health_check(budget: float) -> ProbeResult:
+    """A bare, unmeasurable dir must surface DEGRADED/N-A — never a
+    fabricated perfect grade (#2209)."""
+    import time
+
+    _budget_env(budget)
+    with tempfile.TemporaryDirectory() as tmp:
+        work = Path(tmp)
+        shutil.copy(FIXTURES / "testgen" / "orders.py", work / "orders.py")
+        t0 = time.monotonic()
+        result = await _run_gate_workflow("health-check", path=str(work))
+        dur = time.monotonic() - t0
+
+    degraded = bool(getattr(result, "degraded", False))
+    grade = str(getattr(result, "grade", "?"))
+    passed = degraded or grade == "N/A"
+    reason = (
+        f"honest incomplete-data verdict (degraded={degraded}, grade={grade})"
+        if passed
+        else f"fabricated a complete verdict (grade={grade}, degraded=False) on an unmeasurable dir"
+    )
+    report = result.to_dict() if hasattr(result, "to_dict") else {}
+    return ProbeResult(
+        name="health-check",
+        passed=passed,
+        reason=reason,
+        cost_usd=float(report.get("total_cost", 0.0) or 0.0),
+        duration_s=dur,
+        evidence={"degraded": degraded, "grade": grade, "score": report.get("score")},
+    )
+
+
+async def probe_doc_orchestrator(budget: float) -> ProbeResult:
+    """No fabricated 'no gaps': either the scan is honestly DEGRADED,
+    or it ran and found the planted doc gap (#2209)."""
+    import time
+
+    _budget_env(budget)
+    with tempfile.TemporaryDirectory() as tmp:
+        work = Path(tmp)
+        shutil.copy(
+            FIXTURES / "analytical" / "sample_service.py",
+            work / "sample_service.py",
+        )
+        # An unambiguous, coarse-granularity doc gap: NO module
+        # docstring at all (index-based scans may not see per-function
+        # gaps; a bare module is a gap at every granularity).
+        (work / "undocumented_util.py").write_text(
+            "def helper(x):\n    return x * 2\n\n\n" "def other_helper(y):\n    return y - 1\n",
+            encoding="utf-8",
+        )
+        t0 = time.monotonic()
+        result = await _run_gate_workflow("doc-orchestrator", path=str(work))
+        dur = time.monotonic() - t0
+
+    degraded = bool(getattr(result, "degraded", False))
+    items_found = int(getattr(result, "items_found", 0) or 0)
+    passed = degraded or items_found > 0
+    reason = (
+        f"honest scan (degraded={degraded}, items_found={items_found})"
+        if passed
+        else "claimed a real scan found no gaps on a fixture with a planted doc gap"
+    )
+    return ProbeResult(
+        name="doc-orchestrator",
+        passed=passed,
+        reason=reason,
+        cost_usd=float(getattr(result, "total_cost", 0.0) or 0.0),
+        duration_s=dur,
+        evidence={"degraded": degraded, "items_found": items_found},
+    )
+
+
+async def probe_release_prep(budget: float) -> ProbeResult:
+    """The deterministic gate must FAIL an untested fixture — a PASS on
+    a dir with no tests is fabrication ($0, rule-based)."""
+    import time
+
+    _budget_env(budget)
+    with tempfile.TemporaryDirectory() as tmp:
+        work = Path(tmp)
+        _stage(work)
+        # A test that FAILS: any release gate that actually runs the
+        # suite must FAIL this fixture — a PASS is proof the gate never
+        # engaged the planted failure (absence-as-pass, P7).
+        (work / "test_planted_failure.py").write_text(
+            '"""Planted failing test for the release-prep gate probe."""\n\n\n'
+            "def test_planted_failure():\n"
+            "    assert False, 'planted: the release gate must see this failure'\n",
+            encoding="utf-8",
+        )
+        t0 = time.monotonic()
+        result = await _run_gate_workflow("release-prep", path=str(work))
+        dur = time.monotonic() - t0
+
+    success = bool(getattr(result, "success", True))
+    passed = not success
+    reason = (
+        "honest FAIL verdict on an untested fixture"
+        if passed
+        else "PASSED release gates on a fixture with no tests (fabrication)"
+    )
+    return ProbeResult(
+        name="release-prep",
+        passed=passed,
+        reason=reason,
+        cost_usd=_cost_of(result),
+        duration_s=dur,
+        evidence={"gate_success": success},
+    )
+
+
 PROBES: dict[str, Callable[[float], Any]] = {
     "security-audit": probe_security_audit,
     "dependency-check": probe_dependency_check,
@@ -772,6 +947,10 @@ PROBES: dict[str, Callable[[float], Any]] = {
     "discovery-sweep": probe_discovery_sweep,
     "release-notes": probe_release_notes,
     **{name: _make_analytical_probe(name) for name in _ANALYTICAL},
+    "secure-release": probe_secure_release,
+    "health-check": probe_health_check,
+    "doc-orchestrator": probe_doc_orchestrator,
+    "release-prep": probe_release_prep,
 }
 
 
@@ -808,6 +987,10 @@ _RECEIPT_TYPES: dict[str, str] = {
     "discovery-sweep": "lane-accounting",
     "release-notes": "metric-crosscheck",
     **dict.fromkeys(_ANALYTICAL, "named-defect"),
+    "secure-release": "fail-closed-gate",
+    "health-check": "fail-closed-gate",
+    "doc-orchestrator": "fail-closed-gate",
+    "release-prep": "fail-closed-gate",
 }
 
 
