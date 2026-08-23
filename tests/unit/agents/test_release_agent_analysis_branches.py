@@ -77,13 +77,16 @@ class TestSecurityLlmEnhancement:
         monkeypatch.setattr(
             agent,
             "_call_llm",
-            lambda *a, **k: ('{"critical_issues": 2, "confidence": 0.8}', {}),
+            lambda *a, **k: ('{"critical_issues": 2, "confidence": 0.8, "notes": "x"}', {}),
         )
         _, findings = agent._execute_tier(".", Tier.CHEAP)
         # Non-gate fields merge; a stricter LLM count ratchets the bandit
-        # value upward (fail-closed) — it can never lower it.
-        assert findings["confidence"] == 0.8
+        # value upward (fail-closed) — it can never lower it. confidence
+        # and score are parser-owned: score tracks the ratcheted count.
+        assert findings["notes"] == "x"
+        assert findings["confidence"] == 0.9
         assert findings["critical_issues"] == 2
+        assert findings["score"] == 40.0
         assert findings["mode"] == "llm"
         assert findings["tier"] == "cheap"
 

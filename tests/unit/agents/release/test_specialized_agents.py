@@ -838,8 +838,10 @@ class TestSecurityAuditorAgent:
         assert findings["critical_issues"] == 1
         assert findings["high_issues"] == 1
         assert findings["total_findings"] == 1
-        # Non-gate fields are still LLM-enhanced.
-        assert findings["confidence"] == 0.95
+        # score/confidence are parser-owned display fields: the LLM's
+        # 100 / 0.95 must not mask a HIGH finding (bug-predict #2).
+        assert findings["score"] == 85.0
+        assert findings["confidence"] == 0.9
 
     def test_execute_tier_stricter_llm_count_can_fail_the_gate(self):
         """Fail-closed ratchet: an LLM count higher than bandit's raises
@@ -865,3 +867,86 @@ class TestSecurityAuditorAgent:
 
         assert success is False
         assert findings["critical_issues"] == 2
+
+    def _run_llm_tier(self, bandit_results, llm_payload):
+        """Run _execute_tier with a stubbed bandit run and LLM response."""
+        from attune.agents.release.release_models import Tier
+
+        agent = self._make_agent()
+        agent.llm_client = object()
+        calls: list[tuple[str, str]] = []
+
+        def fake_call(prompt, system_prompt, tier):
+            calls.append((prompt, system_prompt))
+            return json.dumps(llm_payload), {}
+
+        with (
+            patch("attune.agents.release.security_agent.LLM_MODE", "real"),
+            patch(
+                "attune.agents.release.security_agent._run_command",
+                return_value=(
+                    1 if bandit_results else 0,
+                    json.dumps({"results": bandit_results}),
+                    "",
+                ),
+            ),
+            patch.object(agent, "_call_llm", side_effect=fake_call),
+        ):
+            success, findings = agent._execute_tier(".", Tier.CHEAP)
+        return success, findings, calls
+
+    def test_llm_separate_counts_normalize_to_bandit_gate_count(self):
+        """bug-predict #1: bandit's critical_issues is CRITICAL+HIGH; the
+        LLM reports them separately. {critical:1, high:1} vs bandit
+        critical_issues=2 is the SAME quantity — no double count to 3 or 4.
+        """
+        results = [
+            {"issue_severity": "CRITICAL", "issue_text": "a", "filename": "a.py"},
+            {"issue_severity": "HIGH", "issue_text": "b", "filename": "b.py"},
+        ]
+        _, findings, _ = self._run_llm_tier(results, {"critical_issues": 1, "high_issues": 1})
+        assert findings["critical_issues"] == 2
+        assert findings["high_issues"] == 1
+
+    def test_llm_stricter_separate_counts_still_ratchet_up(self):
+        """A stricter LLM (2 critical + 1 high) raises the gate count to 3."""
+        results = [{"issue_severity": "HIGH", "issue_text": "b", "filename": "b.py"}]
+        success, findings, _ = self._run_llm_tier(results, {"critical_issues": 2, "high_issues": 1})
+        assert success is False
+        assert findings["critical_issues"] == 3
+        assert findings["high_issues"] == 1
+        # score recomputed from post-ratchet counts: 2 critical + 1 high.
+        assert findings["score"] == 100.0 - 2 * 30 - 15
+
+    def test_llm_cannot_raise_score_over_a_high_finding(self):
+        """bug-predict #2: LLM {score: 100} against a HIGH finding leaves
+        the parser's 85 in place; confidence stays parser-owned too.
+        """
+        results = [{"issue_severity": "HIGH", "issue_text": "b", "filename": "b.py"}]
+        _, findings, _ = self._run_llm_tier(results, {"score": 100, "confidence": 1.0})
+        assert findings["score"] == 85.0
+        assert findings["confidence"] == 0.9
+
+    def test_llm_prompt_carries_parsed_summary_not_truncated_json(self):
+        """bug-predict #3: the LLM sees the parsed counts + top findings,
+        never a byte-sliced raw bandit document.
+        """
+        results = [
+            {
+                "issue_severity": "HIGH",
+                "issue_text": "x" * 4000,
+                "filename": "big.py",
+                "line_number": 7,
+                "more_context": "bandit-only field that must not leak",
+            }
+        ]
+        _, _, calls = self._run_llm_tier(results, {})
+        ((prompt, system_prompt),) = calls
+        body = prompt.split("\n", 1)[1]
+        summary = json.loads(body)  # parses whole — nothing truncated
+        assert summary["critical_issues"] == 1
+        assert summary["high_issues"] == 1
+        assert summary["total_findings"] == 1
+        assert summary["top_findings"][0]["file"] == "big.py"
+        assert "more_context" not in body
+        assert "separately" in system_prompt

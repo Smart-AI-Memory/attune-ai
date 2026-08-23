@@ -3,6 +3,24 @@
 Runs bandit on the codebase and classifies vulnerabilities by severity.
 Supports LLM-enhanced classification when an API key is available.
 
+Count semantics (pinned by tests, found by bug-predict dogfood 2026-08-23,
+round table q-bug-predict-health-001):
+
+- ``critical_issues`` is the GATE count and deliberately sums bandit's
+  CRITICAL and HIGH severities — the release gate (``max_critical_issues:
+  0``) must block on HIGH findings too. ``high_issues`` is the plain HIGH
+  count, so ``critical_issues - high_issues`` recovers pure CRITICAL.
+- The LLM reports ``critical_issues`` and ``high_issues`` SEPARATELY (the
+  natural reading of the names). Before the fail-closed ratchet compares
+  the two, the LLM's gate count is normalized to ``critical + high`` so
+  the same quantity is compared on both sides — never double-counted,
+  never under-counted.
+- ``score`` and ``confidence`` are parser-owned display fields: ``score``
+  is recomputed from the post-ratchet counts with the one formula in
+  ``_score``; the LLM may not overwrite either.
+- The LLM receives the PARSED summary (severity counts + top findings),
+  never a byte-sliced raw bandit document.
+
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
 """
@@ -35,7 +53,27 @@ _SEVERITY_COUNT_KEYS = (
     "medium_issues",
     "low_issues",
 )
-_BANDIT_AUTHORITATIVE_KEYS = frozenset(_SEVERITY_COUNT_KEYS) | {"total_findings"}
+_BANDIT_AUTHORITATIVE_KEYS = frozenset(_SEVERITY_COUNT_KEYS) | {
+    "total_findings",
+    "score",
+    "confidence",
+}
+
+# What the LLM is shown: the parsed summary, not raw bandit bytes.
+_LLM_SUMMARY_KEYS = (*_SEVERITY_COUNT_KEYS, "total_findings", "top_findings", "note")
+
+
+def _score(critical: int, high: int, medium: int, low: int) -> float:
+    """Score 100 with no findings, decreasing by severity weight."""
+    return max(0.0, 100.0 - critical * 30 - high * 15 - medium * 5 - low * 1)
+
+
+def _llm_count(llm_findings: dict[str, Any], key: str) -> int | None:
+    """Return the LLM's integer count for ``key``, or None if absent/bogus."""
+    value = llm_findings.get(key)
+    if isinstance(value, int) and not isinstance(value, bool):
+        return value
+    return None
 
 
 class SecurityAuditorAgent(ReleaseAgent):
@@ -49,9 +87,11 @@ class SecurityAuditorAgent(ReleaseAgent):
         "You are a security auditor. Analyze the bandit scan results and "
         "classify vulnerabilities. Respond in JSON:\n"
         '{"critical_issues": N, "high_issues": N, "medium_issues": N, '
-        '"low_issues": N, "score": 0-100, "confidence": 0.0-1.0, '
+        '"low_issues": N, '
         '"top_findings": [{"file": "...", "issue": "...", '
-        '"severity": "..."}]}'
+        '"severity": "..."}]}\n'
+        "Report each severity separately: critical_issues counts only "
+        "CRITICAL findings and high_issues counts only HIGH findings."
     )
 
     def __init__(
@@ -98,9 +138,14 @@ class SecurityAuditorAgent(ReleaseAgent):
             # Parse bandit JSON output
             findings = self._parse_bandit_output(stdout, returncode)
 
-            # If LLM available, enhance with classification
+            # If LLM available, enhance with classification. The LLM sees
+            # the PARSED summary — slicing raw bandit JSON by byte count
+            # handed it a document truncated mid-object.
             if self.llm_client and LLM_MODE == "real":
-                prompt = f"Analyze these bandit results:\n{stdout[:3000]}"
+                prompt = "Analyze these bandit results:\n" + json.dumps(
+                    {k: findings[k] for k in _LLM_SUMMARY_KEYS if k in findings},
+                    indent=2,
+                )
                 response_text, _meta = self._call_llm(prompt, self.SYSTEM_PROMPT, tier)
                 if response_text:
                     llm_findings = _parse_response(response_text)
@@ -112,22 +157,7 @@ class SecurityAuditorAgent(ReleaseAgent):
                                 if k not in _BANDIT_AUTHORITATIVE_KEYS
                             }
                         )
-                        # Fail-closed ratchet: a stricter LLM severity
-                        # count may raise the bandit value, never lower it
-                        # — and never REPLACE the -1 did-not-run sentinel:
-                        # 0 > -1, so without the guard an LLM reporting
-                        # "no issues" turned an unreadable bandit run back
-                        # into a clean gate (found by bug-predict dogfood,
-                        # round table q-bug-predict-health-001).
-                        for key in _SEVERITY_COUNT_KEYS:
-                            llm_count = llm_findings.get(key)
-                            if (
-                                isinstance(llm_count, int)
-                                and not isinstance(llm_count, bool)
-                                and findings[key] >= 0
-                                and llm_count > findings[key]
-                            ):
-                                findings[key] = llm_count
+                        self._ratchet_counts(findings, llm_findings)
 
             findings["mode"] = "llm" if self.llm_client else "rule_based"
             findings["tier"] = tier.value
@@ -139,6 +169,32 @@ class SecurityAuditorAgent(ReleaseAgent):
         except Exception as e:  # noqa: BLE001
             logger.error(f"Security audit failed: {e}")
             return False, {"error": str(e), "critical_issues": -1}
+
+    @staticmethod
+    def _ratchet_counts(findings: dict[str, Any], llm_findings: dict[str, Any]) -> None:
+        """Fail-closed ratchet: a stricter LLM severity count may raise the
+        bandit value, never lower it — and never REPLACE the -1 did-not-run
+        sentinel: 0 > -1, so without the guard an LLM reporting "no issues"
+        turned an unreadable bandit run back into a clean gate.
+
+        The LLM reports critical and high separately while bandit's
+        ``critical_issues`` is CRITICAL+HIGH (module docstring), so the
+        LLM's gate count is normalized to the same sum before comparing.
+        ``score`` is recomputed from the post-ratchet counts.
+        """
+        llm_counts = {key: _llm_count(llm_findings, key) for key in _SEVERITY_COUNT_KEYS}
+        if llm_counts["critical_issues"] is not None:
+            llm_counts["critical_issues"] += llm_counts["high_issues"] or 0
+        for key, llm_count in llm_counts.items():
+            if llm_count is not None and findings[key] >= 0 and llm_count > findings[key]:
+                findings[key] = llm_count
+        if findings["critical_issues"] >= 0:
+            findings["score"] = _score(
+                findings["critical_issues"] - findings["high_issues"],
+                findings["high_issues"],
+                findings["medium_issues"],
+                findings["low_issues"],
+            )
 
     def _parse_bandit_output(self, stdout: str, returncode: int) -> dict[str, Any]:
         """Parse bandit JSON output into structured findings.
@@ -199,15 +255,7 @@ class SecurityAuditorAgent(ReleaseAgent):
                 severity_counts[sev] += 1
 
         total = sum(severity_counts.values())
-        # Score: 100 if no issues, decreasing with severity
-        score = max(
-            0.0,
-            100.0
-            - severity_counts["CRITICAL"] * 30
-            - severity_counts["HIGH"] * 15
-            - severity_counts["MEDIUM"] * 5
-            - severity_counts["LOW"] * 1,
-        )
+        score = _score(*(severity_counts[k] for k in ("CRITICAL", "HIGH", "MEDIUM", "LOW")))
 
         top_findings = []
         for r in results[:5]:
@@ -224,7 +272,8 @@ class SecurityAuditorAgent(ReleaseAgent):
             # INTENTIONAL: counts CRITICAL+HIGH because the release gate
             # (max_critical_issues: 0) must block on HIGH findings too.
             # The name is historical — renaming would break gate configs
-            # and downstream consumers of this payload.
+            # and downstream consumers of this payload. See the module
+            # docstring for how the LLM's separate counts are normalized.
             "critical_issues": (severity_counts["CRITICAL"] + severity_counts["HIGH"]),
             "high_issues": severity_counts["HIGH"],
             "medium_issues": severity_counts["MEDIUM"],
