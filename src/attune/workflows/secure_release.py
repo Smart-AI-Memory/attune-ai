@@ -289,6 +289,31 @@ class SecureReleasePipeline(BaseWorkflow):
                 release_result,
             )
 
+            # Contract principle 7: a failed gatekeeper fails the gate.
+            # A sub-workflow that errored (success=False) or never ran
+            # contributed zero findings because nothing executed — that
+            # absence is not a pass and must force NO_GO.
+            failed_gatekeepers = [
+                name
+                for name, result, required in (
+                    ("security_audit", security_result, True),
+                    ("code_review", code_review_result, bool(diff)),
+                    ("release_prep", release_result, True),
+                )
+                if required and (result is None or not result.success)
+            ]
+            if failed_gatekeepers:
+                go_no_go = "NO_GO"
+                blockers = [
+                    f"GATEKEEPER_EXECUTION_FAILED: {name} did not complete - "
+                    "zero findings with zero execution is not a pass"
+                    for name in failed_gatekeepers
+                ] + blockers
+                recommendations = [
+                    "Fix the failed gatekeeper(s) and re-run the pipeline",
+                    "Findings from this run are incomplete - do not release on them",
+                ]
+
         except Exception as e:  # noqa: BLE001
             logger.error(f"Secure release pipeline failed: {e}")
             blockers.append(f"Pipeline failed: {e!s}")
