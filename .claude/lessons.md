@@ -24673,3 +24673,37 @@ launched in parallel.
   see it. Pairs with the existing worktree-vs-main PYTHONPATH/Write-path
   lessons: same family (locating the right tree), this one is the
   VERIFICATION surface rather than the execute or write surface.
+
+- **State the BASIS with every load-bearing claim — an inference in
+  the grammar of a verified fact is the bug, and the verifying command
+  is usually one line you already have**: ratified 2026-08-22 after a
+  release session where four such claims each had a cheap probe
+  available and unrun. **The rule: verify when the probe is cheap; when
+  you do not, SAY SO IN THE CLAIM** ("verified by X" / "inferred, not
+  checked"). An unmarked confident assertion is indistinguishable from
+  a checked one, so the reader acts on both alike — and Patrick's
+  framing is that guessing without flagging it is itself the issue, the
+  same posture that produces sloppy code. **The diagnostic: name the
+  property your check actually establishes, then ask whether it is the
+  property your next action depends on.** `git rev-parse origin/main:src`
+  matching a tag establishes something about a REMOTE-TRACKING REF; a
+  scan that reads the WORKING TREE is unaffected by it (that checkout
+  was 17 commits behind, and the review would have been filed as the
+  release receipt). `git status --porcelain` clean means "matches its
+  own HEAD", NOT "is current" — pair it with
+  `git rev-list --count HEAD..origin/main`. "The runner spawns a
+  subprocess" establishes a code path, not process independence — read
+  `ps -o ppid=,command=`. Which code will execute is answered by the
+  filesystem that will be read (`pyproject.toml` on disk, an imported
+  `__version__`, `__file__`), never by a ref. Relaying a third party's
+  approval ("X approved this") is the same error in social form: the
+  recipient cannot verify it through you. **Why this sits in core
+  rather than the tail: recall cannot save you from it.** The corpus
+  already held adjacent lessons and none fired, because the failure
+  happens when a CONCLUSION IS FORMED — earlier than any tool call that
+  would trigger retrieval — and on that session the SessionStart hook
+  had already printed `STALE SOURCE … 17 commits behind` and it was
+  read as ambient noise. Verification also keeps OLD lessons honest:
+  the same session found a core lesson's premise ("Windows lanes are
+  NOT required") had gone stale, so acting on it unverified would have
+  added pointless friction.
