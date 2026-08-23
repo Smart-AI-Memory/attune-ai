@@ -338,54 +338,37 @@ class TestStartViaDocker:
 
 
 class TestStartViaDirect:
-    """Test _start_via_direct function"""
+    """_start_via_direct refuses on every platform (chair-ruled C4, 2026-08-23).
 
-    @patch("attune.memory.redis_bootstrap.IS_WINDOWS", False)
-    @patch("attune.memory.redis_bootstrap._find_command")
-    def test_redis_server_not_found(self, mock_find):
-        """Test when redis-server is not in PATH"""
-        mock_find.return_value = None
-        result = _start_via_direct()
-        assert result is False
+    A config-less redis-server listened on every interface with no
+    password, masked the crash-looping configured stack, and wrote
+    dump.rdb into the caller's cwd. The method now returns False without
+    spawning — on Unix AND Windows, binary on PATH or not.
+    """
 
     @patch("attune.memory.redis_bootstrap.IS_WINDOWS", False)
     @patch("attune.memory.redis_bootstrap.subprocess.Popen")
-    @patch("attune.memory.redis_bootstrap._find_command")
-    @patch("attune.memory.redis_bootstrap.time.sleep")
-    def test_direct_start_unix_success(self, mock_sleep, mock_find, mock_popen):
-        """Test successful direct start on Unix"""
-        mock_find.return_value = "/usr/bin/redis-server"
-        mock_process = Mock()
-        mock_process.returncode = 0
-        mock_popen.return_value = mock_process
+    @patch("attune.memory.redis_bootstrap._find_command", return_value=None)
+    def test_refuses_without_binary(self, mock_find, mock_popen):
+        assert _start_via_direct() is False
+        mock_popen.assert_not_called()
 
-        result = _start_via_direct()
-        assert result is True
+    @patch("attune.memory.redis_bootstrap.IS_WINDOWS", False)
+    @patch("attune.memory.redis_bootstrap.subprocess.Popen")
+    @patch("attune.memory.redis_bootstrap._find_command", return_value="/usr/bin/redis-server")
+    def test_refuses_on_unix_with_binary(self, mock_find, mock_popen):
+        assert _start_via_direct() is False
+        mock_popen.assert_not_called()
 
     @patch("attune.memory.redis_bootstrap.IS_WINDOWS", True)
     @patch("attune.memory.redis_bootstrap.subprocess.Popen")
-    @patch("attune.memory.redis_bootstrap._find_command")
-    @patch("attune.memory.redis_bootstrap.time.sleep")
-    def test_direct_start_windows_success(self, mock_sleep, mock_find, mock_popen):
-        """Test successful direct start on Windows"""
-        mock_find.return_value = "C:\\Program Files\\Redis\\redis-server.exe"
-        mock_process = Mock()
-        mock_process.poll.return_value = None  # Process still running
-        mock_popen.return_value = mock_process
-
-        result = _start_via_direct()
-        assert result is True
-
-    @patch("attune.memory.redis_bootstrap.IS_WINDOWS", False)
-    @patch("attune.memory.redis_bootstrap.subprocess.Popen")
-    @patch("attune.memory.redis_bootstrap._find_command")
-    def test_direct_start_exception(self, mock_find, mock_popen):
-        """Test when direct start raises exception"""
-        mock_find.return_value = "/usr/bin/redis-server"
-        mock_popen.side_effect = Exception("Failed to start")
-
-        result = _start_via_direct()
-        assert result is False
+    @patch(
+        "attune.memory.redis_bootstrap._find_command",
+        return_value="C:\\Program Files\\Redis\\redis-server.exe",
+    )
+    def test_refuses_on_windows_with_binary(self, mock_find, mock_popen):
+        assert _start_via_direct() is False
+        mock_popen.assert_not_called()
 
 
 class TestStartViaWindowsService:
