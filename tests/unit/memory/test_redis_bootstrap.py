@@ -606,47 +606,31 @@ class TestStartViaDockerFailures:
 
 
 class TestStartViaDirectWindows:
-    @patch("attune.memory.redis_bootstrap.IS_WINDOWS", new=True)
-    @patch("attune.memory.redis_bootstrap.subprocess.Popen")
-    @patch("attune.memory.redis_bootstrap.time.sleep")
-    @patch("attune.memory.redis_bootstrap._find_command")
-    def test_windows_direct_start_success(self, mock_find, mock_sleep, mock_popen):
-        """Lines 192, 202-214: Windows-specific lookup + Popen path."""
-        from attune.memory.redis_bootstrap import _start_via_direct
-
-        mock_find.side_effect = lambda cmd: (
-            "C:\\redis-server.exe" if cmd == "redis-server.exe" else None
-        )
-        proc = MagicMock()
-        proc.poll.return_value = None  # still running
-        mock_popen.return_value = proc
-        assert _start_via_direct() is True
-
-    @patch("attune.memory.redis_bootstrap.IS_WINDOWS", new=True)
-    @patch("attune.memory.redis_bootstrap.subprocess.Popen")
-    @patch("attune.memory.redis_bootstrap.time.sleep")
-    @patch("attune.memory.redis_bootstrap._find_command")
-    def test_windows_direct_start_process_died(self, mock_find, mock_sleep, mock_popen):
-        """Line 212: process.poll() != None → not running → fall through."""
-        from attune.memory.redis_bootstrap import _start_via_direct
-
-        mock_find.side_effect = lambda cmd: (
-            "C:\\redis-server.exe" if cmd == "redis-server.exe" else None
-        )
-        proc = MagicMock()
-        proc.poll.return_value = 1  # died
-        mock_popen.return_value = proc
-        assert _start_via_direct() is False
+    """The refusal holds on Windows too (chair-amended C4, 2026-08-23)."""
 
     @patch("attune.memory.redis_bootstrap.IS_WINDOWS", True)
-    @patch("attune.memory.redis_bootstrap.subprocess.Popen", side_effect=OSError("nope"))
+    @patch("attune.memory.redis_bootstrap.subprocess.Popen")
     @patch("attune.memory.redis_bootstrap._find_command")
-    def test_direct_exception_logged(self, mock_find, mock_popen):
-        """Popen raises on the Windows path → logged + return False."""
+    def test_windows_refuses_to_spawn(self, mock_find, mock_popen):
         from attune.memory.redis_bootstrap import _start_via_direct
 
-        mock_find.return_value = "/usr/bin/redis-server"
+        mock_find.return_value = "C:\\redis\\redis-server.exe"
         assert _start_via_direct() is False
+        mock_popen.assert_not_called()
+
+    @patch("attune.memory.redis_bootstrap._check_redis_running", return_value=False)
+    @patch("attune.memory.redis_bootstrap._start_via_docker", return_value=False)
+    @patch("attune.memory.redis_bootstrap._start_via_homebrew", return_value=False)
+    @patch("attune.memory.redis_bootstrap._start_via_direct")
+    @patch("attune.memory.redis_bootstrap.IS_MACOS", True)
+    @patch("attune.memory.redis_bootstrap.IS_LINUX", False)
+    @patch("attune.memory.redis_bootstrap.IS_WINDOWS", False)
+    def test_direct_is_not_in_the_start_order(self, mock_direct, *_):
+        """ensure_redis never even consults the direct method."""
+        from attune.memory.redis_bootstrap import ensure_redis
+
+        ensure_redis(verbose=False)
+        mock_direct.assert_not_called()
 
 
 class TestStartViaWindowsService:

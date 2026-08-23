@@ -186,46 +186,21 @@ def _start_via_docker(port: int = 6379) -> bool:
 
 
 def _start_via_direct(port: int = 6379) -> bool:
-    """Start redis-server directly — Windows only.
+    """Refuse to spawn a bare redis-server — on every platform.
 
-    On macOS/Linux this method REFUSES (returns False without spawning).
-    The bare ``redis-server --port N --daemonize yes`` it used to run had
-    no config file, so it listened on every interface with no password,
-    no modules, and ``dir`` = the caller's cwd. When the configured
-    redis-stack was crash-looping on 2026-08-23, that squatter took the
-    port, masked the real failure for two hours, and dropped a
-    ``dump.rdb`` into a repo worktree (round table
-    q-post-redis-repair-broken-features-001, chair-ruled C4). Homebrew /
-    systemd / Docker start a CONFIGURED server and remain; when none of
-    them works, "not running" is the honest answer.
+    This method used to run ``redis-server --port N`` (daemonized on
+    Unix) with no config file: every interface, no password, no modules,
+    ``dir`` = the caller's cwd. When the configured redis-stack was
+    crash-looping on 2026-08-23 that squatter took the port, masked the
+    real failure for two hours, and dropped a ``dump.rdb`` into a repo
+    worktree. Homebrew / systemd / Docker / the Windows service start a
+    CONFIGURED server and remain; when none works, "not running" is the
+    honest answer. Round table q-post-redis-repair-broken-features-001,
+    chair-ruled C4 (amended to all platforms after the cross-review lane
+    noted the Windows path had the same shape). The ``port`` parameter
+    is kept so callers and the stop-method map stay unchanged.
     """
-    if not IS_WINDOWS:
-        logger.debug("direct_start_refused", reason="unix: a bare redis-server is unsafe")
-        return False
-
-    redis_server = _find_command("redis-server.exe") or _find_command("redis-server")
-    if not redis_server:
-        return False
-
-    try:
-        # Windows: Start without daemonize (run in background via subprocess)
-        process = subprocess.Popen(
-            [redis_server, "--port", str(port)],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            creationflags=(
-                subprocess.CREATE_NO_WINDOW if hasattr(subprocess, "CREATE_NO_WINDOW") else 0
-            ),
-        )
-        # Don't wait - let it run in background
-        time.sleep(2)
-        if process.poll() is None:  # Still running
-            logger.info("redis_started_directly_windows")
-            return True
-    except Exception as e:  # noqa: BLE001
-        # INTENTIONAL: Direct start is best-effort — fall through to next method
-        logger.debug("direct_start_failed", error=str(e))
-
+    logger.debug("direct_start_refused", port=port, reason="a bare redis-server is unsafe")
     return False
 
 
@@ -452,12 +427,9 @@ def _try_start_methods(
             ]
         )
 
-    start_methods.extend(
-        [
-            (RedisStartMethod.DOCKER, lambda: _start_via_docker(port)),
-            (RedisStartMethod.DIRECT, lambda: _start_via_direct(port)),
-        ]
-    )
+    # DIRECT is deliberately absent: a config-less redis-server is never
+    # auto-started (see _start_via_direct).
+    start_methods.append((RedisStartMethod.DOCKER, lambda: _start_via_docker(port)))
 
     for method, start_func in start_methods:
         try:
