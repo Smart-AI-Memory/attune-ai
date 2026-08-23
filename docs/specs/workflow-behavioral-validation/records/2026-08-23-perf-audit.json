@@ -1,0 +1,18 @@
+{
+  "workflow": "perf-audit",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "named-defect",
+  "verdict": "pass",
+  "cost_usd": 0.2964,
+  "duration_s": 292.5,
+  "ran_at": "2026-08-23T23:12:00Z",
+  "runner_version": "workflow_probe_runner (#2210/#2211/#2216)",
+  "git_sha": "e80953386",
+  "evidence": {
+    "num_findings": 8,
+    "named": [
+      "quadratic membership scan"
+    ],
+    "provenance": "transcribed from the 2026-08-23 live validation session outputs (see test-quality-program decisions.md + #2216)"
+  }
+}

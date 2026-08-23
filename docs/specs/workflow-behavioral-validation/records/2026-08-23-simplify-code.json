@@ -1,0 +1,18 @@
+{
+  "workflow": "simplify-code",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "named-defect",
+  "verdict": "pass",
+  "cost_usd": 0.3336,
+  "duration_s": 80.9,
+  "ran_at": "2026-08-23T23:16:00Z",
+  "runner_version": "workflow_probe_runner (#2210/#2211/#2216)",
+  "git_sha": "e80953386",
+  "evidence": {
+    "num_findings": 11,
+    "named": [
+      "nested conditional"
+    ],
+    "provenance": "transcribed from the 2026-08-23 live validation session outputs (see test-quality-program decisions.md + #2216)"
+  }
+}

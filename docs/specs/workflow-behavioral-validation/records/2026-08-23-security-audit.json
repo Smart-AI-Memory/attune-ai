@@ -1,0 +1,20 @@
+{
+  "workflow": "security-audit",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "named-defect",
+  "verdict": "pass",
+  "cost_usd": 0.3983,
+  "duration_s": 106.8,
+  "ran_at": "2026-08-23T20:55:00Z",
+  "runner_version": "workflow_probe_runner (#2210/#2211/#2216)",
+  "git_sha": "7d66113a0",
+  "evidence": {
+    "score": 15.0,
+    "num_findings": 3,
+    "named": [
+      "CWE-95 dynamic evaluation",
+      "hardcoded key"
+    ],
+    "provenance": "transcribed from the 2026-08-23 live validation session outputs (see test-quality-program decisions.md + #2216)"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "workflow": "release-notes",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "metric-crosscheck",
+  "verdict": "pass",
+  "cost_usd": 0.4689,
+  "duration_s": 88.7,
+  "ran_at": "2026-08-23T21:30:00Z",
+  "runner_version": "workflow_probe_runner (#2210/#2211/#2216)",
+  "git_sha": "7d66113a0",
+  "evidence": {
+    "score": 8.0,
+    "planted_commit_surfaced": true,
+    "provenance": "transcribed from the 2026-08-23 live validation session outputs (see test-quality-program decisions.md + #2216)"
+  }
+}
