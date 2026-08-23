@@ -1,6 +1,6 @@
 # Spec: Workflow Behavioral Validation
 
-**Status**: RATIFIED (chair, 2026-08-23) — the two-track direction and
+**Status**: active (2026-08-23) — ratified by chair; the two-track direction and
 the Principle 5 carve DIRECTION are ratified (see `decisions.md` D1–D9).
 The requirements are stable; the DESIGN's enforcement mechanics
 (`design.md`) continue to be refined and are resolved in Phase 3
