@@ -368,8 +368,9 @@ def _divert_to_file(target: Any, content: str, entry: SessionStashEntry, topics:
                 content, memory_id=entry.id, session_id=entry.session_id, topics=topics
             )
         )
-    except Exception as exc:  # noqa: BLE001
-        # INTENTIONAL: the divert is best-effort; the host session must not break.
+    except (OSError, ValueError, TypeError) as exc:
+        # The file tier raises on a denied/full disk or an unserialisable
+        # record; the divert is best-effort and the host session must not break.
         logger.warning("session stash: file divert failed: %s", exc)
         return False
     logger.warning(

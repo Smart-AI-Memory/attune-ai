@@ -480,13 +480,17 @@ class AMSMemoryBackend:
         read can race the write; a few short retries cover that lag while
         keeping a Stop hook bounded.
         """
+        import httpx
+        from agent_memory_client.exceptions import MemoryClientError
+
         for attempt in range(_READBACK_ATTEMPTS):
             try:
                 _run_sync(self._client.get_long_term_memory(record_id))
                 return True
-            except Exception:  # noqa: BLE001
-                # INTENTIONAL: not-yet-indexed and hard failures look the
-                # same from here; the retry budget separates them.
+            except (MemoryClientError, httpx.HTTPError, OSError) as exc:
+                # Not-yet-indexed (404) and hard failures look the same from
+                # here; the retry budget separates them.
+                logger.debug("readback_miss: id=%s attempt=%d %s", record_id, attempt + 1, exc)
                 if attempt + 1 < _READBACK_ATTEMPTS:
                     time.sleep(_READBACK_DELAY_S)
         return False

@@ -12,6 +12,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 import pytest
+from agent_memory_client.exceptions import MemoryNotFoundError
 
 import attune_redis.memory as ams
 from attune_redis.memory import AMSMemoryBackend
@@ -37,7 +38,7 @@ def test_remember_true_only_after_readback(backend):
 
 def test_acked_but_unreadable_write_returns_false(backend, caplog):
     """The exact 2026-08-23 failure: create acks, readback never succeeds."""
-    backend._client.get_long_term_memory.side_effect = RuntimeError("404")
+    backend._client.get_long_term_memory.side_effect = MemoryNotFoundError("404")
     assert backend.remember("finding", memory_id="m1") is False
     assert backend._client.create_long_term_memory.called
     assert backend._client.get_long_term_memory.call_count == ams._READBACK_ATTEMPTS
@@ -46,7 +47,7 @@ def test_acked_but_unreadable_write_returns_false(backend, caplog):
 
 def test_readback_tolerates_index_lag(backend):
     """A miss followed by a hit within the retry budget still confirms."""
-    backend._client.get_long_term_memory.side_effect = [RuntimeError("404"), {"id": "m1"}]
+    backend._client.get_long_term_memory.side_effect = [MemoryNotFoundError("404"), {"id": "m1"}]
     assert backend.remember("finding", memory_id="m1") is True
     assert backend._client.get_long_term_memory.call_count == 2
 
