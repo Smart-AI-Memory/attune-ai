@@ -173,3 +173,59 @@ def test_llm_reply_cannot_steer_tier_escalation():
     assert result.escalated is False
     assert result.findings["retryable"] is False
     assert result.findings["notes"] == "x"
+
+
+# --- retro 2026-08-23 O1: the LLM merge is an allowlist ---------------------
+
+
+def test_llm_merge_drops_every_key_outside_the_advisory_allowlist():
+    """Structural close of the "LLM-overwritable findings key" class.
+
+    The denylist form needed a new entry per lane (score/confidence,
+    then retryable). With the allowlist, an LLM reply carrying a key the
+    parser owns — or a key nobody has thought of yet — is dropped, and
+    only the advisory fields land.
+    """
+    agent = _agent()
+    agent.llm_client = object()
+    out = json.dumps({"results": [{"issue_severity": "MEDIUM"}]})
+    llm = json.dumps(
+        {
+            "mode": "rule_based",  # parser-owned, written AFTER the merge
+            "tier": "premium",  # parser-owned
+            "error": "boom",  # a key that does not exist on success
+            "gate_override": True,  # a key nobody has named anywhere
+            "top_findings": [{"file": "a.py", "issue": "x", "severity": "MEDIUM"}],
+            "notes": "n",
+            "reasoning": "r",
+        }
+    )
+    with (
+        patch.object(sec_mod, "LLM_MODE", "real"),
+        patch(_RUN, return_value=(1, out, "")),
+        patch.object(agent, "_call_llm", return_value=(llm, {})),
+    ):
+        ok, findings = agent._execute_tier(".", Tier.CHEAP)
+
+    assert ok is True
+    assert "error" not in findings
+    assert "gate_override" not in findings
+    assert findings["mode"] == "llm"
+    assert findings["tier"] == Tier.CHEAP.value
+    assert findings["top_findings"] == [{"file": "a.py", "issue": "x", "severity": "MEDIUM"}]
+    assert findings["notes"] == "n"
+    assert findings["reasoning"] == "r"
+
+
+def test_advisory_allowlist_is_disjoint_from_parser_owned_keys():
+    """The allowlist can never grow to include a parser-owned key."""
+    owned = set(_SEVERITY_COUNT_KEYS) | {
+        "total_findings",
+        "score",
+        "confidence",
+        "retryable",
+        "mode",
+        "tier",
+        "error",
+    }
+    assert not (sec_mod._LLM_ADVISORY_KEYS & owned)

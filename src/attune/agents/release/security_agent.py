@@ -18,6 +18,9 @@ round table q-bug-predict-health-001):
 - ``score`` and ``confidence`` are parser-owned display fields: ``score``
   is recomputed from the post-ratchet counts with the one formula in
   ``_score``; the LLM may not overwrite either.
+- The LLM merge is an ALLOWLIST (``_LLM_ADVISORY_KEYS``): a reply may
+  only add advisory fields; any other key it carries is dropped, so a
+  parser-owned key is protected without being named.
 - The LLM receives the PARSED summary (severity counts + top findings),
   never a byte-sliced raw bandit document.
 
@@ -53,15 +56,15 @@ _SEVERITY_COUNT_KEYS = (
     "medium_issues",
     "low_issues",
 )
-_BANDIT_AUTHORITATIVE_KEYS = frozenset(_SEVERITY_COUNT_KEYS) | {
-    "total_findings",
-    "score",
-    "confidence",
-    # Escalation control signal (ReleaseAgent.process) — set only by the
-    # parser's sentinel paths; an LLM reply must not steer tier retries
-    # (cross-review on #2204).
-    "retryable",
-}
+# The ONLY keys an LLM reply may write into the findings. Everything
+# else — severity counts, score/confidence, total_findings, the
+# ``retryable`` escalation signal, mode/tier — is parser-owned. This is
+# an allowlist, not a denylist: the denylist form lost three lanes in a
+# row on this file (score/confidence → retryable → …), because every key
+# the parser learned to own had to be named before the LLM could no
+# longer overwrite it. A new parser-owned key is now protected by
+# default (retro 2026-08-23, O1).
+_LLM_ADVISORY_KEYS = frozenset({"top_findings", "notes", "reasoning"})
 
 # What the LLM is shown: the parsed summary, not raw bandit bytes.
 _LLM_SUMMARY_KEYS = (*_SEVERITY_COUNT_KEYS, "total_findings", "top_findings", "note")
@@ -155,11 +158,7 @@ class SecurityAuditorAgent(ReleaseAgent):
                     llm_findings = _parse_response(response_text)
                     if "parse_error" not in llm_findings:
                         findings.update(
-                            {
-                                k: v
-                                for k, v in llm_findings.items()
-                                if k not in _BANDIT_AUTHORITATIVE_KEYS
-                            }
+                            {k: llm_findings[k] for k in _LLM_ADVISORY_KEYS if k in llm_findings}
                         )
                         self._ratchet_counts(findings, llm_findings)
 
