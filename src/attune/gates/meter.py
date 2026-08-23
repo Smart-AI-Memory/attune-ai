@@ -14,6 +14,7 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 
 from attune.models.auth_strategy import AuthMode, AuthStrategy
@@ -28,6 +29,9 @@ class Meter:
     """The user's active billing meter and how to frame a spend."""
 
     mode: str  # "api" | "subscription"
+    #: How the mode was established — shown with the framing so the
+    #: reader can tell a measured fact from a configured preference.
+    basis: str = ""
 
     @property
     def is_dollars(self) -> bool:
@@ -49,14 +53,16 @@ class Meter:
             A one-line framing string for the confirm surface.
         """
         if self.is_dollars:
-            return (
+            text = (
                 f"≈ up to ${estimate_usd:.2f} this session window "
                 "— counts against your Anthropic API spend."
             )
-        return (
-            "uses your subscription quota (no per-call charge) "
-            "— counts against your Anthropic usage window."
-        )
+        else:
+            text = (
+                "uses your subscription quota (no per-call charge) "
+                "— counts against your Anthropic usage window."
+            )
+        return f"{text} [basis: {self.basis}]" if self.basis else text
 
 
 def resolve(
@@ -79,8 +85,19 @@ def resolve(
     Returns:
         The active :class:`Meter`.
     """
+    # The RUNTIME fact comes first: when ANTHROPIC_API_KEY is set, the
+    # Claude Code runtime bills that key over any claude.ai login
+    # ("ANTHROPIC_API_KEY … takes precedence over your claude.ai login"),
+    # whatever the strategy prefers. On 2026-08-23 this gate told a user
+    # "subscription quota (no per-call charge)" and the run billed $1.17
+    # to the key (round table q-bug-predict-health-001, principle 16).
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        return Meter(
+            mode=METER_API,
+            basis="ANTHROPIC_API_KEY is set — the runtime bills the key over a claude.ai login",
+        )
     strategy = strategy or AuthStrategy.load()
     mode = strategy.get_recommended_mode(module_lines)
     if mode == AuthMode.SUBSCRIPTION:
-        return Meter(mode=METER_SUBSCRIPTION)
-    return Meter(mode=METER_API)
+        return Meter(mode=METER_SUBSCRIPTION, basis="auth-strategy preference; no API key in env")
+    return Meter(mode=METER_API, basis="auth-strategy preference")

@@ -6,6 +6,8 @@ auth state) so the tests are deterministic across environments.
 
 from __future__ import annotations
 
+import pytest
+
 from attune.gates.meter import (
     METER_API,
     METER_SUBSCRIPTION,
@@ -13,6 +15,15 @@ from attune.gates.meter import (
     resolve,
 )
 from attune.models.auth_strategy import AuthMode, AuthStrategy, SubscriptionTier
+
+
+@pytest.fixture(autouse=True)
+def _no_ambient_api_key(monkeypatch):
+    """Meter resolution reads the RUNTIME key first (2026-08-23); these
+    tests exercise the preference path, so a developer's ambient key must
+    not leak in — keyless CI sets the var to "" and so do we."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "")
+
 
 # --- framing -------------------------------------------------------------
 
@@ -101,3 +112,34 @@ def test_resolve_defaults_to_loaded_strategy(monkeypatch) -> None:
         classmethod(lambda cls, path=None: sentinel),
     )
     assert resolve().mode == METER_SUBSCRIPTION
+
+
+# --- runtime basis beats preference (2026-08-23) --------------------------
+
+
+def test_api_key_in_env_forces_api_meter_over_subscription_preference(monkeypatch) -> None:
+    """The gate said "subscription quota" while the run billed the key."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")  # pragma: allowlist secret
+    strategy = AuthStrategy(default_mode=AuthMode.SUBSCRIPTION)
+    meter = resolve(strategy)
+    assert meter.mode == METER_API
+    assert "ANTHROPIC_API_KEY" in meter.basis
+    framing = meter.framing(1.0)
+    assert "Anthropic API spend" in framing
+    assert "subscription quota" not in framing
+    assert "[basis:" in framing
+
+
+def test_empty_api_key_falls_back_to_preference(monkeypatch) -> None:
+    """Keyless CI sets the var to "" — that is NOT a key."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "")
+    strategy = AuthStrategy(default_mode=AuthMode.SUBSCRIPTION)
+    meter = resolve(strategy)
+    assert meter.mode == METER_SUBSCRIPTION
+    assert "no API key in env" in meter.basis
+
+
+def test_framing_states_its_basis(monkeypatch) -> None:
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    meter = resolve(AuthStrategy(default_mode=AuthMode.API))
+    assert meter.framing(0.5).endswith("[basis: auth-strategy preference]")
