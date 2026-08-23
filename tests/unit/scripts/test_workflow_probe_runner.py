@@ -116,3 +116,28 @@ def test_score_of_reads_report_dict(score, expected) -> None:
         final_output = {"score": score} if score is not None else {}
 
     assert runner._score_of(_R()) == expected
+
+
+def test_crash_reason_none_on_success() -> None:
+    class _R:
+        success = True
+        error = None
+        metadata: dict = {}
+
+    assert runner._crash_reason(_R()) is None
+
+
+def test_crash_reason_distinguishes_crash_from_miss() -> None:
+    # A workflow that ERRORED must be reported as a crash, never as an
+    # analytical miss — that distinction is the point of the harness.
+    class _R:
+        success = False
+        error = "Claude Code returned an error result: success\nmore lines"
+        metadata = {"sdk_error_kind": "is_error_on_success"}
+
+    reason = runner._crash_reason(_R())
+    assert reason is not None
+    assert "CRASHED before analysis" in reason
+    assert "is_error_on_success" in reason
+    # Only the first line of the error is carried, not the whole trace.
+    assert "more lines" not in reason

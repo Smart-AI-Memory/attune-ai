@@ -187,6 +187,24 @@ def _cost_of(result: Any) -> float:
     return float(getattr(report, "total_cost", 0.0) or 0.0)
 
 
+def _crash_reason(result: Any) -> str | None:
+    """Return a distinct reason when the workflow ERRORED before analysis.
+
+    Separating transport/SDK crashes from analytical misses is the whole
+    point of this harness: a workflow that died must not be reported as
+    "ran and missed the defect". ``success is False`` means the workflow
+    returned an error result (e.g. the ``is_error``-on-success SDK
+    regression), not that it analysed the fixture and found nothing.
+    """
+    if getattr(result, "success", True):
+        return None
+    error = getattr(result, "error", None) or "unknown error"
+    kind = (getattr(result, "metadata", None) or {}).get("sdk_error_kind")
+    prefix = f"[{kind}] " if kind else ""
+    first_line = str(error).splitlines()[0][:200]
+    return f"workflow CRASHED before analysis (not an analytical miss): {prefix}{first_line}"
+
+
 def _mentions(text: str, *needles: str) -> bool:
     low = text.lower()
     return any(n.lower() in low for n in needles)
@@ -238,6 +256,15 @@ async def probe_security_audit(budget: float) -> ProbeResult:
         result = await _run_workflow("security-audit", path=str(work), depth="quick")
         dur = time.monotonic() - t0
 
+    crash = _crash_reason(result)
+    if crash:
+        return ProbeResult(
+            name="security-audit",
+            passed=False,
+            reason=crash,
+            cost_usd=_cost_of(result),
+            duration_s=dur,
+        )
     findings = _findings_for(result, "security")
     text = _raw_text(result)
     score = _score_of(result)
@@ -278,6 +305,15 @@ async def probe_dependency_check(budget: float) -> ProbeResult:
         result = await _run_workflow("dependency-check", path=str(work), depth="quick")
         dur = time.monotonic() - t0
 
+    crash = _crash_reason(result)
+    if crash:
+        return ProbeResult(
+            name="dependency-check",
+            passed=False,
+            reason=crash,
+            cost_usd=_cost_of(result),
+            duration_s=dur,
+        )
     findings = _findings_for(result, "dependencies")
     text = _raw_text(result)
     names_pkg = _mentions(
@@ -327,6 +363,15 @@ async def probe_test_gen(budget: float) -> ProbeResult:
         result = await _run_workflow("test-gen", path=str(work), depth="quick")
         dur = time.monotonic() - t0
 
+        crash = _crash_reason(result)
+        if crash:
+            return ProbeResult(
+                name="test-gen",
+                passed=False,
+                reason=crash,
+                cost_usd=_cost_of(result),
+                duration_s=dur,
+            )
         code = _extract_test_code(_raw_text(result))
         if not code.strip():
             return ProbeResult(
@@ -388,6 +433,15 @@ async def probe_discovery_sweep(budget: float) -> ProbeResult:
         )
         dur = time.monotonic() - t0
 
+    crash = _crash_reason(result)
+    if crash:
+        return ProbeResult(
+            name="discovery-sweep",
+            passed=False,
+            reason=crash,
+            cost_usd=_cost_of(result),
+            duration_s=dur,
+        )
     # Per-lane findings counts (group all buckets by finding.source).
     payload = getattr(result, "final_output", "")
     counts: dict[str, int] = {}
@@ -480,6 +534,16 @@ async def probe_release_notes(budget: float) -> ProbeResult:
         result = await _run_workflow("release-notes", path=str(work), depth="quick")
         dur = time.monotonic() - t0
 
+    crash = _crash_reason(result)
+    if crash:
+        return ProbeResult(
+            name="release-notes",
+            passed=False,
+            reason=crash,
+            cost_usd=_cost_of(result),
+            duration_s=dur,
+            evidence={"planted_commit": subject},
+        )
     score = _score_of(result)
     text = _raw_text(result)
     score_ok = score is not None and 0 <= score <= 100
