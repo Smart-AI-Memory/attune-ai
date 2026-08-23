@@ -1586,3 +1586,60 @@ importorskip'd away everywhere since they were written. Fixed in the
 retro-tooling PR (bcrypt added to the [dev] extra + dev group);
 tests/unit/test_no_dead_suites.py now guards the class with an empty
 allowlist.
+
+## 2026-08-22 — post-release self-review, 14.0.0 (release-execute step 16)
+
+Two dashboard-launched runs against the shipped tree (`src` at
+`c47ae532`, verified from the filesystem rather than a ref):
+`code-review` 74/100 (308s, $4.26, run `06e56c93ab9f`) and
+`bug-predict` 60/100 (200s, $2.03, run `a6e92650d199`). 23 findings,
+none Critical, no High security. Three worth recording:
+
+- **The release-audit stage's own scanner walks every file 4x more
+  than it needs to — classification: perf, in code this release
+  shipped.** `classes/rules.py:474` `scan_source` loops the 8-rule
+  pack calling `rule.check(tree, path)` per rule, but only TWO
+  visitor classes exist (`_V1Sweep` :129, `_R7Visitor` :324) — so
+  each rule constructs and runs a full traversal and then filters by
+  rule id, giving 8 full AST walks where 2 suffice. Verified by
+  reading both visitors and counting `RULES` (8). This is the
+  per-release sweep AND the continuous gates, so it burns ~4x the
+  necessary CPU repo-wide on every CI push. Fix is mechanical: run
+  each sweep once, slice hits by `rule_id`. FIXED in #2187 — 751
+  files, 121 hits before and after with 0 mismatches, traversals
+  8 -> 2 per file, guarded by a mutation-checked traversal-count
+  test. D11 lane (codex) came back clean before the chair read it.
+
+- **`_get_commit_diff` never got the hardening its sibling has —
+  classification: latent security (Low).**
+  `patterns/git_extractor.py:242` passes refs straight to
+  `subprocess.run`, while `_get_commit_info` in the SAME file rejects
+  `-`-prefixed refs (:213) and pins the argument list with `--`
+  (:210). Verified by reading both. A partial fix that stopped one
+  function short: git option-injection remains reachable through the
+  diff path. Not yet fixed.
+
+- **`bug-predict` has produced ZERO structured findings in every run
+  since at least 2026-08-02 — classification: dead surface.** The
+  report carries a rich prose summary (naming resource leaks and
+  unchecked `split()[0]`/`int()` on user input) but `sections: []`
+  and `suggestions: []`. Checked all six historical run records in
+  `~/.attune/ops/runs/bug-predict/`: 6/6 have `sections=0,
+  findings=0`, while every one reports `completed` / exit 0. So the
+  ops findings UI and any `sections`-consuming automation have been
+  getting nothing from this workflow for three weeks, and the run
+  looks healthy the whole time. The adapter builds sections from
+  per-heading structured `items`
+  (`workflows/agent_sdk_adapter.py:1717`); bug-predict's output does
+  not populate them. NOT a 14.0.0 regression — it predates the
+  release. Half of the step-16 pair only delivers value if a human
+  reads the prose.
+
+Note on the step itself: the first attempt at this self-review was
+LOST — the ops dashboard had been launched from inside a Claude Code
+session, so session teardown killed the in-flight run before
+`_persist_run` could write a record. Relaunched `nohup`-detached.
+Separately, a ref-level check (`git rev-parse origin/main:src` vs the
+tag) nearly pointed the review at a main checkout that was 17 commits
+BEHIND `origin/main`; caught by a version disagreement, not by git.
+Both are lessons in the 2026-08-22 outbox batch.
