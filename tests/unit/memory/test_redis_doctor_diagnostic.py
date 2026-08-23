@@ -140,6 +140,53 @@ class TestHandlerIntegration:
     def test_handler_registered(self):
         assert TOOL_HANDLERS["redis_health_check"] is handle_redis_health_check
 
+    def _run_with_backend_named(self, name: str, stats: dict) -> dict:
+        from attune_redis.memory import AMSMemoryBackend
+
+        server = MagicMock()
+        # An AMS SUBCLASS: the write target must follow isinstance, not the
+        # class name (cross-review finding, 2026-08-23).
+        spec = type("TracedAMS", (AMSMemoryBackend,), {}) if name == "AMSMemoryBackend" else None
+        backend = MagicMock(spec=spec) if spec else MagicMock()
+        backend.is_connected.return_value = True
+        backend.get_stats.return_value = stats
+        if not spec:
+            type(backend).__name__ = name
+        with (
+            patch("attune_redis.mcp_tools._get_backend", return_value=backend),
+            patch(
+                "attune_redis.mcp_tools._effective_config_report",
+                return_value={
+                    "available": True,
+                    "health": "healthy",
+                    "redacted_url": "redis://:***@cloud.example:15667/0",
+                },
+            ),
+        ):
+            return asyncio.run(handle_redis_health_check(server, {}))
+
+    def test_ams_backend_names_one_write_target_and_labels_the_resolver(self):
+        """Round table 2026-08-23: two endpoints in one answer hid a dead AMS."""
+        result = self._run_with_backend_named(
+            "AMSMemoryBackend", {"base_url": "http://localhost:8000"}
+        )
+        assert result["write_target"] == {
+            "kind": "ams",
+            "url": "http://localhost:8000",
+            "note": "AMS persists to its OWN configured Redis; see the AMS server log",
+        }
+        assert "does NOT govern the selected AMS write path" in (
+            result["effective_config"]["applies_to"]
+        )
+
+    def test_direct_backend_write_target_is_the_resolved_redis(self):
+        result = self._run_with_backend_named("RedisMemoryBackend", {"total_keys": 1})
+        assert result["write_target"] == {
+            "kind": "direct-redis",
+            "url": "redis://:***@cloud.example:15667/0",
+        }
+        assert "applies_to" not in result["effective_config"]
+
     def test_handler_failure_path_still_degrades(self):
         server = MagicMock()
         with patch("attune_redis.mcp_tools._get_backend", side_effect=RuntimeError("boom")):
