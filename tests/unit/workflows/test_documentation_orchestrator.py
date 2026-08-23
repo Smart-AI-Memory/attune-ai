@@ -1785,6 +1785,7 @@ class TestExecutePathKwarg:
         target = tmp_path / "scoped"
         target.mkdir()
         orchestrator._run_scout_phase = AsyncMock(return_value=([], 0.0))
+        orchestrator._scan_performed = True  # stub bypasses the real scan
         result = await orchestrator.execute(path=str(target))
         assert result.success is True
         assert orchestrator.project_root == target.resolve()
@@ -1793,6 +1794,7 @@ class TestExecutePathKwarg:
         target = tmp_path / "legacy"
         target.mkdir()
         orchestrator._run_scout_phase = AsyncMock(return_value=([], 0.0))
+        orchestrator._scan_performed = True  # stub bypasses the real scan
         with pytest.warns(DeprecationWarning, match="project_root"):
             result = await orchestrator.execute(project_root=str(target))
         assert result.success is True
@@ -1804,6 +1806,7 @@ class TestExecutePathKwarg:
         lose = tmp_path / "lose"
         lose.mkdir()
         orchestrator._run_scout_phase = AsyncMock(return_value=([], 0.0))
+        orchestrator._scan_performed = True  # stub bypasses the real scan
         with pytest.warns(DeprecationWarning, match="precedence"):
             result = await orchestrator.execute(path=str(win), project_root=str(lose))
         assert result.success is True
@@ -1813,6 +1816,7 @@ class TestExecutePathKwarg:
         target = tmp_path / "scoped2"
         target.mkdir()
         orchestrator._run_scout_phase = AsyncMock(return_value=([], 0.0))
+        orchestrator._scan_performed = True  # stub bypasses the real scan
         await orchestrator.execute(path=str(target))
         assert orchestrator.export_path == target.resolve() / "docs" / "generated"
 
@@ -1824,6 +1828,82 @@ class TestExecutePathKwarg:
         target = tmp_path / "scoped3"
         target.mkdir()
         orchestrator._run_scout_phase = AsyncMock(return_value=([], 0.0))
+        orchestrator._scan_performed = True  # stub bypasses the real scan
         await orchestrator.execute(path=str(target))
         # An explicitly-set export_path must NOT be re-derived on re-scope.
         assert orchestrator.export_path == export
+
+
+@pytest.mark.asyncio
+class TestDegradedScanStatus:
+    """Regression pins for roundtable q-workflow-fleet-health-001 (Sev5).
+
+    "No documentation gaps found!" may only be claimed after something
+    actually scanned. No scout AND no ProjectIndex means gaps were never
+    assessed — that is an explicit DEGRADED failure, not a success.
+    """
+
+    async def test_no_scout_no_index_is_degraded_not_no_gaps(self, tmp_path):
+        """Nothing scanned → success=False, degraded=True, no 'no gaps' claim."""
+        orchestrator = DocumentationOrchestrator(project_root=str(tmp_path), dry_run=True)
+        orchestrator._scout = None
+        orchestrator._project_index = None
+
+        result = await orchestrator.execute()
+
+        assert result.success is False
+        assert result.degraded is True
+        assert result.items_found == 0
+        assert any("NOT assessed" in error for error in result.errors)
+        assert "No documentation gaps found" not in result.summary
+        assert "DEGRADED" in result.summary
+
+    async def test_index_fallback_scan_counts_as_a_scan(self, tmp_path):
+        """A ProjectIndex fallback scan that finds nothing IS a clean result."""
+        orchestrator = DocumentationOrchestrator(project_root=str(tmp_path), dry_run=True)
+        orchestrator._scout = None
+        mock_index = MagicMock()
+        mock_index.get_context_for_workflow.return_value = {
+            "files_without_docstrings": [],
+            "docs_needing_review": [],
+        }
+        orchestrator._project_index = mock_index
+
+        result = await orchestrator.execute()
+
+        assert result.success is True
+        assert result.degraded is False
+        assert result.phase == "complete"
+
+    async def test_scout_failure_with_no_items_is_degraded(self, tmp_path):
+        """A scout that errored did not assess gaps — zero items is not 'no gaps'."""
+        orchestrator = DocumentationOrchestrator(project_root=str(tmp_path), dry_run=True)
+        mock_scout = MagicMock()
+        mock_result = MagicMock()
+        mock_result.success = False
+        mock_result.cost = 0.1
+        mock_result.findings = []
+        mock_scout.execute = AsyncMock(return_value=mock_result)
+        orchestrator._scout = mock_scout
+        orchestrator._project_index = None
+
+        result = await orchestrator.execute()
+
+        assert result.success is False
+        assert result.degraded is True
+
+    async def test_scout_as_json_surfaces_degraded(self, tmp_path):
+        """The VSCode JSON surface carries the degraded flag."""
+        orchestrator = DocumentationOrchestrator(project_root=str(tmp_path))
+        orchestrator._scout = None
+        orchestrator._project_index = None
+
+        payload = await orchestrator.scout_as_json()
+
+        assert payload["success"] is False
+        assert payload["degraded"] is True
+
+    def test_result_to_dict_includes_degraded(self):
+        """OrchestratorResult serialization exposes the degraded flag."""
+        result = OrchestratorResult(success=False, phase="scout", degraded=True)
+        assert result.to_dict()["degraded"] is True

@@ -19,6 +19,11 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from attune.orchestration.execution_strategies import AgentResult, StrategyResult
+from attune.workflows.health_check_scoring import (
+    calculate_category_scores,
+    calculate_overall_score,
+    generate_recommendations,
+)
 from attune.workflows.orchestrated_health_check import (
     CategoryScore,
     HealthCheckReport,
@@ -802,6 +807,199 @@ class TestExecutePathKwarg:
         await workflow.execute(target=str(other_root))
 
         assert workflow.project_root == other_root.resolve()
+
+
+class TestUnmeasuredCategories:
+    """Regression pins for roundtable q-workflow-fleet-health-001 (Sev2).
+
+    A metric that was not measured must not be a number: categories whose
+    agent produced no measurement are N/A (measured=False), excluded from
+    the weighted score, and the report says so — never default-to-perfect.
+    """
+
+    def test_missing_agents_yield_unmeasured_categories(self):
+        """No agent results → every category is unmeasured, none perfect."""
+        scores = calculate_category_scores({})
+
+        assert len(scores) == 3  # Security, Coverage, Quality
+        assert all(s.measured is False for s in scores)
+        assert all(s.passed is False for s in scores)
+        security = next(s for s in scores if s.name == "Security")
+        assert security.score != 100.0
+        assert any("not measured" in issue for issue in security.issues)
+
+    def test_failed_agent_error_output_is_unmeasured(self):
+        """The error-shaped output a crashed agent emits is not a measurement."""
+        agent_results = {
+            "security_auditor": {
+                "success": False,
+                "output": {"agent_role": "sec", "error_details": "boom"},
+            },
+            "test_coverage_analyzer": {
+                "success": False,
+                "output": {"agent_role": "cov", "error_details": "no coverage.json"},
+            },
+            "code_reviewer": {"success": False, "output": {}},
+        }
+
+        scores = calculate_category_scores(agent_results)
+
+        assert all(s.measured is False for s in scores)
+
+    def test_unmeasured_categories_excluded_from_overall_score(self):
+        """The weighted score covers measured categories only — no dilution."""
+        agent_results = {
+            "security_auditor": {
+                "output": {"critical_issues": 1, "high_issues": 0, "medium_issues": 0},
+            },
+        }
+
+        scores = calculate_category_scores(agent_results)
+        security = next(s for s in scores if s.name == "Security")
+        assert security.measured is True
+        assert security.score == 80.0
+
+        # Coverage and Quality are unmeasured; only Security's 80 counts
+        assert calculate_overall_score(scores) == 80.0
+
+    def test_overall_score_zero_when_nothing_measured(self):
+        """With no measurements at all the score is 0.0, never a fabricated value."""
+        assert calculate_overall_score(calculate_category_scores({})) == 0.0
+
+    def test_recommendations_report_missing_data_not_fake_failures(self):
+        """Unmeasured categories surface as missing data, not 0.0% failures."""
+        recommendations = generate_recommendations(calculate_category_scores({}))
+        joined = "\n".join(recommendations)
+
+        assert "Not measured" in joined
+        assert "Security" in joined
+        # No fabricated numbers and no all-clear on zero data
+        assert "currently 0.0" not in joined
+        assert "health looks good" not in joined
+
+    def test_report_renders_na_and_degraded(self):
+        """Console output shows N/A rows and the DEGRADED banner."""
+        report = HealthCheckReport(
+            overall_health_score=85.0,
+            grade="B",
+            category_scores=[
+                CategoryScore(name="Coverage", score=85.0, weight=0.25),
+                CategoryScore(
+                    name="Security",
+                    score=0.0,
+                    weight=0.30,
+                    passed=False,
+                    measured=False,
+                    issues=["Security not measured — security_auditor produced no measurement"],
+                ),
+            ],
+            degraded=True,
+        )
+
+        output = report.format_console_output()
+
+        assert "DEGRADED" in output
+        assert "N/A (not measured)" in output
+        assert "85.0/100" in output  # the measured part still renders
+
+    def test_report_all_unmeasured_renders_na_not_a_number(self):
+        """Grade N/A: the header never prints a numeric overall score."""
+        report = HealthCheckReport(
+            overall_health_score=0.0,
+            grade="N/A",
+            category_scores=[
+                CategoryScore(
+                    name="Security", score=0.0, weight=0.30, passed=False, measured=False
+                ),
+            ],
+            degraded=True,
+        )
+
+        output = report.format_console_output()
+
+        assert "N/A — no categories were measured" in output
+        assert "0.0/100" not in output
+
+    def test_to_dict_carries_measured_and_degraded(self):
+        """Serialized reports expose the degraded flag and per-category measured."""
+        report = HealthCheckReport(
+            overall_health_score=0.0,
+            grade="N/A",
+            category_scores=[
+                CategoryScore(
+                    name="Security", score=0.0, weight=0.30, passed=False, measured=False
+                ),
+            ],
+            degraded=True,
+        )
+
+        data = report.to_dict()
+
+        assert data["degraded"] is True
+        assert data["category_scores"][0]["measured"] is False
+
+    @pytest.mark.asyncio
+    async def test_execute_all_agents_failed_reports_degraded_na(self, tmp_path):
+        """End-to-end: an all-agents-failed run is DEGRADED grade N/A, not 100/A."""
+        workflow = OrchestratedHealthCheckWorkflow(mode="daily", project_root=str(tmp_path))
+
+        with patch("attune.workflows.orchestrated_health_check.ParallelStrategy") as mock_strategy:
+            mock_results = [
+                AgentResult(
+                    agent_id=agent_id,
+                    success=False,
+                    output={"agent_role": agent_id, "error_details": "crashed"},
+                    error="crashed",
+                    confidence=0.0,
+                    duration_seconds=0.1,
+                )
+                for agent_id in ("security_auditor", "test_coverage_analyzer", "code_reviewer")
+            ]
+            mock_strategy_result = StrategyResult(
+                success=False,
+                outputs=mock_results,
+                aggregated_output={},
+                total_duration=0.3,
+            )
+            mock_strategy.return_value.execute = AsyncMock(return_value=mock_strategy_result)
+
+            report = await workflow.execute()
+
+        assert report.degraded is True
+        assert report.grade == "N/A"
+        assert report.overall_health_score == 0.0
+        output = report.format_console_output()
+        assert "DEGRADED" in output
+        assert "100.0/100" not in output
+
+    @pytest.mark.asyncio
+    async def test_execute_partial_measurement_is_degraded_but_scored(self, tmp_path):
+        """One measured category scores; the missing ones mark the run degraded."""
+        workflow = OrchestratedHealthCheckWorkflow(mode="daily", project_root=str(tmp_path))
+
+        with patch("attune.workflows.orchestrated_health_check.ParallelStrategy") as mock_strategy:
+            mock_results = [
+                AgentResult(
+                    agent_id="test_coverage_analyzer",
+                    success=True,
+                    output={"coverage_percent": 85.0},
+                    confidence=0.85,
+                    duration_seconds=1.0,
+                ),
+            ]
+            mock_strategy_result = StrategyResult(
+                success=True,
+                outputs=mock_results,
+                aggregated_output={},
+                total_duration=1.0,
+            )
+            mock_strategy.return_value.execute = AsyncMock(return_value=mock_strategy_result)
+
+            report = await workflow.execute()
+
+        assert report.degraded is True
+        assert report.overall_health_score == 85.0  # coverage only, undiluted
+        assert report.grade == "B"
 
 
 if __name__ == "__main__":

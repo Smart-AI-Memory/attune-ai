@@ -19,11 +19,15 @@ class CategoryScore:
 
     Attributes:
         name: Category name (e.g., "Security")
-        score: Score 0-100
+        score: Score 0-100 (meaningless when measured is False)
         weight: Weight in overall score (0-1)
         raw_metrics: Raw metrics from agent
         issues: Issues found
         passed: Whether category passed threshold
+        measured: Whether the agent actually produced a measurement.
+            Unmeasured categories are excluded from the weighted
+            overall score and rendered as N/A — a metric that was
+            not measured must not be a number.
 
     """
 
@@ -33,6 +37,7 @@ class CategoryScore:
     raw_metrics: dict[str, Any] = field(default_factory=dict)
     issues: list[str] = field(default_factory=list)
     passed: bool = True
+    measured: bool = True
 
 
 @dataclass
@@ -51,6 +56,9 @@ class HealthCheckReport:
         timestamp: Report generation time
         agents_executed: Number of agents executed
         success: Whether check completed successfully
+        degraded: True when one or more categories were not measured
+            (agent missing or failed) — the score covers only the
+            measured categories and the report is INCOMPLETE DATA
 
     """
 
@@ -65,6 +73,7 @@ class HealthCheckReport:
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
     agents_executed: int = 0
     success: bool = True
+    degraded: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         """Convert report to dictionary for JSON serialization.
@@ -84,6 +93,7 @@ class HealthCheckReport:
                     "raw_metrics": cat.raw_metrics,
                     "issues": cat.issues,
                     "passed": cat.passed,
+                    "measured": cat.measured,
                 }
                 for cat in self.category_scores
             ],
@@ -95,6 +105,7 @@ class HealthCheckReport:
             "timestamp": self.timestamp,
             "agents_executed": self.agents_executed,
             "success": self.success,
+            "degraded": self.degraded,
         }
 
     def format_console_output(self) -> str:
@@ -122,11 +133,19 @@ class HealthCheckReport:
         }
         emoji = grade_emoji.get(self.grade, "")
 
-        lines.append(
-            f"Overall Health: {emoji} "
-            f"{self.overall_health_score:.1f}/100 "
-            f"(Grade {self.grade})",
-        )
+        if self.grade == "N/A":
+            lines.append("Overall Health: ❓ N/A — no categories were measured")
+        else:
+            lines.append(
+                f"Overall Health: {emoji} "
+                f"{self.overall_health_score:.1f}/100 "
+                f"(Grade {self.grade})",
+            )
+        if self.degraded:
+            lines.append(
+                "⚠️  DEGRADED — INCOMPLETE DATA: unmeasured categories "
+                "are shown as N/A and excluded from the score",
+            )
         lines.append(f"Mode: {self.mode.upper()}")
         lines.append(f"Agents Executed: {self.agents_executed}")
         lines.append(f"Generated: {self.timestamp}")
@@ -142,7 +161,14 @@ class HealthCheckReport:
         lines.append("CATEGORY BREAKDOWN")
         lines.append("-" * 70)
 
-        for category in sorted(self.category_scores, key=lambda x: x.score, reverse=True):
+        for category in sorted(
+            self.category_scores,
+            key=lambda x: (x.measured, x.score),
+            reverse=True,
+        ):
+            if not category.measured:
+                lines.append(f"❓ {category.name:15}   N/A (not measured)")
+                continue
             status = "✅" if category.passed else "❌"
             bar_length = int(category.score / 5)  # 0-20 chars
             bar = "█" * bar_length
