@@ -381,6 +381,11 @@ as pickable work.
 - One PR per feature surface: before opening a PR, check for an
   existing or parallel PR touching the same files
   (`gh pr list`, `git log origin/main -- <files>`).
+- Fold in, don't stack: when a same-function PR is already open with
+  ≤1 commit, fold its diff into the new PR and close the old one AT
+  OPEN TIME — a PR stacked on an open sibling goes DIRTY against its
+  own merged content (#2200, 2026-08-23). Record the fold in the new
+  PR body.
 - Before every commit: `git branch --show-current` — confirm the
   checkout you edited is on the branch you mean to ship.
 - Don't touch other agents' worktrees under `.claude/worktrees/`.

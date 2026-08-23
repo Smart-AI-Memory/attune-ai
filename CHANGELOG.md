@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Security auditor: the LLM merge is an allowlist.** An LLM reply may
+  now only add `top_findings` / `notes` / `reasoning`; every other key
+  (severity counts, score, `retryable`, mode/tier, or one nobody has
+  named yet) is dropped instead of written into the gate's findings.
+  Closes the "LLM-overwritable findings key" class structurally after
+  three one-key-per-lane fixes on the same file.
+
+### Added
+
+- `scripts/ledger_precision.py` — per-seat precision tally over the R5
+  cross-review ledger (real / sent per seat, plus inline bug-predict
+  notes), so "yield stays measured" is a number rather than a read.
+
 ## [14.0.0] - 2026-08-22
 
 **The release checks its own diff.** `/release audit` asks a question

@@ -163,3 +163,22 @@ feature-lead-governance P1 re-based onto this ledger (bar: 10
 total runs OR first accepted/rejected pattern — see that spec's
 decisions.md). Posture unchanged: board-only advisory; this grants
 the ledger a ranking role, not a gate role.
+
+## 2026-08-23 — the ledger's yield is tallied by a script, not by reading (chair-ratified retro item)
+
+"Yield stays measured in the R5 ledger" (feature-lead-governance,
+2026-07-30) had no mechanism: the measurement was a human reading
+~90 prose rows. `scripts/ledger_precision.py` now tallies per-seat
+precision from the disposition cells (clean / real / N real /
+dismissed|noise|rejected — the vocabulary D11a fixed), plus any tool
+precision a row records inline (bug-predict). First run on the 89
+rows at ratification: **codex 88% (126 real / 143 sent, 77 lanes,
+9 clean), antigravity 83% (5/6), bug-predict 100% (3/3, one note)**.
+"Rejected" is the conservative remainder — every finding the lead
+did NOT accept as real, including parked and already-correct ones.
+
+Three rows the script cannot read are named, not dropped, and
+pinned in `tests/unit/scripts/test_ledger_precision.py` as a
+shrink-only set: a NEW row outside the vocabulary fails the test,
+so the tally cannot silently stop being "measured". Posture
+unchanged — a report, never a gate; exit code is always 0.

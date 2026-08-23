@@ -32,6 +32,13 @@ the grammar from the module — a bare "countersign:" claim without
 the artifact digest is exactly the lead-narrated form D11c rejects,
 and it fails the gate.
 
+Precision tally (2026-08-23): `python scripts/ledger_precision.py`
+reads the rows below and reports per-seat precision (real / sent);
+a disposition must start with `clean`, `real`, `N real`, or a
+rejection class for the row to count — anything else is listed as
+unclassified, and a new unclassified row fails
+`tests/unit/scripts/test_ledger_precision.py`.
+
 | Date | Seat | Target | Files | Findings | Disposition |
 |---|---|---|---|---|---|
 | 2026-07-29 | codex | branch vs merge-base 94e8459c5 (origin/main) — #1559 skeptic diff | 3 sent / 0 omitted | 5 (findings) | ruled at the #1559 lift (row closed 2026-07-30, chair-directed; fixes verified in merged tree) — 4 real, accepted and fixed in the lift commit (worktree-from-HEAD blind spot surfaced via `uncommitted_paths`; uncited COUNTERSIGN parses malformed; CITE validated against executed labels; git failures raise `SkepticError`) + 1 dismissed — claim: "caller-provided `scratch_root` is not created before `git worktree add`; nonexistent roots fail" — reason: `git worktree add` creates missing parents (probed live, 3-level nonexistent root, exit 0); `test_isolated_pass_and_fail_receipts` stays as the regression guard [P1] |
