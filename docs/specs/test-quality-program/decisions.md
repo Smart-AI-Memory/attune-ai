@@ -819,3 +819,67 @@ deliberate ruled policy with a bright line (e.g. "routine lanes
 target 90%; 100% remains the bar for modules touched by a bug fix"),
 never an ad-hoc stopping point. Also: tonight's 7% is one session's
 n=14 — a chair may reasonably want one more session of data first.
+
+## Workflow-verdict validation — planted-defect probe pack (2026-08-23)
+
+**Date:** 2026-08-23
+**Rubric score at pick time:** n/a (chair-promoted from roundtable
+`q-workflow-fleet-health-001`, not a rubric pick)
+**Picked because:** the fleet probe's 12 "working" workflow verdicts
+were each established by a single small-target run — which proves only
+"exited 0", never analytical validity. A workflow that returns findings
+for the wrong reason, or degrades-to-empty, passes that bar.
+**Outcome:** added a planted-defect fixture pack
+(`tests/fixtures/workflow_probes/`) + an in-process probe runner
+(`scripts/workflow_probe_runner.py`) that asserts five workflows
+actually find a known defect; a free unit guard
+(`tests/unit/scripts/test_workflow_probe_runner.py`, 13 tests) keeps the
+fixtures honest on every push.
+**PR:** _(filled in after merge)_
+**Bug log entry:** n/a (validation harness; no production bug fixed —
+probes surface bugs when run)
+
+This is the roundtable's part (b) — "which 'working' verdicts should NOT
+be trusted from one small-target probe, and what one additional probe
+per suspect would settle it" — mechanized. Each probe stages a fixture
+into a throwaway workdir and runs the workflow IN-PROCESS via
+`get_workflow(name)().execute(...)`, which returns the structured
+`WorkflowResult` directly and sidesteps the CLI `--json` repr fallback
+(the CLI `--json` path emits `str(WorkflowResult)`, not findings — a
+separate defect worth noting, not fixed here).
+
+Probes and their receipts:
+
+- **security-audit** — fixture with one dynamic-eval call (CWE-95) plus
+  one fake hardcoded key: must return security findings that NAME both
+  and a non-perfect score.
+- **dependency-check** — pins with known CVEs (requests 2.19.1 /
+  CVE-2018-18074, PyYAML 5.3.1 / CVE-2020-14343): must name a planted
+  package/CVE.
+- **test-gen** — a branchy, untested module: the emitted test code must
+  import, run, and PASS under pytest (executed, not just exit 0). NOTE:
+  `test-gen` has no Write tool, so it emits tests only as report code
+  fences; the probe extracts and runs them. If it emits none, the probe
+  FAILS with that reason — which is itself a real finding about the
+  workflow.
+- **discovery-sweep** — staged multi-defect workdir: no LLM lane may
+  report 0 findings AND $0 spend (a $0 lane never ran), and no lane may
+  appear in `metadata.failures`. Per-lane spend is read off each
+  source's `spent_usd` after the run (it is not in the result payload).
+- **release-notes** — a throwaway git repo with a planted breaking-change
+  commit: readiness score must be a real 0-100 number and the change
+  must appear in the report.
+
+**Spend / CI boundary (DEC-6, "CI spends attention, never money"):** the
+probes are LLM-billed (~$6-8 for the set) and run ONLY via the script,
+which caps each run with `ATTUNE_MAX_BUDGET_USD` (`--budget`, default
+3.00). With no `--run`/`--all` the script validates fixtures and prints
+a spend plan for $0. The billed probes are NOT wired into per-push CI;
+the free unit guard is.
+
+**Deferred (not in this pass):** the fail-open group the roundtable
+ranked Sev1-Sev3 (secure-release GO on a dead gate, health-check
+fabricated 100/100, doc-orchestrator "no gaps" after its scout failed)
+is a separate fix — this pass validates the *trusted* verdicts, not the
+*masquerading* ones. `test-gen-parallel` (the variant that DOES write
+files) needs pre-existing coverage data and is out of scope here.

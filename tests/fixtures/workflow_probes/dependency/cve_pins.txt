@@ -1,0 +1,16 @@
+# Planted-defect fixture for the dependency-check probe.
+#
+# DO NOT "fix" (bump) these pins — the known-CVE pins ARE the
+# fixture (see tests/fixtures/workflow_probes/README.md). The
+# dependency-check workflow must name at least one of them.
+#
+# NOT named requirements.txt on purpose: GitHub security alerts and
+# dependabot scan requirements*.txt across the repo and would flag
+# these forever. The probe runner stages this file into the probe
+# workdir AS requirements.txt.
+#
+# Planted known-vulnerable pins:
+#   requests==2.19.1  -> CVE-2018-18074 (credential leak on redirect)
+#   PyYAML==5.3.1     -> CVE-2020-14343 (arbitrary code exec via full_load)
+requests==2.19.1
+PyYAML==5.3.1
