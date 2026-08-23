@@ -186,45 +186,42 @@ def _start_via_docker(port: int = 6379) -> bool:
 
 
 def _start_via_direct(port: int = 6379) -> bool:
-    """Try to start redis-server directly in background."""
-    # On Windows, look for redis-server.exe
-    if IS_WINDOWS:
-        redis_server = _find_command("redis-server.exe") or _find_command("redis-server")
-    else:
-        redis_server = _find_command("redis-server")
+    """Start redis-server directly — Windows only.
 
+    On macOS/Linux this method REFUSES (returns False without spawning).
+    The bare ``redis-server --port N --daemonize yes`` it used to run had
+    no config file, so it listened on every interface with no password,
+    no modules, and ``dir`` = the caller's cwd. When the configured
+    redis-stack was crash-looping on 2026-08-23, that squatter took the
+    port, masked the real failure for two hours, and dropped a
+    ``dump.rdb`` into a repo worktree (round table
+    q-post-redis-repair-broken-features-001, chair-ruled C4). Homebrew /
+    systemd / Docker start a CONFIGURED server and remain; when none of
+    them works, "not running" is the honest answer.
+    """
+    if not IS_WINDOWS:
+        logger.debug("direct_start_refused", reason="unix: a bare redis-server is unsafe")
+        return False
+
+    redis_server = _find_command("redis-server.exe") or _find_command("redis-server")
     if not redis_server:
         return False
 
     try:
-        if IS_WINDOWS:
-            # Windows: Start without daemonize (run in background via subprocess)
-            process = subprocess.Popen(
-                [redis_server, "--port", str(port)],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                creationflags=(
-                    subprocess.CREATE_NO_WINDOW if hasattr(subprocess, "CREATE_NO_WINDOW") else 0
-                ),
-            )
-            # Don't wait - let it run in background
-            time.sleep(2)
-            if process.poll() is None:  # Still running
-                logger.info("redis_started_directly_windows")
-                return True
-        else:
-            # Unix: Use daemonize
-            process = subprocess.Popen(
-                [redis_server, "--port", str(port), "--daemonize", "yes"],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-            process.wait(timeout=5)
-
-            if process.returncode == 0:
-                logger.info("redis_started_directly")
-                time.sleep(1)
-                return True
+        # Windows: Start without daemonize (run in background via subprocess)
+        process = subprocess.Popen(
+            [redis_server, "--port", str(port)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=(
+                subprocess.CREATE_NO_WINDOW if hasattr(subprocess, "CREATE_NO_WINDOW") else 0
+            ),
+        )
+        # Don't wait - let it run in background
+        time.sleep(2)
+        if process.poll() is None:  # Still running
+            logger.info("redis_started_directly_windows")
+            return True
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Direct start is best-effort — fall through to next method
         logger.debug("direct_start_failed", error=str(e))
