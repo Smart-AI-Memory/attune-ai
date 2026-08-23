@@ -793,6 +793,80 @@ def _print_plan(selected: list[str]) -> None:
     print("execute (billed).")
 
 
+# --------------------------------------------------------------------------
+# Run-records (registry feed — workflow-behavioral-validation D3/D9).
+# --------------------------------------------------------------------------
+
+RUNNER_VERSION = "0.3.0"
+RECORDS_DIR = REPO_ROOT / "docs" / "specs" / "workflow-behavioral-validation" / "records"
+
+#: Receipt type per probe (design.md § fixture design by workflow type).
+_RECEIPT_TYPES: dict[str, str] = {
+    "security-audit": "named-defect",
+    "dependency-check": "named-defect",
+    "test-gen": "executed-tests",
+    "discovery-sweep": "lane-accounting",
+    "release-notes": "metric-crosscheck",
+    **dict.fromkeys(_ANALYTICAL, "named-defect"),
+}
+
+
+def _git_sha() -> str:
+    """Best-effort short sha of the tree the probe ran against."""
+    try:
+        return subprocess.run(
+            ["git", "rev-parse", "--short=9", "HEAD"],
+            cwd=str(REPO_ROOT),
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=True,
+        ).stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return "unknown"
+
+
+def _verdict_of(result: ProbeResult) -> str:
+    """pass | fail | crash — crash when the workflow never analysed."""
+    if result.passed:
+        return "pass"
+    if "CRASHED" in result.reason or result.reason.startswith("probe raised"):
+        return "crash"
+    return "fail"
+
+
+def write_record(result: ProbeResult, records_dir: Path, ran_at: str, git_sha: str) -> Path:
+    """Write one run-record JSON (ALWAYS runs — pass, fail, AND crash.
+
+    Per D9: revocation depends on failed/crashed records being written
+    and committed, so record-writing must never be gated on the verdict.
+    Files are timestamped (append-only, never overwritten); the registry
+    is re-projected from them by ``scripts/project_probe_registry.py``
+    (the ``--check`` drift guard fails CI on a stale registry).
+    """
+    records_dir.mkdir(parents=True, exist_ok=True)
+    stamp = ran_at.replace(":", "").replace("-", "")[:15]  # YYYYmmddTHHMMSS
+    path = records_dir / f"{stamp}-{result.name}.json"
+    suffix = 1
+    while path.exists():  # append-only: never clobber an existing record
+        path = records_dir / f"{stamp}-{result.name}-{suffix}.json"
+        suffix += 1
+    record = {
+        "workflow": result.name,
+        "fixture": "tests/fixtures/workflow_probes/",
+        "receipt_type": _RECEIPT_TYPES.get(result.name, "named-defect"),
+        "verdict": _verdict_of(result),
+        "cost_usd": round(result.cost_usd, 4),
+        "duration_s": round(result.duration_s, 1),
+        "ran_at": ran_at,
+        "runner_version": RUNNER_VERSION,
+        "git_sha": git_sha,
+        "evidence": {**result.evidence, "reason": result.reason},
+    }
+    path.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    return path
+
+
 async def _run_selected(selected: list[str], budget: float) -> list[ProbeResult]:
     results: list[ProbeResult] = []
     for probe in selected:
@@ -828,6 +902,16 @@ def main(argv: list[str] | None = None) -> int:
         help="per-run USD cap (ATTUNE_MAX_BUDGET_USD); default 3.00",
     )
     parser.add_argument("--json", action="store_true", help="emit JSON results to stdout")
+    parser.add_argument(
+        "--no-record",
+        action="store_true",
+        help="scratch run: skip writing run-records",
+    )
+    parser.add_argument(
+        "--record-dir",
+        default=str(RECORDS_DIR),
+        help="where run-records land (default: the tracked registry records dir)",
+    )
     args = parser.parse_args(argv)
 
     problems = validate_fixtures()
@@ -865,6 +949,28 @@ def main(argv: list[str] | None = None) -> int:
         print(f"[{mark}] {res.name}: {res.reason}")
     total_cost = sum(r.cost_usd for r in results)
     print(f"total measured spend: ${total_cost:.4f}")
+
+    if not args.no_record:
+        from datetime import datetime, timezone
+
+        records_dir = Path(args.record_dir)
+        sha = _git_sha()
+        written = [
+            write_record(
+                res,
+                records_dir,
+                ran_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                git_sha=sha,
+            )
+            for res in results
+        ]
+        for path in written:
+            print(f"record: {path}")
+        print(
+            "re-project the registry before committing records: "
+            "python scripts/project_probe_registry.py "
+            "(CI's --check guard fails on a stale registry.md)"
+        )
 
     if args.json:
         print(json.dumps([r.to_dict() for r in results], indent=2))
