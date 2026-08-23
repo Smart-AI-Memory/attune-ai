@@ -110,6 +110,9 @@
           </td>
           <td>
             {{ w.description }}
+            {% if w.notice %}
+              <div class="workflow-notice" role="note">⚠ {{ w.notice }}</div>
+            {% endif %}
             <div class="run-status"><span data-status></span></div>
             {% if w.name == "discovery-sweep" %}
               {# Phase 3 chips. Server-rendered for first paint; runner.js

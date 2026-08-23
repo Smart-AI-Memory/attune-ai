@@ -39,6 +39,7 @@ class WorkflowEntry:
     description: str
     stages: int
     tier_map: dict[str, str]
+    notice: str = ""
 
 
 @dataclass(frozen=True)
@@ -1688,6 +1689,24 @@ def read_sweep_chip_counts(scope_path: str, config: Config) -> SweepChipCounts:
     )
 
 
+#: Chair-ruled reliability notices (roundtable q-workflow-fleet-health-001,
+#: 2026-08-23): these workflows currently report success their execution
+#: does not support. Shown as a warning badge on the dashboard until the
+#: fail-closed fixes land; remove the entry in the fixing PR.
+RELIABILITY_NOTICES: dict[str, str] = {
+    "secure-release": (
+        "Known issue: can report GO even when its security-audit and "
+        "release-prep sub-workflows fail to execute. Do not trust a GO "
+        "from this workflow until the fail-closed fix lands."
+    ),
+    "health-check": (
+        "Known issue: reports perfect scores (100/100, grade A) when its "
+        "measurement agents do not run. Treat perfect scores from fast, "
+        "zero-cost runs as unmeasured, not healthy."
+    ),
+}
+
+
 def list_workflows() -> list[WorkflowEntry]:
     """Return the registered workflow catalog. Empty if the registry is unavailable."""
     try:
@@ -1706,6 +1725,7 @@ def list_workflows() -> list[WorkflowEntry]:
                     description=str(entry.get("description", "")),
                     stages=len(stages) if isinstance(stages, list) else 0,
                     tier_map={str(k): str(v) for k, v in tier_map.items()},
+                    notice=RELIABILITY_NOTICES.get(str(entry.get("name", "")), ""),
                 )
             )
     except Exception:  # noqa: BLE001
