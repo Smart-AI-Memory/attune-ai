@@ -861,3 +861,74 @@ class TestProvenanceStampingCoverage:
         out = recall_entries("q", backend=fb)
         assert out[0]["text"] == "ok"  # recall still returns, unstamped
         assert "provenance" not in out[0]
+
+
+# --------------------------------------------------------------------------
+# Unconfirmed upgrade write diverts to the file tier (round table
+# q-post-redis-repair-broken-features-001, 2026-08-23: AMS acked 2,437
+# creates with 200 while its Redis auth was dead; nothing persisted and
+# the hook reported success for two weeks).
+# --------------------------------------------------------------------------
+
+
+class _UnconfirmedBackend(_RememberBackend):
+    """Upgrade tier whose write path cannot prove it kept anything."""
+
+    def remember(self, content, *, memory_id=None, session_id=None, topics=None):
+        self.remembered.append((content, memory_id, session_id, topics))
+        return False
+
+
+def _passthrough_gate(monkeypatch):
+    class _PassThroughGate:
+        def __init__(self, **kwargs):
+            pass
+
+        def sanitize(self, d):
+            return (d, 0)
+
+    monkeypatch.setattr(security_mod, "DataSanitizer", _PassThroughGate)
+
+
+def test_unconfirmed_remember_diverts_to_file_tier(monkeypatch, tmp_path):
+    """A False from the upgrade tier lands the finding in the file tier."""
+    from attune.memory import file_stash as fs_mod
+
+    _passthrough_gate(monkeypatch)
+    monkeypatch.setattr(fs_mod, "_default_base_dir", lambda: tmp_path, raising=False)
+    monkeypatch.setenv("ATTUNE_SESSION_STASH_DIR", str(tmp_path))
+    captured: list[tuple] = []
+
+    class _File:
+        is_fallback = True
+
+        def remember(self, content, *, memory_id=None, session_id=None, topics=None):
+            captured.append((content, memory_id))
+            return True
+
+    monkeypatch.setattr(fs_mod, "FileStashBackend", _File)
+    entry = _entry("a finding the upgrade tier could not confirm")
+    assert stash_entry(entry, backend=_UnconfirmedBackend()) is True
+    assert captured == [("a finding the upgrade tier could not confirm", entry.id)]
+
+
+def test_unconfirmed_remember_on_file_tier_itself_reports_false(monkeypatch):
+    """When the fallback tier IS the target, there is nowhere to divert."""
+    _passthrough_gate(monkeypatch)
+    be = _UnconfirmedBackend()
+    be.is_fallback = True
+    assert stash_entry(_entry("x"), backend=be) is False
+
+
+def test_unconfirmed_remember_reports_false_when_divert_fails(monkeypatch):
+    """The return value reflects persistence, never the upgrade tier's ack."""
+    from attune.memory import file_stash as fs_mod
+
+    _passthrough_gate(monkeypatch)
+
+    class _BrokenFile:
+        def remember(self, *a, **k):
+            raise OSError("disk full")
+
+    monkeypatch.setattr(fs_mod, "FileStashBackend", _BrokenFile)
+    assert stash_entry(_entry("x"), backend=_UnconfirmedBackend()) is False

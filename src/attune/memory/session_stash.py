@@ -331,14 +331,18 @@ def stash_entry(
     remember = getattr(target, "remember", None)
     try:
         if remember is not None:
-            return bool(
-                remember(
-                    safe_content,
-                    memory_id=entry.id,
-                    session_id=entry.session_id,
-                    topics=topics,
-                )
-            )
+            if remember(
+                safe_content,
+                memory_id=entry.id,
+                session_id=entry.session_id,
+                topics=topics,
+            ):
+                return True
+            # The upgrade tier accepted nothing it can prove it kept (an
+            # unconfirmed write, e.g. AMS acking before its Redis write
+            # failed). Divert to the local tier so the finding survives
+            # and report honestly whether THAT landed.
+            return _divert_to_file(target, safe_content, entry, topics)
         # Backend without a searchable write path: key/value stash only
         # (not recallable, but the host session must not break).
         ttl_seconds = max(1, entry.ttl_days) * 86_400
@@ -350,6 +354,31 @@ def stash_entry(
         # the host session.
         logger.warning("session stash write failed: %s", exc)
         return False
+
+
+def _divert_to_file(target: Any, content: str, entry: SessionStashEntry, topics: list[str]) -> bool:
+    """Write ``entry`` to the local file tier after an unconfirmed upgrade write."""
+    if getattr(target, "is_fallback", False):
+        return False  # already the local tier; nothing further to try
+    try:
+        from attune.memory.file_stash import FileStashBackend
+
+        landed = bool(
+            FileStashBackend().remember(
+                content, memory_id=entry.id, session_id=entry.session_id, topics=topics
+            )
+        )
+    except Exception as exc:  # noqa: BLE001
+        # INTENTIONAL: the divert is best-effort; the host session must not break.
+        logger.warning("session stash: file divert failed: %s", exc)
+        return False
+    logger.warning(
+        "session stash: %s write unconfirmed for %s; diverted to file tier (landed=%s)",
+        type(target).__name__,
+        entry.id,
+        landed,
+    )
+    return landed
 
 
 def recall_entries(
