@@ -183,8 +183,13 @@ class SecurityAuditorAgent(ReleaseAgent):
         ``score`` is recomputed from the post-ratchet counts.
         """
         llm_counts = {key: _llm_count(llm_findings, key) for key in _SEVERITY_COUNT_KEYS}
-        if llm_counts["critical_issues"] is not None:
-            llm_counts["critical_issues"] += llm_counts["high_issues"] or 0
+        # Gate count = critical + high whenever EITHER is reported, so an
+        # LLM that names only new HIGH findings still raises the gate and
+        # critical_issues >= high_issues stays true (cross-review #2203).
+        if llm_counts["critical_issues"] is not None or llm_counts["high_issues"] is not None:
+            llm_counts["critical_issues"] = (llm_counts["critical_issues"] or 0) + (
+                llm_counts["high_issues"] or 0
+            )
         for key, llm_count in llm_counts.items():
             if llm_count is not None and findings[key] >= 0 and llm_count > findings[key]:
                 findings[key] = llm_count

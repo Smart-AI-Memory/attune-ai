@@ -918,6 +918,18 @@ class TestSecurityAuditorAgent:
         # score recomputed from post-ratchet counts: 2 critical + 1 high.
         assert findings["score"] == 100.0 - 2 * 30 - 15
 
+    def test_llm_high_only_report_raises_the_gate_count(self):
+        """Cross-review finding on #2203: an LLM that reports only
+        high_issues (no critical_issues key) must still raise the gate
+        count — HIGH findings block the gate — and never drive the
+        pure-CRITICAL term of the score negative.
+        """
+        success, findings, _ = self._run_llm_tier([], {"high_issues": 2})
+        assert success is False
+        assert findings["critical_issues"] == 2
+        assert findings["high_issues"] == 2
+        assert findings["score"] == 100.0 - 2 * 15
+
     def test_llm_cannot_raise_score_over_a_high_finding(self):
         """bug-predict #2: LLM {score: 100} against a HIGH finding leaves
         the parser's 85 in place; confidence stays parser-owned too.
