@@ -259,13 +259,39 @@ class _V1Sweep(ast.NodeVisitor):
             self._hit("R6-redis-fstring-key", node, f"{f.value.id}.{f.attr}(f'...')")
 
 
-def _v1_only(rule_id: str) -> Callable[[ast.AST, str], list[Hit]]:
-    def check(tree: ast.AST, path: str) -> list[Hit]:
-        sweep = _V1Sweep(path)
-        sweep.visit(tree)
-        return [h for h in sweep.hits if h.rule_id == rule_id]
+@dataclass(frozen=True)
+class _SweepCheck:
+    """One rule's slice of a SHARED sweep.
 
-    return check
+    Every rule in a sweep family sees the same traversal, so running
+    the visitor per rule walked each file once per rule (8 walks for
+    the 8-rule pack) to keep one rule's hits and discard the rest.
+    Carrying the visitor class here lets :func:`scan_source` run each
+    distinct sweep once per file and slice it per rule.
+
+    Calling it directly still walks the tree on its own, so a caller
+    holding a single ``Rule`` keeps the old standalone behavior.
+    """
+
+    visitor: type[ast.NodeVisitor]
+    rule_id: str
+
+    def __call__(self, tree: ast.AST, path: str) -> list[Hit]:
+        return self.slice(self.sweep(tree, path))
+
+    def sweep(self, tree: ast.AST, path: str) -> list[Hit]:
+        """Run the whole family sweep once and return ALL its hits."""
+        visitor = self.visitor(path)
+        visitor.visit(tree)
+        return list(getattr(visitor, "hits", []))
+
+    def slice(self, swept: list[Hit]) -> list[Hit]:
+        """Keep only this rule's hits, in traversal order."""
+        return [h for h in swept if h.rule_id == self.rule_id]
+
+
+def _v1_only(rule_id: str) -> Callable[[ast.AST, str], list[Hit]]:
+    return _SweepCheck(_V1Sweep, rule_id)
 
 
 # --------------------------------------------------------------------------
@@ -401,12 +427,7 @@ class _R7Visitor(ast.NodeVisitor):
 
 
 def _r7_only(rule_id: str) -> Callable[[ast.AST, str], list[Hit]]:
-    def check(tree: ast.AST, path: str) -> list[Hit]:
-        visitor = _R7Visitor(path)
-        visitor.visit(tree)
-        return [h for h in visitor.hits if h.rule_id == rule_id]
-
-    return check
+    return _SweepCheck(_R7Visitor, rule_id)
 
 
 #: The pack. Class ids map to the 2026-08-20 register; a rule with no
@@ -490,7 +511,20 @@ def scan_source(source: str, path: str, rules: tuple[Rule, ...] = RULES) -> list
     except (SyntaxError, ValueError) as exc:
         lineno = getattr(exc, "lineno", 0) or 0
         return [Hit("PARSE-ERROR", path, lineno, str(exc))]
+    # One traversal per distinct sweep, not one per rule. Rules that
+    # share a visitor (all of RULES does) would otherwise walk the
+    # file once each -- 8 walks where 2 suffice, on every scanned file
+    # in every CI run.
+    swept: dict[type[ast.NodeVisitor], list[Hit]] = {}
     hits: list[Hit] = []
     for rule in rules:
-        hits.extend(rule.check(tree, path))
+        check = rule.check
+        if not isinstance(check, _SweepCheck):
+            hits.extend(check(tree, path))  # custom rule: unchanged
+            continue
+        family = swept.get(check.visitor)
+        if family is None:
+            family = check.sweep(tree, path)
+            swept[check.visitor] = family
+        hits.extend(check.slice(family))
     return hits
