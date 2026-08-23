@@ -527,6 +527,32 @@ def _effective_config_report() -> dict[str, Any]:
     return report
 
 
+def _write_target(backend: Any, stats: dict[str, Any], effective: dict[str, Any]) -> dict[str, Any]:
+    """The ONE endpoint the selected backend writes to (principle 16).
+
+    A health answer that names two Redis endpoints — the AMS base URL
+    in ``stats`` and the direct-Redis resolver's ``redacted_url`` in
+    ``effective_config`` — cannot tell the reader which one their
+    stash depends on (round table q-post-redis-repair-broken-features-001,
+    2026-08-23: the resolver pointed at Redis Cloud while writes went
+    through a local AMS whose own Redis was auth-dead, and the answer
+    read as healthy). Derive the target from ``backend_selected`` and
+    label the other endpoint as not governing writes.
+    """
+    name = type(backend).__name__
+    if name == "AMSMemoryBackend":
+        effective["applies_to"] = (
+            "direct Redis clients (recall index, telemetry) — does NOT govern "
+            "the selected AMS write path"
+        )
+        return {
+            "kind": "ams",
+            "url": stats.get("base_url"),
+            "note": "AMS persists to its OWN configured Redis; see the AMS server log",
+        }
+    return {"kind": "direct-redis", "url": effective.get("redacted_url")}
+
+
 async def handle_redis_health_check(server: Any, args: dict[str, Any]) -> dict[str, Any]:
     """Check AMS health, connection status, and effective Redis config.
 
@@ -546,13 +572,15 @@ async def handle_redis_health_check(server: Any, args: dict[str, Any]) -> dict[s
         backend = _get_backend(server)
         connected = backend.is_connected()
         stats = backend.get_stats()
+        effective = _effective_config_report()
         return {
             "success": True,
             "connected": connected,
             "stats": stats,
             "source": "redis-ams",
             "backend_selected": type(backend).__name__,
-            "effective_config": _effective_config_report(),
+            "write_target": _write_target(backend, stats, effective),
+            "effective_config": effective,
         }
     except ImportError:
         return {
