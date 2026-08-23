@@ -166,8 +166,14 @@ class SecurityAuditorAgent(ReleaseAgent):
             findings["mode"] = "llm" if self.llm_client else "rule_based"
             findings["tier"] = tier.value
 
-            # Success = no critical issues
+            # Success = no critical issues. A failing count is FINAL:
+            # bandit is deterministic and the LLM ratchet above can only
+            # raise it, so a stronger tier cannot turn this into a pass —
+            # don't spend two more bandit runs (and two LLM calls) on it.
+            # The exception path below stays retryable: its cause is
+            # unknown and a transient error may clear on a retry.
             critical = findings.get("critical_issues", 0)
+            findings["retryable"] = False
             return critical == 0, findings
 
         except Exception as e:  # noqa: BLE001

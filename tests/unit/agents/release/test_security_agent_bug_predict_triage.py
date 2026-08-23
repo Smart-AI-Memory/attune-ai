@@ -48,11 +48,25 @@ def test_unparseable_bandit_output_does_not_escalate_tiers():
     assert result.findings["note"] == "Could not parse bandit output"
 
 
-def test_real_findings_still_escalate():
-    """A genuine failure keeps the existing CHEAP -> CAPABLE -> PREMIUM path."""
+def test_real_findings_do_not_escalate_either():
+    """A failing bandit count is final (deterministic tool, raise-only
+    ratchet), so CAPABLE/PREMIUM retries cannot change the verdict."""
     agent = _agent()
     out = json.dumps({"results": [{"issue_severity": "HIGH"}]})
     with patch(_RUN, return_value=(1, out, "")) as run:
+        result = agent.process(".")
+
+    assert run.call_count == 1
+    assert result.success is False
+    assert result.escalated is False
+    assert result.tier_used is Tier.CHEAP
+    assert result.findings["critical_issues"] == 1
+
+
+def test_exception_path_still_escalates():
+    """An unknown error keeps the retry: a transient fault may clear."""
+    agent = _agent()
+    with patch(_RUN, side_effect=OSError("transient")) as run:
         result = agent.process(".")
 
     assert run.call_count == 3
@@ -139,15 +153,15 @@ def test_high_alone_is_the_gate_count():
 # --- cross-review on #2204: the LLM cannot steer escalation ---------------
 
 
-def test_llm_reply_cannot_suppress_tier_escalation():
-    """``retryable`` is an escalation control signal owned by the parser's
-    sentinel paths; an LLM reply carrying ``retryable: false`` against a
-    real finding must not silence the CAPABLE/PREMIUM retries.
+def test_llm_reply_cannot_steer_tier_escalation():
+    """``retryable`` is an escalation control signal owned by the parser;
+    an LLM reply carrying ``retryable: true`` against a real finding must
+    not buy CAPABLE/PREMIUM retries the parser has ruled out.
     """
     agent = _agent()
     agent.llm_client = object()
     out = json.dumps({"results": [{"issue_severity": "HIGH"}]})
-    llm = json.dumps({"retryable": False, "notes": "x"})
+    llm = json.dumps({"retryable": True, "notes": "x"})
     with (
         patch.object(sec_mod, "LLM_MODE", "real"),
         patch(_RUN, return_value=(1, out, "")) as run,
@@ -155,7 +169,7 @@ def test_llm_reply_cannot_suppress_tier_escalation():
     ):
         result = agent.process(".")
 
-    assert run.call_count == 3
-    assert result.escalated is True
-    assert "retryable" not in result.findings
+    assert run.call_count == 1
+    assert result.escalated is False
+    assert result.findings["retryable"] is False
     assert result.findings["notes"] == "x"
