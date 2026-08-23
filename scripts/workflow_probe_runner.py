@@ -74,6 +74,14 @@ _EST_COST_USD: dict[str, float] = {
     "test-gen": 1.2,
     "discovery-sweep": 4.5,
     "release-notes": 3.2,
+    # Analytical batch (Phase 3) — rough per-probe, capped by --budget.
+    "code-review": 0.9,
+    "deep-review": 1.2,
+    "perf-audit": 0.5,
+    "refactor-plan": 0.9,
+    "simplify-code": 1.2,
+    "test-audit": 0.9,
+    "doc-audit": 2.9,
 }
 
 PROBE_ORDER = [
@@ -82,6 +90,13 @@ PROBE_ORDER = [
     "test-gen",
     "discovery-sweep",
     "release-notes",
+    "code-review",
+    "deep-review",
+    "perf-audit",
+    "refactor-plan",
+    "simplify-code",
+    "test-audit",
+    "doc-audit",
 ]
 
 
@@ -147,6 +162,23 @@ def validate_fixtures() -> list[str]:
         text = tg.read_text(encoding="utf-8")
         if "def order_total" not in text:
             problems.append(f"{tg.name}: expected target function is gone")
+
+    ana = FIXTURES / "analytical" / "sample_service.py"
+    if not ana.exists():
+        problems.append(f"missing fixture: {ana}")
+    else:
+        text = ana.read_text(encoding="utf-8")
+        # A few planted-defect markers across classes — if these are
+        # gone the analytical probes would run against a clean file and
+        # go vacuous.
+        for marker, label in (
+            ("def find_duplicates", "perf O(n^2) target"),
+            ("tags: list[str] = []", "mutable-default target"),
+            ("def validate_label", "duplication target"),
+            ("def summarize(items):", "missing-docstring target"),
+        ):
+            if marker not in text:
+                problems.append(f"{ana.name}: planted {label} is gone")
 
     return problems
 
@@ -580,12 +612,164 @@ async def probe_release_notes(budget: float) -> ProbeResult:
     )
 
 
+# --------------------------------------------------------------------------
+# Analytical probes — all share one multi-defect fixture (Phase 3, D5).
+# Each asserts its OWN planted defect class is surfaced. Behavioral
+# receipt (per the spec's "validating probe" definition): findings > 0
+# AND the report names the planted class — never an exact string/score.
+# --------------------------------------------------------------------------
+
+_ANALYTICAL: dict[str, dict[str, Any]] = {
+    "perf-audit": {
+        "cls": "the O(n^2) membership scan",
+        "needles": [
+            "o(n",
+            "quadratic",
+            "n^2",
+            "n²",
+            "linear scan",
+            "membership",
+            "nested loop",
+            "use a set",
+            "set(",
+            "performance",
+        ],
+    },
+    "refactor-plan": {
+        "cls": "the duplicated validate_* blocks",
+        "needles": [
+            "duplicat",
+            "refactor",
+            "repeat",
+            "validate_",
+            "copy-paste",
+            "copy paste",
+            "extract",
+            "dry",
+        ],
+    },
+    "simplify-code": {
+        "cls": "the nested conditional",
+        "needles": [
+            "nest",
+            "simplif",
+            "early return",
+            "guard clause",
+            "guard-clause",
+            "categorize",
+            "flatten",
+            "conditional",
+        ],
+    },
+    "code-review": {
+        "cls": "the mutable default argument",
+        "needles": [
+            "mutable default",
+            "default argument",
+            "default parameter",
+            "tags=[]",
+            "shared",
+            "append_tag",
+        ],
+    },
+    "deep-review": {
+        "cls": "the mutable default / swallowed exception",
+        "needles": [
+            "mutable default",
+            "default argument",
+            "except",
+            "swallow",
+            "broad except",
+            "load_config",
+            "append_tag",
+        ],
+    },
+    "test-audit": {
+        "cls": "the missing tests",
+        "needles": [
+            "untested",
+            "no test",
+            "test gap",
+            "no coverage",
+            "lacks test",
+            "missing test",
+            "not tested",
+            "without test",
+        ],
+    },
+    "doc-audit": {
+        "cls": "the missing docstring",
+        "needles": [
+            "docstring",
+            "summarize",
+            "undocumented",
+            "missing doc",
+            "no doc",
+            "lacks a doc",
+            "without a doc",
+        ],
+    },
+}
+
+
+async def _probe_analytical(name: str, budget: float) -> ProbeResult:
+    """Run one analytical workflow against the shared multi-defect
+    fixture and assert its planted defect class is surfaced."""
+    import time
+
+    _budget_env(budget)
+    cfg = _ANALYTICAL[name]
+    with tempfile.TemporaryDirectory() as tmp:
+        work = Path(tmp)
+        shutil.copy(
+            FIXTURES / "analytical" / "sample_service.py",
+            work / "sample_service.py",
+        )
+        t0 = time.monotonic()
+        result = await _run_workflow(name, path=str(work), depth="quick")
+        dur = time.monotonic() - t0
+
+    crash = _crash_reason(result)
+    if crash:
+        return ProbeResult(
+            name=name,
+            passed=False,
+            reason=crash,
+            cost_usd=_cost_of(result),
+            duration_s=dur,
+        )
+
+    num_findings = _total_findings(result)
+    named = _mentions(_raw_text(result), *cfg["needles"])
+    passed = num_findings > 0 and named
+    reasons = []
+    if num_findings == 0:
+        reasons.append("no findings returned")
+    if not named:
+        reasons.append(f"did not surface {cfg['cls']}")
+    reason = "; ".join(reasons) or f"surfaced {cfg['cls']}"
+    return ProbeResult(
+        name=name,
+        passed=passed,
+        reason=reason,
+        cost_usd=_cost_of(result),
+        duration_s=dur,
+        evidence={"num_findings": num_findings, "named_class": named},
+    )
+
+
+def _make_analytical_probe(name: str) -> Callable[[float], Any]:
+    """Bind a workflow name to the shared analytical probe."""
+    return lambda budget: _probe_analytical(name, budget)
+
+
 PROBES: dict[str, Callable[[float], Any]] = {
     "security-audit": probe_security_audit,
     "dependency-check": probe_dependency_check,
     "test-gen": probe_test_gen,
     "discovery-sweep": probe_discovery_sweep,
     "release-notes": probe_release_notes,
+    **{name: _make_analytical_probe(name) for name in _ANALYTICAL},
 }
 
 

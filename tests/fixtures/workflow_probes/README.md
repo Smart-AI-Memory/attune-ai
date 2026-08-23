@@ -23,6 +23,7 @@ Conventions (same as `tests/fixtures/outcome_first_fix/`):
 | `security/vulnerable_service.py` | security-audit | one `eval()` call (CWE-95) + one fake hardcoded API key |
 | `dependency/cve_pins.txt` | dependency-check | pins with known CVEs (requests 2.19.1 / CVE-2018-18074, PyYAML 5.3.1 / CVE-2020-14343) |
 | `testgen/orders.py` | test-gen | no defect — a small branchy module with zero tests; emitted tests must import, run, and pass against it |
+| `analytical/sample_service.py` | code-review, deep-review, perf-audit, refactor-plan, simplify-code, test-audit, doc-audit | ONE shared multi-defect file (Phase 3): O(n²) scan, duplicated `validate_*` blocks, nested conditional, mutable default arg, swallowed exception, no tests, a missing docstring — each analytical probe asserts its own class |
 
 Notes:
 

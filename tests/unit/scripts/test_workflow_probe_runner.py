@@ -63,6 +63,35 @@ def test_testgen_fixture_has_target_and_no_tests() -> None:
     assert not any(name.startswith("test_") or name.endswith("_test.py") for name in files)
 
 
+def test_analytical_fixture_carries_all_planted_defects() -> None:
+    text = (FIXTURES / "analytical" / "sample_service.py").read_text()
+    # One marker per planted defect class the analytical probes assert.
+    assert "def find_duplicates" in text  # perf O(n^2)
+    assert "tags: list[str] = []" in text  # mutable default arg
+    assert "def validate_label" in text  # duplication
+    assert "def categorize" in text  # nested conditional
+    assert "def summarize(items):" in text  # missing docstring
+
+
+def test_analytical_probes_registered_and_costed() -> None:
+    # Each analytical workflow is wired into PROBES, PROBE_ORDER, and has
+    # a cost estimate — the same guard the batch relies on to not go
+    # silently un-run.
+    for name in runner._ANALYTICAL:
+        assert name in runner.PROBES
+        assert name in runner.PROBE_ORDER
+        assert name in runner._EST_COST_USD
+
+
+def test_analytical_probe_names_are_real_workflows() -> None:
+    # The probe names must resolve to registered workflows, or a probe
+    # errors at run time (verify-before-coding).
+    from attune.workflows import get_workflow
+
+    for name in runner._ANALYTICAL:
+        assert get_workflow(name) is not None
+
+
 def test_missing_fixture_is_reported() -> None:
     original = runner.FIXTURES
     try:
