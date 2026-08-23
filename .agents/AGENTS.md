@@ -163,6 +163,26 @@ as pickable work.
     script where `~/.attune/memory/` exists and skips elsewhere,
     including CI).*
 
+16. **Claims carry their basis.** A load-bearing claim states how it
+    is known — "verified by <probe>" or, plainly, "inferred, not
+    checked". Verify whenever the probe is cheap; when you do not,
+    SAY SO IN THE CLAIM. The bug is never the inference, it is the
+    inference wearing the grammar of a verified fact, because the
+    reader cannot tell them apart and acts on both alike. Before
+    asserting, name the property your check actually establishes and
+    ask whether it is the property the next action depends on — a ref
+    comparison answers "what does the remote know", never "what is on
+    this disk"; a clean `git status` means "matches its own HEAD", not
+    "is current".
+    *Enforcer: **aspirational** (no gate detects an inference stated
+    as fact — it is a property of prose. Reviewed periodically via
+    the `/retro` close-out, which asks which claims carried no stated
+    basis. Ratified 2026-08-22 after a release session in which four
+    such claims — one relayed to a peer as the chair's authorization
+    — each had a one-line verifying command available and unrun, and
+    in which two existing detection mechanisms had already reported
+    the problem and were read as ambient noise.)*
+
 ### Shared truth
 
 - Treat the current worktree, Git state, and relevant test results as

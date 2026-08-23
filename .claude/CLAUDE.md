@@ -156,6 +156,26 @@ as pickable work.
     script where `~/.attune/memory/` exists and skips elsewhere,
     including CI).*
 
+16. **Claims carry their basis.** A load-bearing claim states how it
+    is known — "verified by <probe>" or, plainly, "inferred, not
+    checked". Verify whenever the probe is cheap; when you do not,
+    SAY SO IN THE CLAIM. The bug is never the inference, it is the
+    inference wearing the grammar of a verified fact, because the
+    reader cannot tell them apart and acts on both alike. Before
+    asserting, name the property your check actually establishes and
+    ask whether it is the property the next action depends on — a ref
+    comparison answers "what does the remote know", never "what is on
+    this disk"; a clean `git status` means "matches its own HEAD", not
+    "is current".
+    *Enforcer: **aspirational** (no gate detects an inference stated
+    as fact — it is a property of prose. Reviewed periodically via
+    the `/retro` close-out, which asks which claims carried no stated
+    basis. Ratified 2026-08-22 after a release session in which four
+    such claims — one relayed to a peer as the chair's authorization
+    — each had a one-line verifying command available and unrun, and
+    in which two existing detection mechanisms had already reported
+    the problem and were read as ambient noise.)*
+
 ### Shared truth
 
 - Treat the current worktree, Git state, and relevant test results as
@@ -572,63 +592,6 @@ Query the tail with `/recall <topic>`; relevant lessons also surface
 automatically at prompt time and at tool-call decision points.
 APPEND NEW LESSONS to `.claude/lessons.md`, not here — mirror into
 this section only if core-worthy (and then keep both copies in sync).
-
-- **Pre-commit black/ruff/detect-secrets auto-fix vs staging —
-  the dance, one root cause and several symptoms**: the
-  auto-fix hooks modify staged files during `git commit`,
-  which interacts badly with staging. Core rule: **pre-flight
-  the PINNED hooks before `git add`** so they see already-clean
-  files. The symptoms and remedies:
-  - **Pre-flight the pinned tool** — run `uv run --with
-    pre-commit pre-commit run black --files <f>` (and `ruff`)
-    before staging. Use the PINNED version, not `.venv`'s —
-    they can format differently (saw py3.10 venv black leave a
-    triple-quoted layout that pinned black reformatted). Also
-    pre-flight `uv run ruff check <f>` for the non-autofixable
-    lint (F841, E402) that the format hooks don't catch. This
-    avoids the stash/restore dance entirely. **CI black runs on
-    the WHOLE file your PR touches, not just your diff** — so a
-    pre-existing pinned-black discrepancy on lines you never
-    edited fails your PR's `lint`/`pre-commit` (PR #689: CI black
-    wanted a `print(f"""…""")` wrapped at line 640, nowhere near
-    the change; local `.venv` black left it alone). Especially
-    likely after a **hand-resolved rebase conflict** (the resolved
-    region is only formatted by your LOCAL edit-formatter, which
-    differs from pinned) or when touching a file not pinned-black-
-    checked in a while. Diagnostic for "black fails on lines I
-    didn't write": run `uv run --with pre-commit pre-commit run
-    black --files <f>` and commit whatever it reformats.
-  - **Stash conflict** — if a hook auto-fixed staged files AND
-    any tracked file is unstaged (even unrelated — `uv.lock`, a
-    fixture), pre-commit's stash/restore cycle conflicts and
-    the commit fails (silently or in a loop). Quarantine:
-    `git add` the related files OR `git stash push <unrelated>`,
-    commit, then pop.
-  - **Re-stage after auto-fix** — when a hook reformats staged
-    files, the commit fails but the fixes land in the working
-    tree UNSTAGED; `git add <files>` again and retry. Distinct
-    from the stash conflict: here the hook ran fine and there
-    are no unstaged siblings — the commit just needs repeating.
-  - **`git commit -q` can exit 0 yet SKIP the commit** — when
-    end-of-file-fixer / trailing-whitespace modify files, the
-    tail shows "Passed" with no "Aborted" line, but the commit
-    is skipped and the files left re-staged. ALWAYS verify with
-    `git log --oneline -1` / `git status --short` after
-    committing — no error message ≠ commit landed.
-  - **detect-secrets** — (a) it flags obvious placeholders like
-    `"fake"` in `{"ANTHROPIC_API_KEY": "fake"}` via the
-    Secret-Keyword heuristic (even a 4-char string fires); add
-    `# pragma: allowlist secret` on the line. (b) when the hook
-    bumps `.secrets.baseline`'s schema (e.g. 1.4.0→1.5.0), a
-    previously-stashed `.secrets.baseline` reverts the bump on
-    `git stash pop` — after popping, `git diff .secrets.baseline`
-    then `git checkout .secrets.baseline` to discard the revert.
-  - **`SKIP=hookname` ≠ `--no-verify`** — `SKIP=check-docs-
-    freshness git commit …` runs every OTHER hook and skips
-    only the named one (surgical; defensible when one hook
-    fails on state orthogonal to the commit). `--no-verify`
-    skips ALL hooks and is forbidden by the rules; `SKIP=` is
-    the allowed alternative.
 
 - **Diagnosing "this branch cannot be merged", and "the command
   errored but the merge actually succeeded"**:
@@ -1203,6 +1166,39 @@ this section only if core-worthy (and then keep both copies in sync).
   migration is a silent recall regression for every gate that scans for
   the old one.** Pairs with the existing "reviewing gate allowlist
   entries — the escape hatch is the actual attack surface" prior.
+- **State the BASIS with every load-bearing claim — an inference in
+  the grammar of a verified fact is the bug, and the verifying command
+  is usually one line you already have**: ratified 2026-08-22 after a
+  release session where four such claims each had a cheap probe
+  available and unrun. **The rule: verify when the probe is cheap; when
+  you do not, SAY SO IN THE CLAIM** ("verified by X" / "inferred, not
+  checked"). An unmarked confident assertion is indistinguishable from
+  a checked one, so the reader acts on both alike — and Patrick's
+  framing is that guessing without flagging it is itself the issue, the
+  same posture that produces sloppy code. **The diagnostic: name the
+  property your check actually establishes, then ask whether it is the
+  property your next action depends on.** `git rev-parse origin/main:src`
+  matching a tag establishes something about a REMOTE-TRACKING REF; a
+  scan that reads the WORKING TREE is unaffected by it (that checkout
+  was 17 commits behind, and the review would have been filed as the
+  release receipt). `git status --porcelain` clean means "matches its
+  own HEAD", NOT "is current" — pair it with
+  `git rev-list --count HEAD..origin/main`. "The runner spawns a
+  subprocess" establishes a code path, not process independence — read
+  `ps -o ppid=,command=`. Which code will execute is answered by the
+  filesystem that will be read (`pyproject.toml` on disk, an imported
+  `__version__`, `__file__`), never by a ref. Relaying a third party's
+  approval ("X approved this") is the same error in social form: the
+  recipient cannot verify it through you. **Why this sits in core
+  rather than the tail: recall cannot save you from it.** The corpus
+  already held adjacent lessons and none fired, because the failure
+  happens when a CONCLUSION IS FORMED — earlier than any tool call that
+  would trigger retrieval — and on that session the SessionStart hook
+  had already printed `STALE SOURCE … 17 commits behind` and it was
+  read as ambient noise. Verification also keeps OLD lessons honest:
+  the same session found a core lesson's premise ("Windows lanes are
+  NOT required") had gone stale, so acting on it unverified would have
+  added pointless friction.
 - **`os.geteuid()` inside a `pytest.mark.skipif` condition errors the
   WHOLE MODULE at collection time on Windows — skipif conditions are
   evaluated eagerly, so a second `skipif(os.name == "nt")` above it
