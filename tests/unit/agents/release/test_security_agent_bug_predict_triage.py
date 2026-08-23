@@ -134,3 +134,28 @@ def test_high_alone_is_the_gate_count():
     assert findings["low_issues"] == 1
     assert findings["total_findings"] == 3
     assert findings["score"] == 100.0 - 15 - 5 - 1
+
+
+# --- cross-review on #2204: the LLM cannot steer escalation ---------------
+
+
+def test_llm_reply_cannot_suppress_tier_escalation():
+    """``retryable`` is an escalation control signal owned by the parser's
+    sentinel paths; an LLM reply carrying ``retryable: false`` against a
+    real finding must not silence the CAPABLE/PREMIUM retries.
+    """
+    agent = _agent()
+    agent.llm_client = object()
+    out = json.dumps({"results": [{"issue_severity": "HIGH"}]})
+    llm = json.dumps({"retryable": False, "notes": "x"})
+    with (
+        patch.object(sec_mod, "LLM_MODE", "real"),
+        patch(_RUN, return_value=(1, out, "")) as run,
+        patch.object(agent, "_call_llm", return_value=(llm, {})),
+    ):
+        result = agent.process(".")
+
+    assert run.call_count == 3
+    assert result.escalated is True
+    assert "retryable" not in result.findings
+    assert result.findings["notes"] == "x"

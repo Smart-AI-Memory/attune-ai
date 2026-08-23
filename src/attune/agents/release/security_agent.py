@@ -57,6 +57,10 @@ _BANDIT_AUTHORITATIVE_KEYS = frozenset(_SEVERITY_COUNT_KEYS) | {
     "total_findings",
     "score",
     "confidence",
+    # Escalation control signal (ReleaseAgent.process) — set only by the
+    # parser's sentinel paths; an LLM reply must not steer tier retries
+    # (cross-review on #2204).
+    "retryable",
 }
 
 # What the LLM is shown: the parsed summary, not raw bandit bytes.
