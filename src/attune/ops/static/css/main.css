@@ -3239,3 +3239,13 @@ a.kpi:hover {
 .memory-table .col-kind .chip {
   text-decoration: none;
 }
+
+/* Chair-ruled reliability notices (roundtable q-workflow-fleet-health-001) */
+.workflow-notice {
+  margin-top: 0.35rem;
+  padding: 0.3rem 0.55rem;
+  border-radius: 6px;
+  background: rgba(180, 83, 9, 0.12);
+  border: 1px solid rgba(180, 83, 9, 0.45);
+  font-size: 0.82rem;
+}
