@@ -63,6 +63,35 @@ def test_testgen_fixture_has_target_and_no_tests() -> None:
     assert not any(name.startswith("test_") or name.endswith("_test.py") for name in files)
 
 
+def test_analytical_fixture_carries_all_planted_defects() -> None:
+    text = (FIXTURES / "analytical" / "sample_service.py").read_text()
+    # One marker per planted defect class the analytical probes assert.
+    assert "def find_duplicates" in text  # perf O(n^2)
+    assert "tags: list[str] = []" in text  # mutable default arg
+    assert "def validate_label" in text  # duplication
+    assert "def categorize" in text  # nested conditional
+    assert "def summarize(items):" in text  # missing docstring
+
+
+def test_analytical_probes_registered_and_costed() -> None:
+    # Each analytical workflow is wired into PROBES, PROBE_ORDER, and has
+    # a cost estimate — the same guard the batch relies on to not go
+    # silently un-run.
+    for name in runner._ANALYTICAL:
+        assert name in runner.PROBES
+        assert name in runner.PROBE_ORDER
+        assert name in runner._EST_COST_USD
+
+
+def test_analytical_probe_names_are_real_workflows() -> None:
+    # The probe names must resolve to registered workflows, or a probe
+    # errors at run time (verify-before-coding).
+    from attune.workflows import get_workflow
+
+    for name in runner._ANALYTICAL:
+        assert get_workflow(name) is not None
+
+
 def test_missing_fixture_is_reported() -> None:
     original = runner.FIXTURES
     try:
@@ -138,6 +167,40 @@ def test_total_findings_zero_when_absent() -> None:
         metadata: dict = {}
 
     assert runner._total_findings(_R()) == 0
+
+
+def test_analytical_receipt_is_named_class_not_count() -> None:
+    # Live validation 2026-08-23: refactor-plan returned 0 structured
+    # findings on one run and 44 on the next for the SAME fixture, while
+    # naming the duplication both times. The analytical gate is the
+    # NAMED CLASS (behavioral); the count is evidence only. This pins
+    # that a zero-count result with the class named still PASSES, so a
+    # later "tighten the assertion" doesn't reintroduce the flake.
+    import asyncio
+
+    class _R:
+        success = True
+        error = None
+        metadata = {
+            "findings": {},  # zero structured findings
+            "raw_result_text": "The validate_ blocks are duplicated; refactor.",
+        }
+        final_output = "x"
+        cost_report = None
+        summary = ""
+
+    async def fake_run(name, **kwargs):
+        return _R()
+
+    original = runner._run_workflow
+    runner._run_workflow = fake_run
+    try:
+        out = asyncio.run(runner._probe_analytical("refactor-plan", 1.0))
+    finally:
+        runner._run_workflow = original
+    assert out.passed, out.reason
+    assert out.evidence["num_findings"] == 0
+    assert out.evidence["named_class"] is True
 
 
 def test_crash_reason_none_on_success() -> None:
