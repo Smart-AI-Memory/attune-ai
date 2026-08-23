@@ -741,13 +741,15 @@ async def _probe_analytical(name: str, budget: float) -> ProbeResult:
 
     num_findings = _total_findings(result)
     named = _mentions(_raw_text(result), *cfg["needles"])
-    passed = num_findings > 0 and named
-    reasons = []
-    if num_findings == 0:
-        reasons.append("no findings returned")
-    if not named:
-        reasons.append(f"did not surface {cfg['cls']}")
-    reason = "; ".join(reasons) or f"surfaced {cfg['cls']}"
+    # The receipt is BEHAVIORAL: the workflow named the planted class.
+    # The structured-findings COUNT is evidence only, never a gate —
+    # live validation (2026-08-23) showed refactor-plan returning 0
+    # structured findings on one run and 44 on the next for the SAME
+    # fixture, while naming the duplication in the report text both
+    # times. Gating on the count made the probe fail on LLM variance
+    # rather than on detection (the spec's "never exact-match" rule).
+    passed = named
+    reason = f"surfaced {cfg['cls']}" if named else f"did not surface {cfg['cls']}"
     return ProbeResult(
         name=name,
         passed=passed,

@@ -169,6 +169,40 @@ def test_total_findings_zero_when_absent() -> None:
     assert runner._total_findings(_R()) == 0
 
 
+def test_analytical_receipt_is_named_class_not_count() -> None:
+    # Live validation 2026-08-23: refactor-plan returned 0 structured
+    # findings on one run and 44 on the next for the SAME fixture, while
+    # naming the duplication both times. The analytical gate is the
+    # NAMED CLASS (behavioral); the count is evidence only. This pins
+    # that a zero-count result with the class named still PASSES, so a
+    # later "tighten the assertion" doesn't reintroduce the flake.
+    import asyncio
+
+    class _R:
+        success = True
+        error = None
+        metadata = {
+            "findings": {},  # zero structured findings
+            "raw_result_text": "The validate_ blocks are duplicated; refactor.",
+        }
+        final_output = "x"
+        cost_report = None
+        summary = ""
+
+    async def fake_run(name, **kwargs):
+        return _R()
+
+    original = runner._run_workflow
+    runner._run_workflow = fake_run
+    try:
+        out = asyncio.run(runner._probe_analytical("refactor-plan", 1.0))
+    finally:
+        runner._run_workflow = original
+    assert out.passed, out.reason
+    assert out.evidence["num_findings"] == 0
+    assert out.evidence["named_class"] is True
+
+
 def test_crash_reason_none_on_success() -> None:
     class _R:
         success = True
