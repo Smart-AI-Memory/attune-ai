@@ -424,3 +424,58 @@ class TestRunReleaseNotes:
         assert out["health_score"] is None
         assert out["recommendation"] == "Workflow short-circuited: missing API key"
         assert out["cost"] == 0.0
+
+
+class TestRunBugPredictReportFidelity:
+    """The handler against what the workflow REALLY emits since #2193.
+
+    The tests above feed a hand-made ``{"predictions": [...]}`` dict, which
+    proves plumbing, not fidelity: ``BugPredictionWorkflow`` now returns a
+    serialized ``WorkflowReport`` in ``final_output``. If the handler's
+    ``predictions`` pick ever stopped resolving to the report's findings,
+    the MCP tool would return ``[]`` while the CLI showed a full table —
+    and every test here would stay green. Round table
+    q-bug-predict-health-001 (2026-08-23), chair-promoted C4; zero cost.
+    """
+
+    @pytest.mark.asyncio
+    async def test_serialized_report_findings_surface_as_predictions(self):
+        from attune.workflows.output import Finding, FindingsSection, WorkflowReport
+
+        report = WorkflowReport(
+            title="Bug prediction",
+            summary="risk concentrates in two boundary functions",
+            score=66,
+            sections=[
+                FindingsSection(
+                    title="Bugs",
+                    tier="essential",
+                    findings=[
+                        Finding(
+                            severity="high",
+                            file="src/attune/agents/release/security_agent.py",
+                            line=115,
+                            message="ratchet lifts the -1 sentinel",
+                        ),
+                        Finding(severity="low", file="src/x.py", line=3, message="minor"),
+                    ],
+                )
+            ],
+        )
+        result = _make_result(success=True, final_output=report.to_dict(), total_cost=1.17)
+        mod = _make_workflow_module("attune.workflows.bug_predict", "BugPredictionWorkflow", result)
+
+        with patch.dict(sys.modules, {"attune.workflows.bug_predict": mod}):
+            out = await server_with_root()._run_bug_predict({"path": "src"})
+
+        assert out["success"] is True
+        assert out["score"] == 66
+        assert [p["severity"] for p in out["predictions"]] == ["high", "low"]
+        assert out["predictions"][0]["file"].endswith("security_agent.py")
+        assert out["predictions"][0]["line"] == 115
+        assert "## Bugs" in out["summary_markdown"] or "Bugs" in out["summary_markdown"]
+
+
+def server_with_root():
+    """A server whose workspace root admits the relative ``src`` path."""
+    return _make_server()
