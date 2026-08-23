@@ -883,3 +883,69 @@ fabricated 100/100, doc-orchestrator "no gaps" after its scout failed)
 is a separate fix — this pass validates the *trusted* verdicts, not the
 *masquerading* ones. `test-gen-parallel` (the variant that DOES write
 files) needs pre-existing coverage data and is out of scope here.
+
+## Fleet-probe validation results — all five probes run (2026-08-23)
+
+**Date:** 2026-08-23
+**Outcome:** ran every probe against its planted-defect fixture with
+real LLM billing (~$6.70 total). Three "working" verdicts CONFIRMED;
+two real defects surfaced.
+**PR:** #2210 (harness), #2211 (findings-count fix)
+
+The probe runner was exercised end-to-end after the Anthropic API usage
+limit was raised. This is the receipt the roundtable's part (b) asked
+for — the "working" verdicts are no longer single-small-target
+"exited 0" claims.
+
+Per-probe receipts (score/findings/spend are one run each; LLM output
+varies run-to-run):
+
+- **security-audit — CONFIRMED.** Fixture with a dynamic-eval call +
+  a fake key: score 15/100, 3 findings, named both defects. $0.40.
+- **dependency-check — CONFIRMED.** Known-CVE pins: 2 findings, named a
+  planted vulnerable dependency. $0.45.
+- **release-notes — CONFIRMED.** Planted breaking-change commit:
+  readiness score 8/100 (appropriately low), the breaking change
+  surfaced in the report. $0.47.
+- **test-gen — DEFECT.** Ran cleanly (no crash, $0.62) but emitted NO
+  runnable test code — only prose describing tests. Root cause is
+  structural: `test-gen`'s subagents have only Read/Glob/Grep, no Write
+  tool, so it cannot emit executable tests. Its fleet "working" verdict
+  is true only in the "exited 0" sense — it does not produce tests you
+  can run. This is exactly the "exited 0 ≠ does the job" gap the
+  roundtable was chartered to find.
+- **discovery-sweep — DEFECT (one lane), narrowed.** At `--budget 3`
+  the sweep split funds across 6 LLM lanes, starving each to ~$0.18;
+  4 lanes died at their cap — a budget artifact, not a defect. Re-run at
+  `--budget 5` cleared 5 of those (bug-predict 8 findings/$0.58,
+  doc-audit 13/$0.51, test-audit 8/$0.49, security-audit 5/$0.66,
+  perf-audit 5/$0.35). ONE lane fails reproducibly even with adequate
+  budget: the **dependency-check lane inside discovery-sweep** spends
+  $0.00 and returns only failure markers, while the STANDALONE
+  dependency-check workflow passed ($0.45, 2 findings) minutes earlier.
+  Same workflow, different invocation context → different outcome. Root
+  cause NOT yet diagnosed (observed, not inferred): either the sweep's
+  budget allocation gives that lane $0, or it crashes before spending.
+  This is the roundtable's "$0 lane that never ran" concern, isolated to
+  one specific lane.
+
+**Harness bug the live run caught (fixed in #2211):** the first live
+security-audit run reported FAIL "no security findings returned" while
+the workflow had actually returned 3 findings — because the probe read
+`metadata["findings"]["security"]` but security-audit keys findings by
+SEVERITY (CRITICAL/HIGH/…), not by category. The probe now counts
+across every bucket (`_total_findings`), key-agnostic. The wrong-key
+vacuous assertion is the exact failure class this harness exists to
+catch, turned on itself — and only the live run exposed it.
+
+**Open follow-ups (surfaced, not committed here):**
+
+1. `test-gen` emitting no runnable tests — either wire a Write tool +
+   output path into the workflow, or relabel its verdict/UX so users
+   don't expect runnable output. Candidate for its own issue.
+2. discovery-sweep's dependency-check lane getting $0 / failure markers
+   — diagnose the sweep budget allocation vs. an in-lane crash.
+   Candidate for its own issue.
+3. Probe/sweep budgets must scale with lane count — a fixed total split
+   across N lanes starves each; the runner could size discovery-sweep's
+   budget to the lane count rather than a flat cap.
