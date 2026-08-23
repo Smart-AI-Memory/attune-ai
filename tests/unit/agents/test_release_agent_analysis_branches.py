@@ -119,3 +119,32 @@ class TestDocumentationDefensivePaths:
         assert success is False
         assert findings["error"] == "fs exploded"
         assert findings["coverage_percent"] == 0.0
+
+
+def test_llm_ratchet_never_lifts_the_did_not_run_sentinel(monkeypatch):
+    """bug-predict dogfood 2026-08-23: bandit output unreadable -> -1; the LLM
+    says 0; 0 > -1 lifted the sentinel and the gate passed blind again."""
+    agent = sec_mod.SecurityAuditorAgent(redis_client=None)
+    monkeypatch.setattr(sec_mod, "_run_command", lambda *a, **k: (0, "Working... 100%\n{}", ""))
+    monkeypatch.setattr(sec_mod, "LLM_MODE", "real")
+    agent.llm_client = object()
+    monkeypatch.setattr(
+        agent,
+        "_call_llm",
+        lambda *a, **k: ('{"critical_issues": 0, "high_issues": 0, "score": 95}', {}),
+    )
+    success, findings = agent._execute_tier(".", Tier.CHEAP)
+    assert success is False
+    assert findings["critical_issues"] == -1
+    assert findings["note"] == "Could not parse bandit output"
+
+
+def test_llm_ratchet_still_raises_a_real_count(monkeypatch):
+    agent = sec_mod.SecurityAuditorAgent(redis_client=None)
+    monkeypatch.setattr(sec_mod, "_run_command", lambda *a, **k: (0, '{"results": []}', ""))
+    monkeypatch.setattr(sec_mod, "LLM_MODE", "real")
+    agent.llm_client = object()
+    monkeypatch.setattr(agent, "_call_llm", lambda *a, **k: ('{"critical_issues": 2}', {}))
+    success, findings = agent._execute_tier(".", Tier.CHEAP)
+    assert success is False
+    assert findings["critical_issues"] == 2

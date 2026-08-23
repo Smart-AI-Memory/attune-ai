@@ -113,12 +113,18 @@ class SecurityAuditorAgent(ReleaseAgent):
                             }
                         )
                         # Fail-closed ratchet: a stricter LLM severity
-                        # count may raise the bandit value, never lower it.
+                        # count may raise the bandit value, never lower it
+                        # — and never REPLACE the -1 did-not-run sentinel:
+                        # 0 > -1, so without the guard an LLM reporting
+                        # "no issues" turned an unreadable bandit run back
+                        # into a clean gate (found by bug-predict dogfood,
+                        # round table q-bug-predict-health-001).
                         for key in _SEVERITY_COUNT_KEYS:
                             llm_count = llm_findings.get(key)
                             if (
                                 isinstance(llm_count, int)
                                 and not isinstance(llm_count, bool)
+                                and findings[key] >= 0
                                 and llm_count > findings[key]
                             ):
                                 findings[key] = llm_count
