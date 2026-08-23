@@ -161,14 +161,16 @@ wrong dependency; one standalone job serves all three cadences.
 |---|---|---|---|
 | Pre-release gate | affected + gate-critical probes | scaled to scope | yes — a fail blocks release |
 | On workflow change | that workflow's probe | ~$1–5 (one probe) | advisory / labeled |
-| Weekly scheduled audit | full fleet | **$25–30 hard cap** | advisory |
+| Weekly scheduled audit | full fleet | **$32 hard cap** (chair-set) | advisory |
 | On-demand (CLI) | any subset | `--budget` | n/a |
 
 Budget basis: measured $6.70 for 5 probes (discovery-sweep alone $2.6 at
-a $5 cap); naive scale to ~20 ≈ $15–25. The $25–30 full-fleet cap is
-tied to the $50 API-spend budget — a full sweep is a deliberate budgeted
-event. The runner already reports measured spend, so the cap is
-validated against reality, not left a guess.
+a $5 cap); naive scale to ~20 ≈ $15–25. The full-fleet run uses the large
+cap but a **hard $32 ceiling** (chair-set, 2026-08-23) — a full sweep is
+a deliberate budgeted event within the $50 API-spend budget. The runner
+enforces the cap via `ATTUNE_MAX_BUDGET_USD` and reports measured spend,
+so the ceiling is validated against reality, not left a guess; the job
+must abort rather than exceed $32.
 
 ## 4. Rollout & fixture design
 

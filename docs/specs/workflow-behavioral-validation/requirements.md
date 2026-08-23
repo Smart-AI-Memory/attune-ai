@@ -172,19 +172,16 @@ A probe validates a workflow when it:
 4. records its measured spend, and runs only via the manual /
    gated / scheduled surfaces above, never per-push.
 
-### Open questions for design (Phase 2)
+### Open questions for design (Phase 2) — RESOLVED (chair, 2026-08-23, D8)
 
-1. Registry format and where verdicts are persisted (new tracked
-   file vs. extend the R5 ledger).
-2. The carve mechanics — which of the three candidate approaches
-   above, decided per-workflow or fleet-wide.
-3. Pre-release gate wiring — does it extend the existing
-   release-prep team, or a new gated job, and what's the budget
-   cap for a full-fleet probe run (~$6-8 measured for 5 probes;
-   ~20 workflows implies a larger cap).
-4. Which of the ~20 workflows get probes first, and the fixture
-   design for generative vs. analytical vs. meta (sweep)
-   workflows.
+1. Registry format / persistence → **new tracked file** (D3).
+2. Carve mechanics → **fleet-wide uniform mechanism** (seam-split for
+   the whole fleet), with per-workflow probe-gated activation retained
+   (D2/D8). See D8 for the interpretation note.
+3. Pre-release gate wiring → **standalone job** (D4); full-fleet budget
+   uses the large cap with a **hard $32 ceiling** (D8).
+4. Rollout / fixture design → **lead's best judgement** (D5;
+   analytical-first).
 
 ### Acceptance (Phase 1 done when)
 

@@ -145,3 +145,29 @@ demonstration that "accepted and folded in" is not the same as "correct".
 actually implementable. Two consecutive lanes both found real issues, so
 the chair may reasonably want one more re-lane before ratifying, or may
 judge the mechanics now sound.
+
+## D8 — Chair answers to the Phase-2 open questions (2026-08-23)
+
+**Ruled:** chair, 2026-08-23, answering requirements.md § Open questions.
+
+1. **Registry format / persistence → new tracked file.** Confirms D3
+   (derived, its own artifact, not the R5 ledger).
+2. **Carve mechanics → fleet-wide.** The MECHANISM is chosen uniformly
+   for the whole fleet — seam-split for every workflow, not a
+   per-module menu of split-vs-pragma-vs-advisory. This refines D2:
+   there is ONE carve mechanism fleet-wide.
+   **Interpretation flagged (chair to correct in one word if wrong):**
+   "fleet-wide" is read as *uniform mechanism across the fleet*, NOT
+   *carve all ~20 modules at once*. Per-workflow, probe-gated ACTIVATION
+   (D2, cross-review-hardened) stands: a module is carved only once it
+   has a fresh passing probe; no probe → full floor. A module that
+   cannot be split simply stays fully floored + additive probe (D6/D7).
+   If the chair instead meant "carve the whole fleet immediately",
+   that reopens D2 and the revocability model — say so.
+3. **Pre-release gate wiring / budget → standalone job (D4), full-fleet
+   cap uses the large cap but HARD $32 ceiling.** Sets D4's open number:
+   the weekly/full-fleet run may use the large cap but must abort rather
+   than exceed **$32**. Design.md updated.
+4. **Rollout / fixture design → lead's best judgement.** Confirms D5
+   (analytical-first, shared multi-defect fixture; gate group next;
+   generative last). The lead owns the per-workflow specifics.
