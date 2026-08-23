@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import ast
 import subprocess
 import textwrap
 from pathlib import Path
 
+from attune.classes import rules as rules_mod
 from attune.classes.rules import (
     RULES,
     Calibration,
@@ -207,3 +209,98 @@ class TestCanonicalRepoId:
         d = tmp_path / "Plain"
         d.mkdir()
         assert canonical_repo_id(d) == "plain"
+
+
+class TestOneTraversalPerSweepFamily:
+    """The pack shares two visitors; a file must be walked twice, not 8x.
+
+    Running the visitor per rule is the obvious implementation and it
+    is what shipped in 14.0.0: each rule built its own visitor, walked
+    the whole file, then discarded every hit but its own. That is 8
+    full AST traversals per file for an 8-rule pack, on every scanned
+    file of every CI run. These tests pin the collapse so a later
+    refactor cannot quietly reintroduce it -- the output is identical
+    either way, so nothing else would notice.
+    """
+
+    def _count_constructions(self, source: str) -> list[str]:
+        """Return the visitor class names constructed during one scan."""
+        built: list[str] = []
+        originals = {}
+        for cls in (rules_mod._V1Sweep, rules_mod._R7Visitor):
+            originals[cls] = cls.__init__
+
+            def make(orig, name):
+                def __init__(self, path, *a, **k):
+                    built.append(name)
+                    orig(self, path, *a, **k)
+
+                return __init__
+
+            cls.__init__ = make(originals[cls], cls.__name__)
+        try:
+            rules_mod.scan_source(source, "sample.py")
+        finally:
+            for cls, orig in originals.items():
+                cls.__init__ = orig
+        return built
+
+    def test_each_sweep_family_is_walked_exactly_once(self):
+        source = (
+            "import subprocess\n"
+            "def f(data):\n"
+            "    subprocess.run(['x'])\n"
+            "    return data.get('k')\n"
+        )
+
+        built = self._count_constructions(source)
+
+        assert len(built) == 2, f"expected one walk per family, got {built}"
+        assert sorted(built) == ["_R7Visitor", "_V1Sweep"]
+
+    def test_walk_count_does_not_grow_with_the_rule_count(self):
+        """The whole point: adding rules must not add traversals."""
+        source = "def f(d):\n    return d.get('k')\n"
+
+        assert len(rules_mod.RULES) > 2, "pack should be bigger than its family count"
+        assert len(self._count_constructions(source)) == 2
+
+    def test_a_rule_outside_the_shared_sweeps_still_runs(self):
+        """Custom checks keep working -- the fast path is not the only path."""
+        seen: list[str] = []
+
+        def custom(tree, path):
+            seen.append(path)
+            return [rules_mod.Hit("CUSTOM", path, 1, "fired")]
+
+        rule = rules_mod.Rule("CUSTOM", "custom", (), custom, ())
+
+        hits = rules_mod.scan_source("x = 1\n", "sample.py", rules=(rule,))
+
+        assert seen == ["sample.py"]
+        assert [h.rule_id for h in hits] == ["CUSTOM"]
+
+    def test_calling_a_single_rule_directly_still_scans_standalone(self):
+        """A caller holding one Rule keeps the old self-contained behavior."""
+        source = "import subprocess\nsubprocess.run(['x'])\n"
+        rule = next(r for r in rules_mod.RULES if r.id == "R4-subprocess-no-timeout")
+
+        direct = rule.check(ast.parse(source), "sample.py")
+
+        assert [h.rule_id for h in direct] == ["R4-subprocess-no-timeout"]
+
+    def test_shared_sweep_output_matches_per_rule_scanning(self):
+        """Equivalence, not just speed: same hits, same order."""
+        source = (
+            "import subprocess\n"
+            "def f(data):\n"
+            "    subprocess.run(['a'])\n"
+            "    subprocess.run(['b'])\n"
+            "    return data.get('k')\n"
+        )
+        tree = ast.parse(source)
+
+        collapsed = rules_mod.scan_source(source, "sample.py")
+        per_rule = [h for rule in rules_mod.RULES for h in rule.check(tree, "sample.py")]
+
+        assert collapsed == per_rule
