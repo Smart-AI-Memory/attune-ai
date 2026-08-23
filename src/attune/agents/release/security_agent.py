@@ -57,6 +57,10 @@ _BANDIT_AUTHORITATIVE_KEYS = frozenset(_SEVERITY_COUNT_KEYS) | {
     "total_findings",
     "score",
     "confidence",
+    # Escalation control signal (ReleaseAgent.process) — set only by the
+    # parser's sentinel paths; an LLM reply must not steer tier retries
+    # (cross-review on #2204).
+    "retryable",
 }
 
 # What the LLM is shown: the parsed summary, not raw bandit bytes.
@@ -167,7 +171,7 @@ class SecurityAuditorAgent(ReleaseAgent):
             return critical == 0, findings
 
         except Exception as e:  # noqa: BLE001
-            logger.error(f"Security audit failed: {e}")
+            logger.exception("Security audit failed: %s", e)
             return False, {"error": str(e), "critical_issues": -1}
 
     @staticmethod
@@ -215,7 +219,9 @@ class SecurityAuditorAgent(ReleaseAgent):
         # Both degrade paths below carry the -1 sentinel: an auditor that
         # did not run, or whose output could not be read, has produced NO
         # count, and the Security gate treats no count as a failure
-        # (contract principle 7 — absence is not a pass).
+        # (contract principle 7 — absence is not a pass). They are also
+        # ``retryable: False``: the sentinel is a property of the bandit
+        # run, so tier escalation cannot change it (see ReleaseAgent.process).
         if returncode == -1:
             # bandit not installed -- report as unknown
             return {
@@ -226,6 +232,7 @@ class SecurityAuditorAgent(ReleaseAgent):
                 "score": 50.0,
                 "confidence": 0.3,
                 "note": "bandit not available",
+                "retryable": False,
             }
 
         try:
@@ -244,15 +251,18 @@ class SecurityAuditorAgent(ReleaseAgent):
                 "score": 50.0,
                 "confidence": 0.5,
                 "note": "Could not parse bandit output",
+                "retryable": False,
             }
 
         results = data.get("results", [])
-        severity_counts = {
-            "CRITICAL": 0,
-            "HIGH": 0,
-            "MEDIUM": 0,
-            "LOW": 0,
-        }
+        # bandit's severity ranking is LOW / MEDIUM / HIGH (plus
+        # UNDEFINED) — bandit itself never emits CRITICAL, so that bucket
+        # is 0 from the scanner; it exists because the LLM may report
+        # CRITICAL separately and the ratchet normalizes against the
+        # same CRITICAL+HIGH gate quantity (module docstring). LOW is
+        # normally filtered out by ``--severity-level medium`` above but
+        # is still counted if a bandit build lets one through.
+        severity_counts = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
 
         for result in results:
             sev = result.get("issue_severity", "LOW").upper()
