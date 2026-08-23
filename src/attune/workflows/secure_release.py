@@ -289,33 +289,15 @@ class SecureReleasePipeline(BaseWorkflow):
                 release_result,
             )
 
-            # Contract principle 7: a failed gatekeeper fails the gate.
-            # A sub-workflow that errored (success=False) or never ran
-            # contributed zero findings because nothing executed — that
-            # absence is not a pass and must force NO_GO.
-            failed_gatekeepers = [
-                name
-                for name, result, required in (
-                    ("security_audit", security_result, True),
-                    ("code_review", code_review_result, bool(diff)),
-                    ("release_prep", release_result, True),
-                )
-                if required and (result is None or not result.success)
-            ]
-            if failed_gatekeepers:
-                go_no_go = "NO_GO"
-                blockers = [
-                    f"GATEKEEPER_EXECUTION_FAILED: {name} did not complete - "
-                    "zero findings with zero execution is not a pass"
-                    for name in failed_gatekeepers
-                ] + blockers
-                # Keep remediation advice derived from the gatekeepers
-                # that DID run; drop only the "ready for release" line,
-                # which a failed gatekeeper makes untrue.
-                recommendations = [
-                    "Fix the failed gatekeeper(s) and re-run the pipeline",
-                    "Findings from this run are incomplete - do not release on them",
-                ] + [r for r in recommendations if "ready for release" not in r]
+            go_no_go, blockers, recommendations = self._apply_gatekeeper_sentinel(
+                security_result,
+                code_review_result,
+                release_result,
+                code_review_required=bool(diff),
+                go_no_go=go_no_go,
+                blockers=blockers,
+                recommendations=recommendations,
+            )
 
         except Exception as e:  # noqa: BLE001
             logger.error(f"Secure release pipeline failed: {e}")
@@ -346,6 +328,64 @@ class SecureReleasePipeline(BaseWorkflow):
             mode=self.mode,
             crew_enabled=crew_report is not None,
         )
+
+    def _apply_gatekeeper_sentinel(
+        self,
+        security_result: WorkflowResult | None,
+        code_review_result: WorkflowResult | None,
+        release_result: WorkflowResult | None,
+        *,
+        code_review_required: bool,
+        go_no_go: str,
+        blockers: list[str],
+        recommendations: list[str],
+    ) -> tuple[str, list[str], list[str]]:
+        """Force NO_GO when any required sub-workflow failed to execute.
+
+        Contract principle 7: a failed gatekeeper fails the gate. A
+        sub-workflow that errored (success=False) or never ran
+        contributed zero findings because nothing executed — that
+        absence is not a pass.
+
+        Args:
+            security_result: SecurityAuditWorkflow result (always required).
+            code_review_result: CodeReviewWorkflow result.
+            release_result: ReleasePreparationWorkflow result (always required).
+            code_review_required: True when a diff was supplied, making
+                code review a gatekeeper for this run.
+            go_no_go: Decision computed from findings and risk.
+            blockers: Blockers computed so far.
+            recommendations: Recommendations computed so far.
+
+        Returns:
+            Possibly-overridden ``(go_no_go, blockers, recommendations)``.
+
+        """
+        failed = [
+            name
+            for name, result, required in (
+                ("security_audit", security_result, True),
+                ("code_review", code_review_result, code_review_required),
+                ("release_prep", release_result, True),
+            )
+            if required and (result is None or not result.success)
+        ]
+        if not failed:
+            return go_no_go, blockers, recommendations
+
+        blockers = [
+            f"GATEKEEPER_EXECUTION_FAILED: {name} did not complete - "
+            "zero findings with zero execution is not a pass"
+            for name in failed
+        ] + blockers
+        # Keep remediation advice derived from the gatekeepers that DID
+        # run; drop only the "ready for release" line, which a failed
+        # gatekeeper makes untrue.
+        recommendations = [
+            "Fix the failed gatekeeper(s) and re-run the pipeline",
+            "Findings from this run are incomplete - do not release on them",
+        ] + [r for r in recommendations if "ready for release" not in r]
+        return "NO_GO", blockers, recommendations
 
     def _calculate_combined_risk(
         self,
