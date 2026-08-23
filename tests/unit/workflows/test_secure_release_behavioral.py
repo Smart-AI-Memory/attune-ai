@@ -14,6 +14,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from attune.workflows.data_classes import CostReport, WorkflowResult
 from attune.workflows.secure_release import (
     SecureReleasePipeline,
     SecureReleaseResult,
@@ -243,11 +244,9 @@ class TestSecureReleaseExecution:
     """Test execute flow with mocked sub-workflows."""
 
     @staticmethod
-    def _make_mock_result(final_output: dict) -> MagicMock:
-        """Create a mock WorkflowResult with given final_output."""
+    def _make_mock_result(final_output: dict) -> WorkflowResult:
+        """Create a WorkflowResult for a successful sub-workflow."""
         from datetime import datetime
-
-        from attune.workflows.data_classes import CostReport, WorkflowResult
 
         mock_cost = CostReport(
             total_cost=0.01,
@@ -316,15 +315,13 @@ class TestSecureReleaseExecution:
         assert any("failed" in b.lower() for b in result.blockers)
 
     @staticmethod
-    def _make_failed_result(error: str) -> MagicMock:
-        """Create a mock WorkflowResult for a sub-workflow that errored.
+    def _make_failed_result(error: str) -> WorkflowResult:
+        """Create a WorkflowResult for a sub-workflow that errored.
 
         Mirrors the SDK-subprocess failure shape: success=False, no
         final_output, error set — returned, not raised.
         """
         from datetime import datetime
-
-        from attune.workflows.data_classes import CostReport, WorkflowResult
 
         return WorkflowResult(
             success=False,
