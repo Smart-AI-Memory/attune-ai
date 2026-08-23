@@ -195,7 +195,7 @@ _BASELINE: dict[str, int] = {
     "src/attune/memory/personal.py": 5,
     # Both lowered by library-review H1 — see features.py above.
     "src/attune/memory/redis_auto_detect.py": 0,
-    "src/attune/memory/redis_bootstrap.py": 7,
+    "src/attune/memory/redis_bootstrap.py": 6,  # 2026-08-23: direct spawn removed (#2197)
     "src/attune/memory/security/audit_logger.py": 4,
     "src/attune/memory/security/query.py": 1,
     "src/attune/memory/session_stash.py": 14,
