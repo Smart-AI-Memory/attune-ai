@@ -33,6 +33,35 @@ CORE_HEADING = "## Lessons — core"
 # BEFORE the count cap, so a promotion that costs real context trips here
 # and forces the eviction conversation. Seeded at 44,951 (26 entries,
 # 2026-08-22). SHRINK-ONLY: demote something rather than widening it.
+#
+# WHICH lesson to demote, when this budget refuses a promotion
+# (criterion ratified 2026-08-22, in the retro that followed the first
+# eviction this budget forced):
+#
+#   Core residency is for failures that DON'T ANNOUNCE THEMSELVES.
+#
+# If the failure produces a loud, searchable symptom, the lesson belongs
+# in the lessons.md tail no matter how useful it is — JIT recall reaches
+# it, because the operator holds a term to retrieve on. A pre-commit
+# failure is loud: the commit fails, a hook prints its own name, files
+# show modified. An inference stated as a verified fact produces NO
+# symptom, so there is nothing to retrieve on and residency is the only
+# mechanism left; that asymmetry is why "claims carry their basis"
+# (contract principle 16) was promoted and the pre-commit auto-fix
+# lesson was demoted to pay for it.
+#
+# Two riders from the same trade. (1) Keep PREVENTION resident and let
+# DIAGNOSIS be retrievable: the demoted lesson's five operative rules
+# were already resident in CLAUDE.md's "Git and pre-commit" section, so
+# only the diagnosis of an already-visible incident moved to recall.
+# (2) The cost is easy to forget — core is context EVERY session pays
+# for whether or not the lesson fires, so a lesson that only earns its
+# keep during a recognizable incident should not be charged to every
+# session.
+#
+# Do not compare candidates on how much unique content each carries.
+# That was the losing argument in the ratifying discussion; the
+# deciding question is whether recall can reach it when it matters.
 CORE_BUDGET_BYTES = 46_000
 
 
