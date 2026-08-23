@@ -118,6 +118,28 @@ def test_score_of_reads_report_dict(score, expected) -> None:
     assert runner._score_of(_R()) == expected
 
 
+def test_total_findings_is_key_agnostic() -> None:
+    # security-audit keys findings by SEVERITY, not category "security".
+    # Counting one hard-coded key would read 0 here and go vacuous.
+    class _R:
+        metadata = {"findings": {"CRITICAL": ["a"], "HIGH": ["b", "c"], "LOW": []}}
+
+    assert runner._total_findings(_R()) == 3
+    # And the category-keyed shape still counts.
+
+    class _R2:
+        metadata = {"findings": {"dependencies": ["x", "y"]}}
+
+    assert runner._total_findings(_R2()) == 2
+
+
+def test_total_findings_zero_when_absent() -> None:
+    class _R:
+        metadata: dict = {}
+
+    assert runner._total_findings(_R()) == 0
+
+
 def test_crash_reason_none_on_success() -> None:
     class _R:
         success = True

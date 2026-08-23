@@ -162,6 +162,20 @@ def _findings_for(result: Any, category: str) -> list[str]:
     return list(findings.get(category, []))
 
 
+def _total_findings(result: Any) -> int:
+    """Count findings across EVERY bucket of ``metadata["findings"]``.
+
+    Different workflows key the findings dict differently — security-audit
+    keys by SEVERITY (CRITICAL/HIGH/MEDIUM/LOW), others by category
+    (security/dependencies/...). Asserting on one hard-coded key silently
+    reads empty when the workflow used a different key, turning the probe
+    vacuous. Summing every bucket is key-agnostic.
+    """
+    meta = getattr(result, "metadata", None) or {}
+    findings = meta.get("findings") or {}
+    return sum(len(v) for v in findings.values() if isinstance(v, list))
+
+
 def _raw_text(result: Any) -> str:
     meta = getattr(result, "metadata", None) or {}
     text = meta.get("raw_result_text") or ""
@@ -265,16 +279,16 @@ async def probe_security_audit(budget: float) -> ProbeResult:
             cost_usd=_cost_of(result),
             duration_s=dur,
         )
-    findings = _findings_for(result, "security")
+    num_findings = _total_findings(result)
     text = _raw_text(result)
     score = _score_of(result)
     names_eval = _mentions(text, "eval", "cwe-95", "code injection")
     names_key = _mentions(text, "hardcoded", "secret", "credential", "api key", "cwe-798")
     non_perfect = score is None or score < 100
 
-    passed = bool(findings) and names_eval and names_key and non_perfect
+    passed = num_findings > 0 and names_eval and names_key and non_perfect
     reasons = []
-    if not findings:
+    if num_findings == 0:
         reasons.append("no security findings returned")
     if not names_eval:
         reasons.append("did not name the eval() defect")
@@ -290,7 +304,7 @@ async def probe_security_audit(budget: float) -> ProbeResult:
         reason=reason,
         cost_usd=_cost_of(result),
         duration_s=dur,
-        evidence={"score": score, "num_findings": len(findings)},
+        evidence={"score": score, "num_findings": num_findings},
     )
 
 
@@ -314,7 +328,7 @@ async def probe_dependency_check(budget: float) -> ProbeResult:
             cost_usd=_cost_of(result),
             duration_s=dur,
         )
-    findings = _findings_for(result, "dependencies")
+    num_findings = _total_findings(result)
     text = _raw_text(result)
     names_pkg = _mentions(
         text,
@@ -325,9 +339,9 @@ async def probe_dependency_check(budget: float) -> ProbeResult:
         "2.19.1",
         "5.3.1",
     )
-    passed = bool(findings) and names_pkg
+    passed = num_findings > 0 and names_pkg
     reasons = []
-    if not findings:
+    if num_findings == 0:
         reasons.append("no dependency findings returned")
     if not names_pkg:
         reasons.append("did not name a planted vulnerable package/CVE")
@@ -339,7 +353,7 @@ async def probe_dependency_check(budget: float) -> ProbeResult:
         reason=reason,
         cost_usd=_cost_of(result),
         duration_s=dur,
-        evidence={"num_findings": len(findings)},
+        evidence={"num_findings": num_findings},
     )
 
 
