@@ -169,3 +169,41 @@ judge the mechanics now sound.
 4. **Rollout / fixture design → lead's best judgement.** Confirms D5
    (analytical-first, shared multi-defect fixture; gate group next;
    generative last). The lead owns the per-workflow specifics.
+
+## D9 — Requirements RATIFIED; third Codex lane; design mechanics → Phase 3 (2026-08-23)
+
+**Ruled:** chair, 2026-08-23 ("ratify requirements. ok do as you
+recommend" — i.e. run the final lane, then ratify).
+
+**Third Codex lane** on the amended spec returned 4 findings — and,
+tellingly, ALL FOUR were in design.md's enforcement mechanics; NONE
+touched requirements.md. Accepted and folded in:
+
+1. **(high) `ran_at` ordering is skew-prone** — a future wall-clock
+   stamp would win indefinitely. Fixed: the projector orders by **Git
+   commit order** (authoritative, monotonic for an append-only tracked
+   set); `ran_at`/`git_sha` are informational only.
+2. **(high) Revocation had no write-back mechanism** — a blocking probe
+   failure could leave the last passing record + stale carve checked in.
+   Fixed: record-write + carve-config regen is an **always-runs step**
+   (pass/fail/crash) that commits the record and opens an automated
+   carve-config PR, drift-guarded — independent of the blocking verdict.
+3. **(medium) Seam-helper "independent 85%" underspecified** against
+   aggregated coverage. Fixed: per-file/per-flag codecov target per
+   helper + an explicit source→helper ownership map.
+4. **(medium) Stale "split vs advisory-retreat" line** contradicted
+   D6/D8. Fixed: "split vs no-carve".
+
+**Ruling:** **Requirements are RATIFIED.** The two-track model, the
+Principle 5 carve direction, cadence, non-goals, and the definition of a
+validating probe are stable — three consecutive lanes found zero issues
+in them. The churn was entirely in design.md's *enforcement mechanics*
+(ordering keys, write-back, per-file measurement) — the kind of detail a
+prose spec can only gesture at and that real code + tests will pin down.
+Per the lead's recommendation, those move to **Phase 3 execution**,
+where each mechanic is implemented with its own review lane, rather than
+continuing to re-lane a prose document with diminishing returns.
+
+**Still gated:** the mechanical enforcer PR touching Principle 5's actual
+gates (codecov config, contract text) is chair-armed only — the lead
+does not arm auto-merge on it (CHAIR-ARMS).

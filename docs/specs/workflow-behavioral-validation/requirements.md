@@ -1,8 +1,10 @@
 # Spec: Workflow Behavioral Validation
 
-**Status**: approved (2026-08-23) — chair approved the two-track
-direction and the Principle 5 carve DIRECTION (see `decisions.md`
-D1–D5; Phase 2 design in `design.md`). The carve's mechanical
+**Status**: RATIFIED (chair, 2026-08-23) — the two-track direction and
+the Principle 5 carve DIRECTION are ratified (see `decisions.md` D1–D9).
+The requirements are stable; the DESIGN's enforcement mechanics
+(`design.md`) continue to be refined and are resolved in Phase 3
+execution against real code + tests. The carve's mechanical
 contract-text + enforcer edits remain gated to a separate reviewed
 execution PR — no gate/config change lands ahead of that.
 **Created**: 2026-08-23
