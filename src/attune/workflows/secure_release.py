@@ -309,10 +309,13 @@ class SecureReleasePipeline(BaseWorkflow):
                     "zero findings with zero execution is not a pass"
                     for name in failed_gatekeepers
                 ] + blockers
+                # Keep remediation advice derived from the gatekeepers
+                # that DID run; drop only the "ready for release" line,
+                # which a failed gatekeeper makes untrue.
                 recommendations = [
                     "Fix the failed gatekeeper(s) and re-run the pipeline",
                     "Findings from this run are incomplete - do not release on them",
-                ]
+                ] + [r for r in recommendations if "ready for release" not in r]
 
         except Exception as e:  # noqa: BLE001
             logger.error(f"Secure release pipeline failed: {e}")

@@ -388,13 +388,17 @@ class TestSecureReleaseExecution:
     @pytest.mark.asyncio
     async def test_one_failed_gatekeeper_is_no_go(self) -> None:
         """A single failed gatekeeper (release_prep) forces NO_GO even
-        when the security audit succeeded cleanly.
+        when the security audit ran to completion — and remediation
+        advice derived from the gatekeeper that DID run survives
+        (cross-review finding, PR #2208 D11 lane).
         """
         from unittest.mock import AsyncMock, patch
 
         wf = SecureReleasePipeline(mode="standard")
 
-        sec_result = self._make_mock_result({"assessment": {"risk_score": 5, "risk_level": "low"}})
+        sec_result = self._make_mock_result(
+            {"assessment": {"risk_score": 55, "risk_level": "high"}},
+        )
 
         mock_sec_wf = MagicMock()
         mock_sec_wf.execute = AsyncMock(return_value=sec_result)
@@ -421,6 +425,10 @@ class TestSecureReleaseExecution:
             b.startswith("GATEKEEPER_EXECUTION_FAILED") and "release_prep" in b
             for b in result.blockers
         )
+        # Advice derived from the completed security audit survives the
+        # sentinel; only the "ready for release" fiction is dropped.
+        assert any("warnings" in r.lower() for r in result.recommendations)
+        assert not any("ready for release" in r.lower() for r in result.recommendations)
 
     @pytest.mark.asyncio
     async def test_failed_code_review_with_diff_is_no_go(self) -> None:
