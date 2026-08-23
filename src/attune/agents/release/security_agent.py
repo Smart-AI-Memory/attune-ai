@@ -87,6 +87,10 @@ class SecurityAuditorAgent(ReleaseAgent):
                     "json",
                     "--severity-level",
                     "medium",
+                    # bandit >= 1.9 writes a rich "Working... 100%" progress
+                    # line to STDOUT ahead of the JSON document; -q
+                    # suppresses it so stdout is the document alone.
+                    "-q",
                 ],
                 cwd=codebase_path,
             )
@@ -141,10 +145,14 @@ class SecurityAuditorAgent(ReleaseAgent):
             Dict with classified findings
 
         """
+        # Both degrade paths below carry the -1 sentinel: an auditor that
+        # did not run, or whose output could not be read, has produced NO
+        # count, and the Security gate treats no count as a failure
+        # (contract principle 7 — absence is not a pass).
         if returncode == -1:
             # bandit not installed -- report as unknown
             return {
-                "critical_issues": 0,
+                "critical_issues": -1,
                 "high_issues": 0,
                 "medium_issues": 0,
                 "low_issues": 0,
@@ -162,7 +170,7 @@ class SecurityAuditorAgent(ReleaseAgent):
                 raise ValueError("bandit output was not a JSON object")
         except ValueError:  # includes json.JSONDecodeError
             return {
-                "critical_issues": 0,
+                "critical_issues": -1,
                 "high_issues": 0,
                 "medium_issues": 0,
                 "low_issues": 0,

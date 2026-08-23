@@ -625,21 +625,58 @@ class TestSecurityAuditorAgent:
         assert result["score"] == pytest.approx(95.0)
 
     def test_parse_bandit_output_command_not_found(self):
-        """returncode=-1 → bandit not available, score=50, critical=0."""
+        """returncode=-1 → bandit not available, score=50, critical=-1 (fail-closed)."""
         agent = self._make_agent()
         result = agent._parse_bandit_output("", returncode=-1)
 
-        assert result["critical_issues"] == 0
+        assert result["critical_issues"] == -1
         assert result["score"] == pytest.approx(50.0)
         assert "bandit not available" in result.get("note", "")
 
     def test_parse_bandit_output_invalid_json_returns_defaults(self):
-        """Invalid JSON stdout returns safe defaults."""
+        """Invalid JSON stdout returns the fail-closed sentinel, never a clean count."""
         agent = self._make_agent()
         result = agent._parse_bandit_output("not json at all", returncode=0)
 
-        assert result["critical_issues"] == 0
+        assert result["critical_issues"] == -1
         assert "note" in result
+
+    def test_progress_bar_prefixed_stdout_fails_closed(self, monkeypatch):
+        """bandit >= 1.9 prefixes stdout with a progress line when not quieted.
+
+        Regression for the Security gate passing blind: the prefixed document
+        failed json.loads, the parser degraded to critical_issues=0, and the
+        gate read that as clean. Unreadable output must make the tier FAIL.
+        """
+        from attune.agents.release import security_agent as sec_mod
+        from attune.agents.release.release_models import Tier
+
+        agent = self._make_agent()
+        stdout = 'Working... \u2501\u2501\u2501 100% 0:00:04\n{"results": [], "errors": []}'
+        monkeypatch.setattr(sec_mod, "_run_command", lambda *a, **k: (0, stdout, ""))
+        success, findings = agent._execute_tier(".", Tier.CHEAP)
+
+        assert success is False
+        assert findings["critical_issues"] == -1
+        assert findings["note"] == "Could not parse bandit output"
+
+    def test_bandit_invocation_is_quiet(self, monkeypatch):
+        """The command passes -q so the JSON document is the whole of stdout."""
+        from attune.agents.release import security_agent as sec_mod
+        from attune.agents.release.release_models import Tier
+
+        seen: list[list[str]] = []
+
+        def fake_run(cmd, cwd=None):
+            seen.append(list(cmd))
+            return 0, '{"results": [], "errors": []}', ""
+
+        monkeypatch.setattr(sec_mod, "_run_command", fake_run)
+        agent = self._make_agent()
+        success, _ = agent._execute_tier(".", Tier.CHEAP)
+
+        assert success is True
+        assert seen and "-q" in seen[0] and "-f" in seen[0] and "json" in seen[0]
 
     def test_parse_bandit_output_top_findings_limited_to_five(self):
         """top_findings is capped at 5 entries."""
