@@ -1,0 +1,19 @@
+{
+  "workflow": "refactor-plan",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "named-defect",
+  "verdict": "pass",
+  "cost_usd": 0.3421,
+  "duration_s": 87.7,
+  "ran_at": "2026-08-23T23:59:00Z",
+  "runner_version": "workflow_probe_runner (#2210/#2211/#2216)",
+  "git_sha": "11965cb6f",
+  "evidence": {
+    "num_findings": 0,
+    "named": [
+      "duplicated validate_* blocks"
+    ],
+    "note": "re-run after the named-class receipt fix; structured count is non-deterministic (0/44/0 across runs)",
+    "provenance": "transcribed from the 2026-08-23 live validation session outputs (see test-quality-program decisions.md + #2216)"
+  }
+}

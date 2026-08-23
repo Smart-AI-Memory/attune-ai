@@ -1,0 +1,23 @@
+{
+  "workflow": "discovery-sweep",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "lane-accounting",
+  "verdict": "fail",
+  "cost_usd": 2.5867,
+  "duration_s": 194.8,
+  "ran_at": "2026-08-23T21:55:00Z",
+  "runner_version": "workflow_probe_runner (#2210/#2211/#2216)",
+  "git_sha": "7d66113a0",
+  "evidence": {
+    "defect_issue": "#2214 \u2014 dependency-check lane $0/failure-markers; 6/7 lanes clean at $5 budget",
+    "lane_findings": {
+      "bug-predict": 8,
+      "doc-audit": 13,
+      "test-audit": 8,
+      "pattern-scan": 1,
+      "security-audit": 5,
+      "perf-audit": 5
+    },
+    "provenance": "transcribed from the 2026-08-23 live validation session outputs (see test-quality-program decisions.md + #2216)"
+  }
+}

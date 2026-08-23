@@ -1,0 +1,16 @@
+{
+  "workflow": "test-gen",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "executed-tests",
+  "verdict": "fail",
+  "cost_usd": 0.6233,
+  "duration_s": 160.8,
+  "ran_at": "2026-08-23T21:25:00Z",
+  "runner_version": "workflow_probe_runner (#2210/#2211/#2216)",
+  "git_sha": "7d66113a0",
+  "evidence": {
+    "emitted_test_chars": 0,
+    "defect_issue": "#2213 \u2014 emits no runnable tests (no Write tool)",
+    "provenance": "transcribed from the 2026-08-23 live validation session outputs (see test-quality-program decisions.md + #2216)"
+  }
+}

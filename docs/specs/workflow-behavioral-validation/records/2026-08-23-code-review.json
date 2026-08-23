@@ -1,0 +1,18 @@
+{
+  "workflow": "code-review",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "named-defect",
+  "verdict": "pass",
+  "cost_usd": 0.6678,
+  "duration_s": 103.2,
+  "ran_at": "2026-08-23T23:05:00Z",
+  "runner_version": "workflow_probe_runner (#2210/#2211/#2216)",
+  "git_sha": "e80953386",
+  "evidence": {
+    "num_findings": 19,
+    "named": [
+      "mutable default argument"
+    ],
+    "provenance": "transcribed from the 2026-08-23 live validation session outputs (see test-quality-program decisions.md + #2216)"
+  }
+}
