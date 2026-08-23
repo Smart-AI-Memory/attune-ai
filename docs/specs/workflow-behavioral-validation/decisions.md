@@ -27,11 +27,14 @@ deterministic seams (arg parsing, path validation, result adapter, error
 classification, budget allocation) KEEP the coverage floor.
 
 The carve is a fleet-wide policy that ACTIVATES per-workflow and only
-once that workflow has a passing probe: no probe → full floor; probe →
-seam-split so the driver is carved and the seams stay covered. Mechanism
-is seam-split (design approach (a)); `# pragma: no cover` is rejected;
-coverage-advisory is the named per-module retreat if a clean split is
-impossible.
+once that workflow has a FRESH passing probe: no probe → full floor;
+probe → seam-split so the driver is carved and the seams stay covered.
+Mechanism is seam-split (design approach (a)); `# pragma: no cover` is
+rejected. **Retreat (corrected by D6): if a module cannot be split
+cleanly it gets NO carve — full floor on the whole module plus the probe
+as an additive gate.** Whole-module coverage-advisory is rejected (it
+would drop the seams' floor). The carve is revocable — a failed, crashed,
+or stale latest probe re-arms the full floor (see D6 + design.md).
 
 **Governance note:** Principle 5 is a ratified contract principle with
 mechanical enforcers (`codecov.yml`, the threshold drift guard). This
@@ -107,4 +110,38 @@ were Codex-independent — not the lead's prior echoed back.
 **Disposition:** the carve DIRECTION (D2) stands; these are refinements
 to how it is specified and will be enforced, not a reversal. Design.md
 updated; the mechanical enforcer PR (still gated) must implement both
-enforcers from finding 4 and the monotonic projector from finding 3.
+enforcers from finding 4 and the reproducible projector from finding 3.
+
+## D7 — Second Codex lane (re-lane after D6): 3 findings accepted (2026-08-23)
+
+**Lane:** chair re-invoked `/cross-review codex` on the amended spec to
+verify the D6 fixes held before ratifying. Codex, spec branch diff; row
+in `docs/specs/cross-review/receipts.md`. The re-lane caught that the
+D6 round-1 fixes were STATED but not mechanically coherent — a useful
+demonstration that "accepted and folded in" is not the same as "correct".
+
+**Accepted, all three, folded into the spec:**
+
+1. **(high) D2's own text still contradicted D6.** The design.md retreat
+   was fixed in D6 but D2's decision text still named whole-module
+   "coverage-advisory" as the retreat. Fixed: D2's retreat clause now
+   reads "no carve — full floor + additive probe", matching D6.
+2. **(high) "Monotonic projector by git_sha" is not implementable.**
+   Two arbitrary Git SHAs have no older/newer relation without a history
+   walk. Fixed: the projector rebuilds the whole table from the full
+   append-only *tracked* record set, selecting the latest `ran_at` per
+   workflow; `git_sha` is provenance only, never an ordering key. Because
+   records are append-only and tracked, re-projection is idempotent with
+   no regression path to guard.
+3. **(high) Static coverage config cannot REVOKE a carve.** codecov.yml
+   is static and cannot re-arm the floor when a latest probe
+   fails/crashes/stales, leaving D2's revocability unenforced. Fixed:
+   the carved-driver set is GENERATED from the registry each run (a
+   driver is carved iff its latest probe is a fresh pass) and
+   drift-guarded, so a workflow drops out of the carve set automatically
+   when its probe stops passing — revocation is mechanical, not manual.
+
+**Disposition:** direction still stands; D7 makes the D6 refinements
+actually implementable. Two consecutive lanes both found real issues, so
+the chair may reasonably want one more re-lane before ratifying, or may
+judge the mechanics now sound.
