@@ -156,14 +156,12 @@ judge the mechanics now sound.
    for the whole fleet — seam-split for every workflow, not a
    per-module menu of split-vs-pragma-vs-advisory. This refines D2:
    there is ONE carve mechanism fleet-wide.
-   **Interpretation flagged (chair to correct in one word if wrong):**
-   "fleet-wide" is read as *uniform mechanism across the fleet*, NOT
-   *carve all ~20 modules at once*. Per-workflow, probe-gated ACTIVATION
-   (D2, cross-review-hardened) stands: a module is carved only once it
-   has a fresh passing probe; no probe → full floor. A module that
-   cannot be split simply stays fully floored + additive probe (D6/D7).
-   If the chair instead meant "carve the whole fleet immediately",
-   that reopens D2 and the revocability model — say so.
+   **Interpretation CONFIRMED by chair (2026-08-23):** "fleet-wide"
+   means *uniform mechanism across the fleet*, NOT *carve all ~20
+   modules at once*. Per-workflow, probe-gated ACTIVATION (D2,
+   cross-review-hardened) stands: a module is carved only once it has a
+   fresh passing probe; no probe → full floor. A module that cannot be
+   split simply stays fully floored + additive probe (D6/D7).
 3. **Pre-release gate wiring / budget → standalone job (D4), full-fleet
    cap uses the large cap but HARD $32 ceiling.** Sets D4's open number:
    the weekly/full-fleet run may use the large cap but must abort rather
