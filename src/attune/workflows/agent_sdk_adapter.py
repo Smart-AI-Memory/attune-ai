@@ -29,6 +29,7 @@ from attune.ops.session_redaction import redact
 from .base import ModelTier
 from .data_classes import CostReport, NextAction, WorkflowResult, WorkflowStage
 from .output import (
+    CalloutSection,
     Finding,
     FindingsSection,
     ListSection,
@@ -1709,6 +1710,38 @@ class AgentSDKResultAdapter:
         next_steps = next_steps_section_from_suggestions(suggestions)
         if next_steps is not None:
             sections.append(next_steps)
+
+        # A SCORED report with no sections analysed the code, graded it,
+        # and then handed back nothing structured. That renders as a blank
+        # panel and reports completed/exit 0, so it looks healthy from
+        # every angle — bug-predict did exactly this in 6 of 6 recorded
+        # runs across three weeks and nobody noticed. Say so in the report
+        # rather than rendering blank; the run still records, and the
+        # prose summary is still there to read.
+        #
+        # The scored-vs-unscored split is the discriminator, measured over
+        # the recorded run corpus (2026-08-22): an ABORTED run is also
+        # section-less but carries no score, and flagging those would make
+        # the marker noise. Do not widen this to "any empty report".
+        if score is not None and not sections:
+            logger.warning(
+                "%s produced a scored report with no structured sections; "
+                "findings exist only in the summary prose",
+                title,
+            )
+            sections.append(
+                CalloutSection(
+                    title="No structured findings",
+                    tier="essential",
+                    emphasis="warn",
+                    text=(
+                        "This workflow returned a score but no structured "
+                        "findings, so there is nothing to list here. Any "
+                        "findings are in the summary above. This is a "
+                        "reporting defect, not a clean result."
+                    ),
+                )
+            )
 
         report_metadata: dict[str, object] = {"duration_s": duration_ms / 1000}
         if total_cost is not None:
