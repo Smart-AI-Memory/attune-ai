@@ -261,15 +261,19 @@ class ReleaseAgent:
 
         success, findings = self._execute_tier(codebase_path, Tier.CHEAP)
 
-        # Escalate to CAPABLE if needed
-        if not success:
+        # Escalate to CAPABLE if needed. A tier may mark its failure
+        # ``retryable: False`` when a stronger model cannot change the
+        # outcome (a tool that did not run, unreadable tool output) —
+        # re-running it would spend two more tool runs and two LLM calls
+        # on a result that is already final.
+        if not success and findings.get("retryable", True):
             escalated = True
             self.current_tier = Tier.CAPABLE
             self._register_heartbeat(status="escalating", task="Retrying")
             success, findings = self._execute_tier(codebase_path, Tier.CAPABLE)
 
         # Escalate to PREMIUM if still failing
-        if not success:
+        if not success and findings.get("retryable", True):
             self.current_tier = Tier.PREMIUM
             self._register_heartbeat(status="escalating", task="Premium retry")
             success, findings = self._execute_tier(codebase_path, Tier.PREMIUM)
