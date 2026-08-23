@@ -90,14 +90,17 @@ def classify(findings: int | None, disposition: str) -> tuple[int | None, int | 
     d = disposition.strip()
     if findings is None:
         return None, None
+    # A row whose Findings count contradicts its disposition is NOT
+    # guessed at: "5 (findings) | clean" or "2 (findings) | 5 real" is
+    # a ledger error to surface, not a negative rejection count.
     if d.lower().startswith("clean"):
-        return 0, 0
+        return (0, 0) if findings == 0 else (None, None)
     if _REJECTION.match(d):
         return 0, findings
     m = _N_REAL.match(d)
     if m:
         real = _WORDS.get(m.group(1)) or int(m.group(1))
-        return real, findings - real
+        return (real, findings - real) if real <= findings else (None, None)
     if _ALL_REAL.match(d):
         return findings, 0
     return None, None

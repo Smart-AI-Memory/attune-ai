@@ -50,6 +50,10 @@ def _row(seat: str, findings: str, disposition: str, date: str = "2026-08-23") -
         ("1 (findings)", 'rejected — claim: "x" — reason: y', (0, 1)),
         ("1 (findings)", 'rejected-as-stated, alignment adopted — claim: "x" — reason: y', (0, 1)),
         ("1 (findings)", 'noise-as-stated, readability adopted — claim: "x" — reason: y', (0, 1)),
+        # Findings count contradicts the disposition (cross-review on
+        # #2206): surfaced as unclassified, never a negative remainder.
+        ("5 (findings)", "clean", (None, None)),
+        ("2 (findings)", "5 real — accepted and fixed in-branch", (None, None)),
         # Not a review verdict: left for a human, never guessed.
         ("5 (findings)", "ruled at the #1559 lift (row closed 2026-07-30)", (None, None)),
         ("3 (findings)", "stale-branch — carry only if revived", (None, None)),

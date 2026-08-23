@@ -174,8 +174,10 @@ dismissed|noise|rejected — the vocabulary D11a fixed), plus any tool
 precision a row records inline (bug-predict). First run on the 89
 rows at ratification: **codex 88% (126 real / 143 sent, 77 lanes,
 9 clean), antigravity 83% (5/6), bug-predict 100% (3/3, one note)**.
-"Rejected" is the conservative remainder — every finding the lead
-did NOT accept as real, including parked and already-correct ones.
+Within a classified row, "rejected" is the conservative remainder —
+every finding the lead did NOT accept as real (a `4 real` of 5 counts
+one). Rows the script cannot classify (parked `stale-branch`, chair-
+ruled, partial-manifest) contribute to NO column; they are listed.
 
 Three rows the script cannot read are named, not dropped, and
 pinned in `tests/unit/scripts/test_ledger_precision.py` as a
