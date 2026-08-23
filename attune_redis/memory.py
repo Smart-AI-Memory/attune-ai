@@ -32,7 +32,8 @@ logger = logging.getLogger(__name__)
 #: constant to avoid a cross-package import into attune-redis.
 _DEFAULT_TTL_DAYS = 30
 
-#: Readback budget after a long-term write: 3 tries ~0.45 s worst case.
+#: Readback retries after a long-term write (sleep between; each try is
+#: bounded by the client request timeout, not by this constant).
 _READBACK_ATTEMPTS = 3
 _READBACK_DELAY_S = 0.15
 
@@ -460,15 +461,18 @@ class AMSMemoryBackend:
                     deduplicate=False,
                 )
             )
+            # The receipt beats the promise: AMS acknowledges the create
+            # with 200 BEFORE the Redis write lands (verified 2026-08-23 —
+            # 2,437 acks and zero persisted records while its Redis auth
+            # was dead). Only a readback of the id we just wrote proves
+            # persistence. Runs inside this guard so an unexpected client
+            # or deserialisation error degrades to False like any other.
+            confirmed = self._readback(record_id)
         except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Graceful degradation for AMS HTTP errors
             logger.error("remember_failed: id=%s error=%s", record_id, e)
             return False
-        # The receipt beats the promise: AMS acknowledges the create with
-        # 200 BEFORE the Redis write lands (verified 2026-08-23 — 2,437
-        # acks and zero persisted records while its Redis auth was dead).
-        # Only a readback of the id we just wrote proves persistence.
-        if self._readback(record_id):
+        if confirmed:
             return True
         logger.error("remember_unconfirmed: id=%s acknowledged but not readable", record_id)
         return False
@@ -477,8 +481,12 @@ class AMSMemoryBackend:
         """Return True once ``record_id`` is readable from AMS.
 
         AMS indexes long-term memories on a background task, so the first
-        read can race the write; a few short retries cover that lag while
-        keeping a Stop hook bounded.
+        read can race the write; a few short retries cover that lag. The
+        bound is NOT 0.45 s: each attempt is a request governed by the
+        client's timeout (30 s default), so a stalled AMS can hold the
+        Stop hook for up to three timeouts plus the sleeps. The hook's
+        caller already treats the write as best-effort; a tighter
+        client timeout is the lever if that ever bites.
         """
         import httpx
         from agent_memory_client.exceptions import MemoryClientError

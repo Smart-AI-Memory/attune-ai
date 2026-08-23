@@ -56,3 +56,9 @@ def test_create_failure_short_circuits_without_readback(backend):
     backend._client.create_long_term_memory.side_effect = RuntimeError("boom")
     assert backend.remember("finding", memory_id="m1") is False
     backend._client.get_long_term_memory.assert_not_called()
+
+
+def test_unexpected_readback_error_degrades_to_false(backend):
+    """An error outside the transport set must not escape remember()."""
+    backend._client.get_long_term_memory.side_effect = RuntimeError("loop closed")
+    assert backend.remember("finding", memory_id="m1") is False
