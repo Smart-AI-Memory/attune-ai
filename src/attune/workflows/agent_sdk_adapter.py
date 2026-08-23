@@ -1570,9 +1570,16 @@ class AgentSDKResultAdapter:
             if matched_category:
                 continue
 
-            # Any other h2/h3 header ends the current category
-            if stripped.startswith("##"):
+            # Any other h2 header ends the current category. Deeper
+            # headers (``### HIGH`` severity groups under ``## Bugs``)
+            # stay INSIDE it — treating them as terminators dropped
+            # every bullet beneath them and yielded ``{"bugs": []}``:
+            # a truthy findings dict that built a scored report with
+            # zero sections (bug-predict, 6/6 runs, 2026-08-22).
+            if stripped.startswith("##") and not stripped.startswith("###"):
                 current_category = None
+                continue
+            if stripped.startswith("###"):
                 continue
 
             # Collect bullet points under the current category
