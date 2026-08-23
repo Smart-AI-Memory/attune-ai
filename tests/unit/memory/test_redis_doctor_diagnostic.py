@@ -141,11 +141,17 @@ class TestHandlerIntegration:
         assert TOOL_HANDLERS["redis_health_check"] is handle_redis_health_check
 
     def _run_with_backend_named(self, name: str, stats: dict) -> dict:
+        from attune_redis.memory import AMSMemoryBackend
+
         server = MagicMock()
-        backend = MagicMock()
+        # An AMS SUBCLASS: the write target must follow isinstance, not the
+        # class name (cross-review finding, 2026-08-23).
+        spec = type("TracedAMS", (AMSMemoryBackend,), {}) if name == "AMSMemoryBackend" else None
+        backend = MagicMock(spec=spec) if spec else MagicMock()
         backend.is_connected.return_value = True
         backend.get_stats.return_value = stats
-        type(backend).__name__ = name
+        if not spec:
+            type(backend).__name__ = name
         with (
             patch("attune_redis.mcp_tools._get_backend", return_value=backend),
             patch(

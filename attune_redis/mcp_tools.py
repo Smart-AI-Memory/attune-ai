@@ -539,8 +539,9 @@ def _write_target(backend: Any, stats: dict[str, Any], effective: dict[str, Any]
     read as healthy). Derive the target from ``backend_selected`` and
     label the other endpoint as not governing writes.
     """
-    name = type(backend).__name__
-    if name == "AMSMemoryBackend":
+    from attune_redis.memory import AMSMemoryBackend
+
+    if isinstance(backend, AMSMemoryBackend):
         effective["applies_to"] = (
             "direct Redis clients (recall index, telemetry) — does NOT govern "
             "the selected AMS write path"
