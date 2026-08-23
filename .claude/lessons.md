@@ -24707,3 +24707,74 @@ launched in parallel.
   the same session found a core lesson's premise ("Windows lanes are
   NOT required") had gone stale, so acting on it unverified would have
   added pointless friction.
+
+- **Core residency is for failures that DON'T ANNOUNCE THEMSELVES —
+  a loud, greppable failure belongs in the JIT tail no matter how
+  useful its lesson is, because recall can reach it**: ratified
+  2026-08-22 in the retro, resolving a real disagreement. Promoting
+  "claims carry their basis" to `.claude/CLAUDE.md`'s always-loaded
+  core tripped the shrink-only byte budget
+  (`tests/unit/lessons/test_core_mirror.py`, 46,000 B, 270 B of
+  headroom), which forced the eviction conversation the budget exists
+  to force. I proposed demoting the pre-commit auto-fix lesson because
+  all five of its OPERATIVE rules are already duplicated in the same
+  file's resident "Git and pre-commit" contract section, then pushed
+  back on my own proposal: the demoted entry also carries diagnostics
+  the contract does not (the stash-conflict symptom; "CI black runs on
+  the WHOLE file your PR touches"), and those are what you need
+  mid-incident. Patrick leaned demote anyway, and was right — my
+  pushback used the wrong test. **I compared the two lessons on how
+  much unique content each carried; the deciding question is whether
+  RECALL CAN REACH IT WHEN IT MATTERS.** A pre-commit failure is loud:
+  the commit fails, a hook prints its own name, files show modified,
+  and the operator holds searchable handles ("black", "pre-commit",
+  "stash", even "black fails on lines I didn't write"). That is the
+  condition under which JIT retrieval works BEST. An inference stated
+  as a verified fact produces no symptom at all — nothing fails, so
+  there is no term to retrieve on, and residency is the only mechanism
+  left. **The criterion, checkable and non-arbitrary: if the failure
+  produces a loud searchable symptom, the lesson goes in the tail; if
+  the failure is silent at the moment it happens, it must be
+  resident.** A useful corollary fell out of the same trade: keep
+  PREVENTION resident and let DIAGNOSIS be retrievable — the five
+  operative pre-commit rules stay always-loaded via the contract, so
+  the mistake is still prevented; only the diagnosis of an
+  already-visible incident moved to recall. And the cost side is real
+  and easy to forget: core is context EVERY session pays for whether
+  or not the lesson fires, so a lesson that only earns its keep during
+  a recognizable incident should not be charged to every session.
+  Net that day: core 45,730 -> 44,563 B while ADDING a lesson.
+
+- **A heading-driven text parser encodes an assumption about heading DEPTH — a prompt that asks for sub-grouping silently violates it, and the failure is a truthy-but-empty dict that still builds a scored report**: 2026-08-22, the 6/6 bug-predict runs with a score but zero sections (#2191 marked it, #2193 fixed it). `_parse_findings` treated every `##`-prefixed line — including `###` — as ending the current category. Bug-predict's prompt asked for `## Bugs` "organized by severity", so the agent wrote `### HIGH`; `## Bugs` opened the category, `### HIGH` closed it, every bullet beneath was dropped → `{"bugs": []}`. That dict is truthy, so the adapter built a report; empty, so it had no sections; scored, because `## Summary` parsed fine. Exit 0, `completed`, rich prose — healthy from every angle. Two tells: (1) the workflow was the ONLY subagent workflow not passing `output_format=WORKFLOW_OUTPUT_SCHEMA` — when siblings on the same adapter work and one doesn't, diff their OPTIONS before their prompts; (2) reproduce the parse in a REPL with the prompt's own requested shape before touching code — one `_parse_findings("## Bugs\n### HIGH\n- x")` call named the bug. Fix both layers: adopt the structured path AND make the text parser keep `###`+ inside its category (`##` alone terminates), so the class is closed for any workflow still on the markdown path. Generalizes: any prompt that says "grouped by / organized by" will get sub-headers back; check what the consumer does with a header one level deeper than it expects.
+
+- **The unbacked-claim pattern, measured at close range: the claim
+  precedes the probe by exactly ONE tool call — so the fix is to swap
+  the order, not to "verify more"**: 2026-08-23 close-out retro, three
+  instances in one stretch, every one caught a single message after it
+  was asserted. (1) "the class still owns all 12 methods" — asserted on
+  `ast.parse` alone; the structural probe existed and ran only on the
+  redo, after tests caught an 8-methods-orphaned class break. (2)
+  "bug-predict finished in ~15s" — asserted from a waiter's first poll;
+  `duration_seconds` in the run record said 201s one read later. (3)
+  "both are mechanical and I can do them now" — asserted before
+  `inspect.getsourcefile` showed the function lived in a different,
+  published package one command later. In all three the probe was
+  cheap, available, and RUN — just after the sentence instead of before
+  it. That reframes principle 16's discipline operationally: when a
+  confident sentence is forming and a probe is one tool call away, run
+  the call first and let the sentence quote it. The cost is one
+  reordering, not extra work — the same commands got run either way.
+
+- **A degrade-to-clean-defaults parser makes its gate pass BLIND — when a gate passes, read the agent's `note` field before trusting it**: 2026-08-23, running `/agents:release-prep` on main. bandit ≥ 1.9 writes a rich `Working... 100%` progress line to STDOUT ahead of its JSON; `json.loads` failed, `_parse_bandit_output` degraded to `critical_issues=0 / score=50 / note="Could not parse bandit output"`, and the Security gate read the zero as clean. The verdict happened to be right (0 real medium+ findings) — which is exactly why nobody noticed. Principle 7 was honored at the TEAM layer (a `success=False` agent fails the gate) but the AGENT returned success with a fabricated zero, so the sentinel never fired. **Tells**: a gate passes with `score=50` / `confidence≤0.5` / any `note` in its findings; a subprocess tool upgrade (bandit 1.9 here) that changes stdout shape. **Fix shape**: quiet the tool (`-q`) so stdout is the document alone AND make the unreadable path return the fail-closed sentinel (`-1`), never the clean default — a parser that cannot read must not return a count. Fixed in #2194. Generalizes to every rule-based gate agent with a "could not parse → safe defaults" branch: "safe" defaults that satisfy the gate are the unsafe choice.
+
+- **A keyed `ReleasePrepTeam` run is a $0 no-op unless `RELEASE_LLM_MODE=real` — the LLM path is gated by that env var, not by the API key**: 2026-08-23. The spend gate was cleared for the keyed pass, the run reported `cost=$0.0000`, every agent stayed `mode=rule_based`, and it took a second look at `base_agent.py` to see `LLM_MODE = os.getenv("RELEASE_LLM_MODE", "simulated")` short-circuits client creation even with `ANTHROPIC_API_KEY` set. A "we spent nothing" receipt after an authorized spend is itself a signal to check which switch was actually off. With the flag set, the full four-agent real-mode pass cost $0.0044 and added no gate-changing information over the deterministic probes — the keyed pass is not worth the flag-hunt for release readiness; the rule-based probes are the receipt.
+
+- **The Agent Memory Server acknowledges `POST /v1/long-term-memory/` with 200 BEFORE its Redis write — an HTTP 2xx from a queue-then-index service is an ack, never a persistence receipt; the stash hook reported success for two weeks while nothing persisted**: 2026-08-23. AMS's Redis auth had been dead since 07-24 (credential-less `REDIS_URL` in its launchd plist); its log showed **2,437 creates → 200, zero 500s** on that endpoint, while `search`/`forget` on the same server 500'd with `Authentication required`. Stop-hook telemetry recorded `backend=AMSMemoryBackend reason=None` daily because `reason` reflects REACHABILITY (health), not the write; the suite could not see it because mocked clients ack too. **Detection that settled it in two commands**: count stash events in `~/.attune/telemetry` by day, then ask AMS for memories created in the same window — events without records is the tell. **Fix shape (#2195)**: read the id back after the create (bounded per attempt — see the "documenting a hazard" lesson), return False on miss, divert to the file tier; plus a NON-MOCKED boundary test against the real server (acked-but-absent must return False over the real transport). Generalizes to any write path whose success is judged by a transport status from a service that indexes asynchronously.
+
+- **Documenting a hazard is not removing it — a cross-review "low" I answered with a docstring came back as a "high" with the consequence spelled out, and the consequence defeated the whole fix**: 2026-08-23, #2195. First lane: "the ~0.45 s worst-case claim omits three 30 s request timeouts" (low). I fixed the CLAIM — rewrote the comment to state the real ~90 s bound — and shipped. Re-lane: "three readbacks can hold the Stop hook ~90 s, past the hook runner's limit, losing the very stash this change exists to preserve" (high). Same fact, now with its blast radius; the honest comment had made the hazard easier to see, not smaller. Fix was three lines (`asyncio.wait_for` per attempt, 2 s cap, hung-client test). **Rule**: when a finding is about a NUMBER, ask what happens at that number before deciding the disposition is "document it" — a bound you are unwilling to defend in the consequence's terms is a bound to change, not describe. Rider on the same day: a masked `env | grep -iE "^REDIS"` printed `REDIS_PASSWORD=<value>` because the mask only covered URL-embedded credentials — the FIFTH secret-leak vector in this corpus. Print variable NAMES (`env | cut -d= -f1 | grep …`), never matched lines, when grepping an environment.
+
+- **A Redis conf rewritten during a rotation can re-add `loadmodule` lines the `redis-stack-server` wrapper ALREADY passes — harmless until the next restart, then a permanent crash loop**: 2026-08-23. The local stack had run since Aug 8; the 08-22 rotation session rewrote `/opt/homebrew/Caskroom/redis-stack-server/*/etc/redis-stack.conf` with five `loadmodule` lines. The wrapper script passes `--loadmodule` for all five itself, so on the next start RediSearch loaded twice and the server aborted (`redisearch.so initialization failed … server aborting`) — 3,282 restarts at ~10 s each, every one logged, nobody looking. **Tells**: `launchctl print` shows `state = spawn scheduled` + `last exit code = 1`; the log shows `Module 'search' loaded` followed by the same `.so` "initialization failed" a few lines later (second load of one module). **Fix**: delete the `loadmodule` lines from the conf (the wrapper owns them) — never both. **Rule**: a running instance proves nothing about the conf it will load next; after editing any daemon config, restart it WHILE YOU ARE STILL THERE, or the failure surfaces at the next reboot as someone else's mystery.
+
+- **A "self-healing" auto-start that spawns a bare server MASKS the real failure — attune's own `redis_bootstrap._start_via_direct` put a password-less, all-interfaces `redis-server` on :6379 while the configured stack was crash-looping, and every probe except the FT.* index read it as healthy**: 2026-08-23. `ensure_redis(auto_start=True)` fell through Homebrew/Docker to `redis-server --port 6379 --daemonize yes`: no config, `*:6379`, no `requirepass`, no modules, `dir` = the caller's cwd (it dropped a `dump.rdb` into a repo worktree). It answered PING, so the stack's crash loop looked like "memory index missing" for two hours. The squatter's origin was a mystery until the code was grepped for `redis-server` — the process signature (`ppid 1`, no conf file, cwd = worktree, started at a session timestamp) matched the spawn line exactly. **Rules**: (1) when a service "came back" on its own, check `CONFIG GET dir` / `INFO server config_file` / `MODULE LIST` before trusting it — a bare server is a different server; (2) a fallback that cannot reproduce the configured server's security posture should refuse and report "not running" (#2197 removed the spawn on every platform, chair-ruled after the cross-review lane showed the Windows path had the same shape); (3) health that is satisfied by ANY listener on the port is not health.
+
+- **zsh does not word-split unquoted variables — `F="a b"; cmd $F` and `for pair in "2194 sha"; set -- $pair` both pass ONE argument, and a script that takes `<pr> <sha>` then looks for a PR named "2194 sha"**: 2026-08-23, twice in one session. First `pre-commit run --files $F` saw a single path containing spaces ("No such file or directory" for the whole list); then a guarded-merge loop `for pair in "2194 9a17cd8f7" …; do set -- $pair; land_pr.sh "$1" "$2"` ran five times with `$1` = the whole pair and `$2` empty — `no pull requests found for branch "2194 9a17cd8f7"`, zero merges, a full relaunch. Bash splits on IFS by default; zsh (the Bash tool's shell here) does not unless `SH_WORD_SPLIT` is set. **Use arrays**: `F=(a b); cmd "${F[@]}"`, and for pairs iterate explicit literals or `read -r pr sha <<<"$pair"`. Companion to the existing zsh gotchas (`=word` PATH expansion, read-only `status`) — same root: the Bash tool's shell is zsh, and Bash idioms fail quietly, not loudly.
