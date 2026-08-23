@@ -24322,3 +24322,354 @@ imposes on every other in-flight PR, not just the next one.
 - **The roundtable Board's FCALL rejects a `draft` message kind — spec-authoring rounds post drafts as `kind='position'` with `role='drafter'` extras**: hit 2026-08-22 running the V2-P1 spec-authoring loop interactively (thread `q-release-audit-roundtable-stage-001`). The skill's spec-authoring section says round outputs are lint-gated drafts/critiques, but `rt_post_message` enforces `question|position|synthesis|ruling|suggestion|halt` — `Board().post_message(..., 'draft', ...)` raises `ResponseError` from the Redis function, after the draft already lint-checked clean. Working recipe: post as `position` carrying `role='drafter'` / `role='critic'` and `reply_to=<draft id>` extras; the compiler lints (`lint_draft`/`lint_critique`) don't care about board kind, only body shape (`**XX-N — title**` items, cited critique items, VERDICT line). Same loop also needs the critique brief to state the lint contract explicitly (item ids in bold, pack/file citation per item, exact VERDICT line) — both external CLI seats produced lint-clean critiques on the first pass when the brief carried the contract verbatim.
 
 - **A derived status column's first honest output can be CONFIDENTLY WRONG where a gate asserts a deliberately-scoped subset — pair every hits-vs-gate derivation with a machine-readable dispositions ledger, or BROKEN-GATE becomes the new false alarm**: 2026-08-22, first live run of `attune.classes.register` (release-audit-stage R2). The derivation table (gate present + hits > 0 = BROKEN-GATE, loud) immediately reported C3 and C4a broken. Both gates are fine: the C3 gate deliberately asserts only the REACHABLE external-input subset (the review dismissed 25 internal sites with reasons and carried 15 stored-data sites), while the R7b rule hits the whole tree — 52 hits vs a gate that intentionally covers ~12. The seat's OQ3 warning materialized on contact: "a hand-maintained column that is KNOWN stale is safer than a derived one that is CONFIDENTLY wrong." The fix is not weakening the loud quadrant — it is making the review's dismissed-with-reason discipline machine-readable (`.attune/class-dispositions.yaml`, `{rule_id, path, reason}` subtracted before derivation, invalid entries reported never silently applied). Rider from the same run: the derivation also caught the hand register stale in the GOOD direction (H1/G1/G2/I-4 gates existed that the register still called fixed-but-ungated) — a derived column drifts loud in both directions, which is the whole argument for deriving; the dispositions ledger is what keeps the loud direction truthful.
+
+- **A CLEAN rebase silently keeps YOUR stale side of a shared
+  monotonic counter — so a long-parked branch can revert someone
+  else's bump without a single conflict marker**: 2026-08-22,
+  unparking the `attune.exceptions` removal after it sat 18 commits
+  behind main. The rebase reported "Successfully rebased" with zero
+  conflicts. But the branch carried `README.md`'s tests-badge floor at
+  **24,000** — correct when written that morning, when the removal put
+  collection at 24,910 — while main had independently bumped it to
+  **25,000** as the suite grew. Git had no reason to conflict: only one
+  side changed that line relative to the merge base, so the rebase kept
+  it, and the branch was about to ship a badge that UNDERSTATED the
+  suite and silently reverted a peer's bump. `check_badge_freshness.py`
+  would NOT have caught it — 25,301 actual against a 24,000 floor is
+  within `MARGIN`, so it passes while claiming less than the truth.
+  **The class: any value that only ever moves one direction — badge
+  floors, ratchet baselines (`CORE_BUDGET_BYTES`, broad-except counts,
+  allowlist sizes), coverage thresholds, seeded counts — is a
+  "last-writer-wins" field that a clean rebase resolves in favour of
+  whoever is older.** Conflicts protect you when both sides edited;
+  nothing protects you when only the stale side did. **Rule:** after
+  rebasing any branch that touched a monotonic/shared counter, diff
+  that specific value against the new base (`git show
+  origin/main:<file> | grep <pattern>`) rather than trusting the clean
+  apply — and re-derive it from current reality rather than restoring
+  either side blindly (here the right answer was "no change needed at
+  all", because the removal no longer drops the count below the floor).
+  Also amend the commit message: it documented a badge change the
+  commit no longer makes.
+
+- **Replacing a markdown block that sits above a `---` rule drops the
+  blank line and turns your last sentence into a SETEXT HEADING**:
+  2026-08-22, rotating README's "New in <version>" slot for the 14.0.0
+  release. The replacement text ended `never hand-written.` and the
+  next characters were `\n---\n`. In markdown, `text` immediately
+  followed by `---` on the next line is **setext H2 syntax**, not a
+  horizontal rule — so the final sentence of the section would have
+  rendered as a giant heading on the project's front page. The original
+  had `\n\n---\n\n`; a python `s.replace(old, new)` whose `old` ended
+  at the paragraph and whose `new` did too is *supposed* to preserve
+  the surrounding newlines, and it did — the bug was that my `old`
+  slice was taken with `s.index("\n---\n", start)` as the END BOUND,
+  which consumed one of the two newlines into the replaced region.
+  **Two rules:** (1) when slicing a markdown block for replacement,
+  bound it on the BLANK LINE (`\n\n`), not on the rule/heading that
+  follows, or the delimiter's leading newline gets eaten; (2) after any
+  scripted markdown edit, assert the boundary bytes explicitly —
+  `repr(s[i:i+30])` around the seam — because setext, list-continuation
+  and fence-close bugs are invisible in the source diff and only appear
+  when rendered. Nothing in the repo's lint catches this: end-of-file
+  fixer, trailing-whitespace and the markdown formatting rules all
+  passed on the broken file.
+
+- **`bump_version.py` owns 10 sites and the ROOT `README.md` is not one
+  of them — its "New in <version>" slot is hand-maintained, and one of
+  its other version mentions must NEVER be bumped**: 2026-08-22, cutting
+  14.0.0. The bumper writes `pyproject.toml`, `plugin/core/__init__.py`,
+  `plugin.json`, BOTH `marketplace.json` files, `API_REFERENCE.md`,
+  `.claude/CLAUDE.md`, `plugin/README.md`, `website/lib/features.ts` and
+  `website/app/page.tsx` — and `test_all_versions_match` backstops those.
+  The root README is outside all of it, so a release that runs the
+  bumper and trusts the drift test ships a front page still headlined
+  with the PREVIOUS version. Three specifics: (1) the README carries its
+  own inline instruction — `<!-- ROTATING SLOT: ... replaced each
+  release ... Don't stack a second "New in" here -->` — so the section is
+  REPLACED, not appended; assert `grep -c '^## New in' == 1` after
+  editing. (2) A second mention (`ships via attune-forms 0.7.0 (new in
+  13.0.0)`) is a HISTORICAL FACT about when a dependency landed and is
+  still true forever — a blind find-replace of the old version string
+  falsifies it. Bump the slot, leave the history. (3) `uv.lock` also
+  carries the version and needs `uv lock` (a one-line diff; anything
+  larger is a dependency cascade to explain before shipping).
+
+- **Unit tests written from your own implementation encode your own
+  misreading of the spec — LIVE-FIRE the thing on real data BEFORE
+  writing them**: 2026-08-22, building the release-audit residual packet
+  (R4). I wrote the builder, then ran it on the real `v13.0.2..HEAD`
+  release diff before writing a single test. It **refused with
+  over-cap at 17 items**, and chasing that number surfaced THREE
+  spec-fidelity violations in my own code: (1) I minted a residual item
+  per ungated-exposure class, which D5 forbids in as many words —
+  "exposure warns via the §3 boolean matrix ONLY, never
+  warning-severity rows competing with hits for the packet's cap";
+  (2) uncalibrated hits also consumed the item cap, though R1 says
+  advisory findings "never block, never clear", so they are unrulable
+  and the chair cannot act on them; (3) the §0 public-symbol delta read
+  only the CHANGED file set, so a module DELETED in the range
+  contributed nothing — and the release's entire breaking change lived
+  in a deleted module, meaning the section whose job is naming the
+  breaking surface reported removed `Test*` classes instead and missed
+  all nine removed exception classes. **Every one of those would have
+  shipped behind green unit tests**, because tests written after an
+  implementation are written to match it: I would have asserted "an
+  exposure class produces an item" and watched it pass. The real diff
+  had no such loyalty. Practice: for any component with a normative
+  spec, the FIRST execution should be against production-shaped data,
+  and a refusal/cap/error on that first run is a finding to chase, not
+  a nuisance to tune away. Then write the tests — and write them from
+  the SPEC's language, not from what the code now does. Corollary for
+  caps and thresholds: when a real workload just misses a documented
+  cap, suspect your own over-production before suspecting the cap
+  (17 -> 9 items once the two spec violations were fixed, comfortably
+  inside a limit that had looked too tight).
+
+- **Platform-specific PATH SEMANTICS cannot be simulated on the other
+  platform — a "cross-platform" regression test for them fails against
+  CORRECT code, so guard the source instead**: 2026-08-22, fixing the
+  Windows-only failure in `_subtract_dispositions` (PR #2173), where
+  `str(Path(...))` renders the NATIVE separator so a hit became
+  `src\mod.py` while the hand-authored disposition said `src/mod.py`
+  and the tuple never matched. The fix (`.as_posix()` on both sides) was
+  right. My first two regression tests were **wrong**: I fed a
+  pre-rendered `str(PureWindowsPath("src/mod.py"))` and asserted it
+  matched — but on POSIX a backslash is an ORDINARY FILENAME
+  CHARACTER, so `Path` never treats it as a separator and `as_posix()`
+  leaves it untouched. The tests failed against the corrected code and
+  I briefly suspected the fix. **The tell: a regression test that fails
+  on the fix you just proved correct is usually testing the host's
+  semantics, not the code's.** What works instead: (a) let the
+  behavioural coverage live on the platform where the behaviour exists
+  (the Windows lanes ran the real assertion), and (b) add a SOURCE
+  guard that runs everywhere — parse the function and assert both sides
+  normalise with `.as_posix()`, so a revert fails fast on macOS instead
+  of waiting on a lane that is not required to merge. Generalises to
+  case-insensitive filesystems, drive letters, `os.sep`, reserved
+  device names, and permission bits: if the property only exists on one
+  OS, a cross-platform behavioural test is fiction — pin the mechanism,
+  not the behaviour.
+
+- **Writing a file SAFELY is not the same as building its PATH safely —
+  the atomic-write idiom can lull you past a traversal hole in the same
+  function**: 2026-08-22, adding the release-audit chair manifest. I
+  wrote the persistence carefully: `tempfile.mkstemp` + `os.fdopen` +
+  `os.replace` for an atomic publish, refuse-on-overwrite for
+  immutability, JSON validated on read. The path-validation gate failed
+  the module anyway, and it was RIGHT: `manifest_path(repo_root, tag)`
+  interpolated a **caller-supplied** tag straight into
+  `.attune/release-manifests/<tag>.json`, so a "tag" of
+  `../../../etc/cron.d/x` writes wherever it likes. Every safe thing I
+  had done was about HOW the bytes land, and none of it constrained
+  WHERE. **The shape to watch: any function taking an identifier from
+  outside — tag, run id, slug, agent id, session key, feature name —
+  and joining it into a path.** The write idiom being modern is not
+  evidence the path is confined. Fix rather than allowlist, in three
+  parts, because each catches a different escape: (1) shape-validate
+  the identifier against what it can legitimately be (`^[A-Za-z0-9]
+  [A-Za-z0-9._-]{0,63}$` for a tag), (2) route the joined path through
+  the repo's `_validate_file_path(..., allowed_dir=...)`, and (3)
+  assert the RESOLVED parent equals the intended directory, which is
+  what actually stops `v1.0.0/../../escape` after normalisation. Pin
+  hostile inputs as parameters — `../`, absolute, embedded NUL, empty,
+  and an over-long name — since each takes a different branch. Related:
+  the standing "apply `_validate_file_path()` consistently across
+  reads, writes and deletes" lesson, of which this is the
+  path-CONSTRUCTION half.
+
+- **Dependency injection creates a coverage blind spot at EXACTLY the
+  code that runs in production — the defaults never execute in the
+  suite**: 2026-08-22, codecov flagged 69 uncovered lines on the
+  release-audit PR. The gap was structural, not sloppiness. Every
+  external call in the stage is injected — the CI reader
+  (`runs_provider`), the seat runner (`invoke`) — which is precisely
+  what makes the logic testable with no network and no model calls. But
+  the tests always pass a fake, so the DEFAULT implementations
+  (`gh_runs_provider`, the `main()` CLI entry point) are never once
+  exercised. Those defaults are the only versions that ever run for a
+  real user. Concentrated result: the two least-tested functions in the
+  package were the live `gh` subprocess wrapper and the CLI whose exit
+  codes another surface documents as a contract. **The tell: a module
+  with high coverage and a suspiciously untouched `_default_*` /
+  `*_provider` / `main()`.** Fix by testing the defaults' FAILURE modes
+  specifically, since that is what injection hides — for the subprocess
+  reader: non-zero exit, unparseable JSON, a dict where a list was
+  expected, a missing binary, and a timeout, each asserting the
+  fail-CLOSED result (`[]` -> caller refuses) rather than a fabricated
+  success; for a CLI: every documented exit code, since those are a
+  contract other surfaces rely on. Coverage went 87% -> 97.5% purely by
+  covering seams the design had made invisible. Corollary: injection is
+  still right — it kept a six-module feature testable without a single
+  model call — but it moves the risk rather than removing it, so budget
+  a test file specifically for "the defaults nobody injects".
+
+- **Two models agreeing is NOT corroboration when they share a prior —
+  and if one of them is you, say so before the chair weighs it**:
+  2026-08-22, the first real sitting of the release-audit stage. Codex
+  said SHIP; antigravity amended to GATE-FIRST, reasoning that "partial
+  audit coverage (16 of 45 files swept)" exposed the release. That was
+  the SAME objection I had argued and the chair had overruled hours
+  earlier (D10, scoping the sweep to `src/`). Patrick read the
+  convergence as new evidence — "based on your feedback, I'm regretting
+  my previous decisions" — and leaned toward reversing a ruling he had
+  made with more information than either model had. **The convergence
+  was worth almost nothing.** Antigravity and I are both LLMs, and
+  "16 of 45 sounds like inadequate coverage" is exactly the prior two
+  language models would share; its agreement with me is a correlated
+  draw, not an independent confirmation. Worse, I was an INTERESTED
+  PARTY — I had argued that position and lost, so my framing of its
+  reply was the least trustworthy input in the room. What actually
+  settled it was evidence neither model had weighed: the packet showed
+  `sweep rows: 0` and `no_calibrated_hits: True`, so the release
+  introduced ZERO instances of any calibrated class, and the class in
+  question (C4b) carried 2 PRE-EXISTING register hits with none in the
+  diff. Blocking on it would also have inverted D5 (hits block,
+  exposure warns) and made every release hostage to a 15-of-26 backlog.
+  **Three durable rules**: (1) when a model seat echoes YOUR position,
+  say out loud that you are an interested party and that shared priors
+  make the agreement weak — do not let it read as a second opinion;
+  (2) check whether the seat is answering the QUESTION ASKED — this one
+  voted GATE-FIRST on C4b while arguing about sweep scope, i.e. it
+  registered a spec objection on an unrelated instrument, which would
+  have written a manifest saying the chair held the release for C4b,
+  something nobody believed; (3) go back to the artifact — the packet's
+  own numbers ended a debate two models could have sustained
+  indefinitely. Also note the sitting had only TWO live seats (claude
+  was absent), so a "table" reversing a chair ruling was one model plus
+  its own advocate.
+
+- **"Dashboard-launched" in the release-execute self-review step is a
+persistence requirement, not a UI preference — the MCP and CLI paths
+run the same workflow and record NOTHING.** Verified 2026-08-22 while
+executing step 16 for 14.0.0. The step reads "run code-review AND
+bug-predict on the shipped tree from the ops dashboard
+(dashboard-launched, so the runs record)", and the parenthetical scans
+as a convenience note. It is the whole point. `_persist_run` has
+exactly ONE caller in the tree (`src/attune/ops/runner.py:732`, from
+`RunnerService`), and `RunnerService` is referenced only from within
+`src/attune/ops/` — no MCP tool, no `attune workflow run`, nothing
+else imports either. So `mcp__attune-ai__code_review` performs the
+identical analysis and leaves no artifact in the run-record corpus:
+the release's demand evidence silently never accrues, and the
+*analysis still looks successful*, which is what makes this the quiet
+kind of failure. The step's stated purpose is "demand-evidence
+generation, not fiat expansion" — evidence that isn't recorded is not
+evidence. **Rule: when a skill names a LAUNCH SURFACE rather than a
+command, check whether the surface owns a side effect the other
+surfaces lack before substituting a more convenient path.** The
+mechanical check is one grep: find the persistence/telemetry call and
+count its callers. Here the correct path is bootstrapping the
+dashboard's own token (`GET /api/session/token`) and POSTing
+`/workflows/{name}/run` with `X-Attune-Client` — the same handshake
+the page performs, so automation stays a legitimate client rather
+than bypassing the recorder. Note the runner holds a busy-lock (one
+run at a time), so the two runs must be chained sequentially, not
+launched in parallel.
+
+- **A running server's own `/api/info` cannot tell you which `src`
+  tree it serves — version and project_root are both compatible with
+  main AND every worktree, so the editable-install MAPPING is still
+  the only answer.** Hit 2026-08-22 running the post-release
+  self-review for 14.0.0. I found an ops dashboard already listening
+  on 8765 and read `/api/info`, which returned
+  `{"version":"14.0.0","project_root":"/Users/patrickroebuck/attune-ai"}`.
+  That looks like proof it is serving the main checkout: right
+  version, main's project root. It was not. `ps` showed the process
+  was launched from a WORKTREE venv, and that venv's
+  `__editable___attune_ai_*_finder.py` MAPPING pointed `attune` at
+  `<worktree>/src/attune`. Both fields are structurally incapable of
+  distinguishing: `version` comes from the package metadata (same
+  string on every checkout of the same release), and `project_root`
+  is the `--project-root` FLAG the process was launched with, which
+  is independent of which code is executing. **The two are orthogonal
+  — the flag says where it LOOKS, the MAPPING says what it RUNS.**
+  This matters doubly for the ops runner, because it spawns work as
+  `sys.executable -m attune.cli_minimal`, so the venv that launched
+  the dashboard also decides which code performs every workflow run
+  it hosts. Reviewing "the shipped tree" through a worktree-launched
+  dashboard silently reviews the worktree's branch instead. The
+  existing worktree lesson already says to verify the LIVE process's
+  resolution rather than infer from a convenient `python -c`; this
+  adds that **the service's own identity endpoint is one of those
+  convenient-but-insufficient reads**, and it is more seductive than a
+  `python -c` because it appears to come from the horse's mouth.
+  Diagnostic that actually settles it, in order: `ps -p <pid> -o
+  command=` for the launching python, then `grep MAPPING` in that
+  venv's finder. The cheap escape hatch when all you need is
+  equivalence rather than location: compare TREE HASHES instead of
+  paths — `git rev-parse <ref>:src` for the tag, main, and the
+  worktree HEAD. Identical hashes plus a clean `git status --porcelain
+  -- src/` proves the bytes match no matter which checkout executes,
+  which converts an ambiguous provenance question into a settled one.
+
+- **An ops dashboard launched from inside a Claude Code session is a
+  CHILD of that session — teardown kills the in-flight run and the record
+  is never written, because `_persist_run` fires only at completion**:
+  2026-08-22, the 14.0.0 post-release self-review (release-execute step
+  16). A `code-review` run had been going ~4 minutes when the session was
+  paused. I told Patrick it would keep running because "it's a child of
+  the dashboard, not of this session" and that he might return to it
+  "already finished and recorded". Both claims were wrong. `ps` had
+  already shown the process tree —
+  `Claude.app/Contents/Helpers/disclaimer -- uv run python -m attune.ops`
+  — so the dashboard was launched THROUGH the app helper and died with the
+  session, taking its child run with it. Nothing landed in
+  `~/.attune/ops/runs/code-review/`, so the work was lost, not pending.
+  **The reasoning error is worth more than the fact: I inferred process
+  independence from ARCHITECTURE ("the runner spawns a subprocess") when
+  the process tree in front of me answered the question directly.** A
+  record on disk survives anything; a run that has not finished has no
+  record to survive.
+  Practical rules: (1) before promising that background work outlives a
+  pause, read the actual ancestry (`ps -o ppid=,command= -p <pid>`) rather
+  than reasoning from design; (2) launch long ops runs `nohup`-detached
+  (`nohup <venv>/bin/python -m attune.ops --project-root <root> --port N
+  --no-browser &` + `disown`) when they must outlive the session, or keep
+  the session alive until every run is terminal; (3) the runner holds a
+  ONE-RUN busy lock, so a second workflow cannot be queued in advance —
+  chaining it requires a live waiter, which is itself session-scoped, so
+  two sequential runs are inherently a stay-alive obligation.
+  Also pinned here because it governs the same step: `_persist_run` has
+  exactly ONE caller (`RunnerService`, `ops/runner.py`), so an
+  MCP-launched or bare-CLI `code-review` records NOTHING. Step 16 says
+  "dashboard-launched, so the runs record" and that clause is load-bearing
+  — bootstrap `GET /api/session/token` and POST `/workflows/<name>/run`
+  with the `X-Attune-Client` header instead of reaching for the MCP tool.
+
+- **`git rev-parse <ref>:<path>` proves something about a REF; the tool
+  you are about to run reads the WORKING TREE — and a checkout can be 17
+  commits behind while every ref-level check passes**: 2026-08-22, setting
+  up the 14.0.0 post-release self-review. To confirm I would review the
+  shipped bytes I compared `git rev-parse origin/main:src` against
+  `git rev-parse v14.0.0:src`, got an identical tree hash, and wrote
+  "IDENTICAL -> main's src IS the shipped tree". Both halves were true and
+  the conclusion was false: `origin/main` is a remote-tracking ref updated
+  by `git fetch`, whereas the review would read
+  `/Users/patrickroebuck/attune-ai/src/attune` off disk — and that
+  checkout's `HEAD` was 17 commits behind `origin/main`, sitting on the
+  13.0.2-era tree. `git status --porcelain -- src/` reported ZERO
+  uncommitted files, which reads like "clean, therefore current" but only
+  means "the working tree matches its own stale HEAD". The review would
+  have run happily against the wrong code and been filed as the 14.0.0
+  receipt — a fabricated evidence artifact, the most expensive kind of
+  wrong, because nothing downstream would ever question it.
+  **The tell that caught it was a version disagreement, not a git check**:
+  the dashboard's `/api/info` said `13.0.1` where 14.0.0 was expected. Two
+  cheap filesystem reads settled it —
+  `grep '^version' pyproject.toml` (said 13.0.2) and
+  `python -c "import attune; print(attune.__version__, attune.__file__)"`.
+  **Rule: when a probe's answer determines WHICH BYTES a tool will read,
+  verify from the filesystem the tool will actually read — `pyproject.toml`
+  on disk, an imported `__version__`, `__file__` — never from a ref
+  comparison.** Refs answer "what does the remote know"; they never answer
+  "what is on this disk". Corollary: `git status` clean is not evidence of
+  currency; pair it with `git rev-list --count HEAD..origin/main`.
+  Note the sibling trap this one hides behind: the SessionStart hydrate
+  hook had already printed `STALE SOURCE: /Users/patrickroebuck/attune-ai
+  17 commits behind last-fetched origin/main` at session start. The
+  warning was correct, present, and ignored as ambient noise — a machine
+  telling you the answer does nothing if the check you then run cannot
+  see it. Pairs with the existing worktree-vs-main PYTHONPATH/Write-path
+  lessons: same family (locating the right tree), this one is the
+  VERIFICATION surface rather than the execute or write surface.
