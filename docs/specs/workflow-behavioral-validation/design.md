@@ -38,22 +38,36 @@ fixtures (planted defects) ──> probe runner ──> run-record (JSON)
 **Decision (ruled):** a new tracked artifact under this spec dir,
 DERIVED from probe run-records — not the R5 cross-review ledger.
 
-- **Run-record** — one JSON per probe run, reusing the `ops/runs/`
-  pattern. Schema: `workflow, fixture, receipt_type, verdict
-  (pass|fail|crash), cost_usd, duration_s, ran_at, runner_version,
-  evidence`. Written by `scripts/workflow_probe_runner.py`.
+- **Run-record** — one JSON per probe run. Schema: `workflow, fixture,
+  receipt_type, verdict (pass|fail|crash), cost_usd, duration_s,
+  ran_at, runner_version, git_sha, evidence`. Written by
+  `scripts/workflow_probe_runner.py`.
 - **Registry table** — `registry.md` (or `.csv`), PROJECTED from the
-  latest record per workflow by a small script. Verdict/cost/last-run
-  cannot lie because they are the last real run (Principle 12: memory is
-  derived, never authored in the serving layer).
+  records by a small script. Verdict/cost/last-run cannot lie because
+  they are the last real run (Principle 12: memory is derived, never
+  authored in the serving layer).
 - **Dispositions ledger** — the ONE hand-authored part, per the
   "derived status column is confidently wrong" lesson: which workflows
   intentionally have no probe, and why (e.g. "no meaningful planted
   defect exists for X"). Without it, "no record" reads as "clean"
   instead of "not yet probed".
 
-Persistence dir: `~/.attune/` for records (machine-local, like
-`ops/runs/`); the projected table + dispositions are tracked in-repo.
+**Reproducibility (finding 3 from the D2 Codex cross-review, accepted).**
+A tracked registry table cannot be projected from machine-local
+`~/.attune/` records — different machines would produce different
+"latest" rows, and a stale machine could overwrite a newer tracked
+verdict. So:
+
+- The run-records that feed the **tracked** registry are themselves
+  **tracked** (committed under this spec dir / the reports corpus),
+  carrying `git_sha` + `ran_at` provenance. Ad-hoc local runs may still
+  write to `~/.attune/` for scratch, but only committed records feed the
+  tracked table.
+- The projector is **monotonic**: it refuses to replace a tracked row
+  with one whose `ran_at`/`git_sha` is older than what the table already
+  records, so a stale re-projection can never regress a newer verdict.
+- The projector gets its own free unit test (synthetic records →
+  expected table, including the refuse-to-regress case).
 
 ## 2. Carve — fleet-wide policy, per-workflow activation, probe-gated
 
@@ -70,7 +84,9 @@ The bright line:
 > result adapter, error classification, budget allocation — keep the
 > 85% coverage floor.
 
-Rules that keep "replace the floor" from becoming "no floor":
+Rules that keep "replace the floor" from becoming "no floor"
+(findings 1, 2, 4 from the D2 Codex cross-review, all accepted —
+see `docs/specs/cross-review/receipts.md`, 2026-08-23):
 
 1. **No probe → full floor.** A workflow module keeps the 85% floor in
    its entirety until it has a passing probe. The carve is *earned*, not
@@ -82,12 +98,33 @@ Rules that keep "replace the floor" from becoming "no floor":
 3. **Reject pragma-no-cover** as the mechanism (it rots and invites
    "exclude the lines the probe happens to hit" — the path-validation
    exclusion lessons). Splitting is also better code.
-4. **Retreat position:** if a module genuinely cannot be split cleanly,
-   it goes coverage-*advisory* (measured, not gated) with the probe as
-   its only gate — recorded per-module in `decisions.md`.
+4. **The carve tracks the LATEST probe, and is revocable (finding 2).**
+   The carve is contingent on the workflow's *most recent* probe
+   passing AND being fresh (within a staleness window — starting
+   proposal: the probe must have passed on or after the workflow
+   driver's last change, and no older than the last release). A
+   subsequent failed, crashed, or stale probe **re-arms the full
+   coverage floor** for that module until a fresh pass restores the
+   carve. A one-time historical pass never permanently earns the carve.
+5. **Retreat = no carve, NOT advisory (finding 1).** If a module
+   genuinely cannot be split cleanly, it does **not** get the carve: it
+   keeps the full 85% floor on the whole module AND runs its probe as an
+   *additive* gate (both must hold). "Coverage-advisory for the whole
+   module" is explicitly rejected — it would drop the floor from the
+   deterministic seams too, contradicting the bright line. Recorded
+   per-module in `decisions.md`.
 
 Enforcer implication (execution, gated on the chair ruling being
-recorded): `codecov.yml` gains a per-path carve for carved driver files;
+recorded). Two enforcers, not one (finding 4 — excluding the driver does
+NOT by itself gate the seam):
+
+- `codecov.yml` carves the driver file's *lines* out of the floor for
+  a carved workflow, AND
+- a **positive** enforcer requires each extracted seam-helper module to
+  meet the 85% floor independently — excluding the driver is not enough;
+  "seams keep the floor" must be a check that fails when a seam-helper
+  drops below 85%, not merely the absence of a check on the driver.
+
 `test_coverage_threshold_is_at_least_80` stays as the deterministic-code
 drift guard. No config lands before the ruling is in `decisions.md`.
 

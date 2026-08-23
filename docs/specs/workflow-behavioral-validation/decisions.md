@@ -72,3 +72,39 @@ multi-defect fixture workdir), then the gate/fail-open group
 behavior), generative workflows last (fix #2213 first, then probe by
 executing the emitted output). Fixture design differs by type — see
 design.md § Rollout & fixture design.
+
+## D6 — Codex D11 governance cross-review of the carve; 4 findings accepted (2026-08-23)
+
+**Lane:** the D2 carve is a governance-affecting change to a ratified
+principle, so per the D11 rule it got a different-model review lane
+BEFORE ratification. Codex, run on the spec branch diff; row in
+`docs/specs/cross-review/receipts.md` (2026-08-23). All four findings
+were Codex-independent — not the lead's prior echoed back.
+
+**Accepted, all four, folded into design.md before ratification:**
+
+1. **(high) Retreat contradicted D2.** "Coverage-advisory for an
+   unsplittable module" would drop the floor from the deterministic
+   seams too — contradicting "seams keep the floor". Fixed: the retreat
+   is now *no carve* — full floor on the whole module + probe as an
+   additive gate. Never advisory.
+2. **(high) No revocation / freshness.** A one-time historical pass
+   would permanently earn the carve. Fixed: the carve tracks the LATEST
+   probe and is revocable — a failed/crashed/stale probe re-arms the
+   full coverage floor until a fresh pass restores it.
+3. **(medium) Registry not reproducible.** Projecting a *tracked* table
+   from *machine-local* `~/.attune/` records lets machines disagree and
+   stale runs overwrite newer verdicts. Fixed: records feeding the
+   tracked table are themselves tracked with `git_sha`/`ran_at`
+   provenance, and the projector is monotonic (refuses to regress a
+   newer verdict).
+4. **(high) Excluding the driver ≠ gating the seam.** A codecov
+   per-path carve on the driver does not by itself require the extracted
+   seam-helper to meet 85%. Fixed: two enforcers — carve the driver's
+   lines AND a positive check that each seam-helper independently meets
+   the floor.
+
+**Disposition:** the carve DIRECTION (D2) stands; these are refinements
+to how it is specified and will be enforced, not a reversal. Design.md
+updated; the mechanical enforcer PR (still gated) must implement both
+enforcers from finding 4 and the monotonic projector from finding 3.
