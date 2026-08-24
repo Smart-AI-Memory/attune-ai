@@ -97,12 +97,20 @@ class TestInitialization:
             return original_mkdir(path, *args, **kwargs)
 
         monkeypatch.setattr(Path, "mkdir", fail_first_mkdir)
+        # #2242: fallback is home-relative (never cwd-relative ./logs)
+        # and carries the same 0o700 as the primary directory.
+        monkeypatch.setattr(Path, "home", staticmethod(lambda: tmp_path / "home"))
 
         audit_logger = AuditLogger(log_dir=str(tmp_path / "unavailable"))
 
-        assert audit_logger.log_dir == Path("./logs")
-        assert audit_logger.log_path == Path("./logs/audit.jsonl")
-        assert (tmp_path / "logs").is_dir()
+        expected = tmp_path / "home" / ".attune" / "logs" / "audit"
+        assert audit_logger.log_dir == expected
+        assert audit_logger.log_path == expected / "audit.jsonl"
+        assert expected.is_dir()
+        # POSIX-only: Windows chmod is a near-no-op and reports 0o777
+        # (known Windows-lane class; see the os.geteuid skipif lesson).
+        if os.name == "posix":
+            assert (expected.stat().st_mode & 0o777) == 0o700
 
 
 class TestWriting:

@@ -29,7 +29,7 @@ class TestRetryPolicy:
     def test_get_delay_linear(self):
         from attune.models.retry import RetryPolicy
 
-        policy = RetryPolicy(initial_delay_ms=500, exponential_backoff=False)
+        policy = RetryPolicy(initial_delay_ms=500, exponential_backoff=False, jitter=False)
         assert policy.get_delay_ms(1) == 500
         assert policy.get_delay_ms(3) == 500
 
@@ -37,7 +37,10 @@ class TestRetryPolicy:
         from attune.models.retry import RetryPolicy
 
         policy = RetryPolicy(
-            initial_delay_ms=1000, backoff_multiplier=2.0, exponential_backoff=True
+            initial_delay_ms=1000,
+            backoff_multiplier=2.0,
+            exponential_backoff=True,
+            jitter=False,
         )
         assert policy.get_delay_ms(1) == 1000
         assert policy.get_delay_ms(2) == 2000
@@ -51,8 +54,20 @@ class TestRetryPolicy:
             max_delay_ms=3000,
             backoff_multiplier=10.0,
             exponential_backoff=True,
+            jitter=False,
         )
         assert policy.get_delay_ms(4) == 3000
+
+    def test_get_delay_jitter_stays_in_equal_jitter_band(self):
+        """#2242: default jitter spreads delays within [base/2, base]."""
+        from attune.models.retry import RetryPolicy
+
+        policy = RetryPolicy(
+            initial_delay_ms=1000, backoff_multiplier=2.0, exponential_backoff=True
+        )
+        samples = {policy.get_delay_ms(2) for _ in range(50)}  # base = 2000
+        assert all(1000 <= s <= 2000 for s in samples)
+        assert len(samples) > 1  # actually randomized, not constant
 
     def test_should_retry_within_limit(self):
         from attune.models.retry import RetryPolicy

@@ -363,6 +363,30 @@ class BaseWizard(ABC):
                 return s
         return None
 
+    def _required_step(self, step_id: str) -> WizardStep:
+        """Find a step by ID, raising a clear error when absent.
+
+        #2242: bare ``next(s for s in self.steps if s.id == ...)`` raised
+        an opaque ``StopIteration`` when a wizard's step list drifted
+        from the IDs its handlers expect.
+
+        Args:
+            step_id: Step identifier to look up.
+
+        Returns:
+            The matching ``WizardStep``.
+
+        Raises:
+            ValueError: If no step with ``step_id`` exists.
+        """
+        step = self._find_step(step_id)
+        if step is None:
+            raise ValueError(
+                f"wizard '{type(self).__name__}' has no step {step_id!r} "
+                f"(steps: {[s.id for s in self.steps]})"
+            )
+        return step
+
     # -----------------------------------------------------------------
     # TASK_DECOMPOSE step
     # -----------------------------------------------------------------

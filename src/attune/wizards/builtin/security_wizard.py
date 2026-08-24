@@ -286,7 +286,7 @@ class SecurityWizard(BaseWizard):
         }
 
         self.process_step_result(
-            next(s for s in self.steps if s.id == "scan"),
+            self._required_step("scan"),
             combined,
         )
         self._session.complete_step("scan", result=combined)
@@ -327,7 +327,7 @@ class SecurityWizard(BaseWizard):
         }
 
         self.process_step_result(
-            next(s for s in self.steps if s.id == "generate_fixes"),
+            self._required_step("generate_fixes"),
             combined,
         )
         self._session.complete_step("generate_fixes", result=combined)

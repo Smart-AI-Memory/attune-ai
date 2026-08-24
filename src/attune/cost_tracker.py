@@ -19,6 +19,7 @@ Licensed under the Apache License, Version 2.0
 import atexit
 import heapq
 import json
+import threading
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -627,13 +628,18 @@ def cmd_costs(args: Any) -> int:
 
 # Singleton for global tracking
 _tracker: CostTracker | None = None
+_tracker_lock = threading.Lock()
 
 
 def get_tracker(storage_dir: str = ".attune") -> CostTracker:
     """Get or create the global cost tracker."""
     global _tracker
     if _tracker is None:
-        _tracker = CostTracker(storage_dir)
+        # #2242: double-checked under a lock — the bare check raced
+        # under multi-threaded init, constructing two instances.
+        with _tracker_lock:
+            if _tracker is None:
+                _tracker = CostTracker(storage_dir)
     return _tracker
 
 
