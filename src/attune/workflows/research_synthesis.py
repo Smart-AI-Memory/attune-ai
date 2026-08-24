@@ -25,16 +25,13 @@ import claude_agent_sdk
 from .agent_sdk_adapter import (
     AgentRunResult,
     AgentSDKResultAdapter,
-    SdkSubprocessError,
-    _last_subprocess_argv,
     build_result_text,
-    capture_subprocess_failure,
-    classify_subprocess_failure,
     collect_agent_output,
     get_max_budget_usd,
     get_subagent_model,
     iter_agent_messages,
     resolve_cwd_for_path,
+    sdk_error_from_exception,
     sdk_isolation_kwargs,
 )
 from .base import BaseWorkflow, ModelTier
@@ -193,15 +190,11 @@ class ResearchSynthesisWorkflow(BaseWorkflow):
             # a structured WorkflowResult rather than crashing. Phase 5
             # of docs/specs/sdk-error-message-fidelity/.
             logger.exception("Agent SDK research synthesis failed: %s", type(exc).__name__)
-            stderr = capture_subprocess_failure(_last_subprocess_argv(exc))
-            kind, summary = classify_subprocess_failure(stderr)
-            sdk_err = SdkSubprocessError(
-                message=summary, stderr=stderr, kind=kind, original_exc=exc
-            )
+            sdk_err = sdk_error_from_exception(exc)
             return self._error_result(
                 sdk_err.format_user_message(),
-                sdk_stderr=stderr,
-                sdk_error_kind=kind,
+                sdk_stderr=sdk_err.stderr,
+                sdk_error_kind=sdk_err.kind,
             )
 
     async def _run_agent_synthesis(

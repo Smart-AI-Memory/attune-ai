@@ -41,7 +41,7 @@ class TestSimplifyCodePhase5:
         with (
             patch("attune.workflows.simplify_code.claude_agent_sdk", mock_sdk),
             patch(
-                "attune.workflows.simplify_code.capture_subprocess_failure",
+                "attune.workflows.agent_sdk_adapter.capture_subprocess_failure",
                 return_value="401 Unauthorized: invalid api key",
             ),
         ):
@@ -73,7 +73,7 @@ class TestDeepReviewPhase5:
         with (
             patch("attune.workflows.deep_review.claude_agent_sdk", mock_sdk),
             patch(
-                "attune.workflows.deep_review.capture_subprocess_failure",
+                "attune.workflows.agent_sdk_adapter.capture_subprocess_failure",
                 return_value=(
                     "Failed to authenticate. API Error: 401 Invalid " "authentication credentials"
                 ),
@@ -102,7 +102,7 @@ class TestResearchSynthesisPhase5:
         with (
             patch("attune.workflows.research_synthesis.claude_agent_sdk", mock_sdk),
             patch(
-                "attune.workflows.research_synthesis.capture_subprocess_failure",
+                "attune.workflows.agent_sdk_adapter.capture_subprocess_failure",
                 return_value="429 Too Many Requests: rate limit exceeded",
             ),
         ):
@@ -136,7 +136,7 @@ class TestRagCodeGenPhase5:
         with (
             patch("attune.workflows.rag_code_gen.claude_agent_sdk", mock_sdk),
             patch(
-                "attune.workflows.rag_code_gen.capture_subprocess_failure",
+                "attune.workflows.agent_sdk_adapter.capture_subprocess_failure",
                 return_value=("Error: You have reached your specified API usage limits."),
             ),
             patch(
@@ -164,7 +164,7 @@ class TestReleasePrepPhase5:
         with (
             patch("attune.workflows.release_prep.claude_agent_sdk", mock_sdk),
             patch(
-                "attune.workflows.release_prep.capture_subprocess_failure",
+                "attune.workflows.agent_sdk_adapter.capture_subprocess_failure",
                 return_value="401 Unauthorized",
             ),
         ):

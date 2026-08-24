@@ -51,7 +51,7 @@ class TestTestAuditPhase6:
                 mock_sdk,
             ),
             patch(
-                "attune.workflows.test_audit.workflow.capture_subprocess_failure",
+                "attune.workflows.agent_sdk_adapter.capture_subprocess_failure",
                 return_value="401 Unauthorized: invalid api key",
             ),
         ):
@@ -80,7 +80,7 @@ class TestDocAuditPhase6:
                 mock_sdk,
             ),
             patch(
-                "attune.workflows.doc_audit.workflow.capture_subprocess_failure",
+                "attune.workflows.agent_sdk_adapter.capture_subprocess_failure",
                 return_value="429 Too Many Requests: rate limit exceeded",
             ),
         ):
@@ -108,7 +108,7 @@ class TestDocumentGenPhase6:
                 mock_sdk,
             ),
             patch(
-                "attune.workflows.document_gen.workflow.capture_subprocess_failure",
+                "attune.workflows.agent_sdk_adapter.capture_subprocess_failure",
                 return_value=("Error: You have reached your specified API usage limits."),
             ),
         ):

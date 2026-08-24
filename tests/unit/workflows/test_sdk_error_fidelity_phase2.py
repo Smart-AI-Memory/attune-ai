@@ -46,7 +46,7 @@ class TestCodeReviewPhase2:
         with (
             patch("attune.workflows.code_review.claude_agent_sdk", mock_sdk),
             patch(
-                "attune.workflows.code_review.capture_subprocess_failure",
+                "attune.workflows.agent_sdk_adapter.capture_subprocess_failure",
                 return_value=(
                     "Error: You have reached your specified API usage limits. "
                     "Regain access on 2026-06-01."
@@ -73,7 +73,7 @@ class TestCodeReviewPhase2:
         with (
             patch("attune.workflows.code_review.claude_agent_sdk", mock_sdk),
             patch(
-                "attune.workflows.code_review.capture_subprocess_failure",
+                "attune.workflows.agent_sdk_adapter.capture_subprocess_failure",
                 return_value="401 Unauthorized: invalid api key",
             ),
         ):
@@ -99,7 +99,7 @@ class TestDependencyCheckPhase2:
                 mock_sdk,
             ),
             patch(
-                "attune.workflows.dependency_check.capture_subprocess_failure",
+                "attune.workflows.agent_sdk_adapter.capture_subprocess_failure",
                 return_value="429 Too Many Requests: rate limit exceeded",
             ),
         ):

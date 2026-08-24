@@ -23,9 +23,17 @@ from attune.workflows.agent_sdk_adapter import iter_agent_messages
 class _FakeResultMessage:
     """Stand-in for ``claude_agent_sdk.ResultMessage``."""
 
-    def __init__(self, subtype: str = "success", is_error: bool = False):
+    def __init__(
+        self,
+        subtype: str = "success",
+        is_error: bool = False,
+        result: str | None = None,
+        errors: list[str] | None = None,
+    ):
         self.subtype = subtype
         self.is_error = is_error
+        self.result = result
+        self.errors = errors
 
 
 class _FakeQuery:
@@ -136,6 +144,120 @@ async def test_clean_stream_passes_through():
 # during teardown — the exact failure class iter_agent_messages exists
 # to fix.
 _UNWRAPPED_LOOP_RE = re.compile(r"async for .+ in claude_agent_sdk\.query\(")
+
+
+# The SDK's ProcessError replacement names only the result SUBTYPE and
+# drops the result body — for an api_error result that subtype is
+# literally "success" (#2227). These tests pin the upgrade path: the
+# error ResultMessage's own text, captured in-stream, drives a
+# classified SdkSubprocessError instead.
+_REPLACEMENT = Exception("Claude Code returned an error result: success")
+
+_QUOTA_TEXT = (
+    "API Error: 400 You have reached your specified API usage limits. "
+    "You will regain access on 2026-09-01 at 00:00 UTC."
+)
+_ORG_DISABLED_TEXT = (
+    "Your organization has disabled Claude subscription access for "
+    "Claude Code · Use an Anthropic API key instead"
+)
+
+
+@pytest.mark.asyncio
+async def test_error_result_text_upgrades_raise_to_classified_error():
+    """#2227: usage-limit result text → SdkSubprocessError(api_quota)."""
+    err = _FakeResultMessage(subtype="success", is_error=True, result=_QUOTA_TEXT)
+    with pytest.raises(adapter.SdkSubprocessError) as exc_info:
+        await _drain(_FakeQuery([err], raise_after=_REPLACEMENT))
+    caught = exc_info.value
+    assert caught.kind == "api_quota"
+    assert _QUOTA_TEXT in caught.stderr
+    assert caught.original_exc is _REPLACEMENT
+    assert caught.__cause__ is _REPLACEMENT
+
+
+@pytest.mark.asyncio
+async def test_org_disabled_subscription_classifies_as_auth():
+    """#2227: the org-disabled subscription text classifies as auth."""
+    err = _FakeResultMessage(subtype="success", is_error=True, result=_ORG_DISABLED_TEXT)
+    with pytest.raises(adapter.SdkSubprocessError) as exc_info:
+        await _drain(_FakeQuery([err], raise_after=_REPLACEMENT))
+    assert exc_info.value.kind == "auth"
+    assert "ANTHROPIC_API_KEY" in exc_info.value.message
+
+
+@pytest.mark.asyncio
+async def test_error_result_without_text_propagates_original():
+    """No capturable error text → the original exception, unchanged."""
+    err = _FakeResultMessage(subtype="error_during_execution", is_error=True)
+    with pytest.raises(Exception, match="error result: success"):
+        await _drain(_FakeQuery([err], raise_after=_REPLACEMENT))
+
+
+@pytest.mark.asyncio
+async def test_errors_list_joined_when_result_absent():
+    """The errors list alone is enough to build the classified raise."""
+    err = _FakeResultMessage(
+        subtype="error_during_execution",
+        is_error=True,
+        errors=["rate_limit: too many requests"],
+    )
+    with pytest.raises(adapter.SdkSubprocessError) as exc_info:
+        await _drain(_FakeQuery([err], raise_after=_REPLACEMENT))
+    assert exc_info.value.kind == "rate_limit"
+
+
+def test_sdk_error_from_exception_fast_path(monkeypatch):
+    """An already-classified SdkSubprocessError is returned untouched.
+
+    The re-probe runs in a different env than the SDK child and can
+    report an unrelated auth condition (#2227) — it must not run.
+    """
+
+    def _boom(*args, **kwargs):  # pragma: no cover - fails the test if hit
+        raise AssertionError("probe must not run on the fast path")
+
+    monkeypatch.setattr(adapter, "capture_subprocess_failure", _boom)
+    err = adapter.SdkSubprocessError(message="m", stderr="s", kind="api_quota", original_exc=None)
+    assert adapter.sdk_error_from_exception(err) is err
+
+
+def test_sdk_error_from_exception_fallback_probes(monkeypatch):
+    """A bare SDK exception still goes through probe + classification."""
+    monkeypatch.setattr(adapter, "capture_subprocess_failure", lambda argv: _QUOTA_TEXT)
+    out = adapter.sdk_error_from_exception(Exception("Command failed with exit code 1"))
+    assert out.kind == "api_quota"
+    assert _QUOTA_TEXT in out.stderr
+
+
+def test_probe_env_mirrors_sdk_child(monkeypatch):
+    """The health probe must run in the SDK child's env, not the parent's.
+
+    A desktop session's CLAUDE_CODE_ENTRYPOINT flips the CLI to host/
+    subscription auth and reports an unrelated error (#2227) — the probe
+    strips CLAUDECODE and forces the sdk-py entrypoint, mirroring
+    claude_agent_sdk's subprocess env construction.
+    """
+    monkeypatch.setenv("CLAUDECODE", "1")
+    monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", "claude-desktop")
+    monkeypatch.setenv("ATTUNE_SDK_ERROR_PROBE", "1")
+    seen: dict = {}
+
+    def _fake_run(args, **kwargs):
+        seen["env"] = kwargs.get("env")
+
+        class _R:
+            returncode = 1
+            stderr = "probe stderr"
+            stdout = ""
+
+        return _R()
+
+    monkeypatch.setattr(adapter.subprocess, "run", _fake_run)
+    adapter.capture_subprocess_failure([])
+    assert seen["env"] is not None
+    assert "CLAUDECODE" not in seen["env"]
+    assert seen["env"]["CLAUDE_CODE_ENTRYPOINT"] == "sdk-py"
 
 
 def test_every_workflow_query_loop_is_wrapped():

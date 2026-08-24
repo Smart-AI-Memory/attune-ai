@@ -192,6 +192,17 @@ async def iter_agent_messages(query: AsyncIterator[Any]) -> AsyncIterator[Any]:
     yielded, the iteration stops cleanly so the caller returns its
     already-captured result instead of discarding it.
 
+    When the stream raises AFTER an ``is_error`` ``ResultMessage`` was
+    seen, the raise is upgraded to a classified
+    :class:`SdkSubprocessError` built from that result's own error text.
+    The SDK's replacement exception names only the result *subtype*
+    (``"Claude Code returned an error result: success"``) and drops the
+    ``result`` body — which is where the CLI put the actual cause (e.g.
+    ``API Error: 400 ... specified API usage limits ...``). Re-probing
+    from the parent instead runs in a DIFFERENT env than the SDK child
+    and can report an unrelated auth condition (#2227), so the captured
+    in-stream text is the highest-fidelity source available.
+
     Any other exception — or one raised before a successful result — is
     re-raised unchanged, preserving fail-closed semantics: a genuine
     auth/quota/startup/runtime failure never becomes a false pass. The
@@ -208,6 +219,7 @@ async def iter_agent_messages(query: AsyncIterator[Any]) -> AsyncIterator[Any]:
         Each message from the underlying stream, unchanged.
     """
     saw_success = False
+    last_error_result_text: str | None = None
     iterator = query.__aiter__()
     while True:
         try:
@@ -227,12 +239,24 @@ async def iter_agent_messages(query: AsyncIterator[Any]) -> AsyncIterator[Any]:
                     exc,
                 )
                 return
+            if last_error_result_text is not None:
+                kind, summary = classify_subprocess_failure(last_error_result_text)
+                raise SdkSubprocessError(
+                    message=summary,
+                    stderr=last_error_result_text,
+                    kind=kind,
+                    original_exc=exc,
+                ) from exc
             raise
-        if (
-            isinstance(message, claude_agent_sdk.ResultMessage)
-            and getattr(message, "subtype", None) == "success"
-        ):
-            saw_success = True
+        if isinstance(message, claude_agent_sdk.ResultMessage):
+            if getattr(message, "subtype", None) == "success":
+                saw_success = True
+            if getattr(message, "is_error", False):
+                error_bits = [str(e) for e in (getattr(message, "errors", None) or [])]
+                result_text = getattr(message, "result", None)
+                if result_text:
+                    error_bits.append(str(result_text))
+                last_error_result_text = "\n".join(error_bits) or None
         yield message
 
 
@@ -795,6 +819,12 @@ _CLASSIFIERS: list[tuple[re.Pattern[str], SdkErrorKind, str]] = [
         "Anthropic API quota reached for this account.",
     ),
     (
+        re.compile(r"disabled Claude subscription access", re.I),
+        "auth",
+        "Claude subscription access is disabled for this organization; "
+        "set ANTHROPIC_API_KEY so workflow subprocesses bill the API key.",
+    ),
+    (
         re.compile(r"\b(401|invalid[_\s-]?api[_\s-]?key|unauthorized)\b", re.I),
         "auth",
         "Anthropic auth invalid or missing.",
@@ -834,6 +864,36 @@ def classify_subprocess_failure(stderr: str) -> tuple[SdkErrorKind, str]:
         if pattern.search(stderr):
             return kind, message
     return "unknown", "The claude CLI subprocess failed; see raw stderr below."
+
+
+def sdk_error_from_exception(exc: Exception) -> SdkSubprocessError:
+    """Return a classified :class:`SdkSubprocessError` for an SDK failure.
+
+    Fast-path: :func:`iter_agent_messages` already raises a fully
+    classified ``SdkSubprocessError`` when the CLI's own error-result
+    text was captured from the stream — reuse it as-is. A re-probe would
+    run outside the SDK child's env and can report a DIFFERENT auth
+    condition than the one the child actually hit (#2227).
+
+    Fallback: recover the failing argv from the exception, re-run/probe
+    the CLI, and classify the captured stderr (the Phase-2 path).
+
+    Args:
+        exc: The exception caught around an SDK ``query()`` call.
+
+    Returns:
+        A classified ``SdkSubprocessError`` (never raises).
+    """
+    if isinstance(exc, SdkSubprocessError):
+        return exc
+    stderr = capture_subprocess_failure(_last_subprocess_argv(exc))
+    kind, summary = classify_subprocess_failure(stderr)
+    return SdkSubprocessError(
+        message=summary,
+        stderr=stderr,
+        kind=kind,
+        original_exc=exc,
+    )
 
 
 def _sdk_error_probe_enabled() -> bool:
@@ -922,6 +982,16 @@ def capture_subprocess_failure(
             "(could not recover the exact failing command from the SDK; "
             "ran a minimal `claude` health probe instead)\n"
         )
+    if env is None:
+        # Mirror the SDK's child env (subprocess_cli strips CLAUDECODE and
+        # forces the sdk-py entrypoint) so the probe reproduces the
+        # condition the SDK child actually hit. Inheriting a desktop
+        # session's CLAUDE_CODE_ENTRYPOINT flips the CLI to host/
+        # subscription auth and reports an unrelated error (#2227,
+        # verified live 2026-08-24: probe said "subscription disabled"
+        # while the child's real failure was an API usage-limit 400).
+        env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
+        env["CLAUDE_CODE_ENTRYPOINT"] = "sdk-py"
     try:
         result = subprocess.run(  # noqa: S603
             args,
