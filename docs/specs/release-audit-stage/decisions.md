@@ -206,3 +206,12 @@ step is a calibratable narrow rule (result-key contract scan over
 the known workflow producer/consumer pairing; channel-identity scan
 for entry-point groups), never an uncalibratable general dataflow
 rule. Not a chair ruling — a record of executing one.
+
+**Addendum (same day, before merge):** the registered next step
+executed faster than this record merged — PR #2271 (squash
+b2c72e34e, 2026-08-24) landed exactly those calibrated narrow rules
+(R8 result-key contract scan over workflow producer/consumer pairs;
+R9 entry-point channel-identity scan) with a gated 9-site baseline,
+hardened through a codex D11 lane (3 findings accepted). C10 is now
+REGISTERED **and mechanized**; the register entry's status should
+read mechanized from this date.
