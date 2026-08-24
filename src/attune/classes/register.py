@@ -35,7 +35,15 @@ import yaml
 from attune.classes.rules import RULES, calibrated_here, canonical_repo_id
 from attune.classes.scan import scan_paths
 
-__all__ = ["GateRef", "GATES", "derive_register", "load_defers", "main"]
+__all__ = [
+    "GateRef",
+    "GATES",
+    "RegisteredClass",
+    "REGISTERED_CLASSES",
+    "derive_register",
+    "load_defers",
+    "main",
+]
 
 _REQUIRED_DISPOSITION_KEYS = {"rule_id", "path", "reason"}
 
@@ -117,6 +125,37 @@ GATES: tuple[GateRef, ...] = (
         "C10",
         "tests/unit/gates/test_phantom_read_gate.py",
         "test_no_phantom_reads",
+    ),
+)
+
+
+@dataclass(frozen=True)
+class RegisteredClass:
+    """One canonical-register entry, tracked repo-side.
+
+    The derived universe is otherwise GATES ∪ RULES ∪ hits ∪ defers,
+    so a class REGISTERED in the canonical (machine-local) register
+    but not yet mechanized was invisible to ``attune classes
+    register``. Listing it here makes registration visible repo-side:
+    with no rule and no gate it derives UNMECHANIZED, carrying
+    ``register_ref`` as the pointer to the canonical entry
+    (chair-approved fold-in, 2026-08-24 retro O3).
+    """
+
+    class_id: str
+    registered_date: str
+    register_ref: str
+
+
+#: Every class the canonical register has REGISTERED, whether or not
+#: mechanized yet. Add a row when a class is registered; the status
+#: column stays DERIVED — this manifest only guarantees presence.
+REGISTERED_CLASSES: tuple[RegisteredClass, ...] = (
+    RegisteredClass(
+        "C10",
+        "2026-08-24",
+        "CLASS-REGISTER.md §C10 (repo-side record: "
+        "docs/specs/release-audit-stage/decisions.md, PR #2269)",
     ),
 )
 
@@ -307,16 +346,19 @@ def derive_register(
     active_defers = {str(d["class_id"]): d for d in defers if not _defer_expired(d, root)}
 
     gate_by_class = {g.class_id: g for g in GATES}
+    registered_by_class = {rc.class_id: rc for rc in REGISTERED_CLASSES}
     universe = (
         set(gate_by_class)
+        | set(registered_by_class)
         | set(calibrated_hits)
         | set(advisory_hits)
         | set(active_defers)
         | {cid for r in RULES for cid in r.class_ids}
     )
 
-    rows = [
-        _class_row(
+    rows = []
+    for class_id in sorted(universe):
+        row = _class_row(
             class_id,
             gate=gate_by_class.get(class_id),
             root=root,
@@ -325,8 +367,10 @@ def derive_register(
             advisory_hits=advisory_hits.get(class_id, 0),
             defer=active_defers.get(class_id),
         )
-        for class_id in sorted(universe)
-    ]
+        registered = registered_by_class.get(class_id)
+        if registered is not None:
+            row["register_ref"] = registered.register_ref
+        rows.append(row)
     return {
         "repo": repo_id,
         "rows": rows,

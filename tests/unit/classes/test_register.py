@@ -13,6 +13,7 @@ from pathlib import Path
 
 from attune.classes.register import (
     GATES,
+    REGISTERED_CLASSES,
     GateRef,
     derive_register,
     load_defers,
@@ -120,6 +121,28 @@ class TestDeriveRegister:
         rows = {r["class_id"]: r for r in result["rows"]}
         # C1 maps only to an uncalibrated v1 rule
         assert rows["C1"]["status"] == "UNMECHANIZED"
+
+    def test_registered_class_is_visible_before_mechanization(self, tmp_path):
+        """A REGISTERED_CLASSES entry joins the universe on its own.
+
+        The fixture repo has no C10 gate file and no C10 rule hits, so
+        without the manifest C10 would be invisible; with it, the row
+        derives UNMECHANIZED... — the gate is absent there — and
+        carries the pointer to the canonical register entry.
+        """
+        repo = _fixture_repo(tmp_path)
+        result = derive_register(repo_root=repo)
+        rows = {r["class_id"]: r for r in result["rows"]}
+        assert "C10" in rows
+        assert rows["C10"]["status"] == "UNMECHANIZED"
+        assert "CLASS-REGISTER.md" in rows["C10"]["register_ref"]
+
+    def test_registered_classes_manifest_is_schema_valid(self):
+        """Every manifest row names a class, a date, and a pointer."""
+        for rc in REGISTERED_CLASSES:
+            assert rc.class_id.strip()
+            assert rc.registered_date.count("-") == 2
+            assert rc.register_ref.strip()
 
     def test_dispositions_subtract_dismissed_hits(self, tmp_path):
         repo = _fixture_repo(tmp_path)
