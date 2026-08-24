@@ -484,7 +484,10 @@ async def probe_discovery_sweep(budget: float) -> ProbeResult:
             "discovery-sweep",
             path=str(work),
             sources=sources,
-            budget_usd=min(budget, 5.0),
+            # Scale the sweep budget with lane count — a flat $5 cap
+            # under-budgeted 7 LLM lanes to ~$0.7 each (queue fix,
+            # 2026-08-24); the caller's --budget stays the hard cap.
+            budget_usd=min(budget, 1.5 * max(len(sources), 1)),
             output_format="json",
         )
         dur = time.monotonic() - t0
@@ -785,10 +788,10 @@ def _make_analytical_probe(name: str) -> Callable[[float], Any]:
 # --------------------------------------------------------------------------
 
 
-async def _run_gate_workflow(name: str, **kwargs: Any) -> Any:
+async def _run_gate_workflow(name: str, _ctor: dict[str, Any] | None = None, **kwargs: Any) -> Any:
     from attune.workflows import get_workflow
 
-    return await get_workflow(name)().execute(**kwargs)
+    return await get_workflow(name)(**(_ctor or {})).execute(**kwargs)
 
 
 async def probe_secure_release(budget: float) -> ProbeResult:
@@ -880,7 +883,11 @@ async def probe_doc_orchestrator(budget: float) -> ProbeResult:
             encoding="utf-8",
         )
         t0 = time.monotonic()
-        result = await _run_gate_workflow("doc-orchestrator", path=str(work))
+        # dry_run: scout-only (a constructor flag, not an execute kwarg)
+        # — the probe validates the SCAN's honesty, not doc generation.
+        result = await _run_gate_workflow(
+            "doc-orchestrator", _ctor={"dry_run": True}, path=str(work)
+        )
         dur = time.monotonic() - t0
 
     degraded = bool(getattr(result, "degraded", False))
@@ -923,12 +930,28 @@ async def probe_release_prep(budget: float) -> ProbeResult:
         result = await _run_gate_workflow("release-prep", path=str(work))
         dur = time.monotonic() - t0
 
-    success = bool(getattr(result, "success", True))
-    passed = not success
+    # #2221 correction: release-prep's execute() returns success=True
+    # even when BLOCKED (exit-0 contract) — the verdict lives in
+    # metadata["approved"]. Reading success made this probe vacuous.
+    meta = getattr(result, "metadata", None) or {}
+    approved = meta.get("approved")
+    if approved is None:
+        return ProbeResult(
+            name="release-prep",
+            passed=False,
+            reason=(
+                "metadata['approved'] missing — cannot judge the gate "
+                "(phantom-read guard: success is always True here)"
+            ),
+            cost_usd=_cost_of(result),
+            duration_s=dur,
+            evidence={"metadata_keys": sorted(meta)},
+        )
+    passed = approved is False
     reason = (
-        "honest FAIL verdict on an untested fixture"
+        "honest BLOCKED verdict on a fixture with a planted failing test"
         if passed
-        else "PASSED release gates on a fixture with no tests (fabrication)"
+        else "APPROVED a release on a fixture with a planted failing test (fabrication)"
     )
     return ProbeResult(
         name="release-prep",
@@ -936,7 +959,7 @@ async def probe_release_prep(budget: float) -> ProbeResult:
         reason=reason,
         cost_usd=_cost_of(result),
         duration_s=dur,
-        evidence={"gate_success": success},
+        evidence={"approved": approved, "confidence": meta.get("confidence")},
     )
 
 

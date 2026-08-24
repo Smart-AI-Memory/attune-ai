@@ -13,13 +13,13 @@ new records; `--check` is the CI drift guard.
 | dependency-check | PASS | 0.4505 | 77.1 | 2026-08-23T21:20:00Z | 7d66113a0 | `records/2026-08-23-dependency-check.json` |
 | discovery-sweep | FAIL | 2.5867 | 194.8 | 2026-08-23T21:55:00Z | 7d66113a0 | `records/2026-08-23-discovery-sweep.json` |
 | doc-audit | PASS | 0.3783 | 81.7 | 2026-08-23T23:20:00Z | e80953386 | `records/2026-08-23-doc-audit.json` |
-| doc-orchestrator | FAIL | 0.0000 | 4.4 | 2026-08-23T23:51:22Z | 0836ddfac | `records/20260823T235122-doc-orchestrator.json` |
+| doc-orchestrator | PASS | 0.0000 | 0.8 | 2026-08-24T04:36:57Z | bc59a5dce | `records/20260824T043657-doc-orchestrator.json` |
 | health-check | PASS | 0.0000 | 2.5 | 2026-08-23T23:51:22Z | 0836ddfac | `records/20260823T235122-health-check.json` |
 | perf-audit | PASS | 0.2964 | 292.5 | 2026-08-23T23:12:00Z | e80953386 | `records/2026-08-23-perf-audit.json` |
 | refactor-plan | PASS | 0.3421 | 87.7 | 2026-08-23T23:59:00Z | 11965cb6f | `records/2026-08-23-refactor-plan.json` |
 | release-notes | PASS | 0.4689 | 88.7 | 2026-08-23T21:30:00Z | 7d66113a0 | `records/2026-08-23-release-notes.json` |
-| release-prep | FAIL | 0.0000 | 1.9 | 2026-08-23T23:51:22Z | 0836ddfac | `records/20260823T235122-release-prep.json` |
-| secure-release | FAIL | 1.1960 | 219.2 | 2026-08-23T23:51:22Z | 0836ddfac | `records/20260823T235122-secure-release.json` |
+| release-prep | PASS | 0.0000 | 2.0 | 2026-08-24T04:41:28Z | bc59a5dce | `records/20260824T044128-release-prep.json` |
+| secure-release | PASS | 1.1601 | 234.6 | 2026-08-24T04:41:28Z | bc59a5dce | `records/20260824T044128-secure-release.json` |
 | security-audit | PASS | 0.3983 | 106.8 | 2026-08-23T20:55:00Z | 7d66113a0 | `records/2026-08-23-security-audit.json` |
 | simplify-code | PASS | 0.3336 | 80.9 | 2026-08-23T23:16:00Z | e80953386 | `records/2026-08-23-simplify-code.json` |
 | test-audit | PASS | 0.4725 | 89.8 | 2026-08-23T23:18:00Z | e80953386 | `records/2026-08-23-test-audit.json` |

@@ -364,17 +364,26 @@ def test_doc_orchestrator_probe_rejects_fabricated_no_gaps() -> None:
 
 
 def test_release_prep_probe_requires_honest_fail() -> None:
-    # The deterministic gate must FAIL an untested fixture; a PASS is
-    # fabrication.
-    class _Passed:
+    # #2221 correction: release-prep's execute() returns success=True
+    # even when BLOCKED — the verdict is metadata["approved"]. The
+    # probe judges THAT key; a missing key is a phantom-read failure,
+    # never a silent pass.
+    class _Approved:
         success = True
         cost_report = None
+        metadata = {"approved": True, "confidence": "high"}
 
-    class _Failed(_Passed):
-        success = False
+    class _Blocked(_Approved):
+        metadata = {"approved": False, "confidence": "low"}
 
-    assert not _with_gate_stub(_Passed(), runner.probe_release_prep).passed
-    assert _with_gate_stub(_Failed(), runner.probe_release_prep).passed
+    class _NoKey(_Approved):
+        metadata = {"confidence": "high"}
+
+    assert not _with_gate_stub(_Approved(), runner.probe_release_prep).passed
+    assert _with_gate_stub(_Blocked(), runner.probe_release_prep).passed
+    missing = _with_gate_stub(_NoKey(), runner.probe_release_prep)
+    assert not missing.passed
+    assert "approved" in missing.reason
 
 
 def test_every_probe_has_a_receipt_type() -> None:
