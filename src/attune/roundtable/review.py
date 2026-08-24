@@ -135,9 +135,11 @@ _PROJECTION_PREFIXES = (
 _GOVERNANCE_PREFIXES = (
     ".claude/gates/",
     ".github/",
-    "pyproject.toml",
-    "codecov.yml",
 )
+
+#: Exact-name governance files — matched whole, so `pyproject.toml.bak`
+#: does not outrank real docs (codex D11 finding, 2026-08-24).
+_GOVERNANCE_FILES = frozenset({"pyproject.toml", "codecov.yml"})
 
 
 def _brief_priority(name: str) -> int:
@@ -155,7 +157,7 @@ def _brief_priority(name: str) -> int:
         return 0
     if name.startswith("tests/"):
         return 1
-    if name.startswith(_GOVERNANCE_PREFIXES):
+    if name in _GOVERNANCE_FILES or name.startswith(_GOVERNANCE_PREFIXES):
         return 2
     if name.startswith(_PROJECTION_PREFIXES):
         return 4
@@ -293,6 +295,15 @@ def run_review(
         scope_misses = sorted(wanted - set(per_file))
         per_file = {name: diff for name, diff in per_file.items() if name in wanted}
         scoped_to = sorted(per_file)
+        if not per_file:
+            # Codex D11 finding (2026-08-24): an all-miss scope would
+            # brief the seat on an EMPTY diff and could come back
+            # "clean" having reviewed none of the requested files —
+            # the falsely-passing re-lane the scope exists to prevent.
+            raise ReviewTargetError(
+                "scoped review matched no files in the diff; requested: "
+                + ", ".join(sorted(wanted))
+            )
         # The seat must know it is reading a deliberate slice, not the
         # whole diff — scoping travels in the brief, not just the result.
         target["description"] += f" — SCOPED to {len(scoped_to)} path(s): " + ", ".join(scoped_to)

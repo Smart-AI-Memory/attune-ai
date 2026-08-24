@@ -418,3 +418,25 @@ class TestScopedReview:
         result = review.run_review(repo, base_ref="main", invoke_seat=_invoke_stub("NO FINDINGS"))
         assert "scoped_to" not in result
         assert "scope_misses" not in result
+
+
+class TestScopedReviewFailClosed:
+    """Codex D11 findings on the O2 branch, pinned (2026-08-24)."""
+
+    def test_all_miss_scope_raises_instead_of_clean(self, repo: Path) -> None:
+        with pytest.raises(review.ReviewTargetError, match="matched no files"):
+            review.run_review(
+                repo,
+                base_ref="main",
+                invoke_seat=_invoke_stub("NO FINDINGS"),
+                paths=["not/in/diff.py", "also/missing.py"],
+            )
+
+    def test_lookalike_governance_names_do_not_outrank_docs(self) -> None:
+        per_file = {
+            "docs/guide.md": "d" * 20,
+            "pyproject.toml.bak": "b" * 20,
+            "codecov.yml.old": "o" * 20,
+        }
+        manifest = review.budget_manifest(per_file, cap_chars=20)
+        assert manifest["sent"] == ["docs/guide.md"]
