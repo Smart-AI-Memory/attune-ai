@@ -272,7 +272,7 @@ class TestAnthropicProvider:
         call_kwargs = mock_client.messages.create.call_args[1]
         assert call_kwargs["thinking"] == {"type": "enabled", "budget_tokens": 10000}
         assert call_kwargs["max_tokens"] > 10000
-        assert call_kwargs["temperature"] == 1.0
+        assert call_kwargs["extra_body"]["temperature"] == 1.0
 
     @patch("anthropic.AsyncAnthropic")
     @pytest.mark.asyncio

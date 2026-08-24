@@ -50,6 +50,29 @@ def _cache_control() -> dict[str, str]:
     return {"type": "ephemeral"}
 
 
+def _sampling_params_to_extra_body(api_kwargs: dict[str, Any]) -> None:
+    """Route surviving sampling params through ``extra_body`` (#2243).
+
+    anthropic-sdk 1.x removed ``temperature``/``top_p``/``top_k`` from
+    ``messages.create()``'s signature entirely (MIGRATION.md: "Remove
+    or use ``extra_body`` for legacy models") — passing them as top-level
+    kwargs raises ``TypeError`` client-side for EVERY model. Any sampling
+    param that survived the model-aware strip above still belongs on the
+    wire for older models, so it moves into ``extra_body``, which both
+    0.x and 1.x merge into the request body unchanged.
+
+    Must run AFTER :func:`_normalize_api_kwargs_for_model` — the strip
+    is model-aware (Opus 4.7+/fable reject the params server-side too)
+    and must see the params at top level.
+    """
+    extra = api_kwargs.setdefault("extra_body", {})
+    for param in ("temperature", "top_p", "top_k"):
+        if param in api_kwargs:
+            extra[param] = api_kwargs.pop(param)
+    if not extra:
+        api_kwargs.pop("extra_body", None)
+
+
 def _normalize_api_kwargs_for_model(api_kwargs: dict[str, Any]) -> None:
     """Drop request params that newer Claude models reject (in place).
 
@@ -235,6 +258,7 @@ class AnthropicProvider(BaseLLMProvider):
         # Drop params newer models (Opus 4.7+) reject — must run AFTER the
         # kwargs merge so a caller-supplied temperature is also stripped.
         _normalize_api_kwargs_for_model(api_kwargs)
+        _sampling_params_to_extra_body(api_kwargs)
 
         # Call Anthropic API (async with AsyncAnthropic) with typed error
         # handling. Fable models route through the beta namespace with the
@@ -423,6 +447,7 @@ class AnthropicProvider(BaseLLMProvider):
 
         # Drop params newer models (Opus 4.7+) reject (see generate()).
         _normalize_api_kwargs_for_model(api_kwargs)
+        _sampling_params_to_extra_body(api_kwargs)
 
         try:
             async with self.client.messages.stream(**api_kwargs) as stream:

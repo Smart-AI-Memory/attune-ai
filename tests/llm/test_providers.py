@@ -685,7 +685,9 @@ class TestSamplingParamNormalization:
             await provider.generate([{"role": "user", "content": "hi"}], temperature=0.3)
 
         sent = mock_client.messages.create.await_args.kwargs
-        assert sent["temperature"] == 0.3
+        # SDK 1.x contract (#2243): sampling params ride in extra_body
+        assert sent["extra_body"]["temperature"] == 0.3
+        assert "temperature" not in sent
 
     @pytest.mark.asyncio
     async def test_generate_omits_temperature_for_sonnet_5(self):
