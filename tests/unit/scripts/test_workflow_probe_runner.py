@@ -407,3 +407,54 @@ def test_run_flag_accepts_repeats_and_commas() -> None:
 
 def test_unknown_probe_rejected_with_repeated_flags() -> None:
     assert runner.main(["--run", "security-audit", "--run", "not-a-real-probe"]) == 1
+def test_dependency_manifest_staged_without_confession(tmp_path) -> None:
+    # 2026-08-24: staged verbatim, the fixture's "this is a planted
+    # test fixture" header made the workflow's agents dismiss the
+    # findings on some runs (observer effect). The staged copy must be
+    # bare pins.
+    runner._stage_dependency_manifest(tmp_path)
+    staged = (tmp_path / "requirements.txt").read_text()
+    assert "#" not in staged
+    assert "requests==2.19.1" in staged
+    assert "PyYAML==5.3.1" in staged
+
+
+def test_dependency_probe_gates_on_named_class() -> None:
+    # Named-class grammar: prose naming the planted package passes even
+    # when the findings buckets came back empty (run-to-run variance);
+    # no naming fails regardless of buckets.
+    import asyncio
+
+    class _Named:
+        success = True
+        error = None
+        metadata = {
+            "findings": {},
+            "raw_result_text": "requests 2.19.1 is vulnerable (CVE-2018-18074).",
+        }
+        final_output = ""
+        cost_report = None
+
+    class _Silent(_Named):
+        metadata = {
+            "findings": {"dependencies": ["something unrelated"]},
+            "raw_result_text": "all clear",
+        }
+
+    async def run_with(stub):
+        original = runner._run_workflow
+        runner._run_workflow = lambda name, **kw: _wrap(stub)
+        try:
+            return await runner.probe_dependency_check(1.0)
+        finally:
+            runner._run_workflow = original
+
+    async def _wrap(v):
+        return v
+
+    named = asyncio.run(run_with(_Named()))
+    assert named.passed, named.reason
+    assert named.evidence["num_findings"] == 0  # count kept as evidence
+
+    silent = asyncio.run(run_with(_Silent()))
+    assert not silent.passed

@@ -1,0 +1,32 @@
+{
+  "workflow": "discovery-sweep",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "lane-accounting",
+  "verdict": "pass",
+  "cost_usd": 3.326,
+  "duration_s": 178.8,
+  "ran_at": "2026-08-24T13:17:36Z",
+  "runner_version": "0.3.0",
+  "git_sha": "463d80964",
+  "evidence": {
+    "lane_findings": {
+      "bug-predict": 10,
+      "doc-audit": 14,
+      "test-audit": 12,
+      "pattern-scan": 1,
+      "security-audit": 6,
+      "perf-audit": 4,
+      "dependency-check": 7
+    },
+    "lane_spend": {
+      "bug-predict": 0.7766,
+      "security-audit": 0.7208,
+      "dependency-check": 0.5039,
+      "perf-audit": 0.3136,
+      "doc-audit": 0.5023,
+      "test-audit": 0.5088
+    },
+    "failures": [],
+    "reason": "every LLM lane spent and/or produced findings"
+  }
+}

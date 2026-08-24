@@ -1,0 +1,18 @@
+{
+  "workflow": "secure-release",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "fail-closed-gate",
+  "verdict": "pass",
+  "cost_usd": 1.0822,
+  "duration_s": 211.7,
+  "ran_at": "2026-08-24T13:17:36Z",
+  "runner_version": "0.3.0",
+  "git_sha": "463d80964",
+  "evidence": {
+    "go_no_go": "NO_GO",
+    "critical_count": 2,
+    "high_count": 1,
+    "blockers": 1,
+    "reason": "fail-closed: planted-critical fixture yielded NO_GO"
+  }
+}

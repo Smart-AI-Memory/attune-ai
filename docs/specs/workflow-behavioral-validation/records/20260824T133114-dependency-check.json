@@ -1,0 +1,16 @@
+{
+  "workflow": "dependency-check",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "named-defect",
+  "verdict": "pass",
+  "cost_usd": 0.4084,
+  "duration_s": 109.5,
+  "ran_at": "2026-08-24T13:31:14Z",
+  "runner_version": "0.3.0",
+  "git_sha": "8a260f413",
+  "evidence": {
+    "num_findings": 4,
+    "named_class": true,
+    "reason": "named a planted vulnerable dependency"
+  }
+}

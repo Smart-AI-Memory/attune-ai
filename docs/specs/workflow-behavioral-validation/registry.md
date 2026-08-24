@@ -8,22 +8,22 @@ new records; `--check` is the CI drift guard.
 
 | Workflow | Verdict | Cost (USD) | Duration (s) | Ran at (UTC) | Tree | Record |
 |----------|---------|------------|--------------|--------------|------|--------|
-| code-review | PASS | 0.6678 | 103.2 | 2026-08-23T23:05:00Z | e80953386 | `records/2026-08-23-code-review.json` |
-| deep-review | PASS | 0.4952 | 94.5 | 2026-08-23T23:07:00Z | e80953386 | `records/2026-08-23-deep-review.json` |
-| dependency-check | PASS | 0.4505 | 77.1 | 2026-08-23T21:20:00Z | 7d66113a0 | `records/2026-08-23-dependency-check.json` |
-| discovery-sweep | FAIL | 2.5867 | 194.8 | 2026-08-23T21:55:00Z | 7d66113a0 | `records/2026-08-23-discovery-sweep.json` |
-| doc-audit | PASS | 0.3783 | 81.7 | 2026-08-23T23:20:00Z | e80953386 | `records/2026-08-23-doc-audit.json` |
-| doc-orchestrator | PASS | 0.0000 | 0.8 | 2026-08-24T04:36:57Z | bc59a5dce | `records/20260824T043657-doc-orchestrator.json` |
-| health-check | PASS | 0.0000 | 2.5 | 2026-08-23T23:51:22Z | 0836ddfac | `records/20260823T235122-health-check.json` |
-| perf-audit | PASS | 0.2964 | 292.5 | 2026-08-23T23:12:00Z | e80953386 | `records/2026-08-23-perf-audit.json` |
-| refactor-plan | PASS | 0.3421 | 87.7 | 2026-08-23T23:59:00Z | 11965cb6f | `records/2026-08-23-refactor-plan.json` |
-| release-notes | PASS | 0.4689 | 88.7 | 2026-08-23T21:30:00Z | 7d66113a0 | `records/2026-08-23-release-notes.json` |
-| release-prep | PASS | 0.0000 | 2.0 | 2026-08-24T04:41:28Z | bc59a5dce | `records/20260824T044128-release-prep.json` |
-| secure-release | PASS | 1.1601 | 234.6 | 2026-08-24T04:41:28Z | bc59a5dce | `records/20260824T044128-secure-release.json` |
-| security-audit | PASS | 0.3983 | 106.8 | 2026-08-23T20:55:00Z | 7d66113a0 | `records/2026-08-23-security-audit.json` |
-| simplify-code | PASS | 0.3336 | 80.9 | 2026-08-23T23:16:00Z | e80953386 | `records/2026-08-23-simplify-code.json` |
-| test-audit | PASS | 0.4725 | 89.8 | 2026-08-23T23:18:00Z | e80953386 | `records/2026-08-23-test-audit.json` |
-| test-gen | PASS | 0.6521 | 160.2 | 2026-08-24T04:32:08Z | 1e70fdb96 | `records/20260824T043208-test-gen.json` |
+| code-review | PASS | 0.6585 | 114.1 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-code-review.json` |
+| deep-review | PASS | 0.4668 | 84.5 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-deep-review.json` |
+| dependency-check | PASS | 0.4084 | 109.5 | 2026-08-24T13:31:14Z | 8a260f413 | `records/20260824T133114-dependency-check.json` |
+| discovery-sweep | PASS | 3.3260 | 178.8 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-discovery-sweep.json` |
+| doc-audit | PASS | 0.5083 | 94.9 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-doc-audit.json` |
+| doc-orchestrator | PASS | 0.0000 | 0.1 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-doc-orchestrator.json` |
+| health-check | PASS | 0.0000 | 2.3 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-health-check.json` |
+| perf-audit | PASS | 0.3042 | 77.2 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-perf-audit.json` |
+| refactor-plan | PASS | 0.3439 | 98.1 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-refactor-plan.json` |
+| release-notes | PASS | 0.5955 | 114.6 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-release-notes.json` |
+| release-prep | PASS | 0.0000 | 2.2 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-release-prep.json` |
+| secure-release | PASS | 1.0822 | 211.7 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-secure-release.json` |
+| security-audit | PASS | 0.6585 | 149.8 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-security-audit.json` |
+| simplify-code | PASS | 0.4602 | 221.6 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-simplify-code.json` |
+| test-audit | PASS | 0.4300 | 298.6 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-test-audit.json` |
+| test-gen | PASS | 0.6388 | 180.0 | 2026-08-24T13:22:56Z | 463d80964 | `records/20260824T132256-test-gen.json` |
 
 ## Not yet probed
 

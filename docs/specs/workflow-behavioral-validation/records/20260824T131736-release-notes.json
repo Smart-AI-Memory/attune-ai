@@ -1,0 +1,16 @@
+{
+  "workflow": "release-notes",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "metric-crosscheck",
+  "verdict": "pass",
+  "cost_usd": 0.5955,
+  "duration_s": 114.6,
+  "ran_at": "2026-08-24T13:17:36Z",
+  "runner_version": "0.3.0",
+  "git_sha": "463d80964",
+  "evidence": {
+    "score": 10.0,
+    "planted_commit": "feat!: remove deprecated authenticate() \u2014 BREAKING CHANGE",
+    "reason": "real readiness score; planted change surfaced"
+  }
+}

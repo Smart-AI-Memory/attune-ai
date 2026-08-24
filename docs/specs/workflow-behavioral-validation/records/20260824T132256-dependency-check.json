@@ -1,0 +1,15 @@
+{
+  "workflow": "dependency-check",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "named-defect",
+  "verdict": "fail",
+  "cost_usd": 0.3659,
+  "duration_s": 88.1,
+  "ran_at": "2026-08-24T13:22:56Z",
+  "runner_version": "0.3.0",
+  "git_sha": "463d80964",
+  "evidence": {
+    "num_findings": 0,
+    "reason": "no dependency findings returned"
+  }
+}

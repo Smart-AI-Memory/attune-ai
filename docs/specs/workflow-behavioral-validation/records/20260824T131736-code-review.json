@@ -1,0 +1,16 @@
+{
+  "workflow": "code-review",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "named-defect",
+  "verdict": "pass",
+  "cost_usd": 0.6585,
+  "duration_s": 114.1,
+  "ran_at": "2026-08-24T13:17:36Z",
+  "runner_version": "0.3.0",
+  "git_sha": "463d80964",
+  "evidence": {
+    "num_findings": 17,
+    "named_class": true,
+    "reason": "surfaced the mutable default argument"
+  }
+}

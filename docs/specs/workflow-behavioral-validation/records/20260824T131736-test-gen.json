@@ -1,0 +1,14 @@
+{
+  "workflow": "test-gen",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "executed-tests",
+  "verdict": "crash",
+  "cost_usd": 0.0,
+  "duration_s": 126.7,
+  "ran_at": "2026-08-24T13:17:36Z",
+  "runner_version": "0.3.0",
+  "git_sha": "463d80964",
+  "evidence": {
+    "reason": "workflow CRASHED before analysis (not an analytical miss): Agent SDK error: SdkSubprocessError: The claude CLI subprocess failed; see raw stderr below."
+  }
+}

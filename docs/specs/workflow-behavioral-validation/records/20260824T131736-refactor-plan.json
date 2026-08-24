@@ -1,0 +1,16 @@
+{
+  "workflow": "refactor-plan",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "named-defect",
+  "verdict": "pass",
+  "cost_usd": 0.3439,
+  "duration_s": 98.1,
+  "ran_at": "2026-08-24T13:17:36Z",
+  "runner_version": "0.3.0",
+  "git_sha": "463d80964",
+  "evidence": {
+    "num_findings": 0,
+    "named_class": true,
+    "reason": "surfaced the duplicated validate_* blocks"
+  }
+}
