@@ -1124,8 +1124,25 @@ async def probe_doc_gen(budget: float) -> ProbeResult:
                 # LLM-emitted code runs with a SCRUBBED env (codex D11
                 # lane, critical): the runner's env holds live
                 # credentials (ANTHROPIC_API_KEY et al.) that a doc
-                # example has no business reading.
-                env={"PATH": os.environ.get("PATH", "")},
+                # example has no business reading. The scrub is an
+                # ALLOWLIST of platform-essential vars — on Windows a
+                # Python child without SYSTEMROOT dies at startup
+                # ("_Py_HashRandomization_Init: failed to get random
+                # numbers", live on main 2026-08-24); credentials stay
+                # excluded either way.
+                env={
+                    k: os.environ[k]
+                    for k in (
+                        "PATH",
+                        "SYSTEMROOT",
+                        "PATHEXT",
+                        "COMSPEC",
+                        "TEMP",
+                        "TMP",
+                        "WINDIR",
+                    )
+                    if k in os.environ
+                },
             )
             if proc.returncode != 0:
                 tail = "\n".join((proc.stdout + proc.stderr).splitlines()[-4:])
