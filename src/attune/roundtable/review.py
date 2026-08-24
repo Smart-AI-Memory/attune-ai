@@ -256,7 +256,12 @@ def run_review(
     manifest = budget_manifest(target["per_file"])
     brief = build_brief(target, manifest)
     if prior_rejections:
-        lines = "\n".join(f"- {r}" for r in prior_rejections)
+        # Bounded so a long rejection history cannot crowd out the diff
+        # the seat is there to assess (re-lane finding, 2026-08-24).
+        capped = [r[:300] for r in list(prior_rejections)[:12]]
+        lines = "\n".join(f"- {r}" for r in capped)
+        if len(prior_rejections) > 12:
+            lines += f"\n- (+{len(prior_rejections) - 12} more rejections truncated)"
         brief += (
             "\n\nPreviously REJECTED findings from earlier lanes on this "
             "same diff, with the refutations. Do NOT re-report these "

@@ -335,3 +335,23 @@ class TestPriorRejections:
         assert review.check_disposition("both real — accepted", 1)
         assert review.check_disposition("real — accepted", 0)
         assert review.check_disposition("both real — accepted", 2) == []
+
+    def test_rejections_are_bounded(self, repo: Path) -> None:
+        """A long rejection history cannot crowd out the diff (re-lane
+        finding, 2026-08-24): entries cap at 300 chars, list at 12."""
+        seen: list[str] = []
+
+        def spy_invoke(recipe, brief, reply_chars=0):
+            seen.append(brief)
+            return 0, "NO FINDINGS"
+
+        review.run_review(
+            repo,
+            base_ref="main",
+            board=RecordingBoard(),
+            invoke_seat=spy_invoke,
+            prior_rejections=[f"claim {i}: " + "x" * 1000 for i in range(30)],
+        )
+        block = seen[0].split("Previously REJECTED")[1]
+        assert len(block) < 12 * 320 + 200
+        assert "+18 more rejections truncated" in block
