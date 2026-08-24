@@ -432,10 +432,11 @@ class TestEventStreamerConsumeEvents:
         assert "stream:agent_heartbeat" in streams_arg
         assert "stream:agent_error" in streams_arg
 
-    def test_consume_events_no_event_types_scans_all_streams(self) -> None:
-        """Test consume_events scans for all streams when event_types is None."""
+    def test_consume_events_no_event_types_reads_registry(self) -> None:
+        """consume_events with event_types=None subscribes to the streams
+        named by the registry set — no keyspace scan (#2241)."""
         mock_client = MagicMock()
-        mock_client.scan_iter.return_value = [b"stream:heartbeat", b"stream:error"]
+        mock_client.smembers.return_value = {b"stream:heartbeat", b"stream:error"}
         mock_client.xread.side_effect = KeyboardInterrupt()
 
         mock_memory = MagicMock()
@@ -446,12 +447,17 @@ class TestEventStreamerConsumeEvents:
 
         list(streamer.consume_events(event_types=None))
 
-        mock_client.scan_iter.assert_called_once_with(match="stream:*", count=100)
+        mock_client.smembers.assert_called_once_with("stream_registry")
+        mock_client.scan_iter.assert_not_called()
+        streams_arg = mock_client.xread.call_args[0][0]
+        assert "stream:heartbeat" in streams_arg
+        assert "stream:error" in streams_arg
 
     def test_consume_events_empty_streams_returns(self) -> None:
-        """Test consume_events returns when no streams found via scan."""
+        """consume_events returns when registry and legacy scan are both empty."""
         mock_client = MagicMock()
-        mock_client.scan_iter.return_value = []  # No streams exist
+        mock_client.smembers.return_value = set()  # Empty registry
+        mock_client.scan_iter.return_value = []  # No pre-registry streams either
 
         mock_memory = MagicMock()
         mock_memory._client = mock_client

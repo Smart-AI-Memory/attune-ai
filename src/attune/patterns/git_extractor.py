@@ -129,18 +129,12 @@ class GitPatternExtractor:
         """
         patterns = []
 
-        for i in range(num_commits):
-            commit_info = self._get_commit_info(f"HEAD~{i}")
-            if not commit_info:
-                continue
-
+        for commit_info, diff in self._get_recent_commits_with_diffs(num_commits):
             # Check if this looks like a fix commit
             fix_score = self._score_fix_commit(commit_info["message"])
             if fix_score < 0.5:
                 continue
 
-            # Analyze the diff for this commit
-            diff = self._get_commit_diff(f"HEAD~{i + 1}", f"HEAD~{i}")
             detected = self._analyze_diff(diff, commit_info)
 
             for pattern in detected:
@@ -150,6 +144,81 @@ class GitPatternExtractor:
                 patterns.append(pattern)
 
         return patterns
+
+    def _get_recent_commits_with_diffs(
+        self,
+        num_commits: int,
+    ) -> list[tuple[dict[str, str], str]]:
+        """Read the last ``num_commits`` commits and their diffs in ONE call.
+
+        #2241: the previous loop spawned two git subprocesses per commit
+        (`git log -1` + `git diff`); this batches the whole walk into a
+        single ``git log --first-parent -p``, which matches the old
+        ``HEAD~{i+1}..HEAD~{i}`` semantics (first-parent walk, diff vs
+        first parent). Field/record separators are the ASCII unit/record
+        separators, which cannot appear in git's %H/%an/%aI fields and
+        are vanishingly unlikely in a subject line.
+
+        Returns:
+            List of (commit_info, diff_text) tuples, newest first. A
+            root commit (no parent) gets an empty diff, matching the old
+            behavior where the ``HEAD~{i+1}`` lookup failed.
+
+        """
+        if num_commits < 1:
+            return []
+
+        # The only dynamic argv element: str(int(n)) with n >= 1 cannot be
+        # option-like, so no _is_option_like branch is needed here — the
+        # module's argv-sweep test carries this function in its vetted set.
+        count = str(int(num_commits))
+
+        fmt = "%x1e%H%x1f%s%x1f%an%x1f%aI%x1f%P"
+        try:
+            result = subprocess.run(
+                [
+                    "git",
+                    "log",
+                    "--first-parent",
+                    "-n",
+                    count,
+                    f"--pretty=format:{fmt}",
+                    "-p",
+                    "--",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+        except (subprocess.SubprocessError, OSError, ValueError):
+            return []
+        if result.returncode != 0:
+            return []
+
+        commits: list[tuple[dict[str, str], str]] = []
+        for record in result.stdout.split("\x1e"):
+            if not record.strip():
+                continue
+            header, _, diff = record.partition("\n")
+            fields = header.split("\x1f")
+            if len(fields) < 5:
+                continue
+            commit_hash, subject, author, date, parents = fields[:5]
+            if not parents.strip():
+                diff = ""
+            commits.append(
+                (
+                    {
+                        "hash": commit_hash[:8],
+                        "message": subject,
+                        "author": author,
+                        "date": date,
+                    },
+                    diff,
+                ),
+            )
+        return commits
 
     def extract_from_staged(self) -> list[dict[str, Any]]:
         """Extract patterns from currently staged changes.

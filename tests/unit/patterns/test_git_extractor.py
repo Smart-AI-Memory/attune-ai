@@ -317,12 +317,13 @@ class TestExtractFromRecentCommits:
         """extract_from_recent_commits skips commits with low fix score."""
         extractor = GitPatternExtractor(str(tmp_path))
 
-        # Commit info with "docs: update readme" — score 0.0, below threshold 0.5
-        commit_log = "abc12345\ndocs: update readme\nJohn Doe\n2025-01-01T00:00:00Z"
-        log_result = _make_completed_process(stdout=commit_log, returncode=0)
-        diff_result = _make_completed_process(stdout="", returncode=0)
+        # Commit with "docs: update readme" — score 0.0, below threshold 0.5
+        batch_log = (
+            "\x1eabc12345\x1fdocs: update readme\x1fJohn Doe\x1f2025-01-01T00:00:00Z\x1fparent1\n"
+        )
+        log_result = _make_completed_process(stdout=batch_log, returncode=0)
 
-        with patch("subprocess.run", side_effect=[log_result, diff_result]):
+        with patch("subprocess.run", return_value=log_result):
             result = extractor.extract_from_recent_commits(num_commits=1)
 
         assert result == []
@@ -331,7 +332,6 @@ class TestExtractFromRecentCommits:
         """extract_from_recent_commits returns patterns for fix commits."""
         extractor = GitPatternExtractor(str(tmp_path))
 
-        commit_log = "abc12345\nfix: null pointer dereference\nJohn Doe\n2025-01-01T00:00:00Z"
         diff_output = (
             "diff --git a/src/module.py b/src/module.py\n"
             "--- a/src/module.py\n"
@@ -339,26 +339,50 @@ class TestExtractFromRecentCommits:
             "+value = data.get('key', [])\n"
             "+if isinstance(value, list):\n"
         )
-        log_result = _make_completed_process(stdout=commit_log, returncode=0)
-        diff_result = _make_completed_process(stdout=diff_output, returncode=0)
+        batch_log = (
+            "\x1eabc12345\x1ffix: null pointer dereference\x1fJohn Doe"
+            "\x1f2025-01-01T00:00:00Z\x1fparent1\n" + diff_output
+        )
+        log_result = _make_completed_process(stdout=batch_log, returncode=0)
 
-        with patch("subprocess.run", side_effect=[log_result, diff_result]):
+        with patch("subprocess.run", return_value=log_result):
             result = extractor.extract_from_recent_commits(num_commits=1)
 
         # Should detect patterns from the diff
         assert isinstance(result, list)
 
-    def test_extract_from_recent_commits_multiple_commits(self, tmp_path):
-        """extract_from_recent_commits iterates over num_commits."""
+    def test_extract_from_recent_commits_single_subprocess_for_batch(self, tmp_path):
+        """The whole batch is read in ONE git subprocess (#2241)."""
         extractor = GitPatternExtractor(str(tmp_path))
-        failed = _make_completed_process(stdout="", returncode=128)
+        batch_log = (
+            "\x1eaaaa1111\x1ffix: first bug\x1fA\x1f2025-01-01T00:00:00Z\x1fp1\n"
+            "+x = 1\n"
+            "\x1ebbbb2222\x1ffix: second bug\x1fB\x1f2025-01-02T00:00:00Z\x1fp2\n"
+            "+y = 2\n"
+        )
+        log_result = _make_completed_process(stdout=batch_log, returncode=0)
 
-        with patch("subprocess.run", return_value=failed) as mock_run:
+        with patch("subprocess.run", return_value=log_result) as mock_run:
             result = extractor.extract_from_recent_commits(num_commits=3)
 
-        # Should have attempted 3 git log calls
-        assert mock_run.call_count == 3
-        assert result == []
+        assert mock_run.call_count == 1
+        assert isinstance(result, list)
+
+    def test_extract_from_recent_commits_root_commit_gets_empty_diff(self, tmp_path):
+        """A parentless (root) commit contributes no diff, matching the old
+        behavior where the HEAD~{i+1} lookup failed."""
+        extractor = GitPatternExtractor(str(tmp_path))
+        batch_log = (
+            "\x1eaaaa1111\x1ffix: initial import bug\x1fA\x1f2025-01-01T00:00:00Z\x1f\n"
+            "+this_diff_must_be_ignored = True\n"
+        )
+        log_result = _make_completed_process(stdout=batch_log, returncode=0)
+
+        with patch("subprocess.run", return_value=log_result):
+            commits = extractor._get_recent_commits_with_diffs(1)
+
+        assert len(commits) == 1
+        assert commits[0][1] == ""
 
 
 class TestExtractFromStaged:
@@ -733,14 +757,16 @@ class TestGitExtractorMain:
         """Lines 415-429: main() displays detected patterns."""
         from attune.patterns.git_extractor import main
 
-        commit_log = "abc12345\nfix: null pointer\nJane Dev\n2025-01-01T00:00:00Z"
         diff_output = "diff --git a/src/module.py b/src/module.py\n" "+try:\n" "+    risky()\n"
-        log_result = _make_completed_process(stdout=commit_log, returncode=0)
-        diff_result = _make_completed_process(stdout=diff_output, returncode=0)
+        batch_log = (
+            "\x1eabc12345\x1ffix: null pointer\x1fJane Dev"
+            "\x1f2025-01-01T00:00:00Z\x1fparent1\n" + diff_output
+        )
+        log_result = _make_completed_process(stdout=batch_log, returncode=0)
 
         with (
             patch("sys.argv", ["git_extractor", "--patterns-dir", str(tmp_path)]),
-            patch("subprocess.run", side_effect=[log_result, diff_result]),
+            patch("subprocess.run", return_value=log_result),
         ):
             main()
 
@@ -752,17 +778,19 @@ class TestGitExtractorMain:
         """Lines 431-435: main() saves patterns when --save is set."""
         from attune.patterns.git_extractor import main
 
-        commit_log = "abc12345\nfix: null pointer\nJane Dev\n2025-01-01T00:00:00Z"
         diff_output = "diff --git a/src/module.py b/src/module.py\n" "+try:\n" "+    risky()\n"
-        log_result = _make_completed_process(stdout=commit_log, returncode=0)
-        diff_result = _make_completed_process(stdout=diff_output, returncode=0)
+        batch_log = (
+            "\x1eabc12345\x1ffix: null pointer\x1fJane Dev"
+            "\x1f2025-01-01T00:00:00Z\x1fparent1\n" + diff_output
+        )
+        log_result = _make_completed_process(stdout=batch_log, returncode=0)
 
         with (
             patch(
                 "sys.argv",
                 ["git_extractor", "--patterns-dir", str(tmp_path), "--save"],
             ),
-            patch("subprocess.run", side_effect=[log_result, diff_result]),
+            patch("subprocess.run", return_value=log_result),
         ):
             main()
 
@@ -774,17 +802,19 @@ class TestGitExtractorMain:
         """Lines 421: --quiet suppresses pattern display."""
         from attune.patterns.git_extractor import main
 
-        commit_log = "abc12345\nfix: null pointer\nJane Dev\n2025-01-01T00:00:00Z"
         diff_output = "diff --git a/src/module.py b/src/module.py\n" "+try:\n" "+    risky()\n"
-        log_result = _make_completed_process(stdout=commit_log, returncode=0)
-        diff_result = _make_completed_process(stdout=diff_output, returncode=0)
+        batch_log = (
+            "\x1eabc12345\x1ffix: null pointer\x1fJane Dev"
+            "\x1f2025-01-01T00:00:00Z\x1fparent1\n" + diff_output
+        )
+        log_result = _make_completed_process(stdout=batch_log, returncode=0)
 
         with (
             patch(
                 "sys.argv",
                 ["git_extractor", "--patterns-dir", str(tmp_path), "--quiet"],
             ),
-            patch("subprocess.run", side_effect=[log_result, diff_result]),
+            patch("subprocess.run", return_value=log_result),
         ):
             main()
 
@@ -795,16 +825,16 @@ class TestGitExtractorMain:
         """Line 426-427: patterns with 'commit_message' field display the commit."""
         from attune.patterns.git_extractor import main
 
-        commit_log = (
-            "abc12345\nfix: null pointer dereference in parser\nJane Dev\n2025-01-01T00:00:00Z"
-        )
         diff_output = "diff --git a/src/module.py b/src/module.py\n" "+try:\n" "+    risky()\n"
-        log_result = _make_completed_process(stdout=commit_log, returncode=0)
-        diff_result = _make_completed_process(stdout=diff_output, returncode=0)
+        batch_log = (
+            "\x1eabc12345\x1ffix: null pointer dereference in parser\x1fJane Dev"
+            "\x1f2025-01-01T00:00:00Z\x1fparent1\n" + diff_output
+        )
+        log_result = _make_completed_process(stdout=batch_log, returncode=0)
 
         with (
             patch("sys.argv", ["git_extractor", "--patterns-dir", str(tmp_path)]),
-            patch("subprocess.run", side_effect=[log_result, diff_result]),
+            patch("subprocess.run", return_value=log_result),
         ):
             main()
 
@@ -836,17 +866,19 @@ class TestGitExtractorMain:
         """Line 433->420: when save_pattern returns None, no 'Saved to:' printed."""
         from attune.patterns.git_extractor import main
 
-        commit_log = "abc12345\nfix: null pointer\nJane Dev\n2025-01-01T00:00:00Z"
         diff_output = "diff --git a/src/module.py b/src/module.py\n+try:\n+    risky()\n"
-        log_result = _make_completed_process(stdout=commit_log, returncode=0)
-        diff_result = _make_completed_process(stdout=diff_output, returncode=0)
+        batch_log = (
+            "\x1eabc12345\x1ffix: null pointer\x1fJane Dev"
+            "\x1f2025-01-01T00:00:00Z\x1fparent1\n" + diff_output
+        )
+        log_result = _make_completed_process(stdout=batch_log, returncode=0)
 
         with (
             patch(
                 "sys.argv",
                 ["git_extractor", "--patterns-dir", str(tmp_path), "--save"],
             ),
-            patch("subprocess.run", side_effect=[log_result, diff_result]),
+            patch("subprocess.run", return_value=log_result),
             patch(
                 "attune.patterns.git_extractor.GitPatternExtractor.save_pattern",
                 return_value=None,

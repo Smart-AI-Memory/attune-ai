@@ -359,3 +359,60 @@ class TestEventStreamerIntegration:
         assert events[0].event_id == "1706356800000-0"
         assert events[0].data["agent_id"] == "test-agent"
         assert events[0].data["status"] == "running"
+
+
+class TestStreamRegistry:
+    """The registry set replaces keyspace scans for subscribe-to-all (#2241)."""
+
+    @staticmethod
+    def _streamer_with_client():
+        mock_client = Mock()
+        mock_memory = Mock()
+        mock_memory._client = mock_client
+        return EventStreamer(memory=mock_memory), mock_client
+
+    def test_publish_registers_stream_key(self):
+        """publish_event SADDs the stream key into the registry set."""
+        streamer, client = self._streamer_with_client()
+        client.xadd.return_value = b"1-0"
+
+        streamer.publish_event(event_type="agent_heartbeat", data={"a": 1})
+
+        client.sadd.assert_called_once_with("stream_registry", "stream:agent_heartbeat")
+
+    def test_active_stream_keys_reads_registry_not_scan(self):
+        """A populated registry answers without any keyspace scan."""
+        streamer, client = self._streamer_with_client()
+        client.smembers.return_value = {b"stream:b", "stream:a"}
+
+        keys = streamer._active_stream_keys()
+
+        assert keys == ["stream:a", "stream:b"]
+        client.scan_iter.assert_not_called()
+
+    def test_active_stream_keys_falls_back_to_scan_when_registry_empty(self):
+        """Streams published by pre-registry code are still discovered.
+
+        The positive assertion below proves the scan result is actually
+        consumed (no broad-except swallows it), but the transport gate is
+        satisfied explicitly: mget is served in terms of get.
+        """
+        from tests.unit.telemetry.conftest import serve_mget_from_get
+
+        streamer, client = self._streamer_with_client()
+        serve_mget_from_get(client)
+        client.smembers.return_value = set()
+        client.scan_iter.return_value = iter([b"stream:legacy"])
+
+        keys = streamer._active_stream_keys()
+
+        assert keys == ["stream:legacy"]
+        client.scan_iter.assert_called_once_with(match="stream:*", count=100)
+
+    def test_delete_stream_unregisters_key(self):
+        """delete_stream SREMs the key so the registry does not go stale."""
+        streamer, client = self._streamer_with_client()
+        client.delete.return_value = 1
+
+        assert streamer.delete_stream(event_type="old_event") is True
+        client.srem.assert_called_once_with("stream_registry", "stream:old_event")

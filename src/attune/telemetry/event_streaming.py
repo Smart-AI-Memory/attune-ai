@@ -122,6 +122,11 @@ class EventStreamer:
     """
 
     STREAM_PREFIX = "stream:"
+    # Set of active stream keys, maintained on publish/delete (#2241) so
+    # subscribe-to-all reads SMEMBERS instead of scanning the keyspace.
+    # Deliberately outside STREAM_PREFIX so the legacy scan fallback
+    # cannot mistake the registry set for a stream.
+    STREAM_REGISTRY_KEY = "stream_registry"
     MAX_STREAM_LENGTH = 10000  # Trim streams to last 10K events
     DEFAULT_BLOCK_MS = 5000  # 5 seconds blocking read timeout
 
@@ -146,6 +151,22 @@ class EventStreamer:
 
         if self.memory is None:
             logger.warning("No memory backend available for event streaming")
+
+    def _active_stream_keys(self) -> list[str]:
+        """Return every active stream key without scanning the keyspace.
+
+        Reads the registry set maintained by :meth:`publish_event`
+        (#2241). Falls back to the legacy ``scan_iter`` only when the
+        registry is empty, so streams published by older code are still
+        discovered. Stale registry entries are harmless — XREAD on a
+        missing stream simply yields nothing.
+        """
+        client = self.memory._client
+        members = client.smembers(self.STREAM_REGISTRY_KEY)
+        if members:
+            return sorted(m.decode("utf-8") if isinstance(m, bytes) else m for m in members)
+        legacy = client.scan_iter(match=f"{self.STREAM_PREFIX}*", count=100)
+        return [s.decode("utf-8") if isinstance(s, bytes) else s for s in legacy]
 
     def _get_stream_key(self, event_type: str) -> str:
         """Get Redis stream key for an event type.
@@ -203,6 +224,10 @@ class EventStreamer:
             if isinstance(event_id, bytes):
                 event_id = event_id.decode("utf-8")
 
+            # Register the stream so subscribe-to-all consumers can
+            # SMEMBERS instead of scanning the keyspace (#2241).
+            self.memory._client.sadd(self.STREAM_REGISTRY_KEY, stream_key)
+
             logger.debug(f"Published event {event_type}: {event_id}")
             return event_id
 
@@ -244,13 +269,8 @@ class EventStreamer:
         if event_types:
             streams = {self._get_stream_key(et): start_id for et in event_types}
         else:
-            # Subscribe to all event streams (expensive - requires KEYS scan)
-            all_streams = list(
-                self.memory._client.scan_iter(match=f"{self.STREAM_PREFIX}*", count=100),
-            )
-            streams = {
-                s.decode("utf-8") if isinstance(s, bytes) else s: start_id for s in all_streams
-            }
+            # Subscribe to all event streams via the registry set (#2241)
+            streams = dict.fromkeys(self._active_stream_keys(), start_id)
 
         if not streams:
             logger.debug("No streams to consume")
@@ -394,6 +414,7 @@ class EventStreamer:
 
         try:
             result = self.memory._client.delete(stream_key)
+            self.memory._client.srem(self.STREAM_REGISTRY_KEY, stream_key)
             return result > 0
         except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to delete stream {event_type}: {e}")
