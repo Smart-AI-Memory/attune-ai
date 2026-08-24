@@ -31,7 +31,6 @@ import pytest
 
 from attune.workflows.agent_sdk_adapter import get_max_budget_usd
 from attune.workflows.discovery_sweep.llm_source_base import (
-    MIN_PER_CALL_BUDGET_USD,
     budget_too_small_finding,
     cap_hit_finding_if_bound,
 )
@@ -187,12 +186,15 @@ async def test_floor_boundary_share_at_min_runs() -> None:
     factory = _FakeWorkflowFactory(
         results=[_FakeResult(final_output=_empty_findings_output())],
     )
+    source = SecurityAuditSource()
     with patch(_WF_PATH, new=factory):
-        # single path, allocation == floor → share == floor → not below → runs.
-        await SecurityAuditSource().discover(["src/"], budget_usd=MIN_PER_CALL_BUDGET_USD)
+        # single path, allocation == the source's own floor (#2214:
+        # per-source min_useful_usd, above the generic MIN) → share ==
+        # floor → not below → runs.
+        await source.discover(["src/"], budget_usd=source.min_useful_usd)
 
     assert len(factory.calls) == 1
-    assert factory.calls[0].execute_kwargs["max_budget_usd"] == MIN_PER_CALL_BUDGET_USD
+    assert factory.calls[0].execute_kwargs["max_budget_usd"] == source.min_useful_usd
 
 
 # ---------------------------------------------------------------------------

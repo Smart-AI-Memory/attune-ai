@@ -7,12 +7,16 @@ call with :data:`STRUCTURED_EMIT_FOOTER` passed via
 Phase 1.5 ``design.md``), invokes ``execute()`` once per path, and
 parses each result via :func:`findings_from_workflow_result`.
 
-``budget_multiplier = 0.5`` reflects the dependency-check
-workflow's narrower spend profile — two subagents
-(inventory-assessor + update-advisor) doing CVE-feed-heavy work
-that's mostly Bash/Read and not deep code analysis. Phase 1.5 set
-the default ratios as ``security=4`` / ``deps=0.5`` /
-``default=1`` so the engine allocates proportionally.
+``budget_multiplier = 1.0`` (raised from 0.5 in #2214): the
+original "narrower spend profile" premise was refuted by
+measurement — a quick-depth run costs ~$0.45, comparable to the
+other lanes, and the 0.5 multiplier allocated ~$0.29 at a $5
+sweep, so EVERY sweep aborted this lane at its budget cap while
+recording $0 (the probe registry's reproducible "$0 lane"). The
+source also defaults to ``depth="quick"`` — the sweep is a
+breadth pass, and quick depth demonstrably finds planted CVEs —
+and skips honestly below ``min_useful_usd`` instead of launching
+a run that is guaranteed to abort.
 
 The ``claude_agent_sdk`` import lives inside :meth:`discover` so
 this module is mock-friendly and doesn't drag the SDK into the
@@ -48,18 +52,28 @@ class DependencyCheckSource(LLMSource):
     Three structural attributes (``name``, ``is_llm``,
     ``budget_multiplier``) satisfy the :class:`FindingSource`
     Protocol; ``LLMSource`` is inherited for the ``--no-llm``
-    filter marker. The 0.5 multiplier overrides LLMSource's
-    default of 1.0 to reflect the workflow's lower per-call spend.
+    filter marker. The multiplier is 1.0 (#2214 — the old 0.5
+    under-allocated below the workflow's measured cost, so the
+    lane aborted at its cap on every sweep).
 
     ``depth`` is configurable per-instance and defaults to
-    ``"standard"`` — same default as standalone
-    ``attune workflow run dependency-check``. Sweep callers that
-    want a cheaper pass can construct with ``depth="quick"``.
+    ``"quick"`` — the sweep is a breadth pass and quick depth
+    demonstrably surfaces planted CVEs (~$0.45 measured). Callers
+    wanting the deeper standalone behavior construct with
+    ``depth="standard"``.
     """
 
     name: str = "dependency-check"
-    budget_multiplier: float = 0.5
-    depth: str = "standard"
+    budget_multiplier: float = 1.0
+    depth: str = "quick"
+
+    #: Below this per-call share the source SKIPS with an honest info
+    #: finding instead of launching a run that is guaranteed to abort
+    #: at its budget cap (#2214). Measured (2026-08-23 probe registry):
+    #: a quick-depth run costs ~$0.45; the old 0.5 multiplier allocated
+    #: ~$0.29 at a $5 sweep, so every sweep aborted this lane with
+    #: "Reached maximum budget" while recording $0.
+    min_useful_usd: float = 0.40
 
     async def discover(self, paths: list[str], budget_usd: float) -> list[Finding]:
         """Run DependencyCheckWorkflow on each path and parse findings.
@@ -80,7 +94,8 @@ class DependencyCheckSource(LLMSource):
         # across paths. Single-path sweeps (the common case) get the
         # whole allocation. Below the floor, skip rather than truncate.
         share = budget_usd / len(paths)
-        if share < MIN_PER_CALL_BUDGET_USD:
+        floor = max(MIN_PER_CALL_BUDGET_USD, self.min_useful_usd)
+        if share < floor:
             return [budget_too_small_finding(self.name, len(paths), share, budget_usd)]
 
         # Late import keeps ``claude_agent_sdk`` out of this
