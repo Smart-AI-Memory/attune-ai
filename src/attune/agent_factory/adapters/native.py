@@ -150,13 +150,24 @@ class NativeWorkflow(BaseWorkflow):
             context = {"state": self._state}
             tasks.append(agent.invoke(input_data, context))
 
-        results = await asyncio.gather(*tasks)
+        results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        # Add agent names
-        for _i, (agent_name, result) in enumerate(zip(self.agents.keys(), results, strict=False)):
+        # #2236: without return_exceptions one raised agent cancelled the
+        # siblings and the result subscript below crashed. A raising agent
+        # now yields an error-shaped result dict alongside the survivors.
+        out: list = []
+        for agent_name, result in zip(self.agents.keys(), results, strict=False):
+            if isinstance(result, BaseException) and not isinstance(result, Exception):
+                raise result
+            if isinstance(result, Exception):
+                result = {
+                    "success": False,
+                    "error": f"{type(result).__name__}: {result}",
+                }
             result["agent"] = agent_name
+            out.append(result)
 
-        return list(results)
+        return out
 
     async def stream(self, input_data: str | dict, initial_state: dict | None = None):
         """Stream workflow execution."""
