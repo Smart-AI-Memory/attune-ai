@@ -21,6 +21,7 @@ warnings.warn(
 )
 
 import json  # noqa: E402
+import logging  # noqa: E402
 from datetime import datetime  # noqa: E402
 from typing import TYPE_CHECKING, Any  # noqa: E402
 
@@ -30,6 +31,31 @@ from .memory.types import (  # noqa: E402
     TTLStrategy,
     parse_stored_record,
 )
+
+logger = logging.getLogger(__name__)
+
+
+def _parse_stored_dict(raw: str, *, key: str = "") -> dict[str, Any] | None:
+    """Parse a Redis-stored JSON value expected to be a dict.
+
+    The dict-shaped sibling of :func:`parse_stored_record` (#2235):
+    malformed JSON or a non-dict payload logs and returns ``None``
+    instead of raising ``JSONDecodeError`` (or surprising callers
+    that subscript the result) from deep inside a coordination call.
+    """
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        logger.warning("Discarding malformed JSON stored at %r", key)
+        return None
+    if not isinstance(payload, dict):
+        logger.warning(
+            "Discarding non-dict JSON payload (%s) stored at %r",
+            type(payload).__name__,
+            key,
+        )
+        return None
+    return payload
 
 
 class ConflictNegotiationMixin:
@@ -249,7 +275,9 @@ class CoordinationSignalsMixin:
         for key in keys:
             raw = self._get(key)
             if raw:
-                signals.append(json.loads(raw))
+                signal = _parse_stored_dict(raw, key=key)
+                if signal is not None:
+                    signals.append(signal)
 
         return signals
 
@@ -322,9 +350,13 @@ class SessionManagementMixin:
         if raw is None:
             return False
 
-        payload = json.loads(raw)
-        if credentials.agent_id not in payload["participants"]:
-            payload["participants"].append(credentials.agent_id)
+        payload = _parse_stored_dict(raw, key=key)
+        if payload is None:
+            return False
+
+        participants = payload.setdefault("participants", [])
+        if credentials.agent_id not in participants:
+            participants.append(credentials.agent_id)
 
         return bool(
             self._set(
@@ -355,5 +387,4 @@ class SessionManagementMixin:
         if raw is None:
             return None
 
-        result: dict = json.loads(raw)
-        return result
+        return _parse_stored_dict(raw, key=key)
