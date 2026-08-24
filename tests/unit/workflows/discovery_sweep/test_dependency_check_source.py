@@ -105,12 +105,17 @@ def _wellformed_payload() -> dict:
 
 
 def test_source_defaults() -> None:
-    """Defaults conform to LLMSource marker + 0.5 budget multiplier."""
+    """Defaults: 1.0 multiplier + quick depth + honest floor (#2214).
+
+    The old 0.5 multiplier under-allocated below the workflow's
+    measured cost, so the lane aborted at its cap on every sweep.
+    """
     source = DependencyCheckSource()
     assert source.name == SOURCE
     assert source.is_llm is True
-    assert source.budget_multiplier == 0.5
-    assert source.depth == "standard"
+    assert source.budget_multiplier == 1.0
+    assert source.depth == "quick"
+    assert source.min_useful_usd == 0.40
 
 
 def test_source_appears_in_default_sources() -> None:
@@ -155,7 +160,7 @@ async def test_single_path_returns_parsed_findings() -> None:
     assert len(factory.calls) == 1
     assert factory.calls[0].execute_kwargs == {
         "path": "./",
-        "depth": "standard",
+        "depth": "quick",
         "max_budget_usd": 0.5,
     }
 
@@ -180,7 +185,7 @@ async def test_constructor_receives_structured_emit_footer() -> None:
 
 @pytest.mark.asyncio
 async def test_custom_depth_is_passed_to_execute() -> None:
-    """``depth="quick"`` reaches the wrapped workflow's execute() call."""
+    """``depth="standard"`` override reaches the wrapped execute() call."""
     factory = _FakeWorkflowFactory(
         results=[_FakeResult(success=True, final_output=_wrap_json({"findings": []}))],
     )
@@ -189,11 +194,11 @@ async def test_custom_depth_is_passed_to_execute() -> None:
         "attune.workflows.dependency_check.DependencyCheckWorkflow",
         new=factory,
     ):
-        await DependencyCheckSource(depth="quick").discover(["./"], budget_usd=0.5)
+        await DependencyCheckSource(depth="standard").discover(["./"], budget_usd=0.5)
 
     assert factory.calls[0].execute_kwargs == {
         "path": "./",
-        "depth": "quick",
+        "depth": "standard",
         "max_budget_usd": 0.5,
     }
 
@@ -240,7 +245,7 @@ async def test_multiple_paths_yield_per_path_calls_and_concat_findings() -> None
         "attune.workflows.dependency_check.DependencyCheckWorkflow",
         new=factory,
     ):
-        findings = await DependencyCheckSource().discover(["./pkg-a/", "./pkg-b/"], budget_usd=0.5)
+        findings = await DependencyCheckSource().discover(["./pkg-a/", "./pkg-b/"], budget_usd=1.0)
 
     assert len(factory.calls) == 2
     assert [f.title for f in findings] == ["first", "second"]
@@ -299,7 +304,7 @@ async def test_wrapped_workflow_raise_does_not_abort_other_paths() -> None:
         "attune.workflows.dependency_check.DependencyCheckWorkflow",
         new=factory,
     ):
-        findings = await DependencyCheckSource().discover(["./bad/", "./good/"], budget_usd=0.5)
+        findings = await DependencyCheckSource().discover(["./bad/", "./good/"], budget_usd=1.0)
 
     assert len(findings) == 2
     assert findings[0].tags == ("source-failure",)
@@ -395,6 +400,26 @@ async def test_budget_below_floor_skips_runs_and_emits_finding() -> None:
     assert only.severity == "info"
     assert only.tags == ("budget-cap",)
     assert only.file is None
+
+
+@pytest.mark.asyncio
+async def test_share_below_min_useful_skips_instead_of_aborting() -> None:
+    """#2214 — a share above the generic floor but below this source's
+    measured minimum (~$0.45 quick run) skips honestly rather than
+    launching a run guaranteed to die at its budget cap ($0, failure
+    marker — the probe registry's reproducible '$0 lane')."""
+    factory = _FakeWorkflowFactory()
+
+    with patch(
+        "attune.workflows.dependency_check.DependencyCheckWorkflow",
+        new=factory,
+    ):
+        findings = await DependencyCheckSource().discover(["./"], budget_usd=0.29)
+
+    assert factory.calls == []  # no doomed run launched
+    assert len(findings) == 1
+    assert findings[0].severity == "info"
+    assert findings[0].tags == ("budget-cap",)
 
 
 @pytest.mark.asyncio

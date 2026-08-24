@@ -53,6 +53,12 @@ class BugPredictSource(LLMSource):
     name: str = "bug-predict"
     depth: str = "standard"
 
+    #: Below this per-call share the source SKIPS with an honest
+    #: info finding instead of launching a run that predictably
+    #: aborts at its budget cap while burning billed tokens into
+    #: a $0 failure marker (#2214; measured 2026-08-23).
+    min_useful_usd: float = 0.5
+
     async def discover(self, paths: list[str], budget_usd: float) -> list[Finding]:
         """Run BugPredictionWorkflow on each path and parse findings.
 
@@ -72,7 +78,8 @@ class BugPredictSource(LLMSource):
         # across paths. Single-path sweeps (the common case) get the
         # whole allocation. Below the floor, skip rather than truncate.
         share = budget_usd / len(paths)
-        if share < MIN_PER_CALL_BUDGET_USD:
+        floor = max(MIN_PER_CALL_BUDGET_USD, self.min_useful_usd)
+        if share < floor:
             return [budget_too_small_finding(self.name, len(paths), share, budget_usd)]
 
         # Late import keeps ``claude_agent_sdk`` out of this module's
