@@ -284,6 +284,108 @@ def test_write_record_is_append_only(tmp_path) -> None:
     assert first.exists() and second.exists()
 
 
+def _with_gate_stub(result_obj, probe_coro_factory):
+    """Run one gate probe with _run_gate_workflow stubbed to result_obj."""
+    import asyncio
+
+    async def fake(name, **kwargs):
+        return result_obj
+
+    original = runner._run_gate_workflow
+    runner._run_gate_workflow = fake
+    try:
+        return asyncio.run(probe_coro_factory(1.0))
+    finally:
+        runner._run_gate_workflow = original
+
+
+def test_secure_release_probe_fails_on_go() -> None:
+    # The Sev1 shape: GO on a planted-critical fixture must FAIL the
+    # probe; NO_GO and CONDITIONAL both pass (fail-closed).
+    class _Go:
+        go_no_go = "GO"
+        total_cost = 1.0
+        critical_count = 0
+        high_count = 0
+        blockers: list = []
+
+    class _NoGo(_Go):
+        go_no_go = "NO_GO"
+
+    class _Cond(_Go):
+        go_no_go = "CONDITIONAL"
+
+    assert not _with_gate_stub(_Go(), runner.probe_secure_release).passed
+    assert _with_gate_stub(_NoGo(), runner.probe_secure_release).passed
+    assert _with_gate_stub(_Cond(), runner.probe_secure_release).passed
+
+
+def test_health_check_probe_rejects_fabricated_perfection() -> None:
+    # The Sev2 shape: a complete-looking grade with degraded=False on an
+    # unmeasurable dir fails; degraded=True or grade N/A passes.
+    class _Fabricated:
+        degraded = False
+        grade = "A"
+
+        def to_dict(self):
+            return {"score": 100, "total_cost": 0.0}
+
+    class _Honest(_Fabricated):
+        degraded = True
+        grade = "C"
+
+    class _NA(_Fabricated):
+        degraded = False
+        grade = "N/A"
+
+    assert not _with_gate_stub(_Fabricated(), runner.probe_health_check).passed
+    assert _with_gate_stub(_Honest(), runner.probe_health_check).passed
+    assert _with_gate_stub(_NA(), runner.probe_health_check).passed
+
+
+def test_doc_orchestrator_probe_rejects_fabricated_no_gaps() -> None:
+    # The Sev5 shape: "scan found no gaps" (degraded=False, 0 items) on
+    # a fixture WITH a planted doc gap fails; honest degraded or a scan
+    # that found the gap passes.
+    class _NoGaps:
+        degraded = False
+        items_found = 0
+        total_cost = 0.0
+
+    class _Degraded(_NoGaps):
+        degraded = True
+
+    class _Found(_NoGaps):
+        items_found = 3
+
+    assert not _with_gate_stub(_NoGaps(), runner.probe_doc_orchestrator).passed
+    assert _with_gate_stub(_Degraded(), runner.probe_doc_orchestrator).passed
+    assert _with_gate_stub(_Found(), runner.probe_doc_orchestrator).passed
+
+
+def test_release_prep_probe_requires_honest_fail() -> None:
+    # #2221 correction: release-prep's execute() returns success=True
+    # even when BLOCKED — the verdict is metadata["approved"]. The
+    # probe judges THAT key; a missing key is a phantom-read failure,
+    # never a silent pass.
+    class _Approved:
+        success = True
+        cost_report = None
+        metadata = {"approved": True, "confidence": "high"}
+
+    class _Blocked(_Approved):
+        metadata = {"approved": False, "confidence": "low"}
+
+    class _NoKey(_Approved):
+        metadata = {"confidence": "high"}
+
+    assert not _with_gate_stub(_Approved(), runner.probe_release_prep).passed
+    assert _with_gate_stub(_Blocked(), runner.probe_release_prep).passed
+    missing = _with_gate_stub(_NoKey(), runner.probe_release_prep)
+    assert not missing.passed
+    assert "approved" in missing.reason
+
+
 def test_every_probe_has_a_receipt_type() -> None:
     # A probe without a receipt-type mapping would silently default;
     # keep the map total over the fleet of probes.

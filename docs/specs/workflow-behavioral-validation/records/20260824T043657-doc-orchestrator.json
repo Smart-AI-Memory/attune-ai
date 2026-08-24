@@ -1,0 +1,16 @@
+{
+  "workflow": "doc-orchestrator",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "fail-closed-gate",
+  "verdict": "pass",
+  "cost_usd": 0.0,
+  "duration_s": 0.8,
+  "ran_at": "2026-08-24T04:36:57Z",
+  "runner_version": "0.3.0",
+  "git_sha": "bc59a5dce",
+  "evidence": {
+    "degraded": false,
+    "items_found": 14,
+    "reason": "honest scan (degraded=False, items_found=14)"
+  }
+}

@@ -13,9 +13,13 @@ new records; `--check` is the CI drift guard.
 | dependency-check | PASS | 0.4505 | 77.1 | 2026-08-23T21:20:00Z | 7d66113a0 | `records/2026-08-23-dependency-check.json` |
 | discovery-sweep | FAIL | 2.5867 | 194.8 | 2026-08-23T21:55:00Z | 7d66113a0 | `records/2026-08-23-discovery-sweep.json` |
 | doc-audit | PASS | 0.3783 | 81.7 | 2026-08-23T23:20:00Z | e80953386 | `records/2026-08-23-doc-audit.json` |
+| doc-orchestrator | PASS | 0.0000 | 0.8 | 2026-08-24T04:36:57Z | bc59a5dce | `records/20260824T043657-doc-orchestrator.json` |
+| health-check | PASS | 0.0000 | 2.5 | 2026-08-23T23:51:22Z | 0836ddfac | `records/20260823T235122-health-check.json` |
 | perf-audit | PASS | 0.2964 | 292.5 | 2026-08-23T23:12:00Z | e80953386 | `records/2026-08-23-perf-audit.json` |
 | refactor-plan | PASS | 0.3421 | 87.7 | 2026-08-23T23:59:00Z | 11965cb6f | `records/2026-08-23-refactor-plan.json` |
 | release-notes | PASS | 0.4689 | 88.7 | 2026-08-23T21:30:00Z | 7d66113a0 | `records/2026-08-23-release-notes.json` |
+| release-prep | PASS | 0.0000 | 2.0 | 2026-08-24T04:41:28Z | bc59a5dce | `records/20260824T044128-release-prep.json` |
+| secure-release | PASS | 1.1601 | 234.6 | 2026-08-24T04:41:28Z | bc59a5dce | `records/20260824T044128-secure-release.json` |
 | security-audit | PASS | 0.3983 | 106.8 | 2026-08-23T20:55:00Z | 7d66113a0 | `records/2026-08-23-security-audit.json` |
 | simplify-code | PASS | 0.3336 | 80.9 | 2026-08-23T23:16:00Z | e80953386 | `records/2026-08-23-simplify-code.json` |
 | test-audit | PASS | 0.4725 | 89.8 | 2026-08-23T23:18:00Z | e80953386 | `records/2026-08-23-test-audit.json` |
@@ -27,12 +31,8 @@ Workflows with NO run-record. Per the spec, absence is 'not yet probed', never '
 
 - **bug-predict** — exercised as a discovery-sweep lane (8 findings in the 2026-08-23 sweep record); no standalone probe yet. Candidate for the analytical batch's next increment.
 - **doc-gen** — BROKEN class from the fleet roundtable (Sev3, deterministic SDK failure); generative probes come last (D5): fix first, then probe by executing the emitted output.
-- **doc-orchestrator** — fail-open group (roundtable Sev5, "no gaps" after its scout failed); probe lands with the gate-group batch and must assert the DEGRADED behavior #2209 adds.
 - **fix** — requires a `goal` argument (dashboard-unrunnable class from the roundtable); needs a purpose-built fixture + invocation, not the shared analytical workdir.
-- **health-check** — fail-open group (roundtable Sev2, fabricated 100/100); probe lands with the gate-group batch and must assert DEGRADED/N-A rendering per #2209, not a numeric score.
-- **orchestrated-health-check** — same gate-group batch as health-check (it is the orchestrated variant of the same surface).
+- **orchestrated-health-check** — same class as `health-check` (`OrchestratedHealthCheckWorkflow` serves both registry names); the health-check probe + record covers this surface.
 - **rag-code-gen** — requires a `query` argument (dashboard-unrunnable class); generative batch (D5), probe must execute/resolve the cited output.
-- **release-gate** — deterministic rule-based gate (the roundtable's honest-degrade counterexample); a planted failing-gate fixture probe is planned with the gate-group batch.
-- **release-prep** — same deterministic gate family as release-gate; covered indirectly by release-notes' metric-crosscheck probe until the gate-group batch lands.
+- **release-gate** — same class as `release-prep` (`ReleasePrepTeamWorkflow` serves both registry names); covered by the release-prep probe + record (currently FAIL — #2221).
 - **research-synthesis** — BROKEN class from the fleet roundtable (Sev6, dies after ~229s); fix first, then probe.
-- **secure-release** — fail-open group (roundtable Sev1, GO on a dead gate — fixed in #2208); its probe is the highest-teeth one in the gate-group batch: a fixture whose sub-workflow fails MUST yield NO_GO.

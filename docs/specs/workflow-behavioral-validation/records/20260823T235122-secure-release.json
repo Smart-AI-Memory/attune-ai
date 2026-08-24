@@ -1,0 +1,19 @@
+{
+  "workflow": "secure-release",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "fail-closed-gate",
+  "verdict": "fail",
+  "cost_usd": 1.196,
+  "duration_s": 219.2,
+  "ran_at": "2026-08-23T23:51:22Z",
+  "runner_version": "0.3.0",
+  "git_sha": "0836ddfac",
+  "evidence": {
+    "go_no_go": "GO",
+    "critical_count": 0,
+    "high_count": 0,
+    "blockers": 0,
+    "reason": "returned GO on a planted-critical fixture (fail-open)",
+    "defect_issue": "#2219 \u2014 phantom 'assessment' key zeroes sub-audit findings"
+  }
+}

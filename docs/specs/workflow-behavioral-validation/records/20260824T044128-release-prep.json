@@ -1,0 +1,16 @@
+{
+  "workflow": "release-prep",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "fail-closed-gate",
+  "verdict": "pass",
+  "cost_usd": 0.0,
+  "duration_s": 2.0,
+  "ran_at": "2026-08-24T04:41:28Z",
+  "runner_version": "0.3.0",
+  "git_sha": "bc59a5dce",
+  "evidence": {
+    "approved": false,
+    "confidence": "low",
+    "reason": "honest BLOCKED verdict on a fixture with a planted failing test"
+  }
+}
