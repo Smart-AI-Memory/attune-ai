@@ -204,6 +204,72 @@ class TestSecureReleaseRecommendations:
 
 
 @pytest.mark.unit
+class TestPhantomKeyRegression:
+    """#2219 — the aggregator must read the REAL SDK result shape.
+
+    The pre-SDK ``final_output["assessment"]`` / ``"security_score"`` /
+    ``"has_critical_issues"`` keys no longer exist; reading them zeroed
+    a sub-audit's findings and produced GO on a planted-critical
+    fixture (probe registry, 2026-08-23). These tests feed the shape
+    the SDK adapter actually emits and pin fail-closed behavior.
+    """
+
+    @staticmethod
+    def _sdk_result(score: float | None, findings: dict) -> MagicMock:
+        result = MagicMock()
+        result.final_output = {"_type": "WorkflowReport", "score": score}
+        if score is None:
+            result.final_output = {"_type": "WorkflowReport"}
+        result.metadata = {"findings": findings}
+        return result
+
+    def test_severity_keyed_findings_are_counted(self) -> None:
+        wf = SecureReleasePipeline()
+        sec = self._sdk_result(15, {"CRITICAL": ["c1"], "HIGH": ["h1", "h2"], "LOW": []})
+        findings = wf._aggregate_findings(None, sec, None)
+        assert findings["critical"] == 1
+        assert findings["high"] == 2
+        assert findings["total"] == 3
+
+    def test_category_keyed_findings_fail_closed_as_high(self) -> None:
+        # Unknown-severity buckets are not ignorable in a release gate.
+        wf = SecureReleasePipeline()
+        sec = self._sdk_result(40, {"security": ["a", "b", "c"]})
+        findings = wf._aggregate_findings(None, sec, None)
+        assert findings["high"] == 3
+        assert findings["total"] == 3
+
+    def test_planted_critical_fixture_yields_no_go(self) -> None:
+        # The exact probe scenario: sub-audit score 15/100 with a
+        # CRITICAL finding must be NO_GO on BOTH paths (critical count
+        # and risk >= 75) — never GO.
+        wf = SecureReleasePipeline()
+        sec = self._sdk_result(15, {"CRITICAL": ["c1"], "HIGH": ["h1", "h2"]})
+        findings = wf._aggregate_findings(None, sec, None)
+        risk = wf._calculate_combined_risk(None, sec, None, None)
+        assert risk >= 75
+        assert wf._determine_go_no_go(risk, findings, None) == "NO_GO"
+
+    def test_score_read_from_sdk_shape(self) -> None:
+        assert SecureReleasePipeline._report_score(self._sdk_result(15, {})) == 15.0
+        assert SecureReleasePipeline._report_score(None) is None
+        # The retired shape carries no score — None, never "healthy".
+        old = MagicMock()
+        old.final_output = {"assessment": {"risk_score": 100}}
+        old.metadata = {}
+        assert SecureReleasePipeline._report_score(old) is None
+
+    def test_extraction_drift_warning_on_scored_but_findingless_audit(self) -> None:
+        # A sub-audit scoring below 100 with ZERO extractable findings
+        # looks exactly like a clean audit — it must warn, not pass
+        # silently.
+        wf = SecureReleasePipeline()
+        sec = self._sdk_result(60, {})
+        _, warnings, _ = wf._generate_recommendations(None, sec, None, None)
+        assert any("extraction may be broken" in w for w in warnings)
+
+
+@pytest.mark.unit
 class TestSecureReleaseResult:
     """Test SecureReleaseResult dataclass."""
 
@@ -244,7 +310,7 @@ class TestSecureReleaseExecution:
     """Test execute flow with mocked sub-workflows."""
 
     @staticmethod
-    def _make_mock_result(final_output: dict) -> WorkflowResult:
+    def _make_mock_result(final_output: dict, metadata: dict | None = None) -> WorkflowResult:
         """Create a WorkflowResult for a successful sub-workflow."""
         from datetime import datetime
 
@@ -262,6 +328,7 @@ class TestSecureReleaseExecution:
             started_at=datetime.now(),
             completed_at=datetime.now(),
             total_duration_ms=100,
+            metadata=metadata or {},
         )
 
     @pytest.mark.asyncio
@@ -393,8 +460,12 @@ class TestSecureReleaseExecution:
 
         wf = SecureReleasePipeline(mode="standard")
 
+        # Real SDK shape (#2219): serialized WorkflowReport final_output
+        # + severity-keyed metadata findings — the retired "assessment"
+        # key would silently contribute nothing.
         sec_result = self._make_mock_result(
-            {"assessment": {"risk_score": 55, "risk_level": "high"}},
+            {"_type": "WorkflowReport", "score": 45},
+            metadata={"findings": {"HIGH": ["h1", "h2"], "MEDIUM": ["m1"]}},
         )
 
         mock_sec_wf = MagicMock()
