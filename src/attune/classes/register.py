@@ -113,6 +113,11 @@ GATES: tuple[GateRef, ...] = (
         "tests/unit/gates/test_deserialize_subscript_gate.py",
         "test_no_unguarded_deserialize_into_reconstructor",
     ),
+    GateRef(
+        "C10",
+        "tests/unit/gates/test_phantom_read_gate.py",
+        "test_no_phantom_reads",
+    ),
 )
 
 
