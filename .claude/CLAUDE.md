@@ -1161,36 +1161,6 @@ this section only if core-worthy (and then keep both copies in sync).
   the same session found a core lesson's premise ("Windows lanes are
   NOT required") had gone stale, so acting on it unverified would have
   added pointless friction.
-- **`os.geteuid()` inside a `pytest.mark.skipif` condition errors the
-  WHOLE MODULE at collection time on Windows — skipif conditions are
-  evaluated eagerly, so a second `skipif(os.name == "nt")` above it
-  never gets a chance**: 2026-08-21, all five Windows lanes on PR #2147
-  went red on a tests-only change. The decorator stack read:
-  ```python
-  @pytest.mark.skipif(os.name == "nt", reason="POSIX mode bits")
-  @pytest.mark.skipif(os.geteuid() == 0, reason="root ignores the write bit")
-  ```
-  which looks defensive and is not: `os.geteuid` **does not exist** on
-  Windows, so the condition expression raises `AttributeError: module
-  'os' has no attribute 'geteuid'` while pytest is COLLECTING the file —
-  before any skip logic runs, taking every test in the module with it
-  (`ERROR tests/unit/curator/test_cache.py`). The nt-skip is dead code:
-  a decorator cannot protect an expression that is evaluated to build
-  the decorator below it. Fix: collapse to one module-level constant
-  computed with a safe accessor —
-  `_CANNOT_REFUSE_WRITES = os.name == "nt" or getattr(os, "geteuid", lambda: 1)() == 0`
-  — then a single `skipif(_CANNOT_REFUSE_WRITES, ...)`. The repo's three
-  pre-existing uses already short-circuit correctly
-  (`os.name == "posix" and os.geteuid() != 0` in
-  `tests/unit/memory/test_file_stash.py`; `hasattr(os, "geteuid") and ...`
-  in `tests/unit/telemetry/test_form_events.py` and
-  `tests/unit/workflows/discovery_sweep/test_pattern_scan_source.py`) —
-  **grep for an existing safe spelling before writing a new
-  platform-gated skip**. Generalizes to any POSIX-only `os` member in a
-  skipif condition (`geteuid`, `getuid`, `setuid`, `fork`, `getpriority`)
-  and to `pytest.mark.parametrize` argument expressions, which are also
-  evaluated at collection. Diagnostic tell: a tests-only diff that fails
-  EVERY Windows lane as `ERROR` (collection) rather than `FAILED`.
 - **Calibrate a new gate rule on the real tree BEFORE writing it, and
   report the precision — a first-draft rule is routinely 60-70% precise,
   and the discriminator that fixes it must be pinned as a fixture**:
@@ -1218,6 +1188,7 @@ this section only if core-worthy (and then keep both copies in sync).
   Matches the class register's own pipeline (confirm -> mechanize ->
   CALIBRATE -> gate -> sweep-fix -> close) and its standing line that
   "uncalibrated rules do not gate anything".
+- **Progressive tier escalation is dead spend for any agent whose gate value is a fail-closed ratchet — check monotonicity before paying for CAPABLE/PREMIUM retries**: 2026-08-23, triaging bug-predict's six `security_agent.py` hypotheses (PR #2204). The reported bug was narrow: the `-1` did-not-run sentinel made `ReleaseAgent.process()` escalate CHEAP → CAPABLE → PREMIUM, re-running bandit (and in real mode the LLM) three times for an outcome that could not change. Fixed with a `retryable: False` signal on the degrade dicts. But reading the ratchet showed the sentinel case is just the visible corner of a larger property: bandit's counts are authoritative and the LLM may only RAISE them, so `critical_issues` is monotone non-decreasing across tiers and a CHEAP-tier failure can never become a CAPABLE/PREMIUM success — escalation helps this agent in NO case. **Diagnostic: before trusting an escalate-on-failure loop, ask what a stronger model could change about the SUCCESS predicate specifically.** If the predicate reads a tool-derived value the escalation cannot move (deterministic tool, fail-closed ratchet, absent-tool sentinel), every extra tier is pure cost and should short-circuit. Left the broader case as a chair-callable follow-up in the PR body; the triage precision was 3 real / 2 already-correct-pinned / 2 false positive across seven hypotheses.
 - **A required check failing on a PR that cannot possibly affect it means
   MAIN is red — check main's last run BEFORE debugging the PR; and
   `strict: false` does NOT mean "no rebase needed"**: 2026-08-21. A
