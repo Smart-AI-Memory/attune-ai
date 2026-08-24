@@ -135,18 +135,22 @@ agent's context) and the adoption gap on the existing V7
 `template_store` ("sculpt once, cast per fork" exists; nothing binds
 it to the places forms fire from).
 
-**R5.1 Binding convention.** A skill/command that elicits ships its
-form template alongside it (per-skill `form.json` or a named
-`template_store` entry); the Socratic rule's instruction becomes
-"cast the named template, fill the slots" — composing a form dict
-from scratch is the fallback, not the default.
+**R5.1 Binding convention.** A skill/command that elicits binds to a
+NAMED `template_store` entry — one template home, so the fused call
+(R5.2) can address every bound template (codex lane finding 1: a
+second per-skill-file home would be unaddressable by R5.2). The
+skill text names its template; the Socratic rule's instruction
+becomes "cast the named template, fill the slots" — composing a
+form dict from scratch is the fallback, not the default.
 **R5.2 Fused server call.** `elicitation_render_widget` accepts
 `template: <name>` + `slots: {...}` and performs
 load → cast → validate → render server-side in ONE call; the form
 schema and HTML never transit the agent's context.
-**R5.3 Authoring gate.** A CI drift test validates every shipped
-template through `form_from_dict` at authoring time — a template
-edit cannot ship a form the validator would reject at cast time.
+**R5.3 Authoring gate.** Every shipped template carries
+`example_slots` (representative slot values); a CI drift test CASTS
+each template with them (`form_from_template`) and validates the
+RESULT — validating the uncast template alone proves nothing about
+the form substitution produces (codex lane finding 2).
 **R5.4 Authoring preview.** A standalone HTML preview page
 exercising the production renderer (the ratified preview
 discipline), so a template edit is seen as users will see it.
