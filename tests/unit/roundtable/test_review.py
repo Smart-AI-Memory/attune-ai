@@ -245,3 +245,81 @@ class TestLedger:
             repo, base_ref="main", board=RecordingBoard(), invoke_seat=_invoke_stub("NO FINDINGS")
         )
         assert review.ledger_row(result, disposition="real").endswith("| real |")
+
+
+class TestDispositionCheck:
+    """check_disposition mirrors both ledger gates (2026-08-24 retro).
+
+    The two fixtures below are the EXACT rows that went red on PR #2268
+    — one per gate — pinned so the mirror never loses the discriminators
+    that were paid for with two CI rounds.
+    """
+
+    def test_unclassifiable_leading_shape_flagged(self) -> None:
+        problems = review.check_disposition("1 modified, 2 rejected — modified-accept (…)", 3)
+        assert problems and "cannot classify" in problems[0]
+
+    def test_rejected_without_claim_reason_flagged(self) -> None:
+        problems = review.check_disposition("rejected — all three. The merge-patch claim (…)", 3)
+        assert problems and "D11a" in problems[0]
+
+    def test_compliant_forms_pass(self) -> None:
+        for disposition, findings in [
+            ("clean — NO FINDINGS", 0),
+            ("real — accepted and fixed in-branch", 2),
+            ("both real — accepted", 2),
+            ("2 real, 2 rejected — real (medium): …", 4),
+            ('rejected — claim: "x" — reason: refuted by inspection', 1),
+        ]:
+            assert review.check_disposition(disposition, findings) == [], disposition
+
+    def test_count_contradictions_flagged(self) -> None:
+        assert review.check_disposition("5 real", 3)
+        assert review.check_disposition("clean", 2)
+
+    def test_ledger_row_raises_on_noncompliant_disposition(self, repo: Path) -> None:
+        result = review.run_review(
+            repo,
+            base_ref="main",
+            board=RecordingBoard(),
+            invoke_seat=_invoke_stub("FINDING: big.py:3 [low] magic numbers"),
+        )
+        with pytest.raises(ValueError, match="fails the gates"):
+            review.ledger_row(result, disposition="1 modified, 2 rejected — …")
+
+    def test_ledger_row_placeholder_skips_validation(self, repo: Path) -> None:
+        result = review.run_review(
+            repo, base_ref="main", board=RecordingBoard(), invoke_seat=_invoke_stub("NO FINDINGS")
+        )
+        assert review.ledger_row(result).endswith("| not-triaged |")
+
+
+class TestPriorRejections:
+    """Re-lane briefs carry earlier rejections (2026-08-24 retro)."""
+
+    def test_rejections_reach_the_brief(self, repo: Path) -> None:
+        seen: list[str] = []
+
+        def spy_invoke(recipe, brief, reply_chars=0):
+            seen.append(brief)
+            return 0, "NO FINDINGS"
+
+        review.run_review(
+            repo,
+            base_ref="main",
+            board=RecordingBoard(),
+            invoke_seat=spy_invoke,
+            prior_rejections=["cwd=self.repo_path — no such attribute exists (refuted)"],
+        )
+        assert "Previously REJECTED" in seen[0]
+        assert "cwd=self.repo_path" in seen[0]
+
+    def test_no_rejections_no_block(self, repo: Path) -> None:
+        seen: list[str] = []
+
+        def spy_invoke(recipe, brief, reply_chars=0):
+            seen.append(brief)
+            return 0, "NO FINDINGS"
+
+        review.run_review(repo, base_ref="main", board=RecordingBoard(), invoke_seat=spy_invoke)
+        assert "Previously REJECTED" not in seen[0]

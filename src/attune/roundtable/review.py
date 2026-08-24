@@ -237,16 +237,32 @@ def run_review(
     base_ref: str = "origin/main",
     board: Any | None = None,
     invoke_seat: Callable[[Sequence[str], str], tuple[int, str]] = default_invoke_seat,
+    prior_rejections: Sequence[str] = (),
 ) -> dict[str, Any]:
     """Run one advisory review; ``ok`` is True whenever the run ran.
 
     ``status``: ``findings`` / ``clean`` / ``absent`` /
     ``format_noncompliant``. Board unreachability degrades to
     ``board: skipped (<reason>)`` — never a failure (R2/R4).
+
+    ``prior_rejections``: one-line summaries (claim + refutation) of
+    findings already rejected in earlier lanes on this same diff. They
+    are appended to the brief so a RE-LANE seat does not spend its
+    budget re-reporting a refuted claim (2026-08-24 retro: the same
+    false ``cwd=self.repo_path`` finding surfaced in all three #2268
+    lanes because each brief was blind to the previous rejections).
     """
     target = resolve_target(repo_root, mode=mode, base_ref=base_ref)
     manifest = budget_manifest(target["per_file"])
     brief = build_brief(target, manifest)
+    if prior_rejections:
+        lines = "\n".join(f"- {r}" for r in prior_rejections)
+        brief += (
+            "\n\nPreviously REJECTED findings from earlier lanes on this "
+            "same diff, with the refutations. Do NOT re-report these "
+            "unless you have NEW evidence that overturns the stated "
+            f"refutation:\n{lines}"
+        )
 
     code, reply = invoke_seat(_seat_recipe(seat), brief, reply_chars=ROLE_REPLY_CHARS["reviewer"])
     absent = code != 0 or not reply.strip()
@@ -307,10 +323,75 @@ def run_review(
     return result
 
 
+# The two ledger gates' grammars, mirrored here so a row can be checked
+# at AUTHORING time instead of two CI rounds later (2026-08-24 retro:
+# PR #2268 went red twice on hand-authored rows — first on the precision
+# tally's leading shape, then on the D11a claim/reason format). The
+# gates in tests/unit/{gates,scripts}/ stay the independent enforcers;
+# drift between this mirror and the gates is caught by the gates
+# themselves failing on a row this check passed.
+_DISPOSITION_REJECTION = re.compile(r"^(?:dismissed|noise|rejected)\b")
+_DISPOSITION_REJECTED_FORMAT = re.compile(
+    r"^(?:dismissed|noise|rejected)\b[^\u2014]*\u2014 claim: \".+\" \u2014 reason: .+$"
+)
+_DISPOSITION_ALL_REAL = re.compile(r"^(?:all |both )?real\b")
+_DISPOSITION_N_REAL = re.compile(r"^(\d+|one|two|three|four|five) real\b")
+_WORD_COUNTS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5}
+
+
+def check_disposition(disposition: str, findings: int) -> list[str]:
+    """Return the gate problems a ledger disposition would trip, if any.
+
+    Faithful mirror of ``scripts/ledger_precision.py``'s ``classify``
+    leading-shape grammar (same regexes, same match order) plus the
+    D11a rejection format from
+    ``tests/unit/gates/test_ledger_rejection_format.py``. An empty list
+    means both gates accept the row.
+    """
+    d = disposition.strip()
+    problems: list[str] = []
+    if d.lower().startswith("clean"):
+        if findings != 0:
+            problems.append(f"'clean' contradicts a findings count of {findings}")
+        return problems
+    if _DISPOSITION_REJECTION.match(d):
+        if not _DISPOSITION_REJECTED_FORMAT.match(d):
+            problems.append(
+                "rejection-class rows must carry the verbatim claim and "
+                "reason: 'rejected \u2014 claim: \"...\" \u2014 reason: ...' (D11a)"
+            )
+        return problems
+    m = _DISPOSITION_N_REAL.match(d)
+    if m:
+        token = m.group(1)
+        real = _WORD_COUNTS.get(token) or int(token)
+        if real > findings:
+            problems.append(f"'{real} real' exceeds the findings count of {findings}")
+        return problems
+    if _DISPOSITION_ALL_REAL.match(d):
+        return problems
+    problems.append(
+        "disposition must lead with clean / 'N real' / real / "
+        "dismissed|noise|rejected \u2014 the precision tally cannot classify "
+        f"{d[:40]!r}"
+    )
+    return problems
+
+
 def ledger_row(result: dict[str, Any], disposition: str = "not-triaged") -> str:
-    """Render the R5 dogfood-ledger row for the spec's receipts.md."""
+    """Render the R5 dogfood-ledger row for the spec's receipts.md.
+
+    Any disposition other than the ``not-triaged`` placeholder is
+    validated against both ledger gates' grammars at authoring time
+    (:func:`check_disposition`); a non-compliant one raises rather than
+    shipping a row CI will reject two rounds later.
+    """
     date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     manifest = result["manifest"]
+    if disposition != "not-triaged":
+        problems = check_disposition(disposition, len(result["findings"]))
+        if problems:
+            raise ValueError("ledger disposition fails the gates: " + "; ".join(problems))
     return (
         f"| {date} | {result['seat']} | {result['target']} | "
         f"{len(manifest['sent'])} sent / {len(manifest['omitted'])} omitted | "
