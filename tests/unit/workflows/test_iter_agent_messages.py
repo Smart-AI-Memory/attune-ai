@@ -217,14 +217,18 @@ def test_sdk_error_from_exception_fast_path(monkeypatch):
     def _boom(*args, **kwargs):  # pragma: no cover - fails the test if hit
         raise AssertionError("probe must not run on the fast path")
 
-    monkeypatch.setattr(adapter, "capture_subprocess_failure", _boom)
+    from attune.workflows import sdk_errors
+
+    monkeypatch.setattr(sdk_errors, "capture_subprocess_failure", _boom)
     err = adapter.SdkSubprocessError(message="m", stderr="s", kind="api_quota", original_exc=None)
     assert adapter.sdk_error_from_exception(err) is err
 
 
 def test_sdk_error_from_exception_fallback_probes(monkeypatch):
     """A bare SDK exception still goes through probe + classification."""
-    monkeypatch.setattr(adapter, "capture_subprocess_failure", lambda argv: _QUOTA_TEXT)
+    from attune.workflows import sdk_errors
+
+    monkeypatch.setattr(sdk_errors, "capture_subprocess_failure", lambda argv: _QUOTA_TEXT)
     out = adapter.sdk_error_from_exception(Exception("Command failed with exit code 1"))
     assert out.kind == "api_quota"
     assert _QUOTA_TEXT in out.stderr
@@ -253,7 +257,9 @@ def test_probe_env_mirrors_sdk_child(monkeypatch):
 
         return _R()
 
-    monkeypatch.setattr(adapter.subprocess, "run", _fake_run)
+    from attune.workflows import sdk_errors
+
+    monkeypatch.setattr(sdk_errors.subprocess, "run", _fake_run)
     adapter.capture_subprocess_failure([])
     assert seen["env"] is not None
     assert "CLAUDECODE" not in seen["env"]

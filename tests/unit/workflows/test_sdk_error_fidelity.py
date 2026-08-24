@@ -195,7 +195,7 @@ class TestCaptureSubprocessFailure:
         `claude` runs."""
         monkeypatch.setenv("ATTUNE_SDK_ERROR_PROBE", "1")
         monkeypatch.setattr(
-            "attune.workflows.agent_sdk_adapter._claude_health_probe_argv",
+            "attune.workflows.sdk_errors._claude_health_probe_argv",
             lambda: ["sh", "-c", "echo '401 Invalid authentication credentials' 1>&2; exit 1"],
         )
         out = capture_subprocess_failure([])
@@ -209,7 +209,7 @@ class TestCaptureSubprocessFailure:
         branch)."""
         monkeypatch.setenv("ATTUNE_SDK_ERROR_PROBE", "1")
         monkeypatch.setattr(
-            "attune.workflows.agent_sdk_adapter._claude_health_probe_argv",
+            "attune.workflows.sdk_errors._claude_health_probe_argv",
             lambda: ["sh", "-c", "exit 7"],
         )
         out = capture_subprocess_failure([])
