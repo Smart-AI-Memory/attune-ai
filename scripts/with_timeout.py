@@ -45,16 +45,26 @@ def main(argv: list[str]) -> int:
         return USAGE_EXIT
 
     cmd = argv[2:]
-    # New process group so a timeout kills children too (a bare
+    # POSIX: new session so a timeout kills children too (a bare
     # proc.kill() strands grandchildren, which is the original hang).
-    proc = subprocess.Popen(cmd, start_new_session=True)  # noqa: S603
+    # Windows has no killpg; taskkill /T below kills the tree instead.
+    posix = os.name == "posix"
+    proc = subprocess.Popen(cmd, start_new_session=posix)  # noqa: S603
     try:
         return proc.wait(timeout=seconds)
     except subprocess.TimeoutExpired:
-        try:
-            os.killpg(proc.pid, signal.SIGKILL)
-        except (ProcessLookupError, PermissionError):
-            proc.kill()
+        if posix:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except (ProcessLookupError, PermissionError):
+                proc.kill()
+        else:
+            subprocess.run(  # noqa: S603
+                ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                capture_output=True,
+                check=False,
+            )
+            proc.kill()  # idempotent backstop if taskkill missed it
         proc.wait()
         print(
             f"with_timeout: command exceeded {seconds:g}s and was killed",
