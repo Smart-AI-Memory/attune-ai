@@ -135,7 +135,38 @@ memory storage and recall, and every local transform.
      release with the headline feature; the displaced content moves to
      a permanent section below. Don't stack a second "New in" here. -->
 
-## New in 14.0.0 — the release checks its own diff
+## New in 14.1.0 — workflows that prove they work
+
+Every workflow in your catalog now comes with evidence behind it.
+14.1.0 ships a **planted-defect validation harness**: each workflow is
+run against a fixture carrying a known bug — a real `eval()`, a real
+CVE pin, a module with no docstrings — and has to *find it* to keep
+its "working" badge. Not "exited 0": actually caught the planted
+defect, with the cost and verdict recorded in a tracked registry you
+can read.
+
+You feel that in three places immediately:
+
+- **Your release gate tells the truth.** `secure-release` now reads
+  its sub-audits' real findings — a planted-critical fixture that used
+  to sail through as GO now comes back NO_GO with the criticals
+  counted. If an audit ever scores low while yielding zero readable
+  findings, you get a warning instead of silence.
+- **Your doc scan finds real gaps.** The documentation orchestrator
+  now detects modules with missing docstrings out of the box, and when
+  it can't assess something it says "not assessed" — never a
+  fabricated "no gaps found."
+- **Every discovery-sweep lane earns its budget.** Lanes get
+  measured-cost budget floors: each one either runs with enough money
+  to finish or tells you it skipped — no more lanes silently dying at
+  $0 mid-sweep.
+
+And the catalogs are honest about the rest: the few workflows still
+being repaired are hidden from the dashboard, CLI list, and MCP catalog
+until their probes pass — so everything you *can* click actually works.
+
+<details>
+<summary>Previously new in 14.0.0 — the release checks its own diff</summary>
 
 `/release audit` answers a question the other release checks don't ask:
 **what class of defect could *this* release have introduced?** It
@@ -146,33 +177,14 @@ one-page residual — never a diff dump. Three models then sit on it for
 a single round and either accept or amend a pre-filled disposition per
 item. You rule; `/release publish` refuses to tag until every item
 carries a ruling, and records that ruling next to the commit it was
-made about.
+made about. The packet also states how many files were swept against
+how many changed, so an empty result can never be mistaken for a clean
+one.
 
-It also knows what it didn't look at. The packet states how many files
-were swept against how many changed, so an empty result can never be
-mistaken for a clean one. And the class register behind it **derives**
-each status from evidence — whether the gate resolves, what it still
-finds, whether a deferral covers it — so a gate that gets renamed goes
-loud instead of quietly reading CLOSED.
+14.0.0 also removed `attune.exceptions` (the retired Empathy-era tree):
+the migration is to delete the handler, not repoint the import.
 
-The rest you can see from the outside. Background alerting is solid:
-`attune alerts watch --daemon` keeps a firm hold on its database across
-the fork and writes owner-only files. The ops client token is compared
-in constant time, git refs are validated before they reach the command
-line, and telemetry listings cost a single Redis round trip instead of
-one per record. The repo's own whole-tree scanners now survive a file
-with a null byte in it rather than stopping at the first one.
-
-The major bump is a removal: `attune.exceptions` — the nine-class tree
-rooted at `EmpathyFrameworkError` — was the final unremoved surface of
-the "Empathy" framework retired in 9.0.0, and nothing in the library
-raised any of them once their throwers were deleted. **The migration is
-to delete the handler, not repoint the import**: a `try/except` naming
-one of these was already dead code, and there is deliberately no shim
-for an exception that can never be caught. One trap worth naming —
-`attune.config.validation.ValidationError` is a *different, live* class
-(a dataclass describing a config problem, not an exception), so
-repointing there gets you something you cannot catch.
+</details>
 
 ---
 
