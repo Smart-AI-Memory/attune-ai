@@ -219,3 +219,31 @@ class TestRedisOptionalInit:
         monkeypatch.setattr(rpt, "REDIS_AVAILABLE", False)
         team = rpt.ReleasePrepTeam(redis_url="redis://example:6379/0")
         assert team.redis is None
+
+
+class TestGatherPartialFailure:
+    """#2236: a raising agent becomes a failed result, never an abort."""
+
+    def test_raising_agent_fails_its_gate_and_siblings_survive(self):
+        team = team_with(GREEN)
+
+        class _RaisingAgent:
+            agent_id = "security-auditor"
+            role = "Security Auditor"
+            total_cost = 0.0
+
+            def process(self, codebase_path: str) -> ReleaseAgentResult:
+                raise RuntimeError("auditor exploded")
+
+        # Replace the security agent with one that raises mid-process.
+        team.agents[0] = _RaisingAgent()  # type: ignore[assignment]
+        report = asyncio.run(team.assess_readiness("."))
+
+        # A report is still produced, the crashed agent shows as a
+        # FAILED result (a failed gatekeeper fails the gate), and the
+        # three sibling results survive.
+        failed = [r for r in report.agent_results if not r.success]
+        assert [r.agent_id for r in failed] == ["security-auditor"]
+        assert "RuntimeError" in failed[0].findings.get("error", "")
+        assert len(report.agent_results) == 4
+        assert report.approved is False

@@ -168,7 +168,33 @@ class ReleasePrepTeam:
         # Execute all agents in parallel
         loop = asyncio.get_running_loop()
         tasks = [loop.run_in_executor(None, agent.process, codebase_path) for agent in self.agents]
-        results: list[ReleaseAgentResult] = await asyncio.gather(*tasks)
+        outcomes = await asyncio.gather(*tasks, return_exceptions=True)
+        # #2236: a single raising agent used to abort the whole
+        # assessment. A crash now becomes a FAILED result for that agent
+        # so its quality gate fails (a failed gatekeeper fails the gate,
+        # never vanishes), while sibling results survive.
+        results: list[ReleaseAgentResult] = []
+        for agent, outcome in zip(self.agents, outcomes, strict=False):
+            if isinstance(outcome, BaseException) and not isinstance(outcome, Exception):
+                raise outcome
+            if isinstance(outcome, Exception):
+                logger.error(
+                    "Release agent %s raised during process: %s",
+                    agent.agent_id,
+                    outcome,
+                    exc_info=outcome,
+                )
+                results.append(
+                    ReleaseAgentResult(
+                        agent_id=agent.agent_id,
+                        agent_role=agent.role,
+                        success=False,
+                        tier_used=Tier.CHEAP,
+                        findings={"error": f"{type(outcome).__name__}: {outcome}"},
+                    )
+                )
+            else:
+                results.append(outcome)
 
         elapsed = time.time() - start
 

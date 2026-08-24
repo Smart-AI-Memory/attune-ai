@@ -248,3 +248,70 @@ async def test_team_runs_agents_in_parallel():
     await team.run("x")
     # Both agents started before the slow one finished → concurrent.
     assert order[:2] == ["a-start", "b-start"]
+
+
+# ---------------------------------------------------------------------------
+# gather-partial-failure guard (#2236)
+# ---------------------------------------------------------------------------
+
+
+class _RaisingAgent:
+    def __init__(self, key):
+        self.key = key
+
+    async def run(self, target):  # noqa: ANN001
+        raise RuntimeError("agent exploded")
+
+
+@pytest.mark.asyncio
+async def test_one_crashed_agent_still_produces_verdict():
+    """#2236: a raising agent must not cancel siblings or crash run()."""
+    team = AgentTeam(
+        agents=[_FakeAgent("good", 95.0), _RaisingAgent("bad")],
+        gates=[
+            GateSpec(name="good-gate", agent_key="good", threshold=90.0, critical=True),
+            GateSpec(name="bad-gate", agent_key="bad", threshold=50.0, critical=True),
+        ],
+    )
+    report = await team.run("x")
+    # The crashed agent's gate FAILS (absence is not a pass) -> blocker.
+    assert report.passed is False
+    assert any("bad-gate" in b for b in report.blockers)
+    # The surviving agent's result and gate are intact.
+    assert [r.key for r in report.results] == ["good"]
+    assert any(g.name == "good-gate" and g.passed for g in report.gates)
+    # The crash itself is surfaced.
+    assert any("agent 'bad' raised RuntimeError" in w for w in report.warnings)
+
+
+@pytest.mark.asyncio
+async def test_crashed_agent_without_gate_is_a_warning_only():
+    team = AgentTeam(
+        agents=[_FakeAgent("good", 95.0), _RaisingAgent("ungated")],
+        gates=[GateSpec(name="good-gate", agent_key="good", threshold=90.0, critical=True)],
+    )
+    report = await team.run("x")
+    assert report.passed is True
+    assert any("ungated" in w for w in report.warnings)
+
+
+@pytest.mark.asyncio
+async def test_cancellation_is_reraised_not_swallowed():
+    """CancelledError (BaseException, not Exception) must propagate.
+
+    ``gather(return_exceptions=True)`` DOES capture a child's
+    CancelledError into the results list — the guard re-raises it
+    instead of recording the cancellation as a mere agent failure.
+    (KeyboardInterrupt/SystemExit never reach the guard: task
+    machinery propagates them out of gather directly.)
+    """
+
+    class _CancelledAgent:
+        key = "boom"
+
+        async def run(self, target):  # noqa: ANN001
+            raise asyncio.CancelledError
+
+    team = AgentTeam(agents=[_CancelledAgent()], gates=[])
+    with pytest.raises(asyncio.CancelledError):
+        await team.run("x")

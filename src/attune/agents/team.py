@@ -316,14 +316,36 @@ class AgentTeam:
             A :class:`TeamReport` with the pass/fail verdict, evaluated
             gates, per-agent results, blockers, warnings, and total cost.
         """
-        results: list[AgentResult] = list(
-            await asyncio.gather(*(agent.run(target) for agent in self.agents))
+        gathered = await asyncio.gather(
+            *(agent.run(target) for agent in self.agents),
+            return_exceptions=True,
         )
+        # #2236: without return_exceptions one raised coroutine cancelled
+        # siblings and corrupted the gate verdict. A crashed agent now
+        # yields no result — its gate fails below (result None -> not
+        # passed), preserving "a failed gatekeeper fails the gate".
+        results: list[AgentResult] = []
+        crash_notes: list[str] = []
+        for agent, outcome in zip(self.agents, gathered, strict=False):
+            if isinstance(outcome, BaseException) and not isinstance(outcome, Exception):
+                raise outcome
+            if isinstance(outcome, Exception):
+                logger.error(
+                    "Team agent %r raised during run: %s",
+                    agent.key,
+                    outcome,
+                    exc_info=outcome,
+                )
+                crash_notes.append(
+                    f"agent '{agent.key}' raised {type(outcome).__name__}: {outcome}"
+                )
+            else:
+                results.append(outcome)
         by_key = {r.key: r for r in results}
 
         gates: list[QualityGate] = []
         blockers: list[str] = []
-        warnings: list[str] = []
+        warnings: list[str] = list(crash_notes)
         for spec in self.gates:
             result = by_key.get(spec.agent_key)
             actual = result.score if result is not None else 0.0
