@@ -242,9 +242,14 @@ class TestLedger:
 
     def test_disposition_override(self, repo: Path) -> None:
         result = review.run_review(
-            repo, base_ref="main", board=RecordingBoard(), invoke_seat=_invoke_stub("NO FINDINGS")
+            repo,
+            base_ref="main",
+            board=RecordingBoard(),
+            invoke_seat=_invoke_stub("FINDING: big.py:3 [low] magic numbers"),
         )
-        assert review.ledger_row(result, disposition="real").endswith("| real |")
+        assert review.ledger_row(result, disposition="real — accepted").endswith(
+            "| real — accepted |"
+        )
 
 
 class TestDispositionCheck:
@@ -323,3 +328,10 @@ class TestPriorRejections:
 
         review.run_review(repo, base_ref="main", board=RecordingBoard(), invoke_seat=spy_invoke)
         assert "Previously REJECTED" not in seen[0]
+
+    def test_all_real_count_contradictions_flagged(self) -> None:
+        """Lane finding (2026-08-24): 'both real' with 1 finding and bare
+        'real' with 0 findings are contradictions, not valid rows."""
+        assert review.check_disposition("both real — accepted", 1)
+        assert review.check_disposition("real — accepted", 0)
+        assert review.check_disposition("both real — accepted", 2) == []

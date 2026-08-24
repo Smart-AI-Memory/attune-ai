@@ -346,7 +346,9 @@ def check_disposition(disposition: str, findings: int) -> list[str]:
     leading-shape grammar (same regexes, same match order) plus the
     D11a rejection format from
     ``tests/unit/gates/test_ledger_rejection_format.py``. An empty list
-    means both gates accept the row.
+    means both gates accept the row. Count contradictions the tally
+    would silently mis-tally (e.g. 'both real' with one finding) are
+    also flagged \u2014 stricter here than the gates, by design.
     """
     d = disposition.strip()
     problems: list[str] = []
@@ -369,6 +371,13 @@ def check_disposition(disposition: str, findings: int) -> list[str]:
             problems.append(f"'{real} real' exceeds the findings count of {findings}")
         return problems
     if _DISPOSITION_ALL_REAL.match(d):
+        if d.startswith("both ") and findings != 2:
+            problems.append(f"'both real' implies exactly 2 findings, count is {findings}")
+        elif findings == 0:
+            problems.append(
+                "'real' contradicts a findings count of 0 \u2014 a "
+                "no-findings row leads with 'clean'"
+            )
         return problems
     problems.append(
         "disposition must lead with clean / 'N real' / real / "

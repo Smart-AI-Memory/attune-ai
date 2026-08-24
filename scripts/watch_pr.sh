@@ -27,6 +27,19 @@ PR="${1:?usage: watch_pr.sh <pr-number> [workflow] [interval]}"
 WORKFLOW="${2:-tests.yml}"
 INTERVAL="${3:-120}"
 
+# A nonnumeric or nonpositive interval would make every `sleep` fail
+# instantly, turning the loop into an unthrottled API hammer.
+case "$INTERVAL" in
+'' | *[!0-9]*)
+    echo "watch_pr.sh: interval must be a positive integer, got '$INTERVAL'" >&2
+    exit 64
+    ;;
+esac
+if [ "$INTERVAL" -lt 1 ]; then
+    echo "watch_pr.sh: interval must be >= 1 second, got '$INTERVAL'" >&2
+    exit 64
+fi
+
 while :; do
     info=$(gh pr view "$PR" --json state,mergedAt,headRefOid,headRefName 2>/dev/null) || {
         sleep "$INTERVAL"
