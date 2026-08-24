@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Enforceable session spend ledger** (14.1.0-retro item 4;
+  `docs/specs/session-spend-ledger/`). A cross-launcher, append-only
+  jsonl accumulator (`~/.attune/telemetry/session_spend.jsonl`) that
+  every billed launcher appends to — the workflow probe runner
+  (actual measured cost per probe) and every roundtable lane routed
+  through `default_invoke_seat` (routine seats, synthesis,
+  cross-model review, producing, countersign, gate-triage, skeptic;
+  flat conservative estimate per `claude` seat call). Once cumulative
+  spend inside the rolling 5-hour window reaches the cap
+  (`ATTUNE_SESSION_SPEND_CAP_USD`, default $10), the next billable
+  launch is HARD-refused: `SessionSpendCapError` at the seam, exit 2
+  from the probe runner (already-run probes keep their records),
+  exit 3 from a routine before its board thread opens. A cap `<= 0`
+  refuses the FIRST call — no free call (the known budget-latch bug
+  class, regression-tested); the off switch is explicit
+  (`ATTUNE_SESSION_LEDGER=off`) and recording continues under it so
+  the audit trail survives an override.
+
 ## [14.1.0] - 2026-08-24
 
 Behavioral validation for the workflow fleet, and the fail-open fixes

@@ -72,6 +72,11 @@ ALLOWLIST = frozenset(
         "src/attune/curator/cache.py",
         "src/attune/gates/envelope.py",
         "src/attune/gates/lifecycle/ledger.py",
+        # Reviewed 2026-08-24: append-only session spend ledger. The
+        # path is module-constructed (~/.attune/telemetry/) or an
+        # operator env override (ATTUNE_SESSION_LEDGER_PATH), never
+        # user- or LLM-supplied — same class as gates/envelope.py.
+        "src/attune/gates/session_ledger.py",
         "src/attune/handoff/packet.py",
         "src/attune/hooks/scripts/worktree_path_guard.py",
         "src/attune/help/feedback.py",
