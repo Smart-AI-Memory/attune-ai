@@ -17,6 +17,7 @@ from pathlib import Path
 
 import pytest
 
+import attune.telemetry.form_events as form_events_module
 from attune.telemetry.form_events import (
     _MAX_BYTES,
     _rotate_if_huge,
@@ -226,3 +227,55 @@ class TestInferenceRate:
         assert rate["fields_inferred"] == 4
         assert rate["fully_inferred"] == 1
         assert rate["inferred_share"] == round(4 / 6, 3)
+
+
+# ---------------------------------------------------------------------------
+# Stage telemetry (attune-forms >= 0.8.0) — skipped, not failed, when the
+# installed wheel predates form_id / stage events, so this file stays green
+# across the dependency floor. The implementation's own suite lives in the
+# attune-forms repo; what belongs HERE is the alias-module seam attune-ai
+# actually consumes.
+# ---------------------------------------------------------------------------
+
+
+_STAGE_EVENTS = pytest.mark.skipif(
+    not hasattr(form_events_module, "stage_latency"),
+    reason="stage telemetry needs attune-forms >= 0.8.0",
+)
+
+
+@_STAGE_EVENTS
+class TestStageEventsThroughAlias:
+    def test_stage_loggers_and_latency_round_trip(self, _isolated_home: Path) -> None:
+        form_events_module.log_form_build("f1", source="dict", question_count=2)
+        form_events_module.log_form_rendered("f1", duration_ms=3.0, html_bytes=1024)
+        form_events_module.log_submission(form_id="f1")
+
+        events = [
+            json.loads(line)
+            for line in _events_file(_isolated_home).read_text(encoding="utf-8").splitlines()
+        ]
+        assert [e["event"] for e in events] == [
+            "form_build",
+            "form_rendered",
+            "form_submitted",
+        ]
+        assert {e["form_id"] for e in events} == {"f1"}
+
+        stats = form_events_module.stage_latency()
+        assert stats["builds"] == stats["renders"] == stats["submissions"] == 1
+        assert stats["joined"] == 1
+        assert stats["render_ms"] == {"p50": 3.0, "p95": 3.0, "n": 1}
+
+    def test_form_id_flows_from_dict_to_submission(self, _isolated_home: Path) -> None:
+        """The seam receipt: attune.elicitation's re-exported pipeline and
+        the telemetry alias land on one join key."""
+        from attune.elicitation import form_from_dict
+
+        definition = {
+            "title": "Scope",
+            "fields": [{"id": "goal", "text": "Goal?", "type": "text_input"}],
+        }
+        first = form_from_dict(dict(definition))
+        second = form_from_dict(dict(definition))
+        assert first.form_id and first.form_id == second.form_id

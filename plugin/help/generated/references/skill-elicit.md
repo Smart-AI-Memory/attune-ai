@@ -31,10 +31,15 @@ ordinary Socratic-ambiguity judgement wouldn't already ask.
 
 ## Step 0 — check the template library first (V7)
 
-Recurring fork classes are stored as named JSON templates
-(`src/attune/elicitation/templates/`). **Reach for a template before
-hand-building**: a reused template makes answers comparable across
-sessions (joinable on `FormResponse.template_id`).
+Recurring fork classes are stored as named JSON templates in the
+`attune_forms` package (`attune_forms/templates/` in the installed
+wheel; new templates land in the attune-forms repo). **Reach for a
+template before hand-building**: a reused template makes answers
+comparable across sessions (joinable on `FormResponse.template_id`),
+and from attune-forms 0.8.0 each cast is telemetry-tagged
+`template:<name>` vs `dict` — the adoption signal is measured, so
+hand-building a form a template already covers shows up in the log.
+Check `list_templates()` first; only hand-build when nothing matches.
 
 ```python
 from attune.elicitation import form_from_template, list_templates

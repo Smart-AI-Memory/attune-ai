@@ -277,11 +277,18 @@ _RICH = {
 _TRIVIAL = {"title": "T", "fields": [{"id": "q", "type": "boolean", "text": "Proceed?"}]}
 
 
+def _surface_events() -> list[dict]:
+    """The routing decisions only: attune-forms >= 0.8.0 interleaves
+    ``form_build`` / ``form_rendered`` stage events into the same log, so
+    counting raw lines would break on the dependency upgrade."""
+    return [e for e in _events() if e.get("event") == "form_surface"]
+
+
 def test_render_widget_handler_records_the_decision() -> None:
     result = _run("_handle_elicitation_render_widget", _RICH)
     assert result["success"] is True
 
-    events = _events()
+    events = _surface_events()
     assert len(events) == 1
     assert events[0]["chosen"] == "widget"
     assert events[0]["surface"] == "widget"
@@ -294,7 +301,7 @@ def test_render_form_handler_records_disagreement_and_nudges() -> None:
     assert result["success"] is True
     assert "surface_note" in result  # the nudge back toward the widget
 
-    events = _events()
+    events = _surface_events()
     assert len(events) == 1
     assert events[0]["chosen"] == "ask"
     assert events[0]["surface"] == "widget"
@@ -306,7 +313,7 @@ def test_render_form_handler_stays_quiet_when_ask_is_correct() -> None:
     result = _run("_handle_elicitation_render_form", _TRIVIAL)
     assert "surface_note" not in result
 
-    events = _events()
+    events = _surface_events()
     assert events[0]["agreed"] is True
     assert events[0]["reason"] == "trivial_form"
 

@@ -942,13 +942,13 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
             "responses": response.responses,
             "response_id": response.response_id,
         }
-        hint = self._maybe_keyboard_hint()
+        hint = self._maybe_keyboard_hint(form)
         if hint:
             result["hint"] = hint
         return result
 
     @staticmethod
-    def _maybe_keyboard_hint() -> str | None:
+    def _maybe_keyboard_hint(form: Any = None) -> str | None:
         """Record the submission and return D17's one-time keyboard hint.
 
         A validated submission is the only honest place to count "forms
@@ -959,12 +959,23 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
 
         Best-effort: a telemetry problem must never break the submission
         the user just made.
+
+        Args:
+            form: The validated ``FormSchema``, when the caller has one —
+                its ``form_id`` (attune-forms >= 0.8.0) joins this
+                submission to its ``form_rendered`` event for the
+                stage-latency read-back.
         """
         try:
             from attune.elicitation import keyboard_mode_enabled
             from attune.telemetry.form_events import log_submission, maybe_keyboard_hint
 
-            log_submission()
+            try:
+                log_submission(form_id=getattr(form, "form_id", "") or "")
+            except TypeError:
+                # attune-forms < 0.8.0: zero-arg signature, no form_id
+                # on FormSchema — the submission still counts.
+                log_submission()
             return maybe_keyboard_hint(keyboard_mode=keyboard_mode_enabled())
         except (OSError, ValueError, ImportError) as exc:
             logger.debug("keyboard-mode hint skipped: %s", exc)
