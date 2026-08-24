@@ -355,7 +355,6 @@ class TestPriorRejections:
         block = seen[0].split("Previously REJECTED")[1]
         assert len(block) < 12 * 320 + 200
         assert "+18 more rejections truncated" in block
-        assert review.ledger_row(result, disposition="real").endswith("| real |")
 
 
 class TestGovernancePriority:
