@@ -12,9 +12,13 @@ Format (parsed by `scripts/project_probe_registry.py`):
 - **bug-predict** — exercised as a discovery-sweep lane (8 findings in
   the 2026-08-23 sweep record); no standalone probe yet. Candidate for
   the analytical batch's next increment.
-- **doc-gen** — BROKEN class from the fleet roundtable (Sev3,
-  deterministic SDK failure); generative probes come last (D5): fix
-  first, then probe by executing the emitted output.
+- **doc-gen** — fixed-and-validated 2026-08-24: the "deterministic
+  SDK failure" class was the #2227 runner-path condition (API key at
+  its usage cap wearing the is_error-on-success mask); with #2229 on
+  main and the cap raised, the exact runner command completed live
+  (exit 0, $1.06, 148s, real report). The D5 generative probe
+  (execute the emitted output) is still owed — this entry records the
+  fix receipt, not a probe.
 - **fix** — requires a `goal` argument (dashboard-unrunnable class from
   the roundtable); needs a purpose-built fixture + invocation, not the
   shared analytical workdir.
@@ -27,5 +31,6 @@ Format (parsed by `scripts/project_probe_registry.py`):
 - **release-gate** — same class as `release-prep`
   (`ReleasePrepTeamWorkflow` serves both registry names); covered by
   the release-prep probe + record (currently FAIL — #2221).
-- **research-synthesis** — BROKEN class from the fleet roundtable
-  (Sev6, dies after ~229s); fix first, then probe.
+- **research-synthesis** — fixed-and-validated 2026-08-24: same
+  #2227 class as doc-gen; runner-path run completed live (exit 0,
+  $1.18, 189s, substantive analysis). D5 generative probe still owed.
