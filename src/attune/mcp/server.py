@@ -50,6 +50,14 @@ ATTUNE_LEVEL_NAMES: dict[int, str] = {
     5: "Systems",
 }
 
+# Ruled by the 15.0.0 manifest (release-15-manifest D2, chair
+# 2026-08-24): the interaction-level concept is retired.
+_LEVEL_TOOLS_DEPRECATION = (
+    "attune_get_level/attune_set_level are deprecated and will be "
+    "removed in 15.0.0 — the interaction-level concept is retired "
+    "(release-15-manifest D2)"
+)
+
 _VOICE_SKIP_TOOLS: frozenset[str] = frozenset(
     {
         "memory_store",
@@ -624,12 +632,23 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
             return {"success": False, "error": "Telemetry module not installed"}
 
     async def _handle_attune_get_level(self) -> dict[str, Any]:
-        """Get current interaction level."""
+        """Get current interaction level.
+
+        .. deprecated:: 14.2
+            Removed in 15.0.0 — the interaction-level concept is
+            retired (release-15-manifest D2).
+        """
+        warnings.warn(
+            _LEVEL_TOOLS_DEPRECATION,
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return {
             "success": True,
             "level": self._attune_level,
             "name": ATTUNE_LEVEL_NAMES.get(self._attune_level, "Unknown"),
             "description": ATTUNE_LEVEL_DESCRIPTIONS.get(self._attune_level, ""),
+            "deprecated": _LEVEL_TOOLS_DEPRECATION,
         }
 
     async def _handle_list_capabilities(self) -> dict[str, Any]:
@@ -684,10 +703,19 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
     async def _handle_attune_set_level(self, args: dict[str, Any]) -> dict[str, Any]:
         """Set interaction level for this session.
 
+        .. deprecated:: 14.2
+            Removed in 15.0.0 — the interaction-level concept is
+            retired (release-15-manifest D2).
+
         Args:
             args: Must contain level (integer 1-5)
 
         """
+        warnings.warn(
+            _LEVEL_TOOLS_DEPRECATION,
+            DeprecationWarning,
+            stacklevel=2,
+        )
         level = args.get("level")
         # bool is an int subclass, so `True`/`False` would otherwise slip
         # through isinstance(int) and be used as 1/0 — reject them explicitly.
@@ -705,6 +733,7 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
             "previous_level": previous,
             "current_level": level,
             "name": ATTUNE_LEVEL_NAMES[level],
+            "deprecated": _LEVEL_TOOLS_DEPRECATION,
         }
 
     async def _handle_context_get(self, args: dict[str, Any]) -> dict[str, Any]:
