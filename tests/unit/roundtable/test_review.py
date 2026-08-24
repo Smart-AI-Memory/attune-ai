@@ -355,3 +355,66 @@ class TestPriorRejections:
         block = seen[0].split("Previously REJECTED")[1]
         assert len(block) < 12 * 320 + 200
         assert "+18 more rejections truncated" in block
+        assert review.ledger_row(result, disposition="real").endswith("| real |")
+
+
+class TestGovernancePriority:
+    """Governance surfaces rank behind tests, ahead of docs (retro O2)."""
+
+    def test_tiny_governance_file_beats_large_doc(self) -> None:
+        per_file = {
+            "docs/guide.md": "d" * 80,
+            ".claude/gates/empathy-allowlist.txt": "g" * 10,
+            "pyproject.toml": "p" * 10,
+        }
+        manifest = review.budget_manifest(per_file, cap_chars=30)
+        assert manifest["sent"] == [
+            ".claude/gates/empathy-allowlist.txt",
+            "pyproject.toml",
+        ]
+        assert manifest["omitted"] == ["docs/guide.md"]
+
+    def test_src_and_tests_still_outrank_governance(self) -> None:
+        per_file = {
+            "pyproject.toml": "p" * 40,
+            "src/attune/a.py": "s" * 40,
+            "tests/unit/test_a.py": "t" * 40,
+        }
+        manifest = review.budget_manifest(per_file, cap_chars=90)
+        assert manifest["sent"] == ["src/attune/a.py", "tests/unit/test_a.py"]
+        assert manifest["omitted"] == ["pyproject.toml"]
+
+
+class TestScopedReview:
+    """paths= scopes the lane to named files (the partial-lane re-run)."""
+
+    def test_scoped_run_reviews_only_named_paths(self, repo: Path) -> None:
+        invoke = _invoke_stub("NO FINDINGS")
+        result = review.run_review(
+            repo,
+            base_ref="main",
+            invoke_seat=invoke,
+            paths=["small.py"],
+        )
+        assert result["scoped_to"] == ["small.py"]
+        assert result["scope_misses"] == []
+        assert result["manifest"]["sent"] == ["small.py"]
+        assert "big.py" not in result["manifest"]["omitted"]
+        assert "SCOPED to 1 path(s)" in result["target"]
+        # The seat's brief says so too — a scoped lane must not read as full.
+        assert "SCOPED" in invoke.calls[0]["brief"]
+
+    def test_scope_miss_is_recorded_not_silent(self, repo: Path) -> None:
+        result = review.run_review(
+            repo,
+            base_ref="main",
+            invoke_seat=_invoke_stub("NO FINDINGS"),
+            paths=["small.py", "not/in/diff.py"],
+        )
+        assert result["scope_misses"] == ["not/in/diff.py"]
+        assert result["scoped_to"] == ["small.py"]
+
+    def test_unscoped_run_carries_no_scope_keys(self, repo: Path) -> None:
+        result = review.run_review(repo, base_ref="main", invoke_seat=_invoke_stub("NO FINDINGS"))
+        assert "scoped_to" not in result
+        assert "scope_misses" not in result

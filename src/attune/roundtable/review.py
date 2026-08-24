@@ -19,7 +19,7 @@ import re
 import subprocess  # nosec B404 — fixed argv, read-only git, never shell=True
 from collections.abc import Callable, Sequence
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePath
 from typing import Any
 
 import structlog
@@ -126,6 +126,20 @@ _PROJECTION_PREFIXES = (
 )
 
 
+#: Governance/enforcement surfaces — small, load-bearing, and exactly
+#: what a D11 lane exists to read. Without their own class they sort
+#: into "everything else" AND lose the largest-first tiebreak (a
+#: 31-line allowlist shrink ranks behind every doc), which is how the
+#: #2259 lane omitted pyproject.toml and the gate allowlist while
+#: reporting clean (2026-08-24 retro O2).
+_GOVERNANCE_PREFIXES = (
+    ".claude/gates/",
+    ".github/",
+    "pyproject.toml",
+    "codecov.yml",
+)
+
+
 def _brief_priority(name: str) -> int:
     """Packing rank: masters before projections when the cap bites.
 
@@ -134,14 +148,18 @@ def _brief_priority(name: str) -> int:
     src enum edit — the omission the scoped follow-up lane existed to
     cover. src and tests are what the seat is there to judge; known
     projections duplicate masters that already rank ahead of them.
+    Governance surfaces rank right behind tests (see
+    ``_GOVERNANCE_PREFIXES``).
     """
     if name.startswith("src/"):
         return 0
     if name.startswith("tests/"):
         return 1
+    if name.startswith(_GOVERNANCE_PREFIXES):
+        return 2
     if name.startswith(_PROJECTION_PREFIXES):
-        return 3
-    return 2
+        return 4
+    return 3
 
 
 def budget_manifest(per_file: dict[str, str], cap_chars: int = DIFF_CAP_CHARS) -> dict[str, Any]:
@@ -238,6 +256,7 @@ def run_review(
     board: Any | None = None,
     invoke_seat: Callable[[Sequence[str], str], tuple[int, str]] = default_invoke_seat,
     prior_rejections: Sequence[str] = (),
+    paths: Sequence[str] | None = None,
 ) -> dict[str, Any]:
     """Run one advisory review; ``ok`` is True whenever the run ran.
 
@@ -257,9 +276,27 @@ def run_review(
     (docs/specs/session-spend-ledger/). That refusal stops a NEW
     billable launch; it does not touch the binding posture above —
     nothing here gates a merge or scores a finding.
+    ``paths`` scopes the review to those repo-relative files (posix
+    separators) — the scoped re-lane for a PARTIAL manifest's omitted
+    substantive files (2026-08-24 retro O2: the #2259 lane could not
+    be re-run on the two files it omitted). A path matching nothing
+    in the diff is recorded under ``scope_misses`` rather than
+    silently ignored, and the result carries ``scoped_to`` so the
+    ledger row states the scope honestly.
     """
     target = resolve_target(repo_root, mode=mode, base_ref=base_ref)
-    manifest = budget_manifest(target["per_file"])
+    per_file = target["per_file"]
+    scoped_to: list[str] | None = None
+    scope_misses: list[str] = []
+    if paths is not None:
+        wanted = {PurePath(p).as_posix() for p in paths}
+        scope_misses = sorted(wanted - set(per_file))
+        per_file = {name: diff for name, diff in per_file.items() if name in wanted}
+        scoped_to = sorted(per_file)
+        # The seat must know it is reading a deliberate slice, not the
+        # whole diff — scoping travels in the brief, not just the result.
+        target["description"] += f" — SCOPED to {len(scoped_to)} path(s): " + ", ".join(scoped_to)
+    manifest = budget_manifest(per_file)
     brief = build_brief(target, manifest)
     if prior_rejections:
         # Bounded so a long rejection history cannot crowd out the diff
@@ -322,6 +359,9 @@ def run_review(
         "target": target["description"],
         "board": board_status,
     }
+    if scoped_to is not None:
+        result["scoped_to"] = scoped_to
+        result["scope_misses"] = scope_misses
     logger.info(
         "cross_review",
         seat=seat,

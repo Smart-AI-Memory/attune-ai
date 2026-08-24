@@ -63,3 +63,15 @@ print(json.dumps(run_review('.', seat=os.environ['SEAT'], mode=os.environ['MODE'
 - `/cross-review` — review the current branch vs merge-base.
 - `/cross-review staged` — review the staged diff.
 - `/cross-review seat=antigravity` — pick the reviewer seat.
+
+## Scoped re-lane (partial manifests)
+
+When a lane returns a PARTIAL manifest that omitted substantive
+files, re-run scoped to exactly those files instead of accepting
+clean-on-partial: pass `paths=[...]` (repo-relative) to
+`run_review` — the brief, result (`scoped_to`/`scope_misses`), and
+ledger row all state the scope, and a path missing from the diff is
+recorded, never silently dropped. Governance surfaces
+(`.claude/gates/`, `pyproject.toml`, `.github/`, `codecov.yml`)
+rank just behind tests in the packing order, so on D11-class diffs
+they are unlikely to be omitted in the first place.
