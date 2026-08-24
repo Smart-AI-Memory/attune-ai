@@ -251,6 +251,12 @@ def run_review(
     budget re-reporting a refuted claim (2026-08-24 retro: the same
     false ``cwd=self.repo_path`` finding surfaced in all three #2268
     lanes because each brief was blind to the previous rejections).
+    A ``claude``-seat review at the session spend cap raises
+    :class:`~attune.gates.session_ledger.SessionSpendCapError` from
+    the default invoker BEFORE any subprocess spawns
+    (docs/specs/session-spend-ledger/). That refusal stops a NEW
+    billable launch; it does not touch the binding posture above —
+    nothing here gates a merge or scores a finding.
     """
     target = resolve_target(repo_root, mode=mode, base_ref=base_ref)
     manifest = budget_manifest(target["per_file"])

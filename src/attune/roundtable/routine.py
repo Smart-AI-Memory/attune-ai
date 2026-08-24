@@ -31,6 +31,7 @@ import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 
+from attune.gates import session_ledger
 from attune.roundtable.board import Board
 
 #: Per-check and per-seat wall-clock bounds (seconds).
@@ -185,11 +186,32 @@ def default_invoke_seat(
     (``compiler.ROLE_REPLY_CHARS``) instead of the flat routine cap —
     the V2-P1 field-note fix, threaded through for producing runs
     (RR-5).
+
+    Session spend enforcement (docs/specs/session-spend-ledger/):
+    a ``claude`` seat bills the Anthropic API key on CLI-spawned
+    runs, so the ledger is checked BEFORE the subprocess spawns —
+    :class:`~attune.gates.session_ledger.SessionSpendCapError`
+    propagates as the hard refusal — and a flat conservative
+    estimate is recorded after it. ``codex``/``agy`` seats bill
+    other providers and are neither checked nor recorded (R4).
+    Every lane that composes this default invoker (routine seats,
+    synthesis, review, producing, countersign, gate-triage,
+    skeptic) inherits the enforcement; injected test invokers make
+    no billable call and bypass it by design (R5).
     """
+    billed = recipe[0] == "claude"
+    if billed:
+        session_ledger.check(f"seat:{recipe[0]}")
     if recipe[-1] == "-":
-        return run_command(recipe, stdin_text=brief, provider_clean=True, reply_chars=reply_chars)
-    argv = [brief if part == "{brief}" else part for part in recipe]
-    return run_command(argv, provider_clean=True, reply_chars=reply_chars)
+        result = run_command(recipe, stdin_text=brief, provider_clean=True, reply_chars=reply_chars)
+    else:
+        argv = [brief if part == "{brief}" else part for part in recipe]
+        result = run_command(argv, provider_clean=True, reply_chars=reply_chars)
+    if billed and result[0] != 127:
+        # 127 = binary not found — nothing spawned, nothing billed.
+        # Every other exit (including a timeout) may have billed.
+        session_ledger.record(f"seat:{recipe[0]}", session_ledger.seat_estimate_usd())
+    return result
 
 
 def run_routine(
@@ -224,6 +246,18 @@ def run_routine(
     print(f"routine {spec.name!r}: thread {thread!r}", flush=True)
 
     if not dry_run:
+        # Refuse UPFRONT when the session spend cap is already
+        # reached — before the board connect and the (minutes-long)
+        # check battery, so no partial thread is opened for a run
+        # that cannot afford its claude seat (session-spend-ledger
+        # decisions.md D6). The per-seat check in
+        # ``default_invoke_seat`` still enforces mid-run crossings.
+        try:
+            session_ledger.check(f"routine:{spec.name}")
+        except session_ledger.SessionSpendCapError as exc:
+            print(f"REFUSED: {exc}", flush=True)
+            raise SystemExit(3) from exc
+
         # Reach the board BEFORE the check battery: a stale REDIS_URL
         # (live receipt: a retired cloud host in ~/.zshrc) must fail
         # in seconds with a pointer, not after minutes of checks with

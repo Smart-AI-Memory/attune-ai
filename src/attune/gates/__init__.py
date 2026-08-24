@@ -25,6 +25,9 @@ from attune.gates.meter import (
     Meter,
     resolve,
 )
+from attune.gates.session_ledger import (
+    SessionSpendCapError,
+)
 
 # Note: ``spend_gate`` is intentionally NOT eagerly imported here — it
 # pulls ``attune.workflows.agent_sdk_adapter`` (the Agent SDK), which
@@ -37,6 +40,7 @@ __all__ = [
     "METER_SUBSCRIPTION",
     "Envelope",
     "Meter",
+    "SessionSpendCapError",
     "load_envelope",
     "load_or_new",
     "resolve",

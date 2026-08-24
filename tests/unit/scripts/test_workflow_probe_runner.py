@@ -777,3 +777,96 @@ def test_emitted_examples_run_with_scrubbed_env() -> None:
         runner._run_workflow = original
         del _os.environ["PROBE_ENV_CANARY"]
     assert out.passed, out.reason
+
+
+# ---------------------------------------------------------------------------
+# Session spend ledger enforcement (docs/specs/session-spend-ledger/)
+# The hermetic ledger env comes from this directory's conftest.py.
+# ---------------------------------------------------------------------------
+
+
+def _fake_probe(cost: float, calls: list[str], name: str = "security-audit"):
+    async def probe(budget: float):
+        calls.append(name)
+        return runner.ProbeResult(name=name, passed=True, reason="ok", cost_usd=cost)
+
+    return probe
+
+
+def test_run_selected_refuses_at_cap_without_launching(monkeypatch) -> None:
+    """R2/R3: a probe at the (zero) cap never launches — hard refusal."""
+    import asyncio
+
+    monkeypatch.setenv("ATTUNE_SESSION_SPEND_CAP_USD", "0")
+    calls: list[str] = []
+    monkeypatch.setitem(runner.PROBES, "security-audit", _fake_probe(1.0, calls))
+    results, refusal = asyncio.run(runner._run_selected(["security-audit"], 1.0))
+    assert results == []
+    assert calls == []
+    assert refusal and "no free first call" in refusal
+
+
+def test_run_selected_records_actual_probe_cost(monkeypatch) -> None:
+    import asyncio
+    import json
+    import os
+    from pathlib import Path
+
+    monkeypatch.setenv("ATTUNE_SESSION_SPEND_CAP_USD", "10")
+    calls: list[str] = []
+    monkeypatch.setitem(runner.PROBES, "security-audit", _fake_probe(1.5, calls))
+    results, refusal = asyncio.run(runner._run_selected(["security-audit"], 1.0))
+    assert refusal is None and len(results) == 1
+    ledger = Path(os.environ["ATTUNE_SESSION_LEDGER_PATH"])
+    entries = [json.loads(line) for line in ledger.read_text().splitlines()]
+    assert entries[0]["label"] == "probe:security-audit"
+    assert abs(entries[0]["cost_usd"] - 1.5) < 1e-9
+
+
+def test_run_selected_mid_run_crossing_stops_later_probes(monkeypatch) -> None:
+    """Crossing the cap mid-run keeps finished results and refuses the rest."""
+    import asyncio
+
+    monkeypatch.setenv("ATTUNE_SESSION_SPEND_CAP_USD", "2")
+    calls: list[str] = []
+    monkeypatch.setitem(runner.PROBES, "security-audit", _fake_probe(2.5, calls))
+    monkeypatch.setitem(runner.PROBES, "test-gen", _fake_probe(0.5, calls, name="test-gen"))
+    results, refusal = asyncio.run(runner._run_selected(["security-audit", "test-gen"], 1.0))
+    assert [r.name for r in results] == ["security-audit"]
+    assert calls == ["security-audit"]
+    assert refusal and "already spent" in refusal
+
+
+def test_main_exits_2_on_session_refusal(monkeypatch, capsys) -> None:
+    """Exit 2 (refused) is distinct from 1 (a probe ran and failed)."""
+
+    async def fake_selected(selected, budget):
+        return [], "cap reached"
+
+    monkeypatch.setattr(runner, "_run_selected", fake_selected)
+    code = runner.main(["--run", "security-audit", "--no-record"])
+    assert code == 2
+    assert "SESSION SPEND CAP" in capsys.readouterr().err
+
+
+def test_run_selected_crashed_probe_records_the_budget_cap(monkeypatch) -> None:
+    """D11 lane finding: a probe that crashes mid-workflow may have
+    billed before raising; recording $0 would let real spend escape
+    the cap. The conservative bound is the per-run budget."""
+    import asyncio
+    import json
+    import os
+    from pathlib import Path
+
+    monkeypatch.setenv("ATTUNE_SESSION_SPEND_CAP_USD", "10")
+
+    async def crasher(budget: float):
+        raise ValueError("boom mid-workflow")
+
+    monkeypatch.setitem(runner.PROBES, "security-audit", crasher)
+    results, refusal = asyncio.run(runner._run_selected(["security-audit"], 3.0))
+    assert refusal is None
+    assert len(results) == 1 and not results[0].passed
+    ledger = Path(os.environ["ATTUNE_SESSION_LEDGER_PATH"])
+    entries = [json.loads(line) for line in ledger.read_text().splitlines()]
+    assert entries[0]["cost_usd"] == 3.0

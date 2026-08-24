@@ -44,7 +44,10 @@ Usage::
     python scripts/workflow_probe_runner.py --all --budget 3.00 --json
 
 Exit code: 0 when every RUN probe passed (and, in plan mode, when every
-fixture validated); 1 when any probe failed or a fixture is missing.
+fixture validated); 1 when any probe failed or a fixture is missing;
+2 when the session spend ledger refused remaining probes
+(docs/specs/session-spend-ledger/ — already-run probes keep their
+results and records).
 """
 
 from __future__ import annotations
@@ -1514,12 +1517,30 @@ def write_record(result: ProbeResult, records_dir: Path, ran_at: str, git_sha: s
     return path
 
 
-async def _run_selected(selected: list[str], budget: float) -> list[ProbeResult]:
+async def _run_selected(selected: list[str], budget: float) -> tuple[list[ProbeResult], str | None]:
+    """Run probes in order; stop launching on a session-cap refusal.
+
+    Returns ``(results, refusal)``. Probes that already ran keep
+    their results (and get recorded to the registry as usual — their
+    spend is real); probes after the refusal never launch. Each
+    probe's actual measured cost is appended to the cross-launcher
+    session ledger (docs/specs/session-spend-ledger/).
+    """
+    from attune.gates import session_ledger
+
     results: list[ProbeResult] = []
+    refusal: str | None = None
     for probe in selected:
+        try:
+            session_ledger.check(f"probe:{probe}")
+        except session_ledger.SessionSpendCapError as exc:
+            refusal = str(exc)
+            print(f"\nREFUSED probe {probe}: {exc}")
+            break
         print(f"\n=== running probe: {probe} (budget cap ${budget:.2f}) ===")
         try:
             results.append(await PROBES[probe](budget))
+            ledger_cost = results[-1].cost_usd
         except Exception as exc:  # noqa: BLE001 — a probe crash is a result
             results.append(
                 ProbeResult(
@@ -1528,10 +1549,16 @@ async def _run_selected(selected: list[str], budget: float) -> list[ProbeResult]
                     reason=f"probe raised {type(exc).__name__}: {exc}",
                 )
             )
+            # A probe that crashed mid-workflow may have billed before
+            # raising, and its cost_report is lost with the exception —
+            # record the per-run budget cap as the conservative bound
+            # (overcount, never undercount — D5; D11 lane finding).
+            ledger_cost = budget
         last = results[-1]
+        session_ledger.record(f"probe:{probe}", ledger_cost)
         mark = "PASS" if last.passed else "FAIL"
         print(f"[{mark}] {probe}: {last.reason} (${last.cost_usd:.4f})")
-    return results
+    return results, refusal
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1591,7 +1618,7 @@ def main(argv: list[str] | None = None) -> int:
         _print_plan(PROBE_ORDER)
         return 0
 
-    results = asyncio.run(_run_selected(selected, args.budget))
+    results, refusal = asyncio.run(_run_selected(selected, args.budget))
 
     print("\n=== summary ===")
     all_passed = True
@@ -1627,6 +1654,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.json:
         print(json.dumps([r.to_dict() for r in results], indent=2))
 
+    if refusal:
+        # Exit 2 (not 1): the session spend cap refused remaining
+        # probes — distinct from "a probe ran and failed".
+        print(f"\nSESSION SPEND CAP: {refusal}", file=sys.stderr)
+        return 2
     return 0 if all_passed else 1
 
 
