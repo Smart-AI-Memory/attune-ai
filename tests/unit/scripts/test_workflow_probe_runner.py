@@ -777,6 +777,8 @@ def test_emitted_examples_run_with_scrubbed_env() -> None:
         runner._run_workflow = original
         del _os.environ["PROBE_ENV_CANARY"]
     assert out.passed, out.reason
+
+
 # ---------------------------------------------------------------------------
 # Session spend ledger enforcement (docs/specs/session-spend-ledger/)
 # The hermetic ledger env comes from this directory's conftest.py.
