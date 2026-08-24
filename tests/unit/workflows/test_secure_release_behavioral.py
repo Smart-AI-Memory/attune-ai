@@ -259,6 +259,39 @@ class TestPhantomKeyRegression:
         old.metadata = {}
         assert SecureReleasePipeline._report_score(old) is None
 
+    def test_mixed_buckets_cannot_exempt_unknown_findings(self) -> None:
+        # D11 lane finding: an empty recognized bucket (LOW: []) must
+        # NOT exempt category-keyed findings from the fail-closed count.
+        wf = SecureReleasePipeline()
+        sec = self._sdk_result(40, {"LOW": [], "security": ["a", "b"]})
+        findings = wf._aggregate_findings(None, sec, None)
+        assert findings["high"] == 2
+        assert findings["total"] == 2
+
+    def test_code_review_findings_reach_total(self) -> None:
+        # D11 lane finding: review counts must update total too.
+        wf = SecureReleasePipeline()
+        review = self._sdk_result(50, {"HIGH": ["h1"], "MEDIUM": ["m1"]})
+        findings = wf._aggregate_findings(None, None, review)
+        assert findings["total"] == 2
+
+    @pytest.mark.parametrize("bad", [True, False, float("nan"), float("inf"), float("-inf"), "95"])
+    def test_report_score_rejects_unusable_values(self, bad) -> None:
+        # D11 lane finding: NaN propagates through risk where every
+        # threshold comparison is False -> a malformed audit becomes GO.
+        # Booleans/strings/non-finite values must read as "no evidence".
+        wf_result = self._sdk_result(None, {})
+        wf_result.final_output = {"_type": "WorkflowReport", "score": bad}
+        assert SecureReleasePipeline._report_score(wf_result) is None
+
+    def test_report_score_clamps_out_of_range(self) -> None:
+        high = self._sdk_result(None, {})
+        high.final_output = {"score": 250}
+        low = self._sdk_result(None, {})
+        low.final_output = {"score": -5}
+        assert SecureReleasePipeline._report_score(high) == 100.0
+        assert SecureReleasePipeline._report_score(low) == 0.0
+
     def test_extraction_drift_warning_on_scored_but_findingless_audit(self) -> None:
         # A sub-audit scoring below 100 with ZERO extractable findings
         # looks exactly like a clean audit — it must warn, not pass

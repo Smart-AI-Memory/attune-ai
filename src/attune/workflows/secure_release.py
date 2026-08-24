@@ -15,6 +15,7 @@ Licensed under the Apache License, Version 2.0
 
 import asyncio
 import logging
+import math
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
@@ -483,6 +484,7 @@ class SecureReleasePipeline(BaseWorkflow):
         review = self._severity_counts(code_review_result)
         critical = max(critical, review["critical"])
         high = max(high, review["high"])
+        total = max(total, review["total"])
 
         return {"critical": critical, "high": high, "total": total}
 
@@ -490,16 +492,23 @@ class SecureReleasePipeline(BaseWorkflow):
     def _report_score(result: WorkflowResult | None) -> float | None:
         """Score (0-100) from a serialized WorkflowReport final_output.
 
-        Returns None when the result is absent or carries no numeric
-        score — callers must treat None as "no evidence", never as
-        "healthy".
+        Returns None when the result is absent or carries no usable
+        numeric score — callers must treat None as "no evidence", never
+        as "healthy". Booleans and non-finite values (NaN/inf) are
+        rejected: a NaN score would propagate into the risk computation
+        where every threshold comparison is False, turning a malformed
+        audit into a GO (D11 lane finding). Out-of-range values clamp
+        to [0, 100].
         """
         if result is None or not isinstance(result.final_output, dict):
             return None
         score = result.final_output.get("score")
-        if isinstance(score, int | float):
-            return float(score)
-        return None
+        if isinstance(score, bool) or not isinstance(score, int | float):
+            return None
+        value = float(score)
+        if not math.isfinite(value):
+            return None
+        return min(100.0, max(0.0, value))
 
     @staticmethod
     def _severity_counts(result: WorkflowResult | None) -> dict[str, int]:
@@ -507,10 +516,12 @@ class SecureReleasePipeline(BaseWorkflow):
 
         Key-agnostic (the #2211 class): SDK workflows key the findings
         dict by SEVERITY (CRITICAL/HIGH/MEDIUM/LOW) or by category.
-        Unknown-key buckets always count toward ``total``; when no
-        severity key is present at all, unknown-bucket entries count as
-        ``high`` — in a release gate, findings of unknown severity are
-        not ignorable (fail-closed).
+        Buckets with an unrecognized key ALWAYS count as ``high`` (and
+        toward ``total``) — in a release gate, findings of unknown
+        severity are not ignorable, and the fail-closed treatment must
+        not depend on which other buckets happen to be present (D11
+        lane finding: gating it on "no severity key present" let an
+        empty ``LOW: []`` bucket exempt category-keyed findings).
         """
         counts = {"critical": 0, "high": 0, "total": 0}
         if result is None:
@@ -518,8 +529,6 @@ class SecureReleasePipeline(BaseWorkflow):
         findings = (result.metadata or {}).get("findings") or {}
         if not isinstance(findings, dict):
             return counts
-        unknown = 0
-        saw_severity_key = False
         for key, items in findings.items():
             if not isinstance(items, list):
                 continue
@@ -528,16 +537,12 @@ class SecureReleasePipeline(BaseWorkflow):
             normalized = str(key).strip().upper()
             if normalized == "CRITICAL":
                 counts["critical"] += count
-                saw_severity_key = True
             elif normalized == "HIGH":
                 counts["high"] += count
-                saw_severity_key = True
             elif normalized in ("MEDIUM", "LOW", "INFO"):
-                saw_severity_key = True
+                pass  # recognized, non-gating severities
             else:
-                unknown += count
-        if unknown and not saw_severity_key:
-            counts["high"] += unknown
+                counts["high"] += count  # unknown severity: fail-closed
         return counts
 
     def _determine_go_no_go(
