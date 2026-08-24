@@ -31,30 +31,42 @@ class PluginMetadata:
 
 
 class BaseWorkflow(ABC):
-    """Universal base class for all workflows across all domains.
+    """Base class for plugin-contributed analysis workflows.
 
-    This replaces domain-specific base classes (BaseCoachWorkflow, etc.)
-    to provide a unified interface.
+    .. deprecated:: 14.2
+        This contract predates the engine's workflow runtime and is slated
+        for replacement in 15.0.0 (#2238). The engine does NOT run
+        ``analyze()``: workflows discovered via entry points must subclass
+        :class:`attune.workflows.base.BaseWorkflow` (whose entry point is
+        ``execute()``). Use this class only for plugin-internal analyzers
+        invoked by your own plugin code.
 
     Design Philosophy:
     - Domain-agnostic: Works for software, healthcare, finance, etc.
-    - Level-aware: Each workflow declares its empathy level
     - Pattern-contributing: Workflows share learnings via pattern library
     """
 
-    def __init__(self, name: str, domain: str, empathy_level: int, category: str | None = None):
+    def __init__(
+        self,
+        name: str,
+        domain: str,
+        empathy_level: int | None = None,
+        category: str | None = None,
+    ):
         """Initialize a workflow
 
         Args:
             name: Human-readable workflow name
             domain: Domain this workflow belongs to (e.g., 'software', 'healthcare')
-            empathy_level: Which empathy level this workflow operates at (1-5)
+            empathy_level: Optional legacy level declaration (1-5). No longer
+                required; retained for backward compatibility while its fate
+                is decided for 15.0.0.
             category: Optional category within domain
 
         """
         self.name = name
         self.domain = domain
-        self.empathy_level = empathy_level
+        self.empathy_level = 1 if empathy_level is None else empathy_level
         self.category = category
         self.logger = logging.getLogger(f"workflow.{domain}.{name}")
 
@@ -313,7 +325,7 @@ class BasePlugin(ABC):
         initialization after plugins are loaded.
 
         Args:
-            server: EmpathyMCPServer instance to register
+            server: AttuneMCPServer instance to register
                 tools on.
 
         """

@@ -103,9 +103,9 @@ class TestDerivations:
         assert derived["skill_count"] == live > 10
 
     def test_registered_count_matches_server_tools(self, derived):
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
-        assert derived["mcp_registered_tool_count"] == len(set(EmpathyMCPServer().tools)) > 20
+        assert derived["mcp_registered_tool_count"] == len(set(AttuneMCPServer().tools)) > 20
 
     def test_core_schema_count_matches_getter_sum(self, derived):
         from attune.mcp import tool_schemas as ts

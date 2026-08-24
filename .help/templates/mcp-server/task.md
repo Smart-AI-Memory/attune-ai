@@ -3,8 +3,8 @@ type: task
 name: mcp-server-task
 feature: mcp-server
 depth: task
-generated_at: 2026-06-23T22:52:03.357140+00:00
-source_hash: 08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f
+generated_at: 2026-08-24T13:13:51.843371+00:00
+source_hash: e6370b6c61134866408d30c64611640a3ac5184dc9d37f7e676a5f7ad176e69c
 status: generated
 ---
 
@@ -28,7 +28,7 @@ print([r["uri"] for r in server.get_resource_list()])
 print([p["name"] for p in server.get_prompt_list()])
 ```
 
-**Verify:** `create_server()` returns a ready `EmpathyMCPServer`.
+**Verify:** `create_server()` returns a ready `AttuneMCPServer`.
 `server.tools` is the merged registry — the 41 built-in tools plus any
 registered by installed plugins (e.g. attune-redis adds five `redis_*`
 tools), so the printed count is ≥ 41. `get_resource_list()` returns the

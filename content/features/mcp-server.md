@@ -17,7 +17,7 @@ nav:
 The MCP server is attune's **Model Context Protocol** implementation —
 it exposes attune's workflows, help system, and memory as structured
 **tools**, **resources**, and **prompts** that an MCP client (Claude
-Code) can call. The server class is **`EmpathyMCPServer`**; it speaks
+Code) can call. The server class is **`AttuneMCPServer`**; it speaks
 MCP over **stdio** and is launched with `python -m attune.mcp.server`.
 
 It is how every other attune feature reaches a conversation: the
@@ -33,13 +33,13 @@ You reach it these ways:
   attune.mcp.server` (the plugin ships one); Claude Code connects over
   stdio;
 - the Python API — `from attune.mcp import create_server,
-  EmpathyMCPServer`, for embedding or testing the server.
+  AttuneMCPServer`, for embedding or testing the server.
 
 ## Concepts
 
-### `EmpathyMCPServer` and its mixins
+### `AttuneMCPServer` and its mixins
 
-`EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin)` is the
+`AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin)` is the
 core server. The mixins supply handler groups: `WorkflowHandlersMixin`
 runs the analysis workflows, `MemoryHandlersMixin` handles
 cross-session memory. A `RateLimiter` guards against tool-call floods.
@@ -132,7 +132,7 @@ print([r["uri"] for r in server.get_resource_list()])
 print([p["name"] for p in server.get_prompt_list()])
 ```
 
-**Verify:** `create_server()` returns a ready `EmpathyMCPServer`.
+**Verify:** `create_server()` returns a ready `AttuneMCPServer`.
 `server.tools` is the merged registry — the 41 built-in tools plus any
 registered by installed plugins (e.g. attune-redis adds five `redis_*`
 tools), so the printed count is ≥ 41. `get_resource_list()` returns the
@@ -179,17 +179,17 @@ debug the connection.
 
 ## Reference
 
-The public surface is `create_server` and `EmpathyMCPServer`, exported
+The public surface is `create_server` and `AttuneMCPServer`, exported
 from `attune.mcp`.
 
 ### `attune.mcp`
 
 | Symbol | Purpose |
 |--------|---------|
-| `create_server() -> EmpathyMCPServer` | Build a ready server instance. |
-| `EmpathyMCPServer(...)` | The MCP server (composes `MemoryHandlersMixin` + `WorkflowHandlersMixin`). |
+| `create_server() -> AttuneMCPServer` | Build a ready server instance. |
+| `AttuneMCPServer(...)` | The MCP server (composes `MemoryHandlersMixin` + `WorkflowHandlersMixin`). |
 
-### `EmpathyMCPServer` — selected members
+### `AttuneMCPServer` — selected members
 
 | Member | Purpose |
 |--------|---------|
@@ -218,7 +218,7 @@ from `attune.mcp`.
 |---------|------------|
 | Client registration | `.mcp.json` → `python -m attune.mcp.server` (plugin uses `uvx --from attune-ai …`). |
 | Direct | `python -m attune.mcp.server` (stdio). |
-| Python | `create_server()` / `EmpathyMCPServer`. |
+| Python | `create_server()` / `AttuneMCPServer`. |
 
 ## Comparison
 
@@ -240,7 +240,7 @@ front doors.
 | Symptom | Cause | Fix | Severity |
 |---|---|---|---|
 | Tools don't appear in Claude Code | The `.mcp.json` entry is missing or the command can't launch | Add/repair the `mcpServers` entry; confirm `python -m attune.mcp.server` runs | high |
-| `RuntimeWarning: coroutine 'EmpathyMCPServer.call_tool' was never awaited` | `call_tool` invoked without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
+| `RuntimeWarning: coroutine 'AttuneMCPServer.call_tool' was never awaited` | `call_tool` invoked without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
 | Tool calls start getting rejected under load | The rate limiter tripped (60 calls / 60 s) | Slow the call rate, or construct with a higher `max_calls` | medium |
 | A tool returns a "path/argument required" error | The tool's own input contract wasn't met | See that tool's feature page; the server just dispatches | medium |
 | Can't tell why the connection failed | Logs aren't on stdout (stdio is the protocol channel) | Read `<tmp>/attune/attune-mcp.log` | low |
@@ -274,7 +274,7 @@ front doors.
 > the feature's author-curated seed questions.
 
 - **Q:** What is the MCP server?
-  **A:** `EmpathyMCPServer` — attune's Model Context Protocol server. It
+  **A:** `AttuneMCPServer` — attune's Model Context Protocol server. It
   exposes attune's workflows, help, and memory as MCP tools/resources/
   prompts to a client like Claude Code, over stdio.
 - **Q:** How do I run it / make the tools show up?
@@ -295,7 +295,7 @@ front doors.
 ## Notes & tips
 
 - **Depend on the documented public surface.** The supported API is
-  `create_server` and `EmpathyMCPServer` from `attune.mcp`; the
+  `create_server` and `AttuneMCPServer` from `attune.mcp`; the
   tool-schema group functions live in `attune.mcp.tool_schemas`.
   Handler methods and the dispatch table are internal.
 - **`await` `call_tool`.** It's the one async entry; the inspection
@@ -308,7 +308,7 @@ front doors.
 
 ### Design decisions
 
-- **Mixins by domain.** `EmpathyMCPServer` composes
+- **Mixins by domain.** `AttuneMCPServer` composes
   `WorkflowHandlersMixin` and `MemoryHandlersMixin` so handler groups
   stay cohesive and the server class stays a thin coordinator.
 - **Schemas separate from handlers.** Tool *schemas* live in

@@ -23,9 +23,9 @@ class TestMCPWorkspaceContainment:
 
     @pytest.fixture
     def server(self, tmp_path):
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
-        return EmpathyMCPServer(workspace_root=str(tmp_path))
+        return AttuneMCPServer(workspace_root=str(tmp_path))
 
     @pytest.fixture
     def in_workspace_file(self, tmp_path):

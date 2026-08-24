@@ -1,4 +1,4 @@
-"""Unit tests for workflow handler methods on EmpathyMCPServer.
+"""Unit tests for workflow handler methods on AttuneMCPServer.
 
 Tests cover _run_security_audit, _run_bug_predict, _run_code_review,
 _run_test_generation, _run_performance_audit, and _run_release_notes
@@ -18,7 +18,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from attune.mcp.server import EmpathyMCPServer
+from attune.mcp.server import AttuneMCPServer
 
 
 @pytest.fixture(autouse=True)
@@ -40,11 +40,11 @@ def _bypass_path_validation():
         yield
 
 
-def _make_server(workspace_root: str = "/") -> EmpathyMCPServer:
+def _make_server(workspace_root: str = "/") -> AttuneMCPServer:
     """Return a server instance with plugin/version-check init suppressed."""
-    with patch.object(EmpathyMCPServer, "_register_plugin_tools"):
+    with patch.object(AttuneMCPServer, "_register_plugin_tools"):
         with patch.dict(sys.modules, {"attune.mcp.version_check": MagicMock()}):
-            return EmpathyMCPServer(workspace_root=workspace_root)
+            return AttuneMCPServer(workspace_root=workspace_root)
 
 
 def _make_result(

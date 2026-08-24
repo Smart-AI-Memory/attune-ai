@@ -12,17 +12,17 @@ type: reference
 
 ## Reference
 
-The public surface is `create_server` and `EmpathyMCPServer`, exported
+The public surface is `create_server` and `AttuneMCPServer`, exported
 from `attune.mcp`.
 
 ### `attune.mcp`
 
 | Symbol | Purpose |
 |--------|---------|
-| `create_server() -> EmpathyMCPServer` | Build a ready server instance. |
-| `EmpathyMCPServer(...)` | The MCP server (composes `MemoryHandlersMixin` + `WorkflowHandlersMixin`). |
+| `create_server() -> AttuneMCPServer` | Build a ready server instance. |
+| `AttuneMCPServer(...)` | The MCP server (composes `MemoryHandlersMixin` + `WorkflowHandlersMixin`). |
 
-### `EmpathyMCPServer` — selected members
+### `AttuneMCPServer` — selected members
 
 | Member | Purpose |
 |--------|---------|
@@ -51,4 +51,4 @@ from `attune.mcp`.
 |---------|------------|
 | Client registration | `.mcp.json` → `python -m attune.mcp.server` (plugin uses `uvx --from attune-ai …`). |
 | Direct | `python -m attune.mcp.server` (stdio). |
-| Python | `create_server()` / `EmpathyMCPServer`. |
+| Python | `create_server()` / `AttuneMCPServer`. |

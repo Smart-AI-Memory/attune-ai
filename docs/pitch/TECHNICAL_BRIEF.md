@@ -199,9 +199,9 @@ The plugin launches a Model Context Protocol server
 tools to any MCP-compatible client:
 
 ```python
-from attune.mcp.server import EmpathyMCPServer
+from attune.mcp.server import AttuneMCPServer
 
-server = EmpathyMCPServer()  # exposes 41 MCP tools
+server = AttuneMCPServer()  # exposes 41 MCP tools
 ```
 
 ### Ops Dashboard (web)

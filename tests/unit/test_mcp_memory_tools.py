@@ -1,6 +1,6 @@
 """Unit tests for MCP memory, level, and context tools.
 
-Tests the 8 new MCP tools added to EmpathyMCPServer:
+Tests the 8 new MCP tools added to AttuneMCPServer:
 - memory_store, memory_retrieve, memory_search, memory_forget
 - attune_get_level, attune_set_level
 - context_get, context_set
@@ -13,20 +13,20 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from attune.mcp.server import EmpathyMCPServer
+from attune.mcp.server import AttuneMCPServer
 
 
 @pytest.fixture
 def server():
-    """Create an EmpathyMCPServer instance for testing."""
+    """Create an AttuneMCPServer instance for testing."""
     with patch("attune.mcp.version_check.check_for_updates", return_value=None):
-        return EmpathyMCPServer()
+        return AttuneMCPServer()
 
 
 class TestToolRegistration:
     """Verify all tools are registered (49 core + 6 optional redis plugin)."""
 
-    def test_tools_list_returns_at_least_core_count(self, server: EmpathyMCPServer):
+    def test_tools_list_returns_at_least_core_count(self, server: AttuneMCPServer):
         """Core tools (50) are always registered; attune-redis adds 6 more."""
         tools = server.get_tool_list()
         tool_names = {t["name"] for t in tools}
@@ -51,7 +51,7 @@ class TestToolRegistration:
                 len(tools) == expected
             ), f"Expected {expected} tools with redis plugin, got {len(tools)}"
 
-    def test_memory_tools_registered(self, server: EmpathyMCPServer):
+    def test_memory_tools_registered(self, server: AttuneMCPServer):
         """Test that all memory tools are in the tool list."""
         tool_names = {t["name"] for t in server.get_tool_list()}
         expected_memory_tools = {
@@ -62,19 +62,19 @@ class TestToolRegistration:
         }
         assert expected_memory_tools.issubset(tool_names)
 
-    def test_attune_tools_registered(self, server: EmpathyMCPServer):
+    def test_attune_tools_registered(self, server: AttuneMCPServer):
         """Test that attune level tools are in the tool list."""
         tool_names = {t["name"] for t in server.get_tool_list()}
         assert "attune_get_level" in tool_names
         assert "attune_set_level" in tool_names
 
-    def test_context_tools_registered(self, server: EmpathyMCPServer):
+    def test_context_tools_registered(self, server: AttuneMCPServer):
         """Test that context tools are in the tool list."""
         tool_names = {t["name"] for t in server.get_tool_list()}
         assert "context_get" in tool_names
         assert "context_set" in tool_names
 
-    def test_memory_store_schema(self, server: EmpathyMCPServer):
+    def test_memory_store_schema(self, server: AttuneMCPServer):
         """Test that memory_store has correct input schema."""
         tool = server.tools["memory_store"]
         schema = tool["input_schema"]
@@ -84,7 +84,7 @@ class TestToolRegistration:
         assert schema["properties"]["classification"]["enum"] == ["PUBLIC", "INTERNAL", "SENSITIVE"]
         assert schema["required"] == ["key", "value"]
 
-    def test_attune_set_level_schema(self, server: EmpathyMCPServer):
+    def test_attune_set_level_schema(self, server: AttuneMCPServer):
         """Test that attune_set_level has correct input schema."""
         tool = server.tools["attune_set_level"]
         schema = tool["input_schema"]
@@ -97,7 +97,7 @@ class TestAttuneTools:
     """Test attune level get/set operations."""
 
     @pytest.mark.asyncio
-    async def test_attune_get_level_default(self, server: EmpathyMCPServer):
+    async def test_attune_get_level_default(self, server: AttuneMCPServer):
         """Test that default level is 3 (Proactive)."""
         result = await server.call_tool("attune_get_level", {})
         assert result["success"] is True
@@ -105,7 +105,7 @@ class TestAttuneTools:
         assert result["name"] == "Proactive"
 
     @pytest.mark.asyncio
-    async def test_attune_set_level_valid(self, server: EmpathyMCPServer):
+    async def test_attune_set_level_valid(self, server: AttuneMCPServer):
         """Test setting level to valid values 1-5."""
         for level in range(1, 6):
             result = await server.call_tool("attune_set_level", {"level": level})
@@ -113,26 +113,26 @@ class TestAttuneTools:
             assert result["current_level"] == level
 
     @pytest.mark.asyncio
-    async def test_attune_set_level_invalid_high(self, server: EmpathyMCPServer):
+    async def test_attune_set_level_invalid_high(self, server: AttuneMCPServer):
         """Test that attune_set_level rejects level > 5."""
         result = await server.call_tool("attune_set_level", {"level": 10})
         assert result["success"] is False
         assert "1 and 5" in result["error"]
 
     @pytest.mark.asyncio
-    async def test_attune_set_level_invalid_low(self, server: EmpathyMCPServer):
+    async def test_attune_set_level_invalid_low(self, server: AttuneMCPServer):
         """Test that attune_set_level rejects level < 1."""
         result = await server.call_tool("attune_set_level", {"level": 0})
         assert result["success"] is False
 
     @pytest.mark.asyncio
-    async def test_attune_set_level_invalid_string(self, server: EmpathyMCPServer):
+    async def test_attune_set_level_invalid_string(self, server: AttuneMCPServer):
         """Test that attune_set_level rejects non-integer input."""
         result = await server.call_tool("attune_set_level", {"level": "high"})
         assert result["success"] is False
 
     @pytest.mark.asyncio
-    async def test_attune_set_returns_previous_level(self, server: EmpathyMCPServer):
+    async def test_attune_set_returns_previous_level(self, server: AttuneMCPServer):
         """Test that attune_set_level returns the previous level."""
         # Default is 3
         result = await server.call_tool("attune_set_level", {"level": 5})
@@ -140,7 +140,7 @@ class TestAttuneTools:
         assert result["current_level"] == 5
 
     @pytest.mark.asyncio
-    async def test_attune_level_names(self, server: EmpathyMCPServer):
+    async def test_attune_level_names(self, server: AttuneMCPServer):
         """Test that all levels have correct names."""
         expected_names = {
             1: "Reactive",
@@ -159,7 +159,7 @@ class TestContextTools:
     """Test context get/set operations."""
 
     @pytest.mark.asyncio
-    async def test_context_get_set_roundtrip(self, server: EmpathyMCPServer):
+    async def test_context_get_set_roundtrip(self, server: AttuneMCPServer):
         """Test that context_set and context_get round-trip values."""
         await server.call_tool("context_set", {"key": "project", "value": "attune-ai"})
         result = await server.call_tool("context_get", {"key": "project"})
@@ -168,7 +168,7 @@ class TestContextTools:
         assert result["found"] is True
 
     @pytest.mark.asyncio
-    async def test_context_get_missing_key(self, server: EmpathyMCPServer):
+    async def test_context_get_missing_key(self, server: AttuneMCPServer):
         """Test that context_get returns found=False for missing keys."""
         result = await server.call_tool("context_get", {"key": "nonexistent"})
         assert result["success"] is True
@@ -176,7 +176,7 @@ class TestContextTools:
         assert result["found"] is False
 
     @pytest.mark.asyncio
-    async def test_context_set_overwrites(self, server: EmpathyMCPServer):
+    async def test_context_set_overwrites(self, server: AttuneMCPServer):
         """Test that context_set overwrites existing values."""
         await server.call_tool("context_set", {"key": "mode", "value": "development"})
         await server.call_tool("context_set", {"key": "mode", "value": "production"})
@@ -184,7 +184,7 @@ class TestContextTools:
         assert result["value"] == "production"
 
     @pytest.mark.asyncio
-    async def test_context_multiple_keys(self, server: EmpathyMCPServer):
+    async def test_context_multiple_keys(self, server: AttuneMCPServer):
         """Test storing and retrieving multiple context keys."""
         keys = {"a": "1", "b": "2", "c": "3"}
         for key, value in keys.items():
@@ -198,7 +198,7 @@ class TestMemoryToolsWithMock:
     """Test memory tools with mocked UnifiedMemory."""
 
     @pytest.mark.asyncio
-    async def test_memory_store_basic(self, server: EmpathyMCPServer):
+    async def test_memory_store_basic(self, server: AttuneMCPServer):
         """Test basic memory_store operation."""
         mock_memory = MagicMock()
         mock_memory.persist_pattern.return_value = {"pattern_id": "test-123"}
@@ -217,7 +217,7 @@ class TestMemoryToolsWithMock:
         mock_memory.stash.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_memory_store_with_classification(self, server: EmpathyMCPServer):
+    async def test_memory_store_with_classification(self, server: AttuneMCPServer):
         """Test memory_store with SENSITIVE classification."""
         mock_memory = MagicMock()
         mock_memory.persist_pattern.return_value = {"pattern_id": "sensitive-123"}
@@ -237,7 +237,7 @@ class TestMemoryToolsWithMock:
         assert "pattern_id" in result
 
     @pytest.mark.asyncio
-    async def test_memory_retrieve_found(self, server: EmpathyMCPServer):
+    async def test_memory_retrieve_found(self, server: AttuneMCPServer):
         """Test memory_retrieve when key exists in short-term."""
         mock_memory = MagicMock()
         mock_memory.retrieve.return_value = {"value": "found-data", "classification": "PUBLIC"}
@@ -249,7 +249,7 @@ class TestMemoryToolsWithMock:
         assert result["source"] == "short_term"
 
     @pytest.mark.asyncio
-    async def test_memory_retrieve_missing_key(self, server: EmpathyMCPServer):
+    async def test_memory_retrieve_missing_key(self, server: AttuneMCPServer):
         """Test memory_retrieve when key does not exist."""
         mock_memory = MagicMock()
         mock_memory.retrieve.return_value = None
@@ -262,7 +262,7 @@ class TestMemoryToolsWithMock:
         assert "not found" in result.get("message", "").lower()
 
     @pytest.mark.asyncio
-    async def test_memory_search_matches(self, server: EmpathyMCPServer):
+    async def test_memory_search_matches(self, server: AttuneMCPServer):
         """Test memory_search returns matching patterns."""
         mock_memory = MagicMock()
         mock_memory.search_patterns = MagicMock(
@@ -278,7 +278,7 @@ class TestMemoryToolsWithMock:
         assert result["count"] == 2
 
     @pytest.mark.asyncio
-    async def test_memory_forget_removes(self, server: EmpathyMCPServer):
+    async def test_memory_forget_removes(self, server: AttuneMCPServer):
         """Test memory_forget removes data."""
         mock_memory = MagicMock()
         mock_memory.delete_pattern = MagicMock()
@@ -289,7 +289,7 @@ class TestMemoryToolsWithMock:
         assert result["key"] == "old-key"
 
     @pytest.mark.asyncio
-    async def test_memory_store_import_error(self, server: EmpathyMCPServer):
+    async def test_memory_store_import_error(self, server: AttuneMCPServer):
         """Test memory_store handles ImportError gracefully."""
         server._memory = None  # Force lazy init
 
@@ -307,7 +307,7 @@ class TestUnknownTool:
     """Test handling of unknown tool names."""
 
     @pytest.mark.asyncio
-    async def test_unknown_tool_returns_error(self, server: EmpathyMCPServer):
+    async def test_unknown_tool_returns_error(self, server: AttuneMCPServer):
         """Test that calling an unknown tool returns an error."""
         result = await server.call_tool("nonexistent_tool", {})
         assert result["success"] is False
@@ -339,7 +339,7 @@ class TestPersonalMemoryTools:
     """Tests for personal_memory_capture/recall/topics/forget MCP tools."""
 
     @pytest.mark.asyncio
-    async def test_capture_success(self, server: EmpathyMCPServer, tmp_path):
+    async def test_capture_success(self, server: AttuneMCPServer, tmp_path):
         """personal_memory_capture returns success with destination path."""
         mock_pm = MagicMock()
         mock_pm.capture.return_value = tmp_path / "auth-design" / "decision.md"
@@ -352,7 +352,7 @@ class TestPersonalMemoryTools:
         assert "auth-design" in result["path"]
 
     @pytest.mark.asyncio
-    async def test_capture_invalid_topic_returns_error(self, server: EmpathyMCPServer):
+    async def test_capture_invalid_topic_returns_error(self, server: AttuneMCPServer):
         """personal_memory_capture returns error for an invalid topic slug."""
         mock_pm = MagicMock()
         mock_pm.capture.side_effect = ValueError("Invalid topic slug")
@@ -365,7 +365,7 @@ class TestPersonalMemoryTools:
         assert "error" in result
 
     @pytest.mark.asyncio
-    async def test_capture_import_error(self, server: EmpathyMCPServer):
+    async def test_capture_import_error(self, server: AttuneMCPServer):
         """personal_memory_capture degrades gracefully when module is absent."""
         import sys
 
@@ -384,7 +384,7 @@ class TestPersonalMemoryTools:
         assert "error" in result
 
     @pytest.mark.asyncio
-    async def test_recall_success(self, server: EmpathyMCPServer):
+    async def test_recall_success(self, server: AttuneMCPServer):
         """personal_memory_recall returns matching hits."""
         mock_pm = MagicMock()
         mock_pm.query.return_value = [
@@ -400,7 +400,7 @@ class TestPersonalMemoryTools:
         assert result["results"][0]["score"] == 0.9
 
     @pytest.mark.asyncio
-    async def test_recall_empty(self, server: EmpathyMCPServer):
+    async def test_recall_empty(self, server: AttuneMCPServer):
         """personal_memory_recall returns empty results list when nothing matches."""
         mock_pm = MagicMock()
         mock_pm.query.return_value = []
@@ -411,7 +411,7 @@ class TestPersonalMemoryTools:
         assert result["results"] == []
 
     @pytest.mark.asyncio
-    async def test_recall_import_error(self, server: EmpathyMCPServer):
+    async def test_recall_import_error(self, server: AttuneMCPServer):
         """personal_memory_recall degrades gracefully when module is absent."""
         import sys
 
@@ -426,7 +426,7 @@ class TestPersonalMemoryTools:
         assert result["success"] is False
 
     @pytest.mark.asyncio
-    async def test_topics_success(self, server: EmpathyMCPServer):
+    async def test_topics_success(self, server: AttuneMCPServer):
         """personal_memory_topics returns list of topic slugs."""
         mock_pm = MagicMock()
         mock_pm.list_topics.return_value = ["auth-design", "retry-loop"]
@@ -437,7 +437,7 @@ class TestPersonalMemoryTools:
         assert "auth-design" in result["topics"]
 
     @pytest.mark.asyncio
-    async def test_topics_empty(self, server: EmpathyMCPServer):
+    async def test_topics_empty(self, server: AttuneMCPServer):
         """personal_memory_topics returns empty list when no topics exist."""
         mock_pm = MagicMock()
         mock_pm.list_topics.return_value = []
@@ -447,7 +447,7 @@ class TestPersonalMemoryTools:
         assert result["count"] == 0
 
     @pytest.mark.asyncio
-    async def test_topics_import_error(self, server: EmpathyMCPServer):
+    async def test_topics_import_error(self, server: AttuneMCPServer):
         """personal_memory_topics degrades gracefully when module is absent."""
         import sys
 
@@ -462,7 +462,7 @@ class TestPersonalMemoryTools:
         assert result["success"] is False
 
     @pytest.mark.asyncio
-    async def test_forget_success(self, server: EmpathyMCPServer):
+    async def test_forget_success(self, server: AttuneMCPServer):
         """personal_memory_forget returns deleted count on success."""
         mock_pm = MagicMock()
         mock_pm.forget_topic.return_value = 1
@@ -476,7 +476,7 @@ class TestPersonalMemoryTools:
         assert result["topic"] == "auth-design"
 
     @pytest.mark.asyncio
-    async def test_forget_topic_not_found(self, server: EmpathyMCPServer):
+    async def test_forget_topic_not_found(self, server: AttuneMCPServer):
         """personal_memory_forget returns failure when topic does not exist."""
         mock_pm = MagicMock()
         mock_pm.forget_topic.return_value = 0
@@ -489,7 +489,7 @@ class TestPersonalMemoryTools:
         assert "not found" in result["error"].lower()
 
     @pytest.mark.asyncio
-    async def test_forget_invalid_topic(self, server: EmpathyMCPServer):
+    async def test_forget_invalid_topic(self, server: AttuneMCPServer):
         """personal_memory_forget returns error for invalid topic slug."""
         mock_pm = MagicMock()
         mock_pm.forget_topic.side_effect = ValueError("Invalid topic slug")
@@ -502,7 +502,7 @@ class TestPersonalMemoryTools:
         assert "error" in result
 
     @pytest.mark.asyncio
-    async def test_forget_import_error(self, server: EmpathyMCPServer):
+    async def test_forget_import_error(self, server: AttuneMCPServer):
         """personal_memory_forget degrades gracefully when module is absent."""
         import sys
 

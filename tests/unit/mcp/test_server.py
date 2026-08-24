@@ -2,7 +2,7 @@
 
 Tests cover:
 - _get_default_user_id: OS login fallback
-- EmpathyMCPServer.__init__: tool/resource/prompt registration
+- AttuneMCPServer.__init__: tool/resource/prompt registration
 - _register_tools: merges all schema groups
 - _build_dispatch_table: all tool names mapped
 - _dispatch_tool: rate limiting, unknown tools, error handling
@@ -33,14 +33,14 @@ from attune.mcp.server import (
 
 
 def _make_server(tmp_path: Any = None, **kwargs: Any) -> Any:
-    """Build an EmpathyMCPServer with patched init side-effects."""
+    """Build an AttuneMCPServer with patched init side-effects."""
     with patch(
-        "attune.mcp.server.EmpathyMCPServer._register_plugin_tools",
+        "attune.mcp.server.AttuneMCPServer._register_plugin_tools",
     ):
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
         ws = str(tmp_path) if tmp_path else None
-        return EmpathyMCPServer(workspace_root=ws, **kwargs)
+        return AttuneMCPServer(workspace_root=ws, **kwargs)
 
 
 # -- _get_default_user_id --------------------------------------------
@@ -58,11 +58,11 @@ class TestGetDefaultUserId:
             assert _get_default_user_id() == "mcp-session"
 
 
-# -- EmpathyMCPServer init ------------------------------------------
+# -- AttuneMCPServer init ------------------------------------------
 
 
 class TestServerInit:
-    """Tests for EmpathyMCPServer construction."""
+    """Tests for AttuneMCPServer construction."""
 
     def test_default_workspace_root(self) -> None:
         """Uses cwd when workspace_root not provided."""
@@ -80,15 +80,15 @@ class TestServerInit:
         operate on a sibling main checkout. Setting the env var lets the
         user opt into the wider scope explicitly.
         """
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
         monkeypatch.setenv("ATTUNE_MCP_WORKSPACE_ROOT", str(tmp_path))
-        server = EmpathyMCPServer()
+        server = AttuneMCPServer()
         assert server._workspace_root == str(tmp_path)
 
     def test_explicit_arg_overrides_env_var(self, tmp_path: Any, monkeypatch: Any) -> None:
         """Explicit workspace_root argument wins over env var."""
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
         env_path = tmp_path / "from-env"
         env_path.mkdir()
@@ -96,7 +96,7 @@ class TestServerInit:
         arg_path.mkdir()
 
         monkeypatch.setenv("ATTUNE_MCP_WORKSPACE_ROOT", str(env_path))
-        server = EmpathyMCPServer(workspace_root=str(arg_path))
+        server = AttuneMCPServer(workspace_root=str(arg_path))
         assert server._workspace_root == str(arg_path)
 
     def test_claude_project_dir_workspace_root(self, tmp_path: Any, monkeypatch: Any) -> None:
@@ -106,16 +106,16 @@ class TestServerInit:
         environment to the project root, so the sandbox tracks the
         project even when the server's cwd differs.
         """
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
         monkeypatch.delenv("ATTUNE_MCP_WORKSPACE_ROOT", raising=False)
         monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
-        server = EmpathyMCPServer()
+        server = AttuneMCPServer()
         assert server._workspace_root == str(tmp_path)
 
     def test_attune_var_overrides_claude_project_dir(self, tmp_path: Any, monkeypatch: Any) -> None:
         """ATTUNE_MCP_WORKSPACE_ROOT wins over CLAUDE_PROJECT_DIR."""
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
         attune_path = tmp_path / "from-attune"
         attune_path.mkdir()
@@ -124,14 +124,14 @@ class TestServerInit:
 
         monkeypatch.setenv("ATTUNE_MCP_WORKSPACE_ROOT", str(attune_path))
         monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(claude_path))
-        server = EmpathyMCPServer()
+        server = AttuneMCPServer()
         assert server._workspace_root == str(attune_path)
 
     def test_explicit_arg_overrides_claude_project_dir(
         self, tmp_path: Any, monkeypatch: Any
     ) -> None:
         """Explicit workspace_root argument wins over CLAUDE_PROJECT_DIR."""
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
         claude_path = tmp_path / "from-claude"
         claude_path.mkdir()
@@ -140,7 +140,7 @@ class TestServerInit:
 
         monkeypatch.delenv("ATTUNE_MCP_WORKSPACE_ROOT", raising=False)
         monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(claude_path))
-        server = EmpathyMCPServer(workspace_root=str(arg_path))
+        server = AttuneMCPServer(workspace_root=str(arg_path))
         assert server._workspace_root == str(arg_path)
 
     def test_custom_user_id(self) -> None:
@@ -174,27 +174,27 @@ class TestRegisterTools:
     """Tests for _register_tools()."""
 
     def test_includes_workflow_tools(self) -> None:
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
-        tools = EmpathyMCPServer._register_tools()
+        tools = AttuneMCPServer._register_tools()
         assert "security_audit" in tools
 
     def test_includes_memory_tools(self) -> None:
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
-        tools = EmpathyMCPServer._register_tools()
+        tools = AttuneMCPServer._register_tools()
         assert "memory_store" in tools
 
     def test_includes_utility_tools(self) -> None:
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
-        tools = EmpathyMCPServer._register_tools()
+        tools = AttuneMCPServer._register_tools()
         assert "auth_status" in tools
 
     def test_includes_help_tools(self) -> None:
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
-        tools = EmpathyMCPServer._register_tools()
+        tools = AttuneMCPServer._register_tools()
         assert "help_lookup" in tools
 
 

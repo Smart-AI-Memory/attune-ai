@@ -1036,14 +1036,14 @@ class TestCmdDoctor:
             },
         ):
             with patch(
-                "attune.cli_commands.utility_commands.EmpathyMCPServer",
+                "attune.cli_commands.utility_commands.AttuneMCPServer",
                 mock_server_cls,
                 create=True,
             ):
                 # Patch the lazy import inside cmd_doctor
                 with patch.dict(
                     "sys.modules",
-                    {"attune.mcp.server": MagicMock(EmpathyMCPServer=mock_server_cls)},
+                    {"attune.mcp.server": MagicMock(AttuneMCPServer=mock_server_cls)},
                 ):
                     result = cmd_doctor(args)
 

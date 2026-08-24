@@ -26,8 +26,8 @@ def stub_kernel(tmp_path, monkeypatch):
 
 
 def _make_server(tmp_path):
-    with patch.object(server_module.EmpathyMCPServer, "_register_plugin_tools"):
-        return server_module.EmpathyMCPServer(workspace_root=str(tmp_path))
+    with patch.object(server_module.AttuneMCPServer, "_register_plugin_tools"):
+        return server_module.AttuneMCPServer(workspace_root=str(tmp_path))
 
 
 SPEC = {

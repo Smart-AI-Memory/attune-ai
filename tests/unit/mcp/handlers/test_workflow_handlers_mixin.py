@@ -18,18 +18,18 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from attune.mcp.server import EmpathyMCPServer
+from attune.mcp.server import AttuneMCPServer
 
 # ------------------------------------------------------------------
 # Shared helpers (same pattern as test_workflow_handlers.py)
 # ------------------------------------------------------------------
 
 
-def _make_server(workspace_root: str = "/") -> EmpathyMCPServer:
+def _make_server(workspace_root: str = "/") -> AttuneMCPServer:
     """Return a server instance with plugin/version-check init suppressed."""
-    with patch.object(EmpathyMCPServer, "_register_plugin_tools"):
+    with patch.object(AttuneMCPServer, "_register_plugin_tools"):
         with patch.dict(sys.modules, {"attune.mcp.version_check": MagicMock()}):
-            return EmpathyMCPServer(workspace_root=workspace_root)
+            return AttuneMCPServer(workspace_root=workspace_root)
 
 
 def _make_result(

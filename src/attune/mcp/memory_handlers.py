@@ -25,7 +25,7 @@ _RETRIEVE_TRUST_NOTE = (
 
 
 class MemoryHandlersMixin:
-    """Mixin providing memory tool handlers for EmpathyMCPServer.
+    """Mixin providing memory tool handlers for AttuneMCPServer.
 
     Expects the host class to have a ``_memory`` attribute
     (initialised to ``None``).

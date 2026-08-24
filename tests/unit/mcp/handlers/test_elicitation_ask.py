@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import pytest
 
-from attune.mcp.server import EmpathyMCPServer
+from attune.mcp.server import AttuneMCPServer
 
 _FORM = {
     "title": "Scope",
@@ -24,10 +24,10 @@ _FORM = {
 }
 
 
-def _make_server() -> EmpathyMCPServer:
-    with patch.object(EmpathyMCPServer, "_register_plugin_tools"):
+def _make_server() -> AttuneMCPServer:
+    with patch.object(AttuneMCPServer, "_register_plugin_tools"):
         with patch("attune.mcp.version_check.check_for_updates", return_value=None):
-            return EmpathyMCPServer()
+            return AttuneMCPServer()
 
 
 class _Result:
@@ -128,4 +128,4 @@ class TestElicitationAsk:
 
     def test_elicitation_session_outside_request_returns_none(self):
         # No live MCP request context → (None, None), the fallback signal.
-        assert EmpathyMCPServer._elicitation_session() == (None, None)
+        assert AttuneMCPServer._elicitation_session() == (None, None)

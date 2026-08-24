@@ -1,4 +1,4 @@
-"""Unit tests for context and attune level handler methods on EmpathyMCPServer."""
+"""Unit tests for context and attune level handler methods on AttuneMCPServer."""
 
 from __future__ import annotations
 
@@ -7,14 +7,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from attune.mcp.server import EmpathyMCPServer
+from attune.mcp.server import AttuneMCPServer
 
 
-def _make_server(context: dict | None = None, attune_level: int = 3) -> EmpathyMCPServer:
+def _make_server(context: dict | None = None, attune_level: int = 3) -> AttuneMCPServer:
     """Build a server instance with optional pre-set context and level."""
-    with patch.object(EmpathyMCPServer, "_register_plugin_tools"):
+    with patch.object(AttuneMCPServer, "_register_plugin_tools"):
         with patch.dict(sys.modules, {"attune.mcp.version_check": MagicMock()}):
-            server = EmpathyMCPServer()
+            server = AttuneMCPServer()
     if context is not None:
         server._context = context
     server._attune_level = attune_level

@@ -3,8 +3,8 @@ type: tip
 name: mcp-server-tip
 feature: mcp-server
 depth: tip
-generated_at: 2026-06-23T22:52:03.357140+00:00
-source_hash: 08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f
+generated_at: 2026-08-24T13:13:51.843371+00:00
+source_hash: e6370b6c61134866408d30c64611640a3ac5184dc9d37f7e676a5f7ad176e69c
 status: generated
 ---
 
@@ -13,7 +13,7 @@ status: generated
 ## Notes & tips
 
 - **Depend on the documented public surface.** The supported API is
-  `create_server` and `EmpathyMCPServer` from `attune.mcp`; the
+  `create_server` and `AttuneMCPServer` from `attune.mcp`; the
   tool-schema group functions live in `attune.mcp.tool_schemas`.
   Handler methods and the dispatch table are internal.
 - **`await` `call_tool`.** It's the one async entry; the inspection

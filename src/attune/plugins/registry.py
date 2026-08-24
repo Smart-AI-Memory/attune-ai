@@ -16,8 +16,14 @@ logger = logging.getLogger(__name__)
 # Primary entry point group (v2.7+)
 _ENTRY_POINT_GROUP = "attune.plugins"
 
-# Legacy entry point group for backward compatibility (removed in v3.0.0)
-_LEGACY_ENTRY_POINT_GROUP = "attune_framework.plugins"
+# Legacy entry point groups for backward compatibility (removed in 15.0.0).
+# Both spellings shipped in docs/templates at different times, so discovery
+# must read both — until this fix "empathy_framework.plugins" was registered
+# in pyproject but never read (#2238 phantom-read instance).
+_LEGACY_ENTRY_POINT_GROUPS = (
+    "attune_framework.plugins",
+    "empathy_framework.plugins",
+)
 
 # Module-level discovery cache: avoids repeated importlib.metadata scans.
 # Maps entry-point name -> loaded plugin class.  Populated on first
@@ -51,8 +57,9 @@ class PluginRegistry:
         software = "attune_software.plugin:SoftwarePlugin"
         healthcare = "attune_healthcare.plugin:HealthcarePlugin"
 
-        Also checks the legacy "attune_framework.plugins" group for
-        backward compatibility (will be removed in v3.0.0).
+        Also checks the legacy "attune_framework.plugins" and
+        "empathy_framework.plugins" groups for backward compatibility
+        (removed in 15.0.0).
 
         Discovery results are cached at module level so that repeated
         PluginRegistry instances (e.g. after global reset) skip the
@@ -68,7 +75,7 @@ class PluginRegistry:
         # Build or reuse the discovery cache
         if _discovery_cache is None:
             _discovery_cache = {}
-            for group in (_ENTRY_POINT_GROUP, _LEGACY_ENTRY_POINT_GROUP):
+            for group in (_ENTRY_POINT_GROUP, *_LEGACY_ENTRY_POINT_GROUPS):
                 discovered = entry_points(group=group)
                 for ep in discovered:
                     if ep.name not in _discovery_cache:

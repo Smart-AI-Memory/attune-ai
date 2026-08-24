@@ -3,8 +3,8 @@ type: note
 name: mcp-server-note
 feature: mcp-server
 depth: note
-generated_at: 2026-06-23T22:52:03.357140+00:00
-source_hash: 08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f
+generated_at: 2026-08-24T13:13:51.843371+00:00
+source_hash: e6370b6c61134866408d30c64611640a3ac5184dc9d37f7e676a5f7ad176e69c
 status: generated
 ---
 
@@ -15,7 +15,7 @@ status: generated
 The MCP server is attune's **Model Context Protocol** implementation —
 it exposes attune's workflows, help system, and memory as structured
 **tools**, **resources**, and **prompts** that an MCP client (Claude
-Code) can call. The server class is **`EmpathyMCPServer`**; it speaks
+Code) can call. The server class is **`AttuneMCPServer`**; it speaks
 MCP over **stdio** and is launched with `python -m attune.mcp.server`.
 
 It is how every other attune feature reaches a conversation: the
@@ -31,13 +31,13 @@ You reach it these ways:
   attune.mcp.server` (the plugin ships one); Claude Code connects over
   stdio;
 - the Python API — `from attune.mcp import create_server,
-  EmpathyMCPServer`, for embedding or testing the server.
+  AttuneMCPServer`, for embedding or testing the server.
 
 ## Concepts
 
-### `EmpathyMCPServer` and its mixins
+### `AttuneMCPServer` and its mixins
 
-`EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin)` is the
+`AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin)` is the
 core server. The mixins supply handler groups: `WorkflowHandlersMixin`
 runs the analysis workflows, `MemoryHandlersMixin` handles
 cross-session memory. A `RateLimiter` guards against tool-call floods.
@@ -91,7 +91,7 @@ attune.mcp.server`. It logs to a temp file (`attune-mcp.log`) and loads
 ## Notes & tips
 
 - **Depend on the documented public surface.** The supported API is
-  `create_server` and `EmpathyMCPServer` from `attune.mcp`; the
+  `create_server` and `AttuneMCPServer` from `attune.mcp`; the
   tool-schema group functions live in `attune.mcp.tool_schemas`.
   Handler methods and the dispatch table are internal.
 - **`await` `call_tool`.** It's the one async entry; the inspection

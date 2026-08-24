@@ -3,8 +3,8 @@ type: quickstart
 name: mcp-server-quickstart
 feature: mcp-server
 depth: quickstart
-generated_at: 2026-06-23T22:52:03.357140+00:00
-source_hash: 08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f
+generated_at: 2026-08-24T13:13:51.843371+00:00
+source_hash: e6370b6c61134866408d30c64611640a3ac5184dc9d37f7e676a5f7ad176e69c
 status: generated
 ---
 

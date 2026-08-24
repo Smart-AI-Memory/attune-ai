@@ -1,6 +1,6 @@
 """Tests for MCP help_init, help_status, help_update handlers.
 
-These handlers were added to EmpathyMCPServer for the
+These handlers were added to AttuneMCPServer for the
 project-local help system. Tests verify:
 - help_init scan and accept actions
 - help_status with and without manifest
@@ -18,14 +18,14 @@ import pytest
 
 pytest.importorskip("yaml")
 
-from attune.mcp.server import EmpathyMCPServer  # noqa: E402
+from attune.mcp.server import AttuneMCPServer  # noqa: E402
 
 
 @pytest.fixture()
 def server(tmp_path: Path):
-    """Create an EmpathyMCPServer with workspace_root in tmp_path."""
+    """Create an AttuneMCPServer with workspace_root in tmp_path."""
     with patch("attune.mcp.version_check.check_for_updates", return_value=None):
-        srv = EmpathyMCPServer()
+        srv = AttuneMCPServer()
     srv._workspace_root = str(tmp_path)
     return srv
 

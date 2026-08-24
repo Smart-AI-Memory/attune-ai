@@ -215,9 +215,9 @@ class TestMcpCallToolVoiceWiring:
     @pytest.mark.asyncio
     async def test_workflow_response_gets_voice_summary(self):
         """Workflow tool responses include voice_summary."""
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
-        server = EmpathyMCPServer(workspace_root="/tmp")
+        server = AttuneMCPServer(workspace_root="/tmp")
 
         # Mock the dispatch to return a raw workflow response
         raw_response = {"success": True, "score": 85, "findings": []}
@@ -231,9 +231,9 @@ class TestMcpCallToolVoiceWiring:
     @pytest.mark.asyncio
     async def test_utility_tools_skip_voice(self):
         """Utility tools (memory, auth, etc.) don't get voice fields."""
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
-        server = EmpathyMCPServer(workspace_root="/tmp")
+        server = AttuneMCPServer(workspace_root="/tmp")
 
         raw_response = {"success": True, "memories": []}
         server._dispatch_tool = AsyncMock(return_value=raw_response)
@@ -246,9 +246,9 @@ class TestMcpCallToolVoiceWiring:
     @pytest.mark.asyncio
     async def test_failed_voice_layer_degrades_gracefully(self):
         """If voice layer fails, raw response is returned unchanged."""
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
-        server = EmpathyMCPServer(workspace_root="/tmp")
+        server = AttuneMCPServer(workspace_root="/tmp")
 
         raw_response = {"success": True, "data": "test"}
         server._dispatch_tool = AsyncMock(return_value=raw_response)

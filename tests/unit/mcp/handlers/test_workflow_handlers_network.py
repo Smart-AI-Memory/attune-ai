@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from attune.mcp.server import EmpathyMCPServer
+from attune.mcp.server import AttuneMCPServer
 
 
 def _make_minimal_png() -> bytes:
@@ -33,10 +33,10 @@ def _make_minimal_png() -> bytes:
     return sig + ihdr + idat + iend
 
 
-def _make_server(workspace_root: str) -> EmpathyMCPServer:
-    with patch.object(EmpathyMCPServer, "_register_plugin_tools"):
+def _make_server(workspace_root: str) -> AttuneMCPServer:
+    with patch.object(AttuneMCPServer, "_register_plugin_tools"):
         with patch.dict(sys.modules, {"attune.mcp.version_check": MagicMock()}):
-            return EmpathyMCPServer(workspace_root=workspace_root)
+            return AttuneMCPServer(workspace_root=workspace_root)
 
 
 @pytest.mark.network

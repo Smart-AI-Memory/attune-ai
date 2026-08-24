@@ -12,7 +12,7 @@ type: faq
 
 ## What is the MCP server?
 
-`EmpathyMCPServer` — attune's Model Context Protocol server. It
+`AttuneMCPServer` — attune's Model Context Protocol server. It
 exposes attune's workflows, help, and memory as MCP tools/resources/
 prompts to a client like Claude Code, over stdio.
 

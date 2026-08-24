@@ -24,7 +24,7 @@ There are three moving parts:
    that discovers installed plugins via the `attune.plugins` entry-point
    group, instantiates them, and routes lookups by plugin name and
    workflow id.
-3. **`EmpathyMCPServer`** (`src/attune/mcp/server.py`) — during
+3. **`AttuneMCPServer`** (`src/attune/mcp/server.py`) — during
    construction it iterates the registry and calls each plugin's
    `register_mcp_tools(self)` so plugins can contribute MCP tools to the
    live server.
@@ -83,7 +83,7 @@ to extend behaviour:
 | `register_patterns()` | Not called by core today | Optional pattern library contributions (default `{}`) |
 | `initialize()` | First time a workflow is requested (or explicitly) | Lazy setup; default invokes `register_workflows()` and caches the result |
 | `on_activate()` | After the plugin is registered and `initialize()` succeeds | Post-registration setup (e.g. service connections) |
-| `register_mcp_tools(server)` | During `EmpathyMCPServer.__init__` for each loaded plugin | Add tool definitions to the live MCP server |
+| `register_mcp_tools(server)` | During `AttuneMCPServer.__init__` for each loaded plugin | Add tool definitions to the live MCP server |
 | `get_cli_commands()` | Not invoked from core today | Optional CLI subcommand descriptors (default `[]`) |
 
 ### Read-side helpers (provided)
@@ -104,14 +104,14 @@ This is the seam plugins use to add MCP tools to the running server.
 
 - **Signature**: `register_mcp_tools(self, server: Any) -> None`
 - **Default**: no-op.
-- **Caller**: `EmpathyMCPServer._register_plugin_tools()` iterates
+- **Caller**: `AttuneMCPServer._register_plugin_tools()` iterates
   `get_global_registry().list_plugins()` and calls
   `plugin.register_mcp_tools(self)` if the attribute exists.
-- **When**: synchronously inside `EmpathyMCPServer.__init__`, after the
+- **When**: synchronously inside `AttuneMCPServer.__init__`, after the
   built-in tool/resource/prompt registries are populated.
-- **`server` argument**: the live `EmpathyMCPServer` instance. The
+- **`server` argument**: the live `AttuneMCPServer` instance. The
   base class type-annotates it as `Any` and documents it as
-  `EmpathyMCPServer`.
+  `AttuneMCPServer`.
 - **Failure mode**: the caller wraps each call in `try/except` and logs a
   warning on failure — plugins that raise will not crash MCP startup.
 
@@ -133,7 +133,7 @@ This is the seam plugins use to add MCP tools to the running server.
    `list_workflows()`, or `get_workflow_info()` triggers `initialize()`,
    which runs `register_workflows()` once and caches the result in
    `self._workflows`. A `_initialized` flag prevents re-running.
-6. **MCP wiring.** When `EmpathyMCPServer` is constructed it calls
+6. **MCP wiring.** When `AttuneMCPServer` is constructed it calls
    `register_mcp_tools(self)` on every registered plugin.
 
 There is no formal teardown hook. `clear_discovery_cache()` resets both
@@ -275,7 +275,7 @@ Notable features illustrated:
    ```
 
 2. **(Optional) override `register_mcp_tools(server)`** if you have MCP
-   tools to add. The `server` argument is the live `EmpathyMCPServer`.
+   tools to add. The `server` argument is the live `AttuneMCPServer`.
 
 3. **Declare the entry point** in your `pyproject.toml`:
 
