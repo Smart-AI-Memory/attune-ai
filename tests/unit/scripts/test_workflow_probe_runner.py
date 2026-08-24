@@ -407,6 +407,8 @@ def test_run_flag_accepts_repeats_and_commas() -> None:
 
 def test_unknown_probe_rejected_with_repeated_flags() -> None:
     assert runner.main(["--run", "security-audit", "--run", "not-a-real-probe"]) == 1
+
+
 def test_dependency_manifest_staged_without_confession(tmp_path) -> None:
     # 2026-08-24: staged verbatim, the fixture's "this is a planted
     # test fixture" header made the workflow's agents dismiss the
