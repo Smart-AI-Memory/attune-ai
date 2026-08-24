@@ -48,6 +48,14 @@ concurrent launchers — no read-modify-write race can LOSE a spend
 record the way a rewritten state file could, and undercounting is
 the failure mode enforcement can least afford.
 
+- Known bound (D11 lane, 2026-08-24): check-and-launch is not atomic
+  across processes, so N launchers racing the same headroom can
+  overshoot the cap by at most the sum of their per-run
+  `ATTUNE_MAX_BUDGET_USD` caps. Cross-process file locking was
+  considered and declined for v1 (Windows-portable locking is its
+  own project; the overshoot is bounded and the racers' entries all
+  land, so the NEXT launch refuses). Revisit only on evidence of
+  real concurrent-launcher overshoot.
 - Alternative: extend the spend-gate envelope
   (`~/.attune/spend_gate/envelope.json`). Rejected for v1: the
   envelope is a rewritten single-state file (last-writer-wins loses
@@ -100,4 +108,24 @@ and are neither checked nor recorded (R4).
 - **Probe runner** (`_run_selected`): checks before each probe;
   on refusal, stops launching, keeps (and records to the registry)
   the probes that already ran, prints the refusal, exits 2
-  (distinct from 1 = a probe failed).
+  (distinct from 1 = a probe failed). A probe that CRASHES
+  mid-workflow records the per-run budget cap, not $0 — its
+  cost_report is lost with the exception, and the conservative
+  bound is the most it could have billed (D11 lane, 2026-08-24).
+
+---
+
+## D11 lane record (2026-08-24, codex, pre-chair)
+
+Thread `review-claude-great-galileo-bb76a2-…`; 14 sent / 0 omitted;
+5 findings. Accepted and fixed in-branch: non-finite cap bypass
+(high→ `get_cap_usd` rejects NaN/inf), unreadable-ledger fail-open
+(high → `check` refuses on an existing-but-unreadable ledger),
+crashed-probe $0 record (high → records the budget cap).
+Documented, not mechanized: check-and-launch race (bounded — see
+D3's known-bound note) and the append-failure residual (R7).
+Rejected with reason: the upfront routine check "violates R4 for
+codex/agy-only routines" — every routine convenes the full
+`SEAT_RECIPES` roster, which includes a claude seat, so no such
+routine exists; the seam check remains the governing enforcement
+if one ever does. Full row: `docs/specs/cross-review/receipts.md`.

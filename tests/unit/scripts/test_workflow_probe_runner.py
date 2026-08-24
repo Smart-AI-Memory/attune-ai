@@ -845,3 +845,26 @@ def test_main_exits_2_on_session_refusal(monkeypatch, capsys) -> None:
     code = runner.main(["--run", "security-audit", "--no-record"])
     assert code == 2
     assert "SESSION SPEND CAP" in capsys.readouterr().err
+
+
+def test_run_selected_crashed_probe_records_the_budget_cap(monkeypatch) -> None:
+    """D11 lane finding: a probe that crashes mid-workflow may have
+    billed before raising; recording $0 would let real spend escape
+    the cap. The conservative bound is the per-run budget."""
+    import asyncio
+    import json
+    import os
+    from pathlib import Path
+
+    monkeypatch.setenv("ATTUNE_SESSION_SPEND_CAP_USD", "10")
+
+    async def crasher(budget: float):
+        raise ValueError("boom mid-workflow")
+
+    monkeypatch.setitem(runner.PROBES, "security-audit", crasher)
+    results, refusal = asyncio.run(runner._run_selected(["security-audit"], 3.0))
+    assert refusal is None
+    assert len(results) == 1 and not results[0].passed
+    ledger = Path(os.environ["ATTUNE_SESSION_LEDGER_PATH"])
+    entries = [json.loads(line) for line in ledger.read_text().splitlines()]
+    assert entries[0]["cost_usd"] == 3.0

@@ -56,8 +56,14 @@ re-CONFIRMS interactively rather than hard-refusing.
   `cap<=0 == disabled` latch; divergence recorded in D4).
 - **R7 — degrade toward enforcement, never past it.** A missing
   ledger file counts as $0 spent; corrupt lines are skipped (bounded
-  undercount, work not blocked by a torn write); a malformed cap env
-  falls back to the DEFAULT cap, never to "unlimited".
+  undercount, work not blocked by a torn write); a malformed OR
+  non-finite cap env (NaN would defeat both refusal comparisons)
+  falls back to the DEFAULT cap, never to "unlimited"; an EXISTING
+  ledger that cannot be read fails CLOSED — `check` refuses rather
+  than reading it as $0 (D11 lane, 2026-08-24). Known residual: a
+  failed APPEND (disk full mid-session) is logged but cannot refuse
+  retroactively — the launch already happened; the next `check`
+  still reads every entry that did land.
 
 ## Acceptance criteria
 

@@ -1540,6 +1540,7 @@ async def _run_selected(selected: list[str], budget: float) -> tuple[list[ProbeR
         print(f"\n=== running probe: {probe} (budget cap ${budget:.2f}) ===")
         try:
             results.append(await PROBES[probe](budget))
+            ledger_cost = results[-1].cost_usd
         except Exception as exc:  # noqa: BLE001 — a probe crash is a result
             results.append(
                 ProbeResult(
@@ -1548,8 +1549,13 @@ async def _run_selected(selected: list[str], budget: float) -> tuple[list[ProbeR
                     reason=f"probe raised {type(exc).__name__}: {exc}",
                 )
             )
+            # A probe that crashed mid-workflow may have billed before
+            # raising, and its cost_report is lost with the exception —
+            # record the per-run budget cap as the conservative bound
+            # (overcount, never undercount — D5; D11 lane finding).
+            ledger_cost = budget
         last = results[-1]
-        session_ledger.record(f"probe:{probe}", last.cost_usd)
+        session_ledger.record(f"probe:{probe}", ledger_cost)
         mark = "PASS" if last.passed else "FAIL"
         print(f"[{mark}] {probe}: {last.reason} (${last.cost_usd:.4f})")
     return results, refusal

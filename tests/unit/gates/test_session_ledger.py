@@ -133,6 +133,23 @@ class TestDegradeTowardEnforcement:
         monkeypatch.setenv("ATTUNE_SESSION_SPEND_CAP_USD", "plenty")
         assert get_cap_usd() == DEFAULT_CAP_USD
 
+    @pytest.mark.parametrize("raw", ["nan", "inf", "-inf"])
+    def test_non_finite_cap_env_falls_back_to_default(self, monkeypatch, raw) -> None:
+        """D11 lane finding: NaN made both refusal comparisons False —
+        an unlimited cap through the back door."""
+        monkeypatch.setenv("ATTUNE_SESSION_SPEND_CAP_USD", raw)
+        assert get_cap_usd() == DEFAULT_CAP_USD
+
+    def test_existing_but_unreadable_ledger_fails_closed(self, monkeypatch, tmp_path) -> None:
+        """D11 lane finding: an unreadable ledger read as $0 would
+        silently disable enforcement. A directory in the ledger's
+        place raises OSError-not-FileNotFoundError on every platform."""
+        monkeypatch.setenv("ATTUNE_SESSION_SPEND_CAP_USD", "10")
+        dir_as_ledger = tmp_path / "ledger-is-a-dir"
+        dir_as_ledger.mkdir()
+        with pytest.raises(SessionSpendCapError, match="cannot be read"):
+            check("probe:a", now=NOW, path=dir_as_ledger)
+
     def test_unwritable_ledger_logs_but_does_not_raise(self, tmp_path) -> None:
         blocker = tmp_path / "blocker"
         blocker.write_text("a file where a directory must go", encoding="utf-8")
@@ -143,6 +160,11 @@ class TestRecord:
     def test_negative_cost_raises(self, ledger) -> None:
         with pytest.raises(ValueError, match="non-negative"):
             record("probe:a", -0.01, now=NOW, path=ledger)
+
+    @pytest.mark.parametrize("bad", [float("nan"), float("inf")])
+    def test_non_finite_cost_raises(self, ledger, bad) -> None:
+        with pytest.raises(ValueError, match="finite"):
+            record("probe:a", bad, now=NOW, path=ledger)
 
     def test_appends_parseable_jsonl(self, ledger) -> None:
         record("seat:claude", 0.25, now=NOW, path=ledger)

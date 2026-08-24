@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import os
 import time
 from pathlib import Path
@@ -82,14 +83,21 @@ def get_cap_usd() -> float:
     if not raw:
         return DEFAULT_CAP_USD
     try:
-        return float(raw)
+        cap = float(raw)
     except ValueError:
+        cap = math.nan
+    # NaN would make BOTH refusal comparisons False (an unlimited
+    # cap through the back door), and inf is the off switch's job —
+    # non-finite is malformed, not a bigger budget (D11 lane finding,
+    # 2026-08-24).
+    if not math.isfinite(cap):
         logger.warning(
-            "ATTUNE_SESSION_SPEND_CAP_USD=%r is not a number; using default $%.2f",
+            "ATTUNE_SESSION_SPEND_CAP_USD=%r is not a finite number; using default $%.2f",
             raw,
             DEFAULT_CAP_USD,
         )
         return DEFAULT_CAP_USD
+    return cap
 
 
 def spent_usd(now: float | None = None, path: Path | None = None) -> float:
@@ -97,13 +105,17 @@ def spent_usd(now: float | None = None, path: Path | None = None) -> float:
 
     A missing file is $0; corrupt lines are skipped and logged — a
     torn write may undercount by one entry, but never blocks work or
-    zeroes the whole ledger (R7).
+    zeroes the whole ledger (R7). An EXISTING ledger that cannot be
+    read (permissions, a directory in its place) raises ``OSError``:
+    reading it as $0 would silently disable enforcement, so
+    :func:`check` fails closed instead (D11 lane finding,
+    2026-08-24).
     """
     now = time.time() if now is None else now
     ledger = _ledger_path(path)
     try:
         raw_lines = ledger.read_text(encoding="utf-8").splitlines()
-    except OSError:
+    except FileNotFoundError:
         return 0.0
     total = 0.0
     for line in raw_lines:
@@ -140,7 +152,15 @@ def check(label: str, now: float | None = None, path: Path | None = None) -> flo
             "Raise ATTUNE_SESSION_SPEND_CAP_USD, or set "
             "ATTUNE_SESSION_LEDGER=off to disable checking."
         )
-    spent = spent_usd(now=now, path=path)
+    try:
+        spent = spent_usd(now=now, path=path)
+    except OSError as exc:
+        raise SessionSpendCapError(
+            f"session spend ledger refuses {label!r}: the ledger file "
+            f"exists but cannot be read ({exc}) — an unreadable ledger "
+            "counted as $0 would disable enforcement. Fix the file, or "
+            "set ATTUNE_SESSION_LEDGER=off to disable checking."
+        ) from exc
     if spent >= cap:
         raise SessionSpendCapError(
             f"session spend ledger refuses {label!r}: "
@@ -165,8 +185,8 @@ def record(
     return would not un-spend it. Recording also ignores the off
     switch, so the audit trail survives an override (D4).
     """
-    if cost_usd < 0:
-        raise ValueError("cost_usd must be non-negative")
+    if not math.isfinite(cost_usd) or cost_usd < 0:
+        raise ValueError("cost_usd must be a finite, non-negative number")
     now = time.time() if now is None else now
     ledger = _ledger_path(path)
     line = json.dumps({"ts": round(now, 3), "label": label, "cost_usd": round(cost_usd, 6)})
@@ -190,7 +210,10 @@ def seat_estimate_usd() -> float:
     if not raw:
         return 0.25
     try:
-        return max(float(raw), 0.0)
+        est = float(raw)
     except ValueError:
-        logger.warning("ATTUNE_SEAT_SPEND_ESTIMATE_USD=%r is not a number; using $0.25", raw)
+        est = math.nan
+    if not math.isfinite(est):
+        logger.warning("ATTUNE_SEAT_SPEND_ESTIMATE_USD=%r is not a finite number; using $0.25", raw)
         return 0.25
+    return max(est, 0.0)
