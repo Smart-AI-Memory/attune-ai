@@ -9,6 +9,7 @@ import importlib
 import importlib.metadata
 import inspect
 import re
+from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # 2. Empathy MCP: every registered tool has a dispatch branch
@@ -101,11 +102,18 @@ class TestWorkflowRegistryWiring:
 
 
 class TestWorkflowEntryPoints:
-    """Every attune.workflows entry point must load and have an execute method."""
+    """Any attune.workflows entry point present must load and have execute.
+
+    attune's own built-ins are deliberately NOT registered as entry
+    points (they stay lazy via ``_DEFAULT_WORKFLOW_NAMES``; see the
+    pyproject NOTE and #2238) — the group is for third-party packages,
+    so an empty group is a valid state. A stale editable install may
+    still carry the retired block's entries; when any entry exists it
+    must still load correctly.
+    """
 
     def test_workflow_entry_points_are_loadable(self):
         eps = list(importlib.metadata.entry_points(group="attune.workflows"))
-        assert eps, "No attune.workflows entry points found — is the package installed?"
 
         for ep in eps:
             cls = ep.load()
@@ -115,6 +123,16 @@ class TestWorkflowEntryPoints:
             assert hasattr(
                 cls, "execute"
             ), f"Entry point '{ep.name}' loaded {cls.__name__} which has no execute method"
+
+    def test_builtin_workflows_stay_out_of_entry_points(self):
+        """The retired built-in block must not re-enter pyproject (#2238)."""
+        pyproject = Path(__file__).resolve().parents[2] / "pyproject.toml"
+        content = pyproject.read_text(encoding="utf-8")
+        assert '[project.entry-points."attune.workflows"]' not in content, (
+            "attune's built-ins are lazy via _DEFAULT_WORKFLOW_NAMES; "
+            "registering them as attune.workflows entry points makes "
+            "discover_workflows() import them eagerly"
+        )
 
 
 # ---------------------------------------------------------------------------
