@@ -418,36 +418,60 @@ async def probe_test_gen(budget: float) -> ProbeResult:
                 cost_usd=_cost_of(result),
                 duration_s=dur,
             )
-        code = _extract_test_code(_raw_text(result))
-        if not code.strip():
-            return ProbeResult(
-                name="test-gen",
-                passed=False,
-                reason=(
-                    "workflow emitted no runnable test code "
-                    "(the report contained no pytest-shaped code fence)"
-                ),
-                cost_usd=_cost_of(result),
-                duration_s=dur,
-                evidence={"emitted_test_chars": 0},
+        # #2213: the workflow now WRITES test files (Write tool, scoped
+        # to <path>/tests/generated). Prefer executing the real files it
+        # wrote; fall back to fence extraction for regression coverage
+        # of the old prose-only failure mode.
+        meta = getattr(result, "metadata", None) or {}
+        gen_dir = work / "tests" / "generated"
+        real_files = sorted(gen_dir.glob("test_*.py")) if gen_dir.is_dir() else []
+        if real_files:
+            proc = subprocess.run(
+                [sys.executable, "-m", "pytest", "-q", *map(str, real_files)],
+                cwd=str(work),
+                capture_output=True,
+                text=True,
+                timeout=180,
             )
-
-        test_file = work / "test_probe_generated.py"
-        test_file.write_text(code, encoding="utf-8")
-        proc = subprocess.run(
-            [sys.executable, "-m", "pytest", "-q", str(test_file)],
-            cwd=str(work),
-            capture_output=True,
-            text=True,
-            timeout=180,
-        )
+            source_note = "files_on_disk"
+            emitted_chars = sum(len(p.read_text(encoding="utf-8")) for p in real_files)
+        else:
+            code = _extract_test_code(_raw_text(result))
+            if not code.strip():
+                return ProbeResult(
+                    name="test-gen",
+                    passed=False,
+                    reason=(
+                        "workflow wrote no test files and emitted no "
+                        "runnable test code (no files under "
+                        "tests/generated, no pytest-shaped code fence)"
+                    ),
+                    cost_usd=_cost_of(result),
+                    duration_s=dur,
+                    evidence={
+                        "emitted_test_chars": 0,
+                        "files_written": 0,
+                        "meta_tests_generated": meta.get("tests_generated"),
+                    },
+                )
+            test_file = work / "test_probe_generated.py"
+            test_file.write_text(code, encoding="utf-8")
+            proc = subprocess.run(
+                [sys.executable, "-m", "pytest", "-q", str(test_file)],
+                cwd=str(work),
+                capture_output=True,
+                text=True,
+                timeout=180,
+            )
+            source_note = "report_fence"
+            emitted_chars = len(code)
 
     tail = "\n".join((proc.stdout + proc.stderr).splitlines()[-8:])
     passed = proc.returncode == 0
     reason = (
-        "emitted tests imported, ran, and passed"
+        f"emitted tests ({source_note}) imported, ran, and passed"
         if passed
-        else f"emitted tests did not pass (pytest rc={proc.returncode})"
+        else f"emitted tests ({source_note}) did not pass (pytest rc={proc.returncode})"
     )
     return ProbeResult(
         name="test-gen",
@@ -455,7 +479,12 @@ async def probe_test_gen(budget: float) -> ProbeResult:
         reason=reason,
         cost_usd=_cost_of(result),
         duration_s=dur,
-        evidence={"emitted_test_chars": len(code), "pytest_tail": tail},
+        evidence={
+            "emitted_test_chars": emitted_chars,
+            "files_written": len(real_files),
+            "meta_tests_generated": meta.get("tests_generated"),
+            "pytest_tail": tail,
+        },
     )
 
 
