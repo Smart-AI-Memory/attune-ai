@@ -12,7 +12,7 @@ release prep, do not re-ask. Branch state re-verified 2026-08-24
 conflicts, `CHANGELOG.md` and `src/attune/__init__.py`. First
 passenger.
 
-## D2 — Fate of `empathy_level` (OPEN — CHAIR TO RULE)
+## D2 — Fate of `empathy_level` (RATIFIED chair 2026-08-24 — Option B, die with the framework)
 
 The 1–5 level concept survives the 9.0.0 framework excision as a
 live knob: agent_factory
@@ -37,8 +37,19 @@ parameter. Pro: coherent end-state, one less concept. Con: largest
 blast radius of any 15.0.0 item; any external caller of the level
 tools breaks.
 
-Not decided here. Options presented for the chair; either ruling
-re-shapes deprecation-story item 3.
+**RULING (chair, 2026-08-24): Option B.** The level concept dies
+with the framework. Consequences now unblocked for #2238's
+breaking half:
+
+- 15.0.0 removes `empathy_level` plumbing from agent_factory,
+  config, and llm state; the replacement plugin `BaseWorkflow`
+  contract carries no level parameter.
+- `attune_get_level`/`attune_set_level` MCP tools are deleted in
+  15.0.0, with a 14.x `DeprecationWarning` first (deprecation-story
+  item 3 in requirements.md now has its shape).
+- Blast-radius acknowledgment from the option text stands: any
+  external caller of the level tools breaks at 15.0.0 — the 14.x
+  deprecation window is the mitigation.
 
 ## D3 — anthropic SDK 1.x does NOT ride the major (RECORDED lead 2026-08-24; chair may overrule)
 
