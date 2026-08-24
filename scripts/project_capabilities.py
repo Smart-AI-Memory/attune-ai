@@ -154,6 +154,17 @@ def derive_values(repo: Path) -> dict[str, int]:
                 "tools would be silently missing from the count"
             ) from exc
 
+    # Re-discover from the REAL entry points, always. The registry keeps a
+    # module-level discovery cache and a global-singleton registry; when an
+    # in-process caller (the test suite) runs after a test that touched
+    # either under mocked entry_points, the cached plugin set is wrong and
+    # the derived count silently drops every plugin tool (2026-08-24: 50
+    # vs 61 on whichever xdist worker happened to schedule a registry test
+    # first — the subprocess CLI path never saw it). Derivation must
+    # describe the checked-out revision, not a prior test's cache.
+    from attune.plugins.registry import clear_discovery_cache
+
+    clear_discovery_cache()
     tools = EmpathyMCPServer().tools
     if not isinstance(tools, dict) or not tools:
         raise ProjectionError(
