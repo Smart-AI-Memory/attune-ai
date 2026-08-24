@@ -426,3 +426,11 @@ class TestStreamRegistry:
         event_id = streamer.publish_event(event_type="agent_heartbeat", data={"a": 1})
 
         assert event_id == "1-0"
+
+    def test_delete_reports_true_even_if_unregistration_fails(self):
+        """A registry SREM failure never falsifies a successful DELETE."""
+        streamer, client = self._streamer_with_client()
+        client.delete.return_value = 1
+        client.srem.side_effect = RuntimeError("registry down")
+
+        assert streamer.delete_stream(event_type="old_event") is True

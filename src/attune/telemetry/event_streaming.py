@@ -152,6 +152,26 @@ class EventStreamer:
         if self.memory is None:
             logger.warning("No memory backend available for event streaming")
 
+    def _registry_update(self, op, stream_key: str) -> None:
+        """Apply a registry SADD/SREM without ever failing the caller.
+
+        The registry is an index, not the data: by the time this runs
+        the XADD or DELETE it accompanies has already committed, so a
+        registry failure must degrade to a warning — a stray entry only
+        delays subscribe-to-all visibility until the stream's next
+        successful publish, and XREAD on a stale key yields nothing.
+
+        Args:
+            op: Bound client method (``sadd`` or ``srem``).
+            stream_key: The stream key to (un)register.
+
+        """
+        try:
+            op(self.STREAM_REGISTRY_KEY, stream_key)
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: best-effort index maintenance — see docstring.
+            logger.warning("Stream registry update failed for %s", stream_key, exc_info=True)
+
     def _active_stream_keys(self) -> list[str]:
         """Return every active stream key without scanning the keyspace.
 
@@ -233,15 +253,7 @@ class EventStreamer:
 
             # Register the stream so subscribe-to-all consumers can
             # SMEMBERS instead of scanning the keyspace (#2241).
-            # Best-effort: the event is already committed by XADD, so a
-            # registry failure must not turn this publish into a lie.
-            try:
-                self.memory._client.sadd(self.STREAM_REGISTRY_KEY, stream_key)
-            except Exception:  # noqa: BLE001
-                # INTENTIONAL: publish succeeded; a failed registration
-                # only delays subscribe-to-all visibility until the next
-                # successful publish on this stream.
-                logger.warning("Failed to register stream %s", stream_key, exc_info=True)
+            self._registry_update(self.memory._client.sadd, stream_key)
 
             logger.debug(f"Published event {event_type}: {event_id}")
             return event_id
@@ -429,7 +441,7 @@ class EventStreamer:
 
         try:
             result = self.memory._client.delete(stream_key)
-            self.memory._client.srem(self.STREAM_REGISTRY_KEY, stream_key)
+            self._registry_update(self.memory._client.srem, stream_key)
             return result > 0
         except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to delete stream {event_type}: {e}")
