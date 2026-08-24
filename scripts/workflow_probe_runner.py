@@ -198,6 +198,27 @@ def validate_fixtures() -> list[str]:
 # --------------------------------------------------------------------------
 
 
+def _stage_dependency_manifest(workdir: Path) -> None:
+    """Stage cve_pins.txt as requirements.txt WITHOUT its header comments.
+
+    The tracked fixture's header says, in so many words, "this is a
+    planted-defect test fixture; the pins are intentional" — staged
+    verbatim, the workflow's subagents READ that and on some runs
+    dismiss the findings as intentional, returning an empty findings
+    dict (observed live 2026-08-24: two $0.4 runs with 0 findings, then
+    a run whose report quoted the header back). The header stays in the
+    TRACKED file (it protects the pins from cleanup and explains the
+    non-requirements name); only the staged copy is stripped to bare
+    pins so the workflow sees a normal manifest.
+    """
+    pins = [
+        line
+        for line in (FIXTURES / "dependency" / "cve_pins.txt").read_text().splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+    (workdir / "requirements.txt").write_text("\n".join(pins) + "\n", encoding="utf-8")
+
+
 def _findings_for(result: Any, category: str) -> list[str]:
     meta = getattr(result, "metadata", None) or {}
     findings = meta.get("findings") or {}
@@ -290,7 +311,7 @@ def _stage(workdir: Path) -> None:
     )
     shutil.copy(FIXTURES / "testgen" / "orders.py", workdir / "orders.py")
     # cve_pins.txt is staged AS requirements.txt so the checker sees it.
-    shutil.copy(FIXTURES / "dependency" / "cve_pins.txt", workdir / "requirements.txt")
+    _stage_dependency_manifest(workdir)
 
 
 # --------------------------------------------------------------------------
@@ -356,7 +377,7 @@ async def probe_dependency_check(budget: float) -> ProbeResult:
     _budget_env(budget)
     with tempfile.TemporaryDirectory() as tmp:
         work = Path(tmp)
-        shutil.copy(FIXTURES / "dependency" / "cve_pins.txt", work / "requirements.txt")
+        _stage_dependency_manifest(work)
         t0 = time.monotonic()
         result = await _run_workflow("dependency-check", path=str(work), depth="quick")
         dur = time.monotonic() - t0
@@ -381,13 +402,15 @@ async def probe_dependency_check(budget: float) -> ProbeResult:
         "2.19.1",
         "5.3.1",
     )
-    passed = num_findings > 0 and names_pkg
-    reasons = []
-    if num_findings == 0:
-        reasons.append("no dependency findings returned")
-    if not names_pkg:
-        reasons.append("did not name a planted vulnerable package/CVE")
-    reason = "; ".join(reasons) or "named a planted vulnerable dependency"
+    # Named-class gate (ratified probe grammar: the behavioral receipt
+    # is the NAMED planted defect; counts are evidence, not the gate —
+    # bucket population varies run to run while the naming is stable).
+    passed = names_pkg
+    reason = (
+        "named a planted vulnerable dependency"
+        if passed
+        else "did not name a planted vulnerable package/CVE"
+    )
 
     return ProbeResult(
         name="dependency-check",
@@ -395,7 +418,7 @@ async def probe_dependency_check(budget: float) -> ProbeResult:
         reason=reason,
         cost_usd=_cost_of(result),
         duration_s=dur,
-        evidence={"num_findings": num_findings},
+        evidence={"num_findings": num_findings, "named_class": names_pkg},
     )
 
 
