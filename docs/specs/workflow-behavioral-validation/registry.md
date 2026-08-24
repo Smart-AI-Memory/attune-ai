@@ -19,7 +19,7 @@ new records; `--check` is the CI drift guard.
 | security-audit | PASS | 0.3983 | 106.8 | 2026-08-23T20:55:00Z | 7d66113a0 | `records/2026-08-23-security-audit.json` |
 | simplify-code | PASS | 0.3336 | 80.9 | 2026-08-23T23:16:00Z | e80953386 | `records/2026-08-23-simplify-code.json` |
 | test-audit | PASS | 0.4725 | 89.8 | 2026-08-23T23:18:00Z | e80953386 | `records/2026-08-23-test-audit.json` |
-| test-gen | FAIL | 0.6233 | 160.8 | 2026-08-23T21:25:00Z | 7d66113a0 | `records/2026-08-23-test-gen.json` |
+| test-gen | PASS | 0.6521 | 160.2 | 2026-08-24T04:32:08Z | 1e70fdb96 | `records/20260824T043208-test-gen.json` |
 
 ## Not yet probed
 

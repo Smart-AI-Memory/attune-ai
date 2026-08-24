@@ -321,7 +321,7 @@ def test_edit_scope_guard_denies_outside_and_allows_inside(tmp_path: Path) -> No
         guard({"tool_input": {"file_path": str(tmp_path / "outside.py")}}, None, None)
     )
     assert denied["hookSpecificOutput"]["permissionDecision"] == "deny"
-    assert "outside the fix contract's scope" in (
+    assert "outside the allowed write scope" in (
         denied["hookSpecificOutput"]["permissionDecisionReason"]
     )
 

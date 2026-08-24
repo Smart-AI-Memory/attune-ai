@@ -31,6 +31,7 @@ from ..agent_sdk_adapter import (
     get_max_budget_usd,
     get_subagent_model,
     iter_agent_messages,
+    make_edit_scope_guard,
     resolve_cwd_for_path,
     sdk_isolation_kwargs,
 )
@@ -66,12 +67,18 @@ Analyze the codebase at {path} using the three specialized subagents \
 below. Each subagent should focus on its domain and produce structured \
 markdown output.
 
+The test-writer MUST write the generated pytest files to disk under \
+{output_dir} using the Write tool — one file per source module, named \
+test_<module>.py (create the directory implicitly by writing into it). \
+Generated tests must be runnable: real imports, no placeholder bodies.
+
 After all subagents finish, synthesize their output into a single \
 report with these sections:
 
 ## Summary
 Overall test generation summary — how many functions were analyzed, \
-how many test cases were designed, and how many test files were written.
+how many test cases were designed, and the exact paths of the test \
+files written to {output_dir}.
 
 ## Coverage
 Current coverage analysis and areas that need testing.
@@ -116,8 +123,32 @@ class TestGenerationWorkflow(BaseWorkflow):
         super().__init__(**kwargs)
 
     input_schema = InputSchema(
-        optional_fields={"path": str, "depth": str},
+        optional_fields={"path": str, "depth": str, "output_dir": str},
     )
+
+    @staticmethod
+    def _resolve_output_dir(resolved_path: str, output_dir: str | None) -> Path | None:
+        """Resolve and validate where generated tests are written.
+
+        Default: ``<path>/tests/generated`` for a directory target, or
+        ``<parent>/tests/generated`` for a single-file target. An
+        explicit ``output_dir`` must resolve INSIDE the target's base
+        directory — a path outside it returns ``None`` (#2213; the
+        Write-scope guard enforces the same boundary at tool-call time).
+        """
+        base = Path(resolved_path)
+        if not base.is_dir():
+            base = base.parent
+        if output_dir is None:
+            return base / "tests" / "generated"
+        candidate = Path(output_dir)
+        if not candidate.is_absolute():
+            candidate = base / candidate
+        candidate = candidate.resolve()
+        base = base.resolve()
+        if candidate != base and base not in candidate.parents:
+            return None
+        return candidate
 
     async def execute(self, **kwargs: Any) -> WorkflowResult:
         """Execute the Agent SDK test generation.
@@ -143,12 +174,26 @@ class TestGenerationWorkflow(BaseWorkflow):
         resolved_path = str(Path(path_arg).resolve())
         max_turns = _DEPTH_MAX_TURNS.get(depth, 20)
 
+        output_dir = self._resolve_output_dir(resolved_path, kwargs.get("output_dir"))
+        if output_dir is None:
+            return self._error_result("output_dir must resolve inside the target path's directory")
+        # Snapshot so only THIS run's files are reported (#2213).
+        preexisting = set(output_dir.rglob("*.py")) if output_dir.is_dir() else set()
+
         started_at = datetime.now()
 
         try:
-            run_result = await self._run_agent_gen(resolved_path, max_turns, depth=depth)
+            run_result = await self._run_agent_gen(
+                resolved_path, max_turns, depth=depth, output_dir=output_dir
+            )
             self._track_sdk_run_telemetry(stage="agent", agent_run_result=run_result)
             completed_at = datetime.now()
+
+            generated = (
+                sorted(str(p) for p in output_dir.rglob("*.py") if p not in preexisting)
+                if output_dir.is_dir()
+                else []
+            )
 
             return AgentSDKResultAdapter.from_agent_output(
                 report_title="Test generation",
@@ -160,6 +205,13 @@ class TestGenerationWorkflow(BaseWorkflow):
                     "path": resolved_path,
                     "depth": depth,
                     "max_turns": max_turns,
+                    # #2213: these keys make the MCP handler's
+                    # tests_generated/output_path/generated_files
+                    # surfaces truthful — counted from disk, not
+                    # from the model's own claims.
+                    "generated_files": generated,
+                    "tests_generated": len(generated),
+                    "output_path": str(output_dir),
                 },
                 agent_run_result=run_result,
             )
@@ -181,7 +233,11 @@ class TestGenerationWorkflow(BaseWorkflow):
             return self._error_result(f"Agent SDK error: {type(exc).__name__}: {exc}")
 
     async def _run_agent_gen(
-        self, resolved_path: str, max_turns: int, depth: str = "standard"
+        self,
+        resolved_path: str,
+        max_turns: int,
+        depth: str = "standard",
+        output_dir: Path | None = None,
     ) -> AgentRunResult:
         """Run the Agent SDK test generation and return result text.
 
@@ -189,23 +245,34 @@ class TestGenerationWorkflow(BaseWorkflow):
             resolved_path: Absolute path to generate tests for.
             max_turns: Maximum agent turns.
             depth: Agent depth for budget calculation.
+            output_dir: Directory the test-writer may Write into
+                (#2213). Writes outside it are denied at tool-call
+                time by the scope guard.
 
         Returns:
             AgentRunResult with findings and SDK metadata.
         """
+        output_dir = output_dir or self._resolve_output_dir(resolved_path, None)
+        iso = sdk_isolation_kwargs()
+        iso["hooks"]["PreToolUse"] = [
+            *iso["hooks"]["PreToolUse"],
+            claude_agent_sdk.HookMatcher(
+                matcher="Write", hooks=[make_edit_scope_guard([output_dir])]
+            ),
+        ]
         assistant_parts: list[str] = []
         result_parts: list[str] = []
         run_result = AgentRunResult(result_text="No results returned.")
         async for message in iter_agent_messages(
             claude_agent_sdk.query(
-                prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
+                prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path, output_dir=output_dir),
                 options=claude_agent_sdk.ClaudeAgentOptions(
-                    **sdk_isolation_kwargs(),
+                    **iso,
                     system_prompt=_SYSTEM_PROMPT,
                     cwd=resolve_cwd_for_path(resolved_path),
                     max_budget_usd=get_max_budget_usd(depth),
-                    allowed_tools=["Read", "Glob", "Grep", "Agent"],
-                    permission_mode="default",
+                    allowed_tools=["Read", "Glob", "Grep", "Write", "Agent"],
+                    permission_mode="acceptEdits",
                     max_turns=max_turns,
                     agents={
                         "function-identifier": claude_agent_sdk.AgentDefinition(
@@ -247,9 +314,14 @@ class TestGenerationWorkflow(BaseWorkflow):
                                 "appropriate, include type hints, add "
                                 "docstrings, and follow the naming convention "
                                 "test_{function}_{scenario}_{expected}. Group "
-                                "related tests in classes."
+                                "related tests in classes. WRITE each test "
+                                "file to disk with the Write tool under "
+                                f"{output_dir} (one file per source module, "
+                                "named test_<module>.py); do not merely print "
+                                "the code. The tests must be runnable: real "
+                                "imports, no placeholder bodies."
                             ),
-                            tools=["Read", "Glob", "Grep"],
+                            tools=["Read", "Glob", "Grep", "Write"],
                             model=get_subagent_model("test-writer"),
                         ),
                     },

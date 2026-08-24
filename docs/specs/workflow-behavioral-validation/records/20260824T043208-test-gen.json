@@ -1,0 +1,18 @@
+{
+  "workflow": "test-gen",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "executed-tests",
+  "verdict": "pass",
+  "cost_usd": 0.6521,
+  "duration_s": 160.2,
+  "ran_at": "2026-08-24T04:32:08Z",
+  "runner_version": "0.3.0",
+  "git_sha": "1e70fdb96",
+  "evidence": {
+    "emitted_test_chars": 3160,
+    "files_written": 1,
+    "meta_tests_generated": 1,
+    "pytest_tail": ".......................                                                  [100%]\n23 passed in 0.02s",
+    "reason": "emitted tests (files_on_disk) imported, ran, and passed"
+  }
+}

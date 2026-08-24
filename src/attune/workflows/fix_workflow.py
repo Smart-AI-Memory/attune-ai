@@ -28,6 +28,7 @@ from .agent_sdk_adapter import (
     collect_agent_output,
     get_max_budget_usd,
     iter_agent_messages,
+    make_edit_scope_guard,
     resolve_cwd_for_path,
     sdk_isolation_kwargs,
 )
@@ -57,45 +58,6 @@ run tests yourself):
 Read the scoped files, make the minimal in-place edit, then reply
 with a short summary listing exactly which files you changed and
 what remains uncertain."""
-
-
-def make_edit_scope_guard(scope_paths: list[Path]):
-    """Build a PreToolUse hook denying Edit/Write outside ``scope_paths``.
-
-    Prevention layer for the scope contract (codex D11 lane finding):
-    the deny happens at tool-call time, not just in the post-run
-    receipt diff.
-    """
-    resolved_scope = [p.resolve() for p in scope_paths]
-
-    async def _guard_edit_tool(
-        input_data: dict[str, Any],
-        tool_use_id: str | None,
-        context: Any,
-    ) -> dict[str, Any]:
-        raw = str((input_data.get("tool_input") or {}).get("file_path", ""))
-        if not raw:
-            return {}
-        try:
-            target = Path(raw).resolve()
-        except (OSError, RuntimeError):
-            target = None
-        if target is not None and any(
-            target == allowed or allowed in target.parents for allowed in resolved_scope
-        ):
-            return {}
-        return {
-            "hookSpecificOutput": {
-                "hookEventName": "PreToolUse",
-                "permissionDecision": "deny",
-                "permissionDecisionReason": (
-                    f"path {raw!r} is outside the fix contract's scope; "
-                    "allowed: " + ", ".join(str(p) for p in resolved_scope)
-                ),
-            }
-        }
-
-    return _guard_edit_tool
 
 
 class FixWorkflow(BaseWorkflow):
