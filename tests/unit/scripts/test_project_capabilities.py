@@ -567,3 +567,29 @@ def test_independent_gates_do_not_import_projector():
             if line.lstrip().startswith(("import ", "from ")) and "project_capabilities" in line
         ]
         assert not imports, f"{rel} imports the projector: {imports}"
+
+
+# --- Discovery-cache pollution immunity -----------------------------------
+
+
+def test_derive_values_immune_to_polluted_discovery_cache():
+    """In-process derivation re-discovers from the REAL entry points.
+
+    Regression for the 2026-08-24 main-red flake: registry tests that run
+    earlier on the same xdist worker can leave the module-level discovery
+    cache filled under mocked ``entry_points`` (an empty plugin set). The
+    old derivation then reported the server WITHOUT its plugin tools
+    (50 vs 61) while the subprocess CLI path — immune by construction —
+    stayed green on the very same lane. ``derive_values`` must describe
+    the checked-out revision, not a prior test's cache.
+    """
+    import attune.plugins.registry as registry_mod
+
+    clean = proj.derive_values(REPO_ROOT)
+    registry_mod._discovery_cache = {}  # what a mocked-discovery test leaves behind
+    registry_mod._global_registry = None
+    try:
+        poisoned_run = proj.derive_values(REPO_ROOT)
+    finally:
+        registry_mod.clear_discovery_cache()
+    assert poisoned_run == clean
