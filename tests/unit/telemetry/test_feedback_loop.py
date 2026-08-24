@@ -481,3 +481,105 @@ class TestFeedbackLoopBranches:
             loop.record_feedback("wf5", "s5", "cheap", 0.9)
         rec = loop.recommend_tier("wf5", "s5", current_tier=ModelTier.CHEAP)
         assert rec is not None
+
+
+class _BatchBackend:
+    """MemoryBackend stub whose retrieve_many IS the per-key contract.
+
+    Per the #2162 transport-swap lesson: the batched read is defined in
+    terms of the single read, so tests configuring payloads the old way
+    keep working, and call counters expose which transport actually ran.
+    """
+
+    def __init__(self):
+        self._data = {}
+        self.retrieve_calls = 0
+        self.retrieve_many_calls = 0
+
+    def stash(self, key, value, ttl=None, agent_id=None):
+        self._data[key] = value
+        return True
+
+    def retrieve(self, key, agent_id=None):
+        self.retrieve_calls += 1
+        return self._data.get(key)
+
+    def retrieve_many(self, keys, agent_id=None):
+        self.retrieve_many_calls += 1
+        return {k: self._data.get(k) for k in keys}
+
+    def keys(self, pattern="*"):
+        import fnmatch
+
+        return [k for k in self._data if fnmatch.fnmatch(k, pattern)]
+
+    def delete(self, key, agent_id=None):
+        return self._data.pop(key, None) is not None
+
+
+class TestBatchedRetrieval:
+    """#2237: history and underperforming-stages read in one batch."""
+
+    def _seed(self, loop, stage, tier, scores):
+        for i, score in enumerate(scores):
+            loop.record_feedback(
+                workflow_name="wf",
+                stage_name=stage,
+                tier=tier,
+                quality_score=score,
+                metadata={"seed_index": i},
+            )
+
+    def test_history_uses_one_batched_read(self):
+        backend = _BatchBackend()
+        loop = FeedbackLoop(memory=backend)
+        self._seed(loop, "review", "cheap", [0.9, 0.8, 0.7])
+
+        entries = loop.get_feedback_history("wf", "review", tier="cheap")
+
+        assert len(entries) == 3  # payloads were actually read
+        assert backend.retrieve_many_calls == 1
+        assert backend.retrieve_calls == 0  # no per-key N+1
+
+    def test_history_falls_back_without_retrieve_many(self):
+        class _NoBatchBackend(_BatchBackend):
+            retrieve_many = None  # not callable -> per-key fallback
+
+        backend = _NoBatchBackend()
+        loop = FeedbackLoop(memory=backend)
+        self._seed(loop, "review", "cheap", [0.9, 0.8])
+        entries = loop.get_feedback_history("wf", "review", tier="cheap")
+        assert len(entries) == 2
+        assert backend.retrieve_calls == 2  # per-key fallback ran
+
+    def test_underperforming_stages_single_batch_across_combos(self):
+        backend = _BatchBackend()
+        loop = FeedbackLoop(memory=backend)
+        self._seed(loop, "review", "cheap", [0.2, 0.3, 0.25])  # bad
+        self._seed(loop, "review", "premium", [0.95, 0.9])  # good
+        self._seed(loop, "summarize", "cheap", [0.5, 0.4])  # bad
+
+        under = loop.get_underperforming_stages("wf", quality_threshold=0.7)
+
+        labels = [label for label, _ in under]
+        # Both bad combos flagged, worst first; the good combo absent.
+        assert labels[0] == "review/cheap"
+        assert "summarize/cheap" in labels
+        assert "review/premium" not in labels
+        # The stats are real (computed from actually-read payloads).
+        by_label = dict(under)
+        assert by_label["review/cheap"].sample_count == 3
+        # ONE batched read served every combo — not one scan+N per combo.
+        assert backend.retrieve_many_calls == 1
+        assert backend.retrieve_calls == 0
+
+    def test_malformed_record_skipped_others_kept(self):
+        backend = _BatchBackend()
+        loop = FeedbackLoop(memory=backend)
+        self._seed(loop, "review", "cheap", [0.9, 0.8])
+        # Corrupt one stored record: from_dict will raise on it.
+        bad_key = next(iter(backend._data))
+        backend._data[bad_key] = {"not": "a feedback entry"}
+
+        entries = loop.get_feedback_history("wf", "review", tier="cheap")
+        assert len(entries) == 1

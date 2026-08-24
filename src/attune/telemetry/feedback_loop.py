@@ -267,19 +267,7 @@ class FeedbackLoop:
                 else f"feedback:{workflow_name}:{stage_name}:*"
             )
             keys = self.memory.keys(pattern)
-
-            entries: list[FeedbackEntry] = []
-            for key in keys:
-                data = self._retrieve_feedback(key)
-                if data:
-                    try:
-                        entries.append(FeedbackEntry.from_dict(data))
-                    except Exception as e:  # noqa: BLE001
-                        logger.error(f"Failed to parse feedback entry {key}: {e}")
-                        continue
-                if len(entries) >= limit:
-                    break
-
+            entries = self._parse_entries(self._retrieve_feedback_many(keys), limit)
             entries.sort(key=lambda e: e.timestamp, reverse=True)
             return entries[:limit]
         except Exception as e:  # noqa: BLE001
@@ -293,6 +281,42 @@ class FeedbackLoop:
         except Exception as e:  # noqa: BLE001
             logger.debug(f"Failed to retrieve feedback: {e}")
             return None
+
+    def _retrieve_feedback_many(self, keys: list[str]) -> list[tuple[str, Any]]:
+        """Fetch feedback records for ``keys`` in one backend call.
+
+        #2237: the per-key ``retrieve`` loop paid one round trip per
+        record (N+1). ``retrieve_many`` is part of the MemoryBackend
+        protocol and batches server-side; a backend without it (e.g. the
+        in-process fallback store, where reads are free) degrades to the
+        per-key path. NOTE: batching deliberately goes through the
+        backend, never a raw Redis MGET — the AMS backend's ``_client``
+        is an HTTP client, not redis-py, so a raw-client batch would
+        read a different surface than ``retrieve`` writes.
+        """
+        retrieve_many = getattr(self.memory, "retrieve_many", None)
+        if callable(retrieve_many):
+            try:
+                got = retrieve_many(list(keys))
+                return [(key, got.get(key)) for key in keys]
+            except Exception as e:  # noqa: BLE001
+                logger.debug(f"Batched feedback retrieve failed; falling back: {e}")
+        return [(key, self._retrieve_feedback(key)) for key in keys]
+
+    @staticmethod
+    def _parse_entries(records: list[tuple[str, Any]], limit: int) -> list[FeedbackEntry]:
+        """Parse raw records into entries, skipping malformed ones."""
+        entries: list[FeedbackEntry] = []
+        for key, data in records:
+            if data:
+                try:
+                    entries.append(FeedbackEntry.from_dict(data))
+                except Exception as e:  # noqa: BLE001
+                    logger.error(f"Failed to parse feedback entry {key}: {e}")
+                    continue
+            if len(entries) >= limit:
+                break
+        return entries
 
     def get_quality_stats(
         self,
@@ -316,6 +340,17 @@ class FeedbackLoop:
         if not history:
             return None
 
+        tier_str = tier.value if isinstance(tier, ModelTier) else (tier or "all")
+        return self._stats_from_history(workflow_name, stage_name, tier_str, history)
+
+    @staticmethod
+    def _stats_from_history(
+        workflow_name: str,
+        stage_name: str,
+        tier_str: str,
+        history: list[FeedbackEntry],
+    ) -> QualityStats:
+        """Compute stats over an already-fetched, newest-first history."""
         quality_scores = [entry.quality_score for entry in history]
         avg_quality = sum(quality_scores) / len(quality_scores)
         min_quality = min(quality_scores)
@@ -329,8 +364,6 @@ class FeedbackLoop:
             recent_trend = (recent_avg - older_avg) / max(older_avg, 0.1)
         else:
             recent_trend = 0.0
-
-        tier_str = tier.value if isinstance(tier, ModelTier) else (tier or "all")
 
         return QualityStats(
             workflow_name=workflow_name,
@@ -479,18 +512,29 @@ class FeedbackLoop:
 
         """
         try:
+            # #2237: one scan + ONE batched fetch, grouped in memory —
+            # previously O(combos x (scan + N per-key reads)) via nested
+            # get_quality_stats -> get_feedback_history calls.
             keys = self.memory.keys(f"feedback:{workflow_name}:*")
 
-            stage_tier_combos: set[tuple[str, str]] = set()
+            combo_keys: dict[tuple[str, str], list[str]] = {}
             for key in keys:
                 parts = key.split(":")
                 if len(parts) >= 4:
-                    stage_tier_combos.add((parts[2], parts[3]))
+                    combo_keys.setdefault((parts[2], parts[3]), []).append(key)
+
+            records = dict(self._retrieve_feedback_many(keys))
 
             underperforming = []
-            for stage_name, tier in stage_tier_combos:
-                stats = self.get_quality_stats(workflow_name, stage_name, tier=tier)
-                if stats and stats.avg_quality < quality_threshold:
+            for (stage_name, tier), keys_for_combo in combo_keys.items():
+                entries = self._parse_entries(
+                    [(k, records.get(k)) for k in keys_for_combo], limit=100
+                )
+                if not entries:
+                    continue
+                entries.sort(key=lambda e: e.timestamp, reverse=True)
+                stats = self._stats_from_history(workflow_name, stage_name, tier, entries)
+                if stats.avg_quality < quality_threshold:
                     underperforming.append((f"{stage_name}/{tier}", stats))
 
             underperforming.sort(key=lambda x: x[1].avg_quality)
