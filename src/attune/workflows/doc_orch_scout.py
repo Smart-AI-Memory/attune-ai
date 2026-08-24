@@ -64,10 +64,13 @@ class DocOrchScoutMixin:
 
         if self._scout is None:
             logger.warning("Scout (ManageDocumentationCrew) not available")
-            # Fall back to ProjectIndex if available
+            # Fall back to ProjectIndex if available. The index read
+            # counts as a performed scan ONLY when it actually carried
+            # doc-coverage data (#2220) — an empty/errored/capability-
+            # less read is "not assessed", never "no gaps found".
             if self._project_index is not None:
-                items = self._items_from_index()
-                self._scan_performed = True
+                items, assessed = self._items_from_index()
+                self._scan_performed = assessed
             return items, cost
 
         logger.info("Starting scout phase...")
@@ -86,7 +89,7 @@ class DocOrchScoutMixin:
 
         # Supplement with ProjectIndex data if available
         if self._project_index is not None:
-            index_items = self._items_from_index()
+            index_items, _ = self._items_from_index()
             # Merge, preferring scout items but adding unique index items
             existing_paths = {item.file_path for item in items}
             for idx_item in index_items:
@@ -96,17 +99,28 @@ class DocOrchScoutMixin:
         logger.info("Scout phase found %s items (cost: $%.4f)", len(items), cost)
         return items, cost
 
-    def _items_from_index(self) -> list:
-        """Extract documentation items from ProjectIndex."""
+    def _items_from_index(self) -> tuple[list, bool]:
+        """Extract documentation items from ProjectIndex.
+
+        Returns:
+            Tuple of (items, assessed). ``assessed`` is True only when
+            the index context actually carried doc-coverage data
+            (``files_without_docstrings``) — for years no index branch
+            produced that key, every read defaulted empty, and zero
+            items rendered as "no documentation gaps found" (#2220).
+            A capability-less or errored read is NOT an assessment.
+        """
         from .documentation_orchestrator import DocumentationItem
 
         items: list[DocumentationItem] = []
 
         if self._project_index is None:
-            return items
+            return items, False
 
         try:
             context = self._project_index.get_context_for_workflow("documentation")
+            if "files_without_docstrings" not in context:
+                return items, False
 
             # Get files without docstrings
             if self.include_missing:
@@ -147,8 +161,9 @@ class DocOrchScoutMixin:
                         )
         except Exception as e:  # noqa: BLE001
             logger.warning("Error extracting items from index: %s", e)
+            return items, False
 
-        return items
+        return items, True
 
     def _parse_scout_findings(self, result: Any) -> list:
         """Parse scout result into DocumentationItems."""
