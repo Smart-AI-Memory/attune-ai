@@ -24778,3 +24778,316 @@ launched in parallel.
 - **A "self-healing" auto-start that spawns a bare server MASKS the real failure — attune's own `redis_bootstrap._start_via_direct` put a password-less, all-interfaces `redis-server` on :6379 while the configured stack was crash-looping, and every probe except the FT.* index read it as healthy**: 2026-08-23. `ensure_redis(auto_start=True)` fell through Homebrew/Docker to `redis-server --port 6379 --daemonize yes`: no config, `*:6379`, no `requirepass`, no modules, `dir` = the caller's cwd (it dropped a `dump.rdb` into a repo worktree). It answered PING, so the stack's crash loop looked like "memory index missing" for two hours. The squatter's origin was a mystery until the code was grepped for `redis-server` — the process signature (`ppid 1`, no conf file, cwd = worktree, started at a session timestamp) matched the spawn line exactly. **Rules**: (1) when a service "came back" on its own, check `CONFIG GET dir` / `INFO server config_file` / `MODULE LIST` before trusting it — a bare server is a different server; (2) a fallback that cannot reproduce the configured server's security posture should refuse and report "not running" (#2197 removed the spawn on every platform, chair-ruled after the cross-review lane showed the Windows path had the same shape); (3) health that is satisfied by ANY listener on the port is not health.
 
 - **zsh does not word-split unquoted variables — `F="a b"; cmd $F` and `for pair in "2194 sha"; set -- $pair` both pass ONE argument, and a script that takes `<pr> <sha>` then looks for a PR named "2194 sha"**: 2026-08-23, twice in one session. First `pre-commit run --files $F` saw a single path containing spaces ("No such file or directory" for the whole list); then a guarded-merge loop `for pair in "2194 9a17cd8f7" …; do set -- $pair; land_pr.sh "$1" "$2"` ran five times with `$1` = the whole pair and `$2` empty — `no pull requests found for branch "2194 9a17cd8f7"`, zero merges, a full relaunch. Bash splits on IFS by default; zsh (the Bash tool's shell here) does not unless `SH_WORD_SPLIT` is set. **Use arrays**: `F=(a b); cmd "${F[@]}"`, and for pairs iterate explicit literals or `read -r pr sha <<<"$pair"`. Companion to the existing zsh gotchas (`=word` PATH expansion, read-only `status`) — same root: the Bash tool's shell is zsh, and Bash idioms fail quietly, not loudly.
+
+- **Progressive tier escalation is dead spend for any agent whose gate value is a fail-closed ratchet — check monotonicity before paying for CAPABLE/PREMIUM retries**: 2026-08-23, triaging bug-predict's six `security_agent.py` hypotheses (PR #2204). The reported bug was narrow: the `-1` did-not-run sentinel made `ReleaseAgent.process()` escalate CHEAP → CAPABLE → PREMIUM, re-running bandit (and in real mode the LLM) three times for an outcome that could not change. Fixed with a `retryable: False` signal on the degrade dicts. But reading the ratchet showed the sentinel case is just the visible corner of a larger property: bandit's counts are authoritative and the LLM may only RAISE them, so `critical_issues` is monotone non-decreasing across tiers and a CHEAP-tier failure can never become a CAPABLE/PREMIUM success — escalation helps this agent in NO case. **Diagnostic: before trusting an escalate-on-failure loop, ask what a stronger model could change about the SUCCESS predicate specifically.** If the predicate reads a tool-derived value the escalation cannot move (deterministic tool, fail-closed ratchet, absent-tool sentinel), every extra tier is pure cost and should short-circuit. Left the broader case as a chair-callable follow-up in the PR body; the triage precision was 3 real / 2 already-correct-pinned / 2 false positive across seven hypotheses.
+
+- **A "do X when Y merges" handoff held by TWO sessions puts two agents on ONE branch in ONE worktree — the second session amends and pushes your commit under you, and your next `git diff` shows edits you never made**: 2026-08-23, the #2204 → #2205 follow-up. This session was told "open the follow-up PR when #2204 merges" and parked a commit on `fix/security-agent-failure-not-retryable`; the sibling session that shepherded #2204 to merge held the same instruction implicitly (it owned the merge). When #2204 landed, BOTH acted: I cherry-picked onto a fresh branch off the squash and pushed `142dea663`; within minutes the sibling amended that commit in MY worktree (`1f5103fc8`, adapting #2204's late-added "LLM cannot steer escalation" test to the new semantics), pushed, opened #2205, ran the D11 lane, and appended the ledger row. Tells that something else was writing: a serial run that flipped from `1 failed` to `210 passed` with no edit of mine; a `git diff origin/main --stat` that grew from 18 to 34 test lines while `git status` stayed clean; `git reflog` showing a `commit (amend)` I did not run. It resolved coherently only by luck — the edits were compatible. **Rules:** (1) before acting on a "when Y merges" trigger, `gh pr list --head <branch>` AND `git reflog -3` — if a PR exists or the reflog shows a foreign amend, the other session owns it; verify its claims (the PR body's "ledger row appended" was true only after a `git fetch`, not in the local diff) and STOP; (2) a chip/handoff that says "open the PR when #N merges" should name ONE owner — the merging session is the natural one, because it already knows the moment; the waiting session should hold the branch but not the trigger; (3) `git reflog` is the cheap probe for "did someone else touch this checkout" — `git status` clean says nothing about it. Pairs with the existing "one branch per agent" contract rule (violated here by construction, not by carelessness) and the "interrupted compound command — re-establish actual git state" lesson.
+
+- **A rebase onto a sibling PR that touched the same file can invalidate a triage VERDICT, not just produce a textual conflict — after resolving the hunks, re-read the sibling's design and re-check every verdict that rested on the old shape**: 2026-08-23, #2204 rebased onto #2203. My finding (f) was "bandit has no CRITICAL severity (verified: `bandit.core.constants.RANKING == ['UNDEFINED','LOW','MEDIUM','HIGH']`), so the CRITICAL bucket is dead — remove it." That was TRUE against the code I triaged. #2203 then landed a design in which the LLM reports CRITICAL separately and the ratchet normalizes the LLM's count against bandit's CRITICAL+HIGH gate quantity — so the bucket was no longer scanner-only dead weight; it was one side of a deliberate symmetry, and removing it would have broken #2203's `_score`/`critical - high` recovery. The textual conflict pointed at the lines, but the thing that actually changed was the PREMISE of the verdict. Resolution: take the sibling's side, keep the bucket, add the comment "bandit never fills this; it exists for the LLM's count", rewrite the test to pin HIGH-alone semantics, and downgrade the PR-body row from "removed" to "documented" so the precision record stays honest. **Rule:** a conflict resolution is not done when the markers are gone — for each finding in the PR body, ask "does the verdict's stated reason still hold against the rebased tree?" The verified fact (bandit's ranking) did not change; what changed was whether that fact still implied the fix. Pairs with "spec-named scope drifts from code reality — grep the actual instances" (same family: the premise moved under a decision).
+
+- **A ratified /retro item recorded ONLY in the chat transcript makes the
+  executing session reconstruct it by transcript archaeology — write the
+  ratified items' CONCRETE wording into the starter/handoff before the
+  ratifying session closes**: 2026-08-23, the "address these opportunities"
+  session opened with a plan naming "(O1) allowlist merge, (O2) precision
+  tally script, (O3) fold-in convention line" — shorthand bound to a retro
+  in ANOTHER session's transcript. Nothing durable carried the items: not
+  the starter, not memory, not the outbox. Recovery was grepping
+  `~/.claude/projects/*/**.jsonl` for the retro block (~10 tool calls, and
+  it nearly failed — the first four search patterns missed because the
+  shorthand "allowlist merge" appears nowhere in the retro's own wording,
+  which says "invert to an allowlist"). The retro skill already says
+  "ratified items get RECORDED before the session closes"; the gap is that
+  `queue to starter` dispositions must include the item's full sentence,
+  not a slug — the NEXT session has no access to the referent that made
+  the slug meaningful. Cheap fix that would have prevented it: the
+  ratifying session appends the verbatim opportunity text to
+  `~/.attune/next_session_starter.md` (or a handoff file) at close, so the
+  executing session reads three sentences instead of mining transcripts.
+  Transcript mining recipe that worked, for when it recurs: search
+  assistant-turn text for a DISTINCTIVE PHRASE from the domain (here
+  "Ledger precision" / "pportunit" + "ledger"), newest files first, and
+  expect the user's shorthand to differ from the retro's wording.
+
+- **"The claude CLI subprocess failed without producing any error output"
+  from SDK workflows has THREE stacked causes on this machine — diagnose
+  with a direct `claude -p` probe before touching workflow code**:
+  2026-08-23 fleet probe, three failed cycles before the root cause. (1)
+  A session's leaked env (`CLAUDECODE`, `CLAUDE_CODE_*`,
+  `ANTHROPIC_BASE_URL`) misroutes the nested CLI — scrub the whole
+  `^(CLAUDE|ANTHROPIC_BASE)` family for any subprocess that spawns
+  `claude`, not just the two obvious vars. (2) With a clean env and NO
+  key, the failure persists because **the org has disabled Claude
+  subscription access for Claude Code** — keyless/subscription-first
+  routing is dead on this machine by policy, and the workflow's error
+  text ("run `claude` once interactively") cannot say so. The one-line
+  probe that names it: `env <scrubbed> ANTHROPIC_API_KEY="" claude -p
+  "ok"` → "Your organization has disabled Claude subscription access
+  for Claude Code". (3) With the API key active, MOST workflows run —
+  the two that still fail deterministically (doc-gen,
+  research-synthesis, `Exception: Claude Code returned an error result:
+  success` on claude-agent-sdk 0.2.116) share the SAME
+  `claude_agent_sdk.query()` transport as 12 working workflows, so the
+  discriminator is per-call `ClaudeAgentOptions`, NOT the transport and
+  NOT the version drift alone (venv 0.2.116 vs lockfile pin 0.2.105 —
+  drift is real, close it, but 12/14 query() callers work on 0.2.116).
+  Order of operations that would have saved the cycles: direct CLI
+  probe first (10s), THEN env scrub, THEN workflow reruns. Spend note:
+  with subscription dead, every LLM workflow run bills the API key —
+  the in-repo spend gate correctly reports which basis it will bill
+  (#2201), and its non-interactive block is the tell that you are about
+  to spend money you did not plan.
+
+- **A spec `**Status:**` token must come from the controlled
+  vocabulary, or a docs-only PR paints every matrix lane red**: the
+  allowed set is `STATUS_VOCABULARY` in
+  `src/attune/ops/spec_lifecycle.py` (`active, approved, complete,
+  completed, done, draft, living, parked, paused, shipped,
+  superseded`). A plausible-but-invented token like `RATIFIED` /
+  `finalized` / `locked` fails `tests/unit/gates/
+  test_status_line_gate.py::test_corpus_sweep_every_spec_dir_is_legible`,
+  and because that gate runs inside the full unit suite it fails EVERY
+  matrix lane (both OSes, both clock-tz lanes, coverage) on a
+  **docs-only** PR. 2026-08-23: a spec `requirements.md` flipped to
+  `**Status**: RATIFIED` failed 6 checks on a PR touching only
+  `docs/specs/*.md`. The gate literally uses `RATIFIED` as its example
+  of a garbled token to reject; the lifecycle word for "approved and in
+  execution" is `active` (put the human word "ratified by chair" in the
+  annotation after the em dash, not as the token). Two diagnostics that
+  pin it fast: (1) a docs-only PR failing the test matrix/coverage means
+  a test READS the docs you changed — check main first (green main +
+  failing docs-PR = the diff itself trips a doc-scanning gate, here the
+  status-line sweep), then grep the failure for the gate name rather
+  than debugging the tests; (2) the assertion message names the exact
+  fix — "leading status token 'ratified' not in vocabulary" — and the
+  gate's `evidence_refs` lists the full allowed set. Sibling to the
+  "before correcting a doc count claim, read the claim-drift gate's
+  derivation" lesson: spec/doc prose is test INPUT, and several gates
+  enforce a controlled form on it.
+
+- **A planted-defect fixture that plants an anti-pattern the LINTER
+  also flags will block the commit — `# noqa` the linter, and keep the
+  noqa off the substring the probe greps for**: 2026-08-23, Phase 3 of
+  workflow-behavioral-validation. The analytical fixture
+  (`tests/fixtures/workflow_probes/analytical/sample_service.py`) plants
+  a mutable default argument (`tags: list[str] = []`) for `code-review`
+  / `deep-review` to catch — but ruff's bugbear rule B006 flags exactly
+  that, and since `B` is in the selected set (`pyproject.toml`) and
+  `tests/**` per-file-ignores only `BLE001` (not `B006`), the `ruff`
+  pre-commit hook FAILED and aborted the commit. The fix is
+  `# noqa: B006 — the planted defect` on the line: it silences the
+  linter without changing the source the probe reads (the probe greps
+  the file text / the workflow analyses the code, and the trailing
+  comment doesn't alter `tags: list[str] = []`). Generalises to every
+  planted anti-pattern a repo linter also catches — mutable defaults
+  (B006), bare/broad except (BLE001), unused names (F841), shell=True
+  (S602) — each needs a targeted noqa in the fixture, and the
+  fixture-integrity guard must grep a substring that the noqa leaves
+  intact. Two diagnostics that would have caught it in pre-flight: (1)
+  run the FULL `ruff` hook output, not `... | tail -1` — the tail hid
+  the B006 line and I only saw the sibling `ruff-bare-exception-check`
+  pass; (2) `--no-gpg-sign` will still abort on a failing pre-commit
+  hook, so a commit that "won't land" after the gpg fix may be a
+  DIFFERENT blocker (here ruff, not signing) — read the full hook
+  output before concluding it is still the signing key. Sibling to the
+  security fixture's handling (the `ev`+`al(` split to dodge the
+  security_guard hook, and detect-secrets excluding `tests/`): a
+  planted-defect fixture lives in tension with every scanner that
+  treats the defect as real.
+
+- **Bare `gpg --clearsign` and `git commit -S` can use DIFFERENT keys —
+  test signing with `-u $(git config user.signingkey)`, or a green
+  interactive test misdiagnoses a hung non-interactive commit**:
+  2026-08-23, recovering from a lost-passphrase key by generating a new
+  one. The user's interactive `echo test | gpg --clearsign` printed OK
+  (it resolved to the NEW key), while the agent's `git commit` and even
+  explicit new-key tests kept hanging — and my own bare `--clearsign`
+  probe was meanwhile prompting for the OLD default key whose
+  passphrase was lost, popping stray pinentry dialogs that got answered
+  on the wrong key's prompt (so the "Save in Keychain" tick cached
+  nothing useful). The two commands select keys independently: bare
+  clearsign takes gpg's default secret key; git takes
+  `user.signingkey`. Rules: (1) after any key rotation, every signing
+  test names the key: `echo test | gpg -u <signingkey> --clearsign`;
+  (2) `gpgconf --kill gpg-agent` WIPES the cached passphrase an
+  interactive entry just primed — don't kill the agent while
+  diagnosing "why is my context not inheriting the unlock"; (3) the
+  durable macOS fix is pinentry-mac + one interactive `-u <newkey>`
+  sign with "Save in Keychain" ticked, after dismissing all stray
+  dialogs; (4) check `git config --local user.email` too — a repo-local
+  value silently overrides the global and puts the wrong author email
+  on commits (verification needs the email to match a key UID and a
+  verified GitHub email). Extends the existing pinentry-mac lesson
+  with the two-keys-two-selectors trap and the agent-kill footgun.
+
+- **An LLM workflow's structured-findings COUNT is non-deterministic
+  across identical runs — gate validation on the BEHAVIORAL receipt
+  (the defect is named), keep counts as evidence only**: 2026-08-23,
+  live-validating the analytical probe batch
+  (workflow-behavioral-validation Phase 3). refactor-plan against the
+  SAME fixture returned 0 structured findings, then 44, then 0 across
+  three runs minutes apart — while its report text named the planted
+  duplication (`validate_*` blocks) every single time. A probe gating
+  on `num_findings > 0` failed on LLM variance, not on detection —
+  6/7 probes passed and the 7th "failure" was the probe's own
+  brittleness. The spec's own rule ("assert the workflow named/surfaced
+  the defect — never an exact count/score") existed and I violated it
+  with my own gate anyway, because a count LOOKS more rigorous than a
+  substring check. It is the opposite: the count is the flaky signal,
+  the named-class is the stable one. Fix shape: `passed = named_class`;
+  `num_findings` stays in the evidence dict for humans. Pin the
+  zero-count-but-named case as a passing unit test so a later "tighten
+  the assertion" cleanup can't reintroduce the flake. Sibling to the
+  severity-vs-category findings-key lesson from the same harness (#2211)
+  — both are vacuous/brittle-assertion traps on LLM-shaped output, in
+  opposite directions (reading the wrong key → false miss; trusting a
+  count → false failure).
+
+- **A budget-capped sub-run whose cap is below the workflow's measured
+  appetite fails on EVERY invocation while recording $0 — and the $0 is
+  bookkeeping fiction, because error results carry no cost_report even
+  though tokens were billed**: 2026-08-23, #2214 (discovery-sweep's
+  dependency-check lane). The lane's `budget_multiplier = 0.5` rested
+  on a prose premise ("narrower spend profile") that measurement
+  refuted: a quick-depth dependency-check costs ~$0.45 and standard
+  ~$1.87, comparable to the other lanes — so the ~$0.29 share the
+  multiplier produced at a $5 sweep guaranteed an SDK "Reached maximum
+  budget" abort on the first call, every sweep, forever. Three
+  diagnostics that pin this class fast: (1) a lane that fails
+  REPRODUCIBLY at $0 while its standalone workflow passes points at the
+  invocation context, not the workflow — diff what the wrapper passes
+  (here `max_budget_usd=share`) against the standalone call; (2)
+  compare the allocation against the workflow's MEASURED cost from real
+  runs (the probe registry's cost column), never against the
+  multiplier's design prose; (3) treat "$0 spent" on an errored run as
+  unmeasured, not free — the abort happens mid-run after billable
+  tokens. Fix shape: set the multiplier from measured cost; default the
+  sweep lane to the cheapest depth that demonstrably detects planted
+  defects (breadth pass); and add a per-source `min_useful_usd` floor
+  so a share below the measured minimum SKIPS with an honest
+  info-finding instead of launching a run guaranteed to die at its cap.
+  Generalizes to any fan-out engine that splits a budget by static
+  ratios: every ratio is a claim about relative cost, and unmeasured
+  ratios rot as workflows change shape.
+
+- **`WorkflowResult.success` can mean "the assessment RAN", not "the
+  verdict passed" — read the workflow's documented result contract
+  before asserting on a field, or you file a false defect against
+  correct code**: 2026-08-23, gate-group probe validation.
+  `ReleasePrepTeamWorkflow.execute` returns `success=True` BY DOCUMENTED
+  CONTRACT ("success reflects that the assessment RAN — the release
+  verdict lives in the report (`metadata['approved']`), so a BLOCKED
+  release still exits 0"). My release-prep probe asserted
+  `not result.success` on a fixture with a planted `assert False` test,
+  read the always-True field, and reported "gates PASS a planted
+  failing test — absence-as-pass". Issue #2221 was filed as a verified
+  production defect. Re-verification against the REAL verdict field
+  showed `metadata.approved: False`, "Release **BLOCKED** — confidence:
+  low" — the gate was correct all along; the probe was the defect, and
+  the issue had to be closed as a false alarm. This is the wrong-field
+  sibling of the wrong-KEY class (#2211 severity-vs-category, #2219
+  phantom 'assessment', #2220 never-produced context keys): the field
+  exists and reads cleanly, but MEANS something other than what the
+  assertion needs. Discipline: before gating on any result field,
+  read the execute() docstring for its semantics — repos that route
+  verdicts through `metadata`/report fields while pinning `success` to
+  "ran without crashing" are common (this repo does it deliberately so
+  a BLOCKED release still exits 0). When a probe's finding indicts
+  production code, re-verify on the field the CONTRACT names before
+  filing — the audit of my other three gate probes (go_no_go, degraded,
+  items_found — all contract-correct) is what kept this from spreading.
+
+- **Diagnosing a bundled-`claude`-CLI child that fails at $0 with
+  "error result: success" — the two auth failures wear ONE mask, and a
+  probe run in the parent env reports a DIFFERENT condition than the
+  child hit (#2227, verified live 2026-08-24)**: the CLI emits
+  `subtype:"success", is_error:true` for api_error results, and
+  claude-agent-sdk's ProcessError replacement raises only the SUBTYPE,
+  dropping the `result` body that held the real cause. Two distinct
+  conditions therefore render identically as `Exception: Claude Code
+  returned an error result: success` at exit 1 / $0: (a) org-disabled
+  subscription 403, (b) API usage-limit 400 ("specified API usage
+  limits" = the console's monthly spend limit, per-WORKSPACE as well as
+  org-level). Discriminate by running the bundled CLI directly with
+  `--output-format json` and reading `result` + `api_error_status` —
+  never from the SDK exception text. Auth selection in the child is
+  env-driven: `CLAUDE_CODE_ENTRYPOINT=claude-desktop` (inherited from a
+  desktop-app session) flips the CLI to host/subscription auth even
+  when ANTHROPIC_API_KEY is set and approved; the SDK's own children
+  are safe (it strips `CLAUDECODE` and forces `sdk-py`), but any BARE
+  `claude` spawned from a session shell — health probes included — hits
+  the wrong auth path and reports an unrelated error. Fix shipped in
+  #2229: `iter_agent_messages` captures the is_error ResultMessage's
+  own text in-stream and raises a classified `SdkSubprocessError`;
+  `sdk_error_from_exception()` fast-paths it (never re-probe a
+  classified error); `capture_subprocess_failure` mirrors the SDK child
+  env. Riders: the `opentelemetry` ModuleNotFoundError in such
+  tracebacks is the SDK's own best-effort OTEL injection, caught at
+  DEBUG — benign noise; and `~/.claude.json`'s `customApiKeyResponses`
+  stores the key's last-20-chars SUFFIX, not a prefix — compare with
+  `key.endswith(entry)` when checking whether an env key is approved.
+
+- **A "full local run" scoped to tests/unit is NOT what CI runs — the
+  suite also collects top-level tests/models, tests/security,
+  tests/workflows, tests/memory, tests/agent_factory — and new-code
+  ratchets fire on ANY new matching site, so run tests/unit/gates
+  before every push that adds an except/write/idiom**: 2026-08-24,
+  twice in one session. The #2242 hardening PR went red on ubuntu for
+  tests/models/test_fallback.py + tests/security/
+  test_audit_logger_extended.py (both outside tests/unit, both pinning
+  behavior the diff changed), and the #2237 PR went red solely on the
+  broad-except ratchet (tests/unit/gates) for a new intentional catch.
+  Cheap receipts, in order: (1) `pytest tests` (the WHOLE tree — ~4min
+  with xdist) before push, not per-suite spot runs; (2) any new
+  `except Exception` needs its ratchet baseline entry raised WITH a
+  reason comment in the SAME commit; (3) grep the top-level test dirs
+  for the symbol you changed (`grep -rn get_delay_ms tests/` found the
+  extra pinning tests instantly — after CI already had).
+
+- **`auto-merge-when-green` never arms on dependabot PRs (the arming
+  workflow run shows conclusion=skipped for dependabot-authored
+  pull_request_target events) — a fully-green CLEAN dependabot PR
+  needs a plain `gh pr merge --squash`, no admin**: 2026-08-24,
+  #2233. The label applied fine but `autoMergeRequest` stayed null
+  past the async window; `gh run list --workflow=auto-merge-safe.yml`
+  showed the labeled event's run as SKIPPED (author guard). With
+  mergeStateStatus=CLEAN and all checks green, the plain squash merge
+  went through immediately. Related same-night calibration: dependabot
+  range-widenings across a documented ceiling (mcp <2, anthropic
+  <1.0.0) are close-with-`@dependabot ignore this update` cases, not
+  merge cases — lockfile-green CI proves nothing about a published
+  range that breaks fresh installs. Rider: the probe runner's `--run`
+  flag is comma-separated, NOT repeatable — `--run a --run b` silently
+  keeps only b (argparse last-wins); count the "running probe"
+  sections in the output against what you asked for.
+
+- **`git stash -q` when only UNTRACKED files changed creates NO stash
+  — the paired `git stash pop` then pops a PRE-EXISTING stash (an old
+  autostash or another branch's leftovers) into your tree, possibly
+  with conflicts**: 2026-08-24, live. A stash/checkout/pop wrapper
+  around a branch switch popped a stale `autostash` entry (left by an
+  earlier rebase) plus surfaced a months-old stash from another
+  branch; result was a UU conflict on a file the session never
+  touched. The tell: pop printing "The stash entry is kept in case
+  you need it again" when you expected a clean pop. Rules: (1) before
+  any pop, `git stash list` — know what the top entry IS; (2)
+  untracked files travel across `git checkout` on their own — the
+  stash dance is unnecessary for them; (3) recovery for an unwanted
+  conflicted pop: `git restore --staged --worktree <file>` (the kept
+  stash entry preserves the content if it was ever needed).
+
+- **Job-level logs ARE fetchable mid-run via
+  `gh api repos/<o>/<r>/actions/jobs/<job-id>/logs` — the "can't debug
+  until the whole run completes" limitation applies to
+  `gh run view --log-failed`, not the jobs API**: 2026-08-24, used
+  three times to debug failed matrix lanes while sibling Windows lanes
+  were still running (each time saving the ~15-min wait the existing
+  lesson assumed). Recipe: `run=$(gh run list --branch <br>
+  --workflow=tests.yml --limit 1 --json databaseId --jq
+  '.[0].databaseId')` -> `job=$(gh api .../runs/$run/jobs?per_page=50
+  --jq '.jobs[] | select(.name | contains("ubuntu-latest, 3.12")) |
+  .id')` -> `gh api .../jobs/$job/logs | grep -E "FAILED"`. Works as
+  soon as THAT job has completed (failed), regardless of run status.
+  Also: grep the log for "short test summary" — the assertion detail
+  is there (e.g. `assert (16895 & 511) == 448` instantly identified a
+  Windows mode-bits failure).
