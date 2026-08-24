@@ -54,7 +54,6 @@ import asyncio
 import json
 import os
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -198,6 +197,59 @@ def validate_fixtures() -> list[str]:
 # --------------------------------------------------------------------------
 
 
+def _stage_python_fixture(src: Path, dst: Path) -> None:
+    """Stage a .py fixture with its self-identifying prose stripped.
+
+    Same observer effect as the dependency manifest (see
+    _stage_dependency_manifest): the tracked fixtures announce
+    themselves ("Planted-defect fixture", "SEEDED BUG ... the workflow
+    must still flag it"), and an agent that reads the confession can
+    discount the findings. Confessions appear in three shapes — the
+    module docstring, comment-only lines, and docstring/trailing-
+    comment lines carrying a marker — all stripped from the STAGED
+    copy; the tracked file keeps its annotations for humans and the
+    fixture-integrity checks. A bare noqa/pragma core on a code line
+    survives (tool-directed, not a confession).
+    """
+    markers = ("SEEDED BUG", "planted defect", "planted-defect", "DO NOT FIX", "Planted-defect")
+    quotes = ('"""', "'''")
+    lines = src.read_text(encoding="utf-8").splitlines()
+    out: list[str] = []
+    in_doc = False
+    doc_done = False
+    for line in lines:
+        s = line.strip()
+        if not doc_done:
+            if not in_doc and s.startswith(quotes):
+                in_doc = True
+                if len(s) > 3 and s.endswith(quotes):
+                    in_doc = False
+                    doc_done = True
+                continue
+            if in_doc:
+                if s.endswith(quotes):
+                    in_doc = False
+                    doc_done = True
+                continue
+            if s and not s.startswith("#"):
+                doc_done = True
+        if s.startswith("#"):
+            continue
+        if any(m in line for m in markers):
+            if "#" in line:
+                code, _, comment = line.partition("#")
+                if any(m in comment for m in markers):
+                    core = re.match(r"\s*(noqa[:\s][\w,\s]*|pragma[:\s][\w\s]*)", comment)
+                    line = code.rstrip() + (f"  # {core.group(1).strip()}" if core else "")
+                    if not line.strip():
+                        continue
+            else:
+                # docstring text line carrying a confession — drop it
+                continue
+        out.append(line)
+    dst.write_text("\n".join(out).lstrip("\n") + "\n", encoding="utf-8")
+
+
 def _stage_dependency_manifest(workdir: Path) -> None:
     """Stage cve_pins.txt as requirements.txt WITHOUT its header comments.
 
@@ -217,6 +269,17 @@ def _stage_dependency_manifest(workdir: Path) -> None:
         if line.strip() and not line.lstrip().startswith("#")
     ]
     (workdir / "requirements.txt").write_text("\n".join(pins) + "\n", encoding="utf-8")
+
+
+def _head(result: Any, limit: int = 2048) -> str:
+    """Truncated raw report head for run-records (retro 2026-08-24 1.1).
+
+    The dependency-check observer-effect triage cost an extra billed
+    capture run purely because records persisted only summary+evidence;
+    with the head in the record, the fixture confession would have been
+    visible in the FAIL record itself.
+    """
+    return _raw_text(result)[:limit]
 
 
 def _findings_for(result: Any, category: str) -> list[str]:
@@ -305,11 +368,11 @@ async def _run_workflow(name: str, **kwargs: Any) -> Any:
 
 def _stage(workdir: Path) -> None:
     """Copy the code fixtures into a throwaway workdir."""
-    shutil.copy(
+    _stage_python_fixture(
         FIXTURES / "security" / "vulnerable_service.py",
         workdir / "vulnerable_service.py",
     )
-    shutil.copy(FIXTURES / "testgen" / "orders.py", workdir / "orders.py")
+    _stage_python_fixture(FIXTURES / "testgen" / "orders.py", workdir / "orders.py")
     # cve_pins.txt is staged AS requirements.txt so the checker sees it.
     _stage_dependency_manifest(workdir)
 
@@ -325,7 +388,7 @@ async def probe_security_audit(budget: float) -> ProbeResult:
     _budget_env(budget)
     with tempfile.TemporaryDirectory() as tmp:
         work = Path(tmp)
-        shutil.copy(
+        _stage_python_fixture(
             FIXTURES / "security" / "vulnerable_service.py",
             work / "vulnerable_service.py",
         )
@@ -349,10 +412,12 @@ async def probe_security_audit(budget: float) -> ProbeResult:
     names_key = _mentions(text, "hardcoded", "secret", "credential", "api key", "cwe-798")
     non_perfect = score is None or score < 100
 
-    passed = num_findings > 0 and names_eval and names_key and non_perfect
+    # Named-class gate (retro 2026-08-24 1.3): the behavioral receipts
+    # are the NAMED defects + a non-perfect score; the bucket count is
+    # evidence only (population varies run to run — the dependency-check
+    # observer-effect triage proved counts flake while naming holds).
+    passed = names_eval and names_key and non_perfect
     reasons = []
-    if num_findings == 0:
-        reasons.append("no security findings returned")
     if not names_eval:
         reasons.append("did not name the eval() defect")
     if not names_key:
@@ -367,7 +432,7 @@ async def probe_security_audit(budget: float) -> ProbeResult:
         reason=reason,
         cost_usd=_cost_of(result),
         duration_s=dur,
-        evidence={"score": score, "num_findings": num_findings},
+        evidence={"score": score, "num_findings": num_findings, "raw_head": _head(result)},
     )
 
 
@@ -418,7 +483,11 @@ async def probe_dependency_check(budget: float) -> ProbeResult:
         reason=reason,
         cost_usd=_cost_of(result),
         duration_s=dur,
-        evidence={"num_findings": num_findings, "named_class": names_pkg},
+        evidence={
+            "num_findings": num_findings,
+            "named_class": names_pkg,
+            "raw_head": _head(result),
+        },
     )
 
 
@@ -437,7 +506,7 @@ async def probe_test_gen(budget: float) -> ProbeResult:
     _budget_env(budget)
     with tempfile.TemporaryDirectory() as tmp:
         work = Path(tmp)
-        shutil.copy(FIXTURES / "testgen" / "orders.py", work / "orders.py")
+        _stage_python_fixture(FIXTURES / "testgen" / "orders.py", work / "orders.py")
         t0 = time.monotonic()
         result = await _run_workflow("test-gen", path=str(work), depth="quick")
         dur = time.monotonic() - t0
@@ -485,6 +554,7 @@ async def probe_test_gen(budget: float) -> ProbeResult:
                         "emitted_test_chars": 0,
                         "files_written": 0,
                         "meta_tests_generated": meta.get("tests_generated"),
+                        "raw_head": _head(result),
                     },
                 )
             test_file = work / "test_probe_generated.py"
@@ -517,6 +587,7 @@ async def probe_test_gen(budget: float) -> ProbeResult:
             "files_written": len(real_files),
             "meta_tests_generated": meta.get("tests_generated"),
             "pytest_tail": tail,
+            "raw_head": _head(result),
         },
     )
 
@@ -595,6 +666,7 @@ async def probe_discovery_sweep(budget: float) -> ProbeResult:
             "lane_findings": counts,
             "lane_spend": {k: round(v, 4) for k, v in lane_spend.items()},
             "failures": failures,
+            "raw_head": _head(result),
         },
     )
 
@@ -653,7 +725,7 @@ async def probe_release_notes(budget: float) -> ProbeResult:
             reason=crash,
             cost_usd=_cost_of(result),
             duration_s=dur,
-            evidence={"planted_commit": subject},
+            evidence={"planted_commit": subject, "raw_head": _head(result)},
         )
     score = _score_of(result)
     text = _raw_text(result)
@@ -673,7 +745,7 @@ async def probe_release_notes(budget: float) -> ProbeResult:
         reason=reason,
         cost_usd=_cost_of(result),
         duration_s=dur,
-        evidence={"score": score, "planted_commit": subject},
+        evidence={"score": score, "planted_commit": subject, "raw_head": _head(result)},
     )
 
 
@@ -786,7 +858,7 @@ async def _probe_analytical(name: str, budget: float) -> ProbeResult:
     cfg = _ANALYTICAL[name]
     with tempfile.TemporaryDirectory() as tmp:
         work = Path(tmp)
-        shutil.copy(
+        _stage_python_fixture(
             FIXTURES / "analytical" / "sample_service.py",
             work / "sample_service.py",
         )
@@ -821,7 +893,7 @@ async def _probe_analytical(name: str, budget: float) -> ProbeResult:
         reason=reason,
         cost_usd=_cost_of(result),
         duration_s=dur,
-        evidence={"num_findings": num_findings, "named_class": named},
+        evidence={"num_findings": num_findings, "named_class": named, "raw_head": _head(result)},
     )
 
 
@@ -853,7 +925,7 @@ async def probe_secure_release(budget: float) -> ProbeResult:
     _budget_env(budget)
     with tempfile.TemporaryDirectory() as tmp:
         work = Path(tmp)
-        shutil.copy(
+        _stage_python_fixture(
             FIXTURES / "security" / "vulnerable_service.py",
             work / "vulnerable_service.py",
         )
@@ -879,6 +951,7 @@ async def probe_secure_release(budget: float) -> ProbeResult:
             "critical_count": getattr(result, "critical_count", None),
             "high_count": getattr(result, "high_count", None),
             "blockers": len(getattr(result, "blockers", []) or []),
+            "raw_head": _head(result),
         },
     )
 
@@ -891,7 +964,7 @@ async def probe_health_check(budget: float) -> ProbeResult:
     _budget_env(budget)
     with tempfile.TemporaryDirectory() as tmp:
         work = Path(tmp)
-        shutil.copy(FIXTURES / "testgen" / "orders.py", work / "orders.py")
+        _stage_python_fixture(FIXTURES / "testgen" / "orders.py", work / "orders.py")
         t0 = time.monotonic()
         result = await _run_gate_workflow("health-check", path=str(work))
         dur = time.monotonic() - t0
@@ -911,7 +984,12 @@ async def probe_health_check(budget: float) -> ProbeResult:
         reason=reason,
         cost_usd=float(report.get("total_cost", 0.0) or 0.0),
         duration_s=dur,
-        evidence={"degraded": degraded, "grade": grade, "score": report.get("score")},
+        evidence={
+            "degraded": degraded,
+            "grade": grade,
+            "score": report.get("score"),
+            "raw_head": _head(result),
+        },
     )
 
 
@@ -923,7 +1001,7 @@ async def probe_doc_orchestrator(budget: float) -> ProbeResult:
     _budget_env(budget)
     with tempfile.TemporaryDirectory() as tmp:
         work = Path(tmp)
-        shutil.copy(
+        _stage_python_fixture(
             FIXTURES / "analytical" / "sample_service.py",
             work / "sample_service.py",
         )
@@ -956,7 +1034,7 @@ async def probe_doc_orchestrator(budget: float) -> ProbeResult:
         reason=reason,
         cost_usd=float(getattr(result, "total_cost", 0.0) or 0.0),
         duration_s=dur,
-        evidence={"degraded": degraded, "items_found": items_found},
+        evidence={"degraded": degraded, "items_found": items_found, "raw_head": _head(result)},
     )
 
 
@@ -1011,7 +1089,11 @@ async def probe_release_prep(budget: float) -> ProbeResult:
         reason=reason,
         cost_usd=_cost_of(result),
         duration_s=dur,
-        evidence={"approved": approved, "confidence": meta.get("confidence")},
+        evidence={
+            "approved": approved,
+            "confidence": meta.get("confidence"),
+            "raw_head": _head(result),
+        },
     )
 
 
