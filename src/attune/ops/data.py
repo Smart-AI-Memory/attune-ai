@@ -950,7 +950,8 @@ def read_telemetry_summary(
     # is either a removed workflow or a stub from local development.
     # (P2-8 in the 2026-05-14 QA punch list.)
     try:
-        canonical_names = {w.name for w in list_workflows()}
+        # include_hidden: hidden workflows' historical telemetry is real.
+        canonical_names = {w.name for w in list_workflows(include_hidden=True)}
     except Exception:  # noqa: BLE001
         # INTENTIONAL: if the registry introspection fails, fall back
         # to showing everything rather than hiding all data.
@@ -1693,39 +1694,55 @@ def read_sweep_chip_counts(scope_path: str, config: Config) -> SweepChipCounts:
 #: 2026-08-23): these workflows currently report success their execution
 #: does not support. Shown as a warning badge on the dashboard until the
 #: fail-closed fixes land; remove the entry in the fixing PR.
-RELIABILITY_NOTICES: dict[str, str] = {
-    "secure-release": (
-        "Known issue: can report GO even when its security-audit and "
-        "release-prep sub-workflows fail to execute. Do not trust a GO "
-        "from this workflow until the fail-closed fix lands."
-    ),
-    "health-check": (
-        "Known issue: reports perfect scores (100/100, grade A) when its "
-        "measurement agents do not run. Treat perfect scores from fast, "
-        "zero-cost runs as unmeasured, not healthy."
-    ),
-}
+#: (secure-release and health-check entries removed 2026-08-24: the
+#: fail-closed fixes landed in #2222 / #2209 with live probe receipts —
+#: see docs/specs/workflow-behavioral-validation/registry.md.)
+RELIABILITY_NOTICES: dict[str, str] = {}
 
 
-def list_workflows() -> list[WorkflowEntry]:
-    """Return the registered workflow catalog. Empty if the registry is unavailable."""
+#: Workflows HIDDEN from the dashboard Workflows page (chair-directed
+#: 2026-08-24) until they demonstrably work — the probe registry
+#: (docs/specs/workflow-behavioral-validation/registry.md) is the
+#: evidence surface; remove an entry when its probe passes. Hidden from
+#: the PAGE only: the ops runner still accepts launches (probes/API),
+#: and telemetry keeps counting their historical runs.
+# Hidden-ness is owned by attune.workflows.visibility (single source of
+# truth for every catalog surface); imported LATE inside list_workflows()
+# to preserve this module's no-top-level-attune.workflows convention.
+
+
+def list_workflows(include_hidden: bool = False) -> list[WorkflowEntry]:
+    """Return the registered workflow catalog. Empty if the registry is unavailable.
+
+    Args:
+        include_hidden: When False (the dashboard default), workflows hidden for the
+            dashboard surface (attune.workflows.visibility) are omitted — known-broken or
+            dashboard-unrunnable entries stay off the Workflows page
+            until their probes pass. Validation and telemetry callers
+            pass True: hiding is a presentation concern, never a
+            data-integrity one.
+    """
     try:
         from attune.workflows import list_workflows as registry_list
+        from attune.workflows.visibility import is_hidden
     except ImportError:
         return []
 
     out: list[WorkflowEntry] = []
     try:
         for entry in registry_list():
+            name = str(entry.get("name", ""))
+            if not include_hidden and is_hidden(name, surface="dashboard"):
+                continue
             stages = entry.get("stages") or []
             tier_map = entry.get("tier_map") or {}
             out.append(
                 WorkflowEntry(
-                    name=str(entry.get("name", "")),
+                    name=name,
                     description=str(entry.get("description", "")),
                     stages=len(stages) if isinstance(stages, list) else 0,
                     tier_map={str(k): str(v) for k, v in tier_map.items()},
-                    notice=RELIABILITY_NOTICES.get(str(entry.get("name", "")), ""),
+                    notice=RELIABILITY_NOTICES.get(name, ""),
                 )
             )
     except Exception:  # noqa: BLE001

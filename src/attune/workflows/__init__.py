@@ -133,6 +133,9 @@ from .routing import (
 )
 from .step_config import WorkflowStepConfig, steps_from_tier_map, validate_step_config
 
+# Catalog visibility (hidden-from-users set; presentation only)
+from .visibility import HIDDEN_WORKFLOWS, is_hidden
+
 logger = logging.getLogger(__name__)
 
 # Lazy import mapping for workflow classes
@@ -672,6 +675,8 @@ __all__ = [
     "get_model",
     "get_workflow",
     "get_workflow_stats",
+    "HIDDEN_WORKFLOWS",
+    "is_hidden",
     "list_workflows",
     "refresh_workflow_registry",
     "steps_from_tier_map",

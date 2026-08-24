@@ -85,7 +85,7 @@ def test_read_telemetry_summary_happy_path_full_shape(tmp_path, monkeypatch):
         WorkflowEntry(name="security-audit", description="", stages=1, tier_map={}),
     ]
 
-    def _fake_list_workflows() -> list[WorkflowEntry]:
+    def _fake_list_workflows(include_hidden=False) -> list[WorkflowEntry]:
         return canonical
 
     monkeypatch.setattr(_data_mod, "list_workflows", _fake_list_workflows)
@@ -199,7 +199,7 @@ def test_read_telemetry_summary_workflow_field_fallback_chain(tmp_path, monkeypa
     # Force the "show everything" fallback by making the registry lookup
     # raise, so this test isolates the workflow-name resolution logic from
     # the canonical-filter logic (covered separately below).
-    def _raise():
+    def _raise(include_hidden=False):
         raise RuntimeError("registry unavailable")
 
     monkeypatch.setattr(_data_mod, "list_workflows", _raise)
@@ -308,7 +308,7 @@ def test_read_telemetry_summary_canonical_filter_excludes_unregistered_workflows
     import attune.ops.data as _data_mod
     from attune.ops.data import WorkflowEntry
 
-    def _fake_list_workflows():
+    def _fake_list_workflows(include_hidden=False):
         return [WorkflowEntry(name="code-review", description="", stages=1, tier_map={})]
 
     monkeypatch.setattr(_data_mod, "list_workflows", _fake_list_workflows)
@@ -343,7 +343,7 @@ def test_read_telemetry_summary_registry_failure_falls_back_to_show_everything(
     cfg = _config(tmp_path)
     import attune.ops.data as _data_mod
 
-    def _raise():
+    def _raise(include_hidden=False):
         raise RuntimeError("registry unavailable")
 
     monkeypatch.setattr(_data_mod, "list_workflows", _raise)
@@ -369,7 +369,7 @@ def test_read_telemetry_summary_by_workflow_caps_at_top_20(tmp_path, monkeypatch
     cfg = _config(tmp_path)
     import attune.ops.data as _data_mod
 
-    def _raise():
+    def _raise(include_hidden=False):
         raise RuntimeError("registry unavailable")  # show-everything fallback
 
     monkeypatch.setattr(_data_mod, "list_workflows", _raise)

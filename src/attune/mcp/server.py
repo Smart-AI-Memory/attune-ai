@@ -644,10 +644,11 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandle
 
         """
         from attune.workflows import list_workflows
+        from attune.workflows.visibility import visible_entries
 
         workflows = [
             {"name": w.get("name", ""), "description": w.get("description", "")}
-            for w in list_workflows()
+            for w in visible_entries(list_workflows())
         ]
 
         wizards: list[dict[str, str]] = []

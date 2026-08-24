@@ -12,7 +12,12 @@ from attune.ops.data import RELIABILITY_NOTICES, WorkflowEntry, list_workflows
 
 
 def test_noticed_workflows_are_flagged():
-    assert set(RELIABILITY_NOTICES) == {"secure-release", "health-check"}
+    # 2026-08-24: the fail-closed fixes landed (#2222 secure-release,
+    # #2209 health-check) with live probe receipts, so their containment
+    # notices were removed per this file's own docstring contract. The
+    # dict stays as the mechanism for future containment entries; any
+    # entry present must carry the warning shape.
+    assert set(RELIABILITY_NOTICES) == set()
     for name, text in RELIABILITY_NOTICES.items():
         assert "Known issue" in text, name
 

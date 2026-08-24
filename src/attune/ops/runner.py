@@ -473,7 +473,9 @@ class RunnerService:
         # Verify against the live registry. Cheap: ~25 entries, no I/O.
         from attune.ops import data as _data
 
-        valid_names = {w.name for w in _data.list_workflows()}
+        # include_hidden: hiding is presentation-only — API/probe launches
+        # of hidden workflows remain valid.
+        valid_names = {w.name for w in _data.list_workflows(include_hidden=True)}
         if name not in valid_names:
             logger.warning("recommendation rejected: unknown workflow %r", name)
             return None
