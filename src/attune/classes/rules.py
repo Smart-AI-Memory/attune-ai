@@ -757,7 +757,7 @@ def scan_result_key_contract(
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
                 hits.extend(
-                    _judge_handler(node, str(rel), repo_root / workflows_root, module_imports)
+                    _judge_handler(node, rel.as_posix(), repo_root / workflows_root, module_imports)
                 )
     return hits
 
@@ -936,7 +936,7 @@ def scan_entry_point_channels(
                 hits.append(
                     Hit(
                         "R9-entry-point-channel",
-                        str(rel),
+                        rel.as_posix(),
                         lineno,
                         f"reads group '{group}' that pyproject never names "
                         "and no legacy marker claims",
