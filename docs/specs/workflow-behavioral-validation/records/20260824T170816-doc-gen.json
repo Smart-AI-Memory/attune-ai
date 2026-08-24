@@ -1,0 +1,19 @@
+{
+  "workflow": "doc-gen",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "executed-examples",
+  "verdict": "fail",
+  "cost_usd": 0.5188,
+  "duration_s": 132.1,
+  "ran_at": "2026-08-24T17:08:16Z",
+  "runner_version": "0.3.0",
+  "git_sha": "928ae3f54",
+  "evidence": {
+    "examples_run": 4,
+    "example_failures": [
+      "example 1: rc=1:     order_total([10.0], discount=1.5)        # raises ValueError: discount must be between 0 and 1\n  File \"/private/var/folders/5t/bzsz5qd17pd7h_wwwd5qjbnw0000gn/T/tmp0mv2y4s6/orders.py\", line 10, in order_total\n    raise ValueError(\"discount must be between 0 and 1\")\nValueError: discount must be between 0 and 1"
+    ],
+    "raw_head": "I'll orchestrate the three specialized subagents. Since the outline planner and content writer can both analyze the codebase independently, I'll run them concurrently first, then run the polish reviewer on the produced content.\n\nNow I'll run the polish reviewer on the produced documentation content.\n\nAll three subagents have finished. Here is the synthesized documentation.\n\n---\n\n# Documentation: `orders.py`\n\n## Summary\n\nThe codebase is a single, dependency-free Python module (`orders.py`) providing two pure, stateless utility functions for order pricing in a retail/e-commerce context: `order_total`, which sums item prices and applies an optional fractional discount, and `classify_order`, which maps a total onto a named shipping tier. The two are designed to compose \u2014 the output of `order_total` feeds directly into `classify_order`.\n\n## Outline\n\n*(produced by the outline planner from `orders.py`)*\n\n- **Codebase map**\n  - Language: Python 3.7+ (`from __future__ import annotations`, `list[float]` generics)\n  - Structure: single-file library module \u2014 no packages, tests, config, README, or CLI entry point\n  - Components: `order_total(prices, discount=0.0) -> float` and `classify_order(total) -> str`, forming a compute-total \u2192 classify pipeline (`orders.py`)\n- **Overview** \u2014 order pricing + shipping-tier classification utility (`orders.py`)\n- **Getting Started** \u2014 Python version requirements, import instructions, minimal quick-start\n- **Public API Reference**\n  - `order_total` \u2014 signature, `prices`/`discount` params, discounted subtotal return, `ValueError` on out-of-range discount (`orders.py:4-12`)\n  - `classify_order` \u2014 signature, `total` param, tier string return, threshold table (`orders.py:15-23`)\n- **Configuration Options** \u2014 `discount` valid range (0.0\u20131.0); hard-coded tier thresholds `0/50/200` documented as fixed business rules (`orders.py:9-10, 17-22`)\n- **Usage Examples** \u2014 no-discount total; discounted total with error handling; end-to-end `classify_order(order_total(...))`; boundary cases\n- **Error Handli",
+    "reason": "1/4 emitted example(s) failed to execute"
+  }
+}

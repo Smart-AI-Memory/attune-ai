@@ -1,0 +1,20 @@
+{
+  "workflow": "doc-gen",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "executed-examples",
+  "verdict": "fail",
+  "cost_usd": 0.575,
+  "duration_s": 209.5,
+  "ran_at": "2026-08-24T17:14:40Z",
+  "runner_version": "0.3.0",
+  "git_sha": "928ae3f54",
+  "evidence": {
+    "examples_run": 9,
+    "example_failures": [
+      "example 1: rc=1:   File \"/var/folders/5t/bzsz5qd17pd7h_wwwd5qjbnw0000gn/T/tmpboib16kl/probe_example_1.py\", line 1\n    Args:\n         ^\nSyntaxError: invalid syntax",
+      "example 2: rc=1:   File \"/var/folders/5t/bzsz5qd17pd7h_wwwd5qjbnw0000gn/T/tmpboib16kl/probe_example_2.py\", line 1\n    Args:\n         ^\nSyntaxError: invalid syntax"
+    ],
+    "raw_head": "I'll start by taking a quick look at the codebase structure, then orchestrate the three subagents.\n\nI understand the codebase. Now I'll orchestrate the three subagents as a pipeline (content depends on outline, review depends on content). Starting with the outline planner.\n\nOutline complete. Now I'll run the content writer (using the outline) and, in parallel, since the polish reviewer needs the final content, I'll run content first, then review.\n\nNow the polish reviewer to check the documentation quality and produce suggestions.\n\nAll three subagents have completed. The polish reviewer caught two real defects in the draft (a floating-point equality error and a fictional `summarize` helper), which I've corrected in the Documentation section below. Here is the synthesized document.\n\n---\n\n# `orders.py` \u2014 Documentation\n\n## Summary\n\n`orders.py` is a small, dependency-free Python utility module for e-commerce order calculations. It exposes two pure functions: `order_total`, which sums a list of item prices and applies an optional fractional discount, and `classify_order`, which maps a numeric total to one of four shipping tiers. Both functions are stateless and suited to composition in an order-processing pipeline.\n\n---\n\n## Outline\n\n### 1. Module: `orders.py`\n- **Path:** `/private/var/folders/5t/bzsz5qd17pd7h_wwwd5qjbnw0000gn/T/tmpboib16kl/orders.py`\n- Single-module utility library for order-total and shipping-tier calculations.\n- No external dependencies; uses `from __future__ import annotations` only (`orders.py:1`).\n\n#### 1.1 Module Overview\n- Purpose: compute an order's discounted total and classify it into a shipping tier.\n- Import: `from orders import order_total, classify_order`\n\n#### 1.2 Public API Reference\n- **`order_total(prices: list[float], discount: float = 0.0) -> float`** (`orders.py:4`) \u2014 sums prices, applies fractional discount in `[0, 1]`; raises `ValueError` if out of range (`orders.py:9-10`).\n- **`classify_order(total: float) -> str`** (`orders.py:15`) \u2014 buckets a total into `\"empty\"` / `\"standard\"",
+    "reason": "2/9 emitted example(s) failed to execute"
+  }
+}

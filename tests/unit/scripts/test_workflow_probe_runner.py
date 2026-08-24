@@ -534,3 +534,156 @@ def test_records_carry_raw_head() -> None:
     head = runner._head(_R())
     assert head.startswith("HEAD ")
     assert len(head) == 2048
+
+
+def test_generative_probes_registered_and_costed() -> None:
+    # D5 batch 3 — doc-gen and research-synthesis are wired into every
+    # registration surface (a probe missing from one table silently
+    # drops out of --all runs or records with no receipt type).
+    for name in ("doc-gen", "research-synthesis"):
+        assert name in runner.PROBES
+        assert name in runner.PROBE_ORDER
+        assert name in runner._EST_COST_USD
+        assert name in runner._RECEIPT_TYPES
+
+
+def test_research_fixture_carries_planted_tokens() -> None:
+    arch = (FIXTURES / "research" / "architecture.md").read_text(encoding="utf-8")
+    assert "QuorumLattice" in arch
+    assert "heliotrope" in arch
+    for fname in ("operations.md", "roadmap.md"):
+        assert (FIXTURES / "research" / fname).exists()
+
+
+def test_research_fixture_is_confession_free() -> None:
+    # The corpus must read as a normal project doc set — a fixture that
+    # announces itself lets the agent discount the planted fact (the
+    # dependency-check observer effect, 2026-08-24).
+    for doc in (FIXTURES / "research").glob("*.md"):
+        text = doc.read_text(encoding="utf-8").lower()
+        for marker in ("fixture", "planted", "probe", "synthetic"):
+            assert marker not in text, f"{doc.name} confesses: {marker!r}"
+
+
+def test_fence_to_script_repl_and_plain() -> None:
+    plain = "import orders\nprint(orders.order_total([1.0]))\n"
+    assert runner._fence_to_script(plain) == plain
+    repl = ">>> import orders\n>>> orders.order_total([1.0])\n1.0\n"
+    out = runner._fence_to_script(repl).splitlines()
+    assert "import orders" in out
+    assert "orders.order_total([1.0])" in out
+    assert "1.0" not in out  # illustrative output line dropped
+
+
+def test_harden_expected_raises_pins_the_live_false_positive() -> None:
+    # The exact line from the first live doc-gen run (2026-08-24): a
+    # CORRECT example demonstrating the documented exception, which the
+    # naive executor flagged as a workflow failure. The hardened script
+    # must exit 0 on it.
+    import subprocess as sp
+    import sys as _sys
+    import tempfile as tf
+    from pathlib import Path as P
+
+    code = (
+        "def order_total(prices, discount=0.0):\n"
+        "    if not 0 <= discount <= 1:\n"
+        "        raise ValueError('discount must be between 0 and 1')\n"
+        "    return sum(prices) * (1 - discount)\n"
+        "order_total([10.0], discount=1.5)        "
+        "# raises ValueError: discount must be between 0 and 1\n"
+    )
+    hardened = runner._harden_expected_raises(code)
+    with tf.TemporaryDirectory() as tmp:
+        f = P(tmp) / "ex.py"
+        f.write_text(hardened, encoding="utf-8")
+        proc = sp.run([_sys.executable, str(f)], capture_output=True, text=True, timeout=60)
+    assert proc.returncode == 0, proc.stderr
+
+
+def test_harden_expected_raises_still_fails_on_broken_claims() -> None:
+    # The assertion cuts both ways: a '# raises X' line that does NOT
+    # raise, or raises something else, fails the example.
+    import subprocess as sp
+    import sys as _sys
+    import tempfile as tf
+    from pathlib import Path as P
+
+    for bad in (
+        "x = 1  # raises ValueError\n",  # never raises
+        "int('a')  # raises KeyError\n",  # raises the WRONG exception
+    ):
+        hardened = runner._harden_expected_raises(bad)
+        with tf.TemporaryDirectory() as tmp:
+            f = P(tmp) / "ex.py"
+            f.write_text(hardened, encoding="utf-8")
+            proc = sp.run([_sys.executable, str(f)], capture_output=True, text=True, timeout=60)
+        assert proc.returncode != 0, f"hardened script passed on: {bad!r}"
+
+
+def test_harden_expected_raises_leaves_plain_lines_alone() -> None:
+    plain = "import orders\nprint(orders.order_total([1.0]))\n"
+    assert runner._harden_expected_raises(plain).splitlines() == plain.splitlines()
+
+
+def test_docstring_section_fences_are_not_examples() -> None:
+    # Calibration round 2 (2026-08-24 live run): the doc's API-reference
+    # section renders Google-style docstring blocks in untagged fences
+    # ("Args: ..."), which are prose, not examples — they must not parse
+    # and must not be counted as executable examples.
+    import ast as _ast
+
+    docstring_block = (
+        "Args:\n"
+        "    prices: item prices for the orders module.\n"
+        "    discount: fractional discount.\n"
+    )
+    script = runner._harden_expected_raises(runner._fence_to_script(docstring_block))
+    try:
+        _ast.parse(script)
+        parsed = True
+    except SyntaxError:
+        parsed = False
+    assert not parsed, "docstring section block unexpectedly parses as Python"
+
+    real_example = "import orders\nprint(orders.order_total([1.0]))\n"
+    _ast.parse(runner._harden_expected_raises(runner._fence_to_script(real_example)))
+
+
+def test_probe_doc_gen_filters_and_executes_with_mocked_workflow() -> None:
+    # Regression for the stripped-import NameError (2026-08-24: a $0
+    # billed run died on `ast` because the helper tests never exercised
+    # the probe's own fence-filter path). Mocked workflow, no LLM spend:
+    # a docstring fence is skipped, the real example runs, probe passes.
+    import asyncio
+
+    class _R:
+        success = True
+        error = None
+        metadata = {
+            "raw_result_text": (
+                "# Documentation\n"
+                "order_total and classify_order are documented.\n"
+                "```\nArgs:\n    prices: item prices for orders.\n```\n"
+                "```python\n"
+                "from orders import order_total\n"
+                "print(order_total([1.0, 2.0]))\n"
+                "```\n"
+            )
+        }
+        final_output = "x"
+        cost_report = None
+        summary = ""
+
+    async def fake_run(name, **kwargs):
+        return _R()
+
+    original = runner._run_workflow
+    runner._run_workflow = fake_run
+    try:
+        out = asyncio.run(runner.probe_doc_gen(1.0))
+    finally:
+        runner._run_workflow = original
+    assert out.passed, out.reason
+    assert out.evidence["examples_run"] == 1
+    assert out.evidence["skipped_unparseable"] == 1

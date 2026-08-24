@@ -13,12 +13,14 @@ new records; `--check` is the CI drift guard.
 | dependency-check | PASS | 0.4084 | 109.5 | 2026-08-24T13:31:14Z | 8a260f413 | `records/20260824T133114-dependency-check.json` |
 | discovery-sweep | PASS | 3.3260 | 178.8 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-discovery-sweep.json` |
 | doc-audit | PASS | 0.5083 | 94.9 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-doc-audit.json` |
+| doc-gen | PASS | 0.4598 | 181.4 | 2026-08-24T17:35:37Z | 928ae3f54 | `records/20260824T173537-doc-gen.json` |
 | doc-orchestrator | PASS | 0.0000 | 0.1 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-doc-orchestrator.json` |
 | health-check | PASS | 0.0000 | 2.3 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-health-check.json` |
 | perf-audit | PASS | 0.3042 | 77.2 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-perf-audit.json` |
 | refactor-plan | PASS | 0.3439 | 98.1 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-refactor-plan.json` |
 | release-notes | PASS | 0.5955 | 114.6 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-release-notes.json` |
 | release-prep | PASS | 0.0000 | 2.2 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-release-prep.json` |
+| research-synthesis | PASS | 0.5995 | 156.3 | 2026-08-24T17:08:16Z | 928ae3f54 | `records/20260824T170816-research-synthesis.json` |
 | secure-release | PASS | 1.0822 | 211.7 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-secure-release.json` |
 | security-audit | PASS | 0.6585 | 149.8 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-security-audit.json` |
 | simplify-code | PASS | 0.4602 | 221.6 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-simplify-code.json` |
@@ -30,9 +32,7 @@ new records; `--check` is the CI drift guard.
 Workflows with NO run-record. Per the spec, absence is 'not yet probed', never 'clean'. Reasons are hand-authored in `dispositions.md`.
 
 - **bug-predict** — exercised as a discovery-sweep lane (8 findings in the 2026-08-23 sweep record); no standalone probe yet. Candidate for the analytical batch's next increment.
-- **doc-gen** — fixed-and-validated 2026-08-24: the "deterministic SDK failure" class was the #2227 runner-path condition (API key at its usage cap wearing the is_error-on-success mask); with #2229 on main and the cap raised, the exact runner command completed live (exit 0, $1.06, 148s, real report). The D5 generative probe (execute the emitted output) is still owed — this entry records the fix receipt, not a probe.
 - **fix** — requires a `goal` argument (dashboard-unrunnable class from the roundtable); needs a purpose-built fixture + invocation, not the shared analytical workdir.
 - **orchestrated-health-check** — same class as `health-check` (`OrchestratedHealthCheckWorkflow` serves both registry names); the health-check probe + record covers this surface.
 - **rag-code-gen** — requires a `query` argument (dashboard-unrunnable class); generative batch (D5), probe must execute/resolve the cited output.
 - **release-gate** — same class as `release-prep` (`ReleasePrepTeamWorkflow` serves both registry names); covered by the release-prep probe + record (currently FAIL — #2221).
-- **research-synthesis** — fixed-and-validated 2026-08-24: same
