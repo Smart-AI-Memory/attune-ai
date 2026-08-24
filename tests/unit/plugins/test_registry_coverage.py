@@ -268,8 +268,13 @@ def _catalog_payload() -> dict:
 def _live_registry_counts() -> dict[str, int]:
     counts: dict[str, int] = {}
     from attune.workflows import list_workflows
+    from attune.workflows.visibility import visible_entries
 
-    counts["workflows"] = len(list_workflows())
+    # The catalog deliberately lists the VISIBLE set (known-broken
+    # workflows are hidden until their probes pass — 2026-08-24); the
+    # gate pins catalog == registry-minus-hidden so both silent drift
+    # AND an over-eager filter still fail here.
+    counts["workflows"] = len(visible_entries(list_workflows()))
     try:
         from attune.wizards.registry import list_wizards
 
