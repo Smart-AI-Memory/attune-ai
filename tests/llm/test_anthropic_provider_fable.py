@@ -96,7 +96,8 @@ class TestFableRouting:
         client.messages.create.assert_awaited_once()
         client.beta.messages.create.assert_not_called()
         kwargs = client.messages.create.await_args.kwargs
-        assert kwargs["temperature"] == 0.7
+        # SDK 1.x contract (#2243): sampling params ride in extra_body
+        assert kwargs["extra_body"]["temperature"] == 0.7
         assert "betas" not in kwargs
 
     @pytest.mark.asyncio
