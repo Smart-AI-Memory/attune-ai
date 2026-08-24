@@ -289,7 +289,11 @@ _BASELINE: dict[str, int] = {
     "src/attune/telemetry/approval_gates.py": 8,
     "src/attune/telemetry/cli_analysis.py": 1,
     "src/attune/telemetry/cli_automation.py": 4,
-    "src/attune/telemetry/event_streaming.py": 6,
+    # +1 (#2241): publish_event's best-effort stream-registry SADD — the
+    # event is already committed by XADD, so a registration failure of
+    # any exception class must degrade to a warning, never fail the
+    # publish that succeeded.
+    "src/attune/telemetry/event_streaming.py": 7,
     # +1 (#2237): _retrieve_feedback_many's batched-read guard — a
     # failing retrieve_many degrades to the per-key path (logged);
     # backend transport errors are inherently open-ended.

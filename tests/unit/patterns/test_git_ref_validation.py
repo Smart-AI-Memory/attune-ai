@@ -110,7 +110,16 @@ class TestNoBoundaryWasMissed:
         import attune.patterns.git_extractor as mod
 
         tree = ast.parse(inspect.getsource(mod))
-        guarded = {"_get_commit_info", "_get_commit_diff", "_get_git_config"}
+        # _get_recent_commits_with_diffs' only dynamic argv element is
+        # str(int(num_commits)) behind a >= 1 short-circuit, so an
+        # option-like value is impossible by construction — behavioral
+        # pins live in TestRecentCommitsBatchBoundary.
+        guarded = {
+            "_get_commit_info",
+            "_get_commit_diff",
+            "_get_git_config",
+            "_get_recent_commits_with_diffs",
+        }
         offenders = []
         for fn in ast.walk(tree):
             if not isinstance(fn, ast.FunctionDef) or fn.name in guarded:
@@ -131,3 +140,32 @@ class TestNoBoundaryWasMissed:
             f"unguarded dynamic git argv: {offenders} — route the value through "
             "_is_option_like or add the function to the guarded set"
         )
+
+
+class TestRecentCommitsBatchBoundary:
+    """Behavioral pins for the batched log path's argv discipline (#2241)."""
+
+    def test_nonpositive_count_never_spawns_git(self, extractor, argv_spy):
+        """num_commits < 1 short-circuits before any subprocess."""
+        assert extractor._get_recent_commits_with_diffs(0) == []
+        assert extractor._get_recent_commits_with_diffs(-3) == []
+        assert argv_spy == []
+
+    def test_batch_argv_is_static_except_forced_int_count(self, extractor, argv_spy):
+        """The only dynamic argv element is the int-forced count, and the
+        argv ends with `--` so nothing can be read as a pathspec."""
+        extractor._get_recent_commits_with_diffs(7)
+
+        assert argv_spy == [
+            [
+                "git",
+                "log",
+                "--first-parent",
+                "--diff-merges=first-parent",
+                "-n",
+                "7",
+                "--pretty=format:%x00%H%x1f%an%x1f%aI%x1f%P%x1f%s",
+                "-p",
+                "--",
+            ],
+        ]
