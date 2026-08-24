@@ -391,3 +391,19 @@ def test_every_probe_has_a_receipt_type() -> None:
     # keep the map total over the fleet of probes.
     for name in runner.PROBE_ORDER:
         assert name in runner._RECEIPT_TYPES
+
+
+def test_run_flag_accepts_repeats_and_commas() -> None:
+    # Retro 2026-08-24 item 3.3: repeated --run silently kept only the
+    # last value (argparse default store); it now appends and flattens.
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--run", action="append", default=[])
+    ns = parser.parse_args(["--run", "a,b", "--run", "c"])
+    flat = [p.strip() for chunk in ns.run for p in chunk.split(",") if p.strip()]
+    assert flat == ["a", "b", "c"]
+
+
+def test_unknown_probe_rejected_with_repeated_flags() -> None:
+    assert runner.main(["--run", "security-audit", "--run", "not-a-real-probe"]) == 1
