@@ -144,7 +144,12 @@ class AuditLogger(
             logger.error(f"Failed to initialize audit log directory: {e}")
             self.log_dir = Path.home() / ".attune" / "logs" / "audit"
             self.log_dir.mkdir(parents=True, exist_ok=True)
-            os.chmod(self.log_dir, 0o700)
+            try:
+                os.chmod(self.log_dir, 0o700)
+            except OSError as chmod_err:
+                # Best-effort on the fallback: a chmod refusal must not
+                # take audit logging down entirely.
+                logger.warning(f"Could not restrict fallback log dir perms: {chmod_err}")
             self.log_path = self.log_dir / self.log_filename
             logger.warning(f"Using fallback log directory: {self.log_dir}")
 

@@ -238,6 +238,7 @@ class TestRetryPolicy:
         policy = RetryPolicy(
             initial_delay_ms=500,
             exponential_backoff=False,
+            jitter=False,
         )
 
         assert policy.get_delay_ms(1) == 500
@@ -250,6 +251,7 @@ class TestRetryPolicy:
             initial_delay_ms=1000,
             exponential_backoff=True,
             backoff_multiplier=2.0,
+            jitter=False,
         )
 
         assert policy.get_delay_ms(1) == 1000
@@ -263,6 +265,7 @@ class TestRetryPolicy:
             max_delay_ms=15000,
             exponential_backoff=True,
             backoff_multiplier=2.0,
+            jitter=False,
         )
 
         # Third attempt would be 40000 without cap
