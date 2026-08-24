@@ -1680,3 +1680,36 @@ billed) finding 5 real production defects, 4 fixed in-release — but the
 canonical step-16 run-pair remains BLOCKED on #2227 and is owed once
 that lands. This entry is the receipt of what actually ran and what
 did not.
+
+**UPDATE 2026-08-24 ~03:25 UTC — owed runner pair EXECUTED; #2227
+closed (PR #2229, merged 03:18:32Z, squash `62fb4d124`).** Root cause
+decomposed by live bisection, all probes $0: (1) the deterministic
+$0 signature was the API key at its console usage cap (`400 …
+specified API usage limits`), not a spawn-context transport defect —
+the CLI wraps api_error results as `subtype:"success", is_error:true`
+and the SDK's ProcessError replacement names only the subtype, so the
+real cause was dropped twice; (2) the "subscription disabled" stderr
+probe message was an artifact of probing a bare `claude` in the
+parent env, where `CLAUDE_CODE_ENTRYPOINT=claude-desktop` flips auth
+to the org-disabled subscription path; (3) the `opentelemetry`
+ModuleNotFoundError is benign SDK-internal DEBUG noise. Fix on main:
+in-stream error-text capture → classified `SdkSubprocessError`,
+`sdk_error_from_exception()` in all 14 workflow catch-alls, probe env
+mirrors the SDK child. After the chair raised BOTH spend limits
+(org + workspace), the exact runner command completed end-to-end on
+the 14.1.0 tree (`PYTHONPATH=<main>/src python -m attune.cli_minimal
+workflow run <wf> --path <main>/src/attune`):
+
+- **code-review**: exit 0, **$4.77, 353.7s** — real findings
+  (telemetry feedback-loop Redis N+1s, models↔workflows dependency
+  cycle, agent_sdk_adapter god-module split, Empathy-naming
+  excision remainder).
+- **bug-predict**: exit 0, **$2.34, 275.7s** — real findings
+  (unchecked `json.loads` on Redis data in
+  `memory/redis_memory_coordination.py:252` [HIGH], `gather`
+  fan-outs without `return_exceptions` in 5 team/batch sites,
+  blanket BLE001 ignore for `src/attune/**`).
+
+Pair total $7.11 (estimate band $3–8). The step-16 obligation for
+14.1.0 is now DISCHARGED with receipts; findings above are triage
+candidates, not yet filed issues.
