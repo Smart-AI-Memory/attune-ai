@@ -187,3 +187,31 @@ deserves. It stays OPEN until ruled explicitly.*
 
 **Not yet implemented.** 14.0.0 ships R7 as written (local file, gate
 reads it). The release-asset upload is follow-on work.
+
+## Record — C10 (phantom read) registered (2026-08-24, lead records)
+
+Executed against the 14.1.0-retro chair GO ("class-register entry:
+the phantom-read class"). The entry is in the canonical register
+corpus (`~/.attune/reports/attune-ai-review/CLASS-REGISTER.md`,
+machine-local per the local-first reports carve): **C10 — the
+consumer reads a key/field/name no producer emits (or whose meaning
+differs); the read defaults clean, so the defect renders healthy.**
+Seven confirmed instances 2026-08-23/24 (secure-release phantom keys
+#2222, doc-orchestrator context keys #2223, MCP test-gen handler
+keys #2213→#2250, three probe misreads incl. the #2221 false alarm,
+and the entry-point group split fixed in #2259 — instance 7
+generalizes the "key" to any producer/consumer channel identity).
+Status REGISTERED, unmechanized: per the register pipeline the next
+step is a calibratable narrow rule (result-key contract scan over
+the known workflow producer/consumer pairing; channel-identity scan
+for entry-point groups), never an uncalibratable general dataflow
+rule. Not a chair ruling — a record of executing one.
+
+**Addendum (same day, before merge):** the registered next step
+executed faster than this record merged — PR #2271 (squash
+b2c72e34e, 2026-08-24) landed exactly those calibrated narrow rules
+(R8 result-key contract scan over workflow producer/consumer pairs;
+R9 entry-point channel-identity scan) with a gated 9-site baseline,
+hardened through a codex D11 lane (3 findings accepted). C10 is now
+REGISTERED **and mechanized**; the register entry's status should
+read mechanized from this date.
