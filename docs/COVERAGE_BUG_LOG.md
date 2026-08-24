@@ -1643,3 +1643,40 @@ Separately, a ref-level check (`git rev-parse origin/main:src` vs the
 tag) nearly pointed the review at a main checkout that was 17 commits
 BEHIND `origin/main`; caught by a version disagreement, not by git.
 Both are lessons in the 2026-08-22 outbox batch.
+
+## 2026-08-24 — 14.1.0 post-release self-review (release-execute step 16)
+
+**Tree verified from the filesystem**: worktree detached at merge SHA
+`9f91c9b757c2b66a3786803755dc3a9baface8ff`; on-disk pyproject AND
+imported `__version__` both 14.1.0 before any run.
+
+**Runner-launched runs (the recording path) — ALL FAILED at $0:**
+code-review `6fb48d4803a4` + `f7c4f64e2a56`, bug-predict
+`aa6f7933a92f` + `a74c126a148f` (exit 1, `sdk_error_kind: unknown`;
+second pair launched with `ANTHROPIC_API_KEY` verified present in the
+server env — same failure). No scores or costs exist for the pair; per
+step 16's own rule those runs are NOT claimed as a completed review.
+
+**Top finding (severity: HIGH — filed #2227, verify-note inline):** the
+CLI/ops-runner spawn path fails deterministically in this environment —
+verbose repro of the exact runner command surfaced
+`ModuleNotFoundError: No module named 'opentelemetry'` +
+`Exception: Claude Code returned an error result: success`
+(is_error-on-success), while the in-process path executed 16+ billed
+workflow runs the same night without a single transport failure
+(receipts: probe registry records, live NO_GO/DEGRADED/sweep receipts in
+the 14.1.0 changelog). VERIFIED by side-by-side execution, not
+inference; localizes the fleet roundtable's doc-gen/research-synthesis
+"deterministic SDK failure" class to the spawn context. Second finding
+(severity: MEDIUM, recorded in #2227): the run-record's `sdk_stderr`
+health probe reported an unrelated auth condition ("subscription
+disabled") because it probes a bare `claude` without the workflow env —
+a misleading-diagnostic class.
+
+**Analytical coverage note (context, not a substitute claim):** this
+release's tree DID receive an unusually deep behavioral pass the same
+night — 14 planted-defect probes across 16 workflow surfaces (~$14
+billed) finding 5 real production defects, 4 fixed in-release — but the
+canonical step-16 run-pair remains BLOCKED on #2227 and is owed once
+that lands. This entry is the receipt of what actually ran and what
+did not.
