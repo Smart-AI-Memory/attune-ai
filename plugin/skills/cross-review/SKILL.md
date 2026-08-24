@@ -69,9 +69,11 @@ print(json.dumps(run_review('.', seat=os.environ['SEAT'], mode=os.environ['MODE'
 When a lane returns a PARTIAL manifest that omitted substantive
 files, re-run scoped to exactly those files instead of accepting
 clean-on-partial: pass `paths=[...]` (repo-relative) to
-`run_review` — the brief, result (`scoped_to`/`scope_misses`), and
-ledger row all state the scope, and a path missing from the diff is
-recorded, never silently dropped. Governance surfaces
-(`.claude/gates/`, `pyproject.toml`, `.github/`, `codecov.yml`)
-rank just behind tests in the packing order, so on D11-class diffs
-they are unlikely to be omitted in the first place.
+`run_review` — the brief, result (`scoped_to`), and ledger row all
+state the scope. The scope fails CLOSED: any requested path not in
+the diff raises `ReviewTargetError` (a scoped lane must review
+everything it was asked to — re-issue with only in-diff paths).
+Governance surfaces (`.claude/gates/`, `pyproject.toml`,
+`.github/`, `codecov.yml`) rank just behind tests in the packing
+order, so on D11-class diffs they are unlikely to be omitted in
+the first place.

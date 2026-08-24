@@ -397,22 +397,21 @@ class TestScopedReview:
             paths=["small.py"],
         )
         assert result["scoped_to"] == ["small.py"]
-        assert result["scope_misses"] == []
         assert result["manifest"]["sent"] == ["small.py"]
         assert "big.py" not in result["manifest"]["omitted"]
         assert "SCOPED to 1 path(s)" in result["target"]
         # The seat's brief says so too — a scoped lane must not read as full.
         assert "SCOPED" in invoke.calls[0]["brief"]
 
-    def test_scope_miss_is_recorded_not_silent(self, repo: Path) -> None:
-        result = review.run_review(
-            repo,
-            base_ref="main",
-            invoke_seat=_invoke_stub("NO FINDINGS"),
-            paths=["small.py", "not/in/diff.py"],
-        )
-        assert result["scope_misses"] == ["not/in/diff.py"]
-        assert result["scoped_to"] == ["small.py"]
+    def test_partial_scope_miss_raises_fail_closed(self, repo: Path) -> None:
+        """Codex re-lane finding: a silently shrunk scope must not pass."""
+        with pytest.raises(review.ReviewTargetError, match="not/in/diff.py"):
+            review.run_review(
+                repo,
+                base_ref="main",
+                invoke_seat=_invoke_stub("NO FINDINGS"),
+                paths=["small.py", "not/in/diff.py"],
+            )
 
     def test_unscoped_run_carries_no_scope_keys(self, repo: Path) -> None:
         result = review.run_review(repo, base_ref="main", invoke_seat=_invoke_stub("NO FINDINGS"))
@@ -424,7 +423,7 @@ class TestScopedReviewFailClosed:
     """Codex D11 findings on the O2 branch, pinned (2026-08-24)."""
 
     def test_all_miss_scope_raises_instead_of_clean(self, repo: Path) -> None:
-        with pytest.raises(review.ReviewTargetError, match="matched no files"):
+        with pytest.raises(review.ReviewTargetError, match="not in the diff"):
             review.run_review(
                 repo,
                 base_ref="main",

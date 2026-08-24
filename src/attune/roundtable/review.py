@@ -281,29 +281,29 @@ def run_review(
     ``paths`` scopes the review to those repo-relative files (posix
     separators) — the scoped re-lane for a PARTIAL manifest's omitted
     substantive files (2026-08-24 retro O2: the #2259 lane could not
-    be re-run on the two files it omitted). A path matching nothing
-    in the diff is recorded under ``scope_misses`` rather than
-    silently ignored, and the result carries ``scoped_to`` so the
-    ledger row states the scope honestly.
+    be re-run on the two files it omitted). Every requested path must
+    be in the diff or the run raises ``ReviewTargetError`` (fail
+    closed — codex D11, both rounds); the result carries
+    ``scoped_to`` so the ledger row states the scope honestly.
     """
     target = resolve_target(repo_root, mode=mode, base_ref=base_ref)
     per_file = target["per_file"]
     scoped_to: list[str] | None = None
-    scope_misses: list[str] = []
     if paths is not None:
         wanted = {PurePath(p).as_posix() for p in paths}
-        scope_misses = sorted(wanted - set(per_file))
+        misses = sorted(wanted - set(per_file))
+        if misses:
+            # Codex D11 findings (2026-08-24, both re-lane rounds): a
+            # scope the diff cannot fully satisfy must fail LOUD. An
+            # all-miss scope would brief the seat on an empty diff and
+            # come back "clean" having reviewed nothing; a partial miss
+            # would claim coverage of a request it silently shrank.
+            # Callers re-issue with only in-diff paths.
+            raise ReviewTargetError(
+                "scoped review: requested path(s) not in the diff: " + ", ".join(misses)
+            )
         per_file = {name: diff for name, diff in per_file.items() if name in wanted}
         scoped_to = sorted(per_file)
-        if not per_file:
-            # Codex D11 finding (2026-08-24): an all-miss scope would
-            # brief the seat on an EMPTY diff and could come back
-            # "clean" having reviewed none of the requested files —
-            # the falsely-passing re-lane the scope exists to prevent.
-            raise ReviewTargetError(
-                "scoped review matched no files in the diff; requested: "
-                + ", ".join(sorted(wanted))
-            )
         # The seat must know it is reading a deliberate slice, not the
         # whole diff — scoping travels in the brief, not just the result.
         target["description"] += f" — SCOPED to {len(scoped_to)} path(s): " + ", ".join(scoped_to)
@@ -372,7 +372,6 @@ def run_review(
     }
     if scoped_to is not None:
         result["scoped_to"] = scoped_to
-        result["scope_misses"] = scope_misses
     logger.info(
         "cross_review",
         seat=seat,
