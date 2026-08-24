@@ -43,7 +43,12 @@ re-CONFIRMS interactively rather than hard-refusing.
   a regression test.
 - **R4 — only Anthropic-billed launches are gated.** `codex` and
   `agy` seats bill other providers; they are neither checked nor
-  recorded. The budget being protected is the Anthropic $50.
+  recorded. The budget being protected is the Anthropic $50. The
+  codex half of this premise is chair-VERIFIED, not inferred:
+  Patrick stated 2026-08-24 that the codex CLI runs on his $100
+  Codex subscription plan (recorded in the global memory
+  `user_claude_cli_subscription_org_disabled`), so codex seat and
+  D11-lane invocations spend $0 against this budget.
 - **R5 — enforcement at the shared seam.** Roundtable enforcement
   lives in `default_invoke_seat` (routine.py), which every lane —
   routine seats, synthesis, review, producing, countersign,
