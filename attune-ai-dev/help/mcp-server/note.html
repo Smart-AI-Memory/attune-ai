@@ -277,7 +277,7 @@
 <p>The MCP server is attune's <strong>Model Context Protocol</strong> implementation —
 it exposes attune's workflows, help system, and memory as structured
 <strong>tools</strong>, <strong>resources</strong>, and <strong>prompts</strong> that an MCP client (Claude
-Code) can call. The server class is <strong><code>EmpathyMCPServer</code></strong>; it speaks
+Code) can call. The server class is <strong><code>AttuneMCPServer</code></strong>; it speaks
 MCP over <strong>stdio</strong> and is launched with <code>python -m attune.mcp.server</code>.</p>
 <p>It is how every other attune feature reaches a conversation: the
 <code>code_review</code>, <code>security_audit</code>, <code>memory_store</code>, <code>help_lookup</code>, … tools
@@ -289,11 +289,11 @@ tool (those belong to their own features).</p>
 <ul>
 <li><strong>registration</strong> — a <code>.mcp.json</code> entry runs <code>python -m attune.mcp.server</code> (the plugin ships one); Claude Code connects over
 stdio;</li>
-<li>the Python API — <code>from attune.mcp import create_server, EmpathyMCPServer</code>, for embedding or testing the server.</li>
+<li>the Python API — <code>from attune.mcp import create_server, AttuneMCPServer</code>, for embedding or testing the server.</li>
 </ul>
 <h2>Concepts</h2>
-<h3><code>EmpathyMCPServer</code> and its mixins</h3>
-<p><code>EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin)</code> is the
+<h3><code>AttuneMCPServer</code> and its mixins</h3>
+<p><code>AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin)</code> is the
 core server. The mixins supply handler groups: <code>WorkflowHandlersMixin</code>
 runs the analysis workflows, <code>MemoryHandlersMixin</code> handles
 cross-session memory. A <code>RateLimiter</code> guards against tool-call floods.
@@ -382,7 +382,7 @@ runaway client can't flood the server.</p>
 <h2>Notes &amp; tips</h2>
 <ul>
 <li><strong>Depend on the documented public surface.</strong> The supported API is
-<code>create_server</code> and <code>EmpathyMCPServer</code> from <code>attune.mcp</code>; the
+<code>create_server</code> and <code>AttuneMCPServer</code> from <code>attune.mcp</code>; the
 tool-schema group functions live in <code>attune.mcp.tool_schemas</code>.
 Handler methods and the dispatch table are internal.</li>
 <li><strong><code>await</code> <code>call_tool</code>.</strong> It's the one async entry; the inspection

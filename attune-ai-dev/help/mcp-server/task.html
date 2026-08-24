@@ -285,7 +285,7 @@ print(len(server.tools), &quot;tools&quot;)
 print([r[&quot;uri&quot;] for r in server.get_resource_list()])
 print([p[&quot;name&quot;] for p in server.get_prompt_list()])
 </code></pre>
-<p><strong>Verify:</strong> <code>create_server()</code> returns a ready <code>EmpathyMCPServer</code>.
+<p><strong>Verify:</strong> <code>create_server()</code> returns a ready <code>AttuneMCPServer</code>.
 <code>server.tools</code> is the merged registry — the 41 built-in tools plus any
 registered by installed plugins (e.g. attune-redis adds five <code>redis_*</code>
 tools), so the printed count is ≥ 41. <code>get_resource_list()</code> returns the
