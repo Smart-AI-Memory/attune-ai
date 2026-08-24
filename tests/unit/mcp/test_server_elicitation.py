@@ -32,8 +32,8 @@ FORM = {
 
 def _make_server(tmp_path):
     """Create a server without plugin discovery side effects."""
-    with patch.object(server_module.EmpathyMCPServer, "_register_plugin_tools"):
-        return server_module.EmpathyMCPServer(workspace_root=str(tmp_path))
+    with patch.object(server_module.AttuneMCPServer, "_register_plugin_tools"):
+        return server_module.AttuneMCPServer(workspace_root=str(tmp_path))
 
 
 @pytest.mark.asyncio
@@ -96,7 +96,7 @@ async def test_render_widget_rejects_malformed_form(tmp_path):
 @pytest.mark.parametrize("error", [OSError("disk"), ValueError("config"), ImportError("module")])
 def test_record_surface_choice_swallows_expected_errors(error):
     with patch("attune.elicitation.keyboard_mode_enabled", side_effect=error):
-        result = server_module.EmpathyMCPServer._record_surface_choice(
+        result = server_module.AttuneMCPServer._record_surface_choice(
             SimpleNamespace(),
             chosen="ask",
         )
@@ -163,13 +163,13 @@ def test_keyboard_hint_swallows_expected_errors(error, failing_seam):
         patch("attune.telemetry.form_events.log_submission", **seams["log_submission"]),
         patch("attune.telemetry.form_events.maybe_keyboard_hint", **seams["maybe_keyboard_hint"]),
     ):
-        result = server_module.EmpathyMCPServer._maybe_keyboard_hint()
+        result = server_module.AttuneMCPServer._maybe_keyboard_hint()
 
     assert result is None
 
 
 def test_elicitation_session_is_empty_outside_request():
-    assert server_module.EmpathyMCPServer._elicitation_session() == (None, None)
+    assert server_module.AttuneMCPServer._elicitation_session() == (None, None)
 
 
 def test_elicitation_session_returns_live_request_context():
@@ -181,7 +181,7 @@ def test_elicitation_session_returns_live_request_context():
         new_callable=PropertyMock,
         return_value=context,
     ):
-        result = server_module.EmpathyMCPServer._elicitation_session()
+        result = server_module.AttuneMCPServer._elicitation_session()
 
     assert result == (session, "request-1")
 
@@ -211,7 +211,7 @@ async def test_ask_without_request_context_is_unsupported(tmp_path):
 async def test_ask_converts_session_exception_to_error_envelope(tmp_path):
     session = SimpleNamespace(elicit_form=AsyncMock(side_effect=RuntimeError("closed")))
     with patch.object(
-        server_module.EmpathyMCPServer,
+        server_module.AttuneMCPServer,
         "_elicitation_session",
         return_value=(session, "request-1"),
     ):
@@ -234,7 +234,7 @@ async def test_ask_returns_non_accept_action(tmp_path, action, expected_action):
         elicit_form=AsyncMock(return_value=SimpleNamespace(action=action, content=None))
     )
     with patch.object(
-        server_module.EmpathyMCPServer,
+        server_module.AttuneMCPServer,
         "_elicitation_session",
         return_value=(session, "request-1"),
     ):
@@ -251,7 +251,7 @@ async def test_ask_accept_reports_content_validation_problems(tmp_path):
         )
     )
     with patch.object(
-        server_module.EmpathyMCPServer,
+        server_module.AttuneMCPServer,
         "_elicitation_session",
         return_value=(session, "request-1"),
     ):
@@ -278,7 +278,7 @@ async def test_ask_accept_returns_validated_response(tmp_path):
         )
     )
     with patch.object(
-        server_module.EmpathyMCPServer,
+        server_module.AttuneMCPServer,
         "_elicitation_session",
         return_value=(session, "request-1"),
     ):

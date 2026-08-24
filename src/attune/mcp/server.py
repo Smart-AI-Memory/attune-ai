@@ -8,6 +8,7 @@ import asyncio
 import json
 import logging
 import os
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -86,7 +87,7 @@ def _get_default_user_id() -> str:
         return "mcp-session"
 
 
-class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandlersMixin):
+class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandlersMixin):
     """MCP server for Attune AI workflows.
 
     Exposes workflows and telemetry as MCP tools
@@ -1432,18 +1433,18 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandle
 
 # -- MCP SDK wiring ------------------------------------------------
 # Uses the official MCP Python SDK (mcp.server.Server) for protocol
-# compliance. The EmpathyMCPServer class above holds all state and
+# compliance. The AttuneMCPServer class above holds all state and
 # handlers; the SDK layer below delegates to it.
 
 _mcp_server = Server("attune-ai")
-_app: EmpathyMCPServer | None = None
+_app: AttuneMCPServer | None = None
 
 
-def _get_app() -> EmpathyMCPServer:
+def _get_app() -> AttuneMCPServer:
     """Lazily create the application server singleton."""
     global _app  # noqa: PLW0603
     if _app is None:
-        _app = EmpathyMCPServer()
+        _app = AttuneMCPServer()
     return _app
 
 
@@ -1536,14 +1537,30 @@ async def _handle_get_prompt(
 # -- Public helpers -------------------------------------------------
 
 
-def create_server() -> EmpathyMCPServer:
-    """Create and return an Empathy MCP server instance.
+def create_server() -> AttuneMCPServer:
+    """Create and return an Attune MCP server instance.
 
     Returns:
         Configured MCP server
 
     """
-    return EmpathyMCPServer()
+    return AttuneMCPServer()
+
+
+def __getattr__(name: str) -> Any:
+    """Serve the retired ``EmpathyMCPServer`` name with a deprecation warning.
+
+    The class was renamed to :class:`AttuneMCPServer` (legacy-brand
+    excision remainder, #2238). The alias is removed in 15.0.0.
+    """
+    if name == "EmpathyMCPServer":
+        warnings.warn(
+            "EmpathyMCPServer is deprecated; use AttuneMCPServer " "(alias removed in 15.0.0)",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return AttuneMCPServer
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 async def _run_stdio() -> None:

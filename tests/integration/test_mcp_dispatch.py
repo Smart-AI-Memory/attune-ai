@@ -6,7 +6,7 @@ This is the end-to-end path that every MCP tool invocation takes:
       → handler(args)                     # actual work
         → workflow.execute() / memory op  # business logic
 
-Tests here use a real EmpathyMCPServer instance with workflows mocked at the
+Tests here use a real AttuneMCPServer instance with workflows mocked at the
 boundary so no LLM calls or Redis connections are needed.
 """
 
@@ -17,7 +17,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from attune.mcp.server import EmpathyMCPServer
+from attune.mcp.server import AttuneMCPServer
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -26,10 +26,10 @@ from attune.mcp.server import EmpathyMCPServer
 
 @pytest.fixture
 def server(tmp_path):
-    """Real EmpathyMCPServer with plugin registration and version-check suppressed."""
-    with patch.object(EmpathyMCPServer, "_register_plugin_tools"):
+    """Real AttuneMCPServer with plugin registration and version-check suppressed."""
+    with patch.object(AttuneMCPServer, "_register_plugin_tools"):
         with patch.dict(sys.modules, {"attune.mcp.version_check": MagicMock()}):
-            return EmpathyMCPServer(workspace_root=str(tmp_path))
+            return AttuneMCPServer(workspace_root=str(tmp_path))
 
 
 # ---------------------------------------------------------------------------

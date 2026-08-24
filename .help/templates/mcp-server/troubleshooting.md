@@ -3,8 +3,8 @@ type: troubleshooting
 name: mcp-server-troubleshooting
 feature: mcp-server
 depth: troubleshooting
-generated_at: 2026-06-23T22:52:03.357140+00:00
-source_hash: 08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f
+generated_at: 2026-08-24T13:13:51.843371+00:00
+source_hash: e6370b6c61134866408d30c64611640a3ac5184dc9d37f7e676a5f7ad176e69c
 status: generated
 ---
 
@@ -15,7 +15,7 @@ status: generated
 | Symptom | Cause | Fix | Severity |
 |---|---|---|---|
 | Tools don't appear in Claude Code | The `.mcp.json` entry is missing or the command can't launch | Add/repair the `mcpServers` entry; confirm `python -m attune.mcp.server` runs | high |
-| `RuntimeWarning: coroutine 'EmpathyMCPServer.call_tool' was never awaited` | `call_tool` invoked without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
+| `RuntimeWarning: coroutine 'AttuneMCPServer.call_tool' was never awaited` | `call_tool` invoked without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
 | Tool calls start getting rejected under load | The rate limiter tripped (60 calls / 60 s) | Slow the call rate, or construct with a higher `max_calls` | medium |
 | A tool returns a "path/argument required" error | The tool's own input contract wasn't met | See that tool's feature page; the server just dispatches | medium |
 | Can't tell why the connection failed | Logs aren't on stdout (stdio is the protocol channel) | Read `<tmp>/attune/attune-mcp.log` | low |

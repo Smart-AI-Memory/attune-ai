@@ -304,7 +304,7 @@ def _get_backend(server: Any) -> Any:
     """Get or create AMSMemoryBackend from server state.
 
     Args:
-        server: EmpathyMCPServer instance.
+        server: AttuneMCPServer instance.
 
     Returns:
         AMSMemoryBackend instance.
@@ -942,7 +942,7 @@ def register_tools(server: Any) -> None:
     Adds tool definitions and wires handler dispatch.
 
     Args:
-        server: EmpathyMCPServer instance.
+        server: AttuneMCPServer instance.
     """
     server.tools.update(TOOL_DEFINITIONS)
 

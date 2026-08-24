@@ -1,4 +1,4 @@
-"""Unit tests for memory handler methods on EmpathyMCPServer.
+"""Unit tests for memory handler methods on AttuneMCPServer.
 
 Tests cover _get_memory(), _handle_memory_store/retrieve/search/forget()
 via the server methods (previously tested via standalone functions in
@@ -17,18 +17,18 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from attune.mcp.memory_handlers import MemoryHandlersMixin
-from attune.mcp.server import EmpathyMCPServer
+from attune.mcp.server import AttuneMCPServer
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 
-def _make_server(memory: object = None) -> EmpathyMCPServer:
+def _make_server(memory: object = None) -> AttuneMCPServer:
     """Return a server instance with optional pre-set memory."""
-    with patch.object(EmpathyMCPServer, "_register_plugin_tools"):
+    with patch.object(AttuneMCPServer, "_register_plugin_tools"):
         with patch.dict(sys.modules, {"attune.mcp.version_check": MagicMock()}):
-            server = EmpathyMCPServer()
+            server = AttuneMCPServer()
     if memory is not None:
         server._memory = memory
     return server

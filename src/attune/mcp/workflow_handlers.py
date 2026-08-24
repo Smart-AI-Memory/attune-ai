@@ -193,7 +193,7 @@ def _workflow_response(
 
 
 class WorkflowHandlersMixin:
-    """Mixin providing workflow tool handlers for EmpathyMCPServer.
+    """Mixin providing workflow tool handlers for AttuneMCPServer.
 
     Covers workflows not already exposed in the base server:
     doc-audit, doc-gen, doc-orchestrator, test-audit,

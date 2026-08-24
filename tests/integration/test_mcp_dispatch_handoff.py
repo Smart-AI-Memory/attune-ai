@@ -2,7 +2,7 @@
 
 Separate file from test_mcp_dispatch.py to avoid a held-queue
 collision with #1594, which modifies that module. Same discipline:
-a real EmpathyMCPServer, the real dispatch table, the real
+a real AttuneMCPServer, the real dispatch table, the real
 attune.handoff core — only the repo is a tmp fixture.
 """
 
@@ -15,7 +15,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from attune.mcp.server import EmpathyMCPServer
+from attune.mcp.server import AttuneMCPServer
 
 
 def _git(repo: Path, *args: str) -> str:
@@ -103,24 +103,22 @@ def repo(tmp_path: Path) -> Path:
 
 
 @pytest.fixture
-def server(repo: Path) -> EmpathyMCPServer:
+def server(repo: Path) -> AttuneMCPServer:
     """Real server rooted at the fixture repo; plugins/version-check off."""
-    with patch.object(EmpathyMCPServer, "_register_plugin_tools"):
+    with patch.object(AttuneMCPServer, "_register_plugin_tools"):
         with patch.dict(sys.modules, {"attune.mcp.version_check": MagicMock()}):
-            return EmpathyMCPServer(workspace_root=str(repo))
+            return AttuneMCPServer(workspace_root=str(repo))
 
 
 class TestHandoffDispatch:
     """call_tool → _dispatch_tool → handoff handlers → attune.handoff."""
 
-    def test_tools_registered(self, server: EmpathyMCPServer) -> None:
+    def test_tools_registered(self, server: AttuneMCPServer) -> None:
         names = {t["name"] for t in server.get_tool_list()}
         assert {"handoff_create", "handoff_resume"} <= names
 
     @pytest.mark.asyncio
-    async def test_create_then_resume_round_trip(
-        self, server: EmpathyMCPServer, repo: Path
-    ) -> None:
+    async def test_create_then_resume_round_trip(self, server: AttuneMCPServer, repo: Path) -> None:
         created = await server.call_tool(
             "handoff_create",
             {
@@ -144,7 +142,7 @@ class TestHandoffDispatch:
 
     @pytest.mark.asyncio
     async def test_memory_linkage_through_real_dispatch(
-        self, server: EmpathyMCPServer, repo: Path
+        self, server: AttuneMCPServer, repo: Path
     ) -> None:
         """T3/D5: create stashes a handoff pointer, resume recalls it —
         through the real dispatch chain and the real sanitizer."""
@@ -172,13 +170,13 @@ class TestHandoffDispatch:
             assert report["memory"]["results"][0]["id"] == pointer_id
 
     @pytest.mark.asyncio
-    async def test_resume_missing_packet_truthful(self, server: EmpathyMCPServer) -> None:
+    async def test_resume_missing_packet_truthful(self, server: AttuneMCPServer) -> None:
         result = await server.call_tool("handoff_resume", {})
         assert result["ok"] is False
         assert result["reason"] == "packet_not_found"
 
     @pytest.mark.asyncio
-    async def test_create_cap_rejection_through_dispatch(self, server: EmpathyMCPServer) -> None:
+    async def test_create_cap_rejection_through_dispatch(self, server: AttuneMCPServer) -> None:
         result = await server.call_tool("handoff_create", {"goal": "x" * 3000})
         # call_tool appends voice-layer keys — assert the contract subset,
         # never exact dict equality (repo lesson: additive keys break it).

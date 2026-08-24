@@ -257,9 +257,9 @@ def _catalog_payload() -> dict:
     """Run the real list_capabilities handler and return its payload."""
     import asyncio
 
-    from attune.mcp.server import EmpathyMCPServer
+    from attune.mcp.server import AttuneMCPServer
 
-    return asyncio.run(EmpathyMCPServer()._handle_list_capabilities())
+    return asyncio.run(AttuneMCPServer()._handle_list_capabilities())
 
 
 # Registry name in the catalog payload -> a callable returning the live

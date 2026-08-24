@@ -15,7 +15,7 @@ type: concept
 The MCP server is attune's **Model Context Protocol** implementation —
 it exposes attune's workflows, help system, and memory as structured
 **tools**, **resources**, and **prompts** that an MCP client (Claude
-Code) can call. The server class is **`EmpathyMCPServer`**; it speaks
+Code) can call. The server class is **`AttuneMCPServer`**; it speaks
 MCP over **stdio** and is launched with `python -m attune.mcp.server`.
 
 It is how every other attune feature reaches a conversation: the
@@ -31,13 +31,13 @@ You reach it these ways:
   attune.mcp.server` (the plugin ships one); Claude Code connects over
   stdio;
 - the Python API — `from attune.mcp import create_server,
-  EmpathyMCPServer`, for embedding or testing the server.
+  AttuneMCPServer`, for embedding or testing the server.
 
 ## Concepts
 
-### `EmpathyMCPServer` and its mixins
+### `AttuneMCPServer` and its mixins
 
-`EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin)` is the
+`AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin)` is the
 core server. The mixins supply handler groups: `WorkflowHandlersMixin`
 runs the analysis workflows, `MemoryHandlersMixin` handles
 cross-session memory. A `RateLimiter` guards against tool-call floods.

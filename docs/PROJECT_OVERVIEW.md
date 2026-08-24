@@ -87,7 +87,7 @@ attune_software/       # Software plugin (bundled)
 | BaseWorkflow | `workflows/base.py` | Abstract base for all workflows |
 | WorkflowResult | `workflows/data_classes.py` | Execution result (success, stages, cost) |
 | ModelTier | `workflows/compat.py` | Enum: CHEAP / CAPABLE / PREMIUM |
-| EmpathyMCPServer | `mcp/server.py` | MCP server for Claude Code |
+| AttuneMCPServer | `mcp/server.py` | MCP server for Claude Code |
 | EmpathyConfig | `config/config.py` | Runtime configuration |
 | UnifiedMemory | `memory/__init__.py` | Two-tier memory interface |
 | BaseWizard | `wizards/base.py` | Wizard abstract base |

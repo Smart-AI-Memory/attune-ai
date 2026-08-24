@@ -68,7 +68,7 @@ class RedisPlugin(BasePlugin):
         search, promote, health check).
 
         Args:
-            server: EmpathyMCPServer instance.
+            server: AttuneMCPServer instance.
         """
         try:
             from attune_redis.mcp_tools import register_tools

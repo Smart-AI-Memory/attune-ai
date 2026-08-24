@@ -260,10 +260,10 @@ def _run(handler_name: str, form: dict) -> dict:
     """Invoke an elicitation MCP handler without constructing the server."""
     import asyncio
 
-    from attune.mcp.server import EmpathyMCPServer
+    from attune.mcp.server import AttuneMCPServer
 
-    server = EmpathyMCPServer.__new__(EmpathyMCPServer)
-    handler = getattr(EmpathyMCPServer, handler_name)
+    server = AttuneMCPServer.__new__(AttuneMCPServer)
+    handler = getattr(AttuneMCPServer, handler_name)
     return asyncio.run(handler(server, {"form": form}))
 
 

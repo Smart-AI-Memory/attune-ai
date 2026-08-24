@@ -13,7 +13,7 @@ type: tip
 ## Notes & tips
 
 - **Depend on the documented public surface.** The supported API is
-  `create_server` and `EmpathyMCPServer` from `attune.mcp`; the
+  `create_server` and `AttuneMCPServer` from `attune.mcp`; the
   tool-schema group functions live in `attune.mcp.tool_schemas`.
   Handler methods and the dispatch table are internal.
 - **`await` `call_tool`.** It's the one async entry; the inspection

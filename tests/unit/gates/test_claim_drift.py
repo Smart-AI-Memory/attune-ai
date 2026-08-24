@@ -29,7 +29,7 @@ REPO = Path(__file__).resolve().parents[3]
 @lru_cache(maxsize=1)
 def live_values() -> dict[str, str]:
     """Derive every gated value from its owning registry."""
-    from attune.mcp.server import EmpathyMCPServer
+    from attune.mcp.server import AttuneMCPServer
     from attune.workflows import discover_workflows
 
     registry = discover_workflows()
@@ -40,7 +40,7 @@ def live_values() -> dict[str, str]:
     ).group(1)
     return {
         "skills": str(len(glob.glob(str(REPO / "plugin" / "skills" / "*" / "SKILL.md")))),
-        "tools": str(len(EmpathyMCPServer().tools)),
+        "tools": str(len(AttuneMCPServer().tools)),
         # D4: totals quote distinct workflow classes, not slugs.
         "workflows": str(len(set(registry.values()))),
         "workflow_slugs": str(len(registry)),

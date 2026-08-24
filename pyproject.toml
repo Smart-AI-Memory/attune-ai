@@ -455,33 +455,12 @@ attune_crypto_pin = "attune._pytest_crypto_pin"
 software = "attune_software.plugin:SoftwarePlugin"
 redis = "attune_redis.plugin:RedisPlugin"
 
-# Backward-compat alias (removed in v3.0.0)
-[project.entry-points."empathy_framework.plugins"]
-software = "attune_software.plugin:SoftwarePlugin"
-
-# Workflow plugin entry points for auto-discovery
-[project.entry-points."attune.workflows"]
-code-review = "attune.workflows.code_review:CodeReviewWorkflow"
-doc-gen = "attune.workflows.document_gen:DocumentGenerationWorkflow"
-bug-predict = "attune.workflows.bug_predict:BugPredictionWorkflow"
-# Superseded by wizards — kept for backward compatibility until migration
-security-audit = "attune.workflows.security_audit:SecurityAuditWorkflow"
-perf-audit = "attune.workflows.perf_audit:PerformanceAuditWorkflow"
-test-gen = "attune.workflows.test_gen:TestGenerationWorkflow"
-test-audit = "attune.workflows.test_audit:TestAuditWorkflow"
-refactor-plan = "attune.workflows.refactor_plan:RefactorPlanWorkflow"
-dependency-check = "attune.workflows.dependency_check:DependencyCheckWorkflow"
-# v5.2 Agent team (replaces CrewAI-based crew)
-release-prep = "attune.agents.release.release_prep_team:ReleasePrepTeamWorkflow"
-# health-check: removed in v2.9.0 (module deleted, use release-prep workflow instead)
-# test-coverage-boost: removed (module deleted, use test-gen workflow instead)
-# Legacy entry points removed - handled by migration system
-# (release-prep-legacy → release-prep, health-check-legacy → health-check)
-# Other workflows
-doc-audit = "attune.workflows.doc_audit:DocAuditWorkflow"
-secure-release = "attune.workflows.secure_release:SecureReleasePipeline"
-# pro-review: Consolidated into code-review (migration.py)
-# pr-review: Consolidated into code-review (migration.py)
+# NOTE on workflow entry points: attune's own built-in workflows are
+# registered in attune.workflows._DEFAULT_WORKFLOW_NAMES (lazy-loaded);
+# they are deliberately NOT duplicated as "attune.workflows" entry
+# points, which discover_workflows() now reads and would import eagerly.
+# Third-party packages register theirs under
+# [project.entry-points."attune.workflows"].
 
 # Wizard entry points for auto-discovery
 [project.entry-points."attune.wizards"]

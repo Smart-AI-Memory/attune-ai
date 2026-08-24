@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 import pytest
 
-from attune.mcp.server import EmpathyMCPServer
+from attune.mcp.server import AttuneMCPServer
 
 _FORM = {
     "title": "Scope",
@@ -23,10 +23,10 @@ _FORM = {
 }
 
 
-def _make_server() -> EmpathyMCPServer:
-    with patch.object(EmpathyMCPServer, "_register_plugin_tools"):
+def _make_server() -> AttuneMCPServer:
+    with patch.object(AttuneMCPServer, "_register_plugin_tools"):
         with patch("attune.mcp.version_check.check_for_updates", return_value=None):
-            return EmpathyMCPServer()
+            return AttuneMCPServer()
 
 
 class TestRenderWidgetHandler:

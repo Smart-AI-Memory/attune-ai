@@ -20,7 +20,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from attune.mcp.server import EmpathyMCPServer
+from attune.mcp.server import AttuneMCPServer
 from attune.mcp.workflow_handlers import _workflow_response
 from attune.voice.report_renderer import render_safe
 from attune.workflows.output import Finding, WorkflowReport
@@ -51,10 +51,10 @@ def _bypass_path_validation():
         yield
 
 
-def _make_server(workspace_root: str = "/") -> EmpathyMCPServer:
-    with patch.object(EmpathyMCPServer, "_register_plugin_tools"):
+def _make_server(workspace_root: str = "/") -> AttuneMCPServer:
+    with patch.object(AttuneMCPServer, "_register_plugin_tools"):
         with patch.dict(sys.modules, {"attune.mcp.version_check": MagicMock()}):
-            return EmpathyMCPServer(workspace_root=workspace_root)
+            return AttuneMCPServer(workspace_root=workspace_root)
 
 
 def _make_result(

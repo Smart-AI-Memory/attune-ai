@@ -19,10 +19,10 @@ class TestEmpathyMCPWiring:
     """Every key in _register_tools() must have an if/elif branch in call_tool()."""
 
     def _registered_tools(self) -> set[str]:
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
         # Instantiate a lightweight server and inspect the registered tools dict
-        server = EmpathyMCPServer.__new__(EmpathyMCPServer)
+        server = AttuneMCPServer.__new__(AttuneMCPServer)
         server._memory = None
         server._attune_level = 3
         server._context = {}
@@ -30,10 +30,10 @@ class TestEmpathyMCPWiring:
         return set(server._register_tools().keys())
 
     def _dispatched_tools(self) -> set[str]:
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
         # _build_dispatch_table returns {tool_name: handler}
-        server = EmpathyMCPServer.__new__(EmpathyMCPServer)
+        server = AttuneMCPServer.__new__(AttuneMCPServer)
         server._memory = None
         server._attune_level = 3
         server._context = {}

@@ -3,8 +3,8 @@ type: reference
 name: mcp-server-reference
 feature: mcp-server
 depth: reference
-generated_at: 2026-06-23T22:52:03.357140+00:00
-source_hash: 08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f
+generated_at: 2026-08-24T13:13:51.843371+00:00
+source_hash: e6370b6c61134866408d30c64611640a3ac5184dc9d37f7e676a5f7ad176e69c
 status: generated
 ---
 
@@ -12,17 +12,17 @@ status: generated
 
 ## Reference
 
-The public surface is `create_server` and `EmpathyMCPServer`, exported
+The public surface is `create_server` and `AttuneMCPServer`, exported
 from `attune.mcp`.
 
 ### `attune.mcp`
 
 | Symbol | Purpose |
 |--------|---------|
-| `create_server() -> EmpathyMCPServer` | Build a ready server instance. |
-| `EmpathyMCPServer(...)` | The MCP server (composes `MemoryHandlersMixin` + `WorkflowHandlersMixin`). |
+| `create_server() -> AttuneMCPServer` | Build a ready server instance. |
+| `AttuneMCPServer(...)` | The MCP server (composes `MemoryHandlersMixin` + `WorkflowHandlersMixin`). |
 
-### `EmpathyMCPServer` — selected members
+### `AttuneMCPServer` — selected members
 
 | Member | Purpose |
 |--------|---------|
@@ -51,4 +51,4 @@ from `attune.mcp`.
 |---------|------------|
 | Client registration | `.mcp.json` → `python -m attune.mcp.server` (plugin uses `uvx --from attune-ai …`). |
 | Direct | `python -m attune.mcp.server` (stdio). |
-| Python | `create_server()` / `EmpathyMCPServer`. |
+| Python | `create_server()` / `AttuneMCPServer`. |

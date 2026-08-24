@@ -47,18 +47,18 @@ class _FakeWorkflowResult:
 
 
 def _make_server(tmp_path: Any) -> Any:
-    """Build an EmpathyMCPServer pointed at a temp workspace.
+    """Build an AttuneMCPServer pointed at a temp workspace.
 
     Patches heavyweight init side-effects (plugin discovery)
     to keep the test fast. The version-check thread is a daemon
     inside a try/except and is harmless.
     """
     with patch(
-        "attune.mcp.server.EmpathyMCPServer._register_plugin_tools",
+        "attune.mcp.server.AttuneMCPServer._register_plugin_tools",
     ):
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
-        return EmpathyMCPServer(workspace_root=str(tmp_path))
+        return AttuneMCPServer(workspace_root=str(tmp_path))
 
 
 # ------------------------------------------------------------------
@@ -121,7 +121,7 @@ _HELP_IMPORTS = "attune.help.engine"
 @pytest.mark.unit
 @pytest.mark.asyncio
 class TestHandleHelpLookup:
-    """Tests for EmpathyMCPServer._handle_help_lookup."""
+    """Tests for AttuneMCPServer._handle_help_lookup."""
 
     async def test_progressive_returns_template(self, tmp_path: Any) -> None:
         """Progressive mode returns populated template fields."""
@@ -335,7 +335,7 @@ class TestHandleHelpLookup:
 @pytest.mark.unit
 @pytest.mark.asyncio
 class TestHandleHelpMaintain:
-    """Tests for EmpathyMCPServer._handle_help_maintain."""
+    """Tests for AttuneMCPServer._handle_help_maintain."""
 
     async def test_delegates_to_workflow(self, tmp_path: Any) -> None:
         """Handler creates workflow and calls execute."""

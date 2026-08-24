@@ -21,17 +21,17 @@ class TestDeepReviewMCPDispatch:
 
     def test_deep_review_tool_registered(self):
         """deep_review appears in the registered tool definitions."""
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
-        server = EmpathyMCPServer()
+        server = AttuneMCPServer()
         tool_names = {t["name"] for t in server.get_tool_list()}
         assert "deep_review" in tool_names
 
     def test_deep_review_tool_has_required_path(self):
         """deep_review tool schema requires a path parameter."""
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
-        server = EmpathyMCPServer()
+        server = AttuneMCPServer()
         tools = {t["name"]: t for t in server.get_tool_list()}
         schema = tools["deep_review"]["input_schema"]
         assert "path" in schema["properties"]
@@ -39,9 +39,9 @@ class TestDeepReviewMCPDispatch:
 
     def test_deep_review_in_dispatch_table(self):
         """deep_review has a handler in the dispatch table."""
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
-        server = EmpathyMCPServer()
+        server = AttuneMCPServer()
         table = server._build_dispatch_table()
         assert "deep_review" in table
 

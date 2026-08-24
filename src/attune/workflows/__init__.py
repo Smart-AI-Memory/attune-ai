@@ -20,7 +20,7 @@ Usage:
 Workflow Discovery:
     Workflows can be discovered via entry points (pyproject.toml):
 
-    [project.entry-points."empathy.workflows"]
+    [project.entry-points."attune.workflows"]
     my-workflow = "my_package.workflows:MyWorkflow"
 
     Then call discover_workflows() to load all registered workflows.
@@ -397,7 +397,8 @@ def discover_workflows(
     """Discover workflows via entry points and config.
 
     This function loads workflows registered as entry points under the
-    'empathy.workflows' group. This allows third-party packages to register
+    'attune.workflows' group (plus the legacy 'empathy.workflows' group,
+    removed in 15.0.0). This allows third-party packages to register
     custom workflows that integrate with the Attune AI.
 
     Note: Workflows are loaded lazily - classes are only imported when
@@ -464,27 +465,62 @@ def discover_workflows(
         for workflow_name in config.disabled_workflows:
             discovered.pop(workflow_name, None)
 
-    # Discover via entry points
+    # Discover via entry points. "attune.workflows" is the primary group;
+    # "empathy.workflows" is the legacy group (removed in 15.0.0). Until
+    # this fix the loader read ONLY the legacy group, so entry points
+    # registered under the primary group (including attune's own in
+    # pyproject.toml) were never loaded (#2238 phantom-read instance).
+    primary_names = _load_entry_point_workflows(discovered, config, "attune.workflows")
+    _load_entry_point_workflows(
+        discovered,
+        config,
+        "empathy.workflows",
+        skip_names=primary_names,
+        legacy=True,
+    )
+
+    return discovered
+
+
+def _load_entry_point_workflows(
+    discovered: dict[str, type["BaseWorkflow"]],
+    config: "WorkflowConfig | None",
+    group: str,
+    skip_names: set[str] | None = None,
+    legacy: bool = False,
+) -> set[str]:
+    """Load one entry-point group into ``discovered``; return names loaded."""
+    loaded: set[str] = set()
     try:
-        eps = importlib.metadata.entry_points(group="empathy.workflows")
-        for ep in eps:
-            try:
-                workflow_cls = ep.load()
-                if isinstance(workflow_cls, type) and hasattr(workflow_cls, "execute"):
-                    if config is None or ep.name not in config.disabled_workflows:
-                        discovered[ep.name] = workflow_cls
-            except Exception as e:  # noqa: BLE001
-                # INTENTIONAL: entry point plugins may fail; log but don't break
-                logger.warning(
-                    "Failed to load workflow entry point '%s': %s",
-                    ep.name,
-                    e,
-                )
+        eps = importlib.metadata.entry_points(group=group)
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: entry_points() may not be available; log but don't break
         logger.debug("Entry point discovery unavailable: %s", e)
+        return loaded
 
-    return discovered
+    for ep in eps:
+        if skip_names and ep.name in skip_names:
+            continue  # primary-group registration wins
+        try:
+            workflow_cls = ep.load()
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: entry point plugins may fail; log but don't break
+            logger.warning("Failed to load workflow entry point '%s': %s", ep.name, e)
+            continue
+        if not (isinstance(workflow_cls, type) and hasattr(workflow_cls, "execute")):
+            continue
+        if config is not None and ep.name in config.disabled_workflows:
+            continue
+        if legacy:
+            logger.warning(
+                "Workflow entry point '%s' uses the legacy 'empathy.workflows' "
+                "group; re-register it under 'attune.workflows' (legacy group "
+                "removed in 15.0.0)",
+                ep.name,
+            )
+        discovered[ep.name] = workflow_cls
+        loaded.add(ep.name)
+    return loaded
 
 
 def refresh_workflow_registry(config: "WorkflowConfig | None" = None) -> None:

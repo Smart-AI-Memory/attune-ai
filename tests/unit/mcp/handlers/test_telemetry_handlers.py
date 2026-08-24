@@ -1,4 +1,4 @@
-"""Unit tests for telemetry handler method on EmpathyMCPServer.
+"""Unit tests for telemetry handler method on AttuneMCPServer.
 
 Tests cover _get_telemetry_stats() which delegates to UsageTracker.
 
@@ -11,14 +11,14 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from attune.mcp.server import EmpathyMCPServer
+from attune.mcp.server import AttuneMCPServer
 
 
-def _make_server() -> EmpathyMCPServer:
+def _make_server() -> AttuneMCPServer:
     """Build a minimal server instance."""
-    with patch.object(EmpathyMCPServer, "_register_plugin_tools"):
+    with patch.object(AttuneMCPServer, "_register_plugin_tools"):
         with patch.dict(sys.modules, {"attune.mcp.version_check": MagicMock()}):
-            return EmpathyMCPServer()
+            return AttuneMCPServer()
 
 
 _FAKE_STATS = {

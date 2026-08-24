@@ -453,9 +453,9 @@ def cmd_doctor(args: Namespace) -> int:
 
     # 8. MCP server
     try:
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
 
-        server = EmpathyMCPServer()
+        server = AttuneMCPServer()
         tool_count = len(server.tools)
         _ok(f"MCP server: {tool_count} tools")
     except Exception as e:  # noqa: BLE001

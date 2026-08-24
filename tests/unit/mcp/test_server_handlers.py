@@ -14,8 +14,8 @@ import attune.mcp.server as server_module
 
 def _make_server(tmp_path):
     """Create a server without plugin discovery side effects."""
-    with patch.object(server_module.EmpathyMCPServer, "_register_plugin_tools"):
-        return server_module.EmpathyMCPServer(workspace_root=str(tmp_path))
+    with patch.object(server_module.AttuneMCPServer, "_register_plugin_tools"):
+        return server_module.AttuneMCPServer(workspace_root=str(tmp_path))
 
 
 def _workflow_result(final_output, *, success=True, summary="summary"):
@@ -356,7 +356,7 @@ async def test_level_and_context_handlers_round_trip(tmp_path):
 
 def test_get_app_caches_singleton(reset_adapter_app):
     instance = MagicMock()
-    with patch.object(server_module, "EmpathyMCPServer", return_value=instance) as factory:
+    with patch.object(server_module, "AttuneMCPServer", return_value=instance) as factory:
         assert server_module._get_app() is instance
         assert server_module._get_app() is instance
     factory.assert_called_once_with()
@@ -456,7 +456,7 @@ async def test_protocol_get_prompt_maps_messages(reset_adapter_app):
 
 def test_create_server_constructs_application():
     instance = MagicMock()
-    with patch.object(server_module, "EmpathyMCPServer", return_value=instance) as factory:
+    with patch.object(server_module, "AttuneMCPServer", return_value=instance) as factory:
         assert server_module.create_server() is instance
     factory.assert_called_once_with()
 
@@ -515,7 +515,7 @@ def test_main_tolerates_missing_dotenv_and_keyboard_interrupt():
 
 
 def test_runtime_registered_shapes_match_protocol_contract(tmp_path):
-    app = server_module.EmpathyMCPServer(workspace_root=str(tmp_path))
+    app = server_module.AttuneMCPServer(workspace_root=str(tmp_path))
 
     assert set(app.tools) == set(app._tool_handlers) | set(app._plugin_handlers)
     assert all(set(tool) == {"name", "description", "input_schema"} for tool in app.get_tool_list())

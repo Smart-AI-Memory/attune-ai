@@ -77,9 +77,9 @@ def test_mcp_handler_returns_structured_error_when_attune_rag_missing() -> None:
     """_run_rag_knowledge_query returns a structured dict
     naming the attune-rag core dep when it can't import.
     No exception escapes to the MCP dispatcher."""
-    from attune.mcp.server import EmpathyMCPServer
+    from attune.mcp.server import AttuneMCPServer
 
-    server = EmpathyMCPServer()
+    server = AttuneMCPServer()
 
     saved = _block_attune_rag()
     try:
@@ -111,9 +111,9 @@ def test_mcp_handler_names_attune_help_package_on_help_corpus_error() -> None:
     hint appended — the [author] extra that used to ship it was
     retired (author-consolidation T4), so the hint names the package
     itself and the fix is one command."""
-    from attune.mcp.server import EmpathyMCPServer
+    from attune.mcp.server import AttuneMCPServer
 
-    server = EmpathyMCPServer()
+    server = AttuneMCPServer()
 
     saved = _block_attune_rag()
     sys.modules["attune_rag"] = _fake_attune_rag_with_failing_pipeline(  # type: ignore[assignment]
@@ -131,9 +131,9 @@ def test_mcp_handler_names_attune_help_package_on_help_corpus_error() -> None:
 
 def test_mcp_handler_omits_author_hint_for_unrelated_setup_errors() -> None:
     """RuntimeErrors that don't mention attune-help stay un-hinted."""
-    from attune.mcp.server import EmpathyMCPServer
+    from attune.mcp.server import AttuneMCPServer
 
-    server = EmpathyMCPServer()
+    server = AttuneMCPServer()
 
     saved = _block_attune_rag()
     sys.modules["attune_rag"] = _fake_attune_rag_with_failing_pipeline(  # type: ignore[assignment]
@@ -149,9 +149,9 @@ def test_mcp_handler_omits_author_hint_for_unrelated_setup_errors() -> None:
 
 
 def test_mcp_handler_rejects_empty_query_without_attune_rag() -> None:
-    from attune.mcp.server import EmpathyMCPServer
+    from attune.mcp.server import AttuneMCPServer
 
-    server = EmpathyMCPServer()
+    server = AttuneMCPServer()
 
     saved = _block_attune_rag()
     try:
@@ -165,9 +165,9 @@ def test_mcp_handler_rejects_empty_query_without_attune_rag() -> None:
 def test_mcp_handler_rejects_invalid_k_without_attune_rag() -> None:
     """k-bounds validation runs before the attune_rag import,
     so it still functions when the extra is missing."""
-    from attune.mcp.server import EmpathyMCPServer
+    from attune.mcp.server import AttuneMCPServer
 
-    server = EmpathyMCPServer()
+    server = AttuneMCPServer()
 
     saved = _block_attune_rag()
     try:
@@ -206,9 +206,9 @@ def test_workflow_registered_in_default_map() -> None:
 def test_mcp_tool_schema_registered_without_attune_rag() -> None:
     """The rag_knowledge_query schema is always registered;
     only the handler lazy-imports attune_rag."""
-    from attune.mcp.server import EmpathyMCPServer
+    from attune.mcp.server import AttuneMCPServer
 
-    server = EmpathyMCPServer()
+    server = AttuneMCPServer()
     saved = _block_attune_rag()
     try:
         tool_names = {t["name"] for t in server.get_tool_list()}

@@ -1,8 +1,8 @@
 """Unit tests for MCP SDK handler functions in attune.mcp.server.
 
 Tests cover the handler functions registered with the MCP SDK Server:
-- _handle_list_tools returns Tool objects from EmpathyMCPServer schemas
-- _handle_call_tool delegates to EmpathyMCPServer.call_tool()
+- _handle_list_tools returns Tool objects from AttuneMCPServer schemas
+- _handle_call_tool delegates to AttuneMCPServer.call_tool()
 - _handle_list_resources returns Resource objects
 - _handle_list_prompts returns Prompt objects
 - _handle_get_prompt returns GetPromptResult with messages
@@ -33,7 +33,7 @@ def _make_app(
     prompt_messages: list | None = None,
     prompt_raises: Exception | None = None,
 ) -> MagicMock:
-    """Build a mock EmpathyMCPServer with sensible defaults."""
+    """Build a mock AttuneMCPServer with sensible defaults."""
     app = MagicMock()
     app.tools = tools or {}
     app.resources = resources or {}
