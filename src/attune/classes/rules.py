@@ -742,9 +742,23 @@ def scan_result_key_contract(
         tree = _parse_file(repo_root / rel)
         if tree is None:
             continue
+        # TOP-LEVEL workflow imports count for EVERY handler in the
+        # file — a handler importing its workflow at module scope must
+        # not silently evade the seam (codex cross-review, #2271).
+        # Direct body statements only: walking the whole tree would
+        # union every handler's nested imports into every other's.
+        module_imports = [
+            stmt.module.removeprefix("attune.workflows.")
+            for stmt in tree.body
+            if isinstance(stmt, ast.ImportFrom)
+            and stmt.module
+            and stmt.module.startswith("attune.workflows.")
+        ]
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
-                hits.extend(_judge_handler(node, str(rel), repo_root / workflows_root))
+                hits.extend(
+                    _judge_handler(node, str(rel), repo_root / workflows_root, module_imports)
+                )
     return hits
 
 
@@ -770,10 +784,13 @@ def _servable(pick: str, src: str, dict_keys: set[str], adapter: bool) -> bool:
 
 
 def _judge_handler(
-    node: ast.FunctionDef | ast.AsyncFunctionDef, rel: str, workflows_root: Path
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
+    rel: str,
+    workflows_root: Path,
+    module_imports: list[str] | None = None,
 ) -> list[Hit]:
     """R8 hits for one handler method's ``_workflow_response`` picks."""
-    modules = _handler_workflow_modules(node)
+    modules = _handler_workflow_modules(node) + list(module_imports or [])
     calls = [
         c
         for c in ast.walk(node)
@@ -902,7 +919,10 @@ def scan_entry_point_channels(
             text = path.read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
-        if "entry_points" not in text:
+        # Singular substring: the collector matches helper calls like
+        # ``_load_entry_point_workflows`` too, so the prefilter must
+        # not demand the plural form (codex cross-review, #2271).
+        if "entry_point" not in text:
             continue
         try:
             tree = ast.parse(text)

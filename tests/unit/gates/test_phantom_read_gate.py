@@ -211,6 +211,28 @@ def test_rule_ignores_control_kwargs(tmp_path: Path) -> None:
     assert _r8_scan(repo) == []
 
 
+def test_rule_sees_a_module_level_workflow_import(tmp_path: Path) -> None:
+    """A handler importing its workflow at module scope is still judged.
+
+    Codex cross-review finding on #2271: nested-import discovery alone
+    let module-level imports evade the seam. Top-level imports count
+    for every handler in the file — and only DIRECT body statements do,
+    so one handler's nested import never leaks into another's contract.
+    """
+    repo = _r8_repo(
+        tmp_path,
+        _ADAPTER_WORKFLOW,
+        (
+            "from attune.workflows.wf import W\n"
+            "async def handler(self, args):\n"
+            "    result = await W().run()\n"
+            "    return _workflow_response(result, tests_generated='tests_generated')\n"
+        ),
+    )
+    hits = _r8_scan(repo)
+    assert [h.detail.split(" ")[0] for h in hits] == ["handler:tests_generated<-tests_generated"]
+
+
 def test_rule_degrades_on_unreadable_inputs(tmp_path: Path) -> None:
     """Broken files skip; missing modules and dynamic picks are unjudged."""
     repo = _r8_repo(
@@ -308,6 +330,23 @@ def test_rule_ignores_non_group_string_literals(tmp_path: Path) -> None:
         "",
     )
     assert scan_entry_point_channels(repo) == []
+
+
+def test_rule_prefilter_matches_singular_helper_calls(tmp_path: Path) -> None:
+    """A file whose only entry-point surface is a singular-named helper.
+
+    Codex cross-review finding on #2271: the prefilter demanded the
+    plural ``entry_points`` substring while the collector matches
+    helpers like ``load_entry_point_group`` — such a file evaded the
+    scan entirely.
+    """
+    repo = _r9_repo(
+        tmp_path,
+        "eps = load_entry_point_group('vendor.workflows')\n",
+        "",
+    )
+    hits = scan_entry_point_channels(repo)
+    assert len(hits) == 1 and "vendor.workflows" in hits[0].detail
 
 
 def test_rule_degrades_on_unparseable_src(tmp_path: Path) -> None:
