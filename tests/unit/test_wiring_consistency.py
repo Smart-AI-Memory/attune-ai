@@ -127,8 +127,12 @@ class TestWorkflowEntryPoints:
     def test_builtin_workflows_stay_out_of_entry_points(self):
         """The retired built-in block must not re-enter pyproject (#2238)."""
         pyproject = Path(__file__).resolve().parents[2] / "pyproject.toml"
-        content = pyproject.read_text(encoding="utf-8")
-        assert '[project.entry-points."attune.workflows"]' not in content, (
+        headers = [
+            line.strip()
+            for line in pyproject.read_text(encoding="utf-8").splitlines()
+            if not line.lstrip().startswith("#")
+        ]
+        assert '[project.entry-points."attune.workflows"]' not in headers, (
             "attune's built-ins are lazy via _DEFAULT_WORKFLOW_NAMES; "
             "registering them as attune.workflows entry points makes "
             "discover_workflows() import them eagerly"
