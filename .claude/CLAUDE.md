@@ -755,30 +755,6 @@ this section only if core-worthy (and then keep both copies in sync).
   qualifiers" lesson — same family (spec/audit text goes
   stale; verify against current code before acting).
 
-- **`security_guard.py` pre-commit hook blocks
-  `eval(` / `exec(` inside `git commit -m` heredocs
-  — use `git commit -F /tmp/msg.txt` to bypass**:
-  the project ships a `src/attune/hooks/scripts/
-  security_guard.py` PreToolUse hook that scans Bash
-  command text for `eval(` / `exec(` and exits 2,
-  blocking the call entirely. It triggers on legit
-  commit messages that *describe* eval/exec usage —
-  e.g. a `feat(workflows): ...` commit body
-  documenting that a scanner detects `eval(` calls
-  will be blocked because the literal text in the
-  `-m` argument contains `eval(`. The guard scans
-  the inline shell text, not the heredoc/file
-  contents. Workaround: write the message to a temp
-  file and use `git commit -F /tmp/<name>.txt`, then
-  `rm` the file. The guard sees only `git commit -F
-  /tmp/foo.txt` (no `eval(` in the visible command)
-  and allows it. Same workaround works for any tool
-  whose `Bash` invocation includes literal blocked
-  tokens in inline text — pivot to file-passed
-  arguments. Hit twice this session: once for the
-  discovery-sweep filter-fix PR, once for the
-  follow-up docs PR.
-
 - **`git stash pop` gotchas — inverted --ours/--theirs and
   silent skips**:
   - **--ours/--theirs are INVERTED from a regular merge** —
@@ -832,25 +808,6 @@ this section only if core-worthy (and then keep both copies in sync).
   (no merges, no protection changes — just `gh pr
   checks` reads) pass the classifier fine and are the
   right home for unattended logic during long CI waits.
-
-- **Admin-merging a PR before Windows lanes complete buries
-  a real bug on main**: extends the existing "Admin-merging
-  a deletion PR without checking the `build` docs check"
-  lesson. PR #379 (S2 data layer for ops-sessions-page) was
-  admin-merged after macOS/Ubuntu lanes turned green; the 4
-  Windows lanes hadn't finished. They eventually failed
-  with the production bug above, but by then the squash was
-  on main and every subsequent PR's CI surfaced the same
-  failure. Procedural rule: when admin-merging a PR that
-  includes new Windows-relevant code (path handling,
-  subprocess, encoding, anything that touches the
-  filesystem), wait for **all** OS lanes — not just the
-  fast ones — or accept that you'll open a hotfix PR
-  within a day. The Windows matrix is ~13 min vs ~3 min on
-  macOS/Ubuntu; budget for it. Companion observation: a
-  docs-only PR opened the next day surfaced the bug
-  instantly because it ran the same matrix against the new
-  HEAD. CI debt has a short half-life.
 
 - **Read/head/cat on untracked `.txt` files in a
   repo working tree can leak secrets into the
@@ -1331,3 +1288,22 @@ this section only if core-worthy (and then keep both copies in sync).
   test feeding a non-empty scan must also serve the batched read
   (`tests/unit/gates/test_listing_mock_transport_gate.py`), since this
   class is invisible by construction and vigilance cannot cover it.
+
+- **A "do X when Y merges" handoff held by TWO sessions puts two agents on ONE branch in ONE worktree — the second session amends and pushes your commit under you, and your next `git diff` shows edits you never made**: 2026-08-23, the #2204 → #2205 follow-up. This session was told "open the follow-up PR when #2204 merges" and parked a commit on `fix/security-agent-failure-not-retryable`; the sibling session that shepherded #2204 to merge held the same instruction implicitly (it owned the merge). When #2204 landed, BOTH acted: I cherry-picked onto a fresh branch off the squash and pushed `142dea663`; within minutes the sibling amended that commit in MY worktree (`1f5103fc8`, adapting #2204's late-added "LLM cannot steer escalation" test to the new semantics), pushed, opened #2205, ran the D11 lane, and appended the ledger row. Tells that something else was writing: a serial run that flipped from `1 failed` to `210 passed` with no edit of mine; a `git diff origin/main --stat` that grew from 18 to 34 test lines while `git status` stayed clean; `git reflog` showing a `commit (amend)` I did not run. It resolved coherently only by luck — the edits were compatible. **Rules:** (1) before acting on a "when Y merges" trigger, `gh pr list --head <branch>` AND `git reflog -3` — if a PR exists or the reflog shows a foreign amend, the other session owns it; verify its claims (the PR body's "ledger row appended" was true only after a `git fetch`, not in the local diff) and STOP; (2) a chip/handoff that says "open the PR when #N merges" should name ONE owner — the merging session is the natural one, because it already knows the moment; the waiting session should hold the branch but not the trigger; (3) `git reflog` is the cheap probe for "did someone else touch this checkout" — `git status` clean says nothing about it. Pairs with the existing "one branch per agent" contract rule (violated here by construction, not by carelessness) and the "interrupted compound command — re-establish actual git state" lesson.
+
+- **A "full local run" scoped to tests/unit is NOT what CI runs — the
+  suite also collects top-level tests/models, tests/security,
+  tests/workflows, tests/memory, tests/agent_factory — and new-code
+  ratchets fire on ANY new matching site, so run tests/unit/gates
+  before every push that adds an except/write/idiom**: 2026-08-24,
+  twice in one session. The #2242 hardening PR went red on ubuntu for
+  tests/models/test_fallback.py + tests/security/
+  test_audit_logger_extended.py (both outside tests/unit, both pinning
+  behavior the diff changed), and the #2237 PR went red solely on the
+  broad-except ratchet (tests/unit/gates) for a new intentional catch.
+  Cheap receipts, in order: (1) `pytest tests` (the WHOLE tree — ~4min
+  with xdist) before push, not per-suite spot runs; (2) any new
+  `except Exception` needs its ratchet baseline entry raised WITH a
+  reason comment in the SAME commit; (3) grep the top-level test dirs
+  for the symbol you changed (`grep -rn get_delay_ms tests/` found the
+  extra pinning tests instantly — after CI already had).
