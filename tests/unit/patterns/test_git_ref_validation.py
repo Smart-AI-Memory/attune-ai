@@ -163,7 +163,7 @@ class TestRecentCommitsBatchBoundary:
                 "--first-parent",
                 "-n",
                 "7",
-                "--pretty=format:%x1e%H%x1f%s%x1f%an%x1f%aI%x1f%P",
+                "--pretty=format:%x00%H%x1f%an%x1f%aI%x1f%P%x1f%s",
                 "-p",
                 "--",
             ],

@@ -28,6 +28,16 @@ def _make_completed_process(stdout="", returncode=0, stderr=""):
     return result
 
 
+_HASH = "abcd1234" * 5  # 40 hex chars — the parser validates %H as hex
+
+
+def _batch_record(
+    subject, author="Jane Dev", date="2025-01-01T00:00:00Z", parents="parent1", diff=""
+):
+    """One NUL-framed record in the batched `git log` wire format."""
+    return f"\x00{_HASH}\x1f{author}\x1f{date}\x1f{parents}\x1f{subject}\n{diff}"
+
+
 class TestGitPatternExtractorInit:
     """Tests for GitPatternExtractor initialization."""
 
@@ -318,9 +328,7 @@ class TestExtractFromRecentCommits:
         extractor = GitPatternExtractor(str(tmp_path))
 
         # Commit with "docs: update readme" — score 0.0, below threshold 0.5
-        batch_log = (
-            "\x1eabc12345\x1fdocs: update readme\x1fJohn Doe\x1f2025-01-01T00:00:00Z\x1fparent1\n"
-        )
+        batch_log = _batch_record("docs: update readme", author="John Doe")
         log_result = _make_completed_process(stdout=batch_log, returncode=0)
 
         with patch("subprocess.run", return_value=log_result):
@@ -339,9 +347,8 @@ class TestExtractFromRecentCommits:
             "+value = data.get('key', [])\n"
             "+if isinstance(value, list):\n"
         )
-        batch_log = (
-            "\x1eabc12345\x1ffix: null pointer dereference\x1fJohn Doe"
-            "\x1f2025-01-01T00:00:00Z\x1fparent1\n" + diff_output
+        batch_log = _batch_record(
+            "fix: null pointer dereference", author="John Doe", diff=diff_output
         )
         log_result = _make_completed_process(stdout=batch_log, returncode=0)
 
@@ -354,11 +361,8 @@ class TestExtractFromRecentCommits:
     def test_extract_from_recent_commits_single_subprocess_for_batch(self, tmp_path):
         """The whole batch is read in ONE git subprocess (#2241)."""
         extractor = GitPatternExtractor(str(tmp_path))
-        batch_log = (
-            "\x1eaaaa1111\x1ffix: first bug\x1fA\x1f2025-01-01T00:00:00Z\x1fp1\n"
-            "+x = 1\n"
-            "\x1ebbbb2222\x1ffix: second bug\x1fB\x1f2025-01-02T00:00:00Z\x1fp2\n"
-            "+y = 2\n"
+        batch_log = _batch_record("fix: first bug", author="A", diff="+x = 1\n") + _batch_record(
+            "fix: second bug", author="B", date="2025-01-02T00:00:00Z", diff="+y = 2\n"
         )
         log_result = _make_completed_process(stdout=batch_log, returncode=0)
 
@@ -372,9 +376,11 @@ class TestExtractFromRecentCommits:
         """A parentless (root) commit contributes no diff, matching the old
         behavior where the HEAD~{i+1} lookup failed."""
         extractor = GitPatternExtractor(str(tmp_path))
-        batch_log = (
-            "\x1eaaaa1111\x1ffix: initial import bug\x1fA\x1f2025-01-01T00:00:00Z\x1f\n"
-            "+this_diff_must_be_ignored = True\n"
+        batch_log = _batch_record(
+            "fix: initial import bug",
+            author="A",
+            parents="",
+            diff="+this_diff_must_be_ignored = True\n",
         )
         log_result = _make_completed_process(stdout=batch_log, returncode=0)
 
@@ -758,10 +764,7 @@ class TestGitExtractorMain:
         from attune.patterns.git_extractor import main
 
         diff_output = "diff --git a/src/module.py b/src/module.py\n" "+try:\n" "+    risky()\n"
-        batch_log = (
-            "\x1eabc12345\x1ffix: null pointer\x1fJane Dev"
-            "\x1f2025-01-01T00:00:00Z\x1fparent1\n" + diff_output
-        )
+        batch_log = _batch_record("fix: null pointer", diff=diff_output)
         log_result = _make_completed_process(stdout=batch_log, returncode=0)
 
         with (
@@ -779,10 +782,7 @@ class TestGitExtractorMain:
         from attune.patterns.git_extractor import main
 
         diff_output = "diff --git a/src/module.py b/src/module.py\n" "+try:\n" "+    risky()\n"
-        batch_log = (
-            "\x1eabc12345\x1ffix: null pointer\x1fJane Dev"
-            "\x1f2025-01-01T00:00:00Z\x1fparent1\n" + diff_output
-        )
+        batch_log = _batch_record("fix: null pointer", diff=diff_output)
         log_result = _make_completed_process(stdout=batch_log, returncode=0)
 
         with (
@@ -803,10 +803,7 @@ class TestGitExtractorMain:
         from attune.patterns.git_extractor import main
 
         diff_output = "diff --git a/src/module.py b/src/module.py\n" "+try:\n" "+    risky()\n"
-        batch_log = (
-            "\x1eabc12345\x1ffix: null pointer\x1fJane Dev"
-            "\x1f2025-01-01T00:00:00Z\x1fparent1\n" + diff_output
-        )
+        batch_log = _batch_record("fix: null pointer", diff=diff_output)
         log_result = _make_completed_process(stdout=batch_log, returncode=0)
 
         with (
@@ -826,10 +823,7 @@ class TestGitExtractorMain:
         from attune.patterns.git_extractor import main
 
         diff_output = "diff --git a/src/module.py b/src/module.py\n" "+try:\n" "+    risky()\n"
-        batch_log = (
-            "\x1eabc12345\x1ffix: null pointer dereference in parser\x1fJane Dev"
-            "\x1f2025-01-01T00:00:00Z\x1fparent1\n" + diff_output
-        )
+        batch_log = _batch_record("fix: null pointer dereference in parser", diff=diff_output)
         log_result = _make_completed_process(stdout=batch_log, returncode=0)
 
         with (
@@ -867,10 +861,7 @@ class TestGitExtractorMain:
         from attune.patterns.git_extractor import main
 
         diff_output = "diff --git a/src/module.py b/src/module.py\n+try:\n+    risky()\n"
-        batch_log = (
-            "\x1eabc12345\x1ffix: null pointer\x1fJane Dev"
-            "\x1f2025-01-01T00:00:00Z\x1fparent1\n" + diff_output
-        )
+        batch_log = _batch_record("fix: null pointer", diff=diff_output)
         log_result = _make_completed_process(stdout=batch_log, returncode=0)
 
         with (

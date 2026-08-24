@@ -155,9 +155,12 @@ class GitPatternExtractor:
         (`git log -1` + `git diff`); this batches the whole walk into a
         single ``git log --first-parent -p``, which matches the old
         ``HEAD~{i+1}..HEAD~{i}`` semantics (first-parent walk, diff vs
-        first parent). Field/record separators are the ASCII unit/record
-        separators, which cannot appear in git's %H/%an/%aI fields and
-        are vanishingly unlikely in a subject line.
+        first parent). Records are NUL-separated — commit objects and
+        git's text diff output cannot contain NUL, so a record boundary
+        cannot be forged from a subject or a patch body. Within the
+        header, the subject comes LAST and the split is bounded, so a
+        subject containing the field separator stays intact; the hash
+        field is validated as hex before a record is accepted.
 
         Returns:
             List of (commit_info, diff_text) tuples, newest first. A
@@ -173,7 +176,7 @@ class GitPatternExtractor:
         # module's argv-sweep test carries this function in its vetted set.
         count = str(int(num_commits))
 
-        fmt = "%x1e%H%x1f%s%x1f%an%x1f%aI%x1f%P"
+        fmt = "%x00%H%x1f%an%x1f%aI%x1f%P%x1f%s"
         try:
             result = subprocess.run(
                 [
@@ -197,14 +200,16 @@ class GitPatternExtractor:
             return []
 
         commits: list[tuple[dict[str, str], str]] = []
-        for record in result.stdout.split("\x1e"):
+        for record in result.stdout.split("\x00"):
             if not record.strip():
                 continue
             header, _, diff = record.partition("\n")
-            fields = header.split("\x1f")
-            if len(fields) < 5:
+            fields = header.split("\x1f", 4)
+            if len(fields) != 5:
                 continue
-            commit_hash, subject, author, date, parents = fields[:5]
+            commit_hash, author, date, parents, subject = fields
+            if not re.fullmatch(r"[0-9a-f]{40,64}", commit_hash):
+                continue
             if not parents.strip():
                 diff = ""
             commits.append(

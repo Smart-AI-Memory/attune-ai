@@ -160,6 +160,13 @@ class EventStreamer:
         registry is empty, so streams published by older code are still
         discovered. Stale registry entries are harmless — XREAD on a
         missing stream simply yields nothing.
+
+        Transition semantics (deliberate tradeoff): while the registry
+        is non-empty, a stream that only pre-registry code publishes to
+        is not discovered here. Each stream self-heals on its first
+        post-upgrade publish (every publish SADDs), so the gap lasts at
+        most one publish per stream; a union scan would reintroduce the
+        keyspace scan this registry exists to remove.
         """
         client = self.memory._client
         members = client.smembers(self.STREAM_REGISTRY_KEY)
@@ -226,7 +233,15 @@ class EventStreamer:
 
             # Register the stream so subscribe-to-all consumers can
             # SMEMBERS instead of scanning the keyspace (#2241).
-            self.memory._client.sadd(self.STREAM_REGISTRY_KEY, stream_key)
+            # Best-effort: the event is already committed by XADD, so a
+            # registry failure must not turn this publish into a lie.
+            try:
+                self.memory._client.sadd(self.STREAM_REGISTRY_KEY, stream_key)
+            except Exception:  # noqa: BLE001
+                # INTENTIONAL: publish succeeded; a failed registration
+                # only delays subscribe-to-all visibility until the next
+                # successful publish on this stream.
+                logger.warning("Failed to register stream %s", stream_key, exc_info=True)
 
             logger.debug(f"Published event {event_type}: {event_id}")
             return event_id

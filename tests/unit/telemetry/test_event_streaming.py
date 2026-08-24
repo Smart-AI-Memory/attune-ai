@@ -416,3 +416,13 @@ class TestStreamRegistry:
 
         assert streamer.delete_stream(event_type="old_event") is True
         client.srem.assert_called_once_with("stream_registry", "stream:old_event")
+
+    def test_publish_succeeds_even_if_registration_fails(self):
+        """A registry SADD failure never fails the already-committed XADD."""
+        streamer, client = self._streamer_with_client()
+        client.xadd.return_value = b"1-0"
+        client.sadd.side_effect = RuntimeError("registry down")
+
+        event_id = streamer.publish_event(event_type="agent_heartbeat", data={"a": 1})
+
+        assert event_id == "1-0"
