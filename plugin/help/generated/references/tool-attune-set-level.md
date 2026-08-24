@@ -9,7 +9,7 @@ source: src/attune/mcp/tool_schemas.py
 
 # Reference: Tool: Attune Set Level
 
-Set interaction level (1-5) for this session.
+DEPRECATED: removed in 15.0.0 — the interaction-level concept is retired (release-15-manifest D2). Set interaction level (1-5) for this session.
 
 **Group:** utility
 

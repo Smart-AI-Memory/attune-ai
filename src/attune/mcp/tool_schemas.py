@@ -316,13 +316,19 @@ def get_utility_tools() -> dict[str, dict[str, Any]]:
         },
         "attune_get_level": {
             "description": (
+                "DEPRECATED: removed in 15.0.0 — the interaction-level "
+                "concept is retired (release-15-manifest D2). "
                 "Get current interaction level (1-5). "
                 "Level 1=Reactive, 2=Guided, 3=Proactive, 4=Anticipatory, 5=Systems."
             ),
             "input_schema": {"type": "object", "properties": {}},
         },
         "attune_set_level": {
-            "description": "Set interaction level (1-5) for this session.",
+            "description": (
+                "DEPRECATED: removed in 15.0.0 — the interaction-level "
+                "concept is retired (release-15-manifest D2). "
+                "Set interaction level (1-5) for this session."
+            ),
             "input_schema": {
                 "type": "object",
                 "properties": {

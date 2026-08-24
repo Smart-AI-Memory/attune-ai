@@ -165,12 +165,18 @@ planning, or explicit user request.
 
 ### attune_get_level
 
+**Deprecated — removed in 15.0.0** (the interaction-level
+concept is retired; release-15-manifest D2).
+
 Returns the current empathy level (integer 1-5) for
 this session.
 
 **Parameters:** None.
 
 ### attune_set_level
+
+**Deprecated — removed in 15.0.0** (the interaction-level
+concept is retired; release-15-manifest D2).
 
 Set the empathy level for this session.
 

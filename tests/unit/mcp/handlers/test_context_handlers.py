@@ -229,3 +229,58 @@ class TestHandleAttuneSetLevel:
         result = await server._handle_attune_set_level({})
 
         assert result["success"] is False
+
+
+class TestLevelToolsDeprecation:
+    """The level tools are deprecated in 14.x, removed in 15.0.0 (D2).
+
+    Ruled by the 15.0.0 manifest (release-15-manifest decisions.md D2,
+    chair 2026-08-24): the interaction-level concept is retired. These pins keep the 14.x deprecation surface honest —
+    both handlers warn, both success payloads carry the notice, and
+    both tool schemas lead with DEPRECATED.
+    """
+
+    @pytest.mark.asyncio
+    async def test_get_level_emits_deprecation_warning(self):
+        """_handle_attune_get_level warns DeprecationWarning naming 15.0.0."""
+        server = _make_server(attune_level=3)
+        with pytest.warns(DeprecationWarning, match="removed in 15.0.0"):
+            result = await server._handle_attune_get_level()
+        assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_set_level_emits_deprecation_warning(self):
+        """_handle_attune_set_level warns DeprecationWarning naming 15.0.0."""
+        server = _make_server(attune_level=2)
+        with pytest.warns(DeprecationWarning, match="removed in 15.0.0"):
+            result = await server._handle_attune_set_level({"level": 4})
+        assert result["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_success_payloads_carry_deprecation_notice(self):
+        """Both success responses include a 'deprecated' field naming 15.0.0."""
+        server = _make_server(attune_level=3)
+        with pytest.warns(DeprecationWarning):
+            got = await server._handle_attune_get_level()
+        with pytest.warns(DeprecationWarning):
+            set_result = await server._handle_attune_set_level({"level": 5})
+
+        assert "removed in 15.0.0" in got["deprecated"]
+        assert "removed in 15.0.0" in set_result["deprecated"]
+
+    @pytest.mark.asyncio
+    async def test_invalid_set_level_still_errors(self):
+        """The deprecation warning does not change the validation contract."""
+        server = _make_server(attune_level=2)
+        with pytest.warns(DeprecationWarning):
+            result = await server._handle_attune_set_level({"level": 9})
+        assert result["success"] is False
+        assert server._attune_level == 2
+
+    def test_tool_schemas_lead_with_deprecated(self):
+        """Both level tool descriptions start with DEPRECATED."""
+        from attune.mcp.tool_schemas import get_utility_tools
+
+        tools = get_utility_tools()
+        for name in ("attune_get_level", "attune_set_level"):
+            assert tools[name]["description"].startswith("DEPRECATED"), name

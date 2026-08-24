@@ -9,7 +9,7 @@ source: src/attune/mcp/tool_schemas.py
 
 # Reference: Tool: Attune Get Level
 
-Get current interaction level (1-5). Level 1=Reactive, 2=Guided, 3=Proactive, 4=Anticipatory, 5=Systems.
+DEPRECATED: removed in 15.0.0 — the interaction-level concept is retired (release-15-manifest D2). Get current interaction level (1-5). Level 1=Reactive, 2=Guided, 3=Proactive, 4=Anticipatory, 5=Systems.
 
 **Group:** utility
 
