@@ -286,7 +286,10 @@ _BASELINE: dict[str, int] = {
     "src/attune/telemetry/cli_analysis.py": 1,
     "src/attune/telemetry/cli_automation.py": 4,
     "src/attune/telemetry/event_streaming.py": 6,
-    "src/attune/telemetry/feedback_loop.py": 6,
+    # +1 (#2237): _retrieve_feedback_many's batched-read guard — a
+    # failing retrieve_many degrades to the per-key path (logged);
+    # backend transport errors are inherently open-ended.
+    "src/attune/telemetry/feedback_loop.py": 7,
     "src/attune/telemetry/lessons/__init__.py": 1,
     "src/attune/telemetry/memory_events.py": 1,
     "src/attune/telemetry/usage_ping.py": 4,
