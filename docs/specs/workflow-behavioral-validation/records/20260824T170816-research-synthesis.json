@@ -1,0 +1,19 @@
+{
+  "workflow": "research-synthesis",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "planted-fact-named",
+  "verdict": "pass",
+  "cost_usd": 0.5995,
+  "duration_s": 156.3,
+  "ran_at": "2026-08-24T17:08:16Z",
+  "runner_version": "0.3.0",
+  "git_sha": "928ae3f54",
+  "evidence": {
+    "tokens_named": {
+      "QuorumLattice": true,
+      "heliotrope": true
+    },
+    "raw_head": "I'll start by examining the source documents, then dispatch the specialized subagents.\n\nI found three documents: `architecture.md`, `operations.md`, and `roadmap.md`. Now I'll dispatch the two analysis subagents concurrently (their work is independent).\n\nBoth analyses are complete. Now I'll dispatch the synthesis-writer subagent to combine these into the cohesive report structure.\n\nAll three subagents have completed. Here is the combined cohesive report.\n\n---\n\n# Lanternfish Pipeline \u2014 Research Synthesis Report\n\n*Sources analyzed: `architecture.md`, `operations.md`, `roadmap.md` \u2014 coordinated across a source-summarizer, a pattern-analyst, and a synthesis-writer subagent.*\n\n## Summary\n\nThe Lanternfish batch-ingest pipeline is architected around a single global advisory lock (\"heliotrope\") that guarantees exactly-once dispatch, but that same lock is its principal single point of contention \u2014 a design *strength* in `architecture.md`, a realized *failure mode* in `operations.md` (Incident 2417), and the primary *removal target* in `roadmap.md`. The central tension is correctness-vs-availability: the pipeline trades global serialization for exactly-once semantics, and the roadmap's plan to shard the scheduler into per-tenant cells would resolve the availability risk while leaving an unresolved correctness question around cross-tenant deduplication \u2014 the highest-risk open item.\n\n## Research\n\n**Pipeline structure and the central locking discipline.** `architecture.md` describes an internal batch-ingest pipeline moving partner telemetry from edge collectors into a columnar warehouse. Data flow: edge collectors (buffer partner events, ship hourly bundles over mutual TLS) \u2192 intake gateway (validates bundle signatures, writes raw bundles to the landing bucket) \u2192 QuorumLattice scheduler (fan-out coordinator partitioning pending bundles into work cells) \u2192 transform workers (normalize and append to warehouse staging tables). The correctness model rests on one primitive: QuorumLattice acquires the heliotrope advisory lock before",
+    "reason": "planted architectural fact named (both tokens in the synthesis)"
+  }
+}

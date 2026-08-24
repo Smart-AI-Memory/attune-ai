@@ -1,0 +1,18 @@
+{
+  "workflow": "doc-gen",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "executed-examples",
+  "verdict": "pass",
+  "cost_usd": 0.4598,
+  "duration_s": 181.4,
+  "ran_at": "2026-08-24T17:35:37Z",
+  "runner_version": "0.3.0",
+  "git_sha": "928ae3f54",
+  "evidence": {
+    "examples_run": 6,
+    "skipped_unparseable": 0,
+    "example_failures": [],
+    "raw_head": "I'll orchestrate the three specialized subagents. Since the content writer benefits from the outline, and the polish reviewer needs the written docs, there's a natural dependency chain. Let me start by having the outline planner analyze the codebase structure.\n\nThe codebase is a single Python module (`orders.py`). Now I'll have the content writer produce the full documentation based on this outline.\n\nNow I'll have the polish reviewer evaluate the documentation and produce improvement suggestions.\n\nAll three subagents have completed. Here is the synthesized documentation.\n\n---\n\n# `orders` \u2014 Codebase Documentation\n\n## Summary\n\nThe codebase at `/private/var/folders/5t/bzsz5qd17pd7h_wwwd5qjbnw0000gn/T/tmpc4j7rjjv` is a single, dependency-free Python module (`orders.py`) providing two e-commerce helper functions: `order_total`, which sums item prices and applies a fractional discount, and `classify_order`, which maps a total onto a named shipping tier. Its purpose is to centralize order-pricing arithmetic and shipping-tier business rules in one reusable place.\n\n---\n\n## Outline\n\n*(Produced by the outline planner \u2014 `orders.py` is the only source file; no README, tests, config, or packaging exist.)*\n\n1. **Overview** \u2014 purpose, requirements (Python 3.7+, no deps), flat single-file layout (`orders.py`)\n2. **Installation / Setup** \u2014 drop-in module; no packaging metadata present; Python version compatibility\n3. **API Reference \u2014 module `orders`** (`orders.py`)\n   - `order_total(prices: list[float], discount: float = 0.0) -> float` (`orders.py:4-12`) \u2014 sums prices, applies discount, raises `ValueError` for out-of-range discount (`orders.py:9-10`)\n   - `classify_order(total: float) -> str` (`orders.py:15-23`) \u2014 tier bucketing: `<=0` \u2192 `\"empty\"`, `0<t<50` \u2192 `\"standard\"`, `50<=t<200` \u2192 `\"priority\"`, `>=200` \u2192 `\"free-shipping\"`\n4. **Usage Examples** \u2014 quick start; discount + `ValueError` handling; composing both functions; edge cases (empty list, discount 0/1, boundary totals 0/50/200)\n5. **Error Handling Reference** \u2014 `ValueErro",
+    "reason": "all 6 emitted example(s) referencing the module executed"
+  }
+}

@@ -50,6 +50,7 @@ fixture validated); 1 when any probe failed or a fixture is missing.
 from __future__ import annotations
 
 import argparse
+import ast
 import asyncio
 import json
 import os
@@ -87,6 +88,10 @@ _EST_COST_USD: dict[str, float] = {
     "health-check": 0.3,
     "doc-orchestrator": 0.3,
     "release-prep": 0.0,
+    # Generative batch (D5 batch 3) — estimates from the 2026-08-24
+    # runner-path validation runs ($1.06 / $1.18 at standard depth).
+    "doc-gen": 1.2,
+    "research-synthesis": 1.3,
 }
 
 PROBE_ORDER = [
@@ -106,6 +111,8 @@ PROBE_ORDER = [
     "health-check",
     "doc-orchestrator",
     "release-prep",
+    "doc-gen",
+    "research-synthesis",
 ]
 
 
@@ -188,6 +195,19 @@ def validate_fixtures() -> list[str]:
         ):
             if marker not in text:
                 problems.append(f"{ana.name}: planted {label} is gone")
+
+    research = FIXTURES / "research"
+    for fname in ("architecture.md", "operations.md", "roadmap.md"):
+        doc = research / fname
+        if not doc.exists():
+            problems.append(f"missing fixture: {doc}")
+    arch = research / "architecture.md"
+    if arch.exists():
+        text = arch.read_text(encoding="utf-8")
+        # The planted architectural fact the synthesis probe asserts on.
+        for token in ("QuorumLattice", "heliotrope"):
+            if token not in text:
+                problems.append(f"{arch.name}: planted token {token!r} is gone")
 
     return problems
 
@@ -492,6 +512,11 @@ async def probe_dependency_check(budget: float) -> ProbeResult:
 
 
 _CODE_FENCE = re.compile(r"```(?:python|py)?\s*\n(.*?)```", re.DOTALL)
+
+#: Like _CODE_FENCE but CAPTURES the language tag: a ```python fence
+#: claims to be Python (parse failure = defect), an untagged fence may
+#: be prose (parse failure = skip). Codex D11 lane, 2026-08-24.
+_TAGGED_FENCE = re.compile(r"```(python|py)?[ \t]*\n(.*?)```", re.DOTALL)
 
 
 def _extract_test_code(text: str) -> str:
@@ -918,6 +943,267 @@ async def _run_gate_workflow(name: str, _ctor: dict[str, Any] | None = None, **k
     return await get_workflow(name)(**(_ctor or {})).execute(**kwargs)
 
 
+def _fence_to_script(code: str) -> str:
+    """Make a doc example executable — REPL fences keep only statements.
+
+    Emitted examples come in two shapes: plain scripts (returned as-is)
+    and ``>>>``/``...`` REPL transcripts, where the unprefixed lines are
+    ILLUSTRATIVE outputs, not code. For REPL fences, keep the prefixed
+    statements and drop the output lines — "the example executes" is the
+    receipt; matching the illustrated output is doctest's job, and an
+    LLM's illustrative values would make that assertion flaky.
+    """
+    lines = code.splitlines()
+    if not any(line.lstrip().startswith(">>>") for line in lines):
+        return code
+    kept: list[str] = []
+    for line in lines:
+        stripped = line.lstrip()
+        if stripped.startswith(">>>") or stripped.startswith("..."):
+            # Strip the 3-char prefix plus at most ONE separator space —
+            # lstrip() here destroyed the indentation of compound-
+            # statement bodies ("...     total = ..."), making valid
+            # multiline REPL examples unparseable (codex D11 lane,
+            # 2026-08-24).
+            rest = stripped[3:]
+            kept.append(rest[1:] if rest.startswith(" ") else rest)
+    return "\n".join(kept)
+
+
+_RAISES_NOTE = re.compile(r"#\s*raises\s+(\w+)", re.IGNORECASE)
+
+
+def _harden_expected_raises(code: str) -> str:
+    """Turn ``# raises X``-annotated lines into assertions that X raises.
+
+    Calibration discriminator (first live run, 2026-08-24): the doc-gen
+    doc emitted a CORRECT example deliberately demonstrating the
+    documented exception (``order_total([10.0], discount=1.5)  # raises
+    ValueError``); executing it naively flagged the workflow as failed.
+    An annotated line is a claim — "this raises X" — so the probe now
+    ASSERTS that claim: the named exception must be raised, and any
+    other outcome (no raise, different exception) fails the example.
+    Strictly stronger than skipping the line.
+    """
+    out: list[str] = []
+    for line in code.splitlines():
+        note = _RAISES_NOTE.search(line)
+        stmt = line.split("#", 1)[0].rstrip()
+        if not (note and stmt.strip()):
+            out.append(line)
+            continue
+        exc = note.group(1)
+        indent = stmt[: len(stmt) - len(stmt.lstrip())]
+        body = stmt.strip()
+        out.extend(
+            [
+                f"{indent}try:",
+                f"{indent}    {body}",
+                f"{indent}except Exception as _probe_exc:",
+                f"{indent}    assert type(_probe_exc).__name__ == {exc!r}, (",
+                f"{indent}        'expected {exc}, got ' + type(_probe_exc).__name__)",
+                f"{indent}else:",
+                f"{indent}    raise SystemExit('documented {exc} was not raised')",
+            ]
+        )
+    return "\n".join(out)
+
+
+async def probe_doc_gen(budget: float) -> ProbeResult:
+    """D5 generative receipt: the EMITTED documentation is executed.
+
+    doc-gen documents the staged ``orders.py`` module. The receipt is
+    the design-table one for generative workflows ("emitted output
+    actually runs"), applied as the fact-check primitives' contract —
+    symbols the doc cites must import and resolve:
+
+    1. grounding — the doc names BOTH public functions of the module
+       (a doc of a two-function module that misses one is a miss);
+    2. execution — every emitted Python example that references the
+       module runs against it (subprocess, cwd=workdir), and at least
+       one such example must exist. A fictional symbol in an example
+       fails its run — docs may not cite fiction.
+    """
+    import time
+
+    _budget_env(budget)
+    with tempfile.TemporaryDirectory() as tmp:
+        work = Path(tmp)
+        _stage_python_fixture(FIXTURES / "testgen" / "orders.py", work / "orders.py")
+        t0 = time.monotonic()
+        result = await _run_workflow("doc-gen", path=str(work), depth="quick")
+        dur = time.monotonic() - t0
+
+        crash = _crash_reason(result)
+        if crash:
+            return ProbeResult(
+                name="doc-gen",
+                passed=False,
+                reason=crash,
+                cost_usd=_cost_of(result),
+                duration_s=dur,
+                evidence={"raw_head": _head(result)},
+            )
+
+        text = _raw_text(result)
+        missing = [fn for fn in ("order_total", "classify_order") if fn not in text]
+        if missing:
+            return ProbeResult(
+                name="doc-gen",
+                passed=False,
+                reason="doc does not name module function(s): " + ", ".join(missing),
+                cost_usd=_cost_of(result),
+                duration_s=dur,
+                evidence={"missing_symbols": missing, "raw_head": _head(result)},
+            )
+
+        # Calibration round 2 (2026-08-24 live run): the API-reference
+        # section renders Google-style docstring blocks ("Args:" /
+        # "Returns:") inside UNTAGGED fences; those are prose, not
+        # examples, and are skipped when they don't parse. A fence
+        # explicitly tagged ```python claims to BE Python, so a parse
+        # failure there is an emitted-output defect and FAILS the probe
+        # (codex D11 lane: skipping every unparseable fence would let
+        # one valid example mask syntactically broken ones).
+        fences: list[str] = []
+        skipped_unparseable = 0
+        syntax_broken: list[str] = []
+        for tag, block in _TAGGED_FENCE.findall(text):
+            if "orders" not in block:
+                continue
+            script = _harden_expected_raises(_fence_to_script(block))
+            try:
+                ast.parse(script)
+            # ValueError: ast.parse raises it on null bytes in source
+            # (the ast-parse-null-byte gate pins this pairing).
+            except (SyntaxError, ValueError) as exc:
+                if tag:
+                    detail = getattr(exc, "msg", None) or str(exc)
+                    lineno = getattr(exc, "lineno", "?")
+                    syntax_broken.append(f"tagged fence: {detail} (line {lineno})")
+                else:
+                    skipped_unparseable += 1
+                continue
+            fences.append(script)
+        if syntax_broken:
+            return ProbeResult(
+                name="doc-gen",
+                passed=False,
+                reason=(f"{len(syntax_broken)} python-tagged example(s) do not parse"),
+                cost_usd=_cost_of(result),
+                duration_s=dur,
+                evidence={
+                    "syntax_broken": syntax_broken,
+                    "raw_head": _head(result),
+                },
+            )
+        if not fences:
+            return ProbeResult(
+                name="doc-gen",
+                passed=False,
+                reason="doc emitted no runnable example referencing the module",
+                cost_usd=_cost_of(result),
+                duration_s=dur,
+                evidence={
+                    "fences_total": len(_CODE_FENCE.findall(text)),
+                    "skipped_unparseable": skipped_unparseable,
+                    "raw_head": _head(result),
+                },
+            )
+
+        failures: list[str] = []
+        for i, fence in enumerate(fences):
+            ex = work / f"probe_example_{i}.py"
+            ex.write_text(fence, encoding="utf-8")
+            proc = subprocess.run(
+                [sys.executable, str(ex)],
+                cwd=str(work),
+                capture_output=True,
+                text=True,
+                timeout=120,
+                # LLM-emitted code runs with a SCRUBBED env (codex D11
+                # lane, critical): the runner's env holds live
+                # credentials (ANTHROPIC_API_KEY et al.) that a doc
+                # example has no business reading.
+                env={"PATH": os.environ.get("PATH", "")},
+            )
+            if proc.returncode != 0:
+                tail = "\n".join((proc.stdout + proc.stderr).splitlines()[-4:])
+                failures.append(f"example {i}: rc={proc.returncode}: {tail}")
+
+    passed = not failures
+    reason = (
+        f"all {len(fences)} emitted example(s) referencing the module executed"
+        if passed
+        else f"{len(failures)}/{len(fences)} emitted example(s) failed to execute"
+    )
+    return ProbeResult(
+        name="doc-gen",
+        passed=passed,
+        reason=reason,
+        cost_usd=_cost_of(result),
+        duration_s=dur,
+        evidence={
+            "examples_run": len(fences),
+            "skipped_unparseable": skipped_unparseable,
+            "example_failures": failures,
+            "raw_head": _head(result),
+        },
+    )
+
+
+async def probe_research_synthesis(budget: float) -> ProbeResult:
+    """D5 generative receipt: a planted architectural fact is NAMED.
+
+    Stages a three-document corpus about a fictional pipeline whose
+    architecture carries two invented tokens (``QuorumLattice``, the
+    scheduler; ``heliotrope``, its fan-out lock). The tokens exist
+    nowhere outside the fixture, so they can appear in the synthesis
+    only if the sources were actually read — the probe asserts BOTH
+    are named. A synthesis that reads the corpus cannot describe the
+    scheduler without them; a synthesis invented from priors cannot
+    produce them.
+    """
+    import time
+
+    _budget_env(budget)
+    with tempfile.TemporaryDirectory() as tmp:
+        work = Path(tmp)
+        for doc in sorted((FIXTURES / "research").glob("*.md")):
+            (work / doc.name).write_text(doc.read_text(encoding="utf-8"), encoding="utf-8")
+        t0 = time.monotonic()
+        result = await _run_workflow("research-synthesis", path=str(work), depth="quick")
+        dur = time.monotonic() - t0
+
+    crash = _crash_reason(result)
+    if crash:
+        return ProbeResult(
+            name="research-synthesis",
+            passed=False,
+            reason=crash,
+            cost_usd=_cost_of(result),
+            duration_s=dur,
+            evidence={"raw_head": _head(result)},
+        )
+
+    text = _raw_text(result)
+    named = {tok: _mentions(text, tok) for tok in ("QuorumLattice", "heliotrope")}
+    passed = all(named.values())
+    reason = (
+        "planted architectural fact named (both tokens in the synthesis)"
+        if passed
+        else "planted fact NOT named: missing " + ", ".join(t for t, ok in named.items() if not ok)
+    )
+    return ProbeResult(
+        name="research-synthesis",
+        passed=passed,
+        reason=reason,
+        cost_usd=_cost_of(result),
+        duration_s=dur,
+        evidence={"tokens_named": named, "raw_head": _head(result)},
+    )
+
+
 async def probe_secure_release(budget: float) -> ProbeResult:
     """A planted-critical fixture must NOT get a GO (P7, #2208)."""
     import time
@@ -1108,6 +1394,8 @@ PROBES: dict[str, Callable[[float], Any]] = {
     "health-check": probe_health_check,
     "doc-orchestrator": probe_doc_orchestrator,
     "release-prep": probe_release_prep,
+    "doc-gen": probe_doc_gen,
+    "research-synthesis": probe_research_synthesis,
 }
 
 
@@ -1148,6 +1436,8 @@ _RECEIPT_TYPES: dict[str, str] = {
     "health-check": "fail-closed-gate",
     "doc-orchestrator": "fail-closed-gate",
     "release-prep": "fail-closed-gate",
+    "doc-gen": "executed-examples",
+    "research-synthesis": "planted-fact-named",
 }
 
 

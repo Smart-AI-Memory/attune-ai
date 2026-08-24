@@ -1,0 +1,14 @@
+{
+  "workflow": "doc-gen",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "executed-examples",
+  "verdict": "crash",
+  "cost_usd": 0.0,
+  "duration_s": 0.0,
+  "ran_at": "2026-08-24T17:31:33Z",
+  "runner_version": "0.3.0",
+  "git_sha": "928ae3f54",
+  "evidence": {
+    "reason": "probe raised NameError: name 'ast' is not defined"
+  }
+}
