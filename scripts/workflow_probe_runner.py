@@ -1126,8 +1126,13 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--run",
-        default="",
-        help="comma-separated probe names to run (billed)",
+        action="append",
+        default=[],
+        help=(
+            "probe names to run (billed); comma-separated and/or "
+            "repeated — earlier a repeated --run silently kept only "
+            "the last value (retro 2026-08-24 item 3.3)"
+        ),
     )
     parser.add_argument("--all", action="store_true", help="run every probe (billed)")
     parser.add_argument(
@@ -1159,7 +1164,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.all:
         selected = list(PROBE_ORDER)
     elif args.run:
-        selected = [p.strip() for p in args.run.split(",") if p.strip()]
+        selected = [p.strip() for chunk in args.run for p in chunk.split(",") if p.strip()]
     else:
         selected = []
 
