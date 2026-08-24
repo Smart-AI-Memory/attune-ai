@@ -4769,10 +4769,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#empathymcpserver-selected-members" class="md-nav__link">
+  <a href="#attunemcpserver-selected-members" class="md-nav__link">
     <span class="md-ellipsis">
       
-        EmpathyMCPServer — selected members
+        AttuneMCPServer — selected members
       
     </span>
   </a>
@@ -4856,7 +4856,7 @@ client.</p>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="nb">print</span><span class="p">([</span><span class="n">r</span><span class="p">[</span><span class="s2">"uri"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">server</span><span class="o">.</span><span class="n">get_resource_list</span><span class="p">()])</span>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="nb">print</span><span class="p">([</span><span class="n">p</span><span class="p">[</span><span class="s2">"name"</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">server</span><span class="o">.</span><span class="n">get_prompt_list</span><span class="p">()])</span>
 </code></pre></div>
-<p><strong>Verify:</strong> <code>create_server()</code> returns a ready <code>EmpathyMCPServer</code>.
+<p><strong>Verify:</strong> <code>create_server()</code> returns a ready <code>AttuneMCPServer</code>.
 <code>server.tools</code> is the merged registry — the 41 built-in tools plus any
 registered by installed plugins (e.g. attune-redis adds five <code>redis_*</code>
 tools), so the printed count is ≥ 41. <code>get_resource_list()</code> returns the
@@ -4891,7 +4891,7 @@ checkout uses <code>uv run python -m attune.mcp.server</code>.</p>
 Server logs land in <code>&lt;tmp&gt;/attune/attune-mcp.log</code> if you need to
 debug the connection.</p>
 <h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
-<p>The public surface is <code>create_server</code> and <code>EmpathyMCPServer</code>, exported
+<p>The public surface is <code>create_server</code> and <code>AttuneMCPServer</code>, exported
 from <code>attune.mcp</code>.</p>
 <h3 id="attunemcp"><code>attune.mcp</code><a class="headerlink" href="#attunemcp" title="Permanent link">&para;</a></h3>
 <table>
@@ -4903,16 +4903,16 @@ from <code>attune.mcp</code>.</p>
 </thead>
 <tbody>
 <tr>
-<td><code>create_server() -&gt; EmpathyMCPServer</code></td>
+<td><code>create_server() -&gt; AttuneMCPServer</code></td>
 <td>Build a ready server instance.</td>
 </tr>
 <tr>
-<td><code>EmpathyMCPServer(...)</code></td>
+<td><code>AttuneMCPServer(...)</code></td>
 <td>The MCP server (composes <code>MemoryHandlersMixin</code> + <code>WorkflowHandlersMixin</code>).</td>
 </tr>
 </tbody>
 </table>
-<h3 id="empathymcpserver-selected-members"><code>EmpathyMCPServer</code> — selected members<a class="headerlink" href="#empathymcpserver-selected-members" title="Permanent link">&para;</a></h3>
+<h3 id="attunemcpserver-selected-members"><code>AttuneMCPServer</code> — selected members<a class="headerlink" href="#attunemcpserver-selected-members" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -5005,11 +5005,11 @@ from <code>attune.mcp</code>.</p>
 </tr>
 <tr>
 <td>Python</td>
-<td><code>create_server()</code> / <code>EmpathyMCPServer</code>.</td>
+<td><code>create_server()</code> / <code>AttuneMCPServer</code>.</td>
 </tr>
 </tbody>
 </table>
-<!-- attune-generated: source_hash=08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f feature=mcp-server kind=how-to generated_at=2026-06-23 -->
+<!-- attune-generated: source_hash=e6370b6c61134866408d30c64611640a3ac5184dc9d37f7e676a5f7ad176e69c feature=mcp-server kind=how-to generated_at=2026-08-24 -->
 
 
 

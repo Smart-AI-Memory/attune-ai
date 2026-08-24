@@ -4708,10 +4708,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#empathymcpserver-and-its-mixins" class="md-nav__link">
+  <a href="#attunemcpserver-and-its-mixins" class="md-nav__link">
     <span class="md-ellipsis">
       
-        EmpathyMCPServer and its mixins
+        AttuneMCPServer and its mixins
       
     </span>
   </a>
@@ -4831,7 +4831,7 @@
 <p>The MCP server is attune's <strong>Model Context Protocol</strong> implementation —
 it exposes attune's workflows, help system, and memory as structured
 <strong>tools</strong>, <strong>resources</strong>, and <strong>prompts</strong> that an MCP client (Claude
-Code) can call. The server class is <strong><code>EmpathyMCPServer</code></strong>; it speaks
+Code) can call. The server class is <strong><code>AttuneMCPServer</code></strong>; it speaks
 MCP over <strong>stdio</strong> and is launched with <code>python -m attune.mcp.server</code>.</p>
 <p>It is how every other attune feature reaches a conversation: the
 <code>code_review</code>, <code>security_audit</code>, <code>memory_store</code>, <code>help_lookup</code>, … tools
@@ -4845,11 +4845,11 @@ tool (those belong to their own features).</p>
   attune.mcp.server</code> (the plugin ships one); Claude Code connects over
   stdio;</li>
 <li>the Python API — <code>from attune.mcp import create_server,
-  EmpathyMCPServer</code>, for embedding or testing the server.</li>
+  AttuneMCPServer</code>, for embedding or testing the server.</li>
 </ul>
 <h2 id="concepts">Concepts<a class="headerlink" href="#concepts" title="Permanent link">&para;</a></h2>
-<h3 id="empathymcpserver-and-its-mixins"><code>EmpathyMCPServer</code> and its mixins<a class="headerlink" href="#empathymcpserver-and-its-mixins" title="Permanent link">&para;</a></h3>
-<p><code>EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin)</code> is the
+<h3 id="attunemcpserver-and-its-mixins"><code>AttuneMCPServer</code> and its mixins<a class="headerlink" href="#attunemcpserver-and-its-mixins" title="Permanent link">&para;</a></h3>
+<p><code>AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin)</code> is the
 core server. The mixins supply handler groups: <code>WorkflowHandlersMixin</code>
 runs the analysis workflows, <code>MemoryHandlersMixin</code> handles
 cross-session memory. A <code>RateLimiter</code> guards against tool-call floods.
@@ -4939,7 +4939,7 @@ attune.mcp.server</code>. It logs to a temp file (<code>attune-mcp.log</code>) a
 <h2 id="design-extension">Design &amp; extension<a class="headerlink" href="#design-extension" title="Permanent link">&para;</a></h2>
 <h3 id="design-decisions">Design decisions<a class="headerlink" href="#design-decisions" title="Permanent link">&para;</a></h3>
 <ul>
-<li><strong>Mixins by domain.</strong> <code>EmpathyMCPServer</code> composes
+<li><strong>Mixins by domain.</strong> <code>AttuneMCPServer</code> composes
   <code>WorkflowHandlersMixin</code> and <code>MemoryHandlersMixin</code> so handler groups
   stay cohesive and the server class stays a thin coordinator.</li>
 <li><strong>Schemas separate from handlers.</strong> Tool <em>schemas</em> live in
@@ -4964,7 +4964,7 @@ attune.mcp.server</code>. It logs to a temp file (<code>attune-mcp.log</code>) a
 <li><strong>Embed the server:</strong> <code>create_server()</code> returns an instance you can
   drive directly (e.g. in tests via <code>await call_tool(...)</code>).</li>
 </ul>
-<!-- attune-generated: source_hash=08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f feature=mcp-server kind=architecture generated_at=2026-06-23 -->
+<!-- attune-generated: source_hash=e6370b6c61134866408d30c64611640a3ac5184dc9d37f7e676a5f7ad176e69c feature=mcp-server kind=architecture generated_at=2026-08-24 -->
 
 
 
