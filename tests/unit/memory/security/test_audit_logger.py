@@ -107,7 +107,10 @@ class TestInitialization:
         assert audit_logger.log_dir == expected
         assert audit_logger.log_path == expected / "audit.jsonl"
         assert expected.is_dir()
-        assert (expected.stat().st_mode & 0o777) == 0o700
+        # POSIX-only: Windows chmod is a near-no-op and reports 0o777
+        # (known Windows-lane class; see the os.geteuid skipif lesson).
+        if os.name == "posix":
+            assert (expected.stat().st_mode & 0o777) == 0o700
 
 
 class TestWriting:
