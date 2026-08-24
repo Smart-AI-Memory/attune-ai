@@ -7,8 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [14.1.0] - 2026-08-24
+
+Behavioral validation for the workflow fleet, and the fail-open fixes
+it caught. A planted-defect probe harness now validates that workflows
+actually *do their job* (not just exit 0); its first live runs surfaced
+three production fail-open defects in the gate/reporting group — all
+fixed in this release, each with a live receipt.
+
 ### Fixed
 
+- **secure-release read phantom result keys — GO on unread findings**
+  (#2219, #2222). The aggregator read `final_output["assessment"]` /
+  `"security_score"` / `"has_critical_issues"` / `"verdict"` — keys
+  from the pre-SDK result shape that no longer exist — so a sub-audit
+  that found critical vulnerabilities contributed 0 findings and 0
+  risk, and the gate returned GO. Now reads the real shape (report
+  `score` + severity-keyed `metadata["findings"]`, key-agnostic and
+  fail-closed for unknown severities; NaN/bool/inf scores rejected),
+  and a sub-audit scoring <100 with zero extractable findings raises an
+  extraction-drift warning instead of passing silently. Receipt: the
+  planted-critical fixture flipped GO/0/0 → NO_GO/critical=1/risk 80.
+- **doc-orchestrator fabricated "No documentation gaps found!"**
+  (#2220, #2223). The ProjectIndex fallback consumed doc-coverage keys
+  that no index branch ever produced, and counted the empty read as a
+  performed scan. ProjectIndex gains a real `documentation` context
+  (source files with missing docstrings, AST-computed), and the scout
+  now reports "gaps were NOT assessed" (DEGRADED) whenever the index
+  carried no doc-coverage data. Receipt: a docstring-less fixture
+  module is now found (items=1) instead of "no gaps".
+- **discovery-sweep lanes died at $0 on under-allocated budgets**
+  (#2214, #2224). The dependency-check lane's 0.5 budget multiplier
+  rested on a cost premise measurement refuted, guaranteeing a
+  "Reached maximum budget" abort (recorded as $0) on every sweep — and
+  shares near any lane's natural appetite aborted stochastically.
+  Every LLM lane now carries a measured `min_useful_usd` floor and
+  skips honestly (info finding) below it; the dependency lane runs at
+  multiplier 1.0 / quick depth. Receipt: a default-budget sweep runs
+  all 7 lanes with findings from each and zero failures.
 - **Security auditor: the LLM merge is an allowlist.** An LLM reply may
   now only add `top_findings` / `notes` / `reasoning`; every other key
   (severity counts, score, `retryable`, mode/tier, or one nobody has
@@ -18,9 +54,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Workflow behavioral-validation harness** (test-quality program's
+  second track; spec `docs/specs/workflow-behavioral-validation/`).
+  `scripts/workflow_probe_runner.py` runs planted-defect probes against
+  16 of the 23 fleet workflows (analytical, generative, meta, and gate
+  groups), distinguishes crashes from analytical misses, and writes
+  append-only run-records; `scripts/project_probe_registry.py` projects
+  the tracked probe registry (commit-order selection, `--check` drift
+  guard) with a hand-authored dispositions ledger for intentional gaps.
+  Free fixture-integrity guards run in CI; the billed probes never do.
 - `scripts/ledger_precision.py` — per-seat precision tally over the R5
   cross-review ledger (real / sent per seat, plus inline bug-predict
   notes), so "yield stays measured" is a number rather than a read.
+- **Catalogs only offer workflows that work.** Known-broken workflows
+  are hidden from the ops dashboard, `attune workflow list`, and the
+  MCP catalog until their probes pass (`attune.workflows.visibility`,
+  presentation-only — launches, telemetry, and count gates are
+  unaffected); workflows needing arguments the dashboard Run button
+  can't supply are hidden from the dashboard alone. No more guaranteed
+  error cards.
+
+### Known issues
+
+- `test-gen` emits no runnable test files (no Write tool wired —
+  #2213, fix designed); `doc-gen` / `research-synthesis` carry the
+  deterministic SDK failure from the fleet roundtable. All tracked in
+  the probe registry with dispositions.
 
 ## [14.0.0] - 2026-08-22
 

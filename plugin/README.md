@@ -4,7 +4,7 @@ Spec-driven development for Claude Code — turn requirements
 into reliable software. <!-- cap:skill_count -->28 auto-triggering skills<!-- /cap -->, zero
 commands: say what you need and Claude picks the right skill.
 
-**Version:** 14.0.0 | **License:** Apache 2.0
+**Version:** 14.1.0 | **License:** Apache 2.0
 
 > **Fix Receipts** (`/fix`) — new in 11.2.0. Say `fix this and
 > prove it`.
