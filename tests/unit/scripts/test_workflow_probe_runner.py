@@ -687,3 +687,93 @@ def test_probe_doc_gen_filters_and_executes_with_mocked_workflow() -> None:
     assert out.passed, out.reason
     assert out.evidence["examples_run"] == 1
     assert out.evidence["skipped_unparseable"] == 1
+
+
+def test_fence_to_script_preserves_repl_body_indentation() -> None:
+    # Codex D11 lane (medium): lstripping continuation lines destroyed
+    # compound-statement indentation, making valid multiline REPL
+    # examples unparseable (and thus silently skipped).
+    import ast as _ast
+
+    repl = (
+        ">>> from orders import order_total\n"
+        ">>> for prices in ([1.0], [2.0]):\n"
+        "...     print(order_total(prices))\n"
+        "1.0\n"
+        "2.0\n"
+    )
+    script = runner._fence_to_script(repl)
+    _ast.parse(script)  # must be valid Python — indentation intact
+    assert "    print(order_total(prices))" in script.splitlines()
+
+
+def test_python_tagged_broken_fence_fails_probe() -> None:
+    # Codex D11 lane (high): a ```python fence claims to BE Python; a
+    # parse failure there must FAIL the probe, not be skipped as prose —
+    # otherwise one valid example masks broken ones.
+    import asyncio
+
+    class _R:
+        success = True
+        error = None
+        metadata = {
+            "raw_result_text": (
+                "order_total and classify_order.\n"
+                "```python\nfrom orders import order_total(\n```\n"
+                "```python\nfrom orders import order_total\n"
+                "print(order_total([1.0]))\n```\n"
+            )
+        }
+        final_output = "x"
+        cost_report = None
+        summary = ""
+
+    async def fake_run(name, **kwargs):
+        return _R()
+
+    original = runner._run_workflow
+    runner._run_workflow = fake_run
+    try:
+        out = asyncio.run(runner.probe_doc_gen(1.0))
+    finally:
+        runner._run_workflow = original
+    assert not out.passed
+    assert "do not parse" in out.reason
+
+
+def test_emitted_examples_run_with_scrubbed_env() -> None:
+    # Codex D11 lane (critical): LLM-emitted example code must not see
+    # the runner's credentials. Canary in the runner env must be
+    # invisible to the example subprocess.
+    import asyncio
+    import os as _os
+
+    class _R:
+        success = True
+        error = None
+        metadata = {
+            "raw_result_text": (
+                "order_total and classify_order.\n"
+                "```python\n"
+                "import os, sys\n"
+                "sys.exit(1 if os.environ.get('PROBE_ENV_CANARY') else 0)\n"
+                "# orders module env check\n"
+                "```\n"
+            )
+        }
+        final_output = "x"
+        cost_report = None
+        summary = ""
+
+    async def fake_run(name, **kwargs):
+        return _R()
+
+    original = runner._run_workflow
+    runner._run_workflow = fake_run
+    _os.environ["PROBE_ENV_CANARY"] = "leaked"
+    try:
+        out = asyncio.run(runner.probe_doc_gen(1.0))
+    finally:
+        runner._run_workflow = original
+        del _os.environ["PROBE_ENV_CANARY"]
+    assert out.passed, out.reason

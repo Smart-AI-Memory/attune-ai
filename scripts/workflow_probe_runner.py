@@ -513,6 +513,11 @@ async def probe_dependency_check(budget: float) -> ProbeResult:
 
 _CODE_FENCE = re.compile(r"```(?:python|py)?\s*\n(.*?)```", re.DOTALL)
 
+#: Like _CODE_FENCE but CAPTURES the language tag: a ```python fence
+#: claims to be Python (parse failure = defect), an untagged fence may
+#: be prose (parse failure = skip). Codex D11 lane, 2026-08-24.
+_TAGGED_FENCE = re.compile(r"```(python|py)?[ \t]*\n(.*?)```", re.DOTALL)
+
 
 def _extract_test_code(text: str) -> str:
     """Pull fenced code blocks that look like pytest tests."""
@@ -955,7 +960,13 @@ def _fence_to_script(code: str) -> str:
     for line in lines:
         stripped = line.lstrip()
         if stripped.startswith(">>>") or stripped.startswith("..."):
-            kept.append(stripped[3:].lstrip())
+            # Strip the 3-char prefix plus at most ONE separator space —
+            # lstrip() here destroyed the indentation of compound-
+            # statement bodies ("...     total = ..."), making valid
+            # multiline REPL examples unparseable (codex D11 lane,
+            # 2026-08-24).
+            rest = stripped[3:]
+            kept.append(rest[1:] if rest.startswith(" ") else rest)
     return "\n".join(kept)
 
 
@@ -1048,21 +1059,40 @@ async def probe_doc_gen(budget: float) -> ProbeResult:
 
         # Calibration round 2 (2026-08-24 live run): the API-reference
         # section renders Google-style docstring blocks ("Args:" /
-        # "Returns:") inside untagged fences; those are prose, not
-        # examples. A candidate must PARSE as Python after the script
-        # transforms — unparseable fences are skipped, not failed.
+        # "Returns:") inside UNTAGGED fences; those are prose, not
+        # examples, and are skipped when they don't parse. A fence
+        # explicitly tagged ```python claims to BE Python, so a parse
+        # failure there is an emitted-output defect and FAILS the probe
+        # (codex D11 lane: skipping every unparseable fence would let
+        # one valid example mask syntactically broken ones).
         fences: list[str] = []
         skipped_unparseable = 0
-        for block in _CODE_FENCE.findall(text):
+        syntax_broken: list[str] = []
+        for tag, block in _TAGGED_FENCE.findall(text):
             if "orders" not in block:
                 continue
             script = _harden_expected_raises(_fence_to_script(block))
             try:
                 ast.parse(script)
-            except SyntaxError:
-                skipped_unparseable += 1
+            except SyntaxError as exc:
+                if tag:
+                    syntax_broken.append(f"tagged fence: {exc.msg} (line {exc.lineno})")
+                else:
+                    skipped_unparseable += 1
                 continue
             fences.append(script)
+        if syntax_broken:
+            return ProbeResult(
+                name="doc-gen",
+                passed=False,
+                reason=(f"{len(syntax_broken)} python-tagged example(s) do not parse"),
+                cost_usd=_cost_of(result),
+                duration_s=dur,
+                evidence={
+                    "syntax_broken": syntax_broken,
+                    "raw_head": _head(result),
+                },
+            )
         if not fences:
             return ProbeResult(
                 name="doc-gen",
@@ -1087,6 +1117,11 @@ async def probe_doc_gen(budget: float) -> ProbeResult:
                 capture_output=True,
                 text=True,
                 timeout=120,
+                # LLM-emitted code runs with a SCRUBBED env (codex D11
+                # lane, critical): the runner's env holds live
+                # credentials (ANTHROPIC_API_KEY et al.) that a doc
+                # example has no business reading.
+                env={"PATH": os.environ.get("PATH", "")},
             )
             if proc.returncode != 0:
                 tail = "\n".join((proc.stdout + proc.stderr).splitlines()[-4:])

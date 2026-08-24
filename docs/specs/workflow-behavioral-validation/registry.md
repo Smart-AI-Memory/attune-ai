@@ -13,7 +13,7 @@ new records; `--check` is the CI drift guard.
 | dependency-check | PASS | 0.4084 | 109.5 | 2026-08-24T13:31:14Z | 8a260f413 | `records/20260824T133114-dependency-check.json` |
 | discovery-sweep | PASS | 3.3260 | 178.8 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-discovery-sweep.json` |
 | doc-audit | PASS | 0.5083 | 94.9 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-doc-audit.json` |
-| doc-gen | PASS | 0.4598 | 181.4 | 2026-08-24T17:35:37Z | 928ae3f54 | `records/20260824T173537-doc-gen.json` |
+| doc-gen | PASS | 0.5079 | 125.9 | 2026-08-24T17:41:44Z | d232d4b1d | `records/20260824T174144-doc-gen.json` |
 | doc-orchestrator | PASS | 0.0000 | 0.1 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-doc-orchestrator.json` |
 | health-check | PASS | 0.0000 | 2.3 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-health-check.json` |
 | perf-audit | PASS | 0.3042 | 77.2 | 2026-08-24T13:17:36Z | 463d80964 | `records/20260824T131736-perf-audit.json` |

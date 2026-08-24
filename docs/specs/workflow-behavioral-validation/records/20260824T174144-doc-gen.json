@@ -1,0 +1,18 @@
+{
+  "workflow": "doc-gen",
+  "fixture": "tests/fixtures/workflow_probes/",
+  "receipt_type": "executed-examples",
+  "verdict": "pass",
+  "cost_usd": 0.5079,
+  "duration_s": 125.9,
+  "ran_at": "2026-08-24T17:41:44Z",
+  "runner_version": "0.3.0",
+  "git_sha": "d232d4b1d",
+  "evidence": {
+    "examples_run": 3,
+    "skipped_unparseable": 0,
+    "example_failures": [],
+    "raw_head": "I'll orchestrate the three subagents. Since the outline planner and content writer both analyze the source directly (independent work), I'll run them concurrently first, then run the polish reviewer on the produced documentation.\n\nNow I'll run the polish reviewer on the produced documentation to generate improvement suggestions.\n\nAll three subagents have finished. Here is the synthesized documentation.\n\n---\n\n## Summary\n\nThe codebase is a single-file Python module, `orders.py`, providing a small, dependency-free utility library for e-commerce order pricing. It exposes two pure, stateless functions: `order_total`, which sums item prices and applies a fractional discount, and `classify_order`, which maps an order total to a named shipping tier.\n\n## Outline\n\n**Module**\n- `orders` \u2014 `orders.py` \u2014 Standalone Python 3 module (uses `from __future__ import annotations`); no package structure, external dependencies, tests, or config files.\n\n**APIs**\n- `order_total(prices: list[float], discount: float = 0.0) -> float` \u2014 `orders.py:4` \u2014 Sums prices, applies a fractional discount in `[0, 1]`; raises `ValueError` if out of range (`orders.py:9-10`).\n- `classify_order(total: float) -> str` \u2014 `orders.py:15` \u2014 Maps a total to a shipping tier: `\"empty\"`, `\"standard\"`, `\"priority\"`, or `\"free-shipping\"`.\n\n**Example sections**\n- Installation \u2014 note the absence of packaging metadata; standalone importable script.\n- Quickstart \u2014 compute a total for a sample cart, then classify it.\n- Common workflows \u2014 chaining `order_total` \u2192 `classify_order`; handling invalid discount input; boundary testing at 0/50/200.\n- API reference appendix \u2014 full signatures and docstrings.\n\n## Documentation\n\n# Orders Module\n\nA small utility module for computing order totals with discounts and classifying orders into shipping tiers. It has no external dependencies and relies only on the Python standard library.\n\n**Source:** `orders.py`\n\n### Overview\n\nThe `orders` module provides two pure, stateless functions:\n- `order_total` \u2014 sums a list of item prices and appli",
+    "reason": "all 3 emitted example(s) referencing the module executed"
+  }
+}
