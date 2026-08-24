@@ -870,3 +870,81 @@ def test_run_selected_crashed_probe_records_the_budget_cap(monkeypatch) -> None:
     ledger = Path(os.environ["ATTUNE_SESSION_LEDGER_PATH"])
     entries = [json.loads(line) for line in ledger.read_text().splitlines()]
     assert entries[0]["cost_usd"] == 3.0
+
+
+def test_emitted_tests_run_with_scrubbed_env_files_on_disk() -> None:
+    # Codex D11 lane on #2273 (critical), same class as probe_doc_gen's
+    # scrub: LLM-emitted test code must not see the runner's
+    # credentials. A canary in the runner env must be invisible to the
+    # pytest subprocess — the staged test FAILS if it can read it, so
+    # a leak fails this test via out.passed.
+    import asyncio
+    import os as _os
+    from pathlib import Path as _Path
+
+    class _R:
+        success = True
+        error = None
+        metadata: dict = {}
+        final_output = "x"
+        cost_report = None
+        summary = ""
+
+    async def fake_run(name, **kwargs):
+        gen = _Path(kwargs["path"]) / "tests" / "generated"
+        gen.mkdir(parents=True)
+        (gen / "test_probe_canary.py").write_text(
+            "import os\n\n"
+            "def test_env_scrubbed():\n"
+            "    assert os.environ.get('PROBE_ENV_CANARY') is None\n",
+            encoding="utf-8",
+        )
+        return _R()
+
+    original = runner._run_workflow
+    runner._run_workflow = fake_run
+    _os.environ["PROBE_ENV_CANARY"] = "leaked"
+    try:
+        out = asyncio.run(runner.probe_test_gen(1.0))
+    finally:
+        runner._run_workflow = original
+        del _os.environ["PROBE_ENV_CANARY"]
+    assert out.passed, out.reason
+    assert out.evidence["files_written"] == 1
+
+
+def test_emitted_tests_run_with_scrubbed_env_report_fence() -> None:
+    # Same canary for the fallback path: fence-extracted test code is
+    # executed with the scrubbed env too.
+    import asyncio
+    import os as _os
+
+    class _R:
+        success = True
+        error = None
+        metadata = {
+            "raw_result_text": (
+                "```python\n"
+                "import os\n\n"
+                "def test_env_scrubbed():\n"
+                "    assert os.environ.get('PROBE_ENV_CANARY') is None\n"
+                "```\n"
+            )
+        }
+        final_output = "x"
+        cost_report = None
+        summary = ""
+
+    async def fake_run(name, **kwargs):
+        return _R()
+
+    original = runner._run_workflow
+    runner._run_workflow = fake_run
+    _os.environ["PROBE_ENV_CANARY"] = "leaked"
+    try:
+        out = asyncio.run(runner.probe_test_gen(1.0))
+    finally:
+        runner._run_workflow = original
+        del _os.environ["PROBE_ENV_CANARY"]
+    assert out.passed, out.reason
+    assert out.evidence["files_written"] == 0
