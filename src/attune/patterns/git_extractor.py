@@ -183,6 +183,10 @@ class GitPatternExtractor:
                     "git",
                     "log",
                     "--first-parent",
+                    # Implied by --first-parent since git 2.31; explicit so
+                    # merge commits keep their first-parent patch on older
+                    # gits too (verified live: identical output either way).
+                    "--diff-merges=first-parent",
                     "-n",
                     count,
                     f"--pretty=format:{fmt}",

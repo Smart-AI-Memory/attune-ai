@@ -161,6 +161,7 @@ class TestRecentCommitsBatchBoundary:
                 "git",
                 "log",
                 "--first-parent",
+                "--diff-merges=first-parent",
                 "-n",
                 "7",
                 "--pretty=format:%x00%H%x1f%an%x1f%aI%x1f%P%x1f%s",
