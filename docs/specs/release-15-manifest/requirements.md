@@ -1,8 +1,8 @@
 # 15.0.0 Major-Release Manifest
 
-**Status:** draft (2026-08-24) — scope manifest awaiting chair
-review. One decision is OPEN and gating (D2: the fate of
-`empathy_level`); everything else is recorded scope.
+**Status:** approved (2026-08-24) — merged as the major's scope
+document (#2262); D2 RATIFIED same day (Option B — `empathy_level`
+dies with the framework), so no gating decision remains open.
 **Slug:** `release-15-manifest`
 **Provenance:** several pre-authorized breaking changes were
 assembling toward the next major with no single document scoping
@@ -39,8 +39,8 @@ contract (all verified against the 2026-08-24 tree):
   ([base.py:45](../../../src/attune/plugins/base.py)) — takes
   `empathy_level: int` in `__init__` and requires an `analyze()`
   abstract the engine cannot run. Replacing the contract is
-  breaking for third-party plugins; the replacement's shape
-  depends on D2.
+  breaking for third-party plugins; per D2 (Option B) the
+  replacement is level-free.
 - **`EmpathyMCPServer` → `AttuneMCPServer` alias removal** — the
   rename-with-alias itself lands in 14.x (deprecation story
   below); 15.0.0 removes the alias. As of 2026-08-24 the rename
@@ -59,16 +59,16 @@ contract (all verified against the 2026-08-24 tree):
   standardizes discovery on `attune.*` and drops the empathy-named
   groups; 14.x dual-reads with deprecation warnings first.
 
-### 3. OPEN CHAIR DECISION — the fate of `empathy_level` (D2)
+### 3. `empathy_level` dies with the framework (D2 — RATIFIED chair 2026-08-24, Option B)
 
-**This manifest does not decide it.** The 1–5 level concept is
-plumbed through agent_factory, config, llm state, plugin discovery,
-and the live MCP tools `attune_get_level`/`attune_set_level`.
-Removing the framework while keeping the knob is incoherent
-long-term. Options and consequences in
-[decisions.md D2](decisions.md) — **the ruling gates #2238's
-breaking half** (the `BaseWorkflow` replacement and the MCP tool
-surface both take their shape from it).
+The 1–5 level concept is plumbed through agent_factory, config,
+llm state, plugin discovery, and the live MCP tools
+`attune_get_level`/`attune_set_level`. The chair ruled Option B:
+15.0.0 removes the level plumbing end-to-end, the replacement
+plugin `BaseWorkflow` carries no level parameter, and the MCP
+level tools are deleted (14.x `DeprecationWarning` first). Full
+ruling and consequences in [decisions.md D2](decisions.md); this
+unblocks #2238's breaking half.
 
 ## Not a passenger
 
@@ -97,14 +97,17 @@ Land in 14.x, each with a `DeprecationWarning`:
    declaration (removable in 14.x — nothing reads it).
 3. The replacement plugin `BaseWorkflow` contract published
    alongside the old one (old contract warns on instantiation) —
-   **blocked on D2** for its signature.
+   per D2, level-free signature; `attune_get_level`/
+   `attune_set_level` also warn in 14.x ahead of their 15.0.0
+   deletion.
 4. `attune.exceptions` needs no 14.x shim — the removal branch is
    the pre-authorized cutover itself.
 
 ## Sequencing
 
 1. 14.x: #2253 ✅ merged → #2239 layering → deprecation-story items
-   1–3 (item 3 after D2 rules).
-2. D2 chair ruling — gates #2238's breaking half.
+   1–3.
+2. D2 ✅ ruled 2026-08-24 (Option B) — #2238's breaking half is
+   unblocked.
 3. 15.0.0 (not before mid-to-late September 2026): board passenger
-   1 (rebase), passenger 2, plus whatever D2 rules.
+   1 (rebase), passenger 2 including the D2 level removal.
