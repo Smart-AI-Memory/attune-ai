@@ -1,0 +1,173 @@
+name: Attune signed control proof
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".agent-vigil-control-policy.json"
+      - ".github/workflows/agent-vigil-control-proof.yml"
+  schedule:
+    - cron: "23 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  certify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out Attune AI
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Run Attune control challenges
+        shell: bash
+        run: |
+          set +e
+          python -m pip install -e ".[dev]" >"$RUNNER_TEMP/dependencies.log" 2>&1
+          dependencies_status=$?
+          cat "$RUNNER_TEMP/dependencies.log"
+
+          if [[ "$dependencies_status" -eq 0 ]]; then
+            python scripts/project_collaboration_contract.py --check >"$RUNNER_TEMP/collaboration-projection.log" 2>&1
+            echo "$?" >"$RUNNER_TEMP/collaboration-projection.status"
+            pytest -q tests/unit/ci/test_workflow_yaml.py tests/unit/ci/test_ci_spend_guard.py >"$RUNNER_TEMP/workflow-policy.log" 2>&1
+            echo "$?" >"$RUNNER_TEMP/workflow-policy.status"
+          else
+            printf 'dependency installation failed with exit code %s\n' "$dependencies_status" >"$RUNNER_TEMP/collaboration-projection.log"
+            printf 'dependency installation failed with exit code %s\n' "$dependencies_status" >"$RUNNER_TEMP/workflow-policy.log"
+            echo "$dependencies_status" >"$RUNNER_TEMP/collaboration-projection.status"
+            echo "$dependencies_status" >"$RUNNER_TEMP/workflow-policy.status"
+          fi
+
+          cat "$RUNNER_TEMP/collaboration-projection.log"
+          cat "$RUNNER_TEMP/workflow-policy.log"
+          exit 0
+
+      - name: Build signed proof payload
+        shell: bash
+        run: |
+          node <<'NODE'
+          const crypto = require("node:crypto");
+          const fs = require("node:fs");
+          const path = require("node:path");
+          const root = process.env.RUNNER_TEMP;
+          const readStatus = (name) => Number(fs.readFileSync(path.join(root, `${name}.status`), "utf8").trim());
+          const digest = (name) => `sha256:${crypto.createHash("sha256").update(fs.readFileSync(path.join(root, `${name}.log`))).digest("hex")}`;
+          const result = (id) => {
+            const passed = readStatus(id) === 0;
+            return { id, expected: "PASS", actual: passed ? "PASS" : "ERROR", passed, evidenceHash: digest(id) };
+          };
+          const challenges = [result("collaboration-projection"), result("workflow-policy")];
+          const passed = challenges.filter((challenge) => challenge.passed).length;
+          const payload = {
+            control: { vendor: "Smart-AI-Memory", product: "attune-governance", version: process.env.GITHUB_SHA },
+            sourceCommit: process.env.GITHUB_SHA,
+            generatedAt: new Date().toISOString(),
+            status: passed === challenges.length ? "PASS" : "HOLD",
+            challenges,
+            summary: { passed, total: challenges.length },
+            limits: [
+              "The signer reports command exit status and retained log hashes.",
+              "Agent Vigil verifies the signed claim but does not reconstruct the Attune AI test environment."
+            ]
+          };
+          fs.writeFileSync(path.join(root, "control-proof-payload.json"), `${JSON.stringify(payload, null, 2)}\n`, { mode: 0o600 });
+          NODE
+
+      - name: Check out Agent Vigil
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: sulmusic2-star/agent-vigil
+          ref: be3161fb7a85a4d69af6356e6c453ffd72ebac97
+          path: .agent-vigil-tool
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: .agent-vigil-tool/package-lock.json
+
+      - name: Build Agent Vigil
+        working-directory: .agent-vigil-tool
+        run: npm ci && npm run build
+
+      - id: signing-key
+        name: Configure the repository signing key
+        shell: bash
+        env:
+          SIGNING_KEY: ${{ secrets.AGENT_VIGIL_SIGNING_KEY }}
+        run: |
+          if [[ -z "$SIGNING_KEY" ]]; then
+            echo "configured=false" >>"$GITHUB_OUTPUT"
+            echo "AGENT_VIGIL_SIGNING_KEY is not configured" >&2
+            exit 0
+          fi
+          if grep -q 'sha256:0000000000000000000000000000000000000000000000000000000000000000' .agent-vigil-control-policy.json; then
+            echo "configured=false" >>"$GITHUB_OUTPUT"
+            echo "the control policy still contains the placeholder signer identity" >&2
+            exit 0
+          fi
+          umask 077
+          printf '%s' "$SIGNING_KEY" >"$RUNNER_TEMP/provider-private.pem"
+          openssl pkey -in "$RUNNER_TEMP/provider-private.pem" -pubout -out "$RUNNER_TEMP/provider-public.pem"
+          echo "configured=true" >>"$GITHUB_OUTPUT"
+
+      - name: Sign and verify the control proof
+        if: steps.signing-key.outputs.configured == 'true'
+        shell: bash
+        run: |
+          set +e
+          cli=".agent-vigil-tool/dist/cli.js"
+          node "$cli" certify sign "$RUNNER_TEMP/control-proof-payload.json" --private-key "$RUNNER_TEMP/provider-private.pem" --output "$RUNNER_TEMP/signed-control-proof.json"
+          test -s "$RUNNER_TEMP/signed-control-proof.json" || exit 1
+          node "$cli" certify record-signed "$RUNNER_TEMP/signed-control-proof.json" --public-key "$RUNNER_TEMP/provider-public.pem" --organization Smart-AI-Memory --repository Smart-AI-Memory/attune-ai --required-check "Attune signed control proof" --output "$RUNNER_TEMP/control-certificate.json"
+          test -s "$RUNNER_TEMP/control-certificate.json" || exit 1
+          node "$cli" certify add "$RUNNER_TEMP/control-certificate.json" --corpus "$RUNNER_TEMP/control-corpus.jsonl"
+          test -s "$RUNNER_TEMP/control-corpus.jsonl" || exit 1
+          node "$cli" certify status --corpus "$RUNNER_TEMP/control-corpus.jsonl" --policy .agent-vigil-control-policy.json --format json --output "$RUNNER_TEMP/control-status.json"
+          test -s "$RUNNER_TEMP/control-status.json" || exit 1
+          exit 0
+
+      - name: Retain the certificate bundle
+        if: always() && steps.signing-key.outputs.configured == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: attune-signed-control-${{ github.run_id }}
+          retention-days: 90
+          if-no-files-found: error
+          path: |
+            ${{ runner.temp }}/collaboration-projection.log
+            ${{ runner.temp }}/workflow-policy.log
+            ${{ runner.temp }}/control-proof-payload.json
+            ${{ runner.temp }}/signed-control-proof.json
+            ${{ runner.temp }}/control-certificate.json
+            ${{ runner.temp }}/control-corpus.jsonl
+            ${{ runner.temp }}/control-status.json
+            ${{ runner.temp }}/provider-public.pem
+            .agent-vigil-control-policy.json
+
+      - name: Enforce fresh status
+        if: always()
+        shell: bash
+        env:
+          CONFIGURED: ${{ steps.signing-key.outputs.configured }}
+        run: |
+          if [[ "$CONFIGURED" != "true" ]]; then
+            echo "signed control proof is not configured" >&2
+            exit 1
+          fi
+          node -e 'const fs=require("node:fs"); const p=process.env.RUNNER_TEMP+"/control-status.json"; const r=JSON.parse(fs.readFileSync(p,"utf8")); if(r.status!=="PASS"||r.summary.fresh!==r.summary.total) process.exit(1)'

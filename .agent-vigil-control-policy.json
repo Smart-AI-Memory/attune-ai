@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "agent-vigil-control-policy/v1",
+  "policyId": "attune-signed-control-v1",
+  "organization": "Smart-AI-Memory",
+  "maxAgeHours": 168,
+  "repositories": [
+    {
+      "repository": "Smart-AI-Memory/attune-ai",
+      "requiredCheck": "Attune signed control proof",
+      "allowedControls": [
+        "Smart-AI-Memory/attune-governance@sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "requiredChallenges": [
+        "collaboration-projection",
+        "workflow-policy"
+      ]
+    }
+  ]
+}
