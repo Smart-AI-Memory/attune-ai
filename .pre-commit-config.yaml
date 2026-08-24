@@ -164,6 +164,22 @@ repos:
         files: ^(src/.*\.py|\.help/features\.yaml)$
         stages: [pre-commit]
 
+      # R5 ledger row gates at commit time (retro 3.1, chair-ruled
+      # 2026-08-24). Runs the two REAL gate tests — precision-tally
+      # leading shape + D11a claim/reason format — whenever
+      # receipts.md is staged, so a hand-edited row that bypassed
+      # review.ledger_row's authoring-time validation fails HERE
+      # (~1s, serial, no coverage) instead of two CI rounds later
+      # (the PR #2268 failure mode). No duplicated grammar: the
+      # gates themselves are the entry point, baselines included.
+      - id: check-ledger-row-gates
+        name: Check R5 ledger rows against both gates
+        entry: python -m pytest tests/unit/scripts/test_ledger_precision.py tests/unit/gates/test_ledger_rejection_format.py -q -p no:xdist -o addopts=
+        language: system
+        pass_filenames: false
+        files: ^docs/specs/cross-review/receipts\.md$
+        stages: [pre-commit]
+
       # Coverage exclusion policy enforcement
       # Every production-code entry in pyproject.toml's
       # [tool.coverage.run] omit block must have an inline `#` comment.
