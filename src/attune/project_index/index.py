@@ -673,6 +673,22 @@ class ProjectIndex:
                 "summary": self._summary.to_dict(),
             }
 
+        if workflow_type == "documentation":
+            # Doc-coverage view (#2220). The doc-orchestrator's index
+            # fallback consumed this key for years while NO branch
+            # produced it — every read defaulted empty and zero items
+            # rendered as "no gaps found". The presence of
+            # ``files_without_docstrings`` is also the scout's
+            # scan-was-performed marker, so only emit it from this
+            # branch, where it is genuinely computed.
+            undocumented = [f for f in self.get_files_by_category("source") if not f.has_docstrings]
+            return {
+                "files_without_docstrings": [
+                    {"path": f.path, "loc": f.lines_of_code} for f in undocumented[:50]
+                ],
+                "summary": self._summary.to_dict(),
+            }
+
         return {
             "summary": self._summary.to_dict(),
             "files_needing_attention": [

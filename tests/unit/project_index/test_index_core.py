@@ -262,6 +262,21 @@ class TestWorkflowContext:
         ctx = _populated(tmp_path).get_context_for_workflow("unknown")
         assert "files_needing_attention" in ctx
 
+    def test_documentation(self, tmp_path):
+        # #2220 — this branch did not exist: the doc-orchestrator read
+        # files_without_docstrings for years while nothing produced it,
+        # so every scan "found no gaps". Undocumented source files must
+        # be listed; documented ones must not.
+        idx = _populated(tmp_path)
+        for record in idx._records.values():
+            record.has_docstrings = record.path != "src/a.py"
+        ctx = idx.get_context_for_workflow("documentation")
+        assert "files_without_docstrings" in ctx
+        listed = [f["path"] for f in ctx["files_without_docstrings"]]
+        assert "src/a.py" in listed
+        assert "src/b.py" not in listed
+        assert all("loc" in f for f in ctx["files_without_docstrings"])
+
 
 class TestRefresh:
     def test_refresh_parallel(self, tmp_path):

@@ -664,7 +664,7 @@ class TestItemsFromIndex:
     def test_items_from_index_no_index(self, orchestrator):
         """Test items extraction when ProjectIndex is not available."""
         orchestrator._project_index = None
-        items = orchestrator._items_from_index()
+        items, _ = orchestrator._items_from_index()
         assert items == []
 
     @patch("attune.workflows.documentation_orchestrator.HAS_PROJECT_INDEX", True)
@@ -680,7 +680,7 @@ class TestItemsFromIndex:
         }
         orchestrator._project_index = mock_index
 
-        items = orchestrator._items_from_index()
+        items, _ = orchestrator._items_from_index()
         assert len(items) == 2
         assert items[0].file_path == "src/main.py"
         assert items[0].issue_type == "missing_docstring"
@@ -704,7 +704,7 @@ class TestItemsFromIndex:
         }
         orchestrator._project_index = mock_index
 
-        items = orchestrator._items_from_index()
+        items, _ = orchestrator._items_from_index()
         assert len(items) == 1
         assert items[0].file_path == "docs/api.md"
         assert items[0].issue_type == "stale_doc"
@@ -734,7 +734,7 @@ class TestItemsFromIndex:
         }
         orchestrator._project_index = mock_index
 
-        items = orchestrator._items_from_index()
+        items, _ = orchestrator._items_from_index()
         # Should only have missing_docstring items
         assert len(items) == 1
         assert items[0].issue_type == "missing_docstring"
@@ -752,7 +752,7 @@ class TestItemsFromIndex:
         }
         orchestrator._project_index = mock_index
 
-        items = orchestrator._items_from_index()
+        items, _ = orchestrator._items_from_index()
         # Should only have main.py, not requirements.txt
         assert len(items) == 1
         assert items[0].file_path == "src/main.py"
@@ -780,7 +780,7 @@ class TestItemsFromIndex:
         }
         orchestrator._project_index = mock_index
 
-        items = orchestrator._items_from_index()
+        items, _ = orchestrator._items_from_index()
         # Only docs/api.md should survive - requirements.txt is excluded
         assert len(items) == 1
         assert items[0].file_path == "docs/api.md"
@@ -791,8 +791,46 @@ class TestItemsFromIndex:
         mock_index.get_context_for_workflow.side_effect = RuntimeError("index unavailable")
         orchestrator._project_index = mock_index
 
-        items = orchestrator._items_from_index()
+        items, assessed = orchestrator._items_from_index()
         assert items == []
+        # An errored read is NOT an assessment (#2220).
+        assert assessed is False
+
+    def test_capabilityless_context_is_not_an_assessment(self, orchestrator):
+        """#2220 — a context WITHOUT doc-coverage data must not count
+        as a performed scan. For years no index branch produced
+        `files_without_docstrings`; every read defaulted empty and
+        zero items rendered as 'no documentation gaps found'."""
+        mock_index = MagicMock()
+        mock_index.get_context_for_workflow.return_value = {
+            "summary": {},
+            "files_needing_attention": [],
+        }
+        orchestrator._project_index = mock_index
+
+        items, assessed = orchestrator._items_from_index()
+        assert items == []
+        assert assessed is False
+
+    def test_context_with_doc_data_is_an_assessment(self, orchestrator):
+        """The produced-key marker flips assessed True — including the
+        genuinely-clean case (key present, empty list)."""
+        mock_index = MagicMock()
+        mock_index.get_context_for_workflow.return_value = {
+            "files_without_docstrings": [],
+            "summary": {},
+        }
+        orchestrator._project_index = mock_index
+
+        items, assessed = orchestrator._items_from_index()
+        assert items == []
+        assert assessed is True
+
+    def test_no_index_is_not_an_assessment(self, orchestrator):
+        orchestrator._project_index = None
+        items, assessed = orchestrator._items_from_index()
+        assert items == []
+        assert assessed is False
 
 
 class TestGenerateSummary:
@@ -1762,7 +1800,7 @@ class TestProjectIndexEdgeCases:
         mock_index.records = mock_records
         orchestrator._index = mock_index
 
-        items = orchestrator._items_from_index()
+        items, _ = orchestrator._items_from_index()
 
         # Should only include source file, not requirements.txt
         assert len(items) <= 1
