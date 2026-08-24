@@ -1074,9 +1074,13 @@ async def probe_doc_gen(budget: float) -> ProbeResult:
             script = _harden_expected_raises(_fence_to_script(block))
             try:
                 ast.parse(script)
-            except SyntaxError as exc:
+            # ValueError: ast.parse raises it on null bytes in source
+            # (the ast-parse-null-byte gate pins this pairing).
+            except (SyntaxError, ValueError) as exc:
                 if tag:
-                    syntax_broken.append(f"tagged fence: {exc.msg} (line {exc.lineno})")
+                    detail = getattr(exc, "msg", None) or str(exc)
+                    lineno = getattr(exc, "lineno", "?")
+                    syntax_broken.append(f"tagged fence: {detail} (line {lineno})")
                 else:
                     skipped_unparseable += 1
                 continue
