@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unittest.mock
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, PropertyMock, patch
 
@@ -115,7 +116,11 @@ async def test_collect_response_returns_validated_answers_and_hint(tmp_path):
             {"form": FORM, "answers": {"target": "src", "depth": "quick"}}
         )
 
-    log_submission.assert_called_once_with()
+    # Called with the form's telemetry join key — an empty string on
+    # attune-forms 0.7.x (no FormSchema.form_id yet), the content hash
+    # on >= 0.8.0. Asserting the kwarg shape keeps this green on both.
+    log_submission.assert_called_once()
+    assert set(log_submission.call_args.kwargs) == {"form_id"}
     assert result["success"] is True
     assert result["responses"] == {"target": "src", "depth": "quick"}
     # forms 0.7.0 appends an 8-hex uniqueness suffix to the response id.
@@ -166,6 +171,40 @@ def test_keyboard_hint_swallows_expected_errors(error, failing_seam):
         result = server_module.AttuneMCPServer._maybe_keyboard_hint()
 
     assert result is None
+
+
+def test_keyboard_hint_falls_back_to_zero_arg_log_submission():
+    """attune-forms < 0.8.0 has ``log_submission()`` with no params —
+    the TypeError falls back to the legacy call instead of dropping the
+    submission (or the hint) on the floor."""
+    log_submission = unittest.mock.Mock(side_effect=[TypeError("old signature"), None])
+    with (
+        patch("attune.telemetry.form_events.log_submission", log_submission),
+        patch("attune.telemetry.form_events.maybe_keyboard_hint", return_value="Press K"),
+        patch("attune.elicitation.keyboard_mode_enabled", return_value=False),
+    ):
+        result = server_module.AttuneMCPServer._maybe_keyboard_hint(
+            SimpleNamespace(form_id="abc123")
+        )
+
+    assert result == "Press K"
+    assert log_submission.call_count == 2
+    assert log_submission.call_args_list[0].kwargs == {"form_id": "abc123"}
+    assert log_submission.call_args_list[1] == unittest.mock.call()
+
+
+def test_keyboard_hint_passes_empty_form_id_without_form():
+    """The zero-arg call path (older in-tree callers, tests) still works:
+    no form object degrades to an empty join key, never an AttributeError."""
+    with (
+        patch("attune.telemetry.form_events.log_submission") as log_submission,
+        patch("attune.telemetry.form_events.maybe_keyboard_hint", return_value=None),
+        patch("attune.elicitation.keyboard_mode_enabled", return_value=False),
+    ):
+        result = server_module.AttuneMCPServer._maybe_keyboard_hint()
+
+    assert result is None
+    log_submission.assert_called_once_with(form_id="")
 
 
 def test_elicitation_session_is_empty_outside_request():
