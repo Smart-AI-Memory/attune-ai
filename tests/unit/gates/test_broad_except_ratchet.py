@@ -244,6 +244,10 @@ _BASELINE: dict[str, int] = {
     "src/attune/ops/memory_data.py": 6,
     "src/attune/ops/routes/bulletin.py": 1,
     "src/attune/ops/routes/dashboard.py": 5,
+    # _workflow_exists (#2242): registry introspection is a fail-open
+    # availability guard — any introspection error must degrade to
+    # "indeterminate", never take the run endpoint down. Logged.
+    "src/attune/ops/routes/runner.py": 1,
     "src/attune/ops/routes/specs.py": 2,
     "src/attune/ops/runner.py": 3,
     "src/attune/ops/session_summarizer.py": 2,

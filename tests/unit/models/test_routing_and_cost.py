@@ -411,6 +411,7 @@ class TestFallbackActivation:
             initial_delay_ms=1000,
             exponential_backoff=True,
             backoff_multiplier=2.0,
+            jitter=False,
         )
 
         # Test delay calculation

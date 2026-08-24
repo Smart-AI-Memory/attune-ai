@@ -243,7 +243,7 @@ class RefactorWizard(BaseWizard):
         }
 
         self.process_step_result(
-            next(s for s in self.steps if s.id == "analyze"),
+            self._required_step("analyze"),
             combined,
         )
         self._session.complete_step("analyze", result=combined)

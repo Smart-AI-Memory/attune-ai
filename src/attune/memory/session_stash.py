@@ -469,7 +469,10 @@ def _record_rejection(count: int, source: str, cwd: str | None) -> None:
         )
     except Exception:  # noqa: BLE001
         # INTENTIONAL: feedback telemetry must never break a deletion.
-        pass
+        # Logged (unlike a bare pass) so masked failures stay visible —
+        # this was the one silent swallow among the file's 13 logging
+        # siblings (#2242).
+        logger.debug("memory_feedback telemetry emit failed", exc_info=True)
 
 
 def forget_entries(

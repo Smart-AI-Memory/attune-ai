@@ -97,6 +97,21 @@ async def _read_run_body(request: Request) -> tuple[str | None, str | None]:
     return raw_path, raw_trigger
 
 
+def _workflow_exists(name: str) -> bool | None:
+    """Whether ``name`` is in the live workflow registry.
+
+    Returns ``None`` (indeterminate) when registry introspection fails —
+    the caller fails OPEN on that, matching data.py's telemetry-rollup
+    convention: availability over strictness on an introspection bug.
+    """
+    try:
+        return name in {w.name for w in data.list_workflows(include_hidden=True)}
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: fail-open marker; the route proceeds.
+        logger.warning("ops.run: workflow registry introspection failed", exc_info=True)
+        return None
+
+
 @router.post("/workflows/{name}/run")
 async def start_run(
     name: str,
@@ -105,6 +120,18 @@ async def start_run(
 ) -> JSONResponse:
     _ensure_allowed(request)
     svc = _service(request)
+
+    # Defense in depth (#2242): validate the workflow name against the
+    # live registry UNCONDITIONALLY, not only on the scope branch. The
+    # spawn is fixed-argv/no-shell either way; this keeps an unknown
+    # name from ever reaching the subprocess layer.
+    if _workflow_exists(name) is False:
+        # Direct JSONResponse (not HTTPException): the app's 404 handler
+        # renders HTML for non-/api/ paths, and run clients parse JSON.
+        return JSONResponse(
+            status_code=404,
+            content={"detail": f"unknown workflow '{name}'"},
+        )
 
     scope, trigger = await _read_run_body(request)
     if scope is not None:

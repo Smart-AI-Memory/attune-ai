@@ -137,11 +137,14 @@ class AuditLogger(
             os.chmod(self.log_dir, 0o700)
             logger.info(f"Audit log directory initialized: {self.log_dir}")
         except Exception as e:  # noqa: BLE001
-            # INTENTIONAL: Fallback to local directory on
-            # any init error (permissions, disk, etc.)
+            # INTENTIONAL: Fallback on any init error (permissions,
+            # disk, etc.). Fixed home-relative location — a cwd-relative
+            # ./logs lands wherever the process happened to start — and
+            # the same 0o700 as the primary dir (#2242).
             logger.error(f"Failed to initialize audit log directory: {e}")
-            self.log_dir = Path("./logs")
+            self.log_dir = Path.home() / ".attune" / "logs" / "audit"
             self.log_dir.mkdir(parents=True, exist_ok=True)
+            os.chmod(self.log_dir, 0o700)
             self.log_path = self.log_dir / self.log_filename
             logger.warning(f"Using fallback log directory: {self.log_dir}")
 

@@ -9,6 +9,7 @@ Licensed under the Apache License, Version 2.0
 
 import json
 import logging
+import threading
 from datetime import datetime
 from pathlib import Path
 
@@ -269,13 +270,18 @@ class DiscoveryEngine:
 
 # Singleton instance
 _engine: DiscoveryEngine | None = None
+_engine_lock = threading.Lock()
 
 
 def get_engine(storage_dir: str = ".attune") -> DiscoveryEngine:
     """Get or create the global discovery engine."""
     global _engine
     if _engine is None:
-        _engine = DiscoveryEngine(storage_dir)
+        # #2242: double-checked under a lock — the bare check raced
+        # under multi-threaded init, constructing two instances.
+        with _engine_lock:
+            if _engine is None:
+                _engine = DiscoveryEngine(storage_dir)
     return _engine
 
 

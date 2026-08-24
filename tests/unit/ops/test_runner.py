@@ -45,6 +45,10 @@ def _missing_cmd(_workflow: str) -> tuple[str, ...]:
 
 def _make_app(tmp_path, monkeypatch, *, allow_run, command_builder, executor=None):
     monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
+    # #2242: start_run validates names against the live registry. These
+    # tests exercise the runner with synthetic names ("x"), so accept
+    # any name here; the dedicated 404/fail-open tests patch their own.
+    monkeypatch.setattr("attune.ops.routes.runner._workflow_exists", lambda name: True)
     # `testserver` is TestClient's default base_url host; `test` is the
     # AsyncClient(base_url="http://test") host. Add both to the
     # allowlist so the security middleware (PR #253-impl) doesn't 400
@@ -592,3 +596,36 @@ async def test_line_over_64k_does_not_fail_run(tmp_path, monkeypatch):
         assert not any("[runner error]" in ln for ln in run.lines)
         assert any(len(ln) >= 200_000 for ln in run.lines)
         assert any("end-long" in ln for ln in run.lines)
+
+
+def test_run_unknown_workflow_404s(tmp_path, monkeypatch):
+    """#2242: a name absent from the registry never reaches the spawn layer."""
+    app, _ = _make_app(
+        tmp_path,
+        monkeypatch,
+        allow_run=True,
+        command_builder=lambda _: ("noop",),
+    )
+    monkeypatch.setattr(
+        "attune.ops.routes.runner._workflow_exists",
+        lambda name: name == "real-workflow",
+    )
+    with TestClient(app) as client:
+        resp = client.post("/workflows/not-a-workflow/run")
+    assert resp.status_code == 404
+    assert "unknown workflow" in resp.json()["detail"]
+
+
+def test_run_registry_introspection_failure_fails_open(tmp_path, monkeypatch):
+    """Registry errors must not take the runner down (availability)."""
+    app, _ = _make_app(
+        tmp_path,
+        monkeypatch,
+        allow_run=True,
+        command_builder=lambda _: ("noop",),
+    )
+
+    monkeypatch.setattr("attune.ops.routes.runner._workflow_exists", lambda name: None)
+    with TestClient(app) as client:
+        resp = client.post("/workflows/x/run")
+    assert resp.status_code == 201  # fail-open: run proceeds
