@@ -108,3 +108,15 @@ plugin shipped and cold-start-verified (D4). Chair ruled:
 
 Premise corrections applied to requirements.md same day: test count
 358 → 384 (2026-08-14), CHANGELOG now exists (attune-forms #10).
+
+## D6 — Phase 5 placement: template-bound forms (chair via pushback form, 2026-08-24)
+
+Chair leaned "add it to the spec"; the lead pushed back on the slot
+(Phase 4 is a distribution phase, announcement-gated and mid-flight)
+and the chair adopted the pushback's recommendation: **new Phase 5**,
+drafted now, executing after Phase 4's submission clears. Response
+id resp-20260824-151530-5dc15ee6. Scope = R5.1–R5.4 (binding
+convention, fused render call, authoring gate, authoring preview),
+with the form-events stage instrumentation (chipped the same day) as
+the measurement dependency. Standalone-spec alternative declined —
+one roadmap artifact for the plugin.

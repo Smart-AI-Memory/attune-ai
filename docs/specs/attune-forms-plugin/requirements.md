@@ -126,6 +126,39 @@ before submission.
 communication-grammar article is published (its own thread, not this
 spec) — the D1 gate, checked at this phase's chair go.
 
+## Phase 5 — Template-bound forms (chair-placed 2026-08-24; executes after Phase 4's submission clears)
+
+Forms authored in advance that look and work exactly like
+live-composed dynamic forms — closing the two costs measured live
+2026-08-24 (agent-side schema orientation; form HTML transiting the
+agent's context) and the adoption gap on the existing V7
+`template_store` ("sculpt once, cast per fork" exists; nothing binds
+it to the places forms fire from).
+
+**R5.1 Binding convention.** A skill/command that elicits binds to a
+NAMED `template_store` entry — one template home, so the fused call
+(R5.2) can address every bound template (codex lane finding 1: a
+second per-skill-file home would be unaddressable by R5.2). The
+skill text names its template; the Socratic rule's instruction
+becomes "cast the named template, fill the slots" — composing a
+form dict from scratch is the fallback, not the default.
+**R5.2 Fused server call.** `elicitation_render_widget` accepts
+`template: <name>` + `slots: {...}` and performs
+load → cast → validate → render server-side in ONE call; the form
+schema and HTML never transit the agent's context.
+**R5.3 Authoring gate.** Every shipped template carries
+`example_slots` (representative slot values); a CI drift test CASTS
+each template with them (`form_from_template`) and validates the
+RESULT — validating the uncast template alone proves nothing about
+the form substitution produces (codex lane finding 2).
+**R5.4 Authoring preview.** A standalone HTML preview page
+exercising the production renderer (the ratified preview
+discipline), so a template edit is seen as users will see it.
+
+**Measurement dependency:** the form-events stage instrumentation
+(form_id + build/rendered/submitted stamps, chipped 2026-08-24)
+lands first, so R5.2's latency win is measured, not asserted.
+
 ## Out of scope
 
 - The display substrate (chartkit / widget kernels) — different
