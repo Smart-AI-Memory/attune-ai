@@ -169,7 +169,7 @@ class TestCalculateCombinedRisk:
         """Test with security audit only."""
         pipeline = SecureReleasePipeline()
         security_result = MagicMock()
-        security_result.final_output = {"assessment": {"risk_score": 40}}
+        security_result.final_output = {"_type": "WorkflowReport", "score": 60}
 
         risk = pipeline._calculate_combined_risk(None, security_result, None, None)
 
@@ -180,7 +180,7 @@ class TestCalculateCombinedRisk:
         pipeline = SecureReleasePipeline()
         crew_report = {"risk_score": 60}  # weight 1.5
         security_result = MagicMock()
-        security_result.final_output = {"assessment": {"risk_score": 40}}  # weight 1.0
+        security_result.final_output = {"score": 60}  # risk 40, weight 1.0
 
         risk = pipeline._calculate_combined_risk(crew_report, security_result, None, None)
 
@@ -191,7 +191,7 @@ class TestCalculateCombinedRisk:
         """Test code review converts security score to risk."""
         pipeline = SecureReleasePipeline()
         code_review_result = MagicMock()
-        code_review_result.final_output = {"security_score": 80}  # 100 - 80 = 20 risk
+        code_review_result.final_output = {"score": 80}  # risk = 100 - 80 = 20
 
         risk = pipeline._calculate_combined_risk(None, None, code_review_result, None)
 
@@ -241,8 +241,13 @@ class TestAggregateFindings:
         """Test aggregating security audit findings."""
         pipeline = SecureReleasePipeline()
         security_result = MagicMock()
-        security_result.final_output = {
-            "assessment": {"severity_breakdown": {"critical": 2, "high": 3, "medium": 5}},
+        security_result.final_output = {"score": 20}
+        security_result.metadata = {
+            "findings": {
+                "CRITICAL": ["c1", "c2"],
+                "HIGH": ["h1", "h2", "h3"],
+                "MEDIUM": ["m1", "m2", "m3", "m4", "m5"],
+            },
         }
 
         findings = pipeline._aggregate_findings(None, security_result, None)
@@ -255,7 +260,8 @@ class TestAggregateFindings:
         """Test code review critical issues flag."""
         pipeline = SecureReleasePipeline()
         code_review_result = MagicMock()
-        code_review_result.final_output = {"has_critical_issues": True}
+        code_review_result.final_output = {"score": 40}
+        code_review_result.metadata = {"findings": {"CRITICAL": ["c1"]}}
 
         findings = pipeline._aggregate_findings(None, None, code_review_result)
 
@@ -272,8 +278,12 @@ class TestAggregateFindings:
             "finding_count": 3,
         }
         security_result = MagicMock()
-        security_result.final_output = {
-            "assessment": {"severity_breakdown": {"critical": 3, "high": 5}},
+        security_result.final_output = {"score": 10}
+        security_result.metadata = {
+            "findings": {
+                "CRITICAL": ["c1", "c2", "c3"],
+                "HIGH": ["h1", "h2", "h3", "h4", "h5"],
+            },
         }
 
         findings = pipeline._aggregate_findings(crew_report, security_result, None)
@@ -390,7 +400,8 @@ class TestGenerateRecommendations:
         """Test security audit critical risk becomes blocker."""
         pipeline = SecureReleasePipeline()
         security_result = MagicMock()
-        security_result.final_output = {"assessment": {"risk_level": "critical"}}
+        security_result.final_output = {"score": 20}
+        security_result.metadata = {"findings": {"CRITICAL": ["c1"]}}
 
         blockers, warnings, recs = pipeline._generate_recommendations(
             None,
@@ -399,13 +410,14 @@ class TestGenerateRecommendations:
             None,
         )
 
-        assert any("critical risk" in b.lower() for b in blockers)
+        assert any("critical" in b.lower() for b in blockers)
 
     def test_code_review_reject_as_blocker(self):
         """Test code review rejection becomes blocker."""
         pipeline = SecureReleasePipeline()
         code_review_result = MagicMock()
-        code_review_result.final_output = {"verdict": "reject"}
+        code_review_result.final_output = {"score": 30}
+        code_review_result.metadata = {"findings": {"CRITICAL": ["c1"]}}
 
         blockers, warnings, recs = pipeline._generate_recommendations(
             None,
@@ -414,13 +426,14 @@ class TestGenerateRecommendations:
             None,
         )
 
-        assert any("rejected" in b.lower() for b in blockers)
+        assert any("critical" in b.lower() for b in blockers)
 
     def test_code_review_changes_requested_as_warning(self):
         """Test code review changes requested becomes warning."""
         pipeline = SecureReleasePipeline()
         code_review_result = MagicMock()
-        code_review_result.final_output = {"verdict": "request_changes"}
+        code_review_result.final_output = {"score": 70}
+        code_review_result.metadata = {"findings": {"HIGH": ["h1"]}}
 
         blockers, warnings, recs = pipeline._generate_recommendations(
             None,
@@ -429,7 +442,7 @@ class TestGenerateRecommendations:
             None,
         )
 
-        assert any("changes requested" in w.lower() for w in warnings)
+        assert any("high" in w.lower() for w in warnings)
 
     def test_release_prep_blockers_propagated(self):
         """Test release prep blockers are propagated."""
