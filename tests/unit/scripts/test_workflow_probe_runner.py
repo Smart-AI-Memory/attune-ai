@@ -460,3 +460,77 @@ def test_dependency_probe_gates_on_named_class() -> None:
 
     silent = asyncio.run(run_with(_Silent()))
     assert not silent.passed
+
+
+def test_python_fixture_staged_without_confession(tmp_path) -> None:
+    # Retro 2026-08-24 1.2: the python fixtures announce themselves
+    # ("Planted-defect fixture", "SEEDED BUG") — same observer effect
+    # as the dependency manifest. Staged copies drop the module
+    # docstring and comment-only lines; code and inline noqa survive.
+    src = FIXTURES / "security" / "vulnerable_service.py"
+    dst = tmp_path / "vulnerable_service.py"
+    runner._stage_python_fixture(src, dst)
+    staged = dst.read_text()
+    assert "Planted-defect fixture" not in staged
+    assert "SEEDED BUG" not in staged
+    assert runner._EVAL_TOKEN in staged  # the defect itself survives
+    assert runner._KEY_MARKER in staged
+    compile(staged, str(dst), "exec")  # still valid python
+
+    # The analytical fixture exercises the trailing-comment shape
+    # (a confession riding the summarize() def line itself).
+    src2 = FIXTURES / "analytical" / "sample_service.py"
+    dst2 = dst.parent / "sample_service.py"
+    runner._stage_python_fixture(src2, dst2)
+    staged2 = dst2.read_text()
+    assert "SEEDED BUG" not in staged2
+    assert "planted defect" not in staged2
+    assert "def summarize(items):" in staged2  # code survives its confession
+    assert "def find_duplicates" in staged2
+    compile(staged2, str(dst2), "exec")
+
+
+def test_security_probe_gates_on_named_class() -> None:
+    # Retro 1.3: naming + non-perfect score is the gate; the bucket
+    # count is evidence only.
+    import asyncio
+
+    class _NamedZeroBuckets:
+        success = True
+        error = None
+        metadata = {
+            "findings": {},
+            "raw_result_text": (
+                "Found dynamic eval of untrusted input (CWE-95, code "
+                "injection) and a hardcoded credential / API key (CWE-798)."
+            ),
+        }
+        final_output = {"score": 40}
+        cost_report = None
+
+    async def _wrap(v):
+        return v
+
+    original = runner._run_workflow
+    runner._run_workflow = lambda name, **kw: _wrap(_NamedZeroBuckets())
+    try:
+        out = asyncio.run(runner.probe_security_audit(1.0))
+    finally:
+        runner._run_workflow = original
+    assert out.passed, out.reason
+    assert out.evidence["num_findings"] == 0
+
+
+def test_records_carry_raw_head() -> None:
+    # Retro 1.1: the dependency-check triage cost an extra billed run
+    # because records persisted no report text; raw_head fixes that.
+    class _R:
+        success = True
+        error = None
+        metadata = {"findings": {}, "raw_result_text": "HEAD " + "x" * 5000}
+        final_output = ""
+        cost_report = None
+
+    head = runner._head(_R())
+    assert head.startswith("HEAD ")
+    assert len(head) == 2048
