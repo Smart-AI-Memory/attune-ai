@@ -226,3 +226,66 @@ def test_crash_reason_distinguishes_crash_from_miss() -> None:
     assert "is_error_on_success" in reason
     # Only the first line of the error is carried, not the whole trace.
     assert "more lines" not in reason
+
+
+def test_write_record_schema_and_verdicts(tmp_path) -> None:
+    import json as _json
+
+    cases = [
+        (runner.ProbeResult("security-audit", True, "surfaced it", 0.5, 10.0), "pass"),
+        (runner.ProbeResult("test-gen", False, "emitted no runnable test code", 0.6, 20.0), "fail"),
+        (
+            runner.ProbeResult(
+                "perf-audit", False, "workflow CRASHED before analysis (not an analytical miss): x"
+            ),
+            "crash",
+        ),
+        (runner.ProbeResult("doc-audit", False, "probe raised ValueError: boom"), "crash"),
+    ]
+    for result, expected_verdict in cases:
+        path = runner.write_record(
+            result, tmp_path, ran_at="2026-08-23T21:20:00Z", git_sha="abc123def"
+        )
+        record = _json.loads(path.read_text())
+        # Full design schema present.
+        for key in (
+            "workflow",
+            "fixture",
+            "receipt_type",
+            "verdict",
+            "cost_usd",
+            "duration_s",
+            "ran_at",
+            "runner_version",
+            "git_sha",
+            "evidence",
+        ):
+            assert key in record, f"missing {key}"
+        assert record["verdict"] == expected_verdict
+        assert record["evidence"]["reason"] == result.reason
+
+
+def test_write_record_is_append_only(tmp_path) -> None:
+    # Same probe, same second: the second record must NOT clobber the
+    # first (append-only record set — D7).
+    first = runner.write_record(
+        runner.ProbeResult("code-review", True, "ok", 0.1, 1.0),
+        tmp_path,
+        ran_at="2026-08-23T21:20:00Z",
+        git_sha="abc",
+    )
+    second = runner.write_record(
+        runner.ProbeResult("code-review", False, "different", 0.2, 2.0),
+        tmp_path,
+        ran_at="2026-08-23T21:20:00Z",
+        git_sha="abc",
+    )
+    assert first != second
+    assert first.exists() and second.exists()
+
+
+def test_every_probe_has_a_receipt_type() -> None:
+    # A probe without a receipt-type mapping would silently default;
+    # keep the map total over the fleet of probes.
+    for name in runner.PROBE_ORDER:
+        assert name in runner._RECEIPT_TYPES
