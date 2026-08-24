@@ -77,6 +77,7 @@ def _make_workflow_result(
     success: bool = True,
     final_output: dict | None = None,
     total_cost: float = 0.01,
+    metadata: dict | None = None,
 ) -> WorkflowResult:
     """Create a WorkflowResult for testing.
 
@@ -98,6 +99,7 @@ def _make_workflow_result(
         started_at=now,
         completed_at=now,
         total_duration_ms=100,
+        metadata=metadata or {},
     )
 
 
@@ -222,7 +224,9 @@ class TestSecureReleasePipelineHelpers:
         """Test combined risk calculation with crew report."""
         pipeline = SecureReleasePipeline()
         crew_report = {"risk_score": 60}
-        security_result = _make_workflow_result(final_output={"assessment": {"risk_score": 40}})
+        security_result = _make_workflow_result(
+            final_output={"_type": "WorkflowReport", "score": 60}
+        )
         score = pipeline._calculate_combined_risk(crew_report, security_result, None, None)
         # crew: 60 * 1.5 = 90, security: 40 * 1.0 = 40
         # total_weight = 2.5, weighted_sum = 130
@@ -238,7 +242,7 @@ class TestSecureReleasePipelineHelpers:
     def test_calculate_combined_risk_with_code_review(self) -> None:
         """Test combined risk with code review results."""
         pipeline = SecureReleasePipeline()
-        code_review = _make_workflow_result(final_output={"security_score": 80})
+        code_review = _make_workflow_result(final_output={"_type": "WorkflowReport", "score": 80})
         score = pipeline._calculate_combined_risk(None, None, code_review, None)
         # security_score=80 -> risk = 100 - 80 = 20
         # 20 * 0.8 / 0.8 = 20.0
@@ -248,7 +252,9 @@ class TestSecureReleasePipelineHelpers:
         """Test combined risk never exceeds 100."""
         pipeline = SecureReleasePipeline()
         crew_report = {"risk_score": 100}
-        security_result = _make_workflow_result(final_output={"assessment": {"risk_score": 100}})
+        security_result = _make_workflow_result(
+            final_output={"_type": "WorkflowReport", "score": 0}
+        )
         score = pipeline._calculate_combined_risk(crew_report, security_result, None, None)
         assert score <= 100.0
 
@@ -271,8 +277,13 @@ class TestSecureReleasePipelineHelpers:
         """Test finding aggregation with security result."""
         pipeline = SecureReleasePipeline()
         security_result = _make_workflow_result(
-            final_output={
-                "assessment": {"severity_breakdown": {"critical": 2, "high": 3, "medium": 5}},
+            final_output={"_type": "WorkflowReport", "score": 20},
+            metadata={
+                "findings": {
+                    "CRITICAL": ["c1", "c2"],
+                    "HIGH": ["h1", "h2", "h3"],
+                    "MEDIUM": ["m1", "m2", "m3", "m4", "m5"],
+                },
             },
         )
         findings = pipeline._aggregate_findings(None, security_result, None)
@@ -283,7 +294,9 @@ class TestSecureReleasePipelineHelpers:
     def test_aggregate_findings_with_code_review_critical(self) -> None:
         """Test finding aggregation marks critical when code review has them."""
         pipeline = SecureReleasePipeline()
-        code_review = _make_workflow_result(final_output={"has_critical_issues": True})
+        code_review = _make_workflow_result(
+            final_output={"score": 40}, metadata={"findings": {"CRITICAL": ["c1"]}}
+        )
         findings = pipeline._aggregate_findings(None, None, code_review)
         assert findings["critical"] >= 1
 
@@ -383,7 +396,8 @@ class TestSecureReleasePipelineHelpers:
         """Test recommendations with critical risk level."""
         pipeline = SecureReleasePipeline()
         security_result = _make_workflow_result(
-            final_output={"assessment": {"risk_level": "critical"}},
+            final_output={"score": 20},
+            metadata={"findings": {"CRITICAL": ["c1"]}},
         )
         blockers, warnings, recs = pipeline._generate_recommendations(
             None,
@@ -391,33 +405,39 @@ class TestSecureReleasePipelineHelpers:
             None,
             None,
         )
-        assert any("critical risk" in b.lower() for b in blockers)
+        assert any("critical" in b.lower() for b in blockers)
 
     def test_generate_recommendations_security_high_risk(self) -> None:
         """Test recommendations with high risk level."""
         pipeline = SecureReleasePipeline()
-        security_result = _make_workflow_result(final_output={"assessment": {"risk_level": "high"}})
+        security_result = _make_workflow_result(
+            final_output={"score": 60}, metadata={"findings": {"HIGH": ["h1"]}}
+        )
         blockers, warnings, recs = pipeline._generate_recommendations(
             None,
             security_result,
             None,
             None,
         )
-        assert any("high risk" in w.lower() for w in warnings)
+        assert any("high" in w.lower() for w in warnings)
 
     def test_generate_recommendations_code_review_reject(self) -> None:
         """Test recommendations when code review rejects."""
         pipeline = SecureReleasePipeline()
-        code_review = _make_workflow_result(final_output={"verdict": "reject"})
+        code_review = _make_workflow_result(
+            final_output={"score": 30}, metadata={"findings": {"CRITICAL": ["c1"]}}
+        )
         blockers, warnings, recs = pipeline._generate_recommendations(None, None, code_review, None)
-        assert any("rejected" in b.lower() for b in blockers)
+        assert any("critical" in b.lower() for b in blockers)
 
     def test_generate_recommendations_code_review_request_changes(self) -> None:
         """Test recommendations when code review requests changes."""
         pipeline = SecureReleasePipeline()
-        code_review = _make_workflow_result(final_output={"verdict": "request_changes"})
+        code_review = _make_workflow_result(
+            final_output={"score": 70}, metadata={"findings": {"HIGH": ["h1"]}}
+        )
         blockers, warnings, recs = pipeline._generate_recommendations(None, None, code_review, None)
-        assert any("changes requested" in w.lower() for w in warnings)
+        assert any("high" in w.lower() for w in warnings)
 
     def test_generate_recommendations_release_blockers(self) -> None:
         """Test recommendations pass through release blockers and warnings."""
@@ -440,7 +460,9 @@ class TestSecureReleasePipelineHelpers:
     def test_generate_recommendations_with_warnings_only(self) -> None:
         """Test recommendations when only warnings present."""
         pipeline = SecureReleasePipeline()
-        security_result = _make_workflow_result(final_output={"assessment": {"risk_level": "high"}})
+        security_result = _make_workflow_result(
+            final_output={"score": 60}, metadata={"findings": {"HIGH": ["h1"]}}
+        )
         blockers, warnings, recs = pipeline._generate_recommendations(
             None,
             security_result,
@@ -548,27 +570,27 @@ class TestFormatSecureReleaseReport:
             success=True,
             go_no_go="GO",
             security_audit=_make_workflow_result(
-                final_output={"assessment": {"risk_score": 30, "risk_level": "medium"}},
+                final_output={"_type": "WorkflowReport", "score": 70},
             ),
             total_cost=0.02,
             total_duration_ms=2000,
         )
         report = format_secure_release_report(result)
         assert "SecurityAudit" in report
-        assert "medium" in report
+        assert "70" in report
 
     def test_report_with_code_review(self) -> None:
         """Test report includes code review results."""
         result = SecureReleaseResult(
             success=True,
             go_no_go="GO",
-            code_review=_make_workflow_result(final_output={"verdict": "approve"}),
+            code_review=_make_workflow_result(final_output={"score": 95}),
             total_cost=0.02,
             total_duration_ms=2000,
         )
         report = format_secure_release_report(result)
         assert "CodeReview" in report
-        assert "approve" in report
+        assert "95" in report
 
     def test_report_with_release_prep(self) -> None:
         """Test report includes release prep results."""

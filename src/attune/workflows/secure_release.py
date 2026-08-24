@@ -15,6 +15,7 @@ Licensed under the Apache License, Version 2.0
 
 import asyncio
 import logging
+import math
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
@@ -418,15 +419,19 @@ class SecureReleasePipeline(BaseWorkflow):
             scores.append(crew_report.get("risk_score", 0))
             weights.append(1.5)  # Crew gets higher weight
 
-        if security_result and security_result.final_output:
-            assessment = security_result.final_output.get("assessment", {})
-            scores.append(assessment.get("risk_score", 0))
+        # SDK-native sub-workflows put a serialized WorkflowReport in
+        # final_output — score 0-100, higher = healthier. The pre-SDK
+        # "assessment"/"security_score" keys no longer exist; reading
+        # them silently contributed 0 risk from a sub-audit that had
+        # found critical issues (#2219, fail-open GO).
+        security_score = self._report_score(security_result)
+        if security_score is not None:
+            scores.append(100.0 - security_score)
             weights.append(1.0)
 
-        if code_review_result and code_review_result.final_output:
-            security_score = code_review_result.final_output.get("security_score", 90)
-            # Convert to risk (100 - security_score)
-            scores.append(100 - security_score)
+        review_score = self._report_score(code_review_result)
+        if review_score is not None:
+            scores.append(100.0 - review_score)
             weights.append(0.8)
 
         if not scores:
@@ -465,21 +470,80 @@ class SecureReleasePipeline(BaseWorkflow):
             high += len(assessment.get("high_findings", []))
             total += crew_report.get("finding_count", 0)
 
-        if security_result and security_result.final_output:
-            assessment = security_result.final_output.get("assessment", {})
-            severity = assessment.get("severity_breakdown", {})
-            critical = max(critical, severity.get("critical", 0))
-            high = max(high, severity.get("high", 0))
-            total = max(
-                total,
-                sum(severity.values()) if severity else 0,
-            )
+        # SDK-native results carry findings in metadata["findings"] —
+        # severity-keyed (CRITICAL/HIGH/...) for security-audit. The
+        # pre-SDK final_output["assessment"]["severity_breakdown"] /
+        # ["has_critical_issues"] keys no longer exist; reading them
+        # counted 0 findings from a sub-audit that had found critical
+        # issues (#2219).
+        sec = self._severity_counts(security_result)
+        critical = max(critical, sec["critical"])
+        high = max(high, sec["high"])
+        total = max(total, sec["total"])
 
-        if code_review_result and code_review_result.final_output:
-            if code_review_result.final_output.get("has_critical_issues"):
-                critical = max(critical, 1)
+        review = self._severity_counts(code_review_result)
+        critical = max(critical, review["critical"])
+        high = max(high, review["high"])
+        total = max(total, review["total"])
 
         return {"critical": critical, "high": high, "total": total}
+
+    @staticmethod
+    def _report_score(result: WorkflowResult | None) -> float | None:
+        """Score (0-100) from a serialized WorkflowReport final_output.
+
+        Returns None when the result is absent or carries no usable
+        numeric score — callers must treat None as "no evidence", never
+        as "healthy". Booleans and non-finite values (NaN/inf) are
+        rejected: a NaN score would propagate into the risk computation
+        where every threshold comparison is False, turning a malformed
+        audit into a GO (D11 lane finding). Out-of-range values clamp
+        to [0, 100].
+        """
+        if result is None or not isinstance(result.final_output, dict):
+            return None
+        score = result.final_output.get("score")
+        if isinstance(score, bool) or not isinstance(score, int | float):
+            return None
+        value = float(score)
+        if not math.isfinite(value):
+            return None
+        return min(100.0, max(0.0, value))
+
+    @staticmethod
+    def _severity_counts(result: WorkflowResult | None) -> dict[str, int]:
+        """critical/high/total finding counts from metadata["findings"].
+
+        Key-agnostic (the #2211 class): SDK workflows key the findings
+        dict by SEVERITY (CRITICAL/HIGH/MEDIUM/LOW) or by category.
+        Buckets with an unrecognized key ALWAYS count as ``high`` (and
+        toward ``total``) — in a release gate, findings of unknown
+        severity are not ignorable, and the fail-closed treatment must
+        not depend on which other buckets happen to be present (D11
+        lane finding: gating it on "no severity key present" let an
+        empty ``LOW: []`` bucket exempt category-keyed findings).
+        """
+        counts = {"critical": 0, "high": 0, "total": 0}
+        if result is None:
+            return counts
+        findings = (result.metadata or {}).get("findings") or {}
+        if not isinstance(findings, dict):
+            return counts
+        for key, items in findings.items():
+            if not isinstance(items, list):
+                continue
+            count = len(items)
+            counts["total"] += count
+            normalized = str(key).strip().upper()
+            if normalized == "CRITICAL":
+                counts["critical"] += count
+            elif normalized == "HIGH":
+                counts["high"] += count
+            elif normalized in ("MEDIUM", "LOW", "INFO"):
+                pass  # recognized, non-gating severities
+            else:
+                counts["high"] += count  # unknown severity: fail-closed
+        return counts
 
     def _determine_go_no_go(
         self,
@@ -559,21 +623,32 @@ class SecureReleasePipeline(BaseWorkflow):
             for f in high[:3]:  # Top 3
                 warnings.append(f"High: {f.get('title', 'Unknown issue')}")
 
-        # Security audit findings
-        if security_result and security_result.final_output:
-            assessment = security_result.final_output.get("assessment", {})
-            if assessment.get("risk_level") == "critical":
-                blockers.append("Security audit identified critical risk level")
-            elif assessment.get("risk_level") == "high":
-                warnings.append("Security audit identified high risk level")
+        # Security audit findings (severity-keyed metadata, not the
+        # retired final_output["assessment"] shape — #2219)
+        sec_counts = self._severity_counts(security_result)
+        if sec_counts["critical"] > 0:
+            blockers.append(f"Security audit found {sec_counts['critical']} critical issue(s)")
+        elif sec_counts["high"] > 0:
+            warnings.append(f"Security audit found {sec_counts['high']} high issue(s)")
 
-        # Code review verdict
-        if code_review_result and code_review_result.final_output:
-            verdict = code_review_result.final_output.get("verdict", "")
-            if verdict == "reject":
-                blockers.append("Code review: Changes rejected")
-            elif verdict == "request_changes":
-                warnings.append("Code review: Changes requested")
+        # Extraction drift guard (#2219): a sub-audit that scored below
+        # 100 but contributed ZERO extractable findings looks exactly
+        # like a clean audit — surface it instead of passing silently.
+        sec_score = self._report_score(security_result)
+        if sec_score is not None and sec_score < 100 and sec_counts["total"] == 0:
+            warnings.append(
+                "Security audit scored below 100 but zero findings were "
+                "extractable — findings extraction may be broken; review "
+                "the audit report before releasing"
+            )
+
+        # Code review findings (the pre-SDK "verdict" key no longer
+        # exists — severity counts are the current shape, #2219)
+        review_counts = self._severity_counts(code_review_result)
+        if review_counts["critical"] > 0:
+            blockers.append(f"Code review found {review_counts['critical']} critical issue(s)")
+        elif review_counts["high"] > 0:
+            warnings.append(f"Code review found {review_counts['high']} high issue(s)")
 
         # Release prep blockers
         if release_result and release_result.final_output:
@@ -716,21 +791,25 @@ def format_secure_release_report(result: SecureReleaseResult) -> str:
     elif result.crew_enabled:
         lines.append("  ⏭️ SecurityAuditCrew: Skipped or failed")
 
-    # Security audit
+    # Security audit (report score: 0-100, higher = healthier; the
+    # retired "assessment" keys rendered a green 0-risk line from a
+    # phantom read — #2219)
     if result.security_audit:
-        sec_output = result.security_audit.final_output or {}
-        assessment = sec_output.get("assessment", {})
-        sec_risk = assessment.get("risk_score", 0)
-        sec_level = assessment.get("risk_level", "unknown")
-        sec_icon = "✅" if sec_risk < 50 else "⚠️" if sec_risk < 75 else "❌"
-        lines.append(f"  {sec_icon} SecurityAudit: {sec_level} risk ({sec_risk}/100)")
+        sec_score = SecureReleasePipeline._report_score(result.security_audit)
+        if sec_score is None:
+            lines.append("  ❓ SecurityAudit: no score reported")
+        else:
+            sec_icon = "✅" if sec_score >= 90 else "⚠️" if sec_score >= 50 else "❌"
+            lines.append(f"  {sec_icon} SecurityAudit: score {sec_score:.0f}/100")
 
     # Code review
     if result.code_review:
-        cr_output = result.code_review.final_output or {}
-        verdict = cr_output.get("verdict", "unknown")
-        cr_icon = "✅" if verdict == "approve" else "⚠️" if verdict == "request_changes" else "❌"
-        lines.append(f"  {cr_icon} CodeReview: {verdict}")
+        cr_score = SecureReleasePipeline._report_score(result.code_review)
+        if cr_score is None:
+            lines.append("  ❓ CodeReview: no score reported")
+        else:
+            cr_icon = "✅" if cr_score >= 90 else "⚠️" if cr_score >= 50 else "❌"
+            lines.append(f"  {cr_icon} CodeReview: score {cr_score:.0f}/100")
 
     # Release prep
     if result.release_prep:
