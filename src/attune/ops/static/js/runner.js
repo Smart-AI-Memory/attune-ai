@@ -19,11 +19,10 @@
   // Regenerate: python scripts/sync_runner_workflow_names.py
   var WORKFLOW_NAMES = [
     "bug-predict", "code-review", "deep-review", "dependency-check",
-    "discovery-sweep", "doc-audit", "doc-gen", "doc-orchestrator",
-    "fix", "health-check", "orchestrated-health-check", "perf-audit",
-    "rag-code-gen", "refactor-plan", "release-gate", "release-notes",
-    "release-prep", "research-synthesis", "secure-release", "security-audit",
-    "simplify-code", "test-audit", "test-gen"
+    "discovery-sweep", "doc-audit", "doc-orchestrator", "health-check",
+    "orchestrated-health-check", "perf-audit", "refactor-plan", "release-gate",
+    "release-notes", "release-prep", "secure-release", "security-audit",
+    "simplify-code", "test-audit"
   ];
   // <<< AUTO-GENERATED: WORKFLOW_NAMES
 

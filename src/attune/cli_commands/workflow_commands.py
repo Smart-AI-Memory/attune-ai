@@ -23,8 +23,9 @@ logger = logging.getLogger(__name__)
 def cmd_workflow_list(args: Namespace) -> int:
     """List available workflows."""
     from attune.workflows import list_workflows
+    from attune.workflows.visibility import HIDDEN_WORKFLOWS, visible_entries
 
-    workflows = list_workflows()
+    workflows = visible_entries(list_workflows())
 
     print("\n📋 Available Workflows\n")
     print("-" * 60)
@@ -46,6 +47,12 @@ def cmd_workflow_list(args: Namespace) -> int:
 
     print("-" * 60)
     print(f"\nTotal: {len(workflows)} workflows")
+    if HIDDEN_WORKFLOWS:
+        print(
+            f"Hidden (known-broken or unrunnable here, {len(HIDDEN_WORKFLOWS)}): "
+            + ", ".join(sorted(HIDDEN_WORKFLOWS))
+        )
+        print("  see docs/specs/workflow-behavioral-validation/registry.md")
     print("\nRun a workflow: attune workflow run <name>")
     return 0
 

@@ -88,7 +88,14 @@ class TestConcernDerivation:
         assert derived["doc-orchestrator"] == "docs"  # not "meta"
         assert derived["perf-audit"] == "audit"
         assert derived["release-prep"] == "meta"
-        assert derived["rag-code-gen"] == "other"
+        # rag-code-gen is dashboard-hidden (visibility, 2026-08-24) so it
+        # no longer appears in the page's derivation; its concern class is
+        # still derivable from the full catalog.
+        full = {
+            w.name: workflow_concern.derive_concern(w.name)
+            for w in data.list_workflows(include_hidden=True)
+        }
+        assert full["rag-code-gen"] == "other"
 
     def test_concern_counts_sums_to_workflow_total(self) -> None:
         """concern_counts populates all 7 buckets; sum equals workflow total."""
