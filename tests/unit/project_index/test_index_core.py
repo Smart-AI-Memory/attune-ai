@@ -124,7 +124,13 @@ class TestSyncToRedis:
         idx.redis_client = MagicMock()
         idx._sync_to_redis()
         assert idx.redis_client.set.call_count >= 2  # summary + meta
-        assert idx.redis_client.hset.call_count == 3  # one per record
+        # #2241: ONE hset carrying every record as a mapping (was one
+        # call per record). Assert the payload, not just the count, so
+        # the batch actually contains the records.
+        assert idx.redis_client.hset.call_count == 1
+        mapping = idx.redis_client.hset.call_args.kwargs["mapping"]
+        assert len(mapping) == 3
+        assert all(isinstance(v, str) for v in mapping.values())
 
     def test_exception_is_swallowed(self, tmp_path):
         idx = _populated(tmp_path)
@@ -368,3 +374,27 @@ class TestRefreshIncremental:
 
         assert "src/new.py" in idx._records
         assert updated == 1
+
+
+class TestDependencyLookupCache:
+    """#2241: memoized import resolution must invalidate on mutation."""
+
+    def test_results_unchanged_and_cache_reused(self, tmp_path):
+        idx = _populated(tmp_path)
+        first = idx.get_dependencies("src/a.py")
+        version = idx._dep_cache_version
+        second = idx.get_dependencies("src/a.py")
+        assert [r.path for r in first] == [r.path for r in second]
+        assert idx._dep_cache_version == version  # no rebuild between calls
+
+    def test_structural_mutation_invalidates(self, tmp_path):
+        idx = _populated(tmp_path)
+        idx.get_dependencies("src/a.py")
+        cached_version = idx._dep_cache_version
+        # Structural mutation (delete a record the queried file does NOT
+        # depend on — deleting the queried record itself would early-return
+        # before the cache is consulted) bumps the version...
+        del idx._records["tests/test_a.py"]
+        idx._structure_version += 1  # as the mutation sites do
+        idx.get_dependencies("src/a.py")
+        assert idx._dep_cache_version != cached_version

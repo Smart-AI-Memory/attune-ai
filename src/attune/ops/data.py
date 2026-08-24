@@ -648,15 +648,21 @@ def list_recent_sessions_with_paths(
                     mtime.isoformat(),
                 )
 
+    # #2241: parse newest-by-mtime first and stop at the limit instead
+    # of parsing every session JSONL before limiting. mtime is a proxy
+    # for last_activity (the file is appended on activity), so parsing
+    # the newest `limit` files covers the final top-`limit` ordering;
+    # the parsed slice is still sorted by last_activity below.
+    candidates = sorted(by_id.values(), key=lambda item: item[0], reverse=True)
     out: list[tuple[Session, Path]] = []
-    for _mtime, jsonl in by_id.values():
+    for _mtime, jsonl in candidates:
+        if limit is not None and limit >= 0 and len(out) >= limit:
+            break
         session = parse(jsonl)
         if session is None:
             continue
         out.append((session, jsonl))
     out.sort(key=lambda item: item[0].last_activity or "", reverse=True)
-    if limit is not None and limit >= 0:
-        out = out[:limit]
     return out
 
 

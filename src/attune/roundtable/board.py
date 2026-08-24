@@ -391,9 +391,14 @@ class Board:
     def ledger_read(self) -> list[dict[str, Any]]:
         """Return all rotation-ledger records in reservation order."""
         run_ids = self.client.lrange(LEDGER_ORDER_KEY, 0, -1) or []
-        records: list[dict[str, Any]] = []
+        if not run_ids:
+            return []
+        # #2241: one pipelined round trip instead of one hgetall per run.
+        pipe = self.client.pipeline()
         for run_id in run_ids:
-            raw = self.client.hgetall(self.ledger_record_key(str(run_id)))
+            pipe.hgetall(self.ledger_record_key(str(run_id)))
+        records: list[dict[str, Any]] = []
+        for raw in pipe.execute():
             if raw:
                 raw["served"] = raw.get("served") == "1"
                 records.append(raw)

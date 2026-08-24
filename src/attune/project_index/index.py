@@ -67,6 +67,11 @@ class ProjectIndex:
         self._records: dict[str, FileRecord] = {}
         self._summary: ProjectSummary = ProjectSummary()
         self._generated_at: datetime | None = None
+        # #2241 dependency-lookup cache; bumped on structural mutation.
+        self._structure_version = 0
+        self._dep_cache_version = -1
+        self._dotted_paths: list[tuple[str, FileRecord]] = []
+        self._import_memo: dict[str, FileRecord | None] = {}
 
         # Index file path
         self._index_path = self.project_root / self.DEFAULT_INDEX_PATH
@@ -105,6 +110,7 @@ class ProjectIndex:
             self._records = {}
             for path, record_data in data.get("files", {}).items():
                 self._records[path] = FileRecord.from_dict(record_data)
+            self._structure_version += 1
 
             # Load timestamp
             if data.get("generated_at"):
@@ -167,12 +173,14 @@ class ProjectIndex:
                 json.dumps(self._summary.to_dict()),
             )
 
-            # Store each file record
-            for path, record in self._records.items():
+            # Store all file records in one round trip (#2241: this was
+            # one hset per record — thousands of sequential round trips).
+            if self._records:
                 self.redis_client.hset(
                     f"{prefix}:files",
-                    path,
-                    json.dumps(record.to_dict()),
+                    mapping={
+                        path: json.dumps(record.to_dict()) for path, record in self._records.items()
+                    },
                 )
 
             # Store metadata
@@ -378,6 +386,7 @@ class ProjectIndex:
             # Update records
             for record in new_records:
                 self._records[record.path] = record
+            self._structure_version += 1
 
         # Remove deleted files
         files_removed = 0
@@ -385,6 +394,7 @@ class ProjectIndex:
             if deleted_file and deleted_file in self._records:
                 del self._records[deleted_file]
                 files_removed += 1
+                self._structure_version += 1
 
         # Rebuild dependency graph if requested
         if analyze_dependencies:
@@ -591,13 +601,28 @@ class ProjectIndex:
         record = self._records.get(path)
         if not record:
             return []
-        # Match imports to paths
+        # #2241: this scanned every record per import (quadratic across
+        # calls, with two str.replace per comparison). The dotted-path
+        # list is now computed once per index structure and each import's
+        # resolution memoized; both invalidate via _structure_version.
+        if self._dep_cache_version != self._structure_version:
+            self._dotted_paths = [
+                (p.replace("/", ".").replace("\\", "."), r) for p, r in self._records.items()
+            ]
+            self._import_memo = {}
+            self._dep_cache_version = self._structure_version
         results = []
         for imp in record.imports:
-            for other_path, other_record in self._records.items():
-                if imp in other_path.replace("/", ".").replace("\\", "."):
-                    results.append(other_record)
-                    break
+            if imp in self._import_memo:
+                hit = self._import_memo[imp]
+            else:
+                hit = next(
+                    (r for dotted, r in self._dotted_paths if imp in dotted),
+                    None,
+                )
+                self._import_memo[imp] = hit
+            if hit is not None:
+                results.append(hit)
         return results
 
     # ===== Statistics =====
