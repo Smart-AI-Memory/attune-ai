@@ -3551,10 +3551,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#codebase-metrics-v1100" class="md-nav__link">
+  <a href="#codebase-metrics-1500" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Codebase Metrics (v11.0.0)
+        Codebase Metrics (15.0.0)
       
     </span>
   </a>
@@ -3562,10 +3562,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#key-coupling-metrics-v1100" class="md-nav__link">
+  <a href="#key-coupling-metrics-1500" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Key Coupling Metrics (v11.0.0)
+        Key Coupling Metrics (15.0.0)
       
     </span>
   </a>
@@ -5447,10 +5447,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#codebase-metrics-v1100" class="md-nav__link">
+  <a href="#codebase-metrics-1500" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Codebase Metrics (v11.0.0)
+        Codebase Metrics (15.0.0)
       
     </span>
   </a>
@@ -5458,10 +5458,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#key-coupling-metrics-v1100" class="md-nav__link">
+  <a href="#key-coupling-metrics-1500" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Key Coupling Metrics (v11.0.0)
+        Key Coupling Metrics (15.0.0)
       
     </span>
   </a>
@@ -6068,7 +6068,10 @@ hierarchy. Lower tiers never import from higher tiers.</p>
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>          │                               │
 <a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>     cli_router ←── commands ──→ wizards
 </code></pre></div>
-<h3 id="codebase-metrics-v1100">Codebase Metrics (v11.0.0)<a class="headerlink" href="#codebase-metrics-v1100" title="Permanent link">&para;</a></h3>
+<h3 id="codebase-metrics-1500">Codebase Metrics (15.0.0)<a class="headerlink" href="#codebase-metrics-1500" title="Permanent link">&para;</a></h3>
+<p>Measured 2026-08-25 against <code>src/attune/</code> by AST walk; tests by
+<code>pytest --collect-only</code>. Regenerate with the same method before a
+major — the previous table was stamped v11.0.0 and had drifted.</p>
 <table>
 <thead>
 <tr>
@@ -6079,32 +6082,35 @@ hierarchy. Lower tiers never import from higher tiers.</p>
 <tbody>
 <tr>
 <td>Python files</td>
-<td>731</td>
+<td>758</td>
 </tr>
 <tr>
 <td>Lines of code</td>
-<td>189,910</td>
+<td>197,932</td>
 </tr>
 <tr>
 <td>Functions (incl. methods)</td>
-<td>5,154</td>
+<td>5,310</td>
 </tr>
 <tr>
 <td>Classes</td>
-<td>889</td>
+<td>892</td>
 </tr>
 <tr>
 <td>Subpackages</td>
-<td>50</td>
+<td>90</td>
 </tr>
 <tr>
 <td>Tests</td>
-<td>23,597 collected</td>
+<td>25,510 collected</td>
 </tr>
 </tbody>
 </table>
-<h3 id="key-coupling-metrics-v1100">Key Coupling Metrics (v11.0.0)<a class="headerlink" href="#key-coupling-metrics-v1100" title="Permanent link">&para;</a></h3>
-<p>Dependents = files under <code>src/attune/</code> importing the module.</p>
+<h3 id="key-coupling-metrics-1500">Key Coupling Metrics (15.0.0)<a class="headerlink" href="#key-coupling-metrics-1500" title="Permanent link">&para;</a></h3>
+<p>Dependents = distinct files under <code>src/attune/</code> that import the
+module, excluding the module's own files. Both absolute
+(<code>attune.x.y</code>) and relative (<code>from .y</code>) imports are resolved, and
+importing a submodule credits its parent package.</p>
 <table>
 <thead>
 <tr>
@@ -6116,41 +6122,51 @@ hierarchy. Lower tiers never import from higher tiers.</p>
 <tbody>
 <tr>
 <td>security/path_validation</td>
-<td>77</td>
+<td>82</td>
 <td>Path traversal guard</td>
 </tr>
 <tr>
-<td>config</td>
-<td>26</td>
-<td>Configuration</td>
-</tr>
-<tr>
 <td>models</td>
-<td>52</td>
+<td>55</td>
 <td>Model registry, tiers</td>
 </tr>
 <tr>
 <td>memory</td>
-<td>53</td>
+<td>32</td>
 <td>Unified storage API</td>
 </tr>
 <tr>
-<td>meta_workflows</td>
-<td>31</td>
-<td>Orchestration hub</td>
-</tr>
-<tr>
 <td>workflows</td>
-<td>59</td>
+<td>27</td>
 <td>Workflow engine</td>
 </tr>
 <tr>
+<td>config</td>
+<td>20</td>
+<td>Configuration</td>
+</tr>
+<tr>
+<td>telemetry</td>
+<td>14</td>
+<td>Usage and feedback signals</td>
+</tr>
+<tr>
+<td>meta_workflows</td>
+<td>10</td>
+<td>Orchestration hub</td>
+</tr>
+<tr>
 <td>mcp</td>
-<td>49 core tools</td>
+<td>1</td>
 <td>Claude Code integration</td>
 </tr>
 </tbody>
 </table>
+<p><code>mcp</code> has one in-tree dependent because it is an entry point, not a
+library — it is imported by the MCP client, not by other modules. It
+serves <strong>48 core tools</strong> (the sum of <code>mcp/tool_schemas.py</code>'s schema
+getters), and 59 in a default install once the bundled <code>attune_redis</code>
+plugin contributes its 11.</p>
 <hr />
 <h2 id="core-components">Core Components<a class="headerlink" href="#core-components" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>┌─────────────────────────────────────────────────────────────┐
