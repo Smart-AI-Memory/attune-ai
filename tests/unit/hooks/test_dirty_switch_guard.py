@@ -11,6 +11,9 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import importlib.util
+import io
+import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -183,6 +186,131 @@ class TestFailsOpen:
     def test_dirty_paths_returns_none_outside_a_repo(self, mod, tmp_path, monkeypatch):
         monkeypatch.chdir(tmp_path)
         assert mod.dirty_paths() is None
+
+
+class TestGitDetection:
+    """``git`` must be recognized behind the prefixes people actually type."""
+
+    @pytest.mark.parametrize(
+        "command",
+        [
+            "GIT_AUTHOR_NAME=x git checkout main",
+            "env git checkout main",
+            "sudo git checkout main",
+            "/usr/bin/git checkout main",
+        ],
+    )
+    def test_prefixed_git_is_still_git(self, mod, command):
+        invocations = mod.git_invocations(command)
+        assert invocations, f"git not detected in: {command}"
+        assert mod.is_branch_switch(invocations[0]) is True
+
+    def test_a_lookalike_binary_is_not_git(self, mod):
+        assert mod.git_invocations("gitk checkout main") == []
+        assert mod.git_invocations("mygit checkout main") == []
+
+
+class TestMetricsLogging:
+    """Metrics are best-effort and must never block the tool call."""
+
+    def test_metric_row_is_written(self, mod, tmp_path, monkeypatch):
+        log = tmp_path / "metrics.jsonl"
+        monkeypatch.setattr(mod, "METRICS_LOG", log)
+
+        mod._log_metric("fired", "switch with 2 dirty path(s)")
+
+        rows = [json.loads(line) for line in log.read_text().splitlines()]
+        assert len(rows) == 1
+        assert rows[0]["enforcement"] == mod.ENFORCEMENT_NAME
+        assert rows[0]["outcome"] == "fired"
+        assert rows[0]["detail"] == "switch with 2 dirty path(s)"
+        assert rows[0]["ts"]
+
+    def test_unwritable_log_is_swallowed(self, mod, tmp_path, monkeypatch):
+        """An unwritable metrics path must not raise into the hook."""
+        blocker = tmp_path / "not-a-dir"
+        blocker.write_text("x")
+        monkeypatch.setattr(mod, "METRICS_LOG", blocker / "sub" / "metrics.jsonl")
+
+        mod._log_metric("fired", "detail")  # must not raise
+
+    def test_escape_hatch_records_an_allowed_metric(self, mod, tmp_path, monkeypatch):
+        log = tmp_path / "metrics.jsonl"
+        monkeypatch.setattr(mod, "METRICS_LOG", log)
+        monkeypatch.setenv(mod_allow_env(), "1")
+
+        assert mod.main(_ctx("git checkout main")) == 0
+        assert "escape hatch" in log.read_text()
+
+
+class TestStdinContextParsing:
+    """Malformed hook input must degrade to allow, never crash."""
+
+    def test_valid_json_object_parses(self, mod, monkeypatch):
+        monkeypatch.setattr("sys.stdin", io.StringIO('{"tool_name": "Bash"}'))
+        assert mod._read_stdin_context() == {"tool_name": "Bash"}
+
+    def test_empty_stdin_yields_empty_context(self, mod, monkeypatch):
+        monkeypatch.setattr("sys.stdin", io.StringIO("   "))
+        assert mod._read_stdin_context() == {}
+
+    def test_malformed_json_yields_empty_context(self, mod, monkeypatch):
+        monkeypatch.setattr("sys.stdin", io.StringIO("{not json"))
+        assert mod._read_stdin_context() == {}
+
+    def test_non_object_json_yields_empty_context(self, mod, monkeypatch):
+        """A JSON array is valid JSON but not a hook context."""
+        monkeypatch.setattr("sys.stdin", io.StringIO("[1, 2]"))
+        assert mod._read_stdin_context() == {}
+
+
+class TestScriptEntryPoint:
+    """A non-mocked round trip through the real script, as Claude Code runs it."""
+
+    @pytest.fixture
+    def repo(self, tmp_path):
+        subprocess.run(["git", "init", "-q", "-b", "main"], cwd=tmp_path, check=True)
+        subprocess.run(["git", "config", "user.email", "t@t.invalid"], cwd=tmp_path, check=True)
+        subprocess.run(["git", "config", "user.name", "t"], cwd=tmp_path, check=True)
+        (tmp_path / "f.txt").write_text("one")
+        subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True)
+        subprocess.run(
+            ["git", "commit", "-q", "--no-gpg-sign", "-m", "first"], cwd=tmp_path, check=True
+        )
+        return tmp_path
+
+    def _run(self, repo, payload: str):
+        env = dict(os.environ)
+        env.pop(mod_allow_env(), None)
+        return subprocess.run(
+            [sys.executable, str(SCRIPT_PATH)],
+            input=payload,
+            cwd=repo,
+            capture_output=True,
+            text=True,
+            check=False,
+            env=env,
+        )
+
+    def test_dirty_switch_exits_2_with_the_files_named(self, repo):
+        (repo / "f.txt").write_text("uncommitted")
+        result = self._run(
+            repo, '{"tool_name":"Bash","tool_input":{"command":"git checkout main"}}'
+        )
+        assert result.returncode == 2
+        assert "f.txt" in result.stderr
+
+    def test_clean_switch_exits_0(self, repo):
+        result = self._run(
+            repo, '{"tool_name":"Bash","tool_input":{"command":"git checkout main"}}'
+        )
+        assert result.returncode == 0
+
+    def test_empty_stdin_exits_0(self, repo):
+        assert self._run(repo, "").returncode == 0
+
+    def test_malformed_stdin_exits_0(self, repo):
+        assert self._run(repo, "{not json").returncode == 0
 
 
 def mod_allow_env() -> str:
