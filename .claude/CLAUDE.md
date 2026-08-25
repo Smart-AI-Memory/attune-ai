@@ -598,39 +598,6 @@ automatically at prompt time and at tool-call decision points.
 APPEND NEW LESSONS to `.claude/lessons.md`, not here — mirror into
 this section only if core-worthy (and then keep both copies in sync).
 
-- **Diagnosing "this branch cannot be merged", and "the command
-  errored but the merge actually succeeded"**:
-  - **`mergeStateStatus` is the first read, before CI logs** —
-    `gh pr view <n> --json mergeStateStatus,statusCheckRollup`.
-    The UI renders every case identically ("This branch cannot
-    be merged"): **DIRTY** = textual conflict (rebase + resolve);
-    **UNSTABLE** = a required check failing / fail-ignore-
-    tolerable (address checks or admin-merge); **BEHIND** = base
-    moved, needs fast-forward; **BLOCKED** = waiting on review /
-    required gate.
-  - **`gh pr merge --admin` errors from the LOCAL post-merge
-    step even when the REMOTE merge succeeded** — two shapes: a
-    non-worktree with diverged local main prints `fatal: Not
-    possible to fast-forward` (the local refresh failed, not the
-    merge); from a sub-worktree it exits 1 with `failed to run
-    git: fatal: 'main' is already used by worktree at <parent>`.
-    In BOTH, verify with `gh pr view <n> --json
-    state,mergedAt,mergeCommit` before retrying — a retry 404s
-    because the PR is already merged.
-  - **Batch-merge** — `gh pr list --json mergeable` returns
-    MERGEABLE for DRAFTS too (merge then errors "still a
-    draft"); filter `select(.mergeable=="MERGEABLE" and
-    .isDraft==false)`. An intentionally-failing diagnostic PR
-    marked draft is legitimate — close, don't merge.
-  - **`--delete-branch` on a base PR ORPHANS stacked PRs** whose
-    base is that branch — they auto-close and `gh api -f
-    state=open` 422s ("branch has been deleted"); the PR view
-    stays stuck at the old headRefOid. Prevention: before
-    admin-merging a base with `--delete-branch`, re-target
-    stacked PRs to main (`gh pr edit <stacked> --base main`);
-    check via `gh pr list --base <branch> --state open`.
-    Recovery: open a fresh PR targeting main.
-
 - **Diagnosing CI from the `gh` CLI — field names, cancellation
   traps, and in-flight log availability**:
   - **`gh pr checks --json` field is `bucket`**
@@ -1278,3 +1245,33 @@ this section only if core-worthy (and then keep both copies in sync).
   reason comment in the SAME commit; (3) grep the top-level test dirs
   for the symbol you changed (`grep -rn get_delay_ms tests/` found the
   extra pinning tests instantly — after CI already had).
+
+- **An external fork PR that adds a workflow, executes the author's own
+  tool in CI, and asks the maintainer to mint a new secret is a
+  supply-chain pattern — review the AUTHOR and the trust flow before the
+  diff's mechanics**: 2026-08-25, PR #2265 ("ci: add repository-signed
+  control proof") from `sulmusic2-star` (account created 2025-10, 0
+  followers, unknown to the project). The diff was mechanically CLEAN —
+  SHA-pinned actions, `timeout-minutes`, `concurrency`,
+  `permissions: contents: read`, no key refs; dropped into the tree it
+  passed all 340 workflow-policy gate tests — and its "failing tests"
+  were fork-PR artifacts (labeler's read-only `GITHUB_TOKEN`, Vercel
+  fork-deploy authorization), so a greenness-focused review would have
+  found nothing. The actual risk lived in the trust flow: the workflow
+  checked out the AUTHOR'S OWN repo (`sulmusic2-star/agent-vigil`), ran
+  `npm ci && npm run build` (full unaudited dependency tree), executed
+  its CLI in our Actions environment, and the PR body pre-scripted the
+  maintainer into creating an Ed25519 private key stored as a repo
+  secret — written to disk in the same job where the foreign tool runs.
+  Exfiltrating that key would compromise the very trust anchor the
+  feature claims to provide, and the feature was theater anyway
+  (re-signing exit codes of checks CI already runs, with a key held in
+  the same repo, referencing a nonexistent `attune-governance` signer
+  identity). **Review order for external `.github/` PRs: (1) who is the
+  author and whose code does the workflow fetch/execute; (2) what
+  secrets does it ask to exist and which code can read them; (3) only
+  then the diff's mechanics.** A visibly agent-operated repo is a
+  target for exactly this shape — polished, gate-compliant, body
+  pre-scripting the next steps. Closed without merging; `.github/`
+  diffs are out of class for every auto-merge lane (D8 carve-out),
+  which held correctly.
