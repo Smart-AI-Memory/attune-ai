@@ -31,7 +31,7 @@ and the guard disagree, the guard wins and this table is the bug.
 | `workflows` | `python -c "from attune.workflows import discover_workflows; print(len(set(discover_workflows().values())))"` |
 | `skills` | `ls -d plugin/skills/*/ \| wc -l` |
 | `mcpTools` | `python -c "from attune.mcp import tool_schemas as t; print(sum(len(getattr(t, n)()) for n in dir(t) if n.startswith('get_') and n.endswith('_tools')))"` |
-| `templateKinds` | `python -c "from attune_author.generator import _ALL_TEMPLATE_NAMES as a; print(len(a))"` |
+| `templateKinds` | `python -c "from attune.authoring.generator import _ALL_TEMPLATE_NAMES as a; print(len(a))"` |
 | `wizards` | `python -c "from attune.wizards import list_wizards; print(len(list_wizards()))"` |
 | Version number | `python -c "from attune import __version__; print(__version__)"` |
 
