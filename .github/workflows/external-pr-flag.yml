@@ -1,0 +1,37 @@
+# Flags fork PRs from external authors for maintainer triage the moment
+# they open, so a supply-chain-shaped submission (foreign code executed
+# in CI, requests for new secrets) is reviewed author-first instead of
+# sitting unlabeled until someone reads it. Retro-ratified 2026-08-25
+# (origin: PR #2265).
+#
+# SECURITY: pull_request_target runs with a write-capable token in the
+# BASE repo context. This job must NEVER check out or execute PR code —
+# it only reads event metadata and writes a label + comment.
+name: External PR flag
+
+on:
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  flag:
+    if: github.event.pull_request.head.repo.fork == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+    steps:
+      - name: Label and post triage notice
+        run: |
+          gh pr edit "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" \
+            --add-label external-author
+          gh pr comment "$PR_NUMBER" --repo "$GITHUB_REPOSITORY" --body \
+            "External submission from a fork. Maintainer triage order per the lessons corpus (external-ci-pr-supply-chain-pattern): (1) who is the author, and whose code would any workflow in this diff fetch or execute; (2) what secrets does it ask to exist, and which code can read them; (3) only then the diff's mechanics. Do not approve CI workflow runs before (1) and (2) are answered."
