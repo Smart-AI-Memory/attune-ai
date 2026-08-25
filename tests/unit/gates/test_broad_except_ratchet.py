@@ -183,7 +183,12 @@ _BASELINE: dict[str, int] = {
     # to degraded_connectivity, pinned by TestNeverBlock's RuntimeError case.
     # 2 -> 1 for library-review H1: the three per-module ping probes collapsed
     # into config.ping_redis, so their broad excepts collapsed with them.
-    "src/attune/memory/features.py": 1,
+    # 1 -> 2 for classify_memory_index_health (retro item 8, 2026-08-25): the
+    # MODULE LIST probe is a P15 never-block path — an unexpected failure must
+    # fall back to the connection-level verdict, never turn a working
+    # connection into an error. Pinned by TestMemoryIndexHealth's probe-raises
+    # case.
+    "src/attune/memory/features.py": 2,
     "src/attune/memory/file_stash.py": 1,
     "src/attune/memory/lessons.py": 2,
     "src/attune/memory/long_term_integration.py": 2,

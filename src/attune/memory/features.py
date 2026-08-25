@@ -18,7 +18,7 @@ from enum import Enum
 logger = logging.getLogger(__name__)
 
 #: States that warn loudly, once per session (R3: never self-healing).
-_LOUD_STATES = frozenset({"degraded_auth"})
+_LOUD_STATES = frozenset({"degraded_auth", "degraded_search"})
 
 #: State values already warned about this process (loud-once scope).
 _warned_states: set[str] = set()
@@ -32,6 +32,26 @@ _CRED_RE = re.compile(r"://([^/@:\s]*):[^@\s]*@")
 def _scrub_secrets(text: str) -> str:
     """Mask the password of any credentialed URL embedded in text."""
     return _CRED_RE.sub(r"://\1:***@", text)
+
+
+def _has_search_module(modules: object) -> bool:
+    """Return True when a ``MODULE LIST`` reply advertises search.
+
+    redis-py returns a list of per-module mappings whose keys and values
+    may be ``str`` or ``bytes`` depending on ``decode_responses``, so the
+    reply is flattened and matched case-insensitively rather than
+    indexed by a shape that varies.
+    """
+    if not isinstance(modules, list | tuple):
+        return False
+    for entry in modules:
+        values = entry.values() if isinstance(entry, dict) else [entry]
+        for value in values:
+            if isinstance(value, bytes):
+                value = value.decode("utf-8", "replace")
+            if isinstance(value, str) and "search" in value.lower():
+                return True
+    return False
 
 
 def _warn_once(report: "RedisHealthReport") -> None:
@@ -75,6 +95,10 @@ class RedisHealthState(Enum):
       never self-heal, so it warns loudly ONCE per session.
     - ``DEGRADED_CONNECTIVITY``: server absent or transient failure —
       stays silent (may self-heal; matches today's quiet fallback).
+    - ``DEGRADED_SEARCH``: the server answers PING but carries no
+      search module, so the derived memory index cannot exist. Never
+      self-heals (it needs a different server binary), so it warns
+      loudly ONCE — see :meth:`MemoryFeatures.classify_memory_index_health`.
     - ``DISABLED``: mock mode requested intentionally
       (``ATTUNE_REDIS_MOCK=true``) — distinguished from broken.
     """
@@ -82,6 +106,7 @@ class RedisHealthState(Enum):
     HEALTHY = "healthy"
     DEGRADED_AUTH = "degraded_auth"
     DEGRADED_CONNECTIVITY = "degraded_connectivity"
+    DEGRADED_SEARCH = "degraded_search"
     DISABLED = "disabled"
 
 
@@ -321,6 +346,81 @@ class MemoryFeatures:
             redacted_url=resolved.redacted_url,
             overrides=resolved.overrides,
         )
+
+    @staticmethod
+    def classify_memory_index_health(
+        env: Mapping[str, str] | None = None,
+    ) -> RedisHealthReport:
+        """Classify whether the DERIVED memory index can exist.
+
+        ``classify_redis_health`` answers "does the connection work".
+        That is not the same question as "can the index exist": a plain
+        ``redis-server`` answers PING perfectly while carrying no search
+        module, so ``FT.CREATE`` fails, hydration aborts, and recall is
+        dark behind a server that looks healthy. Distinguishing the two
+        is the whole point of this function — the connection-level
+        report cannot see the difference, and a caller that needs the
+        index will otherwise read PONG as success.
+
+        Connection-level states pass through unchanged. Only a HEALTHY
+        connection is probed further, and only a missing search module
+        downgrades it to :attr:`RedisHealthState.DEGRADED_SEARCH`.
+
+        ``check_redis`` is deliberately NOT routed through this: plain
+        Redis stays valid for key/value use, and only callers that need
+        the index should treat a missing module as degraded.
+
+        Args:
+            env: Environment mapping (defaults to ``os.environ``;
+                injectable for tests).
+
+        Returns:
+            A :class:`RedisHealthReport`; never raises (P15).
+
+        """
+        report = MemoryFeatures.classify_redis_health(env)
+        if report.state is not RedisHealthState.HEALTHY:
+            return report
+
+        from attune.memory.config import resolve_redis_connection
+        from attune.memory.recall_redis import connect_recall_redis
+
+        try:
+            # Probe the SAME endpoint the connection report just cleared,
+            # resolved from the same env — otherwise an injected env is
+            # classified against one server and probed against another.
+            url = resolve_redis_connection(env).url
+            client = connect_recall_redis(url)
+            modules = client.execute_command("MODULE", "LIST")
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL broad catch (P15 never-block): an unexpected
+            # probe failure must not turn a working connection into an
+            # error. Report the connection's own verdict instead.
+            logger.debug("MODULE LIST probe failed", exc_info=True)
+            return report
+
+        if _has_search_module(modules):
+            return report
+
+        return RedisHealthReport(
+            RedisHealthState.DEGRADED_SEARCH,
+            "server answers PING but has no search module — the derived "
+            "memory index cannot be created (needs redis-stack-server, "
+            "not plain redis-server)",
+            redacted_url=report.redacted_url,
+            overrides=report.overrides,
+        )
+
+    @staticmethod
+    def check_memory_index() -> bool:
+        """Return True when the derived memory index can exist.
+
+        Routes the never-self-healing search-module class through the
+        loud-once notice, mirroring :meth:`check_redis`.
+        """
+        report = MemoryFeatures.classify_memory_index_health()
+        _warn_once(report)
+        return report.state is RedisHealthState.HEALTHY
 
     @staticmethod
     def check_redis() -> bool:
