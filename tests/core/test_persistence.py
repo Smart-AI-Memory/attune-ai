@@ -485,6 +485,72 @@ class TestMetricsCollector:
         stats = collector.get_user_stats("old_user")
         assert stats["total_operations"] == 2
 
+    def test_legacy_migration_rebuild_fallback(self, temp_dir):
+        """SQLite < 3.35 has no DROP COLUMN — the rebuild path preserves rows.
+
+        Forces the fallback by refusing the DROP COLUMN statement the way
+        an old SQLite would, then runs the real rebuild SQL against a real
+        database so the migration is proven, not merely reachable.
+        """
+        db_path = str(Path(temp_dir) / "old_sqlite.db")
+        conn = sqlite3.connect(db_path)
+        conn.execute(
+            """
+            CREATE TABLE metrics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                empathy_level INTEGER NOT NULL,
+                success BOOLEAN NOT NULL,
+                response_time_ms REAL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                metadata TEXT
+            )
+            """
+        )
+        conn.execute("CREATE INDEX idx_user_level ON metrics(user_id, empathy_level)")
+        conn.execute(
+            "INSERT INTO metrics (user_id, empathy_level, success, response_time_ms, metadata)"
+            " VALUES ('kept_user', 4, 1, 100.0, '{\"a\": 1}')"
+        )
+        conn.commit()
+
+        class _NoDropColumnCursor:
+            """Delegates to a real cursor but rejects DROP COLUMN."""
+
+            def __init__(self, cursor):
+                self._cursor = cursor
+
+            def execute(self, sql, *args):
+                if "DROP COLUMN" in sql:
+                    raise sqlite3.OperationalError('near "DROP": syntax error')
+                return self._cursor.execute(sql, *args)
+
+        MetricsCollector._migrate_legacy_level_column(_NoDropColumnCursor(conn.cursor()))
+        conn.commit()
+
+        columns = [row[1] for row in conn.execute("PRAGMA table_info(metrics)")]
+        assert "empathy_level" not in columns
+        assert set(columns) == {
+            "id",
+            "user_id",
+            "success",
+            "response_time_ms",
+            "timestamp",
+            "metadata",
+        }
+
+        # The rebuild must carry the existing rows across, not drop them.
+        row = conn.execute(
+            "SELECT id, user_id, success, response_time_ms, metadata FROM metrics"
+        ).fetchall()
+        assert row == [(1, "kept_user", 1, 100.0, '{"a": 1}')]
+        conn.close()
+
+        # The migrated database still works through the public API.
+        collector = MetricsCollector(db_path=db_path)
+        collector.record_metric(user_id="kept_user", success=True, response_time_ms=120.0)
+        assert collector.get_user_stats("kept_user")["total_operations"] == 2
+
     def test_get_nonexistent_user_stats(self, temp_dir):
         """Test getting stats for nonexistent user returns empty"""
         db_path = str(Path(temp_dir) / "metrics.db")
