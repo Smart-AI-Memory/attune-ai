@@ -116,11 +116,8 @@ export function generateMetadata(config?: SEOConfig): Metadata {
       apple: '/apple-touch-icon.png',
     },
     manifest: '/site.webmanifest',
-    verification: {
-      google: 'YOUR_VERIFICATION_CODE_HERE', // TODO: Replace with Google Search Console code
-      // yandex: 'yandex-verification-code',
-      // bing: 'bing-verification-code',
-    },
+    // Search-engine ownership is verified out-of-band: Google via a DNS
+    // TXT record, Bing via /BingSiteAuth.xml — no meta tags needed.
   };
 }
 
