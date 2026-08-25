@@ -141,6 +141,10 @@ _BASELINE: dict[str, int] = {
     "src/attune/handoff/memory_link.py": 5,
     "src/attune/help/feedback.py": 1,
     "src/attune/help/polish.py": 1,
+    # dirty_switch_guard: the PreToolUse __main__ block catches broadly
+    # so a bug in the guard can never block real work — a guard that
+    # crashes must fail OPEN (exit 0), matching every sibling hook here.
+    "src/attune/hooks/scripts/dirty_switch_guard.py": 1,
     "src/attune/hooks/scripts/evaluate_session.py": 3,
     # format_on_save added 1 for library-review L3 (PR #2117): the
     # PostToolUse exit-0-always contract must survive wrong-typed

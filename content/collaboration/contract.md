@@ -360,6 +360,25 @@ as pickable work.
   PR body.
 - Before every commit: `git branch --show-current` — confirm the
   checkout you edited is on the branch you mean to ship.
+- **More than one branch in flight → one worktree each** (chair,
+  2026-08-25). Juggling concurrent branches through a single checkout
+  is what produces wrong-branch commits, vacuous pushes, and resets
+  that eat unrelated work; separate worktrees make the whole class
+  impossible because there is no switch to get wrong. Single-branch
+  work stays in one checkout — the policy is deliberately scoped to
+  concurrency, since every worktree costs a ~460 MB venv and the pile
+  is already large.
+  *Enforcer: `src/attune/hooks/scripts/dirty_switch_guard.py` — a
+  PreToolUse hook that refuses a branch switch or `git reset --hard`
+  while the tree is dirty (new-branch creation, path-scoped restores,
+  and explicit `--force` stay allowed).*
+- **Reap the worktree when its PR merges.** A worktree outlives its
+  branch otherwise; delete it in the same step that confirms the
+  squash, never in a bulk sweep that might delete the session's own
+  worktree or one holding an open PR.
+- Never suppress stderr on a state-changing git command
+  (`2>/dev/null` on a `checkout`/`commit`/`push` turns a loud refusal
+  into a silent no-op you will then reason from).
 - Don't touch other agents' worktrees under `.claude/worktrees/`.
 
 ### Single-source projections
