@@ -1,4 +1,5 @@
 {
+  "buildCommand": "npm run build:vercel",
   "trailingSlash": true,
   "redirects": [
     {
