@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **SDK adapter core moved to the models layer** (#2239 slice 1). The
+  Agent SDK adapter (`agent_sdk_adapter`) and error taxonomy
+  (`sdk_errors`) now live at `attune.models.sdk_adapter` /
+  `attune.models.sdk_errors`; `attune.workflows.agent_sdk_adapter`
+  and `attune.workflows.sdk_errors` remain as full back-compat
+  facades, so existing imports keep working unchanged.
+  `attune.models` no longer imports `attune.workflows` at all —
+  `models/single_turn.py`'s lazy layering import is gone (eager
+  models-internal import), and a subprocess regression test pins the
+  boundary (`tests/unit/models/test_sdk_adapter_layering.py`). Tests
+  that monkeypatch the probe/classifier must target the defining
+  `attune.models.*` modules — patching the facade bindings no longer
+  intercepts (and never soundly did).
+
 ### Added
 
 - **Enforceable session spend ledger** (14.1.0-retro item 4;

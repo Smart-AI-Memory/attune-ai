@@ -16,8 +16,8 @@ from pathlib import Path
 
 import pytest
 
-import attune.workflows.agent_sdk_adapter as adapter
-from attune.workflows.agent_sdk_adapter import iter_agent_messages
+import attune.models.sdk_adapter as adapter
+from attune.models.sdk_adapter import iter_agent_messages
 
 
 class _FakeResultMessage:
@@ -217,19 +217,19 @@ def test_sdk_error_from_exception_fast_path(monkeypatch):
     def _boom(*args, **kwargs):  # pragma: no cover - fails the test if hit
         raise AssertionError("probe must not run on the fast path")
 
-    from attune.workflows import sdk_errors
+    from attune.models import sdk_errors
 
     monkeypatch.setattr(sdk_errors, "capture_subprocess_failure", _boom)
     err = adapter.SdkSubprocessError(message="m", stderr="s", kind="api_quota", original_exc=None)
-    assert adapter.sdk_error_from_exception(err) is err
+    assert sdk_errors.sdk_error_from_exception(err) is err
 
 
 def test_sdk_error_from_exception_fallback_probes(monkeypatch):
     """A bare SDK exception still goes through probe + classification."""
-    from attune.workflows import sdk_errors
+    from attune.models import sdk_errors
 
     monkeypatch.setattr(sdk_errors, "capture_subprocess_failure", lambda argv: _QUOTA_TEXT)
-    out = adapter.sdk_error_from_exception(Exception("Command failed with exit code 1"))
+    out = sdk_errors.sdk_error_from_exception(Exception("Command failed with exit code 1"))
     assert out.kind == "api_quota"
     assert _QUOTA_TEXT in out.stderr
 
@@ -257,10 +257,10 @@ def test_probe_env_mirrors_sdk_child(monkeypatch):
 
         return _R()
 
-    from attune.workflows import sdk_errors
+    from attune.models import sdk_errors
 
     monkeypatch.setattr(sdk_errors.subprocess, "run", _fake_run)
-    adapter.capture_subprocess_failure([])
+    sdk_errors.capture_subprocess_failure([])
     assert seen["env"] is not None
     assert "CLAUDECODE" not in seen["env"]
     assert seen["env"]["CLAUDE_CODE_ENTRYPOINT"] == "sdk-py"
@@ -274,15 +274,21 @@ def test_every_workflow_query_loop_is_wrapped():
     iterates the raw query stream reintroduces the discarded-success
     bug this spec fixed — fail loudly with the offending locations.
     """
-    workflows_dir = Path(adapter.__file__).resolve().parent
+    # The adapter core lives in attune.models (#2239 slice 1); scan
+    # both layers so neither a workflow nor a models-layer caller can
+    # consume the raw stream unwrapped.
+    src_root = Path(adapter.__file__).resolve().parents[1]
+    scan_dirs = [src_root / "workflows", src_root / "models"]
     offenders: list[str] = []
-    for path in sorted(workflows_dir.rglob("*.py")):
-        if path.name == "agent_sdk_adapter.py":
-            # The wrapper's own module documents the raw pattern.
-            continue
-        for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
-            if _UNWRAPPED_LOOP_RE.search(line):
-                offenders.append(f"{path.relative_to(workflows_dir)}:{lineno}")
+    for scan_dir in scan_dirs:
+        for path in sorted(scan_dir.rglob("*.py")):
+            if path.name in ("sdk_adapter.py", "agent_sdk_adapter.py"):
+                # The wrapper's own module (and its facade) document
+                # the raw pattern.
+                continue
+            for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+                if _UNWRAPPED_LOOP_RE.search(line):
+                    offenders.append(f"{path.relative_to(src_root)}:{lineno}")
     assert not offenders, (
         "SDK consumption loops not wrapped in iter_agent_messages "
         f"(teardown-exit guard bypassed): {offenders}"

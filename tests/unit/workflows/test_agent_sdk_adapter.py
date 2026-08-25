@@ -15,21 +15,21 @@ from datetime import datetime, timezone
 
 import pytest
 
-from attune.workflows.agent_sdk_adapter import (
+from attune.models.sdk_adapter import (
     AgentRunResult,
-    AgentSDKResultAdapter,
     collect_agent_output,
     get_max_budget_usd,
     get_subagent_model,
     resolve_cwd_for_path,
-    sdk_error_message,
 )
+from attune.models.sdk_errors import sdk_error_message
 from attune.workflows.data_classes import (
     CostReport,
     NextAction,
     WorkflowResult,
     WorkflowStage,
 )
+from attune.workflows.sdk_output_parser import AgentSDKResultAdapter
 
 
 def _now() -> datetime:
@@ -879,13 +879,13 @@ class TestGetTaskBudgetCliProbe:
 
     def setup_method(self) -> None:
         """Reset the module-level cache before each test."""
-        import attune.workflows.agent_sdk_adapter as mod
+        import attune.models.sdk_adapter as mod
 
         mod._CLI_SUPPORTS_TASK_BUDGET = None
 
     def test_returns_none_when_cli_lacks_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Given a CLI whose --help omits --task-budget, returns None."""
-        import attune.workflows.agent_sdk_adapter as mod
+        import attune.models.sdk_adapter as mod
 
         fake_help = (
             "Usage: claude [options]\n"
@@ -910,7 +910,7 @@ class TestGetTaskBudgetCliProbe:
 
     def test_returns_budget_when_cli_supports_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Given a CLI whose --help mentions --task-budget, returns a TaskBudget."""
-        import attune.workflows.agent_sdk_adapter as mod
+        import attune.models.sdk_adapter as mod
 
         fake_help = "  --task-budget <tokens>  Token cap per task\n"
 
@@ -932,7 +932,7 @@ class TestGetTaskBudgetCliProbe:
 
     def test_probe_result_is_cached(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Probe runs at most once per process; subsequent calls hit cache."""
-        import attune.workflows.agent_sdk_adapter as mod
+        import attune.models.sdk_adapter as mod
 
         call_count = {"n": 0}
 
@@ -956,7 +956,7 @@ class TestGetTaskBudgetCliProbe:
 
     def test_probe_timeout_disables_feature(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """If the probe times out, treat the CLI as unsupported."""
-        import attune.workflows.agent_sdk_adapter as mod
+        import attune.models.sdk_adapter as mod
 
         def fake_run(cmd, **kwargs):
             raise mod.subprocess.TimeoutExpired(cmd=cmd, timeout=5)
@@ -969,7 +969,7 @@ class TestGetTaskBudgetCliProbe:
 
     def test_missing_cli_disables_feature(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """When no CLI is found anywhere, return False without probing."""
-        import attune.workflows.agent_sdk_adapter as mod
+        import attune.models.sdk_adapter as mod
 
         monkeypatch.setattr(mod.shutil, "which", lambda _: None)
         monkeypatch.setattr(mod.Path, "is_file", lambda self: False)
@@ -1415,14 +1415,14 @@ class TestSdkIsolationKwargs:
 
     def test_excludes_all_setting_sources(self) -> None:
         """setting_sources=[] keeps hooks + CLAUDE.md out of subprocesses."""
-        from attune.workflows.agent_sdk_adapter import sdk_isolation_kwargs
+        from attune.models.sdk_adapter import sdk_isolation_kwargs
 
         kwargs = sdk_isolation_kwargs()
         assert kwargs["setting_sources"] == []
 
     def test_carries_subprocess_marker_env(self) -> None:
         """The env marker lets attune hooks self-gate (spec D3/D4)."""
-        from attune.workflows.agent_sdk_adapter import (
+        from attune.models.sdk_adapter import (
             SDK_SUBPROCESS_ENV_VAR,
             sdk_isolation_kwargs,
         )
@@ -1433,7 +1433,7 @@ class TestSdkIsolationKwargs:
 
     def test_fresh_dict_per_call(self) -> None:
         """Callers may mutate the result without cross-call leakage."""
-        from attune.workflows.agent_sdk_adapter import sdk_isolation_kwargs
+        from attune.models.sdk_adapter import sdk_isolation_kwargs
 
         a = sdk_isolation_kwargs()
         a["env"]["EXTRA"] = "x"
@@ -1442,7 +1442,7 @@ class TestSdkIsolationKwargs:
     def test_accepted_by_claude_agent_options(self) -> None:
         """The kwargs splat cleanly into a real ClaudeAgentOptions."""
         claude_agent_sdk = pytest.importorskip("claude_agent_sdk")
-        from attune.workflows.agent_sdk_adapter import sdk_isolation_kwargs
+        from attune.models.sdk_adapter import sdk_isolation_kwargs
 
         options = claude_agent_sdk.ClaudeAgentOptions(**sdk_isolation_kwargs())
         assert options.setting_sources == []
@@ -1509,7 +1509,7 @@ class TestGuardBashTool:
     def _run(self, command: str) -> dict:
         import asyncio
 
-        from attune.workflows.agent_sdk_adapter import _guard_bash_tool
+        from attune.models.sdk_adapter import _guard_bash_tool
 
         return asyncio.run(
             _guard_bash_tool({"tool_name": "Bash", "tool_input": {"command": command}}, None, None)
@@ -1539,14 +1539,14 @@ class TestGuardBashTool:
         assert self._run("") == {}
         import asyncio
 
-        from attune.workflows.agent_sdk_adapter import _guard_bash_tool
+        from attune.models.sdk_adapter import _guard_bash_tool
 
         assert asyncio.run(_guard_bash_tool({"tool_name": "Bash"}, None, None)) == {}
 
     def test_isolation_kwargs_carry_the_guard(self) -> None:
         """sdk_isolation_kwargs wires the guard as a Bash PreToolUse hook."""
         claude_agent_sdk = pytest.importorskip("claude_agent_sdk")
-        from attune.workflows.agent_sdk_adapter import (
+        from attune.models.sdk_adapter import (
             _guard_bash_tool,
             sdk_isolation_kwargs,
         )
@@ -1561,7 +1561,7 @@ class TestGuardBashTool:
     def test_options_accept_the_hooks_kwarg(self) -> None:
         """The full kwargs (incl. hooks) splat into real options."""
         claude_agent_sdk = pytest.importorskip("claude_agent_sdk")
-        from attune.workflows.agent_sdk_adapter import sdk_isolation_kwargs
+        from attune.models.sdk_adapter import sdk_isolation_kwargs
 
         options = claude_agent_sdk.ClaudeAgentOptions(**sdk_isolation_kwargs())
         assert options.hooks is not None

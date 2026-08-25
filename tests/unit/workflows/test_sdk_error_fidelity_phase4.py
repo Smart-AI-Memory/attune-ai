@@ -44,7 +44,7 @@ class TestBugPredictPhase4:
         with (
             patch("attune.workflows.bug_predict.claude_agent_sdk", mock_sdk),
             patch(
-                "attune.workflows.sdk_errors.capture_subprocess_failure",
+                "attune.models.sdk_errors.capture_subprocess_failure",
                 return_value=(
                     "Error: You have reached your specified API usage limits. "
                     "Regain access on 2026-06-01."
@@ -75,7 +75,7 @@ class TestPerfAuditPhase4:
         with (
             patch("attune.workflows.perf_audit.claude_agent_sdk", mock_sdk),
             patch(
-                "attune.workflows.sdk_errors.capture_subprocess_failure",
+                "attune.models.sdk_errors.capture_subprocess_failure",
                 return_value="401 Unauthorized: invalid api key",
             ),
         ):
@@ -100,7 +100,7 @@ class TestRefactorPlanPhase4:
         with (
             patch("attune.workflows.refactor_plan.claude_agent_sdk", mock_sdk),
             patch(
-                "attune.workflows.sdk_errors.capture_subprocess_failure",
+                "attune.models.sdk_errors.capture_subprocess_failure",
                 return_value="429 Too Many Requests: rate limit exceeded",
             ),
         ):
@@ -124,7 +124,7 @@ class TestSecurityAuditPhase4:
         with (
             patch("attune.workflows.security_audit.claude_agent_sdk", mock_sdk),
             patch(
-                "attune.workflows.sdk_errors.capture_subprocess_failure",
+                "attune.models.sdk_errors.capture_subprocess_failure",
                 return_value=(
                     "Failed to authenticate. API Error: 401 Invalid " "authentication credentials"
                 ),

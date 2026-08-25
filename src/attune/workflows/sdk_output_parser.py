@@ -27,7 +27,7 @@ from .output import (
 )
 
 if TYPE_CHECKING:
-    from .agent_sdk_adapter import AgentRunResult
+    from attune.models.sdk_adapter import AgentRunResult
 
 logger = logging.getLogger(__name__)
 

@@ -27,7 +27,7 @@ def _force_cli_supports_task_budget(monkeypatch: pytest.MonkeyPatch) -> None:
     on which CLI happens to be installed. Override both the function
     and the cached result so any code path returns True.
     """
-    import attune.workflows.agent_sdk_adapter as mod
+    import attune.models.sdk_adapter as mod
 
     monkeypatch.setattr(mod, "_CLI_SUPPORTS_TASK_BUDGET", True)
     monkeypatch.setattr(mod, "_cli_supports_task_budget", lambda: True)
@@ -37,7 +37,7 @@ def _force_cli_supports_task_budget(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_get_task_budget_returns_total_for_each_depth() -> None:
-    from attune.workflows.agent_sdk_adapter import get_task_budget
+    from attune.models.sdk_adapter import get_task_budget
 
     for depth, expected in [("quick", 20_000), ("standard", 80_000), ("deep", 200_000)]:
         tb = get_task_budget(depth)
@@ -49,7 +49,7 @@ def test_get_task_budget_returns_total_for_each_depth() -> None:
 def test_get_task_budget_respects_env_override(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from attune.workflows.agent_sdk_adapter import get_task_budget
+    from attune.models.sdk_adapter import get_task_budget
 
     monkeypatch.setenv("ATTUNE_TASK_BUDGET_TOKENS", "5000")
     tb = get_task_budget("standard")
@@ -59,7 +59,7 @@ def test_get_task_budget_respects_env_override(
 def test_get_task_budget_ignores_bad_env(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from attune.workflows.agent_sdk_adapter import get_task_budget
+    from attune.models.sdk_adapter import get_task_budget
 
     monkeypatch.setenv("ATTUNE_TASK_BUDGET_TOKENS", "not-an-int")
     tb = get_task_budget("standard")
@@ -68,14 +68,14 @@ def test_get_task_budget_ignores_bad_env(
 
 
 def test_get_thinking_config_none_for_non_deep() -> None:
-    from attune.workflows.agent_sdk_adapter import get_thinking_config
+    from attune.models.sdk_adapter import get_thinking_config
 
     assert get_thinking_config("quick") is None
     assert get_thinking_config("standard") is None
 
 
 def test_get_thinking_config_non_none_for_deep() -> None:
-    from attune.workflows.agent_sdk_adapter import get_thinking_config
+    from attune.models.sdk_adapter import get_thinking_config
 
     cfg = get_thinking_config("deep")
     assert cfg is not None

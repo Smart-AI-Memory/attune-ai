@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from attune.workflows.agent_sdk_adapter import (
+from attune.models.sdk_errors import (
     SdkSubprocessError,
     _stderr_carries_no_signal,
 )
