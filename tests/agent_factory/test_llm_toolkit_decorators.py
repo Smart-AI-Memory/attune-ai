@@ -239,12 +239,53 @@ class TestRetryOnFailure:
 # =============================================================================
 
 
+class _ScriptedClock:
+    """Stand-in for the ``time`` module returning exact, scripted readings.
+
+    Substituted for ``attune.agent_factory.decorators.time`` so elapsed
+    durations are decided by the test rather than measured from a real
+    clock on a loaded CI runner. Each reading list is consumed in order
+    and its final value repeats.
+
+    Args:
+        monotonic_readings: Successive ``time.monotonic()`` return values.
+        wall_readings: Successive ``time.time()`` return values. Defaults
+            to ``monotonic_readings``. Set these apart to simulate a
+            wall-clock adjustment during the decorated call.
+    """
+
+    def __init__(
+        self,
+        monotonic_readings: list[float],
+        wall_readings: list[float] | None = None,
+    ) -> None:
+        self._monotonic = list(monotonic_readings)
+        self._wall = list(monotonic_readings if wall_readings is None else wall_readings)
+
+    @staticmethod
+    def _next(readings: list[float]) -> float:
+        """Pop the next reading, repeating the last one once exhausted."""
+        return readings.pop(0) if len(readings) > 1 else readings[0]
+
+    def monotonic(self) -> float:
+        """Return the next scripted monotonic reading."""
+        return self._next(self._monotonic)
+
+    def time(self) -> float:
+        """Return the next scripted wall-clock reading."""
+        return self._next(self._wall)
+
+
 class TestLogPerformance:
     """Tests for log_performance decorator."""
 
     @pytest.mark.asyncio
-    async def test_fast_operation_no_warning(self):
+    async def test_fast_operation_no_warning(self, monkeypatch):
         """Test fast operation doesn't log warning."""
+        monkeypatch.setattr(
+            "attune.agent_factory.decorators.time",
+            _ScriptedClock([100.0, 100.1]),
+        )
 
         @log_performance(threshold_seconds=1.0)
         async def fast_operation():
@@ -257,12 +298,92 @@ class TestLogPerformance:
             mock_logger.warning.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_slow_operation_logs_warning(self):
+    async def test_slow_operation_logs_warning(self, monkeypatch):
         """Test slow operation logs warning."""
+        monkeypatch.setattr(
+            "attune.agent_factory.decorators.time",
+            _ScriptedClock([100.0, 105.0]),
+        )
+
+        @log_performance(threshold_seconds=1.0)
+        async def slow_operation():
+            return "slow"
+
+        with patch("attune.agent_factory.decorators.logger") as mock_logger:
+            result = await slow_operation()
+
+            assert result == "slow"
+            mock_logger.warning.assert_called_once()
+            assert "Slow operation" in str(mock_logger.warning.call_args)
+
+    @pytest.mark.asyncio
+    async def test_backward_wall_clock_jump_still_logs_warning(self, monkeypatch):
+        """A backward wall-clock jump must not suppress the slow-operation warning.
+
+        Regression guard for the monotonic fix: the operation really takes
+        5s, but the wall clock is set back 1s mid-call. Measuring with
+        ``time.time()`` yields a negative elapsed and silently skips the
+        warning; ``time.monotonic()`` is unaffected.
+        """
+        monkeypatch.setattr(
+            "attune.agent_factory.decorators.time",
+            _ScriptedClock(
+                monotonic_readings=[100.0, 105.0],
+                wall_readings=[1_000_000.0, 999_999.0],
+            ),
+        )
+
+        @log_performance(threshold_seconds=1.0)
+        async def slow_operation():
+            return "slow"
+
+        with patch("attune.agent_factory.decorators.logger") as mock_logger:
+            result = await slow_operation()
+
+            assert result == "slow"
+            mock_logger.warning.assert_called_once()
+            assert "Slow operation" in str(mock_logger.warning.call_args)
+
+    @pytest.mark.asyncio
+    async def test_forward_wall_clock_jump_logs_no_false_warning(self, monkeypatch):
+        """A forward wall-clock jump must not fabricate a slow-operation warning.
+
+        Regression guard for the monotonic fix: the operation takes 0.1s,
+        but the wall clock jumps forward 500s mid-call. Measuring with
+        ``time.time()`` reports a spurious 500s and warns; ``time.monotonic()``
+        is unaffected.
+        """
+        monkeypatch.setattr(
+            "attune.agent_factory.decorators.time",
+            _ScriptedClock(
+                monotonic_readings=[100.0, 100.1],
+                wall_readings=[1_000_000.0, 1_000_500.0],
+            ),
+        )
+
+        @log_performance(threshold_seconds=1.0)
+        async def fast_operation():
+            return "quick"
+
+        with patch("attune.agent_factory.decorators.logger") as mock_logger:
+            result = await fast_operation()
+
+            assert result == "quick"
+            mock_logger.warning.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_real_sleep_over_threshold_logs_warning(self):
+        """End-to-end check against the real clock, with a 15x margin.
+
+        The deterministic tests above pin the comparison logic; this one
+        confirms the decorator reads a clock that advances with real time.
+        The margin is wide enough to absorb a loaded runner and the ~15.6ms
+        monotonic granularity on Windows -- do not narrow it.
+        """
 
         @log_performance(threshold_seconds=0.01)
         async def slow_operation():
-            await asyncio.sleep(0.02)
+            await asyncio.sleep(0.15)
             return "slow"
 
         with patch("attune.agent_factory.decorators.logger") as mock_logger:
