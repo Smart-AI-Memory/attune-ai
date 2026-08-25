@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return generateSEOMetadata({
     title: `Posts tagged '${tag}' — Attune AI Blog`,
     description: `${posts.length} article${posts.length === 1 ? '' : 's'} tagged with '${tag}' on the Attune AI blog. Claude Code tutorials, agent patterns, and AI workflow guides.`,
-    url: `https://smartaimemory.com/blog/tag/${tag}`,
+    url: `https://smartaimemory.com/blog/tag/${encodeURIComponent(tag)}`,
     keywords: [tag, 'Claude Code', 'Attune AI', 'AI developer blog'],
   });
 }
