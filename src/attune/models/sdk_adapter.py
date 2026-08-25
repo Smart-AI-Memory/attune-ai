@@ -27,6 +27,8 @@ from typing import Any
 
 import claude_agent_sdk
 
+from attune.ops.session_redaction import redact
+
 # Only what this module actually uses. The historical re-export
 # surface (full sdk_errors + AgentSDKResultAdapter) lives on the
 # workflows.agent_sdk_adapter facade, not here.
@@ -238,10 +240,14 @@ async def iter_agent_messages(query: AsyncIterator[Any]) -> AsyncIterator[Any]:
                 )
                 return
             if last_error_result_text is not None:
-                kind, summary = classify_subprocess_failure(last_error_result_text)
+                # stderr travels into logs and WorkflowResult errors;
+                # the probe path (capture_subprocess_failure) already
+                # redacts its output — the in-stream path must match.
+                redacted = redact(last_error_result_text).text
+                kind, summary = classify_subprocess_failure(redacted)
                 raise SdkSubprocessError(
                     message=summary,
-                    stderr=last_error_result_text,
+                    stderr=redacted,
                     kind=kind,
                     original_exc=exc,
                 ) from exc
@@ -617,8 +623,15 @@ def get_max_budget_usd(
         return explicit
     override = os.environ.get("ATTUNE_MAX_BUDGET_USD")
     if override is not None:
-        val = float(override)
-        return val if val > 0 else None
+        try:
+            val = float(override)
+        except ValueError:
+            logger.warning(
+                "ATTUNE_MAX_BUDGET_USD=%r is not a number; " "falling back to the depth default",
+                override,
+            )
+        else:
+            return val if val > 0 else None
     return _DEFAULT_BUDGET_USD.get(depth, 10.00)
 
 
@@ -834,6 +847,12 @@ def get_subagent_model(agent_name: str) -> str | None:
     ``"inherit"``. The literal ``"inherit"`` is normalized to
     ``None`` so callers can pass the return value directly to the
     SDK ``AgentDefinition.model`` field.
+
+    The env overrides deliberately perform NO allowlist validation
+    of the model value: they are an operator escape hatch, so a new
+    model name works without a code change. A typo surfaces as an
+    SDK-level model error at run time rather than being silently
+    coerced here.
 
     Args:
         agent_name: Name of the subagent (e.g. ``"security-reviewer"``).

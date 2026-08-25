@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **SDK adapter robustness** (codex D11 scoped re-lane findings on
+  #2295; all three predate the move). The in-stream error path in
+  `iter_agent_messages` now redacts the captured ResultMessage error
+  text before it enters `SdkSubprocessError.stderr` (matching the
+  probe path's existing redaction); a malformed
+  `ATTUNE_MAX_BUDGET_USD` env value falls back to the depth default
+  with a warning instead of crashing option construction; and a
+  string-valued exception `cmd` is shlex-split into argv (POSIX-aware,
+  Windows-safe) instead of being wrapped as `[cmd]`, which made
+  `subprocess.run` treat the whole command line as an executable path
+  and report a misleading not-found. Both back-compat facades also
+  declare `__all__` now, making the re-export surface explicit.
+
 ### Changed
 
 - **SDK adapter core moved to the models layer** (#2239 slice 1). The
