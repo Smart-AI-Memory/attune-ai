@@ -1,16 +1,9 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
+import nextCoreWebVitals from "eslint-config-next/core-web-vitals";
+import nextTypescript from "eslint-config-next/typescript";
 
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...nextCoreWebVitals,
+  ...nextTypescript,
   {
     ignores: [
       "node_modules/**",
@@ -57,6 +50,13 @@ const eslintConfig = [
       "no-return-await": "error",
       "no-throw-literal": "error",
       "no-useless-catch": "error",
+
+      // React-Compiler-era rules new in eslint-config-next 16 flag
+      // pre-existing shipped patterns (theme/localStorage hydration,
+      // initial-fetch effects); warn until those sites are refactored
+      "react-hooks/set-state-in-effect": "warn",
+      "react-hooks/immutability": "warn",
+      "react-hooks/static-components": "warn",
 
       // TypeScript strict rules
       "@typescript-eslint/no-unused-vars": ["error", {
