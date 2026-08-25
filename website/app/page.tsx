@@ -67,6 +67,13 @@ export default function Home() {
                 View on GitHub
               </a>
             </div>
+            <p className="text-sm text-[var(--text-muted)] mt-4">
+              Or add it from the{' '}
+              <a href="#get-started" className="font-bold text-[var(--primary)] hover:opacity-80 transition-opacity">
+                Claude Code marketplace
+              </a>{' '}
+              &mdash; no Python required.
+            </p>
             <div className="flex flex-wrap gap-3 mt-8 justify-center items-center">
               <span className="text-sm text-[var(--text-muted)]">
                 Free and open source &middot; Apache 2.0
@@ -268,45 +275,57 @@ export default function Home() {
         </section>
 
         {/* 8 — Get started */}
-        <section className="py-24 px-6 bg-[var(--surface-container-low)]" aria-label="Get started">
+        <section id="get-started" className="py-24 px-6 bg-[var(--surface-container-low)]" aria-label="Get started">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-4xl md:text-5xl font-extrabold mb-6">Get started</h2>
-              <code className="inline-block bg-[var(--surface-container-high)] px-6 py-3 rounded-lg text-lg font-mono">
-                pip install attune-ai
-              </code>
+              <h2 className="text-4xl md:text-5xl font-extrabold">Get started</h2>
             </div>
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-[var(--surface)] rounded-2xl p-6 border border-[var(--border)]/40">
-                <h3 className="font-bold mb-2">In Claude Code</h3>
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              {/* Marketplace-first, matching the README's own ordering:
+                  the plugin works standalone — no Python required. */}
+              <div className="bg-[var(--surface)] rounded-2xl p-7 border-2 border-[var(--primary)]/40">
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="font-bold text-lg">In Claude Code</h3>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--primary)] bg-[var(--primary)]/10 px-2 py-0.5 rounded-full">
+                    Works standalone
+                  </span>
+                </div>
+                <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-4 mb-4 overflow-x-auto">
+                  <div><span className="text-white/50">$ </span>claude plugin marketplace add Smart-AI-Memory/attune-ai</div>
+                  <div><span className="text-white/50">$ </span>claude plugin install attune-ai@attune-ai</div>
+                </div>
                 <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-                  Runs on your existing Claude subscription &mdash;
-                  subscription-first routing, zero configuration. Type{' '}
+                  No Python environment required. Runs on your existing Claude
+                  subscription &mdash; then type{' '}
                   <code className="bg-[var(--surface-container-high)] px-1.5 py-0.5 rounded text-xs">/spec</code>{' '}
                   or{' '}
                   <code className="bg-[var(--surface-container-high)] px-1.5 py-0.5 rounded text-xs">/coach</code>{' '}
                   to start.
                 </p>
               </div>
-              <div className="bg-[var(--surface)] rounded-2xl p-6 border border-[var(--border)]/40">
-                <h3 className="font-bold mb-2">Headless CLI &amp; SDK</h3>
+              <div className="bg-[var(--surface)] rounded-2xl p-7 border border-[var(--border)]/40">
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="font-bold text-lg">Python package</h3>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)] bg-[var(--surface-container-high)] px-2 py-0.5 rounded-full">
+                    Adds CLI + MCP
+                  </span>
+                </div>
+                <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-4 mb-4 overflow-x-auto">
+                  <div><span className="text-white/50">$ </span>pip install attune-ai</div>
+                </div>
                 <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                  Unlocks the CLI, the MCP server, and multi-agent workflows.
                   With <code className="bg-[var(--surface-container-high)] px-1.5 py-0.5 rounded text-xs">ANTHROPIC_API_KEY</code>{' '}
-                  set, large modules fall back to the Anthropic API. API usage
-                  bills API credits &mdash; separate from a Claude
-                  subscription.
-                </p>
-              </div>
-              <div className="bg-[var(--surface)] rounded-2xl p-6 border border-[var(--border)]/40">
-                <h3 className="font-bold mb-2">Local-only</h3>
-                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-                  Project memory, retrieval, and the help system work with no
-                  API key and no cloud &mdash; local-first storage, optional
-                  Redis + Ollama for semantic recall.
+                  set, large modules fall back to the Anthropic API &mdash; API
+                  usage bills API credits, separate from a Claude subscription.
                 </p>
               </div>
             </div>
-            <p className="text-center mt-8">
+            <p className="text-sm text-[var(--text-muted)] text-center max-w-2xl mx-auto">
+              Project memory, retrieval, and the help system are local-first
+              &mdash; no API key, no cloud required.
+            </p>
+            <p className="text-center mt-6">
               <Link href="/docs#quickstart" className="text-sm font-bold text-[var(--primary)] hover:opacity-80 transition-opacity">
                 Full installation guide &rarr;
               </Link>
