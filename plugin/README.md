@@ -1,7 +1,7 @@
 # attune-ai
 
 Spec-driven development for Claude Code — turn requirements
-into reliable software. <!-- cap:skill_count -->28 auto-triggering skills<!-- /cap -->, zero
+into reliable software. <!-- cap:skill_count -->29 auto-triggering skills<!-- /cap -->, zero
 commands: say what you need and Claude picks the right skill.
 
 **Version:** 14.1.0 | **License:** Apache 2.0
@@ -105,7 +105,7 @@ pip install 'attune-ai[developer]'
 
 | Capability | Plugin only | + pip |
 | ---------- | ----------- | ----- |
-| <!-- cap:skill_count -->28 auto-triggering skills<!-- /cap --> | Yes | Yes |
+| <!-- cap:skill_count -->29 auto-triggering skills<!-- /cap --> | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
 | <!-- cap:mcp_registered_tool_count -->61 MCP tools<!-- /cap --> | -- | Yes |
 | `attune` CLI | -- | Yes |

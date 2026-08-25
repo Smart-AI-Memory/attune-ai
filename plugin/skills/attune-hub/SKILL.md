@@ -120,6 +120,7 @@ rule (a single turn can't bundle multiple ambiguous decisions). See
 | roundtable | roundtable, convene the table, ask the table, what do the other models think |
 | cross-review | cross review, second opinion, ask another model to review, pre-merge check from codex |
 | docs-outbox | docs outbox, outbox sweep, pending docs, approve digest |
+| recap | recap, end of session review, session retro, wrap up the session |
 
 ## MCP Server Not Running
 

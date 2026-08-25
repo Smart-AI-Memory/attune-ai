@@ -107,7 +107,7 @@ Setup fight you? [Tell me where](https://github.com/Smart-AI-Memory/attune-ai/di
 
 | Capability | Plugin only | Plugin + pip |
 | ---------- | ----------- | ------------ |
-| <!-- cap:skill_count -->28 auto-triggering skills<!-- /cap --> | Yes | Yes |
+| <!-- cap:skill_count -->29 auto-triggering skills<!-- /cap --> | Yes | Yes |
 | Security hooks | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
 | <!-- cap:mcp_registered_tool_count -->61 MCP tools<!-- /cap --> | -- | Yes |
