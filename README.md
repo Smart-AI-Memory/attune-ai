@@ -135,54 +135,59 @@ memory storage and recall, and every local transform.
      release with the headline feature; the displaced content moves to
      a permanent section below. Don't stack a second "New in" here. -->
 
-## New in 14.1.0 — workflows that prove they work
+## New in 15.0.0 — one obvious way to do each thing
 
-Every workflow in your catalog now comes with evidence behind it.
-14.1.0 ships a **planted-defect validation harness**: each workflow is
-run against a fixture carrying a known bug — a real `eval()`, a real
+**Every attune surface now has exactly one name, one contract, and one
+place to register.** 15.0.0 completes a consolidation that has run
+across the last several releases: what the docs describe is what the
+library has, with no second spelling of it kept alive out of habit.
+
+What that buys you:
+
+- **One entry point per extension.** Workflows register under
+  `attune.workflows`, plugins under `attune.plugins`. That is the whole
+  rule. Three groups used to be in play and only some were actually
+  read, so a registration that looked correct could quietly never
+  load — that class of silent miss is gone.
+- **One name for the MCP server**, `AttuneMCPServer`, everywhere it
+  appears.
+- **Nothing vestigial to learn.** The 1–5 level dial is retired from
+  every public API — the plugin contract, both agent configs, the
+  registries, and the two MCP tools that read it. Its meaning came
+  from a framework attune no longer ships, so every new user had to
+  ask what it did. Now nobody has to. The core MCP tool surface is 48
+  tools, all of them live.
+- **A smaller surface to hold in your head**, which is the whole
+  point: less API, and all of it real.
+
+**Upgrading is a no-op** if you use the CLI, the plugin, or the MCP
+tools. If you write third-party plugins or workflows, the
+[15.0.0 upgrade guide](docs/migration/upgrading-to-15.0.0.md) opens
+with an "are you affected?" table — ten rows, each with its one-line
+fix, and two that need nothing from you at all: a legacy
+`empathy_level:` key in `agents.md` is now ignored rather than an
+error, and an existing metrics database migrates itself on first open.
+
+<details>
+<summary>Previously new in 14.1.0 — workflows that prove they work</summary>
+
+Every workflow in your catalog comes with evidence behind it. 14.1.0
+shipped a **planted-defect validation harness**: each workflow is run
+against a fixture carrying a known bug — a real `eval` call, a real
 CVE pin, a module with no docstrings — and has to *find it* to keep
 its "working" badge. Not "exited 0": actually caught the planted
 defect, with the cost and verdict recorded in a tracked registry you
 can read.
 
-You feel that in three places immediately:
-
-- **Your release gate tells the truth.** `secure-release` now reads
-  its sub-audits' real findings — a planted-critical fixture that used
-  to sail through as GO now comes back NO_GO with the criticals
-  counted. If an audit ever scores low while yielding zero readable
-  findings, you get a warning instead of silence.
-- **Your doc scan finds real gaps.** The documentation orchestrator
-  now detects modules with missing docstrings out of the box, and when
-  it can't assess something it says "not assessed" — never a
-  fabricated "no gaps found."
-- **Every discovery-sweep lane earns its budget.** Lanes get
-  measured-cost budget floors: each one either runs with enough money
-  to finish or tells you it skipped — no more lanes silently dying at
-  $0 mid-sweep.
-
-And the catalogs are honest about the rest: the few workflows still
-being repaired are hidden from the dashboard, CLI list, and MCP catalog
-until their probes pass — so everything you *can* click actually works.
-
-<details>
-<summary>Previously new in 14.0.0 — the release checks its own diff</summary>
-
-`/release audit` answers a question the other release checks don't ask:
-**what class of defect could *this* release have introduced?** It
-resolves the range from your last release tag, proves the gates that
-were green are still green *on this exact commit*, sweeps the changed
-package surface with a calibrated rule pack, and hands you a capped
-one-page residual — never a diff dump. Three models then sit on it for
-a single round and either accept or amend a pre-filled disposition per
-item. You rule; `/release publish` refuses to tag until every item
-carries a ruling, and records that ruling next to the commit it was
-made about. The packet also states how many files were swept against
-how many changed, so an empty result can never be mistaken for a clean
-one.
-
-14.0.0 also removed `attune.exceptions` (the retired Empathy-era tree):
-the migration is to delete the handler, not repoint the import.
+That shows up in three places: `secure-release` reads its sub-audits'
+real findings (a planted-critical fixture that used to sail through as
+GO comes back NO_GO); the documentation orchestrator detects missing
+docstrings and says "not assessed" rather than fabricating "no gaps
+found"; and every discovery-sweep lane gets a measured-cost budget
+floor, so a lane either runs with enough money to finish or tells you
+it skipped. The few workflows still being repaired are hidden from the
+dashboard, CLI list, and MCP catalog until their probes pass — so
+everything you *can* click actually works.
 
 </details>
 

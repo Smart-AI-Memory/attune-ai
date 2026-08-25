@@ -73,7 +73,7 @@ def two_git_trees(tmp_path):
             ["git", "init", "--quiet"],
             cwd=tree,
             check=True,
-            timeout=5,
+            timeout=30,
         )
     return tree_a, tree_b
 
@@ -190,7 +190,7 @@ class TestAllowlist:
         fake_home = tmp_path / "fake-home"
         memory = fake_home / ".attune" / "memory"
         memory.mkdir(parents=True)
-        subprocess.run(["git", "init", "--quiet"], cwd=memory, check=True, timeout=5)
+        subprocess.run(["git", "init", "--quiet"], cwd=memory, check=True, timeout=30)
         # ~ expands via HOME on POSIX, USERPROFILE on Windows.
         monkeypatch.setenv("HOME", str(fake_home))
         monkeypatch.setenv("USERPROFILE", str(fake_home))
