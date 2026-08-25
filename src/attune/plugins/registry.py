@@ -13,17 +13,9 @@ from .base import BasePlugin, BaseWorkflow, PluginValidationError
 
 logger = logging.getLogger(__name__)
 
-# Primary entry point group (v2.7+)
+# Sole entry point group — the legacy "attune_framework.plugins" and
+# "empathy_framework.plugins" groups were removed in 15.0.0.
 _ENTRY_POINT_GROUP = "attune.plugins"
-
-# Legacy entry point groups for backward compatibility (removed in 15.0.0).
-# Both spellings shipped in docs/templates at different times, so discovery
-# must read both — until this fix "empathy_framework.plugins" was registered
-# in pyproject but never read (#2238 phantom-read instance).
-_LEGACY_ENTRY_POINT_GROUPS = (
-    "attune_framework.plugins",
-    "empathy_framework.plugins",
-)
 
 # Module-level discovery cache: avoids repeated importlib.metadata scans.
 # Maps entry-point name -> loaded plugin class.  Populated on first
@@ -57,10 +49,6 @@ class PluginRegistry:
         software = "attune_software.plugin:SoftwarePlugin"
         healthcare = "attune_healthcare.plugin:HealthcarePlugin"
 
-        Also checks the legacy "attune_framework.plugins" and
-        "empathy_framework.plugins" groups for backward compatibility
-        (removed in 15.0.0).
-
         Discovery results are cached at module level so that repeated
         PluginRegistry instances (e.g. after global reset) skip the
         importlib.metadata scan.
@@ -75,18 +63,16 @@ class PluginRegistry:
         # Build or reuse the discovery cache
         if _discovery_cache is None:
             _discovery_cache = {}
-            for group in (_ENTRY_POINT_GROUP, *_LEGACY_ENTRY_POINT_GROUPS):
-                discovered = entry_points(group=group)
-                for ep in discovered:
-                    if ep.name not in _discovery_cache:
-                        try:
-                            _discovery_cache[ep.name] = ep.load()
-                        except Exception as e:  # noqa: BLE001
-                            # INTENTIONAL: entry point load is best-effort
-                            self.logger.warning(
-                                f"Failed to load plugin '{ep.name}': {e}",
-                                exc_info=True,
-                            )
+            for ep in entry_points(group=_ENTRY_POINT_GROUP):
+                if ep.name not in _discovery_cache:
+                    try:
+                        _discovery_cache[ep.name] = ep.load()
+                    except Exception as e:  # noqa: BLE001
+                        # INTENTIONAL: entry point load is best-effort
+                        self.logger.warning(
+                            f"Failed to load plugin '{ep.name}': {e}",
+                            exc_info=True,
+                        )
 
         # Instantiate and register from cache
         for name, plugin_class in _discovery_cache.items():

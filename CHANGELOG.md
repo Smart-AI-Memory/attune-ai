@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed (BREAKING — 15.0.0)
 
+- **Legacy Empathy-era names are gone** (release-15-manifest,
+  #2238's breaking half, part 2). The `EmpathyMCPServer` alias is
+  removed from `attune.mcp` and `attune.mcp.server` — import
+  `AttuneMCPServer`. Entry-point discovery is standardized on the
+  `attune.*` groups: workflow discovery no longer reads the legacy
+  `empathy.workflows` group, and plugin discovery no longer reads
+  `attune_framework.plugins` / `empathy_framework.plugins` —
+  re-register third-party workflows under `attune.workflows` and
+  plugins under `attune.plugins`.
 - **The public `empathy_level` surface is gone** (release-15-manifest
   D2/D7; #2238's breaking half, part 1). The 1–5 level knob is removed
   from every public API: the plugin contract

@@ -397,7 +397,7 @@ def discover_workflows(
     """Discover workflows via entry points and config.
 
     This function loads workflows registered as entry points under the
-    'attune.workflows' group (plus the legacy 'empathy.workflows' group,
+    'attune.workflows' group
     removed in 15.0.0). This allows third-party packages to register
     custom workflows that integrate with the Attune AI.
 
@@ -465,19 +465,9 @@ def discover_workflows(
         for workflow_name in config.disabled_workflows:
             discovered.pop(workflow_name, None)
 
-    # Discover via entry points. "attune.workflows" is the primary group;
-    # "empathy.workflows" is the legacy group (removed in 15.0.0). Until
-    # this fix the loader read ONLY the legacy group, so entry points
-    # registered under the primary group (including attune's own in
-    # pyproject.toml) were never loaded (#2238 phantom-read instance).
-    primary_names = _load_entry_point_workflows(discovered, config, "attune.workflows")
-    _load_entry_point_workflows(
-        discovered,
-        config,
-        "empathy.workflows",
-        skip_names=primary_names,
-        legacy=True,
-    )
+    # Discover via entry points — "attune.workflows" only (the legacy
+    # "empathy.workflows" group was removed in 15.0.0).
+    _load_entry_point_workflows(discovered, config, "attune.workflows")
 
     return discovered
 
@@ -486,8 +476,6 @@ def _load_entry_point_workflows(
     discovered: dict[str, type["BaseWorkflow"]],
     config: "WorkflowConfig | None",
     group: str,
-    skip_names: set[str] | None = None,
-    legacy: bool = False,
 ) -> set[str]:
     """Load one entry-point group into ``discovered``; return names loaded."""
     loaded: set[str] = set()
@@ -499,8 +487,6 @@ def _load_entry_point_workflows(
         return loaded
 
     for ep in eps:
-        if skip_names and ep.name in skip_names:
-            continue  # primary-group registration wins
         try:
             workflow_cls = ep.load()
         except Exception as e:  # noqa: BLE001
@@ -511,13 +497,6 @@ def _load_entry_point_workflows(
             continue
         if config is not None and ep.name in config.disabled_workflows:
             continue
-        if legacy:
-            logger.warning(
-                "Workflow entry point '%s' uses the legacy 'empathy.workflows' "
-                "group; re-register it under 'attune.workflows' (legacy group "
-                "removed in 15.0.0)",
-                ep.name,
-            )
         discovered[ep.name] = workflow_cls
         loaded.add(ep.name)
     return loaded

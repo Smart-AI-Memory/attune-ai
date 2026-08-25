@@ -8,7 +8,6 @@ import asyncio
 import json
 import logging
 import os
-import warnings
 from pathlib import Path
 from typing import Any
 
@@ -1500,22 +1499,6 @@ def create_server() -> AttuneMCPServer:
 
     """
     return AttuneMCPServer()
-
-
-def __getattr__(name: str) -> Any:
-    """Serve the retired ``EmpathyMCPServer`` name with a deprecation warning.
-
-    The class was renamed to :class:`AttuneMCPServer` (legacy-brand
-    excision remainder, #2238). The alias is removed in 15.0.0.
-    """
-    if name == "EmpathyMCPServer":
-        warnings.warn(
-            "EmpathyMCPServer is deprecated; use AttuneMCPServer " "(alias removed in 15.0.0)",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return AttuneMCPServer
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 async def _run_stdio() -> None:

@@ -1,11 +1,9 @@
-"""Entry-point group wiring for workflow/plugin discovery (#2238).
+"""Entry-point group wiring for workflow/plugin discovery (#2238, 15.0.0).
 
-Regression guards for the phantom-read fix: ``discover_workflows`` must
-read the primary ``attune.workflows`` group (previously only the legacy
-``empathy.workflows`` group was read, so primary-group registrations
-were silently ignored), and the plugin registry must read the
-``empathy_framework.plugins`` legacy group that pyproject historically
-registered but nothing consumed.
+15.0.0 standardizes discovery on the ``attune.*`` groups only: the
+legacy ``empathy.workflows``, ``attune_framework.plugins``, and
+``empathy_framework.plugins`` groups are no longer read, and the
+``EmpathyMCPServer`` alias is gone.
 """
 
 from unittest.mock import patch
@@ -53,27 +51,12 @@ class TestWorkflowEntryPointGroups:
             discovered = discover_workflows(include_defaults=False)
         assert discovered == {"my-flow": _FakeWorkflow}
 
-    def test_legacy_group_still_discovered(self):
+    def test_legacy_group_is_no_longer_read(self):
+        """15.0.0: a workflow registered only under empathy.workflows is invisible."""
         eps = {"empathy.workflows": [_LoadableEntryPoint("old-flow", _FakeLegacyWorkflow)]}
         with patch("attune.workflows.importlib.metadata.entry_points", _entry_points_stub(eps)):
             discovered = discover_workflows(include_defaults=False)
-        assert discovered == {"old-flow": _FakeLegacyWorkflow}
-
-    def test_primary_wins_over_legacy_on_same_name(self):
-        eps = {
-            "attune.workflows": [_LoadableEntryPoint("dup", _FakeWorkflow)],
-            "empathy.workflows": [_LoadableEntryPoint("dup", _FakeLegacyWorkflow)],
-        }
-        with patch("attune.workflows.importlib.metadata.entry_points", _entry_points_stub(eps)):
-            discovered = discover_workflows(include_defaults=False)
-        assert discovered["dup"] is _FakeWorkflow
-
-    def test_legacy_group_logs_deprecation_warning(self, caplog):
-        eps = {"empathy.workflows": [_LoadableEntryPoint("old-flow", _FakeLegacyWorkflow)]}
-        with patch("attune.workflows.importlib.metadata.entry_points", _entry_points_stub(eps)):
-            with caplog.at_level("WARNING", logger="attune.workflows"):
-                discover_workflows(include_defaults=False)
-        assert any("empathy.workflows" in r.message for r in caplog.records)
+        assert discovered == {}
 
     def test_class_without_execute_is_ignored(self):
         class NoExecute:
@@ -86,38 +69,20 @@ class TestWorkflowEntryPointGroups:
 
 
 class TestPluginRegistryLegacyGroups:
-    def test_both_legacy_groups_are_read(self):
+    def test_only_attune_plugins_group_exists(self):
         from attune.plugins import registry as reg
 
         assert reg._ENTRY_POINT_GROUP == "attune.plugins"
-        assert "attune_framework.plugins" in reg._LEGACY_ENTRY_POINT_GROUPS
-        assert "empathy_framework.plugins" in reg._LEGACY_ENTRY_POINT_GROUPS
+        assert not hasattr(reg, "_LEGACY_ENTRY_POINT_GROUPS")
 
-    def test_empathy_framework_group_plugin_is_discovered(self, monkeypatch):
+    def test_legacy_groups_are_no_longer_read(self, monkeypatch):
+        """15.0.0: discovery queries only attune.plugins."""
         from attune.plugins import registry as reg
-        from attune.plugins.base import BasePlugin, PluginMetadata
-
-        class _StubPlugin(BasePlugin):
-            def get_metadata(self):
-                return PluginMetadata(
-                    name="Stub",
-                    version="1.0.0",
-                    domain="stub",
-                    description="stub",
-                    author="t",
-                    license="Apache-2.0",
-                    requires_core_version="1.0.0",
-                )
-
-            def register_workflows(self):
-                return {}
 
         calls = []
 
         def _fake_entry_points(*, group):
             calls.append(group)
-            if group == "empathy_framework.plugins":
-                return [_LoadableEntryPoint("stub", _StubPlugin)]
             return []
 
         monkeypatch.setattr(reg, "entry_points", _fake_entry_points)
@@ -125,8 +90,7 @@ class TestPluginRegistryLegacyGroups:
         registry = reg.PluginRegistry()
         registry.auto_discover()
         try:
-            assert "empathy_framework.plugins" in calls
-            assert registry.get_plugin("stub") is not None
+            assert calls == ["attune.plugins"]
         finally:
             reg._discovery_cache = None
 
@@ -137,25 +101,16 @@ class TestMCPServerRename:
 
         assert AttuneMCPServer.__name__ == "AttuneMCPServer"
 
-    def test_legacy_alias_warns_and_aliases(self):
-        import attune.mcp.server as server_mod
-
-        with pytest.warns(DeprecationWarning, match="AttuneMCPServer"):
-            legacy = server_mod.EmpathyMCPServer
-        assert legacy is server_mod.AttuneMCPServer
-
-    def test_package_level_alias_resolves(self):
+    def test_legacy_alias_is_gone(self):
+        """15.0.0: the EmpathyMCPServer alias no longer resolves anywhere."""
         import attune.mcp as mcp_pkg
-
-        with pytest.warns(DeprecationWarning):
-            legacy = mcp_pkg.EmpathyMCPServer
-        assert legacy is mcp_pkg.AttuneMCPServer
-
-    def test_unknown_attribute_still_raises(self):
         import attune.mcp.server as server_mod
 
         with pytest.raises(AttributeError):
-            _ = server_mod.NoSuchThing
+            _ = server_mod.EmpathyMCPServer
+        with pytest.raises(AttributeError):
+            _ = mcp_pkg.EmpathyMCPServer
+        assert "EmpathyMCPServer" not in mcp_pkg.__all__
 
 
 class TestPluginBaseWorkflowContract:

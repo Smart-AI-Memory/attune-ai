@@ -35,7 +35,7 @@
   - [ResilientExecutor](#resilientexecutor)
   - [AdaptiveModelRouter](#adaptivemodelrouter)
 - [MCP Server](#mcp-server)
-  - [EmpathyMCPServer](#empathymcpserver)
+  - [AttuneMCPServer](#attunemcpserver)
   - [Tool Schemas](#tool-schemas)
   - [RateLimiter](#ratelimiter)
 - [Orchestration](#orchestration)
@@ -495,9 +495,9 @@ task complexity and historical performance.
 
 ## MCP Server
 
-### EmpathyMCPServer
+### AttuneMCPServer
 
-`attune.mcp.server.EmpathyMCPServer`
+`attune.mcp.server.AttuneMCPServer`
 
 Model Context Protocol server exposing workflows, memory,
 and agents as MCP tools for Claude Code.

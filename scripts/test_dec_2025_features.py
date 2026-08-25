@@ -201,7 +201,7 @@ def test_dependency_alignment():
     pyproject = project_root / "pyproject.toml"
     if pyproject.exists():
         content = pyproject.read_text()
-        if '[project.entry-points."empathy.workflows"]' in content:
+        if '[project.entry-points."attune.plugins"]' in content:
             success("pyproject.toml: workflow entry points defined")
         else:
             error("pyproject.toml: missing workflow entry points")
@@ -316,7 +316,7 @@ asyncio.run(test())
 
     {CYAN}python -c "
 import importlib.metadata
-eps = list(importlib.metadata.entry_points(group='empathy.workflows'))
+eps = list(importlib.metadata.entry_points(group='attune.plugins'))
 print(f'Found {{len(eps)}} workflow entry points:')
 for ep in eps:
     print(f'  {{ep.name}}: {{ep.value}}')"
