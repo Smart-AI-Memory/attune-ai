@@ -10,7 +10,7 @@ source: plugin/skills/memory-and-context/SKILL.md
 Store, retrieve, search, and manage persistent memory across sessions.
 
 ```
-/memory-and-context <operation: store|retrieve|search|forget|empathy>
+/memory-and-context <operation: store|retrieve|search|forget>
 ```
 
 **Result:** Structured results in your Claude Code conversation.

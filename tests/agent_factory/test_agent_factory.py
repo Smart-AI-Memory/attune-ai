@@ -79,7 +79,6 @@ class TestAgentConfig:
         assert config.name == "test"
         assert config.role == AgentRole.CUSTOM
         assert config.model_tier == "capable"
-        assert config.empathy_level == 4
         assert config.temperature == 0.7
         assert config.memory_enabled is True
 
@@ -91,13 +90,11 @@ class TestAgentConfig:
             name="researcher",
             role=AgentRole.RESEARCHER,
             model_tier="premium",
-            empathy_level=5,
             capabilities=[AgentCapability.TOOL_USE, AgentCapability.WEB_SEARCH],
         )
 
         assert config.role == AgentRole.RESEARCHER
         assert config.model_tier == "premium"
-        assert config.empathy_level == 5
         assert len(config.capabilities) == 2
 
 

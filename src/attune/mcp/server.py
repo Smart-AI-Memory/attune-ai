@@ -42,22 +42,6 @@ from attune.mcp.workflow_handlers import WorkflowHandlersMixin, _workflow_respon
 
 logger = logging.getLogger(__name__)
 
-ATTUNE_LEVEL_NAMES: dict[int, str] = {
-    1: "Reactive",
-    2: "Guided",
-    3: "Proactive",
-    4: "Anticipatory",
-    5: "Systems",
-}
-
-# Ruled by the 15.0.0 manifest (release-15-manifest D2, chair
-# 2026-08-24): the interaction-level concept is retired.
-_LEVEL_TOOLS_DEPRECATION = (
-    "attune_get_level/attune_set_level are deprecated and will be "
-    "removed in 15.0.0 — the interaction-level concept is retired "
-    "(release-15-manifest D2)"
-)
-
 _VOICE_SKIP_TOOLS: frozenset[str] = frozenset(
     {
         "memory_store",
@@ -68,8 +52,6 @@ _VOICE_SKIP_TOOLS: frozenset[str] = frozenset(
         "personal_memory_recall",
         "personal_memory_topics",
         "personal_memory_forget",
-        "attune_get_level",
-        "attune_set_level",
         "context_get",
         "context_set",
         "auth_status",
@@ -77,14 +59,6 @@ _VOICE_SKIP_TOOLS: frozenset[str] = frozenset(
         "telemetry_stats",
     }
 )
-
-ATTUNE_LEVEL_DESCRIPTIONS: dict[int, str] = {
-    1: "Responds to explicit requests only",
-    2: "Asks clarifying questions before acting",
-    3: "Suggests next steps and improvements",
-    4: "Predicts needs based on context and history",
-    5: "Considers systemic impacts and cross-cutting concerns",
-}
 
 
 def _get_default_user_id() -> str:
@@ -137,7 +111,6 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
         self.resources = self._register_resources()
         self.prompts = self._register_prompts()
         self._memory = None
-        self._attune_level = 3  # Default: Level3Proactive
         self._context: dict[str, str] = {}
         self._plugin_handlers: dict[str, Any] = {}
         self._rate_limiter = RateLimiter(max_calls=60, window_seconds=60.0)
@@ -313,8 +286,6 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
             "personal_memory_recall": self._handle_personal_memory_recall,
             "personal_memory_topics": lambda _args: self._handle_personal_memory_topics(_args),
             "personal_memory_forget": self._handle_personal_memory_forget,
-            "attune_get_level": lambda _args: self._handle_attune_get_level(),
-            "attune_set_level": self._handle_attune_set_level,
             "context_get": self._handle_context_get,
             "context_set": self._handle_context_set,
             "list_capabilities": lambda _args: self._handle_list_capabilities(),
@@ -631,26 +602,6 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
             logger.warning("Telemetry module not available: %s", e)
             return {"success": False, "error": "Telemetry module not installed"}
 
-    async def _handle_attune_get_level(self) -> dict[str, Any]:
-        """Get current interaction level.
-
-        .. deprecated:: 14.2
-            Removed in 15.0.0 — the interaction-level concept is
-            retired (release-15-manifest D2).
-        """
-        warnings.warn(
-            _LEVEL_TOOLS_DEPRECATION,
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return {
-            "success": True,
-            "level": self._attune_level,
-            "name": ATTUNE_LEVEL_NAMES.get(self._attune_level, "Unknown"),
-            "description": ATTUNE_LEVEL_DESCRIPTIONS.get(self._attune_level, ""),
-            "deprecated": _LEVEL_TOOLS_DEPRECATION,
-        }
-
     async def _handle_list_capabilities(self) -> dict[str, Any]:
         """Enumerate workflows, wizards, and tools from the live registries.
 
@@ -698,42 +649,6 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
                 "wizards": len(wizards),
                 "tools": len(tools),
             },
-        }
-
-    async def _handle_attune_set_level(self, args: dict[str, Any]) -> dict[str, Any]:
-        """Set interaction level for this session.
-
-        .. deprecated:: 14.2
-            Removed in 15.0.0 — the interaction-level concept is
-            retired (release-15-manifest D2).
-
-        Args:
-            args: Must contain level (integer 1-5)
-
-        """
-        warnings.warn(
-            _LEVEL_TOOLS_DEPRECATION,
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        level = args.get("level")
-        # bool is an int subclass, so `True`/`False` would otherwise slip
-        # through isinstance(int) and be used as 1/0 — reject them explicitly.
-        if isinstance(level, bool) or not isinstance(level, int) or level < 1 or level > 5:
-            return {
-                "success": False,
-                "error": "Level must be an integer between 1 and 5",
-            }
-
-        previous = self._attune_level
-        self._attune_level = level
-
-        return {
-            "success": True,
-            "previous_level": previous,
-            "current_level": level,
-            "name": ATTUNE_LEVEL_NAMES[level],
-            "deprecated": _LEVEL_TOOLS_DEPRECATION,
         }
 
     async def _handle_context_get(self, args: dict[str, Any]) -> dict[str, Any]:

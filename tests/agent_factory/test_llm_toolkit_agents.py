@@ -61,14 +61,14 @@ class TestNativeAgent:
     @pytest.mark.asyncio
     async def test_invoke_string_input(self):
         """Test invoking agent with string input."""
-        config = AgentConfig(name="test_agent", empathy_level=3)
+        config = AgentConfig(name="test_agent")
         agent = NativeAgent(config)
 
         result = await agent.invoke("Hello, help me")
 
         assert "output" in result
         assert "metadata" in result
-        assert result["metadata"]["level"] == 3
+        assert "model" in result["metadata"]
         # Without LLM, should use fallback response
         assert "[test_agent]" in result["output"]
 

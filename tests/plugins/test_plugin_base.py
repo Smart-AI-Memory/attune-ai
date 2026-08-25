@@ -81,13 +81,11 @@ class TestBaseWorkflow:
         wizard = ConcreteWizard(
             name="Test Wizard",
             domain="test",
-            empathy_level=3,
             category="testing",
         )
 
         assert wizard.name == "Test Wizard"
         assert wizard.domain == "test"
-        assert wizard.empathy_level == 3
         assert wizard.category == "testing"
 
     def test_base_wizard_no_category(self):
@@ -100,7 +98,7 @@ class TestBaseWorkflow:
             def get_required_context(self):
                 return []
 
-        wizard = ConcreteWizard(name="Simple", domain="test", empathy_level=1)
+        wizard = ConcreteWizard(name="Simple", domain="test")
 
         assert wizard.category is None
 
@@ -114,7 +112,7 @@ class TestBaseWorkflow:
             def get_required_context(self):
                 return ["code", "file_path"]
 
-        wizard = ConcreteWizard(name="Test", domain="test", empathy_level=1)
+        wizard = ConcreteWizard(name="Test", domain="test")
 
         context = {"code": "def test(): pass", "file_path": "test.py"}
 
@@ -130,7 +128,7 @@ class TestBaseWorkflow:
             def get_required_context(self):
                 return ["code", "file_path", "language"]
 
-        wizard = ConcreteWizard(name="Test", domain="test", empathy_level=1)
+        wizard = ConcreteWizard(name="Test", domain="test")
 
         context = {"code": "test"}
 
@@ -139,20 +137,6 @@ class TestBaseWorkflow:
             match="missing required context: \\['file_path', 'language'\\]",
         ):
             wizard.validate_context(context)
-
-    def test_wizard_get_empathy_level(self):
-        """Test get_empathy_level method"""
-
-        class ConcreteWizard(BaseWorkflow):
-            async def analyze(self, context):
-                return {}
-
-            def get_required_context(self):
-                return []
-
-        wizard = ConcreteWizard(name="Test", domain="test", empathy_level=4)
-
-        assert wizard.get_empathy_level() == 4
 
     def test_wizard_contribute_patterns_default(self):
         """Test default contribute_patterns implementation"""
@@ -164,7 +148,7 @@ class TestBaseWorkflow:
             def get_required_context(self):
                 return []
 
-        wizard = ConcreteWizard(name="PatternWizard", domain="patterns", empathy_level=5)
+        wizard = ConcreteWizard(name="PatternWizard", domain="patterns")
 
         analysis_result = {"patterns": ["pattern1", "pattern2"], "confidence": 0.9}
 
@@ -185,7 +169,7 @@ class TestBaseWorkflow:
             def get_required_context(self):
                 return []
 
-        wizard = ConcreteWizard(name="Test", domain="test", empathy_level=1)
+        wizard = ConcreteWizard(name="Test", domain="test")
 
         patterns = wizard.contribute_patterns({"confidence": 1.0})
 
@@ -223,7 +207,7 @@ class TestBasePlugin:
 
         class TestWizard(BaseWorkflow):
             def __init__(self):
-                super().__init__(name="Test", domain="test", empathy_level=1)
+                super().__init__(name="Test", domain="test")
 
             async def analyze(self, context):
                 return {}
@@ -289,7 +273,7 @@ class TestBasePlugin:
 
         class TestWizard(BaseWorkflow):
             def __init__(self):
-                super().__init__(name="Test", domain="test", empathy_level=1)
+                super().__init__(name="Test", domain="test")
 
             async def analyze(self, context):
                 return {}
@@ -345,7 +329,7 @@ class TestBasePlugin:
 
         class Wizard1(BaseWorkflow):
             def __init__(self):
-                super().__init__(name="W1", domain="test", empathy_level=1)
+                super().__init__(name="W1", domain="test")
 
             async def analyze(self, context):
                 return {}
@@ -355,7 +339,7 @@ class TestBasePlugin:
 
         class Wizard2(BaseWorkflow):
             def __init__(self):
-                super().__init__(name="W2", domain="test", empathy_level=2)
+                super().__init__(name="W2", domain="test")
 
             async def analyze(self, context):
                 return {}
@@ -393,7 +377,6 @@ class TestBasePlugin:
                 super().__init__(
                     name="Info Wizard",
                     domain="test",
-                    empathy_level=3,
                     category="info",
                 )
 
@@ -425,7 +408,6 @@ class TestBasePlugin:
         assert info["id"] == "test"
         assert info["name"] == "Info Wizard"
         assert info["domain"] == "test"
-        assert info["empathy_level"] == 3
         assert info["category"] == "info"
         assert info["required_context"] == ["data1", "data2"]
 
@@ -457,7 +439,7 @@ class TestBasePlugin:
 
         class TestWizard(BaseWorkflow):
             def __init__(self):
-                super().__init__(name="Test", domain="test", empathy_level=1)
+                super().__init__(name="Test", domain="test")
 
             async def analyze(self, context):
                 return {}
@@ -499,7 +481,7 @@ class TestBasePlugin:
 
         class TestWizard(BaseWorkflow):
             def __init__(self):
-                super().__init__(name="Test", domain="test", empathy_level=1)
+                super().__init__(name="Test", domain="test")
 
             async def analyze(self, context):
                 return {}

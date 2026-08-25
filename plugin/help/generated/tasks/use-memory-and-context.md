@@ -9,12 +9,12 @@ source: plugin/skills/memory-and-context/SKILL.md
 
 Store, retrieve, search, and manage persistent memory across sessions. Triggers on: store memory, save this, retrieve, forget, manage memory, context, pattern.
 
-Invoke with: `/memory-and-context <operation: store|retrieve|search|forget|empathy>`
+Invoke with: `/memory-and-context <operation: store|retrieve|search|forget>`
 
 ## Steps
 
 1. **Define operation**
-   "What do you need? Store, retrieve, search, forget, or adjust empathy level?"
+   "What do you need? Store, retrieve, search, or forget?"
 
 2. **Define key/query**
    "What key or search term?"
@@ -27,12 +27,10 @@ Invoke with: `/memory-and-context <operation: store|retrieve|search|forget|empat
 tool: - Store: `memory_store(key, value, classification)`
 - Retrieve: `memory_retrieve(key)`
 - Search: `memory_search(query, pattern_type)`
-- Forget: `memory_forget(key, scope)`
-- Get level: `attune_get_level()`
-- Set level: `attune_set_level(level)` attune-ai's memory system sits ABOVE Anthropic's native
+- Forget: `memory_forget(key, scope)` attune-ai's memory system sits ABOVE Anthropic's native
 memory features. It provides security-classified storage,
-cross-agent pattern sharing, empathy-level modulation,
-and a structured pattern lifecycle that native memory
+cross-agent pattern sharing, and a structured pattern
+lifecycle that native memory
 does not offer. Use the decision table below to determine
 which system to use for a given task.
 

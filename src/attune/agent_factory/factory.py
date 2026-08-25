@@ -149,7 +149,6 @@ class AgentFactory:
         system_prompt: str | None = None,
         temperature: float = 0.7,
         max_tokens: int = 4096,
-        empathy_level: int = 4,
         use_patterns: bool = True,
         track_costs: bool = True,
         memory_enabled: bool = True,
@@ -174,8 +173,7 @@ class AgentFactory:
             system_prompt: Custom system prompt
             temperature: LLM temperature
             max_tokens: Max tokens for response
-            empathy_level: Empathy level (1-5)
-            use_patterns: Use learned patterns from Empathy
+            use_patterns: Use learned patterns
             track_costs: Track API costs
             memory_enabled: Enable conversation memory
             memory_type: Type of memory (conversation, summary, vector)
@@ -208,7 +206,6 @@ class AgentFactory:
             system_prompt=system_prompt,
             temperature=temperature,
             max_tokens=max_tokens,
-            empathy_level=empathy_level,
             use_patterns=use_patterns,
             track_costs=track_costs,
             memory_enabled=memory_enabled,

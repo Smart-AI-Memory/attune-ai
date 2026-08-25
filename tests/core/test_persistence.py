@@ -395,6 +395,30 @@ class TestStateManager:
         assert state is None
 
 
+def _no_drop_column(conn):
+    """Wrap a connection so DROP COLUMN fails as it would on SQLite < 3.35."""
+
+    class _Cursor:
+        def __init__(self, cursor):
+            self._cursor = cursor
+
+        def execute(self, sql, *args):
+            if "DROP COLUMN" in sql:
+                raise sqlite3.OperationalError('near "DROP": syntax error')
+            return self._cursor.execute(sql, *args)
+
+    class _Conn:
+        isolation_level = ""
+
+        def __init__(self, real):
+            self._real = real
+
+        def cursor(self):
+            return _Cursor(self._real.cursor())
+
+    return _Conn(conn)
+
+
 class TestMetricsCollector:
     """Test MetricsCollector for telemetry"""
 
@@ -405,7 +429,6 @@ class TestMetricsCollector:
 
         collector.record_metric(
             user_id="test_user",
-            empathy_level=4,
             success=True,
             response_time_ms=250.5,
             metadata={"bottlenecks": 3},
@@ -428,7 +451,6 @@ class TestMetricsCollector:
         for i in range(10):
             collector.record_metric(
                 user_id="test_user",
-                empathy_level=4,
                 success=(i % 5 != 0),  # 8 successes, 2 failures (i=0,5 are failures)
                 response_time_ms=200.0 + i * 10,
             )
@@ -441,28 +463,179 @@ class TestMetricsCollector:
         assert stats["first_use"] is not None
         assert stats["last_use"] is not None
 
-    def test_get_user_stats_by_level(self, temp_dir):
-        """Test statistics broken down by empathy level"""
-        db_path = str(Path(temp_dir) / "metrics.db")
+    def test_legacy_level_column_migrated(self, temp_dir):
+        """A pre-15.0.0 DB with the empathy_level column still accepts inserts."""
+        db_path = str(Path(temp_dir) / "legacy.db")
+        conn = sqlite3.connect(db_path)
+        conn.execute(
+            """
+            CREATE TABLE metrics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                empathy_level INTEGER NOT NULL,
+                success BOOLEAN NOT NULL,
+                response_time_ms REAL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                metadata TEXT
+            )
+            """
+        )
+        conn.execute("CREATE INDEX idx_user_level ON metrics(user_id, empathy_level)")
+        conn.execute(
+            "INSERT INTO metrics (user_id, empathy_level, success, response_time_ms)"
+            " VALUES ('old_user', 3, 1, 100.0)"
+        )
+        conn.commit()
+        conn.close()
+
         collector = MetricsCollector(db_path=db_path)
 
-        # Record metrics for different levels
-        for level in [1, 2, 3, 4, 5]:
-            for _ in range(level * 2):  # More operations at higher levels
-                collector.record_metric(
-                    user_id="test_user",
-                    empathy_level=level,
-                    success=True,
-                    response_time_ms=100.0,
-                )
+        # The legacy column and its index must actually be gone — a
+        # compat workaround keeping the old schema would pass the
+        # insert below while leaving the migration undone.
+        conn = sqlite3.connect(db_path)
+        columns = [row[1] for row in conn.execute("PRAGMA table_info(metrics)")]
+        assert "empathy_level" not in columns
+        indexes = [row[1] for row in conn.execute("PRAGMA index_list(metrics)")]
+        assert "idx_user_level" not in indexes
+        conn.close()
 
-        stats = collector.get_user_stats("test_user")
+        collector.record_metric(
+            user_id="old_user",
+            success=True,
+            response_time_ms=120.0,
+        )
 
-        # Verify level breakdown
-        assert "by_level" in stats
-        assert "level_4" in stats["by_level"]
-        assert stats["by_level"]["level_4"]["operations"] == 8  # 4 * 2
-        assert stats["by_level"]["level_5"]["operations"] == 10  # 5 * 2
+        stats = collector.get_user_stats("old_user")
+        assert stats["total_operations"] == 2
+
+    def test_legacy_migration_rebuild_fallback(self, temp_dir):
+        """SQLite < 3.35 has no DROP COLUMN — the rebuild path preserves rows.
+
+        Forces the fallback by refusing the DROP COLUMN statement the way
+        an old SQLite would, then runs the real rebuild SQL against a real
+        database so the migration is proven, not merely reachable.
+        """
+        db_path = str(Path(temp_dir) / "old_sqlite.db")
+        conn = sqlite3.connect(db_path)
+        conn.execute(
+            """
+            CREATE TABLE metrics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                empathy_level INTEGER NOT NULL,
+                success BOOLEAN NOT NULL,
+                response_time_ms REAL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                metadata TEXT
+            )
+            """
+        )
+        conn.execute("CREATE INDEX idx_user_level ON metrics(user_id, empathy_level)")
+        conn.execute(
+            "INSERT INTO metrics (user_id, empathy_level, success, response_time_ms, metadata)"
+            " VALUES ('kept_user', 4, 1, 100.0, '{\"a\": 1}')"
+        )
+        conn.commit()
+
+        MetricsCollector._migrate_legacy_level_column(_no_drop_column(conn))
+        conn.commit()
+
+        columns = [row[1] for row in conn.execute("PRAGMA table_info(metrics)")]
+        assert "empathy_level" not in columns
+        assert set(columns) == {
+            "id",
+            "user_id",
+            "success",
+            "response_time_ms",
+            "timestamp",
+            "metadata",
+        }
+
+        # The rebuild must carry the existing rows across, not drop them.
+        row = conn.execute(
+            "SELECT id, user_id, success, response_time_ms, metadata FROM metrics"
+        ).fetchall()
+        assert row == [(1, "kept_user", 1, 100.0, '{"a": 1}')]
+        conn.close()
+
+        # The migrated database still works through the public API.
+        collector = MetricsCollector(db_path=db_path)
+        collector.record_metric(user_id="kept_user", success=True, response_time_ms=120.0)
+        assert collector.get_user_stats("kept_user")["total_operations"] == 2
+
+    def test_interrupted_rebuild_leaves_no_orphan_and_retry_succeeds(self, temp_dir):
+        """A crash mid-rebuild must roll back cleanly and stay retryable.
+
+        Without the explicit transaction the orphan ``metrics_new`` survived
+        (DDL autocommits), and every later retry died on "table metrics_new
+        already exists" — permanently bricking the collector.
+        """
+        db_path = str(Path(temp_dir) / "interrupted.db")
+        conn = sqlite3.connect(db_path)
+        conn.execute(
+            """
+            CREATE TABLE metrics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                empathy_level INTEGER NOT NULL,
+                success BOOLEAN NOT NULL,
+                response_time_ms REAL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                metadata TEXT
+            )
+            """
+        )
+        conn.execute(
+            "INSERT INTO metrics (user_id, empathy_level, success, response_time_ms)"
+            " VALUES ('survivor', 3, 1, 100.0)"
+        )
+        conn.commit()
+
+        class _CrashInterrupt(Exception):
+            pass
+
+        def _crashing(real_conn):
+            class _Cursor:
+                def __init__(self, cursor):
+                    self._cursor = cursor
+
+                def execute(self, sql, *args):
+                    if "DROP COLUMN" in sql:
+                        raise sqlite3.OperationalError('near "DROP": syntax error')
+                    if sql.strip().startswith("ALTER TABLE metrics_new RENAME"):
+                        raise _CrashInterrupt("interrupted before the rename")
+                    return self._cursor.execute(sql, *args)
+
+            class _Conn:
+                isolation_level = ""
+
+                def cursor(self):
+                    return _Cursor(real_conn.cursor())
+
+            return _Conn()
+
+        with pytest.raises(_CrashInterrupt):
+            MetricsCollector._migrate_legacy_level_column(_crashing(conn))
+        conn.close()  # uncommitted work dies with the connection
+
+        check = sqlite3.connect(db_path)
+        tables = sorted(
+            row[0]
+            for row in check.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'metrics%'"
+            )
+        )
+        assert tables == ["metrics"], f"orphan table survived the rollback: {tables}"
+        assert check.execute("SELECT COUNT(*) FROM metrics").fetchone()[0] == 1
+
+        # The retry must now succeed rather than hit "already exists".
+        MetricsCollector._migrate_legacy_level_column(_no_drop_column(check))
+        check.commit()
+        columns = [row[1] for row in check.execute("PRAGMA table_info(metrics)")]
+        assert "empathy_level" not in columns
+        assert check.execute("SELECT COUNT(*) FROM metrics").fetchone()[0] == 1
+        check.close()
 
     def test_get_nonexistent_user_stats(self, temp_dir):
         """Test getting stats for nonexistent user returns empty"""
@@ -481,7 +654,6 @@ class TestMetricsCollector:
 
         collector.record_metric(
             user_id="test_user",
-            empathy_level=4,
             success=True,
             response_time_ms=300.0,
             metadata={"intervention_count": 5, "risk_level": "high"},

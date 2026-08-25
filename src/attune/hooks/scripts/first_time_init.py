@@ -30,7 +30,6 @@ DEFAULT_CONFIG = """# Attune AI Configuration
 agent:
   name: empathy-assistant
   model_tier: capable
-  empathy_level: 3
 
 hooks:
   enabled: true

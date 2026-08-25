@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed (BREAKING — 15.0.0)
+
+- **The public `empathy_level` surface is gone** (release-15-manifest
+  D2/D7; #2238's breaking half, part 1). The 1–5 level knob is removed
+  from every public API: the plugin contract
+  (`attune.plugins.base.BaseWorkflow` no longer takes `empathy_level`
+  and loses `get_empathy_level()`), `UnifiedAgentConfig` and the
+  agent_factory `AgentConfig`/`create_agent()` parameter,
+  agents.md frontmatter (a legacy `empathy_level:` key now parses as
+  ignored, never an error), `AgentRegistry.get_by_empathy_level()`,
+  `PluginRegistry.find_workflows_by_level()` (and the
+  `workflows_by_level` statistics block), and
+  `MetricsCollector.record_metric()` (existing metrics databases are
+  migrated automatically — the legacy column is dropped on first
+  open). The MCP tools `attune_get_level` / `attune_set_level`
+  (deprecated in 14.2) are deleted; the MCP core tool count drops
+  from 50 to 48. `EmpathyLLM`'s internal progression machinery is
+  unchanged (un-exported implementation detail, per D7).
+
 ### Fixed
 
 - **SDK adapter robustness** (codex D11 scoped re-lane findings on

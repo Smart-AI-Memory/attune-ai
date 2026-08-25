@@ -28,7 +28,6 @@ class TestMarkdownAgentParserIntegration:
               - Grep
               - Glob
             model_tier: capable
-            empathy_level: 3
             temperature: 0.3
             ---
 
@@ -56,7 +55,6 @@ class TestMarkdownAgentParserIntegration:
         assert "Read" in config.tools
         assert "Grep" in config.tools
         assert "Glob" in config.tools
-        assert config.empathy_level == 3
         assert "expert code reviewer" in config.system_prompt
 
     def test_parse_minimal_agent_file(self, tmp_path):
@@ -79,7 +77,6 @@ class TestMarkdownAgentParserIntegration:
         config = parser.parse_file(agent_file)
 
         assert config.name == "simple-agent"
-        assert config.empathy_level == 4  # default is 4 in Attune AI
         assert config.tools == []  # default
         assert config.system_prompt == "Just do the task."
 
@@ -122,7 +119,6 @@ class TestAgentLoaderIntegration:
             description: Designs system architecture
             role: architect
             model_tier: advanced
-            empathy_level: 4
             ---
 
             You design scalable systems.
@@ -139,7 +135,6 @@ class TestAgentLoaderIntegration:
             description: Reviews code quality
             role: reviewer
             model_tier: capable
-            empathy_level: 3
             ---
 
             You review code.
@@ -158,7 +153,6 @@ class TestAgentLoaderIntegration:
             description: Operates at Level 4+ with pattern learning
             role: specialist
             model_tier: advanced
-            empathy_level: 5
             pattern_learning: true
             ---
 
@@ -196,7 +190,6 @@ class TestAgentLoaderIntegration:
 
         assert config.name == "architect"
         assert config.role == "architect"
-        assert config.empathy_level == 4
 
 
 class TestAgentRegistryIntegration:
@@ -216,7 +209,6 @@ class TestAgentRegistryIntegration:
             name="test-agent",
             description="Test agent",
             role="tester",
-            empathy_level=3,
             system_prompt="You are a test agent.",
         )
 
@@ -251,11 +243,11 @@ class TestAgentRegistryIntegration:
         registry.register(sample_config)
 
         # Modify and re-register
-        sample_config.empathy_level = 5
+        sample_config.description = "Updated test agent"
         registry.register(sample_config, overwrite=True)
 
         retrieved = registry.get("test-agent")
-        assert retrieved.empathy_level == 5
+        assert retrieved.description == "Updated test agent"
 
     def test_unregister_agent(self, sample_config):
         """Test unregistering an agent."""
@@ -276,7 +268,6 @@ class TestAgentRegistryIntegration:
             name="another-agent",
             description="Another",
             role="worker",
-            empathy_level=2,
             system_prompt="Test",
         )
 
@@ -296,7 +287,6 @@ class TestAgentRegistryIntegration:
                 name=name,
                 description=f"A {role}",
                 role=role,
-                empathy_level=3,
                 system_prompt="Test",
             )
             registry.register(config)
@@ -306,27 +296,6 @@ class TestAgentRegistryIntegration:
 
         architects = registry.get_by_role("architect")
         assert len(architects) == 1
-
-    def test_get_by_empathy_level(self):
-        """Test filtering agents by empathy level."""
-        registry = AgentRegistry()
-
-        for name, level in [("low", 1), ("mid1", 3), ("mid2", 3), ("high", 5)]:
-            config = UnifiedAgentConfig(
-                name=name,
-                description=f"Level {level} agent",
-                role="agent",
-                empathy_level=level,
-                system_prompt="Test",
-            )
-            registry.register(config)
-
-        high_empathy = registry.get_by_empathy_level(min_level=4)
-        assert len(high_empathy) == 1
-        assert high_empathy[0].name == "high"
-
-        mid_range = registry.get_by_empathy_level(min_level=2, max_level=4)
-        assert len(mid_range) == 2
 
     def test_get_summary(self, sample_config):
         """Test getting registry summary."""
@@ -366,28 +335,26 @@ class TestAgentRegistryIntegration:
 class TestAgentConfigValidation:
     """Test agent configuration validation."""
 
-    def test_empathy_level_range_validation(self, tmp_path):
-        """Test empathy level must be in valid range."""
-        from pydantic import ValidationError
-
+    def test_legacy_empathy_level_key_is_ignored(self, tmp_path):
+        """A legacy empathy_level key parses without error and is dropped."""
         agent_md = dedent(
             """
             ---
-            name: invalid-empathy
-            description: Invalid empathy level
+            name: legacy-empathy
+            description: Carries a legacy level key
             empathy_level: 10
             ---
             Content
         """,
         ).strip()
 
-        agent_file = tmp_path / "invalid.md"
+        agent_file = tmp_path / "legacy.md"
         agent_file.write_text(agent_md)
 
         parser = MarkdownAgentParser()
-        # Should raise ValidationError for out-of-range empathy level
-        with pytest.raises(ValidationError, match="less than or equal to 5"):
-            parser.parse_file(agent_file)
+        config = parser.parse_file(agent_file)
+        assert config.name == "legacy-empathy"
+        assert not hasattr(config, "empathy_level")
 
     def test_tools_as_list_and_string(self, tmp_path):
         """Test tools can be specified as list or comma-separated."""

@@ -6,7 +6,7 @@ projects them into an explicit, frozen allowlist of claim sites:
 
 - ``skill_count`` — publishable skills under ``plugin/skills/*/SKILL.md``.
 - ``mcp_registered_tool_count`` — unique names in
-  ``EmpathyMCPServer().tools`` (includes bundled plugin tools).
+  ``AttuneMCPServer().tools`` (includes bundled plugin tools).
 - ``mcp_core_schema_tool_count`` — unique names returned by the
   canonical ``attune.mcp.tool_schemas.get_*_tools()`` getters.
 
@@ -138,7 +138,7 @@ def derive_values(repo: Path) -> dict[str, int]:
     _prepend_repo_paths(repo)
     try:
         from attune.mcp import tool_schemas
-        from attune.mcp.server import EmpathyMCPServer
+        from attune.mcp.server import AttuneMCPServer
     except ImportError as exc:
         raise ProjectionError(
             f"attune is not importable ({exc}) — run from the project environment"
@@ -165,10 +165,10 @@ def derive_values(repo: Path) -> dict[str, int]:
     from attune.plugins.registry import clear_discovery_cache
 
     clear_discovery_cache()
-    tools = EmpathyMCPServer().tools
+    tools = AttuneMCPServer().tools
     if not isinstance(tools, dict) or not tools:
         raise ProjectionError(
-            "EmpathyMCPServer().tools is not a non-empty dict — unstable registration"
+            "AttuneMCPServer().tools is not a non-empty dict — unstable registration"
         )
     registered = set(tools)
     _assert_in_repo_imports(repo)

@@ -172,17 +172,11 @@ class TestGetUtilityTools:
             "auth_status",
             "auth_recommend",
             "telemetry_stats",
-            "attune_get_level",
-            "attune_set_level",
             "context_get",
             "context_set",
             "list_capabilities",
         }
         assert expected == set(tools.keys())
-
-    def test_attune_set_level_requires_level(self) -> None:
-        schema = get_utility_tools()["attune_set_level"]["input_schema"]
-        assert "level" in schema["required"]
 
     def test_context_set_requires_key_and_value(self) -> None:
         schema = get_utility_tools()["context_set"]["input_schema"]

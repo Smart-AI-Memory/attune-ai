@@ -35,7 +35,6 @@ class MarkdownAgentParser:
         description: Software architecture specialist
         model: capable
         tools: Read, Grep, Glob
-        empathy_level: 4
         ---
 
         You are an expert software architect...
@@ -176,7 +175,6 @@ class MarkdownAgentParser:
             model_tier=model_tier,
             model_override=frontmatter.get("model_override"),
             provider=provider,
-            empathy_level=int(frontmatter.get("empathy_level", 4)),
             memory_enabled=frontmatter.get("memory_enabled", True),
             pattern_learning=frontmatter.get("pattern_learning", True),
             cost_tracking=frontmatter.get("cost_tracking", True),
@@ -262,14 +260,7 @@ class MarkdownAgentParser:
                 f"Valid options: {', '.join(self.PROVIDER_MAP.keys())}",
             )
 
-        # Validate empathy level
-        empathy_level = frontmatter.get("empathy_level")
-        if empathy_level is not None:
-            try:
-                level = int(empathy_level)
-                if not 1 <= level <= 5:
-                    errors.append(f"empathy_level must be 1-5, got {level}")
-            except (TypeError, ValueError):
-                errors.append(f"empathy_level must be an integer, got {empathy_level}")
+        # Note: a legacy "empathy_level" frontmatter key is ignored, not
+        # an error — pre-15.0.0 agent files still parse.
 
         return errors

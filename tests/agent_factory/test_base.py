@@ -164,11 +164,6 @@ class TestAgentConfig:
         config = AgentConfig(name="agent")
         assert config.max_tokens == 4096
 
-    def test_default_empathy_level(self):
-        """Test default empathy level is 4."""
-        config = AgentConfig(name="agent")
-        assert config.empathy_level == 4
-
     def test_default_memory_enabled(self):
         """Test memory is enabled by default."""
         config = AgentConfig(name="agent")
@@ -222,7 +217,6 @@ class TestAgentConfig:
             system_prompt="You are a security expert",
             temperature=0.3,
             max_tokens=8192,
-            empathy_level=5,
             use_patterns=True,
             track_costs=True,
             memory_enabled=True,

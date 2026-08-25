@@ -79,8 +79,7 @@ class AgentConfig:
     temperature: float = 0.7
     max_tokens: int = 4096
 
-    # Empathy integration
-    empathy_level: int = 4  # 1-5
+    # Attune integration
     use_patterns: bool = True  # Load learned patterns
     track_costs: bool = True  # Track API costs
 

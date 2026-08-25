@@ -24,7 +24,6 @@ class TestAgentRegistry:
             name="test-agent",
             description="Test agent",
             role="tester",
-            empathy_level=4,
         )
 
     def test_register_agent(self, registry, sample_config):
@@ -181,20 +180,6 @@ Updated.
         assert len(architects) == 2
         assert all(c.role == "architect" for c in architects)
 
-    def test_get_by_empathy_level(self, registry):
-        """Test filtering agents by empathy level."""
-        registry.register(UnifiedAgentConfig(name="l2", empathy_level=2))
-        registry.register(UnifiedAgentConfig(name="l4", empathy_level=4))
-        registry.register(UnifiedAgentConfig(name="l5", empathy_level=5))
-
-        # Get level 4+
-        high_empathy = registry.get_by_empathy_level(min_level=4)
-
-        assert len(high_empathy) == 2
-        levels = [c.empathy_level for c in high_empathy]
-        assert 4 in levels
-        assert 5 in levels
-
     def test_get_summary(self, registry):
         """Test getting registry summary."""
         registry.register(
@@ -202,7 +187,6 @@ Updated.
                 name="arch",
                 role="architect",
                 model_tier=ModelTier.PREMIUM,
-                empathy_level=5,
             ),
         )
         registry.register(
@@ -210,7 +194,6 @@ Updated.
                 name="rev",
                 role="reviewer",
                 model_tier=ModelTier.CAPABLE,
-                empathy_level=4,
             ),
         )
 
