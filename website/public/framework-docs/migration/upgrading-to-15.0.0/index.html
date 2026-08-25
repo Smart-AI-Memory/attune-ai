@@ -4726,6 +4726,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="3. The empathy_level knob is gone from every public API">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#heads-up-baseworkflowanalyze-is-not-settled" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Heads-up: BaseWorkflow.analyze() is not settled
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -4936,6 +4953,21 @@ the <code>attune_get_level</code> / <code>attune_set_level</code> MCP tools.</p>
 <p>If you were using the level to select among your own workflows, keep
 your own mapping — the framework no longer has an opinion about what
 1–5 means.</p>
+<h3 id="heads-up-baseworkflowanalyze-is-not-settled">Heads-up: <code>BaseWorkflow.analyze()</code> is not settled<a class="headerlink" href="#heads-up-baseworkflowanalyze-is-not-settled" title="Permanent link">&para;</a></h3>
+<p><code>attune.plugins.base.BaseWorkflow</code> still declares an abstract
+<code>analyze()</code> that the engine does not call — this class is for
+plugin-internal analyzers you invoke yourself, and workflows
+discovered via entry points subclass
+<code>attune.workflows.base.BaseWorkflow</code> (whose entry point is
+<code>execute()</code>) instead.</p>
+<p>That dead abstract is known and is <strong>expected to change in a future
+major</strong> (tracked in
+<a href="https://github.com/Smart-AI-Memory/attune-ai/issues/2238">#2238</a>; the
+15.0.0 manifest deferred it deliberately). It does not affect your
+15.0.0 upgrade — the signature above is what 15.0.0 ships — but if you
+are writing a new plugin today, prefer
+<code>attune.workflows.base.BaseWorkflow</code> for anything the engine should
+run, and expect the plugin-internal contract to be revised.</p>
 <h2 id="4-two-things-that-migrate-themselves">4. Two things that migrate themselves<a class="headerlink" href="#4-two-things-that-migrate-themselves" title="Permanent link">&para;</a></h2>
 <p><strong>agents.md frontmatter.</strong> A leftover <code>empathy_level:</code> key parses as
 ignored. It is not an error, so you can remove it whenever you like.</p>
