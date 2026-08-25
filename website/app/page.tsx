@@ -68,9 +68,9 @@ export default function Home() {
               </a>
             </div>
             <p className="text-sm text-[var(--text-muted)] mt-4">
-              Or add it from the{' '}
+              Or install it as a{' '}
               <a href="#get-started" className="font-bold text-[var(--primary)] hover:opacity-80 transition-opacity">
-                Claude Code marketplace
+                Claude Code plugin
               </a>{' '}
               &mdash; no Python required.
             </p>

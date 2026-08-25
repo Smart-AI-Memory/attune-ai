@@ -212,7 +212,7 @@ export default function DocsPage() {
                   </div>
                   <h3 className="text-lg font-bold mb-2">Plugin</h3>
                   <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
-                    Install from the marketplace. Type /coach for
+                    Install as a Claude Code plugin. Type /coach for
                     progressive help right in your terminal.
                   </p>
                   <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3 break-all">
@@ -452,7 +452,7 @@ export default function DocsPage() {
                 Claude Code Plugin
               </h2>
               <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
-                Install from the marketplace. Progressive help, project
+                Install as a Claude Code plugin. Progressive help, project
                 bootstrapping, and {CAPABILITIES.skills} skills right in your terminal.
               </p>
 

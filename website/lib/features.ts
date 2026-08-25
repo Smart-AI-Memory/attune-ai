@@ -136,7 +136,8 @@ export const PRODUCTS: Product[] = [
     marketplaceInstall:
       "claude plugin install attune-ai@attune-ai",
     description:
-      "Install from the Claude Code marketplace. Type /coach to get " +
+      "Install as a Claude Code plugin (this repo doubles as the " +
+      "plugin marketplace source). Type /coach to get " +
       "progressive help on any topic. Init, status, maintain, and " +
       "update your help system without leaving the terminal.",
     features: [
