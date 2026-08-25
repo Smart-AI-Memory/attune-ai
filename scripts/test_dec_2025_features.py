@@ -202,9 +202,14 @@ def test_dependency_alignment():
     if pyproject.exists():
         content = pyproject.read_text()
         if '[project.entry-points."attune.plugins"]' in content:
-            success("pyproject.toml: workflow entry points defined")
+            success("pyproject.toml: plugin entry points defined")
         else:
-            error("pyproject.toml: missing workflow entry points")
+            error("pyproject.toml: missing plugin entry points")
+        # No "attune.workflows" assertion on purpose: attune's own
+        # workflows are lazy-loaded via _DEFAULT_WORKFLOW_NAMES and
+        # deliberately NOT declared as entry points (see the pyproject
+        # note); only third-party packages register that group, so an
+        # empty group here is correct, not a failure.
 
     return True
 
@@ -317,7 +322,7 @@ asyncio.run(test())
     {CYAN}python -c "
 import importlib.metadata
 eps = list(importlib.metadata.entry_points(group='attune.plugins'))
-print(f'Found {{len(eps)}} workflow entry points:')
+print(f'Found {{len(eps)}} plugin entry points:')
 for ep in eps:
     print(f'  {{ep.name}}: {{ep.value}}')"
 {RESET}
