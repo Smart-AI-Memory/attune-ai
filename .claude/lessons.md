@@ -25091,3 +25091,226 @@ launched in parallel.
   Also: grep the log for "short test summary" — the assertion detail
   is there (e.g. `assert (16895 & 511) == 448` instantly identified a
   Windows mode-bits failure).
+
+- **Two of YOUR OWN same-session branches touching the same files =
+  hold the second PR until the first merges (ratified 2026-08-24,
+  retro 2.1)**: the "stack the branch, hold the PR" discipline exists
+  for cross-PR dependencies, but it applies equally when both PRs are
+  yours in one session: #2260 (fleet baseline) was opened while
+  #2257 (retro fixes) — KNOWN to touch the same two files — was armed
+  and minutes from merging. Entirely foreseeable DIRTY: rebase,
+  union-resolve the both-appended test file, re-sign (rebase drops
+  GPG signatures — verify %G? before pushing), force-push-with-lease.
+  Cost: ~10 minutes of avoidable churn. The rule: before `gh pr
+  create`, check whether any ARMED sibling touches the same paths
+  (`gh pr list` + the diff you just wrote); if yes, either stack on
+  the sibling's head and hold PR creation until it merges, or simply
+  wait out the sibling's CI — an armed green sibling merges in
+  minutes. Chair-ratified as standing discipline at the 2026-08-24
+  second retro.
+
+- **A planted-defect fixture that CONFESSES to being a test fixture
+  (header/docstring saying "planted", "intentional", "do not fix")
+  triggers an OBSERVER EFFECT in LLM-judged probes — agents read the
+  confession and sometimes dismiss the findings as intentional,
+  zeroing structured output while still naming the defects in prose**:
+  2026-08-24, dependency-check fleet FAIL. The tracked cve_pins.txt's
+  14-line protective header was staged VERBATIM into the probe
+  workdir's requirements.txt; two runs returned findings buckets
+  EMPTY (num_findings=0) while the raw text still named the CVEs, and
+  a capture run showed the subagents quoting the header back ("the
+  manifest self-identifies as a planted-defect test fixture"). A
+  pre-split bisect failed identically — no code regression; the
+  fixture was the variable. Fix shape: keep the confession in the
+  TRACKED fixture (it protects pins from cleanup and explains the
+  non-requirements filename) and STRIP it at staging so the workflow
+  sees a normal manifest (_stage_dependency_manifest); with the
+  confession gone the same workflow returned num_findings=4. Pair
+  with the named-class probe grammar: gate on the defect being NAMED
+  in output, keep counts as evidence — bucket population varies run
+  to run even without the observer effect. Audit every fixture the
+  probes stage for the same self-identification (security/analytical
+  fixtures carry "SEEDED BUG" comments — same class, not yet bitten
+  because their probes already judge by naming).
+
+- **`origin/main` is a MOVING ref inside one session when sibling sessions fetch — a grep done an hour ago describes a tree your next branch may not be cut from**: 2026-08-24. Early in the session, greps established "the EmpathyMCPServer rename has not landed" (true at read time). A sibling session then merged the rename (#2259) AND its fetch advanced the shared repo's `origin/main` remote-tracking ref — no fetch was run in THIS session. A later `git checkout -b feat/... origin/main` therefore cut from a tree where the "verified" facts were stale, and the planned work (server rename, entry-point dual-read) was already 80% shipped. The tell that something moved: `git log -1` after branch creation showed bot commits that weren't in the earlier read; the earlier grep results and the new tree disagreed. Rules: (1) facts verified against the tree carry an implicit AS-OF ref — before starting implementation on a NEW branch, re-verify the one or two premise facts against the branch's actual HEAD (one grep), especially in multi-session repos; (2) after `git checkout -b X origin/main`, print and READ `git log --oneline -3` — the base you got, not the base you remember; (3) when a premise fact turns out stale, diff the delta commit (`git show <sha> --stat`) BEFORE building — here it converted a planned three-part PR into a one-part remainder and avoided duplicate work colliding with a merged sibling PR.
+
+- **Deprecation text about a ratcheted-out concept trips the ratchet itself — cite the decision record, not the retired name**: 2026-08-24, deprecating the MCP level tools per the 15.0.0 manifest's D2 ruling. The natural notice ("the level concept retires with the empathy framework") ADDED the token "empathy" to `tool_schemas.py` and two generated help files, and the G5 brand-drift ratchet is count-based per file with a shrink-only contract — so the commit was refused even though every touched file was allowlisted, and the pre-commit hook skipped the commit with exit 0 (the known silent-skip shape; caught by the mandatory `git log -1` verify). The fix is not an allowlist edit: reword to point at the ruling ("the interaction-level concept is retired (release-15-manifest D2)") — the decision record carries the context the retired name was carrying, and the ratchet keeps shrinking. Generalizes: any deprecation/removal notice is precisely the text most tempted to NAME the thing being removed, and a token ratchet cannot distinguish "reintroducing the concept" from "documenting its exit" — so route the explanation through the decision record's slug instead of the banned vocabulary. Rider: generated projections (help references) inherit the token from the source description, so one source-string reword clears N ratchet hits.
+
+- **A pipeline's exit code is its LAST command's — `pytest -q | tail -1 && git commit` commits on red, because `tail` exits 0 regardless**: hit live 2026-08-24 on PR #2259: `pytest … 2>&1 | tail -1 && git add … && git commit … && git push` pushed a commit whose suite had `1 failed` — the failure line was even PRINTED, but the chain keyed off `tail`'s exit 0, and the red commit reached the remote before the next local run caught it. zsh/bash both behave this way without `pipefail`. Rules: (1) NEVER gate a commit/push on a piped test command — run the suite as its own command and check its own exit (`pytest -q; echo exit=$?` or let the harness surface the code), then commit separately; (2) if a pipe is genuinely needed in a gating chain, `set -o pipefail` first — but prefer un-piped, since `pipefail` also turns benign SIGPIPE from an early-exiting reader into failures; (3) the same trap wears other masks in this corpus's history — `grep -c` (exits 0 with output "0"… actually exits 1 on zero matches — the point is every filter appended to a gating command replaces the exit code you meant to test). Related existing lesson: "exit code 0 ≠ success" for `attune workflow run`; this is the shell-side twin where the SHELL, not the tool, launders the code.
+
+- **`float(env_var)` caps and thresholds accept `"nan"` — and NaN
+  defeats EVERY comparison in BOTH directions, turning a spend cap or
+  score gate into an unlimited pass**: hit twice in two days
+  (2026-08-24). The session spend ledger's
+  `ATTUNE_SESSION_SPEND_CAP_USD` parsed with a bare `float(raw)`:
+  `nan <= 0` is False (so the no-budget latch never fires) AND
+  `spent >= nan` is False (so the at-cap refusal never fires) — an
+  unlimited cap through the back door, caught by the codex D11 lane
+  on PR #2270. The secure-release phantom-key fix (#2219/#2222) had
+  the same shape the day before: a NaN/inf score made every risk
+  threshold comparison False, converting a malformed audit into GO.
+  The pattern generalizes: any enforcement value parsed from an env
+  var, config field, or LLM output with `float()` must reject
+  non-finite (`math.isfinite`) — `"nan"`, `"inf"`, `"-inf"` all
+  parse successfully, so `try/except ValueError` does NOT catch
+  them, and the failure is silent because comparisons don't raise,
+  they just answer False. Fail toward enforcement: fall back to the
+  DEFAULT cap/threshold, never to "unlimited"; and pin with
+  parametrized tests over `["nan", "inf", "-inf"]`. Grep for the
+  vulnerable spelling: `float(os.environ` / `float(raw)` feeding a
+  later `<=` / `>=` gate with no `isfinite` between them.
+
+- **The G5 empathy ratchet is COUNT-based per file — deprecation prose that names the retired framework trips it even in fully-allowlisted files; cite the ruling instead of the brand**: 2026-08-24, PR #2266. Deprecation text for the level tools ("the level concept retires with the empathy framework") added new 'empathy' token instances to `src/attune/mcp/tool_schemas.py` and two generated help pages — the pre-commit gate failed with "RATCHET FAIL — files gained 'empathy' matches (list only shrinks)" even though every file was already on the allowlist (the allowlist permits EXISTING tokens; the ratchet separately forbids the per-file count growing). The fix that keeps the prose useful: point at the governance artifact instead of the brand — "the interaction-level concept is retired (release-15-manifest D2)" carries the same information and adds zero tokens. Generalizes: when writing deprecation/removal text for anything covered by a brand-drift ratchet, reference the decision record, not the retired name — the decision slug is stable, greppable, and ratchet-neutral. Tell for the failure: the commit exits 0 but silently doesn't land (hook-skip trap), so the ratchet message only surfaces when you re-run the commit watching full hook output.
+
+- **CI watchers keyed on `gh pr checks` fail-rows false-alarm across superseding runs — key them on the latest RUN's (status, conclusion, headSha) instead; and GitHub's DIRTY can be STALE after the base moves again**: 2026-08-24, #2268 merge shepherding, two false alarms + one stale-state trap in one evening. (1) After a fix-push, `gh pr checks` kept serving the SUPERSEDED run's `fail` rows while the new run sat queued — a watcher that breaks on any fail-bucket row fires on ghosts. (2) The reverse also happened mid-update: some lanes' rows already replaced (pending) while others still showed the old run's fails, producing a nonsense mixed set. Robust shape: read `gh run list --workflow=tests.yml --branch=<br> --limit 1 --json status,conclusion,headSha`, act only when `status=completed` AND `headSha` matches the head you pushed; extends the 2026-07-18 "watch the RUN, not the PR rollup" lesson to the failure direction. (3) After a sibling PR's squash made #2268 DIRTY, a rebase+push cleared it — but when main moved AGAIN, GitHub re-reported DIRTY while a local `git merge-tree --write-tree origin/main <branch>` exited 0 (clean): GitHub's mergeability is computed lazily and can be stale in BOTH directions; a rebase+push forces the recompute. Also confirmed: two armed PRs appending rows to the SAME file's tail (receipts.md) — the first squash predictably DIRTYs the second; plan the rebase, and note `git rebase` auto-resolved the EOF-append cleanly even though GitHub's merge would not.
+
+- **R5 ledger rows are gated by TWO independent grammars — satisfying one is not satisfying the other, and each costs a full CI round to discover remotely**: 2026-08-24, PR #2268, two consecutive red rounds on self-authored ledger rows. Round 1: the precision tally (`scripts/ledger_precision.py`, enforced by `tests/unit/scripts/test_ledger_precision.py`) classifies a row by its disposition's LEADING SHAPE — it must start `clean` / `N real` / `all real` / `dismissed|noise|rejected`; my "1 modified, 2 rejected — ..." was unclassifiable. Round 2: after rewording to lead with "rejected", the D11a rejection-format gate (`tests/unit/gates/test_ledger_rejection_format.py`, regex `^(?:dismissed|noise|rejected)\b[^—]*— claim: ".+" — reason: .+$`) failed the same row for missing the verbatim `claim: "..." — reason: ...` structure. A compliant multi-claim rejection row: lead with `rejected — claim: "<strongest claim verbatim>" — reason: <refutation>`, then fold the other rejections into the reason tail (the trailing `.+` is greedy, so prose after the first pair is fine). There is no "modified" disposition in the grammar — when a finding's stated claim was refuted but prompted a defensive improvement anyway, the honest classification is `rejected` with the improvement noted in the reason. Cheap receipt before pushing ANY receipts.md row: `pytest tests/unit/gates/test_ledger_rejection_format.py tests/unit/scripts/test_ledger_precision.py` (seconds). Pairs with the existing "#2206 ledger classifier" row-integrity work — these are its enforcement teeth, met from the author side.
+
+- **An executor that runs LLM-emitted output (probe receipts, generated
+  tests, doc examples) is an injection surface — scrub the subprocess
+  env, and treat "must parse" filters as claims about WHO asserted the
+  fence was code**: 2026-08-24, building the D5 generative probes
+  (PR #2273). The doc-gen probe executed emitted examples in a
+  subprocess inheriting the runner's env — live ANTHROPIC_API_KEY
+  visible to model-generated code (codex D11 lane, critical; fixed with
+  env={"PATH": ...} + a canary-pinned test; test-gen's pytest run has
+  the same exposure, chipped separately). Two calibration riders from
+  the same build: (1) a doc example annotated `# raises ValueError` is
+  a CLAIM — assert the named exception raises instead of skipping or
+  naively executing the line (round-1 false positive was a CORRECT
+  deliberately-raising example); (2) fence tags carry intent — a
+  ```python-tagged fence that fails ast.parse is an emitted-output
+  DEFECT (fail the probe), while an untagged unparseable fence is
+  usually a docstring-section rendering ("Args:"/"Returns:" prose) and
+  skipping it is correct. Skipping every unparseable fence lets one
+  valid example mask broken ones (lane, high). Bonus tell: ast.parse
+  raises ValueError (not SyntaxError) on null bytes — catch both, the
+  ast-parse-null-byte gate pins the pairing.
+
+- **A rebase push can spawn a RE-SCOPED matrix whose required lanes
+  green by NOT RUNNING your new tests — the sentinel blesses lane
+  absence AND test absence, and the first full run of your tree is
+  main's post-merge run**: 2026-08-24, the #2273 squash turned main
+  red on two lanes (windows scrubbed-env SYSTEMROOT death +
+  ubuntu-3.14 xdist-order flake) that its OWN pre-merge matrix
+  showed green. The final rebase push had spawned a re-scoped run:
+  win-3.10/ubuntu-3.14 never spawned, and the required win-3.12 lane
+  ran a reduced test set that excluded the new tests —
+  `test-matrix-complete` requires "every lane that RAN passed", so
+  it blessed the holes. Auto-merge fired on a green that had never
+  executed the changed code on Windows. Tells: `gh run view <pr-run>
+  --json jobs` listing fewer matrix jobs than main's runs; a
+  new-test failure appearing FIRST on main's post-merge run.
+  Defenses: (1) before trusting a green on a subprocess/env/platform
+  -touching diff, confirm the named lanes actually RAN the new tests
+  (job list + a grep for the test id in the lane log); (2) treat a
+  post-rebase matrix that shrank as unverified, not green — re-run
+  the full matrix or wait for one; (3) extends the existing
+  "CI watchers report ABSENCE as success" family from watcher scope
+  to the MATRIX SENTINEL itself. Rider: a scrubbed subprocess env on
+  Windows must allowlist SYSTEMROOT (+ PATHEXT/COMSPEC/TEMP/TMP) or
+  Python children die at startup ("_Py_HashRandomization_Init") —
+  deterministic, and only a full-matrix run will tell you.
+
+- **Joining event-log stages on a content-derived id via lifetime-first timestamps conflates repeated instances — pair sequentially per cycle (each consumer event takes the latest unmatched producer event at-or-before it)**: 2026-08-24, attune-forms 0.8.0 stage telemetry, caught by the pre-merge codex cross-review lane after 44 author-written unit tests missed it. `form_id` is a deterministic hash of the form definition (so render and collect join without threading state through the agent) — which means REPEATED casts of one definition share an id, and a "first render → first submission" join measures only the first cycle EVER; a template cast every session (the exact use case the telemetry ships for) becomes unmeasurable, and one stale submission predating the first render permanently blocks the join. The fix is the classic per-cycle pairing: scan in log order, keep a per-id stack of unmatched renders, each submission consumes the latest render at-or-before its own timestamp — N cycles yield N latency samples and stale events match nothing. Two riders: (a) an author's tests share the author's blind spot — the two high-severity finds here are exactly what a different-model lane is for, and running it PRE-merge cost the same review with none of the re-release rework; (b) the never-raises contract on telemetry id derivation must catch broadly — `json.dumps(default=str)` re-raises whatever a value's `__str__` raises, so `except (TypeError, ValueError)` still lets hostile values break a valid parse.
+
+- **In-process test red + subprocess sibling green on the SAME lane pins process-state pollution and rules out the environment — and module-level discovery caches are the usual culprit**: 2026-08-24 main-red. `test_real_manifest_repairs_bumped_values_on_copies` derived 50 MCP tools against docs saying 61, intermittently across unrelated lanes (main ubuntu-3.14, docs-only #2277 win-3.12, #2278 win-3.10). The decisive probe cost nothing: `TestSubprocessCli::test_check_is_green_on_synced_repo` — same repo, same interpreter, same env, but a fresh process — PASSED on the very lanes where the in-process derivation failed. That discriminant eliminates dependency drift, wheel gaps, and platform theories in one read and leaves exactly per-process state. Root cause: `attune.plugins.registry` keeps a module-level `_discovery_cache` + `_global_registry` singleton; a registry test running FIRST on an xdist worker under mocked `entry_points` caches an EMPTY plugin set for the whole process (the cleanup conftest only covers `tests/plugins/`), and #2273 adding 243 test lines to `tests/unit/scripts/` reshuffled worker scheduling — which is why a years-old hazard surfaced the same day as an unrelated merge. Fix shape: immunize the DERIVATION (`clear_discovery_cache()` before deriving — a derivation describes the checked-out revision, never a prior test's cache), not more conftest whack-a-mole; prove the regression test red-without/green-with via stash/run/pop. Class: any first-touch module-level cache (`_cache = None` + fill-on-first-use) is a cross-test contamination surface whose failures move around whenever the test population changes.
+
+- **The "Windows lanes are advisory" premise is STALE — `test (windows-latest, 3.12)` and `test-matrix-complete` are now REQUIRED contexts, and the aggregate makes EVERY matrix lane blocking**: verified 2026-08-24 via `gh api repos/.../branches/main/protection/required_status_checks` while diagnosing why #2278 sat BLOCKED with 36 green checks. The corpus's earlier "advisory CI lanes don't gate — merge on the 7 required greens, don't wait for Windows" lesson described a 7-context list that has since grown to 12, including the Windows 3.12 lane AND `test-matrix-complete`, which fails if ANY matrix lane fails — so a win-3.10 failure now blocks even though win-3.10 itself is not listed. Rule: the required-contexts list is CONFIG, not doctrine — re-read it in the session where you act on it, and treat any cached "X is not required" claim as an unverified inference (it was true when written, cost a misdiagnosis today). Same episode: a required check failing on a docs-only PR (#2277) remains the fastest tell that MAIN is red, not the PR.
+
+- **A sibling-package release DURING a merge train reds main through an
+  open version range, and it presents as impossible failures on
+  innocent PRs — diagnose with a local run of the exact union tree
+  FIRST, then diff what CI installs against what your venv holds**:
+  2026-08-24, mid-train. attune-forms 0.8.0 was tag-push published by
+  a parallel chip session while attune-ai's range said
+  `>=0.7.0,<1.0`; every fresh CI install began resolving 0.8.0, whose
+  interleaved stage-telemetry events broke two form-surface tests that
+  count raw log lines — surfacing as coverage/clock-tz/test-lane reds
+  on a DOCS-ONLY PR's merge preview. Two compounding traps: (1) rapid
+  sequential merges (#2270 then #2280 minutes apart) meant the merged
+  union was never CI-tested pairwise, so the union itself was a
+  suspect; a LOCAL full run of the exact union SHA (25,230 green,
+  ~3 min) cleared it and redirected the hunt in one step — cheaper and
+  more decisive than waiting for in-flight CI logs to unlock; (2) the
+  local green was itself the tell: local venvs hold the LOCKED sibling
+  version while CI resolves fresh, so "green locally + red in CI on
+  dep-adjacent tests" should immediately prompt `pip index`/PyPI
+  release-date checks on in-range siblings. The adaptation PR pattern
+  that resolved it cleanly: the publishing session's companion PR
+  carried version-tolerant handling (getattr fallback for the old
+  signature) plus dual-mode receipts (suite green under the locked OLD
+  version AND the fresh NEW one) — demand both modes before arming
+  any dep-adaptation PR. Coordination rider: the publisher session
+  owned the fix branch; the train session's job was routing the
+  diagnosis to it and keying the cascade off its merge event, not
+  pushing to its branch.
+  Late rider (same night): `gh run rerun --failed` re-tests the run's
+  ORIGINAL pinned merge commit, NOT a re-resolved preview — after the
+  base heals, a rerun reproduces the inherited failure verbatim and
+  reads as "still broken". Push a new head (rebase onto the healed
+  base) to get a fresh preview; reruns only help for genuinely flaky
+  lanes on an unchanged-truth tree.
+
+- **Keep-both conflict resolution is only valid for DISJOINT additions
+  — when both sides modified the SAME function, dropping the markers
+  splices a Franken-function; and a piped test run can wave the
+  splice through to an armed PR**: 2026-08-24, rebasing #2272 across
+  three same-file merges. The signature/docstring hunks were true
+  disjoint additions (two independent keyword params, two independent
+  paragraphs — keep-both correct), but the TEST-file hunk held two
+  EVOLVED versions of one region: dropping markers glued a stray
+  assert from one side's superseded test onto the tail of the other's
+  (`NameError: result` at runtime). Rule: before a keep-both, check
+  each side against the MERGE-BASE — if both sides EDITED the same
+  function (vs appending new ones), resolve by choosing the evolved
+  survivor and folding, never by concatenation; grep the result for
+  identifiers that lost their definitions. The splice then nearly
+  shipped because the verifying pytest ran as `pytest ... | tail -2`
+  in an `&&` chain — the pipe made the chain's gate read tail's exit
+  0, so commit+push+arm ran off a red suite (third pipe-swallow
+  variant in one night: git-mutation, grep -c==0, now pytest-as-
+  gate). Rule: any command whose exit code GATES a following mutation
+  runs unpiped (capture to a file, tail the file); armed-PR pushes
+  double the stakes because the label merges whatever CI greens.
+
+- **A `git commit` that hangs AFTER every pre-commit hook prints Passed is GPG signing waiting on pinentry — in a headless/non-interactive session the prompt can never render, so the commit blocks forever and looks exactly like a slow hook**: 2026-08-24, landing a two-line website fix. The commit timed out at 2 min, then again at 10 min; the first run's output showed the LAST hook (brand drift gate) pass, which is the tell — nothing was left to run except the commit-msg guard and signing. Diagnostics that pin it in seconds: (1) `echo test | gpg --clearsign --batch --pinentry-mode error -u <key>` — fails fast with "No pinentry" if the passphrase isn't cached (a cached key signs instantly); (2) `gpg-connect-agent 'keyinfo --list' /bye` — the 7th field is `1` when cached, `-` when not; (3) `ps aux | grep pinentry` during the hang — no pinentry process means the dialog never launched. Root cause detail: a gpg-agent SPAWNED FROM the headless session context cannot reach the GUI (background-context gpg fails with `cannot open '/dev/tty'`), so even pinentry-mac never pops. Recovery: `gpgconf --kill gpg-agent`, then have the user run the commit (or any signing op) from their own GUI terminal — pinentry prompts there and `default-cache-ttl` (8h here) makes subsequent agent-driven commits sign silently. Do NOT work around with `--no-gpg-sign` (repo policy: commits are GPG-signed) and never handle the passphrase directly. Pairs with the "interrupted compound command — re-establish actual git state" lesson: both timeouts left the files staged and HEAD unmoved, verified by `git log -1` + `git status` before each retry.
+
+- **Building `website/` from a worktree: symlinking main's `node_modules` fails (main lacks devDeps like vitest) and `next build` MUTATES `tsconfig.json` — do a real `npm ci` in the worktree and check `git status` for tsconfig drift after the first build**: 2026-08-24, verifying the sitemap tag-encoding fix. Main's `website/node_modules` was installed without devDependencies, so a symlinked build died in type-checking on `vitest.config.ts` (`Cannot find module 'vitest/config'`) — an environmental failure that looks like a code error. Separately, Next.js 15 rewrote `tsconfig.json` (`"jsx": "react-jsx"` → `"preserve"`) during the failed build, leaving a tracked-file modification that would have ridden into the commit unnoticed; `git checkout -- website/tsconfig.json` before staging. Working recipe: `npm ci` in the worktree's `website/` (lockfile matched main's, ~1 min), then `npx next build`; the generated sitemap is inspectable at `.next/server/app/sitemap.xml.body` — grep it for the property under test (here: `<loc>` entries containing raw spaces) instead of trusting the build's exit code. Same family as the worktree-venv-lacks-extras lessons: a worktree's JS deps are as absent as its Python extras, and borrowing main's install is unreliable in both ecosystems.
+
+- **`test_homepage_badge_includes_package_version` scans the homepage SOURCE file for a literal `vX.Y.Z` — a homepage redesign that drops the version badge (or "improves" it by interpolating from `PRODUCTS[0].version`) fails the guard, because the regex reads `website/app/page.tsx` as text, not the rendered page**: 2026-08-25, the homepage rewrite. The new hero initially replaced the `v14.1.0` badge with positioning copy; the guard (`tests/unit/test_website_version_accuracy.py`) failed locally. The fix is to keep the literal version string in the hero badge — single-sourcing it via TS interpolation is NOT possible here since the guard's contract is "a greppable literal that the release process bumps and the test compares to the package version". A comment now sits above the badge in page.tsx saying exactly this. Broader point for website restructures: run the accuracy guard suite locally BEFORE pushing (`python -m pytest tests/unit/test_website_version_accuracy.py`) — website-only PRs skip the whole Python suite in CI (`website_only=true` fast path), so a local run is the ONLY enforcement these guards get on the PRs most likely to break them; the failure otherwise surfaces on whatever unrelated full-suite PR merges next. Same episode also re-confirmed the standing count-verification discipline: the site carried FOUR conflicting workflow/tool/skill counts (21/23, 49/50/60, 27/28) accumulated across releases precisely because prose strings hard-coded numbers instead of interpolating from `CAPABILITIES` — every count string in a page or features.ts prose must interpolate, never inline a digit.
+
+- **Replacing a literal number with `{CAPABILITIES.x}` at the START of a JSX line silently eats the space before it — and the served-HTML grep that would catch it is ALSO blind, because React SSR inserts `<!-- -->` between text nodes**: 2026-08-25, the website count single-sourcing sweep. "verification.\n 23 workflows" renders fine (JSX collapses newline+indent between text to one space), but swap the literal for an expression — "verification.\n {CAPABILITIES.workflows} workflows" — and JSX TRIMS newline-whitespace adjacent to expressions entirely, shipping "verification.21 workflows" to production. Hit twice in one sweep (docs quickstart + Workflows heading); caught only by the chair eyeballing the live page. The fix is an explicit `{' '}` at the end of the preceding line. The verification trap is its own half of the lesson: `curl | grep 'verification. 21 workflows'` returns 0 on BOTH the broken and fixed page, because React's rendered HTML separates adjacent text nodes with `<!-- -->` (`verification.<!-- --> <!-- -->21`). To probe SSR text content, strip comments and tags first (`re.sub(r'<!--.*?-->','',t)` then `re.sub(r'<[^>]+>','',t)`) and grep the visible text — a probe that can't match the healthy page proves nothing about the sick one. Sweep rule going forward: after ANY literal→expression replacement in JSX prose, grep the diff for `^\s*\{` at line starts and check each site's preceding line ends with text-plus-`{' '}`.
+
+- **A shareable-config major that goes flat-config native makes `FlatCompat` crash with an opaque `TypeError: Converting circular structure to JSON` — and Next 16 removed build-time lint, so builds stay green while standalone `eslint` is hard-broken**: 2026-08-25, `website/` (PR #2287). `npm run lint` died during config loading with a ConfigValidator/ConfigArrayFactory stack out of `@eslint/eslintrc` — which reads as "legacy .eslintrc problem", but the tree had NO `.eslintrc*` at all. The flat `eslint.config.mjs` routed `next/core-web-vitals` + `next/typescript` through `FlatCompat.extends()`, and `eslint-config-next@16` now ships those presets as native flat-config arrays: the eslintrc shim can't validate them, and even its error formatter crashes (circular plugin refs defeat `JSON.stringify`), so the real schema error is never printed. Diagnosis order that settles it fast: (1) `ls .eslintrc* eslint.config.*` — if only flat config exists, the eslintrc stack means a compat shim inside it, not a legacy file; (2) check the extended preset's `package.json` `exports` and the shape of what it exports (`node -e "console.log(Array.isArray(require('eslint-config-next/core-web-vitals')))"`) — an array = native flat config, import it directly and delete FlatCompat (+ the `@eslint/eslintrc` devDep). Verify ESM interop before writing the import: Node's CJS-default interop can hand you `{default: [...]}` instead of the array. Two riders: (a) Next 16 no longer runs eslint during `next build`, so "build lint passes but npm run lint crashes" is expected, not a contradiction — CI that relies on the build for lint coverage has none; (b) the preset major also enabled React-Compiler-era `react-hooks` v6 rules (`set-state-in-effect`, `immutability`, `static-components`) that flag canonical pre-existing patterns (localStorage hydration effects, initial-fetch effects) — downgrade those to `warn` in the migration PR and refactor the sites separately, rather than blocking the config fix on component rewrites.
+
+- **An external fork PR that adds a workflow, executes the author's own
+  tool in CI, and asks the maintainer to mint a new secret is a
+  supply-chain pattern — review the AUTHOR and the trust flow before the
+  diff's mechanics**: 2026-08-25, PR #2265 ("ci: add repository-signed
+  control proof") from `sulmusic2-star` (account created 2025-10, 0
+  followers, unknown to the project). The diff was mechanically CLEAN —
+  SHA-pinned actions, `timeout-minutes`, `concurrency`,
+  `permissions: contents: read`, no key refs; dropped into the tree it
+  passed all 340 workflow-policy gate tests — and its "failing tests"
+  were fork-PR artifacts (labeler's read-only `GITHUB_TOKEN`, Vercel
+  fork-deploy authorization), so a greenness-focused review would have
+  found nothing. The actual risk lived in the trust flow: the workflow
+  checked out the AUTHOR'S OWN repo (`sulmusic2-star/agent-vigil`), ran
+  `npm ci && npm run build` (full unaudited dependency tree), executed
+  its CLI in our Actions environment, and the PR body pre-scripted the
+  maintainer into creating an Ed25519 private key stored as a repo
+  secret — written to disk in the same job where the foreign tool runs.
+  Exfiltrating that key would compromise the very trust anchor the
+  feature claims to provide, and the feature was theater anyway
+  (re-signing exit codes of checks CI already runs, with a key held in
+  the same repo, referencing a nonexistent `attune-governance` signer
+  identity). **Review order for external `.github/` PRs: (1) who is the
+  author and whose code does the workflow fetch/execute; (2) what
+  secrets does it ask to exist and which code can read them; (3) only
+  then the diff's mechanics.** A visibly agent-operated repo is a
+  target for exactly this shape — polished, gate-compliant, body
+  pre-scripting the next steps. Closed without merging; `.github/`
+  diffs are out of class for every auto-merge lane (D8 carve-out),
+  which held correctly.
