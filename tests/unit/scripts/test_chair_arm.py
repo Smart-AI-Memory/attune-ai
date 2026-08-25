@@ -87,6 +87,18 @@ class TestGovernancePaths:
     def test_r5_ledger_hits(self, mod):
         assert mod.governance_paths(["docs/specs/cross-review/receipts.md"])
 
+    def test_ratchet_allowlists_hit(self, mod):
+        """Gate allowlists ARE enforcement surface.
+
+        Origin: 2026-08-25 — #2301 removed a line from
+        `.claude/gates/empathy-allowlist.txt` (a shrink-only ratchet)
+        and chair_arm printed "no governance-class surfaces detected".
+        Loosening a ratchet is precisely a CHAIR-ARMS-class act.
+        """
+        assert mod.governance_paths([".claude/gates/empathy-allowlist.txt"]) == [
+            ".claude/gates/empathy-allowlist.txt"
+        ]
+
     def test_agents_md_and_contract_projection_hit(self, mod):
         # codex finding 2026-07-30: these governance surfaces were
         # omitted from the map; a diff touching them reported clean.

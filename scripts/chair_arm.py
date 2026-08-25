@@ -56,6 +56,7 @@ GOVERNANCE_EXACT = {
 }
 GOVERNANCE_PREFIXES = (
     ".claude/rules/",
+    ".claude/gates/",
     ".agents/",
     ".github/",
     "content/collaboration/",
