@@ -6620,8 +6620,7 @@ manager.save_state("user123", empathy.collaboration_state)</p>
 
         <p>Collect and persist Attune AI metrics</p>
 <p>Tracks:
-- Empathy level usage
-- Success rates by level
+- Success rates
 - Average response times
 - Trust trajectory trends</p>
 
@@ -6784,7 +6783,7 @@ print(f"Success rate: {stats['success_rate']:.1%}")</p>
 
 
 <h4 id="attune.persistence.MetricsCollector.record_metric" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">record_metric</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">empathy_level</span><span class="p">,</span> <span class="n">success</span><span class="p">,</span> <span class="n">response_time_ms</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">record_metric</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">success</span><span class="p">,</span> <span class="n">response_time_ms</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 <a href="#attune.persistence.MetricsCollector.record_metric" class="headerlink" title="Permanent link">&para;</a></h4>
 
@@ -6815,22 +6814,6 @@ print(f"Success rate: {stats['success_rate']:.1%}")</p>
             <td>
               <div class="doc-md-description">
                 <p>User identifier</p>
-              </div>
-            </td>
-            <td>
-                <em>required</em>
-            </td>
-          </tr>
-          <tr class="doc-section-item">
-            <td>
-                <code>empathy_level</code>
-            </td>
-            <td>
-                  <code><span title="int">int</span></code>
-            </td>
-            <td>
-              <div class="doc-md-description">
-                <p>1-5 empathy level used</p>
               </div>
             </td>
             <td>
@@ -6897,7 +6880,6 @@ print(f"Success rate: {stats['success_rate']:.1%}")</p>
 <p>collector = MetricsCollector()
 collector.record_metric(
 ...     user_id="user123",
-...     empathy_level=4,
 ...     success=True,
 ...     response_time_ms=250.5,
 ...     metadata={"bottlenecks_predicted": 3}
