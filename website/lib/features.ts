@@ -14,6 +14,57 @@
  * the marketplace plugin was removed — see the docs page FAQ.)
  */
 
+// --- Capability counts (verified against Python registry) ---
+
+/**
+ * Counts that appear in prose and stat callouts across the
+ * site — the single source of truth. Interpolate these into
+ * copy; never hard-code a count in a page or a prose string.
+ * Verified against the live Python code per the
+ * website-content-accuracy rule (last verified 2026-08-25,
+ * attune-ai 14.1.0):
+ *
+ *   workflows: distinct classes in attune.workflows.discover_workflows()
+ *     (D4, claim-drift-gates, 2026-07-12: the prior count used
+ *     list_workflows() filtered on a truthy `stages` field, which is
+ *     set on nearly every workflow — only 3 actually declare more than
+ *     one stage. "Multi-stage workflows" overclaimed what the number
+ *     measured; this is the honest distinct-workflow-class total.
+ *     release-prep/release-gate count once — deliberate alias pair.)
+ *   skills: plugin/skills/ directory count (test_skill_count)
+ *   mcpTools: attune.mcp.tool_schemas get_*_tools() total
+ *   templateKinds: attune.authoring.generator._ALL_TEMPLATE_NAMES
+ *     length (moved from the retired attune_author package)
+ *   wizards: attune.wizards.list_wizards() length
+ */
+export const CAPABILITIES = {
+  workflows: 21,
+  skills: 28,
+  mcpTools: 50,
+  templateKinds: 15,
+  wizards: 5,
+} as const;
+
+/**
+ * Homepage proof metrics — each one names its verifiable source.
+ * See /benchmarks for the methodology behind each number.
+ *
+ *   testsFloor: the README badge's round floor ("25,000+ passing"),
+ *     freshness-guarded by scripts/check_badge_freshness.py in CI —
+ *     it fails the build if actual collected tests fall below the
+ *     floor or exceed it by more than the margin.
+ *   coverageFloorPct: --cov-fail-under in pyproject + the codecov
+ *     project/patch gates (one number, chair-ruled 2026-08-22).
+ *   ragFaithfulness: attune-rag's measured MEAN faithfulness (40-query
+ *     golden set, N=20 runs). The CI regression gate is locked at
+ *     ≥ 0.9686 — say "mean 0.97, CI-gated", never "gated at ≥ 0.97".
+ */
+export const METRICS = {
+  testsFloor: "25,000+",
+  coverageFloorPct: 85,
+  ragFaithfulness: "0.97",
+} as const;
+
 // --- Products ---
 
 export interface Product {
@@ -48,8 +99,8 @@ export const PRODUCTS: Product[] = [
       "Generate concept, task, and reference templates",
       "Staleness detection via source hashing",
       "Auto-regeneration of stale templates",
-      "28 Claude Code skills included",
-      "MCP server with 49 registered tools",
+      `${CAPABILITIES.skills} Claude Code skills included`,
+      `MCP server with ${CAPABILITIES.mcpTools} registered tools`,
     ],
   },
   {
@@ -94,7 +145,7 @@ export const PRODUCTS: Product[] = [
       "/coach status — check template freshness",
       "/coach maintain — regenerate stale templates",
       "Auto-triggers on natural language (help, explain, learn)",
-      "28 auto-triggering skills (security, testing, review, etc.)",
+      `${CAPABILITIES.skills} auto-triggering skills (security, testing, review, etc.)`,
     ],
   },
 ];
@@ -220,38 +271,6 @@ export const DIFFERENTIATORS: Differentiator[] = [
   },
 ];
 
-// --- Capability counts (verified against Python registry) ---
-
-/**
- * Counts that appear in prose and stat callouts across the
- * site. Verified against the live Python code per the
- * website-content-accuracy rule (last verified 2026-07-12,
- * attune-ai 10.4.0):
- *
- *   workflows: distinct classes in attune.workflows.discover_workflows()
- *     (D4, claim-drift-gates, 2026-07-12: the prior count used
- *     list_workflows() filtered on a truthy `stages` field, which is
- *     set on nearly every workflow — only 3 actually declare more than
- *     one stage. "Multi-stage workflows" overclaimed what the number
- *     measured; this is the honest distinct-workflow-class total.
- *     release-prep/release-gate count once — deliberate alias pair.)
- *   skills: plugin/skills/ directory count (test_skill_count)
- *   mcpTools: attune.mcp.tool_schemas get_*_tools() total
- *   templateKinds: attune.authoring.generator._ALL_TEMPLATE_NAMES length
- *   wizards: attune.wizards.list_wizards() length
- *
- * (agentTemplates / compositionPatterns were dropped 2026-06-11:
- * the registries they referenced no longer exist in that shape
- * and no page consumed them.)
- */
-export const CAPABILITIES = {
-  workflows: 21,
-  skills: 28,
-  mcpTools: 50,
-  templateKinds: 15,
-  wizards: 5,
-} as const;
-
 /**
  * @deprecated Use {@link CAPABILITIES} instead. Kept for
  * backward compatibility with any consumer that may still
@@ -288,7 +307,7 @@ export const RELIABILITY_LOOP: LoopStage[] = [
     n: "03",
     name: "Build",
     description:
-      "23 workflows: review, tests, bug prediction, refactor.",
+      `${CAPABILITIES.workflows} workflows: review, tests, bug prediction, refactor.`,
   },
   {
     n: "04",
@@ -384,7 +403,7 @@ export const PILLARS: Pillar[] = [
     tag: "AI workflows",
     title: "Specialist teams, not one prompt",
     description:
-      "23 workflows run teams of 2–6 Claude subagents to " +
+      `${CAPABILITIES.workflows} workflows run teams of 2–6 Claude subagents to ` +
       "review code, surface vulnerabilities, generate tests, and plan " +
       "refactors — with cost-tiered model routing.",
     points: [
@@ -401,7 +420,7 @@ export const PILLARS: Pillar[] = [
     title: "Answers anchored to your code",
     description:
       "Keyword + semantic retrieval keeps generated content grounded in " +
-      "your actual source. Mean faithfulness ≥ 0.97, CI-gated — drift " +
+      "your actual source. Mean faithfulness 0.97, CI-gated — drift " +
       "fails the build.",
     points: [
       "Powered by attune-rag — built in, no extra install",

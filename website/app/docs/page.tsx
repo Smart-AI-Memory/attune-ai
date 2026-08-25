@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { generateMetadata as genMeta, generateStructuredData } from '@/lib/metadata';
+import { CAPABILITIES } from '@/lib/features';
 
 export const metadata: Metadata = genMeta({
   title: 'Documentation',
@@ -20,7 +21,7 @@ const faqItems = [
   {
     question: 'How does it keep generated content from drifting?',
     answer:
-      'Retrieval grounding (powered by attune-rag, a built-in dependency) keeps generated content anchored to your actual source — mean faithfulness is at least 0.97 and CI-gated, so drift fails the build. For docs specifically, templates carry source file hashes; when code changes, staleness detection flags the affected templates so they can be regenerated automatically.',
+      'Retrieval grounding (powered by attune-rag, a built-in dependency) keeps generated content anchored to your actual source — mean faithfulness is measured at 0.97 and CI-gated, so drift fails the build. For docs specifically, templates carry source file hashes; when code changes, staleness detection flags the affected templates so they can be regenerated automatically.',
   },
   {
     question: 'Do I need attune-ai to read templates?',
@@ -165,7 +166,7 @@ export default function DocsPage() {
                   <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
                     The whole platform: spec engine, AI workflows, project
                     memory, retrieval grounding, and verification.
-                    23 workflows, 27 skills, 60 MCP tools.
+                    {CAPABILITIES.workflows} workflows, {CAPABILITIES.skills} skills, {CAPABILITIES.mcpTools} MCP tools.
                   </p>
                   <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3">
                     <span className="text-white/50">$ </span>pip install attune-ai
@@ -452,7 +453,7 @@ export default function DocsPage() {
               </h2>
               <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
                 Install from the marketplace. Progressive help, project
-                bootstrapping, and 27 skills right in your terminal.
+                bootstrapping, and {CAPABILITIES.skills} skills right in your terminal.
               </p>
 
               <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-8 mb-8">
@@ -518,9 +519,9 @@ export default function DocsPage() {
                 Workflows &amp; Skills
               </h2>
               <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
-                The build half of the loop: 23 workflows,
-                27 auto-triggering Claude Code skills,
-                and an MCP server with 60 registered tools — review, tests,
+                The build half of the loop: {CAPABILITIES.workflows} workflows,
+                {CAPABILITIES.skills} auto-triggering Claude Code skills,
+                and an MCP server with {CAPABILITIES.mcpTools} registered tools — review, tests,
                 bug prediction, refactor, and release prep.
               </p>
 
