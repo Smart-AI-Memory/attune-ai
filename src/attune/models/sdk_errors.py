@@ -19,6 +19,7 @@ from __future__ import annotations
 import logging
 import os
 import re
+import shlex
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -469,6 +470,25 @@ def capture_subprocess_failure(
         return probe_note + f"(capture-call also failed: {type(exc).__name__}: {exc})"
 
 
+def _split_string_cmd(cmd: str) -> list[str]:
+    """Split a string-valued exception ``cmd`` into argv.
+
+    Wrapping the whole command line as ``[cmd]`` makes
+    ``subprocess.run`` treat it as one executable path and report a
+    misleading not-found. POSIX lexing mangles Windows backslash
+    paths, so on Windows split in non-POSIX mode and strip the
+    quotes the lexer preserves.
+    """
+    try:
+        if os.name == "nt":
+            return [tok.strip('"') for tok in shlex.split(cmd, posix=False)]
+        return shlex.split(cmd)
+    except ValueError:
+        # Unbalanced quotes — a whitespace split still beats the
+        # single-element argv's misleading not-found diagnostic.
+        return cmd.split()
+
+
 def _last_subprocess_argv(exc: BaseException) -> list[str]:
     """Extract the failing argv from an SDK ``Exception('Command failed ...')``.
 
@@ -483,8 +503,12 @@ def _last_subprocess_argv(exc: BaseException) -> list[str]:
     1. ``exc.args[0]`` if it's already a ``list[str]`` (some SDK
        versions stash the argv there).
     2. ``exc.__cause__.cmd`` — ``subprocess.CalledProcessError``-shaped
-       wrap.
-    3. ``exc.cmd`` — direct attribute on the exception.
+       wrap. A string-valued ``cmd`` is shlex-split into argv (see
+       :func:`_split_string_cmd`) — never wrapped as ``[cmd]``, which
+       would make the re-run treat the whole line as an executable
+       path.
+    3. ``exc.cmd`` — direct attribute on the exception; same
+       string-splitting rule.
     4. Fallback: empty list — the installed claude_agent_sdk raises a
        bare ``Exception`` with the argv stored nowhere, so ``[]`` is the
        normal result. The caller's ``capture_subprocess_failure([])``
@@ -509,13 +533,13 @@ def _last_subprocess_argv(exc: BaseException) -> list[str]:
         if isinstance(cmd, list) and all(isinstance(x, str) for x in cmd):
             return cmd
         if isinstance(cmd, str):
-            return [cmd]
+            return _split_string_cmd(cmd)
 
     # Shape 3: direct .cmd on the exception
     cmd = getattr(exc, "cmd", None)
     if isinstance(cmd, list) and all(isinstance(x, str) for x in cmd):
         return cmd
     if isinstance(cmd, str):
-        return [cmd]
+        return _split_string_cmd(cmd)
 
     return []

@@ -27,3 +27,20 @@ from attune.models.sdk_errors import (  # noqa: F401
     sdk_error_from_exception,
     sdk_error_message,
 )
+
+# The re-export surface IS this module's purpose — __all__ makes that
+# explicit (and keeps scanners from reading the imports as unused).
+__all__ = [
+    "_CLASSIFIERS",
+    "_DEFAULT_BUDGET_USD",
+    "SdkErrorKind",
+    "SdkSubprocessError",
+    "_claude_health_probe_argv",
+    "_last_subprocess_argv",
+    "_sdk_error_probe_enabled",
+    "_stderr_carries_no_signal",
+    "capture_subprocess_failure",
+    "classify_subprocess_failure",
+    "sdk_error_from_exception",
+    "sdk_error_message",
+]

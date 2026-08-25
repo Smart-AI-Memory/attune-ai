@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 
 import attune.models.sdk_adapter as adapter
-from attune.models.sdk_adapter import iter_agent_messages
+from attune.models import sdk_errors
 
 
 class _FakeResultMessage:
@@ -72,7 +72,7 @@ def _patch_result_message(monkeypatch):
 
 async def _drain(query):
     """Collect every message the wrapper yields."""
-    return [m async for m in iter_agent_messages(query)]
+    return [m async for m in adapter.iter_agent_messages(query)]
 
 
 _TEARDOWN = Exception("Command failed with exit code 1")
@@ -176,6 +176,28 @@ async def test_error_result_text_upgrades_raise_to_classified_error():
     assert caught.__cause__ is _REPLACEMENT
 
 
+# Fake key, not a real credential — shaped to trip the redactor.
+_FAKE_KEY = "sk-ant-AAAAaaaa1111BBBB2222CCCC3333dddd"  # pragma: allowlist secret
+
+
+@pytest.mark.asyncio
+async def test_error_result_text_is_redacted_before_exception():
+    """A secret-shaped string in the error result never enters stderr."""
+    err = _FakeResultMessage(
+        subtype="success",
+        is_error=True,
+        result=f"{_QUOTA_TEXT}\nfailing key: {_FAKE_KEY}",
+    )
+    with pytest.raises(adapter.SdkSubprocessError) as exc_info:
+        await _drain(_FakeQuery([err], raise_after=_REPLACEMENT))
+    caught = exc_info.value
+    assert _FAKE_KEY not in caught.stderr
+    assert "sk-ant" not in caught.stderr
+    assert "<redacted>" in caught.stderr
+    # Classification still runs on the surviving prose.
+    assert caught.kind == "api_quota"
+
+
 @pytest.mark.asyncio
 async def test_org_disabled_subscription_classifies_as_auth():
     """#2227: the org-disabled subscription text classifies as auth."""
@@ -217,8 +239,6 @@ def test_sdk_error_from_exception_fast_path(monkeypatch):
     def _boom(*args, **kwargs):  # pragma: no cover - fails the test if hit
         raise AssertionError("probe must not run on the fast path")
 
-    from attune.models import sdk_errors
-
     monkeypatch.setattr(sdk_errors, "capture_subprocess_failure", _boom)
     err = adapter.SdkSubprocessError(message="m", stderr="s", kind="api_quota", original_exc=None)
     assert sdk_errors.sdk_error_from_exception(err) is err
@@ -226,8 +246,6 @@ def test_sdk_error_from_exception_fast_path(monkeypatch):
 
 def test_sdk_error_from_exception_fallback_probes(monkeypatch):
     """A bare SDK exception still goes through probe + classification."""
-    from attune.models import sdk_errors
-
     monkeypatch.setattr(sdk_errors, "capture_subprocess_failure", lambda argv: _QUOTA_TEXT)
     out = sdk_errors.sdk_error_from_exception(Exception("Command failed with exit code 1"))
     assert out.kind == "api_quota"
@@ -256,8 +274,6 @@ def test_probe_env_mirrors_sdk_child(monkeypatch):
             stdout = ""
 
         return _R()
-
-    from attune.models import sdk_errors
 
     monkeypatch.setattr(sdk_errors.subprocess, "run", _fake_run)
     sdk_errors.capture_subprocess_failure([])

@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 
 import pytest
 
+import attune.models.sdk_adapter as mod
 from attune.models.sdk_adapter import (
     AgentRunResult,
     collect_agent_output,
@@ -690,6 +691,20 @@ class TestGetMaxBudgetUsd:
         monkeypatch.setenv("ATTUNE_MAX_BUDGET_USD", "0")
         assert get_max_budget_usd("deep") is None
 
+    def test_env_var_malformed_falls_back_to_depth_default(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A non-numeric ATTUNE_MAX_BUDGET_USD falls back to the depth default."""
+        monkeypatch.setenv("ATTUNE_MAX_BUDGET_USD", "ten dollars")
+        assert get_max_budget_usd("quick") == 2.00
+
+    def test_env_var_malformed_unknown_depth_lands_on_standard(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Malformed env + unknown depth still lands on the standard default."""
+        monkeypatch.setenv("ATTUNE_MAX_BUDGET_USD", "$5")
+        assert get_max_budget_usd("unknown") == 10.00
+
 
 @pytest.mark.unit
 class TestSdkErrorMessage:
@@ -879,14 +894,10 @@ class TestGetTaskBudgetCliProbe:
 
     def setup_method(self) -> None:
         """Reset the module-level cache before each test."""
-        import attune.models.sdk_adapter as mod
-
         mod._CLI_SUPPORTS_TASK_BUDGET = None
 
     def test_returns_none_when_cli_lacks_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Given a CLI whose --help omits --task-budget, returns None."""
-        import attune.models.sdk_adapter as mod
-
         fake_help = (
             "Usage: claude [options]\n"
             "  --max-budget-usd <amount>  Max dollars\n"
@@ -910,8 +921,6 @@ class TestGetTaskBudgetCliProbe:
 
     def test_returns_budget_when_cli_supports_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Given a CLI whose --help mentions --task-budget, returns a TaskBudget."""
-        import attune.models.sdk_adapter as mod
-
         fake_help = "  --task-budget <tokens>  Token cap per task\n"
 
         def fake_run(cmd, **kwargs):
@@ -932,8 +941,6 @@ class TestGetTaskBudgetCliProbe:
 
     def test_probe_result_is_cached(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Probe runs at most once per process; subsequent calls hit cache."""
-        import attune.models.sdk_adapter as mod
-
         call_count = {"n": 0}
 
         def fake_run(cmd, **kwargs):
@@ -956,7 +963,6 @@ class TestGetTaskBudgetCliProbe:
 
     def test_probe_timeout_disables_feature(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """If the probe times out, treat the CLI as unsupported."""
-        import attune.models.sdk_adapter as mod
 
         def fake_run(cmd, **kwargs):
             raise mod.subprocess.TimeoutExpired(cmd=cmd, timeout=5)
@@ -969,8 +975,6 @@ class TestGetTaskBudgetCliProbe:
 
     def test_missing_cli_disables_feature(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """When no CLI is found anywhere, return False without probing."""
-        import attune.models.sdk_adapter as mod
-
         monkeypatch.setattr(mod.shutil, "which", lambda _: None)
         monkeypatch.setattr(mod.Path, "is_file", lambda self: False)
 

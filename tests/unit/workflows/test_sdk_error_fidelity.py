@@ -267,14 +267,47 @@ class TestLastSubprocessArgv:
 
     def test_handles_cause_cmd_as_string(self):
         """Some subprocess errors store .cmd as a single string instead
-        of a list — wrap in a single-element list."""
+        of a list — shlex-split into argv, so subprocess.run doesn't
+        treat the whole command line as one executable path."""
         called = subprocess.CalledProcessError(
             returncode=1,
             cmd="claude -p test",
         )
         wrapper = Exception("Command failed")
         wrapper.__cause__ = called
-        assert _last_subprocess_argv(wrapper) == ["claude -p test"]
+        assert _last_subprocess_argv(wrapper) == ["claude", "-p", "test"]
+
+    def test_direct_cmd_string_is_shlex_split(self, monkeypatch):
+        """Shape 3 with a string .cmd is split into argv, quotes honored.
+
+        POSIX pinned: single-quote grouping is a POSIX lexing rule, so
+        this must not float with the CI platform's real os.name.
+        """
+        from attune.models import sdk_errors
+
+        monkeypatch.setattr(sdk_errors.os, "name", "posix")
+        exc = Exception("Command failed")
+        exc.cmd = "claude -p 'hello world'"
+        assert _last_subprocess_argv(exc) == ["claude", "-p", "hello world"]
+
+    def test_string_cmd_unbalanced_quote_falls_back_to_whitespace_split(self):
+        """Unbalanced quotes must not crash extraction; whitespace-split."""
+        exc = Exception("Command failed")
+        exc.cmd = 'claude -p "unterminated'
+        assert _last_subprocess_argv(exc) == ["claude", "-p", '"unterminated']
+
+    def test_string_cmd_windows_backslash_paths_survive(self, monkeypatch):
+        """On Windows, non-POSIX lexing keeps backslash paths intact."""
+        from attune.models import sdk_errors
+
+        monkeypatch.setattr(sdk_errors.os, "name", "nt")
+        exc = Exception("Command failed")
+        exc.cmd = r'"C:\Users\dev\claude.exe" -p test'
+        assert _last_subprocess_argv(exc) == [
+            r"C:\Users\dev\claude.exe",
+            "-p",
+            "test",
+        ]
 
     def test_ignores_args_zero_when_not_list_of_str(self):
         """Don't false-positive on non-string args[0]."""
