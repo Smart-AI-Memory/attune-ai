@@ -731,12 +731,13 @@ omit = [
     # 2026-07-29 (#1569 omit-audit pass 2): their Interactive labels
     # were false — dedicated suites in tests/unit/meta_workflows/
     # measure them 99-100% keylessly.
-    # Hook scripts (run as standalone processes via Claude Code)
-    "*/hooks/scripts/evaluate_session.py",  # Standalone hook
-    "*/hooks/scripts/first_time_init.py",  # Standalone hook
-    "*/hooks/scripts/session_end.py",  # Standalone hook
-    "*/hooks/scripts/session_start.py",  # Standalone hook
-    "*/hooks/scripts/telemetry_hook.py",  # Standalone hook
+    # Hook-script entries removed 2026-08-25 (#1569 omit-audit,
+    # hooks/scripts probe): every Standalone-hook label was false.
+    # session_end.py / session_start.py no longer exist (dead
+    # entries); evaluate_session (100%), first_time_init (88%),
+    # telemetry_hook (93%), and help_freshness_nudge (91%) all
+    # measure via their EXISTING tests/unit/hooks/ suites with
+    # path-based coverage.
     # Core module stubs
     "*/core_modules/interaction.py",  # Interaction stubs
     "*/core_modules/short_term_memory.py",  # Memory stubs
@@ -759,7 +760,10 @@ omit = [
     "*/core_modules/__init__.py",  # Core modules init
     # Models main entry
     "*/models/__main__.py",  # Models CLI entry point
-    "*/hooks/scripts/help_freshness_nudge.py",  # Standalone hook script (not importable via pytest)
+    # help_freshness_nudge.py entry removed 2026-08-25 (#1569
+    # omit-audit, hooks/scripts probe): the "not importable via
+    # pytest" label was false — tests/unit/hooks/
+    # test_help_freshness_nudge.py measures it 91%.
 ]
 branch = true
 # parallel + concurrency: ensure xdist workers flush coverage data
