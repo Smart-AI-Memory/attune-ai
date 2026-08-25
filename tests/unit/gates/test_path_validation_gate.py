@@ -78,6 +78,11 @@ ALLOWLIST = frozenset(
         # user- or LLM-supplied — same class as gates/envelope.py.
         "src/attune/gates/session_ledger.py",
         "src/attune/handoff/packet.py",
+        # dirty_switch_guard writes only the constant enforcement-metrics
+        # log (~/.attune/enforcement-metrics.jsonl) — no interpolation, no
+        # user- or LLM-supplied component. Same shape and same path as
+        # worktree_path_guard below.
+        "src/attune/hooks/scripts/dirty_switch_guard.py",
         "src/attune/hooks/scripts/worktree_path_guard.py",
         "src/attune/help/feedback.py",
         "src/attune/help/generator.py",
