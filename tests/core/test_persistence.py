@@ -465,6 +465,17 @@ class TestMetricsCollector:
         conn.close()
 
         collector = MetricsCollector(db_path=db_path)
+
+        # The legacy column and its index must actually be gone — a
+        # compat workaround keeping the old schema would pass the
+        # insert below while leaving the migration undone.
+        conn = sqlite3.connect(db_path)
+        columns = [row[1] for row in conn.execute("PRAGMA table_info(metrics)")]
+        assert "empathy_level" not in columns
+        indexes = [row[1] for row in conn.execute("PRAGMA index_list(metrics)")]
+        assert "idx_user_level" not in indexes
+        conn.close()
+
         collector.record_metric(
             user_id="old_user",
             success=True,
