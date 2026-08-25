@@ -48,7 +48,7 @@ def safe_agent_operation(operation_name: str) -> Callable[[F], F]:
         @wraps(func)
         async def wrapper(self, *args, **kwargs):
             """Execute the operation with logging, timing, and error capture."""
-            start_time = time.time()
+            start_time = time.monotonic()
             agent_name = getattr(self, "name", self.__class__.__name__)
 
             logger.debug(f"[{agent_name}] Starting {operation_name}")
@@ -56,13 +56,13 @@ def safe_agent_operation(operation_name: str) -> Callable[[F], F]:
             try:
                 result = await func(self, *args, **kwargs)
 
-                elapsed = time.time() - start_time
+                elapsed = time.monotonic() - start_time
                 logger.debug(f"[{agent_name}] Completed {operation_name} in {elapsed:.2f}s")
 
                 return result
 
             except Exception as e:  # noqa: BLE001
-                elapsed = time.time() - start_time
+                elapsed = time.monotonic() - start_time
                 logger.error(f"[{agent_name}] {operation_name} failed after {elapsed:.2f}s: {e}")
 
                 # Add to audit trail if available
@@ -150,6 +150,9 @@ def retry_on_failure(
 def log_performance(threshold_seconds: float = 1.0) -> Callable[[F], F]:
     """Decorator to log slow operations.
 
+    Elapsed time is measured with ``time.monotonic()``, so a wall-clock
+    adjustment mid-call cannot distort the duration.
+
     Args:
         threshold_seconds: Log warning if operation exceeds this duration
 
@@ -167,11 +170,11 @@ def log_performance(threshold_seconds: float = 1.0) -> Callable[[F], F]:
         @wraps(func)
         async def wrapper(*args, **kwargs):
             """Time the function and log a warning if it exceeds the threshold."""
-            start_time = time.time()
+            start_time = time.monotonic()
 
             result = await func(*args, **kwargs)
 
-            elapsed = time.time() - start_time
+            elapsed = time.monotonic() - start_time
             func_name = func.__name__
 
             if elapsed > threshold_seconds:
