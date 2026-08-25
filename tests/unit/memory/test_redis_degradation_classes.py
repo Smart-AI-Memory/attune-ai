@@ -202,3 +202,99 @@ class TestNeverBlock:
         """The seam always yields a typed report, never an exception."""
         r = MemoryFeatures.classify_redis_health(env={"REDIS_URL": "redis://127.0.0.1:1/0"})
         assert isinstance(r, RedisHealthReport)
+
+
+class TestMemoryIndexHealth:
+    """`classify_memory_index_health` — PING is not the index question.
+
+    Retro item 8 (2026-08-25): a plain ``redis-server`` answers PING
+    while carrying no search module, so ``FT.CREATE`` fails, hydration
+    aborts, and recall is dark behind a server that looks healthy.
+    Verified live against both binaries before these tests were written.
+    """
+
+    ENV = {"REDIS_URL": "redis://h:6379/0"}
+
+    @staticmethod
+    def _healthy_conn(modules):
+        """Patch a healthy connection whose MODULE LIST returns `modules`."""
+        ping_client = MagicMock()
+        ping_client.ping.return_value = True
+        probe_client = MagicMock()
+        probe_client.execute_command.return_value = modules
+        return ping_client, probe_client
+
+    def test_search_module_present_stays_healthy(self):
+        ping_client, probe = self._healthy_conn([{"name": "search", "ver": 20811}])
+        with (
+            patch.object(redis_lib.Redis, "from_url", return_value=ping_client),
+            patch("attune.memory.recall_redis.connect_recall_redis", return_value=probe),
+        ):
+            r = MemoryFeatures.classify_memory_index_health(env=self.ENV)
+        assert r.state is RedisHealthState.HEALTHY
+
+    def test_no_search_module_is_degraded_search(self):
+        ping_client, probe = self._healthy_conn([{"name": "bf", "ver": 1}])
+        with (
+            patch.object(redis_lib.Redis, "from_url", return_value=ping_client),
+            patch("attune.memory.recall_redis.connect_recall_redis", return_value=probe),
+        ):
+            r = MemoryFeatures.classify_memory_index_health(env=self.ENV)
+        assert r.state is RedisHealthState.DEGRADED_SEARCH
+        assert "no search module" in r.detail
+        assert "redis-stack-server" in r.detail
+
+    def test_empty_module_list_is_degraded_search(self):
+        """Plain redis-server reports no modules at all."""
+        ping_client, probe = self._healthy_conn([])
+        with (
+            patch.object(redis_lib.Redis, "from_url", return_value=ping_client),
+            patch("attune.memory.recall_redis.connect_recall_redis", return_value=probe),
+        ):
+            r = MemoryFeatures.classify_memory_index_health(env=self.ENV)
+        assert r.state is RedisHealthState.DEGRADED_SEARCH
+
+    def test_connection_level_failure_passes_through_unprobed(self):
+        """A dead connection keeps its own verdict — not degraded_search."""
+        exc = redis_lib.exceptions.ConnectionError("Connection refused")
+        with patch.object(redis_lib.Redis, "from_url", return_value=_client_raising(exc)):
+            r = MemoryFeatures.classify_memory_index_health(env=self.ENV)
+        assert r.state is RedisHealthState.DEGRADED_CONNECTIVITY
+
+    def test_probe_failure_falls_back_to_connection_verdict(self):
+        """P15 never-block: a raising probe must not manufacture an error.
+
+        Pins the broad except that raised the ratchet baseline to 2.
+        """
+        ping_client = MagicMock()
+        ping_client.ping.return_value = True
+        with (
+            patch.object(redis_lib.Redis, "from_url", return_value=ping_client),
+            patch(
+                "attune.memory.recall_redis.connect_recall_redis",
+                side_effect=RuntimeError("boom"),
+            ),
+        ):
+            r = MemoryFeatures.classify_memory_index_health(env=self.ENV)
+        assert r.state is RedisHealthState.HEALTHY
+
+    def test_check_memory_index_warns_loudly_once(self, caplog):
+        """degraded_search never self-heals, so it joins the loud classes."""
+        ping_client, probe = self._healthy_conn([])
+        with (
+            patch.object(redis_lib.Redis, "from_url", return_value=ping_client),
+            patch("attune.memory.recall_redis.connect_recall_redis", return_value=probe),
+            caplog.at_level(logging.WARNING, logger=FEATURES_LOGGER),
+        ):
+            assert MemoryFeatures.check_memory_index() is False
+            assert MemoryFeatures.check_memory_index() is False
+        assert sum("degraded_search" in r.getMessage() for r in caplog.records) == 1
+
+    def test_check_redis_is_unaffected_by_a_missing_module(self):
+        """Plain Redis stays valid for key/value use — the gate is separate."""
+        ping_client, probe = self._healthy_conn([])
+        with (
+            patch.object(redis_lib.Redis, "from_url", return_value=ping_client),
+            patch("attune.memory.recall_redis.connect_recall_redis", return_value=probe),
+        ):
+            assert MemoryFeatures.check_redis() is True

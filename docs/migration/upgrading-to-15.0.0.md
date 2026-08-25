@@ -104,6 +104,24 @@ If you were using the level to select among your own workflows, keep
 your own mapping — the framework no longer has an opinion about what
 1–5 means.
 
+### Heads-up: `BaseWorkflow.analyze()` is not settled
+
+`attune.plugins.base.BaseWorkflow` still declares an abstract
+`analyze()` that the engine does not call — this class is for
+plugin-internal analyzers you invoke yourself, and workflows
+discovered via entry points subclass
+`attune.workflows.base.BaseWorkflow` (whose entry point is
+`execute()`) instead.
+
+That dead abstract is known and is **expected to change in a future
+major** (tracked in
+[#2238](https://github.com/Smart-AI-Memory/attune-ai/issues/2238); the
+15.0.0 manifest deferred it deliberately). It does not affect your
+15.0.0 upgrade — the signature above is what 15.0.0 ships — but if you
+are writing a new plugin today, prefer
+`attune.workflows.base.BaseWorkflow` for anything the engine should
+run, and expect the plugin-internal contract to be revised.
+
 ## 4. Two things that migrate themselves
 
 **agents.md frontmatter.** A leftover `empathy_level:` key parses as
