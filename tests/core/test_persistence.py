@@ -405,7 +405,6 @@ class TestMetricsCollector:
 
         collector.record_metric(
             user_id="test_user",
-            empathy_level=4,
             success=True,
             response_time_ms=250.5,
             metadata={"bottlenecks": 3},
@@ -428,7 +427,6 @@ class TestMetricsCollector:
         for i in range(10):
             collector.record_metric(
                 user_id="test_user",
-                empathy_level=4,
                 success=(i % 5 != 0),  # 8 successes, 2 failures (i=0,5 are failures)
                 response_time_ms=200.0 + i * 10,
             )
@@ -441,28 +439,40 @@ class TestMetricsCollector:
         assert stats["first_use"] is not None
         assert stats["last_use"] is not None
 
-    def test_get_user_stats_by_level(self, temp_dir):
-        """Test statistics broken down by empathy level"""
-        db_path = str(Path(temp_dir) / "metrics.db")
+    def test_legacy_level_column_migrated(self, temp_dir):
+        """A pre-15.0.0 DB with the empathy_level column still accepts inserts."""
+        db_path = str(Path(temp_dir) / "legacy.db")
+        conn = sqlite3.connect(db_path)
+        conn.execute(
+            """
+            CREATE TABLE metrics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                empathy_level INTEGER NOT NULL,
+                success BOOLEAN NOT NULL,
+                response_time_ms REAL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                metadata TEXT
+            )
+            """
+        )
+        conn.execute("CREATE INDEX idx_user_level ON metrics(user_id, empathy_level)")
+        conn.execute(
+            "INSERT INTO metrics (user_id, empathy_level, success, response_time_ms)"
+            " VALUES ('old_user', 3, 1, 100.0)"
+        )
+        conn.commit()
+        conn.close()
+
         collector = MetricsCollector(db_path=db_path)
+        collector.record_metric(
+            user_id="old_user",
+            success=True,
+            response_time_ms=120.0,
+        )
 
-        # Record metrics for different levels
-        for level in [1, 2, 3, 4, 5]:
-            for _ in range(level * 2):  # More operations at higher levels
-                collector.record_metric(
-                    user_id="test_user",
-                    empathy_level=level,
-                    success=True,
-                    response_time_ms=100.0,
-                )
-
-        stats = collector.get_user_stats("test_user")
-
-        # Verify level breakdown
-        assert "by_level" in stats
-        assert "level_4" in stats["by_level"]
-        assert stats["by_level"]["level_4"]["operations"] == 8  # 4 * 2
-        assert stats["by_level"]["level_5"]["operations"] == 10  # 5 * 2
+        stats = collector.get_user_stats("old_user")
+        assert stats["total_operations"] == 2
 
     def test_get_nonexistent_user_stats(self, temp_dir):
         """Test getting stats for nonexistent user returns empty"""
@@ -481,7 +491,6 @@ class TestMetricsCollector:
 
         collector.record_metric(
             user_id="test_user",
-            empathy_level=4,
             success=True,
             response_time_ms=300.0,
             metadata={"intervention_count": 5, "risk_level": "high"},

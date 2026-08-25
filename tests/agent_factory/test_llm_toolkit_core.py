@@ -88,7 +88,6 @@ class TestAgentConfig:
         assert config.system_prompt is None
         assert config.temperature == 0.7
         assert config.max_tokens == 4096
-        assert config.empathy_level == 4
         assert config.use_patterns is True
         assert config.track_costs is True
         assert config.memory_enabled is True
@@ -105,7 +104,6 @@ class TestAgentConfig:
             capabilities=[AgentCapability.WEB_SEARCH, AgentCapability.RETRIEVAL],
             temperature=0.3,
             max_tokens=8192,
-            empathy_level=5,
         )
 
         assert config.name == "custom_agent"
@@ -117,7 +115,6 @@ class TestAgentConfig:
         assert AgentCapability.WEB_SEARCH in config.capabilities
         assert config.temperature == 0.3
         assert config.max_tokens == 8192
-        assert config.empathy_level == 5
 
     def test_resilience_options(self):
         """Test resilience configuration options."""

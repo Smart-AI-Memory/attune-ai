@@ -14,8 +14,7 @@ class MetricsCollector:
     """Collect and persist Attune AI metrics
 
     Tracks:
-    - Empathy level usage
-    - Success rates by level
+    - Success rates
     - Average response times
     - Trust trajectory trends
     """
@@ -40,7 +39,6 @@ class MetricsCollector:
             CREATE TABLE IF NOT EXISTS metrics (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id TEXT NOT NULL,
-                empathy_level INTEGER NOT NULL,
                 success BOOLEAN NOT NULL,
                 response_time_ms REAL,
                 timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -49,10 +47,12 @@ class MetricsCollector:
         """,
         )
 
+        self._migrate_legacy_level_column(cursor)
+
         cursor.execute(
             """
-            CREATE INDEX IF NOT EXISTS idx_user_level
-            ON metrics(user_id, empathy_level)
+            CREATE INDEX IF NOT EXISTS idx_user
+            ON metrics(user_id)
         """,
         )
 
@@ -66,10 +66,50 @@ class MetricsCollector:
         conn.commit()
         conn.close()
 
+    @staticmethod
+    def _migrate_legacy_level_column(cursor: sqlite3.Cursor) -> None:
+        """Drop the pre-15.0.0 ``empathy_level`` column if present.
+
+        Databases created before 15.0.0 have a NOT NULL
+        ``empathy_level`` column that would reject the new
+        level-free inserts.
+        """
+        columns = [row[1] for row in cursor.execute("PRAGMA table_info(metrics)")]
+        if "empathy_level" not in columns:
+            return
+
+        cursor.execute("DROP INDEX IF EXISTS idx_user_level")
+        try:
+            cursor.execute("ALTER TABLE metrics DROP COLUMN empathy_level")
+        except sqlite3.OperationalError:
+            # SQLite < 3.35 has no DROP COLUMN — rebuild the table.
+            cursor.execute(
+                """
+                CREATE TABLE metrics_new (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id TEXT NOT NULL,
+                    success BOOLEAN NOT NULL,
+                    response_time_ms REAL,
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    metadata TEXT
+                )
+            """,
+            )
+            cursor.execute(
+                """
+                INSERT INTO metrics_new (
+                    id, user_id, success, response_time_ms, timestamp, metadata
+                )
+                SELECT id, user_id, success, response_time_ms, timestamp, metadata
+                FROM metrics
+            """,
+            )
+            cursor.execute("DROP TABLE metrics")
+            cursor.execute("ALTER TABLE metrics_new RENAME TO metrics")
+
     def record_metric(
         self,
         user_id: str,
-        empathy_level: int,
         success: bool,
         response_time_ms: float,
         metadata: dict | None = None,
@@ -78,7 +118,6 @@ class MetricsCollector:
 
         Args:
             user_id: User identifier
-            empathy_level: 1-5 empathy level used
             success: Whether the operation succeeded
             response_time_ms: Response time in milliseconds
             metadata: Optional additional data
@@ -87,7 +126,6 @@ class MetricsCollector:
             >>> collector = MetricsCollector()
             >>> collector.record_metric(
             ...     user_id="user123",
-            ...     empathy_level=4,
             ...     success=True,
             ...     response_time_ms=250.5,
             ...     metadata={"bottlenecks_predicted": 3}
@@ -100,12 +138,11 @@ class MetricsCollector:
         cursor.execute(
             """
             INSERT INTO metrics (
-                user_id, empathy_level, success, response_time_ms, metadata
-            ) VALUES (?, ?, ?, ?, ?)
+                user_id, success, response_time_ms, metadata
+            ) VALUES (?, ?, ?, ?)
         """,
             (
                 user_id,
-                empathy_level,
                 success,
                 response_time_ms,
                 json.dumps(metadata) if metadata else None,
@@ -160,30 +197,6 @@ class MetricsCollector:
                 "last_use": None,
             }
 
-        # Get per-level breakdown
-        cursor.execute(
-            """
-            SELECT
-                empathy_level,
-                COUNT(*) as operations,
-                SUM(CASE WHEN success THEN 1 ELSE 0 END) as successes
-            FROM metrics
-            WHERE user_id = ?
-            GROUP BY empathy_level
-            ORDER BY empathy_level
-        """,
-            (user_id,),
-        )
-
-        level_stats = {}
-        for level_row in cursor.fetchall():
-            level = level_row["empathy_level"]
-            ops = level_row["operations"]
-            level_stats[f"level_{level}"] = {
-                "operations": ops,
-                "success_rate": level_row["successes"] / ops if ops > 0 else 0.0,
-            }
-
         conn.close()
 
         return {
@@ -192,5 +205,4 @@ class MetricsCollector:
             "avg_response_time_ms": row["avg_response_time"],
             "first_use": row["first_use"],
             "last_use": row["last_use"],
-            "by_level": level_stats,
         }

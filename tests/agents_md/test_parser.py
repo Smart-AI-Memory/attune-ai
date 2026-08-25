@@ -64,7 +64,6 @@ Design systems.
         assert "Read" in config.tools
         assert "Grep" in config.tools
         assert "Glob" in config.tools
-        assert config.empathy_level == 5
         assert config.memory_enabled is True
         assert config.pattern_learning is True
         assert config.temperature == 0.5
@@ -203,7 +202,6 @@ File-based agent.
         content = """---
 name: valid-agent
 model: capable
-empathy_level: 4
 ---
 Valid agent.
 """
@@ -255,10 +253,11 @@ Test.
             errors = parser.validate_file(f.name)
             assert any("model" in e.lower() for e in errors)
 
-    def test_validate_file_invalid_empathy_level(self, parser):
-        """Test validation catches invalid empathy level."""
+    def test_validate_file_ignores_legacy_empathy_level(self, parser):
+        """A legacy empathy_level key is ignored, not a validation error."""
         content = """---
 name: test
+model: capable
 empathy_level: 10
 ---
 Test.
@@ -272,7 +271,7 @@ Test.
             f.flush()
 
             errors = parser.validate_file(f.name)
-            assert any("empathy_level" in e for e in errors)
+            assert not any("empathy_level" in e for e in errors)
 
     def test_extra_contains_source_and_raw(self, parser):
         """Test that extra contains source_file and raw_frontmatter."""
@@ -385,18 +384,16 @@ Test.
 
         assert any("provider" in e.lower() for e in errors)
 
-    def test_validate_file_empathy_level_not_an_integer(self, parser, tmp_path):
-        """Test validation catches a non-integer empathy_level (lines 272-273)."""
-        agent_file = tmp_path / "bad_empathy.md"
-        agent_file.write_text(
+    def test_parse_content_ignores_legacy_empathy_level(self, parser):
+        """A legacy empathy_level key does not reach the config model."""
+        config = parser.parse_content(
             """---
 name: test
-empathy_level: not_a_number
+model: capable
+empathy_level: 4
 ---
 Test.
 """
         )
 
-        errors = parser.validate_file(str(agent_file))
-
-        assert any("empathy_level must be an integer" in e for e in errors)
+        assert not hasattr(config, "empathy_level")

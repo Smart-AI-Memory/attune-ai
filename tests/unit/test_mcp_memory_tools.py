@@ -1,8 +1,7 @@
-"""Unit tests for MCP memory, level, and context tools.
+"""Unit tests for MCP memory and context tools.
 
-Tests the 8 new MCP tools added to AttuneMCPServer:
+Tests the MCP tools on AttuneMCPServer:
 - memory_store, memory_retrieve, memory_search, memory_forget
-- attune_get_level, attune_set_level
 - context_get, context_set
 
 Copyright 2025 Smart AI Memory, LLC
@@ -24,15 +23,15 @@ def server():
 
 
 class TestToolRegistration:
-    """Verify all tools are registered (49 core + 6 optional redis plugin)."""
+    """Verify all tools are registered (48 core + 6 optional redis plugin)."""
 
     def test_tools_list_returns_at_least_core_count(self, server: AttuneMCPServer):
-        """Core tools (50) are always registered; attune-redis adds 6 more."""
+        """Core tools (48) are always registered; attune-redis adds 6 more."""
         tools = server.get_tool_list()
         tool_names = {t["name"] for t in tools}
 
-        # 50 core tools must always be present (incl. chart_render_widget)
-        assert len(tools) >= 50
+        # 48 core tools must always be present (incl. chart_render_widget)
+        assert len(tools) >= 48
 
         # When attune-redis plugin is installed, all 6 redis tools are present
         redis_tools = {
@@ -46,7 +45,7 @@ class TestToolRegistration:
         if redis_tools.issubset(tool_names):
             # attune-redis also registers 5 session_memory_* tools when the
             # core session stash is importable (conditional registration).
-            expected = 61 if "session_memory_status" in tool_names else 56
+            expected = 59 if "session_memory_status" in tool_names else 54
             assert (
                 len(tools) == expected
             ), f"Expected {expected} tools with redis plugin, got {len(tools)}"
@@ -61,12 +60,6 @@ class TestToolRegistration:
             "memory_forget",
         }
         assert expected_memory_tools.issubset(tool_names)
-
-    def test_attune_tools_registered(self, server: AttuneMCPServer):
-        """Test that attune level tools are in the tool list."""
-        tool_names = {t["name"] for t in server.get_tool_list()}
-        assert "attune_get_level" in tool_names
-        assert "attune_set_level" in tool_names
 
     def test_context_tools_registered(self, server: AttuneMCPServer):
         """Test that context tools are in the tool list."""
@@ -83,76 +76,6 @@ class TestToolRegistration:
         assert "classification" in schema["properties"]
         assert schema["properties"]["classification"]["enum"] == ["PUBLIC", "INTERNAL", "SENSITIVE"]
         assert schema["required"] == ["key", "value"]
-
-    def test_attune_set_level_schema(self, server: AttuneMCPServer):
-        """Test that attune_set_level has correct input schema."""
-        tool = server.tools["attune_set_level"]
-        schema = tool["input_schema"]
-        assert schema["properties"]["level"]["minimum"] == 1
-        assert schema["properties"]["level"]["maximum"] == 5
-        assert schema["required"] == ["level"]
-
-
-class TestAttuneTools:
-    """Test attune level get/set operations."""
-
-    @pytest.mark.asyncio
-    async def test_attune_get_level_default(self, server: AttuneMCPServer):
-        """Test that default level is 3 (Proactive)."""
-        result = await server.call_tool("attune_get_level", {})
-        assert result["success"] is True
-        assert result["level"] == 3
-        assert result["name"] == "Proactive"
-
-    @pytest.mark.asyncio
-    async def test_attune_set_level_valid(self, server: AttuneMCPServer):
-        """Test setting level to valid values 1-5."""
-        for level in range(1, 6):
-            result = await server.call_tool("attune_set_level", {"level": level})
-            assert result["success"] is True
-            assert result["current_level"] == level
-
-    @pytest.mark.asyncio
-    async def test_attune_set_level_invalid_high(self, server: AttuneMCPServer):
-        """Test that attune_set_level rejects level > 5."""
-        result = await server.call_tool("attune_set_level", {"level": 10})
-        assert result["success"] is False
-        assert "1 and 5" in result["error"]
-
-    @pytest.mark.asyncio
-    async def test_attune_set_level_invalid_low(self, server: AttuneMCPServer):
-        """Test that attune_set_level rejects level < 1."""
-        result = await server.call_tool("attune_set_level", {"level": 0})
-        assert result["success"] is False
-
-    @pytest.mark.asyncio
-    async def test_attune_set_level_invalid_string(self, server: AttuneMCPServer):
-        """Test that attune_set_level rejects non-integer input."""
-        result = await server.call_tool("attune_set_level", {"level": "high"})
-        assert result["success"] is False
-
-    @pytest.mark.asyncio
-    async def test_attune_set_returns_previous_level(self, server: AttuneMCPServer):
-        """Test that attune_set_level returns the previous level."""
-        # Default is 3
-        result = await server.call_tool("attune_set_level", {"level": 5})
-        assert result["previous_level"] == 3
-        assert result["current_level"] == 5
-
-    @pytest.mark.asyncio
-    async def test_attune_level_names(self, server: AttuneMCPServer):
-        """Test that all levels have correct names."""
-        expected_names = {
-            1: "Reactive",
-            2: "Guided",
-            3: "Proactive",
-            4: "Anticipatory",
-            5: "Systems",
-        }
-        for level, name in expected_names.items():
-            await server.call_tool("attune_set_level", {"level": level})
-            result = await server.call_tool("attune_get_level", {})
-            assert result["name"] == name
 
 
 class TestContextTools:

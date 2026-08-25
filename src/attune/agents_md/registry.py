@@ -250,27 +250,6 @@ class AgentRegistry:
         role = role.lower()
         return [config for config in self._agents.values() if config.role.lower() == role]
 
-    def get_by_empathy_level(
-        self,
-        min_level: int = 1,
-        max_level: int = 5,
-    ) -> list[UnifiedAgentConfig]:
-        """Get agents within an empathy level range.
-
-        Args:
-            min_level: Minimum empathy level (inclusive)
-            max_level: Maximum empathy level (inclusive)
-
-        Returns:
-            List of matching agent configs
-
-        """
-        return [
-            config
-            for config in self._agents.values()
-            if min_level <= config.empathy_level <= max_level
-        ]
-
     def get_summary(self) -> dict[str, Any]:
         """Get a summary of registered agents.
 
@@ -279,15 +258,11 @@ class AgentRegistry:
 
         """
         by_role = {}
-        by_level = {}
         by_tier = {}
 
         for config in self._agents.values():
             role = config.role
             by_role[role] = by_role.get(role, 0) + 1
-
-            level = config.empathy_level
-            by_level[level] = by_level.get(level, 0) + 1
 
             tier = (
                 config.model_tier.value
@@ -300,7 +275,6 @@ class AgentRegistry:
             "total_agents": len(self._agents),
             "agent_names": self.list_agents(),
             "by_role": by_role,
-            "by_empathy_level": by_level,
             "by_model_tier": by_tier,
             "load_paths": [str(p) for p in self._load_paths],
         }

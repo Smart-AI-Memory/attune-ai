@@ -33,10 +33,9 @@ class PluginMetadata:
 class BaseWorkflow(ABC):
     """Base class for plugin-contributed analysis workflows.
 
-    .. deprecated:: 14.2
-        This contract predates the engine's workflow runtime and is slated
-        for replacement in 15.0.0 (#2238). The engine does NOT run
-        ``analyze()``: workflows discovered via entry points must subclass
+    Note:
+        The engine does NOT run ``analyze()``: workflows discovered via
+        entry points must subclass
         :class:`attune.workflows.base.BaseWorkflow` (whose entry point is
         ``execute()``). Use this class only for plugin-internal analyzers
         invoked by your own plugin code.
@@ -50,7 +49,6 @@ class BaseWorkflow(ABC):
         self,
         name: str,
         domain: str,
-        empathy_level: int | None = None,
         category: str | None = None,
     ):
         """Initialize a workflow
@@ -58,15 +56,11 @@ class BaseWorkflow(ABC):
         Args:
             name: Human-readable workflow name
             domain: Domain this workflow belongs to (e.g., 'software', 'healthcare')
-            empathy_level: Optional legacy level declaration (1-5). No longer
-                required; retained for backward compatibility while its fate
-                is decided for 15.0.0.
             category: Optional category within domain
 
         """
         self.name = name
         self.domain = domain
-        self.empathy_level = 1 if empathy_level is None else empathy_level
         self.category = category
         self.logger = logging.getLogger(f"workflow.{domain}.{name}")
 
@@ -76,8 +70,7 @@ class BaseWorkflow(ABC):
 
         This is the main entry point for all workflows. The context structure
         is domain-specific but the return format should follow a standard pattern.
-        Subclasses must implement domain-specific analysis logic that aligns with
-        the workflow's empathy level.
+        Subclasses must implement domain-specific analysis logic.
 
         Args:
             context: dict[str, Any]
@@ -90,13 +83,12 @@ class BaseWorkflow(ABC):
         Returns:
             dict[str, Any]
                 Analysis results dictionary containing:
-                - 'issues': list[dict] - Current issues found (Levels 1-3 analysis)
-                - 'predictions': list[dict] - Future issues predicted (Level 4 analysis)
+                - 'issues': list[dict] - Current issues found
+                - 'predictions': list[dict] - Future issues predicted
                 - 'recommendations': list[dict] - Actionable next steps
                 - 'patterns': list[str] - Patterns detected for the pattern library
                 - 'confidence': float - Confidence score between 0.0 and 1.0
                 - 'workflow': str - Name of the workflow that performed analysis
-                - 'empathy_level': int - Empathy level of this analysis (1-5)
                 - 'timestamp': str - ISO format timestamp of analysis
 
         Raises:
@@ -159,14 +151,10 @@ class BaseWorkflow(ABC):
 
         return True
 
-    def get_empathy_level(self) -> int:
-        """Get the empathy level this workflow operates at"""
-        return self.empathy_level
-
     def contribute_patterns(self, analysis_result: dict[str, Any]) -> dict[str, Any]:
         """Extract patterns from analysis for the shared pattern library.
 
-        This enables cross-domain learning (Level 5 Systems Empathy).
+        This enables cross-domain learning.
 
         Args:
             analysis_result: Result from analyze()
@@ -388,14 +376,13 @@ class BasePlugin(ABC):
 
         # Create temporary instance to get metadata
         # (workflows should be lightweight to construct)
-        # Subclasses provide their own defaults for name, domain, empathy_level
+        # Subclasses provide their own defaults for name and domain
         temp_instance = workflow_class()  # type: ignore[call-arg]
 
         return {
             "id": workflow_id,
             "name": temp_instance.name,
             "domain": temp_instance.domain,
-            "empathy_level": temp_instance.empathy_level,
             "category": temp_instance.category,
             "required_context": temp_instance.get_required_context(),
         }

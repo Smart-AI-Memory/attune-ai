@@ -68,7 +68,6 @@ class UnifiedAgentConfig(BaseModel):
             name="researcher",
             role="researcher",
             model_tier=ModelTier.CAPABLE,
-            empathy_level=4
         )
 
     """
@@ -88,14 +87,6 @@ class UnifiedAgentConfig(BaseModel):
         description="Specific model ID to use (overrides tier)",
     )
     provider: Provider = Field(default=Provider.ANTHROPIC, description="LLM provider")
-
-    # Attune AI features
-    empathy_level: int = Field(
-        default=4,
-        ge=1,
-        le=5,
-        description="Empathy level (1=Basic, 4=Anticipatory, 5=Transformative)",
-    )
 
     # Feature flags
     memory_enabled: bool = Field(default=True, description="Enable conversation memory")

@@ -444,7 +444,6 @@ class TestMetricsCollector:
         # Record metric
         collector.record_metric(
             user_id="user_1",
-            empathy_level=4,
             success=True,
             response_time_ms=250.5,
             metadata={"test": "data"},
@@ -478,10 +477,10 @@ class TestMetricsCollector:
         collector = MetricsCollector(db_path=str(db_file))
 
         # Record multiple metrics
-        collector.record_metric("stats_user", 3, True, 100.0)
-        collector.record_metric("stats_user", 4, True, 200.0)
-        collector.record_metric("stats_user", 3, False, 150.0)
-        collector.record_metric("stats_user", 5, True, 300.0)
+        collector.record_metric("stats_user", True, 100.0)
+        collector.record_metric("stats_user", True, 200.0)
+        collector.record_metric("stats_user", False, 150.0)
+        collector.record_metric("stats_user", True, 300.0)
 
         # Get stats
         stats = collector.get_user_stats("stats_user")
@@ -491,38 +490,6 @@ class TestMetricsCollector:
         assert stats["avg_response_time_ms"] == 187.5  # (100+200+150+300)/4
         assert stats["first_use"] is not None
         assert stats["last_use"] is not None
-
-    def test_get_user_stats_by_level(self, tmp_path):
-        """Test that stats include per-level breakdown."""
-        db_file = tmp_path / "test.db"
-        collector = MetricsCollector(db_path=str(db_file))
-
-        # Record metrics at different empathy levels
-        collector.record_metric("level_user", 3, True, 100.0)
-        collector.record_metric("level_user", 3, True, 120.0)
-        collector.record_metric("level_user", 4, True, 200.0)
-        collector.record_metric("level_user", 4, False, 180.0)
-        collector.record_metric("level_user", 5, True, 300.0)
-
-        stats = collector.get_user_stats("level_user")
-
-        # Verify by_level breakdown
-        assert "by_level" in stats
-        assert "level_3" in stats["by_level"]
-        assert "level_4" in stats["by_level"]
-        assert "level_5" in stats["by_level"]
-
-        # Level 3: 2 operations, 2 successes
-        assert stats["by_level"]["level_3"]["operations"] == 2
-        assert stats["by_level"]["level_3"]["success_rate"] == 1.0
-
-        # Level 4: 2 operations, 1 success
-        assert stats["by_level"]["level_4"]["operations"] == 2
-        assert stats["by_level"]["level_4"]["success_rate"] == 0.5
-
-        # Level 5: 1 operation, 1 success
-        assert stats["by_level"]["level_5"]["operations"] == 1
-        assert stats["by_level"]["level_5"]["success_rate"] == 1.0
 
     def test_record_metric_with_metadata(self, tmp_path):
         """Test recording metric with custom metadata."""
@@ -537,7 +504,6 @@ class TestMetricsCollector:
 
         collector.record_metric(
             user_id="meta_user",
-            empathy_level=4,
             success=True,
             response_time_ms=250.0,
             metadata=metadata,
@@ -559,9 +525,9 @@ class TestMetricsCollector:
         collector = MetricsCollector(db_path=str(db_file))
 
         # Record metrics for two different users
-        collector.record_metric("user_a", 3, True, 100.0)
-        collector.record_metric("user_a", 4, True, 150.0)
-        collector.record_metric("user_b", 3, False, 200.0)
+        collector.record_metric("user_a", True, 100.0)
+        collector.record_metric("user_a", True, 150.0)
+        collector.record_metric("user_b", False, 200.0)
 
         # Get stats for user_a
         stats_a = collector.get_user_stats("user_a")

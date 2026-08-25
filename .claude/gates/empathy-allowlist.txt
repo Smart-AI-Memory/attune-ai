@@ -16,18 +16,14 @@ plugin/help/generated/faqs/mixin-classes-inherit-self-workspace-root-at-runtime-
 plugin/help/generated/notes/configuration.md
 plugin/help/generated/notes/memory.md
 plugin/help/generated/quickstarts/configuration.md
-plugin/help/generated/quickstarts/skill-memory-and-context.md
 plugin/help/generated/references/configuration.md
 plugin/help/generated/references/skill-attune-hub.md
-plugin/help/generated/references/skill-memory-and-context.md
 plugin/help/generated/tasks/configuration.md
-plugin/help/generated/tasks/use-memory-and-context.md
 plugin/help/generated/tips/configuration.md
 plugin/help/generated/troubleshooting/configuration.md
 plugin/help/generated/warnings/configuration.md
 plugin/help/generated/warnings/mcp-tool-renames-propagate-to-skill-docs.md
 plugin/skills/attune-hub/SKILL.md
-plugin/skills/memory-and-context/SKILL.md
 # internal
 src/attune/__init__.py
 src/attune/agent_factory/__init__.py
@@ -38,7 +34,6 @@ src/attune/agent_factory/base.py
 src/attune/agent_factory/factory.py
 src/attune/agent_factory/framework.py
 src/attune/agents_md/parser.py
-src/attune/agents_md/registry.py
 src/attune/commands/agents/security-reviewer.md
 src/attune/config/__init__.py
 src/attune/config/agent_config.py
@@ -100,7 +95,6 @@ src/attune/pattern_library.py
 src/attune/patterns/debugging/all_patterns.json
 src/attune/patterns/debugging/workflow_20260107_1770825e.json
 src/attune/platform_utils.py
-src/attune/plugins/base.py
 src/attune/plugins/registry.py
 src/attune/project_index/models.py
 src/attune/redis_config.py

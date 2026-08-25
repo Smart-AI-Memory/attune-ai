@@ -55,7 +55,6 @@ class NativeAgent(BaseAgent):
             return {
                 "output": "",
                 "metadata": {
-                    "level": self.config.empathy_level,
                     "model": self.model,
                     "skipped": True,
                 },
@@ -79,14 +78,13 @@ class NativeAgent(BaseAgent):
             )
             output = response.get("response", "")
             metadata = {
-                "level": response.get("level", self.config.empathy_level),
                 "model": response.get("model", self.model),
                 "patterns_used": response.get("patterns_used", []),
             }
         else:
             # Fallback to simple response
             output = f"[{self.name}] I would process: {user_input}"
-            metadata = {"level": self.config.empathy_level, "model": self.model}
+            metadata = {"model": self.model}
 
         # Track conversation
         self._conversation_history.append({"role": "user", "content": user_input})
@@ -219,7 +217,6 @@ class NativeAdapter(BaseAdapter):
                 self._llm = EmpathyLLM(
                     provider=self.provider,
                     api_key=self.api_key,
-                    target_level=config.empathy_level,
                 )
             except ImportError:
                 pass

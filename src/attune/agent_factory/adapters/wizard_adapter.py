@@ -317,9 +317,6 @@ class WizardAdapter(BaseAdapter):
         wizard_name = getattr(wizard, "name", wizard.__class__.__name__)
         agent_name = name or wizard_name.lower().replace(" ", "_")
 
-        # Get wizard empathy level
-        wizard_level = getattr(wizard, "level", 4)
-
         # Parse role
         if isinstance(role, str):
             try:
@@ -333,7 +330,6 @@ class WizardAdapter(BaseAdapter):
             role=role,
             description=f"Agent wrapping {wizard_name}",
             model_tier=model_tier,
-            empathy_level=wizard_level,
             framework_options={"wizard": wizard},
             **kwargs,
         )

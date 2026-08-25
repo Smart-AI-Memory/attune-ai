@@ -159,7 +159,10 @@ class TestMCPServerRename:
 
 
 class TestPluginBaseWorkflowContract:
-    def test_empathy_level_no_longer_required(self):
+    def test_contract_is_level_free(self):
+        """15.0.0: the plugin contract carries no empathy_level (D2/D7)."""
+        import pytest
+
         from attune.plugins.base import BaseWorkflow
 
         class Minimal(BaseWorkflow):
@@ -170,17 +173,8 @@ class TestPluginBaseWorkflowContract:
                 return ["x"]
 
         wf = Minimal(name="m", domain="software")
-        assert wf.empathy_level == 1
+        assert not hasattr(wf, "empathy_level")
+        assert not hasattr(wf, "get_empathy_level")
 
-    def test_explicit_empathy_level_is_kept(self):
-        from attune.plugins.base import BaseWorkflow
-
-        class Minimal(BaseWorkflow):
-            async def analyze(self, context):
-                return {}
-
-            def get_required_context(self):
-                return ["x"]
-
-        wf = Minimal(name="m", domain="software", empathy_level=4)
-        assert wf.empathy_level == 4
+        with pytest.raises(TypeError):
+            Minimal(name="m", domain="software", empathy_level=4)

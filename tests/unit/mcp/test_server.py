@@ -23,11 +23,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from attune.mcp.server import (
-    ATTUNE_LEVEL_DESCRIPTIONS,
-    ATTUNE_LEVEL_NAMES,
-    _get_default_user_id,
-)
+from attune.mcp.server import _get_default_user_id
 
 # -- Helpers ---------------------------------------------------------
 
@@ -161,10 +157,6 @@ class TestServerInit:
         server = _make_server()
         assert isinstance(server.prompts, dict)
         assert len(server.prompts) > 0
-
-    def test_default_attune_level(self) -> None:
-        server = _make_server()
-        assert server._attune_level == 3
 
 
 # -- _register_tools -------------------------------------------------
@@ -379,48 +371,6 @@ class TestGetPromptMessages:
             server.get_prompt_messages("nonexistent", {})
 
 
-# -- attune level handlers -------------------------------------------
-
-
-class TestAttuneLevelHandlers:
-    """Tests for attune_get_level / attune_set_level."""
-
-    @pytest.mark.asyncio
-    async def test_get_level_returns_default(self) -> None:
-        server = _make_server()
-        result = await server._handle_attune_get_level()
-        assert result["success"] is True
-        assert result["level"] == 3
-        assert result["name"] == "Proactive"
-
-    @pytest.mark.asyncio
-    async def test_set_level_valid(self) -> None:
-        server = _make_server()
-        result = await server._handle_attune_set_level({"level": 5})
-        assert result["success"] is True
-        assert result["previous_level"] == 3
-        assert result["current_level"] == 5
-        assert result["name"] == "Systems"
-
-    @pytest.mark.asyncio
-    async def test_set_level_invalid_too_high(self) -> None:
-        server = _make_server()
-        result = await server._handle_attune_set_level({"level": 6})
-        assert result["success"] is False
-
-    @pytest.mark.asyncio
-    async def test_set_level_invalid_too_low(self) -> None:
-        server = _make_server()
-        result = await server._handle_attune_set_level({"level": 0})
-        assert result["success"] is False
-
-    @pytest.mark.asyncio
-    async def test_set_level_invalid_type(self) -> None:
-        server = _make_server()
-        result = await server._handle_attune_set_level({"level": "high"})
-        assert result["success"] is False
-
-
 # -- context handlers ------------------------------------------------
 
 
@@ -443,16 +393,3 @@ class TestContextHandlers:
         assert result["success"] is True
         assert result["value"] is None
         assert result["found"] is False
-
-
-# -- Constants -------------------------------------------------------
-
-
-class TestConstants:
-    """Tests for module-level constants."""
-
-    def test_level_names_covers_1_to_5(self) -> None:
-        assert set(ATTUNE_LEVEL_NAMES.keys()) == {1, 2, 3, 4, 5}
-
-    def test_level_descriptions_covers_1_to_5(self) -> None:
-        assert set(ATTUNE_LEVEL_DESCRIPTIONS.keys()) == {1, 2, 3, 4, 5}

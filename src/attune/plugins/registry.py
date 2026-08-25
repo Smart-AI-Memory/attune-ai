@@ -213,29 +213,6 @@ class PluginRegistry:
 
         return plugin.get_workflow_info(workflow_id)
 
-    def find_workflows_by_level(self, empathy_level: int) -> list[dict]:
-        """Find all workflows operating at a specific empathy level.
-
-        Args:
-            empathy_level: Target empathy level (1-5)
-
-        Returns:
-            List of workflow info dictionaries
-
-        """
-        if not self._auto_discovered:
-            self.auto_discover()
-
-        results = []
-        for plugin_name, plugin in self._plugins.items():
-            for workflow_id in plugin.list_workflows():
-                info = plugin.get_workflow_info(workflow_id)
-                if info and info.get("empathy_level") == empathy_level:
-                    info["plugin"] = plugin_name
-                    results.append(info)
-
-        return results
-
     def find_workflows_by_domain(self, domain: str) -> list[dict]:
         """Find all workflows for a specific domain.
 
@@ -273,11 +250,6 @@ class PluginRegistry:
 
         total_workflows = sum(len(plugin.list_workflows()) for plugin in self._plugins.values())
 
-        # Count workflows by level
-        workflows_by_level = {}
-        for level in range(1, 6):
-            workflows_by_level[f"level_{level}"] = len(self.find_workflows_by_level(level))
-
         return {
             "total_plugins": len(self._plugins),
             "total_workflows": total_workflows,
@@ -290,7 +262,6 @@ class PluginRegistry:
                 }
                 for name, plugin in self._plugins.items()
             ],
-            "workflows_by_level": workflows_by_level,
         }
 
 

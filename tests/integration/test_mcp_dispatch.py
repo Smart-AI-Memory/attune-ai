@@ -46,21 +46,6 @@ class TestDispatchRouting:
         assert result.get("success") is False or "error" in result
 
     @pytest.mark.asyncio
-    async def test_attune_get_level_dispatches_correctly(self, server):
-        """attune_get_level is a pure-memory handler — no workflow, no mock needed."""
-        result = await server.call_tool("attune_get_level", {})
-        assert "level" in result
-        assert isinstance(result["level"], int)
-        assert 1 <= result["level"] <= 5
-
-    @pytest.mark.asyncio
-    async def test_attune_set_then_get_level(self, server):
-        """set_level → get_level round-trip exercises two handlers in sequence."""
-        await server.call_tool("attune_set_level", {"level": 4})
-        result = await server.call_tool("attune_get_level", {})
-        assert result["level"] == 4
-
-    @pytest.mark.asyncio
     async def test_context_set_and_get(self, server):
         """context_set / context_get round-trip through the same server instance."""
         await server.call_tool("context_set", {"key": "project", "value": "attune-ai"})
@@ -92,7 +77,7 @@ class TestRateLimiting:
         """When the rate limiter denies, _dispatch_tool returns an error without
         calling the handler."""
         with patch.object(server._rate_limiter, "check", return_value=False):
-            result = await server.call_tool("attune_get_level", {})
+            result = await server.call_tool("context_get", {"key": "x"})
 
         assert "error" in result
         assert "Rate limit" in result["error"]
@@ -136,9 +121,9 @@ class TestWorkflowDispatch:
         returns a structured error instead of propagating the exception."""
         with patch.dict(
             server._tool_handlers,
-            {"attune_get_level": AsyncMock(side_effect=RuntimeError("boom"))},
+            {"context_get": AsyncMock(side_effect=RuntimeError("boom"))},
         ):
-            result = await server.call_tool("attune_get_level", {})
+            result = await server.call_tool("context_get", {"key": "x"})
 
         assert result.get("success") is False
         assert "error" in result

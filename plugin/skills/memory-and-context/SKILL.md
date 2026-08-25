@@ -1,7 +1,7 @@
 ---
 name: memory-and-context
 description: "Store, retrieve, search, and manage persistent memory across sessions. Triggers on: store memory, save this, retrieve, forget, manage memory, context, pattern."
-argument-hint: "<operation: store|retrieve|search|forget|empathy>"
+argument-hint: "<operation: store|retrieve|search|forget>"
 disable-model-invocation: true
 ---
 
@@ -23,7 +23,7 @@ If the MCP call fails, fall back to:
 Before running, ask:
 
 1. **Operation**: "What do you need? Store, retrieve,
-   search, forget, or adjust empathy level?"
+   search, or forget?"
 2. **Key/query**: "What key or search term?"
 3. **Classification** (store only): "PUBLIC, INTERNAL,
    or SENSITIVE?"
@@ -37,13 +37,11 @@ tool:
 - Retrieve: `memory_retrieve(key)`
 - Search: `memory_search(query, pattern_type)`
 - Forget: `memory_forget(key, scope)`
-- Get level: `attune_get_level()`
-- Set level: `attune_set_level(level)`
 
 attune-ai's memory system sits ABOVE Anthropic's native
 memory features. It provides security-classified storage,
-cross-agent pattern sharing, empathy-level modulation,
-and a structured pattern lifecycle that native memory
+cross-agent pattern sharing, and a structured pattern
+lifecycle that native memory
 does not offer. Use the decision table below to determine
 which system to use for a given task.
 
@@ -59,13 +57,11 @@ which system to use for a given task.
 | "Classify this finding as SENSITIVE" | -- | Security pipeline |
 | "Coordinate memory across 3 parallel agents" | -- | Redis pub/sub |
 | "Promote this pattern after 5 successful uses" | -- | Pattern lifecycle |
-| "Adjust response depth based on user context" | -- | Empathy modulation |
 | "Track what this project uses" | Auto Memory | -- |
 
 The rule is simple: if Anthropic's native memory handles
 it, use that. If you need classification, cross-agent
-sharing, empathy modulation, or pattern lifecycle
-management, use attune-ai.
+sharing, or pattern lifecycle management, use attune-ai.
 
 ## Memory Operations
 
@@ -144,51 +140,6 @@ Remove data from memory.
   - `"session"` -- Short-term session storage only.
   - `"persistent"` -- Long-term persistent storage only.
   - `"all"` -- Both layers. This is the default.
-
-## Empathy Levels
-
-attune-ai uses 5 empathy levels that modulate response
-depth and proactivity. Each level maps to a named class
-in the framework.
-
-| Level | Class Name | Behavior |
-|-------|------------|----------|
-| 1 | Level1Reactive | Respond when asked. Minimal proactive guidance. Answer the question, nothing more. |
-| 2 | Level2Guided | Collaborative exploration with clarifying questions. Offer options but let the user choose. |
-| 3 | Level3Proactive | Act before being asked. Suggest improvements, flag issues, and offer next steps. |
-| 4 | Level4Anticipatory | Predict future needs. Prepare for likely next steps. Surface relevant context before it is requested. |
-| 5 | Level5Systems | Build structures that help at scale. Design for growth. Create reusable patterns, automation, and frameworks. |
-
-Level 2-3 is appropriate for most development tasks.
-Reserve Level 4-5 for architecture work, release
-planning, or explicit user request.
-
-### attune_get_level
-
-**Deprecated — removed in 15.0.0** (the interaction-level
-concept is retired; release-15-manifest D2).
-
-Returns the current empathy level (integer 1-5) for
-this session.
-
-**Parameters:** None.
-
-### attune_set_level
-
-**Deprecated — removed in 15.0.0** (the interaction-level
-concept is retired; release-15-manifest D2).
-
-Set the empathy level for this session.
-
-**Parameters:**
-
-- **level** (required): Integer from 1 to 5.
-
-**Example:**
-
-```python
-attune_set_level(level=3)  # Switch to proactive mode
-```
 
 ## Context Operations
 
@@ -324,8 +275,6 @@ coordination pauses until reconnection.
   multi-agent coordination.
 - DO NOT store conversation history -- native Session
   Memory handles this.
-- DO NOT set empathy level higher than needed --
-  Level 2-3 is appropriate for most tasks.
 - DO NOT over-classify data as SENSITIVE -- use PUBLIC
   unless the data genuinely contains PII or
   credentials.
