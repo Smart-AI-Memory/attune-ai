@@ -319,7 +319,7 @@ _BASELINE: dict[str, int] = {
     "src/attune/wizards/decomposer.py": 1,
     "src/attune/wizards/registry.py": 3,
     "src/attune/workflows/__init__.py": 2,
-    "src/attune/workflows/agent_sdk_adapter.py": 4,
+    "src/attune/models/sdk_adapter.py": 4,
     "src/attune/workflows/base.py": 1,
     "src/attune/workflows/bug_predict.py": 1,
     "src/attune/workflows/code_review.py": 1,

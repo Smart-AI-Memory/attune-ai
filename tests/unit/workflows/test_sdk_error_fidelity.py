@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import subprocess
 
-from attune.workflows.agent_sdk_adapter import (
+from attune.models.sdk_errors import (
     SdkSubprocessError,
     _last_subprocess_argv,
     capture_subprocess_failure,
@@ -195,7 +195,7 @@ class TestCaptureSubprocessFailure:
         `claude` runs."""
         monkeypatch.setenv("ATTUNE_SDK_ERROR_PROBE", "1")
         monkeypatch.setattr(
-            "attune.workflows.sdk_errors._claude_health_probe_argv",
+            "attune.models.sdk_errors._claude_health_probe_argv",
             lambda: ["sh", "-c", "echo '401 Invalid authentication credentials' 1>&2; exit 1"],
         )
         out = capture_subprocess_failure([])
@@ -209,7 +209,7 @@ class TestCaptureSubprocessFailure:
         branch)."""
         monkeypatch.setenv("ATTUNE_SDK_ERROR_PROBE", "1")
         monkeypatch.setattr(
-            "attune.workflows.sdk_errors._claude_health_probe_argv",
+            "attune.models.sdk_errors._claude_health_probe_argv",
             lambda: ["sh", "-c", "exit 7"],
         )
         out = capture_subprocess_failure([])
@@ -217,7 +217,7 @@ class TestCaptureSubprocessFailure:
 
     def test_health_probe_argv_invokes_claude(self):
         """The fallback probe is a minimal `claude -p` invocation."""
-        from attune.workflows.agent_sdk_adapter import _claude_health_probe_argv
+        from attune.models.sdk_errors import _claude_health_probe_argv
 
         argv = _claude_health_probe_argv()
         assert argv[0] == "claude" or argv[0].endswith("/claude")

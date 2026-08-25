@@ -36,6 +36,7 @@ from typing import TYPE_CHECKING
 
 from attune.llm.fable_call import create_with_fable
 from attune.model_tiers import ModelRefusalError, resolve_model
+from attune.models.sdk_adapter import iter_agent_messages, sdk_isolation_kwargs
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -491,14 +492,6 @@ async def _query_subscription(*, system: str, user_message: str, model: str) -> 
         ResultMessage,
         TextBlock,
         query,
-    )
-
-    # Lazy: attune.models must not import attune.workflows at module
-    # import time (layering) — the adapter is only needed on the
-    # subscription route.
-    from attune.workflows.agent_sdk_adapter import (  # noqa: PLC0415
-        iter_agent_messages,
-        sdk_isolation_kwargs,
     )
 
     options = ClaudeAgentOptions(

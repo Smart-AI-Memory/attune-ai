@@ -39,7 +39,7 @@ async def test_returns_empty_dict_for_none_session_id() -> None:
 @pytest.mark.asyncio
 async def test_returns_empty_dict_when_sdk_lacks_list_subagents() -> None:
     """Graceful degradation when running against an older SDK."""
-    from attune.workflows import agent_sdk_adapter
+    from attune.models import sdk_adapter as agent_sdk_adapter
 
     with (
         patch.object(agent_sdk_adapter.claude_agent_sdk, "list_subagents", None, create=True),
@@ -57,7 +57,7 @@ async def test_returns_empty_dict_when_sdk_lacks_list_subagents() -> None:
 @pytest.mark.asyncio
 async def test_returns_empty_dict_when_sdk_attrs_missing() -> None:
     """Helper must handle SDKs that don't expose the symbols at all."""
-    from attune.workflows import agent_sdk_adapter
+    from attune.models import sdk_adapter as agent_sdk_adapter
 
     # delattr semantics via patch; `create=True` needed because we're
     # deleting attrs that must never exist during this test.
@@ -80,7 +80,7 @@ async def test_returns_empty_dict_when_sdk_attrs_missing() -> None:
 @pytest.mark.asyncio
 async def test_happy_path_extracts_assistant_text() -> None:
     """Full flow: list two subagents, each with mixed message types."""
-    from attune.workflows import agent_sdk_adapter
+    from attune.models import sdk_adapter as agent_sdk_adapter
 
     messages_by_id = {
         "agent-A": [
@@ -130,7 +130,7 @@ async def test_happy_path_extracts_assistant_text() -> None:
 @pytest.mark.asyncio
 async def test_individual_subagent_failure_does_not_block_others() -> None:
     """If one agent's get_subagent_messages raises, the others must still surface."""
-    from attune.workflows import agent_sdk_adapter
+    from attune.models import sdk_adapter as agent_sdk_adapter
 
     def fake_list(session_id: str, directory: str | None = None) -> list[str]:
         return ["agent-broken", "agent-ok"]
@@ -158,7 +158,7 @@ async def test_individual_subagent_failure_does_not_block_others() -> None:
 @pytest.mark.asyncio
 async def test_list_subagents_failure_returns_empty() -> None:
     """A failure on the list call degrades to an empty result, not a raise."""
-    from attune.workflows import agent_sdk_adapter
+    from attune.models import sdk_adapter as agent_sdk_adapter
 
     def fake_list(session_id: str, directory: str | None = None) -> list[str]:
         raise FileNotFoundError("sessions dir missing")
@@ -172,7 +172,7 @@ async def test_list_subagents_failure_returns_empty() -> None:
 @pytest.mark.asyncio
 async def test_extracts_plain_string_content() -> None:
     """Some SDK payloads expose `content` as a bare string rather than a block list."""
-    from attune.workflows import agent_sdk_adapter
+    from attune.models import sdk_adapter as agent_sdk_adapter
 
     def fake_list(session_id: str, directory: str | None = None) -> list[str]:
         return ["agent-str"]
@@ -197,7 +197,7 @@ async def test_extracts_plain_string_content() -> None:
 @pytest.mark.asyncio
 async def test_skips_subagents_with_no_assistant_text() -> None:
     """A subagent whose messages are all user/tool-use contributes no key."""
-    from attune.workflows import agent_sdk_adapter
+    from attune.models import sdk_adapter as agent_sdk_adapter
 
     def fake_list(session_id: str, directory: str | None = None) -> list[str]:
         return ["agent-noisy", "agent-empty"]
