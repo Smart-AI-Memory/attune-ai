@@ -176,42 +176,49 @@ export function useTelemetryData(
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchTelemetry = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Build query parameters
-      const params = new URLSearchParams();
-      if (since) {
-        params.set('since', since.toISOString());
-      }
-      if (workflowName) {
-        params.set('workflow', workflowName);
-      }
-      if (limit) {
-        params.set('limit', limit.toString());
-      }
-
-      // Fetch from API
-      const response = await fetch(`/api/telemetry?${params.toString()}`);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const stats: TelemetryStats = await response.json();
-      setData(stats);
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Unknown error'));
-    } finally {
-      setLoading(false);
+  const fetchTelemetry = useCallback(() => {
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (since) {
+      params.set('since', since.toISOString());
     }
+    if (workflowName) {
+      params.set('workflow', workflowName);
+    }
+    if (limit) {
+      params.set('limit', limit.toString());
+    }
+
+    // Fetch from API; state updates happen in the promise callbacks once
+    // the response arrives, never synchronously
+    return fetch(`/api/telemetry?${params.toString()}`)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((stats: TelemetryStats) => {
+        setData(stats);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err : new Error('Unknown error'));
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [workflowName, since, limit]);
 
-  // Initial fetch
+  const refresh = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    void fetchTelemetry();
+  }, [fetchTelemetry]);
+
+  // Initial fetch (loading already starts true, so no state reset needed here)
   useEffect(() => {
-    fetchTelemetry();
+    void fetchTelemetry();
   }, [fetchTelemetry]);
 
   // Auto-refresh
@@ -219,16 +226,16 @@ export function useTelemetryData(
     if (refreshInterval <= 0) return;
 
     const intervalId = setInterval(() => {
-      fetchTelemetry();
+      refresh();
     }, refreshInterval);
 
     return () => clearInterval(intervalId);
-  }, [refreshInterval, fetchTelemetry]);
+  }, [refreshInterval, refresh]);
 
   return {
     data,
     loading,
     error,
-    refresh: fetchTelemetry,
+    refresh,
   };
 }

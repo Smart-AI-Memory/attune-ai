@@ -25,56 +25,56 @@ interface SavingsBarChartProps {
   className?: string;
 }
 
+// Format currency
+const formatCurrency = (value: number) => `$${value.toFixed(4)}`;
+
+// Color based on savings percentage
+const getColor = (percent: number) => {
+  if (percent >= 60) return '#10b981'; // Green
+  if (percent >= 40) return '#3b82f6'; // Blue
+  if (percent >= 20) return '#f59e0b'; // Amber
+  return '#ef4444'; // Red
+};
+
+// Custom tooltip; recharts injects active/payload/label into the content element
+const CustomTooltip = ({
+  active,
+  label,
+  workflows,
+}: {
+  active?: boolean;
+  label?: string;
+  workflows: WorkflowSavings[];
+}) => {
+  if (!active) return null;
+
+  const workflow = workflows.find((d) => d.name === label);
+  if (!workflow) return null;
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+      <p className="font-semibold text-gray-900 mb-2">{label}</p>
+      <div className="space-y-1 text-sm">
+        <p className="text-gray-600">
+          Actual Cost: <span className="font-medium text-indigo-600">{formatCurrency(workflow.cost)}</span>
+        </p>
+        <p className="text-gray-600">
+          Baseline: <span className="font-medium text-gray-500">{formatCurrency(workflow.baseline)}</span>
+        </p>
+        <p className="text-gray-600">
+          Savings: <span className="font-medium text-green-600">{formatCurrency(workflow.savings)}</span>
+        </p>
+        <p className="text-gray-600">
+          Savings %: <span className="font-medium text-green-600">{workflow.savingsPercent.toFixed(0)}%</span>
+        </p>
+      </div>
+    </div>
+  );
+};
+
 export default function SavingsBarChart({ data, className = '' }: SavingsBarChartProps) {
   // Sort by savings percentage descending
   const sortedData = [...data].sort((a, b) => b.savingsPercent - a.savingsPercent);
-
-  // Format currency
-  const formatCurrency = (value: number) => `$${value.toFixed(4)}`;
-
-  // Color based on savings percentage
-  const getColor = (percent: number) => {
-    if (percent >= 60) return '#10b981'; // Green
-    if (percent >= 40) return '#3b82f6'; // Blue
-    if (percent >= 20) return '#f59e0b'; // Amber
-    return '#ef4444'; // Red
-  };
-
-  // Custom tooltip
-  const CustomTooltip = ({
-    active,
-    payload,
-    label,
-  }: {
-    active?: boolean;
-    payload?: Array<{ value: number; name: string }>;
-    label?: string;
-  }) => {
-    if (!active || !payload || !payload.length) return null;
-
-    const workflow = sortedData.find((d) => d.name === label);
-    if (!workflow) return null;
-
-    return (
-      <div className="bg-white border border-gray-200 rounded-lg shadow-lg p-3">
-        <p className="font-semibold text-gray-900 mb-2">{label}</p>
-        <div className="space-y-1 text-sm">
-          <p className="text-gray-600">
-            Actual Cost: <span className="font-medium text-indigo-600">{formatCurrency(workflow.cost)}</span>
-          </p>
-          <p className="text-gray-600">
-            Baseline: <span className="font-medium text-gray-500">{formatCurrency(workflow.baseline)}</span>
-          </p>
-          <p className="text-gray-600">
-            Savings: <span className="font-medium text-green-600">{formatCurrency(workflow.savings)}</span>
-          </p>
-          <p className="text-gray-600">
-            Savings %: <span className="font-medium text-green-600">{workflow.savingsPercent.toFixed(0)}%</span>
-          </p>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${className}`}>
@@ -101,7 +101,7 @@ export default function SavingsBarChart({ data, className = '' }: SavingsBarChar
               axisLine={{ stroke: '#e5e7eb' }}
               width={75}
             />
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip workflows={sortedData} />} />
             <Legend
               wrapperStyle={{ paddingTop: '10px' }}
               formatter={(value) => (

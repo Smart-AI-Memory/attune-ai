@@ -51,13 +51,6 @@ const eslintConfig = [
       "no-throw-literal": "error",
       "no-useless-catch": "error",
 
-      // React-Compiler-era rules new in eslint-config-next 16 flag
-      // pre-existing shipped patterns (theme/localStorage hydration,
-      // initial-fetch effects); warn until those sites are refactored
-      "react-hooks/set-state-in-effect": "warn",
-      "react-hooks/immutability": "warn",
-      "react-hooks/static-components": "warn",
-
       // TypeScript strict rules
       "@typescript-eslint/no-unused-vars": ["error", {
         argsIgnorePattern: "^_",

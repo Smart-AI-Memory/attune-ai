@@ -22,34 +22,35 @@ export default function WizardPlayground({ category }: WizardPlaygroundProps) {
   const [isLoadingWizards, setIsLoadingWizards] = useState(true);
   const [error, setError] = useState('');
 
+  // isLoadingWizards starts true, and state updates happen in the promise
+  // callbacks once the response arrives — nothing synchronous in the effect
+  const fetchWizards = () =>
+    fetch('/api/wizards')
+      .then((response) => response.json())
+      .then((data) => {
+        let allWizards = data.wizards || [];
+
+        // Filter by category if specified
+        if (category) {
+          allWizards = allWizards.filter((w: Wizard) => w.category === category);
+        }
+
+        setWizards(allWizards);
+        setError('');
+      })
+      .catch((err: unknown) => {
+        console.error('Error fetching wizards:', err);
+        setError('Failed to load wizards. Backend may be unavailable.');
+      })
+      .finally(() => {
+        setIsLoadingWizards(false);
+      });
+
   // Fetch wizards on component mount
   useEffect(() => {
-    fetchWizards();
+    void fetchWizards();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category]);
-
-  const fetchWizards = async () => {
-    setIsLoadingWizards(true);
-    try {
-      const response = await fetch('/api/wizards');
-      const data = await response.json();
-
-      let allWizards = data.wizards || [];
-
-      // Filter by category if specified
-      if (category) {
-        allWizards = allWizards.filter((w: Wizard) => w.category === category);
-      }
-
-      setWizards(allWizards);
-      setError('');
-    } catch (err) {
-      console.error('Error fetching wizards:', err);
-      setError('Failed to load wizards. Backend may be unavailable.');
-    } finally {
-      setIsLoadingWizards(false);
-    }
-  };
 
   const executeWizard = async () => {
     if (!selectedWizard || !inputData.trim()) {
