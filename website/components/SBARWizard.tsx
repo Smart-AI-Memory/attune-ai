@@ -167,26 +167,34 @@ export default function SBARWizard() {
 
   const currentStepConfig = SBAR_STEPS[currentStep - 1];
 
-  // Initialize wizard on mount
-  useEffect(() => {
-    startWizard();
-  }, []);
+  // State updates happen in the promise callbacks once the response
+  // arrives, never synchronously
+  const initializeWizardSession = () =>
+    fetch('/api/wizards/sbar/start', { method: 'POST' })
+      .then((response) => response.json())
+      .then((data) => {
+        setWizardId(data.data?.wizard_session?.wizard_id || data.wizard_id || `local_${Date.now()}`);
+        setCurrentStep(1);
+      })
+      .catch(() => {
+        // Use local session if API unavailable
+        setWizardId(`local_${Date.now()}`);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
 
   const startWizard = async () => {
     setIsLoading(true);
     setError('');
-    try {
-      const response = await fetch('/api/wizards/sbar/start', { method: 'POST' });
-      const data = await response.json();
-      setWizardId(data.data?.wizard_session?.wizard_id || data.wizard_id || `local_${Date.now()}`);
-      setCurrentStep(1);
-    } catch {
-      // Use local session if API unavailable
-      setWizardId(`local_${Date.now()}`);
-    } finally {
-      setIsLoading(false);
-    }
+    await initializeWizardSession();
   };
+
+  // Initialize wizard on mount (isLoading/error already hold their reset
+  // values here, so the session setup runs without the startWizard resets)
+  useEffect(() => {
+    void initializeWizardSession();
+  }, []);
 
   const updateFormData = (section: keyof SbarData, value: string) => {
     setFormData(prev => ({ ...prev, [section]: value }));
