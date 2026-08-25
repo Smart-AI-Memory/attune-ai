@@ -3,6 +3,9 @@
 **Status:** approved (2026-08-24) — merged as the major's scope
 document (#2262); D2 RATIFIED same day (Option B — `empathy_level`
 dies with the framework), so no gating decision remains open.
+**Amended 2026-08-25:** D5 inverts the timing (ship BEFORE
+2026-09-01 — the onboarding cohort is a class that starts on
+15.0.0); D6 records passenger 1 as already shipped in 14.0.0.
 **Slug:** `release-15-manifest`
 **Provenance:** several pre-authorized breaking changes were
 assembling toward the next major with no single document scoping
@@ -10,25 +13,25 @@ it — the exceptions-removal hold (chair, 2026-08-22), issue #2238's
 breaking half, and the #2243 migration question. This manifest is a
 scope document, not implementation.
 
-## Timing constraint (chair, recorded verbatim)
+## Timing constraint (D5 — supersedes the original D4 text)
 
-> the major must NOT ship before mid-to-late September 2026.
-> attune-ai's first external user begins onboarding 2026-09-01 and
-> a stable 14.x during his first weeks is worth more than the
-> architecture.
+**Ship BEFORE 2026-09-01.** The onboarding cohort is a class that
+starts working on attune-ai 2026-09-01, and the chair ruled
+(2026-08-25) that the class starts on 15.0.0 — the major ships
+before they arrive rather than breaking mid-course. The original
+D4 constraint (verbatim in [decisions.md](decisions.md)) read the
+onboarding as a lone user best served by weeks of stable 14.x; D5
+inverts it.
 
 ## Passengers
 
-### 1. `attune.exceptions` removal (first passenger — pre-authorized)
+### 1. `attune.exceptions` removal — ✅ ALREADY SHIPPED (D6)
 
-Done on branch `claude/eager-mendeleev-3352e2` (92a3714b7, `feat!:
-remove the legacy attune.exceptions hierarchy`); chair
-PRE-AUTHORIZED into the next major 2026-08-22 (D1). Branch state
-verified 2026-08-24: exists locally, 1 commit ahead of the
-merge-base, and `git merge-tree` against current `origin/main`
-shows two content conflicts — `CHANGELOG.md` and
-`src/attune/__init__.py` — both mechanical (version-churn overlap),
-not structural. Rebase at boarding time.
+Merged as PR #2177 (`093cd7acd`) and shipped in 14.0.0;
+`src/attune/exceptions.py` is absent from `origin/main` (verified
+2026-08-25). The D1 pre-authorization was discharged by that
+merge. Nothing boards for this item; the parked branch
+`claude/eager-mendeleev-3352e2` is superseded.
 
 ### 2. Empathy-framework excision remainder — breaking half (#2238)
 
@@ -86,28 +89,26 @@ unblocks #2238's breaking half.
   the adapter split (PR #2253, MERGED 2026-08-24). Only if a
   public import path must move does a slice of it board the major.
 
-## Deprecation story (14.x pre-work, so 15.0.0 removes rather than surprises)
+## Deprecation story — MOOT per D5 (2026-08-25)
 
-Land in 14.x, each with a `DeprecationWarning`:
+The 14.x warning window protected existing external consumers;
+telemetry signal is ~0 and the class starts fresh on 15.0.0, so
+the window is dropped. State at ruling time: items 1 and 2
+(rename+alias, dual-read discovery) and the level-tool warnings
+had already landed in 14.x and simply ride until their 15.0.0
+removal; item 3's old-contract instantiation warning was never
+built and is dropped rather than built.
 
-1. `AttuneMCPServer` rename with `EmpathyMCPServer` alias.
-2. Dual-read entry-point discovery: `attune.workflows` alongside
-   `empathy.workflows`; keep `attune_framework.plugins` legacy
-   read; delete the never-read `empathy_framework.plugins`
-   declaration (removable in 14.x — nothing reads it).
-3. The replacement plugin `BaseWorkflow` contract published
-   alongside the old one (old contract warns on instantiation) —
-   per D2, level-free signature; `attune_get_level`/
-   `attune_set_level` also warn in 14.x ahead of their 15.0.0
-   deletion.
-4. `attune.exceptions` needs no 14.x shim — the removal branch is
-   the pre-authorized cutover itself.
+## Sequencing (per D5)
 
-## Sequencing
-
-1. 14.x: #2253 ✅ merged → #2239 layering → deprecation-story items
-   1–3.
-2. D2 ✅ ruled 2026-08-24 (Option B) — #2238's breaking half is
-   unblocked.
-3. 15.0.0 (not before mid-to-late September 2026): board passenger
-   1 (rebase), passenger 2 including the D2 level removal.
+1. Record D5/D6 (this amendment).
+2. #2238's breaking half, all in the 15.0.0 window: the D2
+   `empathy_level` end-to-end removal (incl.
+   `attune_get_level`/`attune_set_level` deletion and the
+   level-free plugin `BaseWorkflow` contract), the
+   `EmpathyMCPServer` alias removal, and entry-point
+   standardization on `attune.*` (drop the `empathy.workflows`
+   read and the legacy plugin groups).
+3. Release prep + release-audit sitting + tag/publish, complete
+   BEFORE 2026-09-01. #2239 layering does not board unless a
+   public import path must move.
