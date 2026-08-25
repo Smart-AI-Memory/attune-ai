@@ -179,6 +179,31 @@ def test_session_stash_round_trip():
         be.close()
 
 
+def _wait_until_searchable(backend, query, marker, timeout_s=30.0):
+    """Poll ``backend``'s own namespace until ``marker`` is searchable.
+
+    AMS indexes long-term memories on a background task, so a write is
+    acknowledged before it is findable. The production readback is
+    deliberately short (it runs inside a Stop hook), which makes it a
+    poor gate for a test on a loaded runner — this polls to the
+    property the test needs instead of to a latency budget.
+
+    Uses ``time.monotonic`` so a wall-clock adjustment mid-poll cannot
+    end the loop early or hang it.
+
+    Returns:
+        The matching record, or None if it never appeared.
+    """
+    deadline = time.monotonic() + timeout_s
+    while True:
+        for record in backend.search(query, limit=20):
+            if marker in (record.get("text") or ""):
+                return record
+        if time.monotonic() >= deadline:
+            return None
+        time.sleep(1)
+
+
 def test_search_is_namespace_isolated():
     """A namespace-scoped search must EXCLUDE other namespaces' records.
 
@@ -210,22 +235,28 @@ def test_search_is_namespace_isolated():
         )
     )
     try:
-        assert (
-            be_a.remember(f"{marker_a}: {shared}", memory_id=marker_a, topics=["type:note"]) is True
-        )
-        assert (
-            be_b.remember(f"{marker_b}: {shared}", memory_id=marker_b, topics=["type:note"]) is True
-        )
+        # `remember` confirms with a readback bounded at ~6.3 s so it can run
+        # inside a Stop hook; under a loaded parallel run AMS indexing can
+        # exceed that and return False for a write that lands moments later.
+        # The return value is kept for diagnosis, but searchability — polled
+        # below — is what this test actually needs.
+        ack_a = be_a.remember(f"{marker_a}: {shared}", memory_id=marker_a, topics=["type:note"])
+        ack_b = be_b.remember(f"{marker_b}: {shared}", memory_id=marker_b, topics=["type:note"])
 
-        # Wait until A's own record is indexed/searchable from A's namespace.
-        hit_a = None
-        for _ in range(15):
-            results_a = be_a.search(shared, limit=20)
-            hit_a = next((r for r in results_a if marker_a in (r.get("text") or "")), None)
-            if hit_a is not None:
-                break
-            time.sleep(1)
-        assert hit_a is not None, f"A's own record not searchable from A for {marker_a!r}"
+        # BOTH records must be searchable in their OWN namespace before the
+        # isolation assertion means anything. Confirming only A would let a
+        # never-indexed B pass vacuously: "B's marker is absent from A" is
+        # trivially true when B was never written.
+        hit_a = _wait_until_searchable(be_a, shared, marker_a)
+        assert hit_a is not None, (
+            f"A's own record not searchable from A for {marker_a!r} " f"(remember returned {ack_a})"
+        )
+        hit_b = _wait_until_searchable(be_b, shared, marker_b)
+        assert hit_b is not None, (
+            f"B's own record not searchable from B for {marker_b!r} "
+            f"(remember returned {ack_b}) — without this the isolation "
+            f"assertion below would pass vacuously"
+        )
 
         # Isolation: B's marker must NOT surface in A's search, even though the
         # shared text would rank B's record highly if namespaces leaked.
