@@ -33,11 +33,16 @@ passes a level.
 The alias was deprecated in 14.x and is removed. The class itself is
 unchanged — only the old name went away.
 
-```python
-# before
-from attune.mcp import EmpathyMCPServer
+Before:
 
-# after
+<!-- doc-import-skip: 15.0.0-removed API, shown for migration -->
+```python
+from attune.mcp import EmpathyMCPServer
+```
+
+After:
+
+```python
 from attune.mcp import AttuneMCPServer
 ```
 
