@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [15.0.0] - 2026-08-26
+
 15.0.0 finishes the Empathy-framework excision begun in 9.0.0: the
 public `empathy_level` surface, the `EmpathyMCPServer` alias, and the
 legacy entry-point groups are all removed. CLI, plugin, and MCP users
