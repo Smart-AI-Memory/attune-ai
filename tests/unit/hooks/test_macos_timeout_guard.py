@@ -92,6 +92,44 @@ def test_non_bash_tool_ignored():
     assert _run("timeout 30 pytest", tool="Write").returncode == 0
 
 
+class TestRedosRegression:
+    """CodeQL `py/redos` (high) on the first draft — alert 185.
+
+    The env-assignment group offered quoted alternatives alongside
+    `\\S*`, which also matches a quoted string, so `""` was matchable
+    two ways inside a repetition. CodeQL named the shape exactly:
+    input starting `&A=` with many repetitions of `""\\tA=`.
+    """
+
+    def test_pathological_input_returns_promptly(self):
+        """The exact shape CodeQL named must not blow up.
+
+        Bounded generously (2 s) to separate REGIMES — linear vs
+        exponential — not to measure speed; the pre-fix pattern did not
+        finish this input in any practical time. Measured with
+        `time.monotonic` so a clock adjustment cannot end it early.
+        """
+        import time
+
+        evil = "&A=" + '""\tA=' * 40
+        start = time.monotonic()
+        uses_bare_timeout(evil)
+        assert time.monotonic() - start < 2.0
+
+    def test_quoted_env_value_still_detected(self):
+        """Dropping the quoted branches must not lose real coverage.
+
+        `_strip_noise` blanks the quoted value before matching, so the
+        assignment still parses and the invocation is still caught.
+        """
+        assert uses_bare_timeout('FOO="a b" timeout 5 ./x') is True
+
+    def test_many_env_assignments_still_detected(self):
+        """Within the bound, a long env prefix still matches."""
+        prefix = " ".join(f"V{i}=1" for i in range(6))
+        assert uses_bare_timeout(f"{prefix} timeout 5 ./x") is True
+
+
 def test_malformed_payload_never_blocks():
     r = subprocess.run(
         [sys.executable, str(GUARD)], input="not json", capture_output=True, text=True

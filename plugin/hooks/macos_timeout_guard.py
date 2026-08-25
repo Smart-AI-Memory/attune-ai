@@ -53,9 +53,17 @@ _HEREDOC = re.compile(r"<<-?\s*(['\"]?)(\w+)\1.*?^\s*\2\s*$", re.S | re.M)
 
 #: `timeout` in command position: at the start, or after a separator,
 #: optionally preceded by env assignments (`TZ=UTC timeout 5 ...`).
-_TIMEOUT_CMD = re.compile(
-    r"(?:^|[;&|(]|\n)\s*(?:[A-Za-z_][A-Za-z0-9_]*=(?:\"[^\"]*\"|'[^']*'|\S*)\s+)*" r"timeout(?=\s)"
-)
+#:
+#: The env-assignment value is a plain \S* with NO alternation. An
+#: earlier draft offered quoted alternatives, which CodeQL correctly
+#: flagged as py/redos (high severity): \S* also matches a quoted
+#: string, so `""` was matchable two ways inside a repetition, giving
+#: exponential backtracking on input like `&A=` followed by many
+#: repetitions of `""\tA=`. The alternatives were never needed --
+#: _strip_noise removes quoted strings BEFORE this pattern runs. The
+#: repetition is bounded rather than open-ended so no input can drive
+#: it super-linearly.
+_TIMEOUT_CMD = re.compile(r"(?:^|[;&|(]|\n)\s*(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+){0,8}timeout(?=\s)")
 
 
 def _strip_noise(command: str) -> str:
