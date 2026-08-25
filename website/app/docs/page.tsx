@@ -154,18 +154,36 @@ export default function DocsPage() {
               </p>
 
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* attune-ai */}
+                {/* Claude Code Plugin — marketplace-first, matching the
+                    homepage and README ordering: works standalone. */}
                 <div className="bg-[var(--background)] border-2 border-[var(--primary)] rounded-lg p-6 flex flex-col relative">
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--primary)] text-white text-xs font-bold px-3 py-1 rounded-full">
                     Recommended
                   </div>
+                  <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
+                    Claude Code
+                  </div>
+                  <h3 className="text-lg font-bold mb-2">Plugin</h3>
+                  <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
+                    Works standalone — no Python environment required. Runs
+                    on your Claude subscription. Type /spec or /coach to
+                    start.
+                  </p>
+                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3 break-all">
+                    <div><span className="text-white/50">$ </span>claude plugin marketplace add Smart-AI-Memory/attune-ai</div>
+                    <div><span className="text-white/50">$ </span>claude plugin install attune-ai@attune-ai</div>
+                  </div>
+                </div>
+
+                {/* attune-ai */}
+                <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-6 flex flex-col">
                   <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
                     Full Platform
                   </div>
                   <h3 className="text-lg font-bold mb-2">attune-ai</h3>
                   <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
                     The whole platform: spec engine, AI workflows, project
-                    memory, retrieval grounding, and verification.
+                    memory, retrieval grounding, and verification.{' '}
                     {CAPABILITIES.workflows} workflows, {CAPABILITIES.skills} skills, {CAPABILITIES.mcpTools} MCP tools.
                   </p>
                   <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3">
@@ -205,20 +223,6 @@ export default function DocsPage() {
                   </div>
                 </div>
 
-                {/* Claude Code Plugin */}
-                <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-6 flex flex-col">
-                  <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
-                    Claude Code
-                  </div>
-                  <h3 className="text-lg font-bold mb-2">Plugin</h3>
-                  <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
-                    Install as a Claude Code plugin. Type /coach for
-                    progressive help right in your terminal.
-                  </p>
-                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3 break-all">
-                    <span className="text-white/50">$ </span>claude plugin marketplace add Smart-AI-Memory/attune-ai
-                  </div>
-                </div>
               </div>
 
               {/* Companion packages */}
@@ -519,7 +523,7 @@ export default function DocsPage() {
                 Workflows &amp; Skills
               </h2>
               <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
-                The build half of the loop: {CAPABILITIES.workflows} workflows,
+                The build half of the loop: {CAPABILITIES.workflows} workflows,{' '}
                 {CAPABILITIES.skills} auto-triggering Claude Code skills,
                 and an MCP server with {CAPABILITIES.mcpTools} registered tools — review, tests,
                 bug prediction, refactor, and release prep.
