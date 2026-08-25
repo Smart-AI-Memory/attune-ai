@@ -73,6 +73,14 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/discipline"
+                  className="text-sm text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
+                >
+                  The Discipline
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/changelog"
                   className="text-sm text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
                 >
