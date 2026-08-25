@@ -135,3 +135,51 @@ un-exported implementation detail (it is not in `attune.__all__`);
 its redesign or retirement is spun off as its own post-15 issue.
 llm/state, learning/evaluator internals, and the security audit
 log's level field ride along untouched as internals.
+
+## D8 — Cut timing, `analyze()` deferral, and the upgrade guide (RATIFIED chair 2026-08-25, via form)
+
+Three rulings from one form, taken after the lead pushed back on
+cutting the same day. Recorded together because they were decided
+together and the second is the reason the first moved.
+
+**Cut timing: 2026-08-26, not 2026-08-25.** The manifest's
+sequencing steps 1 and 2 are complete — passenger 1 discharged in
+14.0.0 (D6), the `empathy_level` public surface removed in #2299,
+and the `EmpathyMCPServer` alias plus entry-point standardization
+in #2301. Only step 3 (release prep, release-audit sitting,
+tag/publish) remained. The chair moved the cut one day to let the
+upgrade guide land first; the D5 window (ship before 2026-09-01)
+is unaffected — five days of margin remain.
+
+**`analyze()` dead contract: DEFERRED, a 16.0.0 is accepted.**
+`attune.plugins.base.BaseWorkflow` still declares an abstract
+`analyze()` the engine cannot run (its own docstring says so), and
+passenger 2's problem statement names that clause alongside the
+`empathy_level` parameter — but the sequencing list names only "the
+level-free `BaseWorkflow` contract", which #2299 delivered. The
+lead's counter-case, raised before the ruling and recorded here
+because the chair decided against it: replacing that contract is
+breaking, so deferring it means a future 16.0.0 — and the
+2026-09-01 cohort lands on 15.0.0, so a September major would break
+them mid-course, the outcome D5 inverted the timing to prevent. The
+chair ruled to defer with that consequence in view. #2238 stays
+open on this clause; it does not board 15.0.0.
+
+**Upgrade guide: written before the tag.** `docs/migration/
+upgrading-to-15.0.0.md`, following the `upgrading-to-13.0.0.md`
+precedent. The cohort is the audience, and 15.0.0 removes public
+API in three families (level surface, legacy names, entry-point
+groups).
+
+**Release-prep precondition added by the chair (same message):**
+the ops dashboard's memory page had to work before the release.
+Root cause was infrastructure, not the page — `redis-stack-server`
+was installed but nothing was running, and plain `redis-server`
+reproduces a subtler failure (no RediSearch, so `FT.CREATE` fails,
+hydration aborts, and the index never exists while `PING` still
+answers `PONG`). Fixed by starting `redis-stack-server` against a
+0600 `~/.attune/redis.conf` carrying `requirepass`; hydration then
+loaded 14 nodes, 1,151 lessons, 204 file pointers, 8 rules, and 122
+edges, and `/memory` renders live counts. The page's degradation
+contract was correct throughout — it rendered the documented
+unreachable state, never a 500.

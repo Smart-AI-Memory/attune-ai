@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+15.0.0 finishes the Empathy-framework excision begun in 9.0.0: the
+public `empathy_level` surface, the `EmpathyMCPServer` alias, and the
+legacy entry-point groups are all removed. CLI, plugin, and MCP users
+upgrade with no code changes; third-party plugins that subclass the
+plugin contract, register entry points, or pass a level are affected.
+Upgrading? The
+[15.0.0 upgrade guide](docs/migration/upgrading-to-15.0.0.md) has a
+one-glance "are you affected?" table.
+
 ### Removed (BREAKING — 15.0.0)
 
 - **Legacy Empathy-era names are gone** (release-15-manifest,
