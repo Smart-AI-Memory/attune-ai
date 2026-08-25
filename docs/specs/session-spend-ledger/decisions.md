@@ -142,7 +142,7 @@ one, which was not enough to support the claim:
 
 | Surface | Text | Covers a never-authenticated call? |
 |---|---|---|
-| [decisions.md D5](#d5--seat-spend-is-a-flat-conservative-estimate-proposed) | flat estimate "deliberately above the typical single-reply `claude -p` cost, so the ledger overcounts rather than undercounts" | no — magnitude only |
+| D5 above, in this file | flat estimate "deliberately above the typical single-reply `claude -p` cost, so the ledger overcounts rather than undercounts" | no — magnitude only |
 | `src/attune/gates/session_ledger.py` `seat_estimate_usd` | "Flat conservative estimate for one **billed** `claude` seat call" | no — presupposes the call billed |
 | `scripts/workflow_probe_runner.py` (crashed-probe path) | "A probe that crashed mid-workflow **may have billed** … record the per-run budget cap as the conservative bound" | no — conditions on "may have billed" |
 
