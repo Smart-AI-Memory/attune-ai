@@ -1,6 +1,7 @@
 # Models↔Workflows Layering — Requirements
 
-**Status:** draft (2026-08-25) — awaiting chair review
+**Status:** active (2026-08-25) — the three open questions were
+chair-ruled same-day (D1–D3, `decisions.md`); design phase next
 **Origin:** issue #2239 (2026-08-24 step-16 runner pair). Slice 1
 (SDK adapter core + `sdk_errors` → `attune.models`, facade kept) was
 executed as its own PR per the issue's verified plan; this spec owns
@@ -99,13 +100,14 @@ Two adjacent structural problems make a naive move actively harmful:
 - Any behavioral change to empathy tier mapping — R1 is pure
   wiring inversion.
 
-## Open questions (for design)
+## Open questions — RULED (2026-08-25, see decisions.md)
 
-1. R2 ordering: inversion-before-excision, or fold R1 into the
-   #2238 remainder work?
-2. R3: which of the four `WorkflowConfig`s is the survivor, and do
-   the config-section ones merge or get renamed to their actual
-   roles (`WorkflowsSection`, `AgentWorkflowConfig`, …)?
-3. Does `workflows/config.py` (676 lines, 23 defs) split so the
-   registry-independent parts can sink, or does it stay put once
-   Edge 1 dies (simplest — nothing then NEEDS to move)?
+1. R2 ordering → **D1: inversion first**, independent of #2238.
+2. R3 → **D2: rename-by-role**; `workflows.config.WorkflowConfig`
+   keeps the name, the other three get role-true names with
+   deprecation aliases (exact names proposed in design).
+3. `workflows/config.py` → **D3: split-on-trigger** — stays put
+   today; the carve is pre-approved in direction and executes
+   (under R4/R5, scope by grep) the first time a lower-layer
+   consumer actually needs part of it. The CI no-upward-import
+   probe holds the boundary meanwhile.
