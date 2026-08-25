@@ -13,9 +13,11 @@ run it only after reading the diff.
 Steps:
  1. Read the PR: state, head SHA, diffstat, changed paths, merge state.
  2. Preflight blockers: open, not draft, base=main, same-repo, not
-    DIRTY (a conflicted PR arms silently and never merges), and no
+    DIRTY (a conflicted PR arms silently and never merges), no
     ``.github/`` paths (the when-green carve-out would disarm + strip
-    the label).
+    the label), and the LOCAL ref for the head branch must match the
+    PR head — arming a head your checkout does not hold binds the
+    receipt to a diff you did not read (2026-08-25 incident).
  3. Name any governance/enforcement surfaces in the diff, so the chair
     knows CHAIR-ARMS class applies (advisory — the read is the control).
  4. Apply the ``auto-merge-when-green`` label (the chair's act).
@@ -64,7 +66,7 @@ VERIFY_TIMEOUT_S = 120
 VERIFY_INTERVAL_S = 6
 
 VIEW_FIELDS = (
-    "state,isDraft,baseRefName,headRefOid,mergeStateStatus,labels,"
+    "state,isDraft,baseRefName,headRefName,headRefOid,mergeStateStatus,labels,"
     "autoMergeRequest,title,url,additions,deletions,files,isCrossRepository"
 )
 
@@ -91,7 +93,61 @@ def governance_paths(paths: list[str]) -> list[str]:
     return hits
 
 
-def find_blockers(view: dict, paths: list[str]) -> list[str]:
+def local_head_state(branch: str, remote_sha: str) -> tuple[str | None, str]:
+    """Compare the local ``branch`` ref against the PR's head SHA.
+
+    Returns ``(local_sha, relation)`` where relation is one of
+    ``absent`` (no local ref — nothing to contradict the remote),
+    ``match``, ``ahead`` (local has commits the PR head lacks — the
+    dangerous case: work committed but never reaching the head being
+    armed), ``behind`` (stale local ref), or ``diverged``.
+    """
+    rev = subprocess.run(
+        ["git", "rev-parse", "--verify", f"refs/heads/{branch}"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if rev.returncode != 0:
+        return None, "absent"
+
+    local_sha = rev.stdout.strip()
+    if local_sha == remote_sha:
+        return local_sha, "match"
+
+    # A SHA this clone never fetched cannot be classified; report the
+    # mismatch without guessing a direction.
+    known = subprocess.run(
+        ["git", "cat-file", "-e", f"{remote_sha}^{{commit}}"],
+        capture_output=True,
+        check=False,
+    )
+    if known.returncode != 0:
+        return local_sha, "diverged"
+
+    def _is_ancestor(a: str, b: str) -> bool:
+        return (
+            subprocess.run(
+                ["git", "merge-base", "--is-ancestor", a, b],
+                capture_output=True,
+                check=False,
+            ).returncode
+            == 0
+        )
+
+    if _is_ancestor(remote_sha, local_sha):
+        return local_sha, "ahead"
+    if _is_ancestor(local_sha, remote_sha):
+        return local_sha, "behind"
+    return local_sha, "diverged"
+
+
+def find_blockers(
+    view: dict,
+    paths: list[str],
+    local_sha: str | None = None,
+    relation: str = "absent",
+) -> list[str]:
     """Return human-readable reasons this PR must not be armed."""
     blockers = []
     if view["state"] != "OPEN":
@@ -109,6 +165,24 @@ def find_blockers(view: dict, paths: list[str]) -> list[str]:
         blockers.append(
             ".github/ paths in diff (when-green carve-out disarms + strips "
             f"the label): {', '.join(github_paths)}"
+        )
+    if local_sha is not None and relation != "match":
+        branch = view.get("headRefName", "?")
+        detail = {
+            "ahead": (
+                "your checkout has commit(s) the PR head does NOT — arming "
+                "here would bind the receipt to a head missing that work "
+                "(push, then re-run)"
+            ),
+            "behind": (
+                "your checkout is behind the PR head, so the diff you read "
+                "is not the diff you would arm (fetch, then re-run)"
+            ),
+            "diverged": ("your checkout and the PR head have diverged (reconcile, then re-run)"),
+        }.get(relation, "local ref does not match the PR head")
+        blockers.append(
+            f"local {branch} is {local_sha[:12]}, PR head is "
+            f"{view['headRefOid'][:12]} — {detail}"
         )
     return blockers
 
@@ -206,7 +280,13 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print("  no governance-class surfaces detected (advisory check)")
 
-    blockers = find_blockers(view, paths)
+    local_sha, relation = local_head_state(view["headRefName"], sha)
+    if relation == "absent":
+        print(f"  local ref {view['headRefName']} not in this clone — head check skipped")
+    elif relation == "match":
+        print(f"  local {view['headRefName']} matches the PR head")
+
+    blockers = find_blockers(view, paths, local_sha, relation)
     if blockers:
         print("BLOCKED — not arming:")
         for b in blockers:

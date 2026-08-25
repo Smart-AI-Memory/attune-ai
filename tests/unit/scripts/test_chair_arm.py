@@ -41,6 +41,7 @@ def _view(**overrides) -> dict:
         "state": "OPEN",
         "isDraft": False,
         "baseRefName": "main",
+        "headRefName": "feature-branch",
         "headRefOid": "a" * 40,
         "mergeStateStatus": "BLOCKED",
         "labels": [],
@@ -273,3 +274,112 @@ class TestMainFlow:
         assert ["pr", "merge", "7", "--disable-auto"] in calls
         assert ["pr", "edit", "7", "--remove-label", mod.LABEL] in calls
         assert not any(a[:2] == ["pr", "comment"] for a in calls)
+
+
+class TestLocalHeadBlocker:
+    """The head you arm must be the head in your checkout.
+
+    Origin: 2026-08-25 — a fix was committed to a sibling branch while
+    the operator believed otherwise; ``git push origin <name>`` exited 0
+    having pushed the unchanged ref, and the PR was armed on a head that
+    did not contain the fix. Nothing in the preflight noticed.
+    """
+
+    def test_matching_local_head_does_not_block(self, mod):
+        assert mod.find_blockers(_view(), [], "a" * 40, "match") == []
+
+    def test_absent_local_ref_does_not_block(self, mod):
+        """Arming from a clone without the branch stays possible."""
+        assert mod.find_blockers(_view(), [], None, "absent") == []
+
+    def test_unpushed_local_commits_block(self, mod):
+        blockers = mod.find_blockers(_view(), [], "b" * 40, "ahead")
+        assert len(blockers) == 1
+        assert "does NOT" in blockers[0]
+        assert "push, then re-run" in blockers[0]
+
+    def test_stale_local_ref_blocks(self, mod):
+        blockers = mod.find_blockers(_view(), [], "b" * 40, "behind")
+        assert len(blockers) == 1
+        assert "fetch, then re-run" in blockers[0]
+
+    def test_diverged_blocks(self, mod):
+        blockers = mod.find_blockers(_view(), [], "b" * 40, "diverged")
+        assert len(blockers) == 1
+        assert "diverged" in blockers[0]
+
+    def test_blocker_names_both_shas_and_the_branch(self, mod):
+        blockers = mod.find_blockers(_view(), [], "b" * 40, "ahead")
+        assert "b" * 12 in blockers[0]
+        assert "a" * 12 in blockers[0]
+        assert "feature-branch" in blockers[0]
+
+
+class TestLocalHeadStateAgainstRealGit:
+    """``local_head_state`` is only useful if it reads git correctly."""
+
+    @staticmethod
+    def _git(repo, *args):
+        import subprocess
+
+        return subprocess.run(
+            ["git", *args], cwd=repo, capture_output=True, text=True, check=True
+        ).stdout.strip()
+
+    @pytest.fixture
+    def repo(self, tmp_path, monkeypatch):
+        import subprocess
+
+        subprocess.run(["git", "init", "-q", "-b", "feature"], cwd=tmp_path, check=True)
+        subprocess.run(["git", "config", "user.email", "t@t.invalid"], cwd=tmp_path, check=True)
+        subprocess.run(["git", "config", "user.name", "t"], cwd=tmp_path, check=True)
+        (tmp_path / "f.txt").write_text("one")
+        subprocess.run(["git", "add", "-A"], cwd=tmp_path, check=True)
+        subprocess.run(
+            ["git", "commit", "-q", "--no-gpg-sign", "-m", "first"], cwd=tmp_path, check=True
+        )
+        monkeypatch.chdir(tmp_path)
+        return tmp_path
+
+    def test_match_when_head_equals_pr_head(self, mod, repo):
+        sha = self._git(repo, "rev-parse", "HEAD")
+        assert mod.local_head_state("feature", sha) == (sha, "match")
+
+    def test_absent_branch_reports_absent(self, mod, repo):
+        assert mod.local_head_state("no-such-branch", "a" * 40) == (None, "absent")
+
+    def test_local_commit_ahead_of_pr_head_is_ahead(self, mod, repo):
+        import subprocess
+
+        pr_head = self._git(repo, "rev-parse", "HEAD")
+        (repo / "f.txt").write_text("two")
+        subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+        subprocess.run(
+            ["git", "commit", "-q", "--no-gpg-sign", "-m", "unpushed"], cwd=repo, check=True
+        )
+
+        local, relation = mod.local_head_state("feature", pr_head)
+        assert relation == "ahead"
+        assert local == self._git(repo, "rev-parse", "HEAD")
+
+    def test_local_behind_pr_head_is_behind(self, mod, repo):
+        """The PR head is a descendant the clone HAS — a stale local ref."""
+        import subprocess
+
+        (repo / "f.txt").write_text("two")
+        subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+        subprocess.run(
+            ["git", "commit", "-q", "--no-gpg-sign", "-m", "newer"], cwd=repo, check=True
+        )
+        pr_head = self._git(repo, "rev-parse", "HEAD")
+        subprocess.run(["git", "reset", "-q", "--hard", "HEAD~1"], cwd=repo, check=True)
+
+        local, relation = mod.local_head_state("feature", pr_head)
+        assert relation == "behind"
+        assert local == self._git(repo, "rev-parse", "HEAD")
+
+    def test_unknown_remote_sha_reports_diverged_not_a_crash(self, mod, repo):
+        """A head this clone never fetched must not be classified by guess."""
+        local, relation = mod.local_head_state("feature", "0" * 40)
+        assert relation == "diverged"
+        assert local == self._git(repo, "rev-parse", "HEAD")
