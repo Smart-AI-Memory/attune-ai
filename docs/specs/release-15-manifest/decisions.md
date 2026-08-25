@@ -67,9 +67,42 @@ upstream. When the lock adopts 1.x, that PR carries a **live-fire
 receipt requirement** (real SDK round-trip on the locked env, not
 the scratch env). Issue #2243 stays open to track lock adoption.
 
-## D4 — Timing (chair constraint, recorded verbatim 2026-08-24)
+## D4 — Timing (chair constraint, recorded verbatim 2026-08-24) — SUPERSEDED by D5
 
 > the major must NOT ship before mid-to-late September 2026.
 > attune-ai's first external user begins onboarding 2026-09-01 and
 > a stable 14.x during his first weeks is worth more than the
 > architecture.
+
+## D5 — Timing INVERTED: ship before 2026-09-01; the class starts on 15.0.0 (RATIFIED chair 2026-08-25 — supersedes D4)
+
+The 2026-09-01 onboarding is a **class** (cohort), not a lone
+user, and the chair wants the class working on 15.0.0 from day
+one. This inverts D4's premise: instead of holding the major so
+the first weeks happen on stable 14.x, the major ships BEFORE the
+class arrives — they never see the legacy surfaces or a
+mid-course breaking change.
+
+Consequences:
+
+- **The 14.x deprecation story is no longer a prerequisite.**
+  Warning shims protect existing external consumers; telemetry
+  signal is ~0 and the class starts fresh on 15.0.0. Items
+  already landed (`AttuneMCPServer` alias, dual-read entry-point
+  discovery, level-tool `DeprecationWarning`s) simply ride until
+  their 15.0.0 removal. The one unlanded item (old `BaseWorkflow`
+  warning on instantiation, deprecation-story item 3) is DROPPED,
+  not built.
+- **Window:** ~6 days from ruling (2026-08-25 → 2026-08-31). The
+  squeeze is CI cycles and the release-audit sitting, not code
+  volume.
+
+## D6 — Passenger 1 correction: attune.exceptions removal already SHIPPED (recorded lead 2026-08-25)
+
+D1/passenger 1 describe the removal as parked on
+`claude/eager-mendeleev-3352e2` awaiting a boarding rebase. Stale:
+it merged as PR #2177 (`093cd7acd`, `feat!: remove the legacy
+attune.exceptions hierarchy`) and shipped in 14.0.0 —
+`src/attune/exceptions.py` is absent from `origin/main` (verified
+2026-08-25 against `f2f3fe97a`). Nothing boards for it; the
+parked branch is superseded and can be deleted.
