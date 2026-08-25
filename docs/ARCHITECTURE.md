@@ -111,30 +111,44 @@ Tier 5 — Entry Points
      cli_router ←── commands ──→ wizards
 ```
 
-### Codebase Metrics (v11.0.0)
+### Codebase Metrics (15.0.0)
+
+Measured 2026-08-25 against `src/attune/` by AST walk; tests by
+`pytest --collect-only`. Regenerate with the same method before a
+major — the previous table was stamped v11.0.0 and had drifted.
 
 | Metric | Value |
 |--------|-------|
-| Python files | 731 |
-| Lines of code | 189,910 |
-| Functions (incl. methods) | 5,154 |
-| Classes | 889 |
-| Subpackages | 50 |
-| Tests | 23,597 collected |
+| Python files | 758 |
+| Lines of code | 197,932 |
+| Functions (incl. methods) | 5,310 |
+| Classes | 892 |
+| Subpackages | 90 |
+| Tests | 25,510 collected |
 
-### Key Coupling Metrics (v11.0.0)
+### Key Coupling Metrics (15.0.0)
 
-Dependents = files under `src/attune/` importing the module.
+Dependents = distinct files under `src/attune/` that import the
+module, excluding the module's own files. Both absolute
+(`attune.x.y`) and relative (`from .y`) imports are resolved, and
+importing a submodule credits its parent package.
 
 | Module | Dependents | Role |
 |--------|-----------|------|
-| security/path_validation | 77 | Path traversal guard |
-| config | 26 | Configuration |
-| models | 52 | Model registry, tiers |
-| memory | 53 | Unified storage API |
-| meta_workflows | 31 | Orchestration hub |
-| workflows | 59 | Workflow engine |
-| mcp | 49 core tools | Claude Code integration |
+| security/path_validation | 82 | Path traversal guard |
+| models | 55 | Model registry, tiers |
+| memory | 32 | Unified storage API |
+| workflows | 27 | Workflow engine |
+| config | 20 | Configuration |
+| telemetry | 14 | Usage and feedback signals |
+| meta_workflows | 10 | Orchestration hub |
+| mcp | 1 | Claude Code integration |
+
+`mcp` has one in-tree dependent because it is an entry point, not a
+library — it is imported by the MCP client, not by other modules. It
+serves **48 core tools** (the sum of `mcp/tool_schemas.py`'s schema
+getters), and 59 in a default install once the bundled `attune_redis`
+plugin contributes its 11.
 
 ---
 
