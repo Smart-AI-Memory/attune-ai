@@ -343,7 +343,7 @@ Claude Code
     │
     ▼
 ┌──────────────────────────────────────────────┐
-│          EmpathyMCPServer                    │
+│          AttuneMCPServer                     │
 │  ┌────────────────────────────────────────┐  │
 │  │  WorkflowHandlersMixin                │  │
 │  │  - security-audit, code-review        │  │

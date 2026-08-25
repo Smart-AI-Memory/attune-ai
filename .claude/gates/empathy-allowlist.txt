@@ -48,7 +48,6 @@ src/attune/llm/interaction.py
 src/attune/llm/levels.py
 src/attune/llm/security.py
 src/attune/llm/state.py
-src/attune/mcp/__init__.py
 src/attune/mcp/server.py
 src/attune/memory/claude_memory.py
 src/attune/memory/control_panel.py
