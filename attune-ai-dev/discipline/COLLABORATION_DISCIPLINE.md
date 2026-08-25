@@ -14,9 +14,9 @@ a collaborative team. The good news: it's a learnable one.
 
 A word about who's writing, because the voice matters for a piece
 like this. I'm a solo developer — one person plus an AI agent,
-shipping a six-package ecosystem in the open. None of the
+shipping a multi-package ecosystem in the open. None of the
 disciplines below were designed up front. They accumulated one
-post-mortem at a time, over a year-plus of working this way. Where
+post-mortem at a time, over three-plus years of working this way. Where
 a section names a failure mode, it's because I hit it. Where it
 names a date, that's the day it happened.
 
@@ -117,7 +117,7 @@ confidence. §7 gives this its own section because it is the
 discipline the others lean on. None of these is clever in
 isolation. The compounding is the discipline.
 
-The rest of this piece names the ten disciplines (plus the §8
+The rest of this piece names the seven disciplines (plus the §8
 case study) that produce mornings like that — each its own section, each adoptable
 incrementally, on its own or together:
 
@@ -141,11 +141,23 @@ incrementally, on its own or together:
   hallucinations, dogfooding works at the meaning layer where they
   live, and the receipt beats the promise.
 - **§8 — Case study.** What this looks like when it goes right: a twenty-four-hour arc.
-- **§9 — Context budgeting.** Managing the reasoning window by keeping files small and single-purpose to avoid context dilution.
-- **§10 — Draft-first review.** Separating high-level architectural design from syntax and integration before modifying source files.
-- **§11 — Diagnostic instrumentation.** Embedding structured logging, error handling, and testable telemetry alongside features.
-- **§12 — Sandbox hygiene.** Enforcing clean builds and test runs in isolated work environments to avoid local environment drift.
+- **§9 — Context budgeting.** What the agent always sees is a
+  budget somebody owns: an always-loaded core under a CI-enforced
+  byte ceiling, everything else recalled just-in-time.
 
+Each discipline is here because something happened. The table is
+the audit surface — skim the right column before committing the
+hour:
+
+| § | Discipline | The receipt that earned it |
+|---|---|---|
+| §2 | Mutual contract | A rendered pushback form changed a live infrastructure decision (the interpreter pin) before it could rot silently |
+| §3 | Pacing | Clean-stop weeks out-shipped grind weeks; the fatigue-push lesson was written after the third signal in three days |
+| §4 | Artifacts | A pre-committed decision matrix routed a 73.3% P@1 measurement in one minute, against our own incentive to adopt the heavier dependency |
+| §5 | Memory | First human review pass over the durable layer: six keeps, one sharpened, zero wrong |
+| §6 | Multi-agent | Two orchestration engines shipped, then deleted; ten stranded spec edits from a parallel session surfaced and saved |
+| §7 | Verification | Six hallucination classes in one page, zero caught by unit tests; 0.996 per-claim faithfulness reached by structure; the $1,200 keyless-CI lesson |
+| §9 | Context budget | A 20,000-byte always-loaded rules budget enforced by a CI drift-guard; the 380-lesson corpus recalled just-in-time instead of loaded wholesale |
 
 ---
 
@@ -615,11 +627,16 @@ revisit — the surface matters less than the discipline running on
 it. Our implementation is the
 [attune-\* family](https://github.com/Smart-AI-Memory):
 `attune-ai` as the tool belt (the plugin that orchestrates the
-disciplines), with `attune-author` (authoring help content),
-`attune-gui` (the ops dashboard), `attune-help` (the living-doc
-help layer), `attune-rag` (retrieval over the help corpus), and
+disciplines), with `attune-help` (the living-doc help layer),
+`attune-rag` (retrieval over the help corpus), and
 `attune-verify` (fact-checking generated content) as the
-specialized tools the belt carries. The patterns above don't
+specialized tools the belt carries. The family used to be
+larger: `attune-author` (authoring) was folded into the core,
+and `attune-gui` (the ops dashboard the dated stories in this
+piece describe) was retired in favor of a leaner in-package ops
+server — both when dogfooding showed the standalone packages
+cost more than they returned, the same deletion discipline §6
+confesses to. The patterns above don't
 require these specific tools — they require *some* tools that play
 these roles. If you'd rather wire your own, the disciplines stand
 alone; if you'd rather skip the wiring, the family is on PyPI.
@@ -1048,6 +1065,18 @@ telemetry for ten days. Each is mechanical, narrow, durable; the
 collection compounds into a wall that past failures do not recur
 through.
 
+Dogfooding in a clean sandbox is what keeps these probes honest.
+The recall bug above was visible only because the probe ran a
+fresh install in a fresh home directory — the checked-out repo,
+with its editable install and warm caches, would have masked it.
+That is the quiet prerequisite under this whole section: a fresh
+checkout must install from the lockfile and run to green without
+hand-tuning, because every clean-environment probe — and every
+subagent spawned into a fresh worktree — inherits whatever
+environmental debt the repo carries. Environment rot doesn't fail
+loudly; it makes verification quietly test something other than
+what ships.
+
 A confession here, because verification discipline includes the
 unglamorous surfaces: the most expensive bug of this project's
 life was not in the code. On 2026-06-10 a dead API key in CI got
@@ -1238,7 +1267,7 @@ the morning unusual was the *absence* of friction: no parallel-push
 collisions, no over-formalization on the trivial decisions, no
 under-scoping on the substantive ones, no re-explaining context
 that was already visible on the dashboard, no fatigue-grinding past
-the productive window. Six disciplines, each boring in isolation,
+the productive window. The disciplines, each boring in isolation,
 compounding into a morning where the work *moved*.
 
 A single ordinary day near this revision (2026-07-02) shows the
@@ -1251,14 +1280,17 @@ broken-round-trip receipt; and a release to PyPI carrying the fix
 that receipt demanded. None of it a crunch. That is what a
 compounding day looks like.
 
-And that morning wasn't a one-off — and the pace has *risen* as the
+And that morning wasn't a one-off — the cadence has held as the
 disciplines compounded. Across the two weeks ending 2026-06-02,
 this one-developer-plus-agent setup merged 134 pull requests into
-the attune-ai repository — roughly ten per calendar day. Across the
-two weeks ending 2026-07-02, the same setup merged **277 — roughly
-twenty per calendar day**. The composition matters more than the
-headline: 74 of the 277 were feature and fix code (about five a
-day); the rest were documentation, tests, specs, and release work
+the attune-ai repository — roughly ten per calendar day. The two
+weeks ending 2026-07-02: **277 — roughly twenty per calendar
+day**, 74 of them feature and fix code (about five a day). The
+two weeks ending 2026-08-25 — this revision's window — came in at
+211 total, but **105 of them feature and fix**: the headline
+dipped from its peak while the code share rose from five a day to
+seven and a half. The composition matters more than the headline:
+the rest are documentation, tests, specs, and release work
 the discipline keeps moving in lockstep with the code. That
 lockstep is the point — §5's memory and §4's artifacts mean the
 docs and specs *keep pace* rather than accruing as debt behind the
@@ -1268,11 +1300,12 @@ multiplier anyone is promised — and they are re-measured every time
 this article is revised, because §7 applies to the article too.
 
 The closing point is simple. This is a learnable skill. The
-discipline above is six bullet-points worth of vocabulary, not a
+discipline above is seven bullet-points worth of vocabulary, not a
 worldview, not an ideology, not a stance on AI. Adopt the contract
 from §2. Adopt the pacing from §3. Adopt the artifact nesting from
 §4. Adopt the memory rules from §5. Adopt the multi-agent awareness
-from §6. Adopt the verification gates from §7. Practice each one
+from §6. Adopt the verification gates from §7. Adopt the context
+budget from §9. Practice each one
 boring-ly until they compound. The mornings that result are
 unremarkable in any single moment, and remarkable across a week.
 
@@ -1284,121 +1317,54 @@ recorded as a durable memory node, governed by the rule it states.
 The form that renders the agent's disagreement was used to fix the
 infrastructure that loads the memory the forms render from.
 Drafting an earlier revision of this piece surfaced a friction
-none of the ten disciplines quite covered; naming it produced a
-new spec by the end of that session. The discipline doesn't only
+none of the disciplines then named quite covered; naming it
+produced a new spec by the end of that session. The discipline doesn't only
 describe the work. It constrains and improves its own
 construction. That is the compounding — tied to the discipline
 itself, not to any one tool.
 
 ---
 
-## §9 — Context Budgeting: Keeping Files Agent-Sized
+## §9 — Context Budgeting: What the Agent Always Sees Is a Budget
 
-An agent's working memory is defined by its context window, but its
-reasoning capacity is constrained by *context noise*. When a single
-source file grows to contain multiple unrelated helper functions, class
-definitions, or utility routines, it becomes a liability. The agent must
-read the entire file to edit a small part of it, which wastes tokens and
-dilutes the model's focus. Large files lead to vague edits, missed edge
-cases, and high-overhead rewrites.
+An agent's context window is the one resource every discipline
+above spends. The failure mode that taught us this crept in
+write-by-write: every lesson, rule, and preference landed where
+"the agent will always see it," because always-visible feels
+safest at the moment of writing. It compounds into a session
+start that is a wall of text taxing every turn after it. The
+lessons corpus here is 380-plus entries; loading it wholesale
+would burn the window before the work began.
 
-The discipline of context budgeting has two components:
+The discipline is to split always-loaded from just-in-time, and
+to make the boundary an enforced number rather than taste. The
+always-loaded core of our rules corpus fits a 20,000-byte budget
+with an explicit allowlist, and a drift-guard test fails CI when
+the eager set outgrows it — so a new rule must either displace
+something or take up residence behind the index. Everything else
+sits as one-line triggers: the trip-wire is always visible, the
+body loads only when the work matches it. Memory gets the same
+shape (§5): a capped one-line-per-entry index at session start,
+bodies read on demand. High-severity classes and rules that must
+fire *before* retrieval could — session mechanics, security
+reflexes — earn the eager slot; everything else rides the index.
 
-- **The Line Budget**: Treat a few hundred lines as a soft ceiling for
-  any single file — 300 is a sensible greenfield default, and an
-  established repo calibrates its own number and applies it to new
-  growth rather than indicting every legacy module at once. If a file
-  grows past the budget, the agent's first recommendation should not be
-  "let's add a new function," but rather a concrete decomposition plan
-  to split the file into smaller, single-responsibility modules.
-- **Proactive Complexity Flags**: When asked to edit a file that exceeds
-  the budget, the agent must flag the risk before proposing code
-  changes: *"This file is 450 lines; we should extract the parser class
-  before implementing this feature to prevent context dilution."*
+The property that generalizes is the enforcement, not our
+numbers. Twenty kilobytes is a calibration, not a constant. What
+matters is that "what the agent always sees" is a budget somebody
+owns, spent deliberately, with a mechanism that fails loudly when
+it silently grows — because it only ever grows. This is §7's
+closing rule pointed at the context window: if a property
+matters, something must fail when it stops being true.
 
-The benefit is mechanical. By keeping files small and highly cohesive,
-you ensure that every file read by the agent is 100% relevant to the
-task, minimizing the cost and error rate of edits.
-
----
-
-## §10 — The "Draft-First" Code Review
-
-Writing code directly into the active source tree mixes two distinct
-concerns: architectural design (what we are building) and syntax
-execution (how we format, import, and hook it up). When these are
-combined, the human is forced to review a massive multi-file diff where
-architectural flaws are easily obscured by lines of formatting and
-import statements.
-
-The draft-first discipline enforces a two-pass implementation:
-
-- **Pass 1: The Draft**: For any task at the XML-task or spec tier, the
-  agent first writes the core logic, algorithm, or data structures in a
-  separate scratchpad, markdown file, or inline block. The draft
-  excludes packaging, imports, and scaffolding. The developer reviews
-  and approves the logic in this isolated state.
-- **Pass 2: The Inline**: Once the draft logic is approved, the agent
-  executes the actual file edits, wire-ins, and import updates in the
-  codebase.
-
-This approach treats code changes exactly like design specs. Unwinding a
-bad architectural decision in a markdown draft costs nothing; unwinding
-it from a five-file diff after it has been wired into the build system
-is painful and error-prone.
-
----
-
-## §11 — Diagnostic Instrumentation First
-
-An agent debugging a system is entirely dependent on what it can
-observe. Unlike a human, it cannot easily attach a debugger, step
-through execution manually, or rely on visual cues. If a system fails
-silently or outputs vague errors, the agent is blind and will resort to
-speculative guesses.
-
-Diagnostic instrumentation must be written first:
-
-- **The Telemetry Minimum**: No feature is complete without structured
-  log points at key state transitions, error boundaries with context-
-  rich catches, and debug hooks that dump state when requested.
-- **Testable Telemetry**: Write unit tests that assert logs are
-  generated under error conditions, verifying that the diagnostic path
-  actually fires.
-
-By instrumenting the codebase as you build, you ensure that when the
-system fails—whether in local CI or production—the agent can diagnose
-the root cause in a single turn by reading the log file, rather than
-running multiple speculative trial-and-error cycles.
-
----
-
-## §12 — Sandbox & Setup Hygiene
-
-A codebase accumulates silent environmental debt. Global python
-packages, local configuration files, and cached state make the project
-run locally for the human, while the same project fails to build or test
-on a clean machine. For agent collaboration, this is fatal; if an agent
-cannot spin up a clean worktree or run a subagent in a sandbox without
-encountering environment rot, productivity stops.
-
-Setup hygiene requires a routine check:
-
-- **The Three-Minute Rule**: A fresh checkout of the repository in an
-  isolated sandbox must be able to install dependencies from the
-  lockfile, configure its environment, and run the test suite to green
-  inside a fixed, published budget — three minutes is right for a young
-  repo; a mature suite earns a larger number, but the budget is a
-  commitment the repo keeps, not a wish.
-- **The Clean Run Check**: Once a week, or at the start of a major
-  release cycle, the agent is tasked to run a clean checkout test. It
-  clones the repo into a clean temp directory, runs the lockfile
-  install, and runs the tests. Any failure is treated as a
-  blocker and must be resolved before other features are written.
-
-Hygiene ensures that the environment is deterministic, enabling
-subagents to spawn reliably and work in parallel without getting bogged
-down by configuration drift.
+A corollary reaches source files. A module the agent must read
+wholesale to edit a small part of is the same tax in another
+form, and the same instinct applies — when a file has grown past
+the point where most of a read is irrelevant to most edits,
+the first recommendation is a decomposition plan, not another
+function appended to the pile. We treat that as judgment guided
+by the budget instinct rather than a hard line count; the
+enforced budgets above are where the discipline has real teeth.
 
 That is the discipline of agent collaboration. I'm still learning
 it. This piece gets revised as the practice does — the confession
@@ -1422,11 +1388,15 @@ irreversible call; an AI agent helped author under the discipline
 the article describes. I bring two decades of developing online
 solutions plus earlier years in coordination-heavy roles outside
 engineering — the contract, pacing, and multi-party patterns
-above owe as much to that history as to anything AI-specific. The
-past year-plus has gone into the
-[attune-\* ecosystem](https://github.com/Smart-AI-Memory)
-— six PyPI packages (attune-ai, attune-rag, attune-author,
-attune-help, attune-gui, attune-verify) that together ship the
-workflow patterns described above. The evidence base for the
-claims here is that codebase and the multi-month working history
-that produced it.
+above owe as much to that history as to anything AI-specific.
+I've worked AI-collaboratively for over three years — about a
+year and a half on earlier AI projects, and the past two-plus
+years on the
+[attune-\* ecosystem](https://github.com/Smart-AI-Memory):
+four PyPI packages today (attune-ai, attune-rag, attune-help,
+attune-verify) that together ship the workflow patterns
+described above, plus two earlier members (attune-author,
+attune-gui) that were folded into the core or retired when
+dogfooding said so. The evidence base for the claims here is
+that codebase and the multi-year working history that produced
+it.
