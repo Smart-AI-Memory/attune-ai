@@ -60,7 +60,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Blog tag archive pages
   const tags = getAllTags();
   const tagPages = tags.map((tag) => ({
-    url: `${baseUrl}/blog/tag/${tag}`,
+    url: `${baseUrl}/blog/tag/${encodeURIComponent(tag)}`,
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
     priority: 0.5,
