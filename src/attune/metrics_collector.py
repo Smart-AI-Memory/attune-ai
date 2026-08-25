@@ -32,60 +32,12 @@ class MetricsCollector:
     def _init_database(self) -> None:
         """Initialize SQLite database for metrics."""
         conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-
-        cursor.execute(
-            """
-            CREATE TABLE IF NOT EXISTS metrics (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id TEXT NOT NULL,
-                success BOOLEAN NOT NULL,
-                response_time_ms REAL,
-                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                metadata TEXT
-            )
-        """,
-        )
-
-        self._migrate_legacy_level_column(cursor)
-
-        cursor.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_user
-            ON metrics(user_id)
-        """,
-        )
-
-        cursor.execute(
-            """
-            CREATE INDEX IF NOT EXISTS idx_timestamp
-            ON metrics(timestamp)
-        """,
-        )
-
-        conn.commit()
-        conn.close()
-
-    @staticmethod
-    def _migrate_legacy_level_column(cursor: sqlite3.Cursor) -> None:
-        """Drop the pre-15.0.0 ``empathy_level`` column if present.
-
-        Databases created before 15.0.0 have a NOT NULL
-        ``empathy_level`` column that would reject the new
-        level-free inserts.
-        """
-        columns = [row[1] for row in cursor.execute("PRAGMA table_info(metrics)")]
-        if "empathy_level" not in columns:
-            return
-
-        cursor.execute("DROP INDEX IF EXISTS idx_user_level")
         try:
-            cursor.execute("ALTER TABLE metrics DROP COLUMN empathy_level")
-        except sqlite3.OperationalError:
-            # SQLite < 3.35 has no DROP COLUMN — rebuild the table.
+            cursor = conn.cursor()
+
             cursor.execute(
                 """
-                CREATE TABLE metrics_new (
+                CREATE TABLE IF NOT EXISTS metrics (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     user_id TEXT NOT NULL,
                     success BOOLEAN NOT NULL,
@@ -95,17 +47,82 @@ class MetricsCollector:
                 )
             """,
             )
+
+            self._migrate_legacy_level_column(conn)
+
             cursor.execute(
                 """
-                INSERT INTO metrics_new (
-                    id, user_id, success, response_time_ms, timestamp, metadata
-                )
-                SELECT id, user_id, success, response_time_ms, timestamp, metadata
-                FROM metrics
+                CREATE INDEX IF NOT EXISTS idx_user
+                ON metrics(user_id)
             """,
             )
-            cursor.execute("DROP TABLE metrics")
-            cursor.execute("ALTER TABLE metrics_new RENAME TO metrics")
+
+            cursor.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_timestamp
+                ON metrics(timestamp)
+            """,
+            )
+
+            conn.commit()
+        finally:
+            conn.close()
+
+    @staticmethod
+    def _migrate_legacy_level_column(conn: sqlite3.Connection) -> None:
+        """Drop the pre-15.0.0 ``empathy_level`` column if present.
+
+        Databases created before 15.0.0 have a NOT NULL
+        ``empathy_level`` column that would reject the new
+        level-free inserts.
+        """
+        cursor = conn.cursor()
+        columns = [row[1] for row in cursor.execute("PRAGMA table_info(metrics)")]
+        if "empathy_level" not in columns:
+            return
+
+        cursor.execute("DROP INDEX IF EXISTS idx_user_level")
+        try:
+            cursor.execute("ALTER TABLE metrics DROP COLUMN empathy_level")
+            return
+        except sqlite3.OperationalError:
+            pass  # SQLite < 3.35 has no DROP COLUMN — rebuild below.
+
+        # DDL runs in autocommit under the driver's implicit transaction, so
+        # an interrupted rebuild would leave an orphan metrics_new behind and
+        # every later retry would die on "table metrics_new already exists".
+        # SQLite's DDL *is* transactional, so an explicit transaction makes
+        # the whole rebuild atomic; the leading DROP clears any orphan left
+        # by a pre-fix build.
+        previous_isolation = conn.isolation_level
+        conn.isolation_level = None
+        cursor.execute("BEGIN IMMEDIATE")
+        cursor.execute("DROP TABLE IF EXISTS metrics_new")
+        cursor.execute(
+            """
+            CREATE TABLE metrics_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                success BOOLEAN NOT NULL,
+                response_time_ms REAL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                metadata TEXT
+            )
+        """,
+        )
+        cursor.execute(
+            """
+            INSERT INTO metrics_new (
+                id, user_id, success, response_time_ms, timestamp, metadata
+            )
+            SELECT id, user_id, success, response_time_ms, timestamp, metadata
+            FROM metrics
+        """,
+        )
+        cursor.execute("DROP TABLE metrics")
+        cursor.execute("ALTER TABLE metrics_new RENAME TO metrics")
+        cursor.execute("COMMIT")
+        conn.isolation_level = previous_isolation
 
     def record_metric(
         self,

@@ -395,6 +395,30 @@ class TestStateManager:
         assert state is None
 
 
+def _no_drop_column(conn):
+    """Wrap a connection so DROP COLUMN fails as it would on SQLite < 3.35."""
+
+    class _Cursor:
+        def __init__(self, cursor):
+            self._cursor = cursor
+
+        def execute(self, sql, *args):
+            if "DROP COLUMN" in sql:
+                raise sqlite3.OperationalError('near "DROP": syntax error')
+            return self._cursor.execute(sql, *args)
+
+    class _Conn:
+        isolation_level = ""
+
+        def __init__(self, real):
+            self._real = real
+
+        def cursor(self):
+            return _Cursor(self._real.cursor())
+
+    return _Conn(conn)
+
+
 class TestMetricsCollector:
     """Test MetricsCollector for telemetry"""
 
@@ -514,18 +538,7 @@ class TestMetricsCollector:
         )
         conn.commit()
 
-        class _NoDropColumnCursor:
-            """Delegates to a real cursor but rejects DROP COLUMN."""
-
-            def __init__(self, cursor):
-                self._cursor = cursor
-
-            def execute(self, sql, *args):
-                if "DROP COLUMN" in sql:
-                    raise sqlite3.OperationalError('near "DROP": syntax error')
-                return self._cursor.execute(sql, *args)
-
-        MetricsCollector._migrate_legacy_level_column(_NoDropColumnCursor(conn.cursor()))
+        MetricsCollector._migrate_legacy_level_column(_no_drop_column(conn))
         conn.commit()
 
         columns = [row[1] for row in conn.execute("PRAGMA table_info(metrics)")]
@@ -550,6 +563,79 @@ class TestMetricsCollector:
         collector = MetricsCollector(db_path=db_path)
         collector.record_metric(user_id="kept_user", success=True, response_time_ms=120.0)
         assert collector.get_user_stats("kept_user")["total_operations"] == 2
+
+    def test_interrupted_rebuild_leaves_no_orphan_and_retry_succeeds(self, temp_dir):
+        """A crash mid-rebuild must roll back cleanly and stay retryable.
+
+        Without the explicit transaction the orphan ``metrics_new`` survived
+        (DDL autocommits), and every later retry died on "table metrics_new
+        already exists" — permanently bricking the collector.
+        """
+        db_path = str(Path(temp_dir) / "interrupted.db")
+        conn = sqlite3.connect(db_path)
+        conn.execute(
+            """
+            CREATE TABLE metrics (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id TEXT NOT NULL,
+                empathy_level INTEGER NOT NULL,
+                success BOOLEAN NOT NULL,
+                response_time_ms REAL,
+                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                metadata TEXT
+            )
+            """
+        )
+        conn.execute(
+            "INSERT INTO metrics (user_id, empathy_level, success, response_time_ms)"
+            " VALUES ('survivor', 3, 1, 100.0)"
+        )
+        conn.commit()
+
+        class _CrashInterrupt(Exception):
+            pass
+
+        def _crashing(real_conn):
+            class _Cursor:
+                def __init__(self, cursor):
+                    self._cursor = cursor
+
+                def execute(self, sql, *args):
+                    if "DROP COLUMN" in sql:
+                        raise sqlite3.OperationalError('near "DROP": syntax error')
+                    if sql.strip().startswith("ALTER TABLE metrics_new RENAME"):
+                        raise _CrashInterrupt("interrupted before the rename")
+                    return self._cursor.execute(sql, *args)
+
+            class _Conn:
+                isolation_level = ""
+
+                def cursor(self):
+                    return _Cursor(real_conn.cursor())
+
+            return _Conn()
+
+        with pytest.raises(_CrashInterrupt):
+            MetricsCollector._migrate_legacy_level_column(_crashing(conn))
+        conn.close()  # uncommitted work dies with the connection
+
+        check = sqlite3.connect(db_path)
+        tables = sorted(
+            row[0]
+            for row in check.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'metrics%'"
+            )
+        )
+        assert tables == ["metrics"], f"orphan table survived the rollback: {tables}"
+        assert check.execute("SELECT COUNT(*) FROM metrics").fetchone()[0] == 1
+
+        # The retry must now succeed rather than hit "already exists".
+        MetricsCollector._migrate_legacy_level_column(_no_drop_column(check))
+        check.commit()
+        columns = [row[1] for row in check.execute("PRAGMA table_info(metrics)")]
+        assert "empathy_level" not in columns
+        assert check.execute("SELECT COUNT(*) FROM metrics").fetchone()[0] == 1
+        check.close()
 
     def test_get_nonexistent_user_stats(self, temp_dir):
         """Test getting stats for nonexistent user returns empty"""
