@@ -106,3 +106,32 @@ attune.exceptions hierarchy`) and shipped in 14.0.0 —
 `src/attune/exceptions.py` is absent from `origin/main` (verified
 2026-08-25 against `f2f3fe97a`). Nothing boards for it; the
 parked branch is superseded and can be deleted.
+
+## D7 — D2 scope clarification: PUBLIC level surface only (RATIFIED chair 2026-08-25)
+
+Executing D2 against the tree surfaced a two-layer reality the
+ruling's text did not distinguish:
+
+- **Shallow public knobs** — plugin `BaseWorkflow.empathy_level` +
+  `get_empathy_level()`, `PluginRegistry.find_workflows_by_level`
+  (+ `workflows_by_level` stats), `UnifiedAgentConfig.empathy_level`,
+  agent_factory `AgentConfig.empathy_level` + factory param,
+  agents_md frontmatter parsing/validation +
+  `get_by_empathy_level`, the two MCP level tools,
+  `MetricsCollector.record_metric(empathy_level=…)` (top-level
+  public export; SQLite column migration), and the first-run
+  config template.
+- **The engine** — `EmpathyLLM` (llm/core.py) is itself a
+  five-level progression machine (`_determine_level`,
+  `_level_1_reactive`…`_level_5_systems`,
+  `CollaborationState.current_level`/`level_history`), imported by
+  14 modules. D2's "llm state" item, executed literally, guts a
+  live class with no specced replacement.
+
+**RULING (chair, 2026-08-25): 15.0.0 removes the public level
+surface only** (the shallow list above — the user-visible API is
+level-free). `EmpathyLLM`'s internal progression stays as
+un-exported implementation detail (it is not in `attune.__all__`);
+its redesign or retirement is spun off as its own post-15 issue.
+llm/state, learning/evaluator internals, and the security audit
+log's level field ride along untouched as internals.
