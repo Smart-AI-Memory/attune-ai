@@ -10,7 +10,10 @@ const navItems = [
   { label: 'Docs', href: '/docs' },
   // The Learn link appears only once the video registry has entries.
   ...(HELP_VIDEOS.length > 0 ? [{ label: 'Learn', href: '/learn' }] : []),
-  { label: 'Pricing', href: '/pricing' },
+  { label: 'Benchmarks', href: '/benchmarks' },
+  // The /pricing route is kept (inbound links), but the product has no
+  // paid tiers — label it for what the page actually says.
+  { label: 'Open Source', href: '/pricing' },
   { label: 'Blog', href: '/blog' },
 ];
 

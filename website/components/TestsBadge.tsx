@@ -1,13 +1,16 @@
+import { METRICS } from '@/lib/features';
+
 interface TestsBadgeProps {
-  tests?: number;
+  tests?: string;
   coverage?: number;
 }
 
-// Defaults verified 2026-06-11: `pytest --collect-only` = 21,386;
-// coverage floor enforced by --cov-fail-under=85 in pyproject.
+// Defaults come from lib/features METRICS — the README badge's
+// CI-guarded round floor and the enforced coverage floor. Never
+// hard-code a raw collected-test count here; it goes stale.
 export default function TestsBadge({
-  tests = 21386,
-  coverage = 85
+  tests = METRICS.testsFloor,
+  coverage = METRICS.coverageFloorPct,
 }: TestsBadgeProps) {
   return (
     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-[#10B981] text-white">
@@ -26,7 +29,7 @@ export default function TestsBadge({
         <polyline points="20 6 9 17 4 12" />
       </svg>
       <span>
-        {tests.toLocaleString()} tests | {coverage}% coverage
+        {tests} tests | {coverage}% coverage
       </span>
     </span>
   );

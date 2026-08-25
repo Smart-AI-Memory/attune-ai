@@ -4,35 +4,18 @@ import Footer from '@/components/Footer';
 import GitHubStarsBadge from '@/components/GitHubStarsBadge';
 import TestsBadge from '@/components/TestsBadge';
 import { generateStructuredData } from '@/lib/metadata';
-import { CAPABILITIES, PILLARS, RELIABILITY_LOOP } from '@/lib/features';
+import { METRICS, RELIABILITY_LOOP } from '@/lib/features';
 
-// Doc-toolchain code sample. attune-ai is the parent
-// framework (headlined in the hero); authoring ships
-// inside it, and the two standalone packages below
-// complete the documentation toolchain we built with it.
-const codeExample = `# 1. attune-ai authoring — generate polished, source-grounded
-#    templates from your codebase (CI or dev time)
-from attune.authoring.generator import generate_feature_templates
-generate_feature_templates(feature, help_dir=".help", project_root=".")
-
-# 2. attune-rag — keyword + semantic retrieval keeps
-#    answers grounded. Mean faithfulness ≥ 0.97, CI-gated.
-
-# 3. attune-help — read them at runtime. 1 dependency,
-#    no API key required. Embed anywhere.
-from attune_help import HelpEngine
-engine = HelpEngine(template_dir=".help/templates")
-print(engine.lookup("security-audit"))`;
-
-// Literal Tailwind class strings per pillar color. Built as full
-// literals (not `bg-[var(--${color})]`) so the JIT scanner can see
-// and generate them — dynamically-constructed class names are not
-// emitted.
-const PILLAR_COLOR: Record<string, { bg: string; text: string }> = {
-  primary: { bg: 'bg-[var(--primary)]/10', text: 'text-[var(--primary)]' },
-  secondary: { bg: 'bg-[var(--secondary)]/10', text: 'text-[var(--secondary)]' },
-  accent: { bg: 'bg-[var(--accent)]/10', text: 'text-[var(--accent)]' },
-};
+// What a coding agent re-learns every session — and what Attune
+// persists. Shared by the problem and memory sections.
+const WHAT_PERSISTS = [
+  ['Architectural decisions', 'why the code is shaped the way it is'],
+  ['Coding conventions', 'the patterns your reviewers actually enforce'],
+  ['Discovered constraints', 'the limits that are not written down anywhere'],
+  ['Lessons from failed approaches', 'so the same dead end is not explored twice'],
+  ['Implementation details', 'the seams, gotchas, and load-bearing quirks'],
+  ['Project-specific knowledge', 'domain terms, priorities, and context'],
+] as const;
 
 export default function Home() {
   const softwareSchema = generateStructuredData('product');
@@ -48,486 +31,336 @@ export default function Home() {
       <Navigation />
       <main id="main-content" className="min-h-screen pt-16">
 
-        {/* Hero Section */}
+        {/* 1 — Hero */}
         <section className="relative overflow-hidden px-6 py-24 md:py-32" aria-label="Hero">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid lg:grid-cols-2 gap-16 items-center">
-              <div className="z-10">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--surface-container-high)] text-[var(--primary)] text-xs font-bold tracking-widest mb-6 uppercase">
-                  <span>v14.1.0</span>
-                  <span className="w-1 h-1 rounded-full bg-[var(--primary)]"></span>
-                  <span className="opacity-80">Memory &amp; receipts for Claude Code</span>
-                </div>
-                <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter mb-8 leading-[1.1]">
-                  Build software from{' '}
-                  <span className="text-gradient">specifications</span>, not prompts.
-                </h1>
-                <p className="text-lg md:text-xl text-[var(--text-secondary)] mb-10 max-w-xl leading-relaxed">
-                  Attune-AI gives your AI coding agent a spine: write a spec,
-                  ground every change in your real code, carry what worked into
-                  the next session, and verify the output before it ships.
-                  Workflows, memory, retrieval grounding, and verification
-                  &mdash; one platform for Claude Code.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <a
-                    href="https://pypi.org/project/attune-ai/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-[var(--primary)] !text-white px-8 py-3 rounded-lg font-bold hover:opacity-90 transition-opacity text-center no-underline"
-                  >
-                    attune-ai on PyPI
-                  </a>
-                  <a
-                    href="https://github.com/Smart-AI-Memory/attune-ai"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-[var(--surface-container-highest)] text-[var(--foreground)] px-8 py-3 rounded-lg font-bold hover:bg-[var(--surface-variant)] transition-colors text-center border border-[var(--border)] no-underline"
-                  >
-                    Star on GitHub
-                  </a>
-                  <Link
-                    href="/how-it-works"
-                    className="bg-[var(--surface-container-highest)] text-[var(--foreground)] px-8 py-3 rounded-lg font-bold hover:bg-[var(--surface-variant)] transition-colors text-center border border-[var(--border)]"
-                  >
-                    See How It Works
-                  </Link>
-                </div>
-                {/* Trust badges */}
-                <div className="flex flex-wrap gap-3 mt-8">
-                  <GitHubStarsBadge />
-                  <TestsBadge />
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[var(--surface-container-high)] text-xs font-medium">
-                    Apache 2.0
-                  </span>
-                </div>
-              </div>
-
-              {/* Reliability-loop spine visual */}
-              <div className="relative">
-                <div className="relative z-10 rounded-2xl overflow-hidden bg-[var(--surface-container-low)] p-8 border border-[var(--border)]/40 shadow-2xl">
-                  <div className="flex items-center gap-2 mb-6">
-                    <div className="w-3 h-3 rounded-full bg-red-500/40"></div>
-                    <div className="w-3 h-3 rounded-full bg-yellow-500/40"></div>
-                    <div className="w-3 h-3 rounded-full bg-green-500/40"></div>
-                    <span className="ml-auto text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">One requirement, end to end</span>
-                  </div>
-
-                  {RELIABILITY_LOOP.map((s, i) => (
-                    <div key={s.name}>
-                      <div className="flex items-start gap-3 py-2.5">
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[var(--primary)]/10 text-[var(--primary)] font-bold text-xs shrink-0">
-                          {s.n}
-                        </span>
-                        <div>
-                          <div className="font-bold text-sm leading-tight">{s.name}</div>
-                          <p className="text-xs text-[var(--text-muted)] leading-snug mt-0.5">{s.description}</p>
-                        </div>
-                      </div>
-                      {i < RELIABILITY_LOOP.length - 1 && (
-                        <div className="ml-4 h-3 w-px bg-[var(--border)]"></div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                {/* Background blur */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] bg-gradient-to-tr from-[var(--surface-container-high)]/50 to-transparent rounded-full blur-3xl -z-10"></div>
-              </div>
+          <div className="max-w-4xl mx-auto text-center">
+            {/* The literal version is required here: the
+                test_homepage_badge_includes_package_version guard scans
+                this file for vX.Y.Z and compares it to the package. */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--surface-container-high)] text-[var(--primary)] text-xs font-bold tracking-widest mb-8 uppercase">
+              <span>v14.1.0</span>
+              <span className="w-1 h-1 rounded-full bg-[var(--primary)]" aria-hidden="true"></span>
+              <span className="opacity-80">Persistent memory for AI coding agents</span>
+            </div>
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter mb-8 leading-[1.1]">
+              Build software from{' '}
+              <span className="text-gradient">specifications</span>, not prompts.
+            </h1>
+            <p className="text-lg md:text-xl text-[var(--text-secondary)] mb-10 max-w-2xl mx-auto leading-relaxed">
+              Attune gives AI coding agents persistent project memory and a
+              reliability layer that keeps changes grounded in your code,
+              aligned with your requirements, and verified before they ship.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                href="/docs#quickstart"
+                className="bg-[var(--primary)] !text-white px-8 py-3 rounded-lg font-bold hover:opacity-90 transition-opacity text-center no-underline"
+              >
+                Install Attune
+              </Link>
+              <a
+                href="https://github.com/Smart-AI-Memory/attune-ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-[var(--surface-container-highest)] text-[var(--foreground)] px-8 py-3 rounded-lg font-bold hover:bg-[var(--surface-variant)] transition-colors text-center border border-[var(--border)] no-underline"
+              >
+                View on GitHub
+              </a>
+            </div>
+            <p className="text-sm text-[var(--text-muted)] mt-4">
+              Or install it as a{' '}
+              <a href="#get-started" className="font-bold text-[var(--primary)] hover:opacity-80 transition-opacity">
+                Claude Code plugin
+              </a>{' '}
+              &mdash; no Python required.
+            </p>
+            <div className="flex flex-wrap gap-3 mt-8 justify-center items-center">
+              <span className="text-sm text-[var(--text-muted)]">
+                Free and open source &middot; Apache 2.0
+              </span>
+              <GitHubStarsBadge />
+              <TestsBadge />
             </div>
           </div>
         </section>
 
-        {/* Problem -> Solution narrative — first below-fold setup.
-            Left column = the problem litany; right column = the
-            same five concerns answered, product -> job, 1:1. */}
-        <section className="py-24 px-6 bg-[var(--surface-container-low)]" aria-label="The problem and the solution">
-          <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 lg:gap-16 items-start">
-            {/* The problem */}
-            <div>
-              <span className="text-xs font-bold text-[var(--text-muted)] tracking-[0.2em] uppercase mb-6 block">The problem</span>
-              <ul className="space-y-4">
-                {[
-                  'AI generates code.',
-                  'Projects require knowledge.',
-                  'Specifications drift.',
-                  'Documentation gets stale.',
-                  'Decisions disappear.',
-                ].map((line) => (
-                  <li key={line} className="flex items-baseline gap-3 text-xl md:text-2xl font-bold text-[var(--text-secondary)]">
-                    <span className="text-[var(--text-muted)]/50" aria-hidden="true">&mdash;</span>
-                    <span>{line}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            {/* The solution */}
-            <div className="rounded-2xl border border-[var(--border)]/50 bg-[var(--surface)] p-8 md:p-10">
-              <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-4 block">The solution</span>
-              <p className="text-[var(--text-secondary)] mb-6 leading-relaxed">
-                Attune keeps software aligned with its requirements by
-                combining five capabilities &mdash; each one a job, not a
-                buzzword:
-              </p>
-              <ul className="space-y-3.5">
-                {[
-                  ['Spec-driven development', 'keeps requirements from drifting.'],
-                  ['Project memory', 'preserves decisions across sessions.'],
-                  ['Grounded retrieval', 'anchors outputs to your real code.'],
-                  ['Synchronized docs', 'stay current as the code changes.'],
-                  ['Verification', 'reduces hallucinations before they ship.'],
-                ].map(([product, job]) => (
-                  <li key={product} className="flex items-baseline gap-2.5 text-sm md:text-base">
-                    <span className="text-[var(--primary)] font-bold" aria-hidden="true">&rarr;</span>
-                    <span>
-                      <span className="font-bold text-[var(--foreground)]">{product}</span>{' '}
-                      <span className="text-[var(--text-secondary)]">{job}</span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </section>
-
-        {/* Platform pillars — memory leads (DEC-3) */}
-        <section className="py-32 px-6 max-w-7xl mx-auto" aria-label="Platform pillars">
-          <div className="text-center mb-20">
-            <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-4 block">The Platform</span>
-            <h2 className="text-4xl md:text-5xl font-extrabold">Memory is the pillar</h2>
-            <p className="text-[var(--text-secondary)] mt-4 max-w-2xl mx-auto">
-              Attune AI leads with project memory &mdash; the four
-              capabilities around it keep your AI agent&apos;s work
-              grounded, verified, and easy to steer. All real and
-              shipped, none a roadmap promise.
+        {/* 2 — Problem */}
+        <section className="py-24 px-6 bg-[var(--surface-container-low)]" aria-label="The problem">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-4xl md:text-5xl font-extrabold mb-8 tracking-tight">
+              Your AI is smart.<br className="hidden sm:block" />{' '}
+              Your project has amnesia.
+            </h2>
+            <p className="text-lg text-[var(--text-secondary)] leading-relaxed mb-6">
+              A coding agent spends hours learning your architecture, your
+              constraints, your conventions, the decisions behind the code,
+              and the approaches that already failed. Then the session ends
+              &mdash; and most of that knowledge is gone. The next session,
+              the next tool, the next model: each one starts rediscovering
+              your project from zero.
+            </p>
+            <p className="text-xl md:text-2xl font-bold text-[var(--foreground)]">
+              Attune makes that knowledge persistent.
             </p>
           </div>
-          <div className="grid md:grid-cols-2 gap-6">
-            {PILLARS.map((p) => {
-              const c = PILLAR_COLOR[p.color];
-              return (
-                <div
-                  key={p.id}
-                  className="bg-[var(--surface)] rounded-2xl p-8 border border-[var(--border)]/40 hover:bg-[var(--surface-container-low)] transition-all duration-300"
-                >
-                  <div className={`w-14 h-14 rounded-xl ${c.bg} flex items-center justify-center mb-5`}>
-                    <span className="text-3xl" aria-hidden="true">{p.icon}</span>
+        </section>
+
+        {/* 3 — Reliability loop */}
+        <section className="py-24 px-6 max-w-7xl mx-auto" aria-label="The reliability loop">
+          <div className="text-center mb-16">
+            <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-4 block">How it works</span>
+            <h2 className="text-4xl md:text-5xl font-extrabold">One reliability loop</h2>
+            <p className="text-[var(--text-secondary)] mt-4 max-w-2xl mx-auto">
+              Every change moves through the same five stages &mdash; from a
+              requirement you can point at to an implementation you can trust.
+            </p>
+          </div>
+          <ol className="grid md:grid-cols-5 gap-6 md:gap-0 list-none">
+            {RELIABILITY_LOOP.map((s, i) => (
+              <li key={s.name} className="relative flex md:block items-start gap-4">
+                <div className="flex md:flex-col items-center md:items-start gap-4 md:gap-0 md:px-5">
+                  <div className="flex items-center w-auto md:w-full">
+                    <span className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-[var(--primary)]/10 text-[var(--primary)] font-bold text-sm shrink-0">
+                      {s.n}
+                    </span>
+                    {i < RELIABILITY_LOOP.length - 1 && (
+                      <span className="hidden md:block flex-1 h-px bg-[var(--border)] ml-4" aria-hidden="true"></span>
+                    )}
                   </div>
-                  <span className={`text-xs font-bold uppercase tracking-[0.12em] ${c.text}`}>
-                    {p.tag}
-                  </span>
-                  <h3 className="text-2xl font-bold mt-1 mb-3">{p.title}</h3>
-                  <p className="text-[var(--text-secondary)] leading-relaxed text-sm mb-4">
-                    {p.description}
-                  </p>
-                  <ul className="space-y-1.5">
-                    {p.points.map((pt) => (
-                      <li key={pt} className="flex items-start gap-2 text-xs text-[var(--text-muted)]">
-                        <span className={`${c.text} mt-0.5`} aria-hidden="true">&#10003;</span>
-                        <span>{pt}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="md:mt-4">
+                    <h3 className="font-bold text-lg leading-tight">{s.name}</h3>
+                    <p className="text-sm text-[var(--text-muted)] leading-snug mt-1.5">{s.description}</p>
+                  </div>
                 </div>
-              );
-            })}
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        {/* 4 — Memory */}
+        <section className="py-24 px-6 bg-[var(--surface-container-low)]" aria-label="Persistent project memory">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-16">
+              <span className="text-xs font-bold text-[var(--secondary)] tracking-[0.2em] uppercase mb-4 block">Project memory</span>
+              <h2 className="text-4xl md:text-5xl font-extrabold">
+                Your agent stops starting from zero.
+              </h2>
+              <p className="text-[var(--text-secondary)] mt-4 max-w-2xl mx-auto">
+                Findings from each session are stashed and recalled in the
+                next &mdash; automatically, or on demand with{' '}
+                <code className="bg-[var(--surface-container-high)] px-1.5 py-0.5 rounded text-sm">/recall</code>.
+                What persists:
+              </p>
+            </div>
+            <ul className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 list-none">
+              {WHAT_PERSISTS.map(([title, detail]) => (
+                <li key={title} className="bg-[var(--surface)] rounded-xl p-5 border border-[var(--border)]/40">
+                  <div className="font-bold text-sm mb-1">{title}</div>
+                  <p className="text-xs text-[var(--text-muted)] leading-snug">{detail}</p>
+                </li>
+              ))}
+            </ul>
+            <p className="text-sm text-[var(--text-muted)] text-center mt-10 max-w-2xl mx-auto">
+              Local-first by default &mdash; memory lives on your machine, no
+              cloud required. An optional Redis tier adds semantic recall with
+              local Ollama embeddings.
+            </p>
           </div>
         </section>
 
-        {/* Capabilities stat band */}
-        <section className="py-20 bg-[var(--surface-container-low)]" aria-label="Capabilities at a glance">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-8 text-center">
+        {/* 5 — Multi-model */}
+        <section className="py-24 px-6 max-w-6xl mx-auto" aria-label="One project brain, multiple agents">
+          <div className="text-center mb-16">
+            <span className="text-xs font-bold text-[var(--accent)] tracking-[0.2em] uppercase mb-4 block">Multi-agent</span>
+            <h2 className="text-4xl md:text-5xl font-extrabold">One project brain. Multiple agents.</h2>
+            <p className="text-[var(--text-secondary)] mt-4 max-w-2xl mx-auto">
+              Attune is the persistent layer beneath your coding agents, not a
+              feature of one of them. Claude Code, Codex, and Antigravity work
+              against the same project memory, specs, lessons, and repository
+              state &mdash; handing off work with git-verified packets and
+              giving each other second opinions on real diffs.
+            </p>
+          </div>
+          {/* Architecture diagram — responsive flex, no image dependency */}
+          <figure aria-label="Architecture: coding agents share the Attune project brain, which grounds work in your repository">
+            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 md:gap-0">
+              {/* Agents */}
+              <div className="flex flex-row md:flex-col gap-3 md:w-52 shrink-0 justify-center">
+                {['Claude Code', 'Codex', 'Antigravity'].map((agent) => (
+                  <div key={agent} className="flex-1 md:flex-none bg-[var(--surface)] border border-[var(--border)]/60 rounded-xl px-4 py-3 text-center font-mono text-sm font-bold">
+                    {agent}
+                  </div>
+                ))}
+              </div>
+              {/* Connector */}
+              <div className="flex md:flex-1 items-center justify-center md:px-2" aria-hidden="true">
+                <span className="hidden md:block w-full h-px bg-[var(--border)]"></span>
+                <span className="md:hidden text-[var(--text-muted)] text-xl">&darr;</span>
+                <span className="hidden md:inline text-[var(--text-muted)] text-xl">&rarr;</span>
+              </div>
+              {/* Brain */}
+              <div className="bg-[var(--primary)]/5 border-2 border-[var(--primary)]/40 rounded-2xl px-6 py-6 text-center md:w-72 shrink-0">
+                <div className="font-extrabold tracking-wide text-[var(--primary)]">ATTUNE PROJECT BRAIN</div>
+                <div className="text-xs text-[var(--text-muted)] mt-2 leading-relaxed">
+                  Memory &middot; Specs &middot; Lessons &middot; Grounding &middot; Verification
+                </div>
+              </div>
+              {/* Connector */}
+              <div className="flex md:flex-1 items-center justify-center md:px-2" aria-hidden="true">
+                <span className="hidden md:block w-full h-px bg-[var(--border)]"></span>
+                <span className="md:hidden text-[var(--text-muted)] text-xl">&darr;</span>
+                <span className="hidden md:inline text-[var(--text-muted)] text-xl">&rarr;</span>
+              </div>
+              {/* Repository */}
+              <div className="bg-[var(--surface)] border border-[var(--border)]/60 rounded-xl px-6 py-5 text-center font-mono text-sm font-bold md:w-52 shrink-0 self-center w-full md:self-auto">
+                Your repository
+              </div>
+            </div>
+            <figcaption className="text-xs text-[var(--text-muted)] text-center mt-6">
+              Cross-model review and deliberation are advisory &mdash; you
+              decide what gets adopted.
+            </figcaption>
+          </figure>
+        </section>
+
+        {/* 6 — Proof */}
+        <section className="py-20 bg-[var(--surface-container-low)]" aria-label="Proof points">
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-extrabold">Measured, not promised.</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               <div>
-                <div className="text-4xl font-extrabold text-[var(--primary)]">{CAPABILITIES.workflows}</div>
-                <div className="text-sm text-[var(--text-muted)] mt-1">workflows</div>
+                <div className="text-4xl font-extrabold text-[var(--primary)]">{METRICS.testsFloor}</div>
+                <div className="text-sm text-[var(--text-muted)] mt-1">automated tests</div>
               </div>
               <div>
-                <div className="text-4xl font-extrabold text-[var(--primary)]">{CAPABILITIES.mcpTools}</div>
-                <div className="text-sm text-[var(--text-muted)] mt-1">MCP tools</div>
+                <div className="text-4xl font-extrabold text-[var(--primary)]">{METRICS.coverageFloorPct}%</div>
+                <div className="text-sm text-[var(--text-muted)] mt-1">coverage floor, CI-enforced</div>
               </div>
               <div>
-                <div className="text-4xl font-extrabold text-[var(--primary)]">{CAPABILITIES.skills}</div>
-                <div className="text-sm text-[var(--text-muted)] mt-1">auto-triggering skills</div>
-              </div>
-              <div>
-                <div className="text-4xl font-extrabold text-[var(--primary)]">&ge;0.97</div>
-                <div className="text-sm text-[var(--text-muted)] mt-1">RAG faithfulness (CI-gated)</div>
+                <div className="text-4xl font-extrabold text-[var(--primary)]">{METRICS.ragFaithfulness}</div>
+                <div className="text-sm text-[var(--text-muted)] mt-1">mean RAG faithfulness, CI-gated</div>
               </div>
               <div>
                 <div className="text-4xl font-extrabold text-[var(--primary)]">100%</div>
                 <div className="text-sm text-[var(--text-muted)] mt-1">open source &middot; Apache 2.0</div>
               </div>
             </div>
-          </div>
-        </section>
-
-        {/* attune-rag — standalone co-flagship package */}
-        <section className="py-24 px-6 max-w-7xl mx-auto" aria-label="attune-rag standalone RAG package">
-          <div className="rounded-3xl border border-[var(--border)]/60 bg-[var(--surface-container-low)] p-10 md:p-14">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div>
-                <span className="text-xs font-bold text-[var(--secondary)] tracking-[0.2em] uppercase mb-4 block">Flagship package &middot; standalone</span>
-                <h2 className="text-3xl md:text-4xl font-extrabold mb-4">
-                  attune-rag &mdash; grounding you can use anywhere
-                </h2>
-                <p className="text-[var(--text-secondary)] leading-relaxed mb-6">
-                  The retrieval engine inside attune-ai is its own package.
-                  Lightweight, LLM-agnostic RAG with pluggable corpora &mdash;
-                  works with Claude, Gemini, or any LLM. Built into attune-ai
-                  for grounding, and equally happy standing on its own in any
-                  Python project.
-                </p>
-                <code className="inline-block bg-[var(--surface-container-high)] px-4 py-2 rounded-lg text-sm font-mono mb-6">pip install attune-rag</code>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <a
-                    href="https://attune-rag.dev"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-[var(--primary)] !text-white px-6 py-3 rounded-lg font-bold hover:opacity-90 transition-opacity text-center no-underline"
-                  >
-                    Visit attune-rag.dev
-                  </a>
-                  <a
-                    href="https://pypi.org/project/attune-rag/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-[var(--surface-container-highest)] text-[var(--foreground)] px-6 py-3 rounded-lg font-bold hover:bg-[var(--surface-variant)] transition-colors text-center border border-[var(--border)] no-underline"
-                  >
-                    attune-rag on PyPI
-                  </a>
-                </div>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-3">
-                {[
-                  ['LLM-agnostic', 'Claude, Gemini, or any model — not locked in'],
-                  ['Faithfulness ≥ 0.97', 'CI-gated — drift fails the build'],
-                  ['Pluggable corpora', 'Point it at docs, code, or any source'],
-                  ['Standalone or built-in', 'Drop into any project, or get it free with attune-ai'],
-                ].map(([title, desc]) => (
-                  <div key={title} className="bg-[var(--background)] rounded-xl p-4 border border-[var(--border)]/40">
-                    <div className="font-bold text-sm text-[var(--secondary)] mb-1">{title}</div>
-                    <p className="text-xs text-[var(--text-muted)] leading-snug">{desc}</p>
-                  </div>
-                ))}
-              </div>
+            <div className="text-center mt-10">
+              <Link href="/benchmarks" className="text-sm font-bold text-[var(--primary)] hover:opacity-80 transition-opacity">
+                See methodology &rarr;
+              </Link>
             </div>
           </div>
         </section>
 
-        {/* Semantic memory — powered by Redis */}
-        <section className="py-24 px-6 max-w-7xl mx-auto" aria-label="Semantic memory powered by Redis">
-          <div className="rounded-3xl border border-[var(--border)]/60 bg-[var(--surface-container-low)] p-10 md:p-14">
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-              <div>
-                <span className="text-xs font-bold text-[var(--secondary)] tracking-[0.2em] uppercase mb-4 block">Semantic memory</span>
-                <h2 className="text-3xl md:text-4xl font-extrabold mb-4">Powered by Redis, ready out of the box</h2>
-                <p className="text-[var(--text-secondary)] leading-relaxed mb-6">
-                  Memory is local-first by default &mdash; nothing leaves your
-                  machine. The Redis Agent Memory Server client ships with the
-                  standard install: point it at a Redis Stack server for
-                  semantic search over your project memory &mdash; local Ollama
-                  embeddings, int8 vector quantization, no cloud required.
-                </p>
-                <code className="inline-block bg-[var(--surface-container-high)] px-4 py-2 rounded-lg text-sm font-mono">pip install attune-ai</code>
-              </div>
-              <div className="grid sm:grid-cols-2 gap-3">
-                {[
-                  ['Local-first', 'Default backend is on-disk — no service required'],
-                  ['Redis AMS tier', 'Client included — semantic recall across sessions'],
-                  ['Ollama embeddings', 'Runs locally — no API key, no cloud'],
-                  ['int8 quantization', 'Compact vectors, shipped in attune-ai 7.4'],
-                ].map(([title, desc]) => (
-                  <div key={title} className="bg-[var(--background)] rounded-xl p-4 border border-[var(--border)]/40">
-                    <div className="font-bold text-sm text-[var(--secondary)] mb-1">{title}</div>
-                    <p className="text-xs text-[var(--text-muted)] leading-snug">{desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+        {/* 7 — Open source */}
+        <section className="py-24 px-6 max-w-3xl mx-auto text-center" aria-label="Open source">
+          <h2 className="text-4xl md:text-5xl font-extrabold mb-6">Inspect everything.</h2>
+          <p className="text-lg text-[var(--text-secondary)] leading-relaxed mb-8">
+            Attune is open source under the Apache License 2.0. Every
+            workflow, every memory operation, every verification step is code
+            you can read, modify, evaluate, and use &mdash; commercially
+            included. No black box between your agent and your repository.
+          </p>
+          <a
+            href="https://github.com/Smart-AI-Memory/attune-ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block bg-[var(--surface-container-highest)] text-[var(--foreground)] px-8 py-3 rounded-lg font-bold hover:bg-[var(--surface-variant)] transition-colors border border-[var(--border)] no-underline"
+          >
+            View the source on GitHub
+          </a>
         </section>
 
-        <section className="py-24 bg-[var(--surface-container-low)]" aria-label="Platform overview">
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="flex flex-col md:flex-row gap-16 items-start">
-              <div className="md:w-2/5">
-                <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-3 block">Sister Family</span>
-                <h2 className="text-3xl font-extrabold mb-6">The Documentation Toolchain</h2>
-                <p className="text-[var(--text-secondary)] mb-8 leading-relaxed">
-                  attune-ai began as a tool to help people work with
-                  AI, then grew into an engineering toolkit focused on
-                  Claude &mdash; and later Redis. The documentation
-                  toolchain came after, built with the same development
-                  discipline: authoring ships inside attune-ai, and
-                  two standalone packages complete the end-to-end
-                  author &rarr; reader loop. Use the full stack, or
-                  drop in just the piece you need.
+        {/* 8 — Get started */}
+        <section id="get-started" className="py-24 px-6 bg-[var(--surface-container-low)]" aria-label="Get started">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-extrabold">Get started</h2>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
+              {/* Marketplace-first, matching the README's own ordering:
+                  the plugin works standalone — no Python required. */}
+              <div className="bg-[var(--surface)] rounded-2xl p-7 border-2 border-[var(--primary)]/40">
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="font-bold text-lg">In Claude Code</h3>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--primary)] bg-[var(--primary)]/10 px-2 py-0.5 rounded-full">
+                    Works standalone
+                  </span>
+                </div>
+                <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-4 mb-4 overflow-x-auto">
+                  <div><span className="text-white/50">$ </span>claude plugin marketplace add Smart-AI-Memory/attune-ai</div>
+                  <div><span className="text-white/50">$ </span>claude plugin install attune-ai@attune-ai</div>
+                </div>
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                  No Python environment required. Runs on your existing Claude
+                  subscription &mdash; then type{' '}
+                  <code className="bg-[var(--surface-container-high)] px-1.5 py-0.5 rounded text-xs">/spec</code>{' '}
+                  or{' '}
+                  <code className="bg-[var(--surface-container-high)] px-1.5 py-0.5 rounded text-xs">/coach</code>{' '}
+                  to start.
                 </p>
-                <ul className="space-y-5">
-                  <li className="flex items-start gap-3">
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[var(--accent)]/15 text-[var(--accent)] font-bold text-xs shrink-0 mt-0.5">1</span>
-                    <div>
-                      <div className="font-semibold text-sm"><code className="font-mono">attune.authoring</code></div>
-                      <p className="text-xs text-[var(--text-secondary)] leading-relaxed mt-1">
-                        Ships with attune-ai &mdash; generates 15 kinds of
-                        source-grounded templates with per-type LLM polish.
-                        Runs at dev time or in CI.
-                      </p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[var(--accent)]/15 text-[var(--accent)] font-bold text-xs shrink-0 mt-0.5">2</span>
-                    <div>
-                      <div className="font-semibold text-sm"><code className="font-mono">attune-rag</code></div>
-                      <p className="text-xs text-[var(--text-secondary)] leading-relaxed mt-1">
-                        Keyword + semantic retrieval, mean faithfulness &ge; 0.97
-                        (CI-gated) &mdash; answers stay grounded in your code.
-                      </p>
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[var(--secondary)]/15 text-[var(--secondary)] font-bold text-xs shrink-0 mt-0.5">3</span>
-                    <div>
-                      <div className="font-semibold text-sm"><code className="font-mono">attune-help</code></div>
-                      <p className="text-xs text-[var(--text-secondary)] leading-relaxed mt-1">
-                        Reads the templates at runtime. 1 dependency, no API
-                        key required. Embed in any Python tool.
-                      </p>
-                    </div>
-                  </li>
-                </ul>
-                <div className="mt-8 pt-6 border-t border-[var(--border)]/40">
-                  <p className="text-xs text-[var(--text-muted)]">
-                    Everything is open source &mdash; Apache 2.0.
-                  </p>
-                </div>
               </div>
-              <div className="md:w-3/5 w-full">
-                <div className="bg-[#213145] rounded-xl overflow-hidden shadow-2xl">
-                  <div className="flex items-center px-4 py-2 bg-[#2a3b50] border-b border-white/5">
-                    <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest">author_reader_loop.py</span>
-                    <div className="ml-auto flex gap-1.5">
-                      <div className="w-2.5 h-2.5 rounded-full bg-white/10"></div>
-                      <div className="w-2.5 h-2.5 rounded-full bg-white/10"></div>
-                    </div>
-                  </div>
-                  <div className="p-6 font-mono text-sm overflow-x-auto">
-                    <pre className="text-white/90 leading-relaxed"><code>{codeExample}</code></pre>
-                  </div>
+              <div className="bg-[var(--surface)] rounded-2xl p-7 border border-[var(--border)]/40">
+                <div className="flex items-center gap-2 mb-3">
+                  <h3 className="font-bold text-lg">Python package</h3>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)] bg-[var(--surface-container-high)] px-2 py-0.5 rounded-full">
+                    Adds CLI + MCP
+                  </span>
                 </div>
+                <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-4 mb-4 overflow-x-auto">
+                  <div><span className="text-white/50">$ </span>pip install attune-ai</div>
+                </div>
+                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+                  Unlocks the CLI, the MCP server, and multi-agent workflows.
+                  With <code className="bg-[var(--surface-container-high)] px-1.5 py-0.5 rounded text-xs">ANTHROPIC_API_KEY</code>{' '}
+                  set, large modules fall back to the Anthropic API &mdash; API
+                  usage bills API credits, separate from a Claude subscription.
+                </p>
               </div>
             </div>
-          </div>
-        </section>
-
-        {/* Four Product Cards */}
-        <section className="py-32 px-6 max-w-7xl mx-auto" aria-label="Products">
-          <div className="text-center mb-20">
-            <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-4 block">Core Capabilities</span>
-            <h2 className="text-4xl md:text-5xl font-extrabold">Four Ways to Use It</h2>
-            <p className="text-[var(--text-secondary)] mt-4 max-w-2xl mx-auto">
-              The attune-ai framework, its Claude Code plugin, and the
-              two-package documentation toolchain we built with it.
-              Pick the piece that fits the job.
+            <p className="text-sm text-[var(--text-muted)] text-center max-w-2xl mx-auto">
+              Project memory, retrieval, and the help system are local-first
+              &mdash; no API key, no cloud required.
+            </p>
+            <p className="text-center mt-6">
+              <Link href="/docs#quickstart" className="text-sm font-bold text-[var(--primary)] hover:opacity-80 transition-opacity">
+                Full installation guide &rarr;
+              </Link>
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* attune-ai */}
-            <div className="group bg-[var(--surface)] rounded-2xl p-7 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
-              <div className="w-14 h-14 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--primary)] transition-colors">
-                <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all" aria-hidden="true">&#128736;&#65039;</span>
-              </div>
-              <h3 className="text-xl font-bold mb-3">attune-ai</h3>
-              <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
-                Full framework. Workflows, staleness detection, MCP server, and 27 auto-triggering skills for Claude Code.
-              </p>
-            </div>
-
-            {/* attune-help */}
-            <div className="group bg-[var(--surface)] rounded-2xl p-7 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
-              <div className="w-14 h-14 rounded-xl bg-[var(--secondary)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--secondary)] transition-colors">
-                <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all" aria-hidden="true">&#128214;</span>
-              </div>
-              <h3 className="text-xl font-bold mb-3">attune-help</h3>
-              <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
-                Lightweight reader. 1 dependency, 6 files. Embed progressive help in any CLI tool, notebook, or internal app.
-              </p>
-            </div>
-
-            {/* attune-rag */}
-            <div className="group bg-[var(--surface)] rounded-2xl p-7 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
-              <div className="w-14 h-14 rounded-xl bg-[var(--accent)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--accent)] transition-colors">
-                <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all" aria-hidden="true">&#128269;</span>
-              </div>
-              <h3 className="text-xl font-bold mb-3">attune-rag</h3>
-              <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
-                Keyword + semantic retrieval over your Markdown corpus. Mean faithfulness &ge; 0.97, CI-gated &mdash; answers stay grounded.
-              </p>
-            </div>
-
-            {/* Claude Code Plugin */}
-            <div className="group bg-[var(--surface)] rounded-2xl p-7 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
-              <div className="w-14 h-14 rounded-xl bg-[var(--surface-container-high)] flex items-center justify-center mb-6 group-hover:bg-[var(--foreground)] transition-colors">
-                <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all" aria-hidden="true">&#9889;</span>
-              </div>
-              <h3 className="text-xl font-bold mb-3">Claude Code Plugin</h3>
-              <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
-                Type <code className="bg-[var(--surface-container-high)] px-1.5 py-0.5 rounded text-xs">/coach</code> in Claude Code. Progressive help in your terminal &mdash; no setup required.
-              </p>
-            </div>
-          </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="max-w-7xl mx-auto px-6 pb-24" aria-label="Call to action">
-          <div className="grid lg:grid-cols-5 gap-8 items-center">
-            <div className="lg:col-span-3 hero-gradient rounded-3xl p-12 text-white relative overflow-hidden">
-              <div className="relative z-10">
-                <h3 className="text-3xl font-extrabold mb-6">Ship software you can trust your agent built</h3>
-                <p className="text-white/80 text-lg mb-8 max-w-lg">
-                  Install from PyPI, run /spec on your next feature, and let the
-                  platform keep the work grounded, remembered, and verified.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <Link
-                    href="/docs"
-                    className="bg-white text-[var(--primary)] px-8 py-3 rounded-lg font-bold hover:bg-[var(--surface-container-low)] transition-colors text-center"
-                  >
-                    Read the Docs
-                  </Link>
-                  <a
-                    href="https://github.com/Smart-AI-Memory/attune-ai"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-ghost-white border-2 border-white/60 px-8 py-3 rounded-lg font-bold hover:bg-white/15 transition-colors text-center"
-                  >
-                    Star on GitHub
-                  </a>
-                </div>
-              </div>
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
-            </div>
-
-            <div className="lg:col-span-2 space-y-6">
-              <div className="p-6 border border-[var(--border)]/40 rounded-2xl bg-[var(--surface-container-low)]">
-                <div className="flex items-center gap-4 mb-3">
-                  <span className="text-[var(--primary)]">&#x1F504;</span>
-                  <span className="font-bold">Auto-Freshness</span>
-                </div>
-                <p className="text-xs text-[var(--text-secondary)]">
-                  Source hashes detect code drift. Stale templates regenerate automatically &mdash; your docs stay in sync with your codebase.
-                </p>
-              </div>
-              <div className="p-6 border border-[var(--border)]/40 rounded-2xl bg-[var(--surface-container-low)]">
-                <div className="flex items-center gap-4 mb-3">
-                  <span className="text-[var(--secondary)]">&#x270F;&#xFE0F;</span>
-                  <span className="font-bold">Human-Enhanceable</span>
-                </div>
-                <p className="text-xs text-[var(--text-secondary)]">
-                  Edit generated templates freely, or write from scratch. The engine respects hand-written content and never overwrites your work.
-                </p>
+        {/* 9 — Final CTA */}
+        <section className="max-w-7xl mx-auto px-6 py-24" aria-label="Call to action">
+          <div className="hero-gradient rounded-3xl p-12 md:p-16 text-white relative overflow-hidden text-center">
+            <div className="relative z-10 max-w-2xl mx-auto">
+              <h2 className="text-3xl md:text-4xl font-extrabold mb-4">
+                Your coding agent shouldn&apos;t forget yesterday.
+              </h2>
+              <p className="text-white/80 text-lg mb-8">
+                Give it a persistent project memory.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  href="/docs#quickstart"
+                  className="bg-white text-[var(--primary)] px-8 py-3 rounded-lg font-bold hover:bg-[var(--surface-container-low)] transition-colors text-center"
+                >
+                  Install Attune
+                </Link>
+                <a
+                  href="https://github.com/Smart-AI-Memory/attune-ai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-ghost-white border-2 border-white/60 px-8 py-3 rounded-lg font-bold hover:bg-white/15 transition-colors text-center"
+                >
+                  View on GitHub
+                </a>
               </div>
             </div>
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" aria-hidden="true"></div>
           </div>
         </section>
       </main>

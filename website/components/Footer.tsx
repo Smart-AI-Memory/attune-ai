@@ -133,7 +133,7 @@ export default function Footer() {
                   rel="noopener noreferrer"
                   className="text-sm text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
                 >
-                  Claude Code marketplace
+                  Claude Code plugin (GitHub)
                 </a>
               </li>
               <li>

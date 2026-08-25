@@ -27,6 +27,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Standard content pages
   const standardPages = [
     '/blog',
+    '/benchmarks',
     '/changelog',
     '/contact',
     '/migrate',

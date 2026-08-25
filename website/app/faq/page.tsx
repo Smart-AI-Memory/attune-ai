@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { generateMetadata, generateStructuredData } from '@/lib/metadata';
+import { CAPABILITIES } from '@/lib/features';
 
 interface FAQItem {
   question: string;
@@ -30,11 +31,11 @@ const faqData: FAQCategory[] = [
       },
       {
         question: 'What is Attune AI built on?',
-        answer: 'Memory is the pillar: project memory carries cross-session findings and a retrievable lessons corpus, surfaced at the moment a prompt needs them. Around it ship four supporting capabilities, each real and shipped: dynamic forms (structured human/AI turns), AI workflows (23 workflows for review, tests, bug prediction, refactors, and outcome-first fixes with verified receipts), retrieval grounding (citations back to your source via attune-rag), and verification (fact-checking generated content before it reaches main).',
+        answer: `Memory is the pillar: project memory carries cross-session findings and a retrievable lessons corpus, surfaced at the moment a prompt needs them. Around it ship four supporting capabilities, each real and shipped: dynamic forms (structured human/AI turns), AI workflows (${CAPABILITIES.workflows} workflows for review, tests, bug prediction, refactors, and outcome-first fixes with verified receipts), retrieval grounding (citations back to your source via attune-rag), and verification (fact-checking generated content before it reaches main).`,
       },
       {
         question: 'What can Attune AI do, in numbers?',
-        answer: 'Attune AI ships 23 workflows, 60 MCP tools, 27 auto-triggering skills, 5 wizards, and 11 template kinds. The spec engine runs via /spec, progressive help via /coach, cross-session recall via /recall, and outcome-first fixes with verified receipts via attune fix.',
+        answer: `Attune AI ships ${CAPABILITIES.workflows} workflows, ${CAPABILITIES.mcpTools} MCP tools, ${CAPABILITIES.skills} auto-triggering skills, ${CAPABILITIES.wizards} wizards, and ${CAPABILITIES.templateKinds} template kinds. The spec engine runs via /spec, progressive help via /coach, cross-session recall via /recall, and outcome-first fixes with verified receipts via attune fix.`,
       },
       {
         question: "What happened to attune-gui?",
@@ -82,7 +83,7 @@ const faqData: FAQCategory[] = [
     questions: [
       {
         question: 'How does retrieval grounding keep answers accurate?',
-        answer: 'Retrieval grounding is powered by attune-rag, a core (built-in) dependency. Keyword and semantic retrieval keep generated content anchored to your actual source, with citations back to where each claim came from. Mean faithfulness is measured at ≥ 0.97 and CI-gated — drift fails the build rather than slipping through.',
+        answer: 'Retrieval grounding is powered by attune-rag, a core (built-in) dependency. Keyword and semantic retrieval keep generated content anchored to your actual source, with citations back to where each claim came from. Mean faithfulness is measured at 0.97 with a CI regression gate — drift fails the build rather than slipping through.',
       },
       {
         question: 'How does verification catch hallucinations?',
