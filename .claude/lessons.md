@@ -26279,3 +26279,103 @@ launched in parallel.
   status**, and grep it for `failed` rather than eyeballing the tail.
   Pairs with the existing worktree-vs-main execution lessons: those are
   about WHICH tree runs, this one is about the tree CHANGING mid-run.
+
+- **A slug is not a summary — recommending on an artifact's NAME
+  produces a confident, specific, wrong characterization, and the
+  wrongness is invisible because the name was chosen to sound like the
+  content**: 2026-08-26, the core-promotion discussion. Asked whether a
+  lesson deserved always-loaded residency, I described
+  `static-scan-vocabulary-vs-behavioral-gate` to the chair as being
+  about "a scanner going blind to an idiom it does not know — it reports
+  green and looks HEALTHIER for it", and argued that its silent failure
+  mode met the core bar better than the candidate we had just declined.
+  **Every word of that description belongs to a DIFFERENT lesson**
+  (`Teaching a scanner a new safe idiom can make its gate go BLIND`,
+  2026-08-21). The entry I was actually recommending leads with the
+  opposite failure: a NOISY scan, 63 sites flagged and 3 real — a loud,
+  self-announcing symptom that by the ratified criterion belongs in the
+  tail. I had never opened the file. The slug contained "static-scan"
+  and "gate", my prior held a scanner-blindness lesson, and the two
+  fused without any moment that felt like inference. **The tell I
+  ignored: I could name the lesson's THEME but could not quote a single
+  concrete from it — no number, no file, no symptom.** A real reading
+  leaves specifics behind; a slug-reading leaves only a topic. **Rule:
+  before an artifact's content becomes an argument — a promotion, a
+  dedupe, a citation, a "this is already covered" dismissal — OPEN IT,
+  and quote one concrete detail back. If you cannot, you have read the
+  index, not the entry.** The cost here was cheap because the byte
+  budget refused the promotion for unrelated reasons and forced me to
+  measure, which forced me to read; absent that mechanical stop, a
+  ~6 KB entry would have been promoted into every future session's
+  context on a characterization that described some other file.
+  **Corollary for corpora specifically: the better your naming
+  convention, the more dangerous this gets** — descriptive slugs are
+  precisely what make it feel unnecessary to open the file. Pairs with
+  the core "claims carry their basis" rule; this is its
+  artifact-reading member, where the unstated basis is "I inferred the
+  content from the filename."
+
+- **Print the container's KEYS before counting anything inside it —
+  three times in one session I counted the wrong noun and reported a
+  confident, load-bearing, wrong number**: 2026-08-26. (1) Costing a
+  rename, `grep -rl | wc -l` gave **"8 sites"**; the real figure was
+  **127 references across 21 files**. The number was load-bearing —
+  the counter-case I put to the chair was denominated in it, and the
+  ruling cited it. (2) Re-checking a known-empty report surface,
+  `len(sections)` returned **2** and I called a three-week-old bug
+  fixed; the sections were `[Bugs=0, Next steps=6]`. (3) On the
+  recheck of THAT, I counted `s.get("rows") or s.get("items")` and
+  got **0** for the Bugs section — so I wrote up a regression that
+  did not exist, into a bug-log entry on main, a lesson, and a retro
+  item the chair then ruled `do now`. The section stores its rows
+  under **`findings`**; `rows`/`items` are empty for it by
+  construction. Fifteen real findings read as zero. **Every instance
+  has the same shape: a count taken through a key or granularity
+  that is ADJACENT to the one that matters, producing a plausible
+  number that survives review because nobody re-derives it.** An
+  import is one line and a usage is many; a container is not its
+  contents; a section's row key varies by section kind. **The rule
+  is mechanical and costs one line: before counting, print the
+  keys** — `sorted(obj.keys())`, `grep -o` the actual matches, `ls`
+  the actual entries — and only then count. Report BOTH numbers when
+  they can differ ("127 references across 21 files"), so a reader
+  never has to guess which you measured. Corollary: when a
+  previously-zero metric turns non-zero, that is a HYPOTHESIS, not
+  closure — the second and third instances above were both "it looks
+  fixed now" readings that were not.
+
+- **An LLM review's SEVERITY is a claim like any other — verify the
+  impact before it changes a decision, because a confidently-worded
+  HIGH can be a Low and will otherwise hold a release for nothing**:
+  2026-08-26, the 15.1.0 post-release self-review. `code-review`
+  returned, as its top finding and first "next step":
+  "**High** — Confirmed dead-code bug: `context.get('class_name'/
+  'workflow_name')` return values never assigned, so codegen silently
+  ignores caller-supplied names … **ships silently broken output
+  today**." Every factual clause was TRUE — both lines really do
+  discard their return value. The IMPACT clause was false. Reading the
+  two functions showed each file discards exactly the name its own
+  templates never reference: `structural.py` renders `workflow_name` +
+  `description` and throws away `class_name`; `output.py` renders
+  `class_name` and throws away `workflow_name`. Confirmed by AST — each
+  discarded name appears exactly ONCE in its function, in the dead call
+  itself. Nothing is ignored; no broken output ships. Correct severity
+  Low: two vestigial statements worth deleting for tidiness. **Taken at
+  face value this would have held a release that was otherwise clean.**
+  Three durable points. (1) **The word "Confirmed" in a generated
+  finding means the model confirmed the OBSERVATION, not the
+  CONSEQUENCE** — dead code is trivially checkable, its blast radius is
+  not, and the two get welded into one sentence. (2) **The cheap probe
+  is "who reads this value?"**: `ast` for the function body and count
+  occurrences — 1 means the fetch is the only mention and the impact
+  claim is dead on arrival. (3) Note WHY the linter missed it, because
+  that is what makes it survive review: ruff's `B018`
+  (useless-expression) does not fire on `context.get(...)` since a CALL
+  may have side effects, so this class hides from static analysis and
+  only an LLM or a human finds it — which is exactly why the LLM's
+  severity is the only signal present and exactly why it must be
+  checked. Pairs with the standing "verify HIGH severity scanner
+  findings against the source" rule for `bug-predict`'s regex scanner;
+  this extends the same discipline from PATTERN false-positives to
+  IMPACT overstatement in prose reviews, where the finding is real and
+  only its weight is wrong.
