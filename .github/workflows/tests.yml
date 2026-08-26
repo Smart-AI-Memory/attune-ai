@@ -341,8 +341,14 @@ jobs:
 
     - name: Run tests with coverage
       # Coverage RATCHET: --cov-fail-under is a one-way valve, not a static
-      # floor. Main has measured 94.69–94.71% across recent runs (stable to
-      # ~0.02%); the gate sits at 94 (≈0.7pt headroom for normal churn). The
+      # floor. DO NOT quote a measured percentage here — the figure this
+      # comment carried (94.69–94.71%, "≈0.7pt headroom") went stale as main
+      # climbed, and on 2026-08-26 it was read as live during a release
+      # incident and produced a wrong diagnosis (the actual figure was
+      # 95.93%, ~2pt of room). The authoritative current number is the
+      # Codecov API, not a comment that cannot update itself:
+      #   curl -s "https://api.codecov.io/api/v2/github/Smart-AI-Memory/repos/attune-ai/report/?branch=main"
+      # Only the GATE below is normative. The
       # old 85 left a ~9.7pt silent-erosion slack — coverage could fall from
       # ~94.7 to 85 without CI noticing. RATCHET POLICY: only ever raise this
       # number (when main climbs and holds above floor+~1), never lower it to
