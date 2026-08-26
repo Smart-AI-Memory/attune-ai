@@ -26379,3 +26379,72 @@ launched in parallel.
   this extends the same discipline from PATTERN false-positives to
   IMPACT overstatement in prose reviews, where the finding is real and
   only its weight is wrong.
+
+- **Never extend a TRUNCATED identifier into a full one — a short SHA
+  looks like a prefix you already have, so completing it feels like
+  recall rather than invention, and the result is a well-formed value
+  that resolves to nothing**: 2026-08-26, writing the next-session
+  starter at the close of a 16-PR day. `git log --oneline -1` had given
+  me `d33786140`; the starter's frontmatter wanted a full
+  `head_sha`, and I wrote
+  `d337861406a9a1e3e0e0ae4d1b8b0f0a1c5e7d29` — correct nine-character
+  prefix, thirty-one fabricated characters after it. `git rev-parse`
+  says the real value is
+  `d33786140663d9c6d8c35ca7ccef58d6a70c6837`. **The forgery is
+  undetectable by eye: right length, right alphabet, right prefix, and
+  it sits in the frontmatter of the one document whose entire job is
+  orienting the next session** — which would have used it as the base
+  for its own reasoning. Caught only because I re-read my own output.
+  **The mechanism worth naming: a truncated value is a PREFIX, and a
+  prefix creates the false sense that the whole is already in hand.**
+  Unlike a wrong number, which at least has to be invented from
+  nothing, a padded identifier launders a real fragment into a fake
+  whole, so the honest part of it supplies the confidence. Same family
+  applies to abbreviated PR/run ids, `%h` short hashes, truncated file
+  paths in log output, and `...`-elided output of any kind. **Rules:
+  (1) when a field wants a FULL identifier, run the command that
+  produces the full form (`git rev-parse`, `--json oid`, `%H` not
+  `%h`) — never lengthen what you have; (2) after writing any document
+  containing an identifier you did not paste from a command's output,
+  RESOLVE IT (`git cat-file -t <sha>`, `gh pr view <n>`) as a
+  post-condition of writing, not as a later review step; (3) prefer
+  storing the short form you actually have over a long form you
+  assembled — a short SHA that resolves beats a long one that does
+  not.** Sibling of
+  `print-the-keys-before-counting` from the same session: that one is
+  counting through an adjacent key, this one is completing an adjacent
+  value; both produce a plausible artifact whose wrongness is invisible
+  at a glance, and both were the fourth-and-third instances of the same
+  underlying habit in a single day — asserting something ADJACENT to
+  what was actually in hand.
+
+- **An agent-written watcher loop with a success condition and a failure
+  condition but NO ATTEMPT BOUND is immortal — when the thing it watches
+  reaches neither state, it polls forever, outlives the resource it
+  polls, and nobody notices because a silent loop looks exactly like a
+  patient one**: 2026-08-26, found during end-of-session cleanup after a
+  16-PR day. Two leaked processes: a `while :;` chaining watcher polling
+  `/api/runs/bug-predict` for **7h12m**, still running against an ops
+  server that had been stopped — its `run_id` extraction had failed
+  silently at minute one, so `$BP` was empty, every status query returned
+  nothing, and neither the "settled" branch nor the "red" branch could
+  ever fire; and an orphaned `gpg` probe at **13h34m**, reparented to
+  init, blocked on a pinentry that could never render. **Every watcher
+  written that session had the same shape** — `until <done>; do sleep N;
+  done` with an early-exit on failure — and every one was correct for the
+  cases it enumerated and unbounded for the case it did not. The trap is
+  that the loop's two exits are both keyed on the WATCHED THING behaving;
+  none is keyed on the watcher having waited long enough, so a
+  malformed/empty query variable converts a monitor into a spinner with
+  no error anywhere. **Rules: (1) bound every poll loop by ATTEMPTS, not
+  just by outcome — `for i in $(seq 1 60); do ... done; echo "TIMED OUT
+  after N"` — so the loop reports its own failure to converge; (2) treat
+  an empty/unparsed id as a HARD EXIT, not a `continue` — if the thing
+  you are polling for could not even be identified, waiting cannot help;
+  (3) at session close, audit for your own leaks: `ps -eo
+  pid,ppid,etime,command | awk '$2==1'` catches processes reparented to
+  init, and a task-output file with no `[exited with code N]` marker is
+  the tell that its shell never finished.** Note the harness reports a
+  killed watcher as `failed ... exit code 144`, which is the SIGTERM
+  landing, not a new problem. Cheap to prevent, invisible until someone
+  looks: these two had been running 13h and 7h with zero symptoms.
