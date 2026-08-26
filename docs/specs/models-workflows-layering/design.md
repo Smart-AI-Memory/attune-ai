@@ -84,7 +84,16 @@ over `WorkflowGraphConfig` because the neighbourhood prefixes with
 `Agent` (`AgentRole`, `AgentCapability`, `AgentConfig`), and the fields
 it carries (`state_schema`, `checkpointing`, `framework_options`,
 `mode` ∈ sequential/parallel/graph/conversation) are graph-construction
-concerns. Cost: `agent_factory/__init__` export + 7 test modules.
+concerns.
+
+  **Cost corrected 2026-08-26 at execution time: 127 references across
+  21 files, not the "8 sites" stated above.** The original figure counted
+  IMPORTING FILES, not references — a 15x underestimate, and the chair's
+  D5 ruling was made against it. Re-put to the chair with the true number
+  and re-ruled PROCEED. The risk profile is unchanged (mechanical,
+  alias-protected, no in-scope file references a different
+  `WorkflowConfig`); only churn and reviewability moved. 104 of the 127
+  are test references.
 
 ## Sequencing
 

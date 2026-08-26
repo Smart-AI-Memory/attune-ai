@@ -4,7 +4,7 @@ Tests the base classes and enums for the Agent Factory:
 - AgentRole enum
 - AgentCapability enum
 - AgentConfig dataclass
-- WorkflowConfig dataclass
+- AgentGraphConfig dataclass
 - BaseAgent abstract class
 - BaseWorkflow abstract class
 - BaseAdapter abstract class
@@ -15,11 +15,11 @@ import pytest
 from attune.agent_factory.base import (
     AgentCapability,
     AgentConfig,
+    AgentGraphConfig,
     AgentRole,
     BaseAdapter,
     BaseAgent,
     BaseWorkflow,
-    WorkflowConfig,
 )
 
 
@@ -234,46 +234,46 @@ class TestAgentConfig:
 
 
 class TestWorkflowConfig:
-    """Tests for WorkflowConfig dataclass."""
+    """Tests for AgentGraphConfig dataclass."""
 
     def test_minimal_creation(self):
         """Test creating config with just name."""
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
         assert config.name == "test_workflow"
 
     def test_default_mode(self):
         """Test default mode is sequential."""
-        config = WorkflowConfig(name="workflow")
+        config = AgentGraphConfig(name="workflow")
         assert config.mode == "sequential"
 
     def test_default_max_iterations(self):
         """Test default max iterations is 10."""
-        config = WorkflowConfig(name="workflow")
+        config = AgentGraphConfig(name="workflow")
         assert config.max_iterations == 10
 
     def test_default_timeout(self):
         """Test default timeout is 300 seconds."""
-        config = WorkflowConfig(name="workflow")
+        config = AgentGraphConfig(name="workflow")
         assert config.timeout_seconds == 300
 
     def test_default_checkpointing(self):
         """Test checkpointing is enabled by default."""
-        config = WorkflowConfig(name="workflow")
+        config = AgentGraphConfig(name="workflow")
         assert config.checkpointing is True
 
     def test_default_retry_on_error(self):
         """Test retry on error is enabled by default."""
-        config = WorkflowConfig(name="workflow")
+        config = AgentGraphConfig(name="workflow")
         assert config.retry_on_error is True
 
     def test_default_max_retries(self):
         """Test default max retries is 3."""
-        config = WorkflowConfig(name="workflow")
+        config = AgentGraphConfig(name="workflow")
         assert config.max_retries == 3
 
     def test_full_config_creation(self):
         """Test creating config with all options."""
-        config = WorkflowConfig(
+        config = AgentGraphConfig(
             name="code_review_pipeline",
             description="Multi-agent code review",
             mode="parallel",
@@ -403,7 +403,7 @@ class TestBaseWorkflow:
 
     def test_init_sets_config(self):
         """Test init sets config."""
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
         agent_config = AgentConfig(name="agent1")
         agent = ConcreteAgent(agent_config)
         workflow = ConcreteWorkflow(config, [agent])
@@ -411,7 +411,7 @@ class TestBaseWorkflow:
 
     def test_init_creates_agents_dict(self):
         """Test init creates agents dictionary by name."""
-        config = WorkflowConfig(name="workflow")
+        config = AgentGraphConfig(name="workflow")
         agent1_config = AgentConfig(name="researcher")
         agent2_config = AgentConfig(name="writer")
         agent1 = ConcreteAgent(agent1_config)
@@ -423,13 +423,13 @@ class TestBaseWorkflow:
 
     def test_init_empty_state(self):
         """Test init creates empty state."""
-        config = WorkflowConfig(name="workflow")
+        config = AgentGraphConfig(name="workflow")
         workflow = ConcreteWorkflow(config, [])
         assert workflow._state == {}
 
     def test_get_state_returns_copy(self):
         """Test get_state returns a copy."""
-        config = WorkflowConfig(name="workflow")
+        config = AgentGraphConfig(name="workflow")
         workflow = ConcreteWorkflow(config, [])
         workflow._state["key"] = "value"
 
@@ -439,7 +439,7 @@ class TestBaseWorkflow:
 
     def test_get_agent_existing(self):
         """Test getting existing agent by name."""
-        config = WorkflowConfig(name="workflow")
+        config = AgentGraphConfig(name="workflow")
         agent_config = AgentConfig(name="researcher")
         agent = ConcreteAgent(agent_config)
         workflow = ConcreteWorkflow(config, [agent])
@@ -449,7 +449,7 @@ class TestBaseWorkflow:
 
     def test_get_agent_nonexistent(self):
         """Test getting nonexistent agent returns None."""
-        config = WorkflowConfig(name="workflow")
+        config = AgentGraphConfig(name="workflow")
         workflow = ConcreteWorkflow(config, [])
 
         retrieved = workflow.get_agent("nonexistent")
@@ -458,7 +458,7 @@ class TestBaseWorkflow:
     @pytest.mark.asyncio
     async def test_run(self):
         """Test run method."""
-        config = WorkflowConfig(name="workflow")
+        config = AgentGraphConfig(name="workflow")
         workflow = ConcreteWorkflow(config, [])
         result = await workflow.run("input", {"key": "value"})
         assert result["output"] == "Workflow complete"
@@ -467,7 +467,7 @@ class TestBaseWorkflow:
     @pytest.mark.asyncio
     async def test_stream(self):
         """Test stream method."""
-        config = WorkflowConfig(name="workflow")
+        config = AgentGraphConfig(name="workflow")
         workflow = ConcreteWorkflow(config, [])
         stages = []
         async for update in workflow.stream("input"):
@@ -516,7 +516,7 @@ class TestBaseAdapter:
     def test_create_workflow(self):
         """Test create_workflow method."""
         adapter = ConcreteAdapter()
-        workflow_config = WorkflowConfig(name="test_workflow")
+        workflow_config = AgentGraphConfig(name="test_workflow")
         agent_config = AgentConfig(name="agent")
         agent = adapter.create_agent(agent_config)
         workflow = adapter.create_workflow(workflow_config, [agent])
@@ -580,12 +580,12 @@ class TestAgentConfigDefaults:
 
 
 class TestWorkflowConfigDefaults:
-    """Tests for WorkflowConfig default factory fields."""
+    """Tests for AgentGraphConfig default factory fields."""
 
     def test_framework_options_default_is_new_dict(self):
         """Test each config gets its own framework_options dict."""
-        config1 = WorkflowConfig(name="workflow1")
-        config2 = WorkflowConfig(name="workflow2")
+        config1 = AgentGraphConfig(name="workflow1")
+        config2 = AgentGraphConfig(name="workflow2")
         config1.framework_options["key"] = "value"
         assert "key" not in config2.framework_options
 

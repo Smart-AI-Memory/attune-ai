@@ -14,7 +14,7 @@ from attune.agent_factory.adapters.wizard_adapter import (
     WizardWorkflow,
     wrap_wizard,
 )
-from attune.agent_factory.base import AgentConfig, AgentRole, WorkflowConfig
+from attune.agent_factory.base import AgentConfig, AgentGraphConfig, AgentRole
 
 # =============================================================================
 # Mock Wizard Classes
@@ -265,7 +265,7 @@ class TestWizardWorkflow:
     @pytest.mark.asyncio
     async def test_run_empty_workflow(self):
         """Test running workflow with no agents."""
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
         workflow = WizardWorkflow(config, [])
 
         result = await workflow.run("test input")
@@ -280,7 +280,7 @@ class TestWizardWorkflow:
         agent_config = AgentConfig(name="wizard1", role=AgentRole.RESEARCHER)
         agent = WizardAgent(wizard, agent_config)
 
-        workflow_config = WorkflowConfig(name="single_wizard")
+        workflow_config = AgentGraphConfig(name="single_wizard")
         workflow = WizardWorkflow(workflow_config, [agent])
 
         result = await workflow.run("test input")
@@ -298,7 +298,7 @@ class TestWizardWorkflow:
         agent1 = WizardAgent(wizard1, AgentConfig(name="wizard1", role=AgentRole.RESEARCHER))
         agent2 = WizardAgent(wizard2, AgentConfig(name="wizard2", role=AgentRole.SUMMARIZER))
 
-        workflow_config = WorkflowConfig(name="multi_wizard")
+        workflow_config = AgentGraphConfig(name="multi_wizard")
         workflow = WizardWorkflow(workflow_config, [agent1, agent2])
 
         result = await workflow.run("test input")
@@ -313,7 +313,7 @@ class TestWizardWorkflow:
         wizard = MockWizard()
         agent = WizardAgent(wizard, AgentConfig(name="wizard", role=AgentRole.RESEARCHER))
 
-        workflow_config = WorkflowConfig(name="stateful_workflow")
+        workflow_config = AgentGraphConfig(name="stateful_workflow")
         workflow = WizardWorkflow(workflow_config, [agent])
 
         initial_state = {"session_id": "123", "user": "test"}
@@ -328,7 +328,7 @@ class TestWizardWorkflow:
         wizard = MockWizard()
         agent = WizardAgent(wizard, AgentConfig(name="wizard", role=AgentRole.RESEARCHER))
 
-        workflow_config = WorkflowConfig(name="streaming_workflow")
+        workflow_config = AgentGraphConfig(name="streaming_workflow")
         workflow = WizardWorkflow(workflow_config, [agent])
 
         events = []
@@ -465,7 +465,7 @@ class TestWizardAdapter:
         wizard = MockWizard()
         agent = WizardAgent(wizard, AgentConfig(name="wizard", role=AgentRole.RESEARCHER))
 
-        workflow_config = WorkflowConfig(name="test_workflow")
+        workflow_config = AgentGraphConfig(name="test_workflow")
         workflow = adapter.create_workflow(workflow_config, [agent])
 
         assert isinstance(workflow, WizardWorkflow)

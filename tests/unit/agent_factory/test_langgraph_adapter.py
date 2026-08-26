@@ -21,7 +21,7 @@ from attune.agent_factory.adapters.langgraph_adapter import (
     LangGraphWorkflow,
     _check_langgraph,
 )
-from attune.agent_factory.base import AgentConfig, AgentRole, WorkflowConfig
+from attune.agent_factory.base import AgentConfig, AgentGraphConfig, AgentRole
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -33,7 +33,7 @@ def _agent_config(name="test-agent", role=AgentRole.COORDINATOR, api_key="sk-tes
 
 
 def _workflow_config(mode="sequential"):
-    return WorkflowConfig(name="test-wf", mode=mode)
+    return AgentGraphConfig(name="test-wf", mode=mode)
 
 
 def _make_agent(name="agent1"):

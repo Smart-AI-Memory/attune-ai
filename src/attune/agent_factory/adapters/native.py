@@ -20,10 +20,10 @@ from typing import Any
 
 from attune.agent_factory.base import (
     AgentConfig,
+    AgentGraphConfig,
     BaseAdapter,
     BaseAgent,
     BaseWorkflow,
-    WorkflowConfig,
 )
 
 
@@ -227,7 +227,7 @@ class NativeAdapter(BaseAdapter):
         llm = self._get_llm(config)
         return NativeAgent(config, llm=llm)
 
-    def create_workflow(self, config: WorkflowConfig, agents: list[BaseAgent]) -> NativeWorkflow:
+    def create_workflow(self, config: AgentGraphConfig, agents: list[BaseAgent]) -> NativeWorkflow:
         """Create a native workflow."""
         return NativeWorkflow(config, agents)
 

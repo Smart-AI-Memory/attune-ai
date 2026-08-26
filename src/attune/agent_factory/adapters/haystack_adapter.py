@@ -16,11 +16,11 @@ from typing import Any
 from attune.agent_factory.base import (
     AgentCapability,
     AgentConfig,
+    AgentGraphConfig,
     AgentRole,
     BaseAdapter,
     BaseAgent,
     BaseWorkflow,
-    WorkflowConfig,
 )
 
 # Lazy import
@@ -114,7 +114,7 @@ class HaystackAgent(BaseAgent):
 class HaystackWorkflow(BaseWorkflow):
     """Workflow using Haystack Pipeline."""
 
-    def __init__(self, config: WorkflowConfig, agents: list[BaseAgent], pipeline=None):
+    def __init__(self, config: AgentGraphConfig, agents: list[BaseAgent], pipeline=None):
         """Initialize Haystack workflow.
 
         Args:
@@ -281,7 +281,9 @@ class HaystackAdapter(BaseAdapter):
 
         return pipeline
 
-    def create_workflow(self, config: WorkflowConfig, agents: list[BaseAgent]) -> HaystackWorkflow:
+    def create_workflow(
+        self, config: AgentGraphConfig, agents: list[BaseAgent]
+    ) -> HaystackWorkflow:
         """Create a Haystack Pipeline workflow."""
         if not self.is_available():
             raise ImportError("Haystack not installed")

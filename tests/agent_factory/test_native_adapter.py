@@ -16,7 +16,7 @@ from attune.agent_factory.adapters.native import (
     NativeAgent,
     NativeWorkflow,
 )
-from attune.agent_factory.base import AgentConfig, AgentRole, WorkflowConfig
+from attune.agent_factory.base import AgentConfig, AgentGraphConfig, AgentRole
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -73,15 +73,15 @@ def native_agent_with_llm(agent_config: AgentConfig, mock_llm: AsyncMock) -> Nat
 
 
 @pytest.fixture
-def workflow_config() -> WorkflowConfig:
+def workflow_config() -> AgentGraphConfig:
     """Workflow config for sequential execution."""
-    return WorkflowConfig(name="test-workflow", mode="sequential")
+    return AgentGraphConfig(name="test-workflow", mode="sequential")
 
 
 @pytest.fixture
-def parallel_workflow_config() -> WorkflowConfig:
+def parallel_workflow_config() -> AgentGraphConfig:
     """Workflow config for parallel execution."""
-    return WorkflowConfig(name="parallel-workflow", mode="parallel")
+    return AgentGraphConfig(name="parallel-workflow", mode="parallel")
 
 
 # ===================================================================
@@ -321,23 +321,23 @@ def _make_agent(name: str) -> NativeAgent:
 class TestNativeWorkflowCreation:
     """Tests for NativeWorkflow construction."""
 
-    def test_creation_stores_agents_by_name(self, workflow_config: WorkflowConfig) -> None:
+    def test_creation_stores_agents_by_name(self, workflow_config: AgentGraphConfig) -> None:
         a1 = _make_agent("a1")
         a2 = _make_agent("a2")
         wf = NativeWorkflow(workflow_config, [a1, a2])
         assert "a1" in wf.agents
         assert "a2" in wf.agents
 
-    def test_get_agent_returns_agent(self, workflow_config: WorkflowConfig) -> None:
+    def test_get_agent_returns_agent(self, workflow_config: AgentGraphConfig) -> None:
         a1 = _make_agent("a1")
         wf = NativeWorkflow(workflow_config, [a1])
         assert wf.get_agent("a1") is a1
 
-    def test_get_agent_returns_none_for_missing(self, workflow_config: WorkflowConfig) -> None:
+    def test_get_agent_returns_none_for_missing(self, workflow_config: AgentGraphConfig) -> None:
         wf = NativeWorkflow(workflow_config, [])
         assert wf.get_agent("nonexistent") is None
 
-    def test_get_state_initially_empty(self, workflow_config: WorkflowConfig) -> None:
+    def test_get_state_initially_empty(self, workflow_config: AgentGraphConfig) -> None:
         wf = NativeWorkflow(workflow_config, [])
         assert wf.get_state() == {}
 
@@ -352,7 +352,7 @@ class TestNativeWorkflowSequential:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_sequential_run_chains_output(self, workflow_config: WorkflowConfig) -> None:
+    async def test_sequential_run_chains_output(self, workflow_config: AgentGraphConfig) -> None:
         a1 = _make_agent("a1")
         a2 = _make_agent("a2")
         wf = NativeWorkflow(workflow_config, [a1, a2])
@@ -365,7 +365,7 @@ class TestNativeWorkflowSequential:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_sequential_run_sets_state(self, workflow_config: WorkflowConfig) -> None:
+    async def test_sequential_run_sets_state(self, workflow_config: AgentGraphConfig) -> None:
         a1 = _make_agent("a1")
         wf = NativeWorkflow(workflow_config, [a1])
         await wf.run("input-data")
@@ -376,7 +376,9 @@ class TestNativeWorkflowSequential:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_sequential_run_with_initial_state(self, workflow_config: WorkflowConfig) -> None:
+    async def test_sequential_run_with_initial_state(
+        self, workflow_config: AgentGraphConfig
+    ) -> None:
         a1 = _make_agent("a1")
         wf = NativeWorkflow(workflow_config, [a1])
         await wf.run("go", initial_state={"key": "val"})
@@ -385,7 +387,7 @@ class TestNativeWorkflowSequential:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_sequential_run_no_agents(self, workflow_config: WorkflowConfig) -> None:
+    async def test_sequential_run_no_agents(self, workflow_config: AgentGraphConfig) -> None:
         wf = NativeWorkflow(workflow_config, [])
         result = await wf.run("go")
         assert result["results"] == []
@@ -394,7 +396,7 @@ class TestNativeWorkflowSequential:
     @pytest.mark.asyncio
     @pytest.mark.unit
     async def test_unknown_mode_falls_back_to_sequential(self) -> None:
-        cfg = WorkflowConfig(name="wf", mode="unknown-mode")
+        cfg = AgentGraphConfig(name="wf", mode="unknown-mode")
         a1 = _make_agent("a1")
         wf = NativeWorkflow(cfg, [a1])
         result = await wf.run("go")
@@ -412,7 +414,7 @@ class TestNativeWorkflowParallel:
     @pytest.mark.asyncio
     @pytest.mark.unit
     async def test_parallel_run_invokes_all_agents(
-        self, parallel_workflow_config: WorkflowConfig
+        self, parallel_workflow_config: AgentGraphConfig
     ) -> None:
         a1 = _make_agent("a1")
         a2 = _make_agent("a2")
@@ -426,7 +428,7 @@ class TestNativeWorkflowParallel:
     @pytest.mark.asyncio
     @pytest.mark.unit
     async def test_parallel_all_receive_same_input(
-        self, parallel_workflow_config: WorkflowConfig
+        self, parallel_workflow_config: AgentGraphConfig
     ) -> None:
         a1 = _make_agent("a1")
         a2 = _make_agent("a2")
@@ -439,7 +441,7 @@ class TestNativeWorkflowParallel:
     @pytest.mark.asyncio
     @pytest.mark.unit
     async def test_parallel_agents_invoked_list(
-        self, parallel_workflow_config: WorkflowConfig
+        self, parallel_workflow_config: AgentGraphConfig
     ) -> None:
         a1 = _make_agent("a1")
         a2 = _make_agent("a2")
@@ -458,7 +460,7 @@ class TestNativeWorkflowStream:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_stream_yields_start_output_end(self, workflow_config: WorkflowConfig) -> None:
+    async def test_stream_yields_start_output_end(self, workflow_config: AgentGraphConfig) -> None:
         a1 = _make_agent("a1")
         wf = NativeWorkflow(workflow_config, [a1])
         events = []
@@ -471,7 +473,7 @@ class TestNativeWorkflowStream:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_stream_multiple_agents(self, workflow_config: WorkflowConfig) -> None:
+    async def test_stream_multiple_agents(self, workflow_config: AgentGraphConfig) -> None:
         a1 = _make_agent("a1")
         a2 = _make_agent("a2")
         wf = NativeWorkflow(workflow_config, [a1, a2])
@@ -492,7 +494,7 @@ class TestNativeWorkflowState:
 
     @pytest.mark.asyncio
     @pytest.mark.unit
-    async def test_get_state_returns_copy(self, workflow_config: WorkflowConfig) -> None:
+    async def test_get_state_returns_copy(self, workflow_config: AgentGraphConfig) -> None:
         a1 = _make_agent("a1")
         wf = NativeWorkflow(workflow_config, [a1])
         await wf.run("go")
@@ -561,7 +563,7 @@ class TestNativeAdapter:
     def test_create_workflow_returns_native_workflow(
         self,
         agent_config: AgentConfig,
-        workflow_config: WorkflowConfig,
+        workflow_config: AgentGraphConfig,
     ) -> None:
         adapter = NativeAdapter()
         agent = adapter.create_agent(agent_config)

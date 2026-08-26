@@ -21,8 +21,8 @@ from attune.agent_factory.adapters.autogen_adapter import (
 )
 from attune.agent_factory.base import (
     AgentConfig,
+    AgentGraphConfig,
     AgentRole,
-    WorkflowConfig,
 )
 
 # ---------------------------------------------------------------------------
@@ -46,7 +46,7 @@ def agent_config():
 @pytest.fixture()
 def workflow_config():
     """Create a basic workflow config."""
-    return WorkflowConfig(name="test-workflow", description="Test workflow")
+    return AgentGraphConfig(name="test-workflow", description="Test workflow")
 
 
 @pytest.fixture()
@@ -461,7 +461,7 @@ class TestAutoGenAdapterCreateAgent:
         """conversation mode builds a free-form GroupChat (no round_robin)."""
         adapter = AutoGenAdapter(api_key="sk-a")
         agent = AutoGenAgent(agent_config, autogen_agent=MagicMock())
-        cfg = WorkflowConfig(name="w", mode="conversation", max_iterations=5)
+        cfg = AgentGraphConfig(name="w", mode="conversation", max_iterations=5)
 
         adapter.create_workflow(cfg, [agent])
 
@@ -473,7 +473,7 @@ class TestAutoGenAdapterCreateAgent:
         """A non-conversation mode builds a round-robin GroupChat."""
         adapter = AutoGenAdapter(api_key="sk-a")
         agent = AutoGenAgent(agent_config, autogen_agent=MagicMock())
-        cfg = WorkflowConfig(name="w", mode="sequential", max_iterations=3)
+        cfg = AgentGraphConfig(name="w", mode="sequential", max_iterations=3)
 
         adapter.create_workflow(cfg, [agent])
 

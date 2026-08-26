@@ -125,14 +125,14 @@ class TestNativeAdapter:
     def test_native_adapter_create_workflow(self):
         """Test creating a workflow with native adapter."""
         from attune.agent_factory.adapters.native import NativeAdapter
-        from attune.agent_factory.base import AgentConfig, WorkflowConfig
+        from attune.agent_factory.base import AgentConfig, AgentGraphConfig
 
         adapter = NativeAdapter()
 
         agent1 = adapter.create_agent(AgentConfig(name="agent1"))
         agent2 = adapter.create_agent(AgentConfig(name="agent2"))
 
-        workflow_config = WorkflowConfig(name="test_workflow", mode="sequential")
+        workflow_config = AgentGraphConfig(name="test_workflow", mode="sequential")
         workflow = adapter.create_workflow(workflow_config, [agent1, agent2])
 
         assert workflow.config.name == "test_workflow"
@@ -290,7 +290,7 @@ class TestNativeWorkflow:
     async def test_native_workflow_sequential(self):
         """Test sequential workflow execution."""
         from attune.agent_factory.adapters.native import NativeAdapter
-        from attune.agent_factory.base import AgentConfig, WorkflowConfig
+        from attune.agent_factory.base import AgentConfig, AgentGraphConfig
 
         adapter = NativeAdapter()
 
@@ -298,7 +298,7 @@ class TestNativeWorkflow:
         agent2 = adapter.create_agent(AgentConfig(name="a2"))
 
         workflow = adapter.create_workflow(
-            WorkflowConfig(name="seq", mode="sequential"),
+            AgentGraphConfig(name="seq", mode="sequential"),
             [agent1, agent2],
         )
 
@@ -314,7 +314,7 @@ class TestNativeWorkflow:
     async def test_native_workflow_parallel(self):
         """Test parallel workflow execution."""
         from attune.agent_factory.adapters.native import NativeAdapter
-        from attune.agent_factory.base import AgentConfig, WorkflowConfig
+        from attune.agent_factory.base import AgentConfig, AgentGraphConfig
 
         adapter = NativeAdapter()
 
@@ -322,7 +322,7 @@ class TestNativeWorkflow:
         agent2 = adapter.create_agent(AgentConfig(name="a2"))
 
         workflow = adapter.create_workflow(
-            WorkflowConfig(name="par", mode="parallel"),
+            AgentGraphConfig(name="par", mode="parallel"),
             [agent1, agent2],
         )
 

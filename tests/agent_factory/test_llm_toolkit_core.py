@@ -11,11 +11,11 @@ from datetime import datetime, timedelta
 from attune.agent_factory.base import (
     AgentCapability,
     AgentConfig,
+    AgentGraphConfig,
     AgentRole,
     BaseAdapter,
     BaseAgent,
     BaseWorkflow,
-    WorkflowConfig,
 )
 from attune.llm.levels import EmpathyLevel
 from attune.llm.state import CollaborationState, Interaction, PatternType, UserPattern
@@ -133,11 +133,11 @@ class TestAgentConfig:
 
 
 class TestWorkflowConfig:
-    """Tests for WorkflowConfig dataclass."""
+    """Tests for AgentGraphConfig dataclass."""
 
     def test_default_values(self):
         """Test default workflow configuration values."""
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
 
         assert config.name == "test_workflow"
         assert config.description == ""
@@ -151,7 +151,7 @@ class TestWorkflowConfig:
 
     def test_custom_values(self):
         """Test custom workflow configuration values."""
-        config = WorkflowConfig(
+        config = AgentGraphConfig(
             name="custom_workflow",
             description="A custom workflow",
             mode="parallel",
@@ -288,7 +288,7 @@ class TestBaseWorkflow:
             async def stream(self, input_data, initial_state=None):
                 yield {"step": "test"}
 
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
         agent1 = ConcreteAgent(AgentConfig(name="agent1"))
         agent2 = ConcreteAgent(AgentConfig(name="agent2"))
 
@@ -316,7 +316,7 @@ class TestBaseWorkflow:
             async def stream(self, input_data, initial_state=None):
                 yield {}
 
-        config = WorkflowConfig(name="state_workflow")
+        config = AgentGraphConfig(name="state_workflow")
         workflow = ConcreteWorkflow(config, [])
 
         workflow._state = {"key": "value"}
@@ -344,7 +344,7 @@ class TestBaseWorkflow:
             async def stream(self, input_data, initial_state=None):
                 yield {}
 
-        config = WorkflowConfig(name="agent_workflow")
+        config = AgentGraphConfig(name="agent_workflow")
         agent = ConcreteAgent(AgentConfig(name="my_agent"))
         workflow = ConcreteWorkflow(config, [agent])
 

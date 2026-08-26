@@ -43,11 +43,11 @@ from typing import Any
 from attune.agent_factory.base import (
     AgentCapability,
     AgentConfig,
+    AgentGraphConfig,
     AgentRole,
     BaseAdapter,
     BaseAgent,
     BaseWorkflow,
-    WorkflowConfig,
 )
 from attune.agent_factory.framework import (
     Framework,
@@ -283,7 +283,7 @@ class AgentFactory:
             Workflow implementing BaseWorkflow interface
 
         """
-        config = WorkflowConfig(
+        config = AgentGraphConfig(
             name=name,
             description=description,
             mode=mode,
