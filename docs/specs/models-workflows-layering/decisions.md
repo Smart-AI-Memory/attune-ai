@@ -87,13 +87,64 @@ dispute: its six sibling sections are all `<module>Config`
 `PersistenceConfig`, `RoutingConfig`, `TelemetryConfig`) and it is
 the only one breaking the pattern. 3 import sites.
 
+## D6 — D4's DISPOSITION stands, its TIMING moves to v16.0.0 (ruled 2026-08-26)
+
+D4 ruled the orphan twin is deleted. D6 rules WHEN: not now, but at the
+next major, via a deprecation the interim releases carry. The chair
+raised this — the lead's initial recommendation was to merge the
+deletion immediately — and the chair's caution was better than the
+recommendation.
+
+What was actually established, and what was not:
+
+- `AgentWorkflowConfig` has been a PUBLIC export since v2.7.1
+  (2026-02-12), across 135 releases. Not in the top-level
+  `attune.__all__`, and named in no doc, README, `.help` page, or
+  website copy.
+- GitHub code search: **0** public files import it, against a
+  CALIBRATED control — `"from attune.config import"` returns 30, so
+  the query demonstrably finds attune imports and the zero is a real
+  negative, not a broken search.
+- PyPI serves ~2,289 installs/month whose composition is unknowable
+  from here. Private repositories are invisible to code search by
+  construction.
+
+**The deciding factor was not probability but DETECTION.** This
+project has no usage telemetry (local-only, default-off, signal ~0),
+so a break would be invisible to us while the affected user simply
+hits `ImportError` and forms an opinion. The asymmetry is stark: the
+insurance costs one small PR now and one at 16.0.0; the uninsured
+downside is silent and unrecoverable. Timing sharpened it — the first
+external user onboards 2026-09-01, five days out, and a breaking
+change in that week lands on a first impression.
+
+Recorded against the counter-argument, which is real: #2239's body set
+the bar ("only a slice that must move a public import path would board
+a major"), and a constraint that applies only when it is free is not a
+constraint. The distinction relied on is that the sentence was written
+to decide whether the LAYERING WORK boarded 15.0.0 — a refactor of
+live code paths — not the deletion of a never-used, never-documented
+twin. That is a real distinction, not a self-evident one.
+
+`WorkflowMode` rides the same schedule: its only remaining consumer is
+the deprecated class.
+
+Mechanism (shipped): PEP 562 module `__getattr__` on `attune.config`
+serves both names with a `DeprecationWarning` naming v16.0.0 and the
+replacement. Deliberately NOT an eager aliased import, which would
+warn every consumer of the package for symbols they never touch. Both
+definitions carry `REMOVE IN v16.0.0`, so
+`scripts/check_deprecation_markers.py` fails the build the moment
+16.0.0 opens — the deprecation cannot rot into a permanent twin, which
+is the standing failure mode this repo has hit before.
+
 ## Sequencing after these rulings
 
 1. D1 inversion PR — SHIPPED as #2314 (Edge 1 dead; the boundary is
    now gated by a static AST scan, since the subprocess probe R1
    originally named proved blind to lazy function-local imports).
-2. D4 delete first — it removes a third of the collision and the
-   duplication question in one step.
+2. D4 — SHIPPED as a DEPRECATION per D6; the deletion itself is a
+   one-line follow-up on the 16.0.0 manifest.
 3. `config/sections` rename (3 sites), then D5 (8 sites). One PR per
    class: each independently revertible, and the test churn should
    not ride with the three-line change. Aliases first, hard rename at
