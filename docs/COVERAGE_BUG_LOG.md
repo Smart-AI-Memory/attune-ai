@@ -1601,20 +1601,29 @@ present, so neither is the exit-0-with-traceback false success.
 not touch — the inverse of the 14.0.0 precedent, where the release's own
 headline feature carried the worst defect. Four worth recording:
 
-- **The 2026-08-22 "bug-predict emits zero structured findings" finding
-  STANDS, and has acquired a shape that hides it — classification: dead
-  surface, regressed in legibility.** That entry recorded 6/6 runs with
-  `sections=0, findings=0`. Today's run reports `sections=2`, which
-  reads as fixed to any check that counts sections. It is not: the
-  sections are `[Bugs=0, Next steps=6]`. **The findings section is still
-  empty in every completed run** (`ca0c52c6c121` Bugs=0,
-  `410497bd6f90` Bugs=0, `a6e92650d199` sections=0). All 15 bugs below
-  exist ONLY as prose in a markdown table; nothing structured consumes
-  them. Verified by reading `rows` per section across three run records,
-  not by counting sections — the first pass here DID count containers
-  and wrongly reported the bug fixed, which is the same units error as
-  the `grep -l` files-vs-references lesson from the same morning. Not
-  yet fixed.
+- **CORRECTION (same day): the 2026-08-22 "bug-predict emits zero
+  structured findings" finding is FIXED, and the entry first written here
+  claiming it still stood was MY OWN PROBE ERROR.** The original fix
+  (`output_format=WORKFLOW_OUTPUT_SCHEMA` in `workflows/bug_predict.py`)
+  works. Recounted with the right key:
+
+      a6e92650d199 (14.0.0, 08-22)  sections=0  [none]        <- the real finding
+      410497bd6f90 (interim)        sections=2  [Bugs=18, Next steps=8]
+      ca0c52c6c121 (today, 15.1.0)  sections=2  [Bugs=15, Next steps=6]
+
+  A findings-kind section carries its rows under **`findings`**; a
+  next-steps section under `items`. My probe read
+  `s.get("rows") or s.get("items")`, which is empty for the Bugs section
+  by construction, so I read 15 real findings as zero and wrote up a
+  regression that does not exist ("acquired a shape that hides it").
+  Nothing was wrong with the workflow. **Classification: no bug — a
+  fabricated finding, retracted.** Recorded rather than deleted because
+  the failure is the point: this was the THIRD instance in one session of
+  counting with the wrong key and reporting a confident number
+  (`grep -l` files-vs-references at 8-vs-127; sections-vs-rows here;
+  rows-vs-findings on the recheck). Each time the number was plausible,
+  load-bearing, and wrong. The durable rule is to print the container's
+  KEYS before counting anything inside it.
 
 - **`agents/release/release_parsing.py:43` — contract violation,
   HIGH, verified in source.** `_parse_response` is typed `-> dict` and
