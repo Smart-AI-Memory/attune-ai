@@ -18,10 +18,10 @@ from pydantic import SecretStr
 
 from attune.agent_factory.base import (
     AgentConfig,
+    AgentGraphConfig,
     BaseAdapter,
     BaseAgent,
     BaseWorkflow,
-    WorkflowConfig,
 )
 
 # Lazy imports
@@ -125,7 +125,7 @@ class LangGraphAgent(BaseAgent):
 class LangGraphWorkflow(BaseWorkflow):
     """Workflow using LangGraph's StateGraph."""
 
-    def __init__(self, config: WorkflowConfig, agents: list[BaseAgent], graph=None):
+    def __init__(self, config: AgentGraphConfig, agents: list[BaseAgent], graph=None):
         """Initialize LangGraph workflow.
 
         Args:
@@ -296,7 +296,9 @@ class LangGraphAdapter(BaseAdapter):
 
         return LangGraphAgent(config, runnable=chain)
 
-    def create_workflow(self, config: WorkflowConfig, agents: list[BaseAgent]) -> LangGraphWorkflow:
+    def create_workflow(
+        self, config: AgentGraphConfig, agents: list[BaseAgent]
+    ) -> LangGraphWorkflow:
         """Create a LangGraph StateGraph workflow."""
         if not self.is_available():
             raise ImportError("LangGraph not installed")

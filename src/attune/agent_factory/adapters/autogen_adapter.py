@@ -15,11 +15,11 @@ from collections.abc import AsyncGenerator, Callable
 
 from attune.agent_factory.base import (
     AgentConfig,
+    AgentGraphConfig,
     AgentRole,
     BaseAdapter,
     BaseAgent,
     BaseWorkflow,
-    WorkflowConfig,
 )
 
 # Lazy import
@@ -107,7 +107,7 @@ class AutoGenWorkflow(BaseWorkflow):
 
     def __init__(
         self,
-        config: WorkflowConfig,
+        config: AgentGraphConfig,
         agents: list[BaseAgent],
         group_chat=None,
         manager=None,
@@ -274,7 +274,7 @@ class AutoGenAdapter(BaseAdapter):
 
         return AutoGenAgent(config, autogen_agent=ag_agent)
 
-    def create_workflow(self, config: WorkflowConfig, agents: list[BaseAgent]) -> AutoGenWorkflow:
+    def create_workflow(self, config: AgentGraphConfig, agents: list[BaseAgent]) -> AutoGenWorkflow:
         """Create an AutoGen GroupChat workflow."""
         if not self.is_available():
             raise ImportError("AutoGen not installed")

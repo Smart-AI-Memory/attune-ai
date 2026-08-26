@@ -98,7 +98,7 @@ class AgentConfig:
 
 
 @dataclass
-class WorkflowConfig:
+class AgentGraphConfig:
     """Configuration for creating a workflow/graph."""
 
     name: str
@@ -184,7 +184,7 @@ class BaseWorkflow(ABC):
     Workflows orchestrate multiple agents to complete complex tasks.
     """
 
-    def __init__(self, config: WorkflowConfig, agents: list[BaseAgent]):
+    def __init__(self, config: AgentGraphConfig, agents: list[BaseAgent]):
         """Initialize base workflow with configuration and agents.
 
         Args:
@@ -255,7 +255,7 @@ class BaseAdapter(ABC):
         """
 
     @abstractmethod
-    def create_workflow(self, config: WorkflowConfig, agents: list[BaseAgent]) -> BaseWorkflow:
+    def create_workflow(self, config: AgentGraphConfig, agents: list[BaseAgent]) -> BaseWorkflow:
         """Create a workflow using this framework.
 
         Args:
@@ -310,3 +310,30 @@ class BaseAdapter(ABC):
                 tier,
                 "claude-sonnet-5",
             )
+
+
+# REMOVE IN v16.0.0 — deprecated alias for the pre-rename name.
+# Renamed to `AgentGraphConfig` so exactly one class in the tree holds the
+# bare name `WorkflowConfig` (the workflows.yaml-backed
+# `attune.workflows.config.WorkflowConfig`). Spec models-workflows-layering
+# D2/D5.
+#
+# Recorded honestly: inside THIS module the old name was already coherent,
+# sitting beside AgentConfig/BaseAgent/BaseWorkflow — the collision was only
+# visible globally. The chair ruled the one-bare-name intent outranks that,
+# with the counter-case in front of it.
+#
+# Served via module __getattr__ (PEP 562) so the warning fires on ACCESS.
+def __getattr__(name: str) -> object:
+    """Serve the deprecated `WorkflowConfig` name. REMOVE IN v16.0.0."""
+    if name != "WorkflowConfig":
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    import warnings
+
+    warnings.warn(
+        "attune.agent_factory.base.WorkflowConfig is deprecated and will be "
+        "removed in v16.0.0. Use AgentGraphConfig instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return AgentGraphConfig

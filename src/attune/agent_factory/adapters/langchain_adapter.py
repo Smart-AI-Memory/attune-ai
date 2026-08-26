@@ -18,10 +18,10 @@ from pydantic import SecretStr
 from attune.agent_factory.base import (
     AgentCapability,
     AgentConfig,
+    AgentGraphConfig,
     BaseAdapter,
     BaseAgent,
     BaseWorkflow,
-    WorkflowConfig,
 )
 
 # Lazy imports for LangChain
@@ -142,7 +142,7 @@ class LangChainAgent(BaseAgent):
 class LangChainWorkflow(BaseWorkflow):
     """Workflow using LangChain's SequentialChain or custom routing."""
 
-    def __init__(self, config: WorkflowConfig, agents: list[BaseAgent], chain=None):
+    def __init__(self, config: AgentGraphConfig, agents: list[BaseAgent], chain=None):
         """Initialize LangChain workflow.
 
         Args:
@@ -321,7 +321,9 @@ class LangChainAdapter(BaseAdapter):
         chain = prompt | llm
         return LangChainAgent(config, chain=chain)
 
-    def create_workflow(self, config: WorkflowConfig, agents: list[BaseAgent]) -> LangChainWorkflow:
+    def create_workflow(
+        self, config: AgentGraphConfig, agents: list[BaseAgent]
+    ) -> LangChainWorkflow:
         """Create a LangChain workflow."""
         # For sequential mode, we can compose chains
         # For more complex modes, just wrap the agents

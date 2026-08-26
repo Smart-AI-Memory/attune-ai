@@ -16,8 +16,8 @@ from attune.agent_factory.adapters.native import (
 from attune.agent_factory.base import (
     AgentCapability,
     AgentConfig,
+    AgentGraphConfig,
     AgentRole,
-    WorkflowConfig,
 )
 from attune.agent_factory.factory import AgentFactory
 from attune.agent_factory.framework import Framework
@@ -164,7 +164,7 @@ class TestNativeWorkflow:
     @pytest.mark.asyncio
     async def test_run_sequential(self, agents):
         """Test running workflow sequentially."""
-        config = WorkflowConfig(name="test_workflow", mode="sequential")
+        config = AgentGraphConfig(name="test_workflow", mode="sequential")
         workflow = NativeWorkflow(config, agents)
 
         result = await workflow.run("Test input")
@@ -177,7 +177,7 @@ class TestNativeWorkflow:
     @pytest.mark.asyncio
     async def test_run_parallel(self, agents):
         """Test running workflow in parallel."""
-        config = WorkflowConfig(name="test_workflow", mode="parallel")
+        config = AgentGraphConfig(name="test_workflow", mode="parallel")
         workflow = NativeWorkflow(config, agents)
 
         result = await workflow.run("Test input")
@@ -189,7 +189,7 @@ class TestNativeWorkflow:
     @pytest.mark.asyncio
     async def test_run_with_initial_state(self, agents):
         """Test running workflow with initial state."""
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
         workflow = NativeWorkflow(config, agents)
 
         result = await workflow.run("Test", initial_state={"key": "value"})
@@ -199,7 +199,7 @@ class TestNativeWorkflow:
     @pytest.mark.asyncio
     async def test_run_unknown_mode_defaults_to_sequential(self, agents):
         """Test that unknown mode defaults to sequential."""
-        config = WorkflowConfig(name="test_workflow", mode="unknown_mode")
+        config = AgentGraphConfig(name="test_workflow", mode="unknown_mode")
         workflow = NativeWorkflow(config, agents)
 
         result = await workflow.run("Test")
@@ -210,7 +210,7 @@ class TestNativeWorkflow:
     @pytest.mark.asyncio
     async def test_stream(self, agents):
         """Test streaming workflow."""
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
         workflow = NativeWorkflow(config, agents)
 
         events = []
@@ -258,7 +258,7 @@ class TestNativeAdapter:
     def test_create_workflow(self):
         """Test creating a workflow."""
         adapter = NativeAdapter()
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
         agents = [
             NativeAgent(AgentConfig(name="agent1")),
             NativeAgent(AgentConfig(name="agent2")),

@@ -31,8 +31,8 @@ from attune.agent_factory.adapters.langchain_adapter import (
 from attune.agent_factory.base import (
     AgentCapability,
     AgentConfig,
+    AgentGraphConfig,
     AgentRole,
-    WorkflowConfig,
 )
 
 
@@ -166,26 +166,26 @@ class TestWorkflowRun:
     def test_chain_ainvoke(self):
         chain = MagicMock()
         chain.ainvoke = AsyncMock(return_value={"output": "chained"})
-        wf = LangChainWorkflow(WorkflowConfig(name="w"), [], chain=chain)
+        wf = LangChainWorkflow(AgentGraphConfig(name="w"), [], chain=chain)
         out = _run(wf.run("in"))
         assert out["output"] == "chained"
 
     def test_chain_sync_and_non_dict(self):
-        wf = LangChainWorkflow(WorkflowConfig(name="w"), [], chain=_SyncRunnable("flat"))
+        wf = LangChainWorkflow(AgentGraphConfig(name="w"), [], chain=_SyncRunnable("flat"))
         out = _run(wf.run("in"))
         assert out["output"] == "flat"
 
     def test_chain_exception(self):
         chain = MagicMock()
         chain.ainvoke = AsyncMock(side_effect=RuntimeError("chain boom"))
-        wf = LangChainWorkflow(WorkflowConfig(name="w"), [], chain=chain)
+        wf = LangChainWorkflow(AgentGraphConfig(name="w"), [], chain=chain)
         out = _run(wf.run("in"))
         assert "Error:" in out["output"]
 
     def test_no_chain_sequential_agents(self):
         a1, a2 = _agent_with("r1"), _agent_with("r2")
         a1.name, a2.name = "a1", "a2"
-        wf = LangChainWorkflow(WorkflowConfig(name="w"), [a1, a2])
+        wf = LangChainWorkflow(AgentGraphConfig(name="w"), [a1, a2])
         out = _run(wf.run("in"))
         assert out["output"] == "r2"
         assert len(out["results"]) == 2
@@ -194,7 +194,7 @@ class TestWorkflowRun:
 class TestWorkflowStream:
     def test_emits_agent_events(self):
         a = _agent_with("x")
-        wf = LangChainWorkflow(WorkflowConfig(name="w"), [a])
+        wf = LangChainWorkflow(AgentGraphConfig(name="w"), [a])
         events = _run(_collect(wf.stream("in")))
         kinds = [e["event"] for e in events]
         assert kinds == ["agent_start", "chunk", "agent_end"]
@@ -378,5 +378,5 @@ class TestCreateAgent:
 
 class TestCreateWorkflow:
     def test_returns_langchain_workflow(self):
-        wf = LangChainAdapter().create_workflow(WorkflowConfig(name="w"), [])
+        wf = LangChainAdapter().create_workflow(AgentGraphConfig(name="w"), [])
         assert isinstance(wf, LangChainWorkflow)

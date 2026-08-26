@@ -17,7 +17,7 @@ from attune.agent_factory.adapters.langgraph_adapter import (
     LangGraphWorkflow,
     _check_langgraph,
 )
-from attune.agent_factory.base import AgentConfig, AgentRole, WorkflowConfig
+from attune.agent_factory.base import AgentConfig, AgentGraphConfig, AgentRole
 
 # =============================================================================
 # _check_langgraph Tests
@@ -272,7 +272,7 @@ class TestLangGraphWorkflow:
 
     def test_init(self):
         """Test workflow initialization."""
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
         workflow = LangGraphWorkflow(config, [], graph=None)
 
         assert workflow._graph is None
@@ -280,7 +280,7 @@ class TestLangGraphWorkflow:
 
     def test_init_with_graph(self):
         """Test initialization with graph."""
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
         mock_graph = MagicMock()
         workflow = LangGraphWorkflow(config, [], graph=mock_graph)
 
@@ -288,7 +288,7 @@ class TestLangGraphWorkflow:
 
     def test_compile_graph_no_graph(self):
         """Test _compile_graph with no graph."""
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
         workflow = LangGraphWorkflow(config, [])
 
         result = workflow._compile_graph()
@@ -296,7 +296,7 @@ class TestLangGraphWorkflow:
 
     def test_compile_graph_with_graph(self):
         """Test _compile_graph compiles the graph."""
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
         mock_graph = MagicMock()
         mock_compiled = MagicMock()
         mock_graph.compile.return_value = mock_compiled
@@ -309,7 +309,7 @@ class TestLangGraphWorkflow:
 
     def test_compile_graph_caches_result(self):
         """Test _compile_graph caches the compiled graph."""
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
         mock_graph = MagicMock()
         mock_compiled = MagicMock()
         mock_graph.compile.return_value = mock_compiled
@@ -326,7 +326,7 @@ class TestLangGraphWorkflow:
     @pytest.mark.asyncio
     async def test_run_with_string_input(self):
         """Test run with string input."""
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
         workflow = LangGraphWorkflow(config, [])
 
         result = await workflow.run("test input")
@@ -336,7 +336,7 @@ class TestLangGraphWorkflow:
     @pytest.mark.asyncio
     async def test_run_with_dict_input(self):
         """Test run with dict input."""
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
         workflow = LangGraphWorkflow(config, [])
 
         result = await workflow.run({"key": "value"})
@@ -346,7 +346,7 @@ class TestLangGraphWorkflow:
     @pytest.mark.asyncio
     async def test_run_with_initial_state(self):
         """Test run with initial state."""
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
         workflow = LangGraphWorkflow(config, [])
 
         result = await workflow.run("test", initial_state={"extra": "data"})
@@ -356,7 +356,7 @@ class TestLangGraphWorkflow:
     @pytest.mark.asyncio
     async def test_run_with_compiled_async(self):
         """Test run with async compiled graph."""
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
         mock_graph = MagicMock()
         mock_compiled = MagicMock()
         mock_compiled.ainvoke = AsyncMock(return_value={"messages": [{"content": "result"}]})
@@ -370,7 +370,7 @@ class TestLangGraphWorkflow:
     @pytest.mark.asyncio
     async def test_run_with_compiled_sync(self):
         """Test run with sync compiled graph."""
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
         mock_graph = MagicMock()
         mock_compiled = MagicMock()
         mock_compiled.invoke = MagicMock(return_value={"output": "sync result"})
@@ -386,7 +386,7 @@ class TestLangGraphWorkflow:
     @pytest.mark.asyncio
     async def test_run_exception_handling(self):
         """Test run handles exceptions."""
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
         mock_graph = MagicMock()
         mock_compiled = MagicMock()
         mock_compiled.ainvoke = AsyncMock(side_effect=Exception("Test error"))
@@ -401,7 +401,7 @@ class TestLangGraphWorkflow:
     @pytest.mark.asyncio
     async def test_run_sequential_fallback(self):
         """Test run falls back to sequential execution."""
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
 
         agent_config = AgentConfig(name="agent1", role=AgentRole.RESEARCHER)
         mock_agent = LangGraphAgent(agent_config)
@@ -415,7 +415,7 @@ class TestLangGraphWorkflow:
     @pytest.mark.asyncio
     async def test_stream_with_astream(self):
         """Test stream with compiled graph that supports astream."""
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
         mock_graph = MagicMock()
         mock_compiled = MagicMock()
 
@@ -437,7 +437,7 @@ class TestLangGraphWorkflow:
     @pytest.mark.asyncio
     async def test_stream_fallback(self):
         """Test stream fallback to run."""
-        config = WorkflowConfig(name="test_workflow")
+        config = AgentGraphConfig(name="test_workflow")
         workflow = LangGraphWorkflow(config, [])
 
         events = []
@@ -560,7 +560,7 @@ class TestLangGraphAdapter:
         """Test create_workflow raises when LangGraph not available."""
         adapter = LangGraphAdapter(api_key="test")
 
-        config = WorkflowConfig(name="test")
+        config = AgentGraphConfig(name="test")
 
         with patch.object(adapter, "is_available", return_value=False):
             with pytest.raises(ImportError, match="LangGraph not installed"):

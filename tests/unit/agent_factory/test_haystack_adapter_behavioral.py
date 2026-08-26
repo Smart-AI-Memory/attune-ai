@@ -17,8 +17,8 @@ from attune.agent_factory.adapters.haystack_adapter import (
 from attune.agent_factory.base import (
     AgentCapability,
     AgentConfig,
+    AgentGraphConfig,
     AgentRole,
-    WorkflowConfig,
 )
 
 # ---------------------------------------------------------------------------
@@ -53,7 +53,7 @@ def rag_config():
 @pytest.fixture()
 def workflow_config():
     """Create a basic workflow config."""
-    return WorkflowConfig(
+    return AgentGraphConfig(
         name="test-workflow",
         description="Test workflow",
     )

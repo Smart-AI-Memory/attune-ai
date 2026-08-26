@@ -17,11 +17,11 @@ import logging
 
 from attune.agent_factory.base import (
     AgentConfig,
+    AgentGraphConfig,
     AgentRole,
     BaseAdapter,
     BaseAgent,
     BaseWorkflow,
-    WorkflowConfig,
 )
 from attune.agent_factory.decorators import log_performance, safe_agent_operation
 
@@ -362,7 +362,7 @@ class WizardAdapter(BaseAdapter):
 
         return self.create_agent_from_wizard(wizard, name=name, **agent_kwargs)
 
-    def create_workflow(self, config: WorkflowConfig, agents: list[BaseAgent]) -> WizardWorkflow:
+    def create_workflow(self, config: AgentGraphConfig, agents: list[BaseAgent]) -> WizardWorkflow:
         """Create a workflow from wizard agents.
 
         Args:

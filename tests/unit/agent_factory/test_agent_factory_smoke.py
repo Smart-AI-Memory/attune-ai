@@ -36,16 +36,16 @@ class TestImports:
         from attune.agent_factory import (
             AgentCapability,
             AgentConfig,
+            AgentGraphConfig,
             AgentRole,
             BaseAgent,
-            WorkflowConfig,
         )
 
         assert AgentCapability is not None
         assert AgentConfig is not None
         assert AgentRole is not None
         assert BaseAgent is not None
-        assert WorkflowConfig is not None
+        assert AgentGraphConfig is not None
 
 
 @pytest.mark.unit
