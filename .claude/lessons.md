@@ -26315,34 +26315,34 @@ launched in parallel.
   artifact-reading member, where the unstated basis is "I inferred the
   content from the filename."
 
-- **A partial fix can DEFEAT THE DETECTOR that found the bug — an empty
-  surface reporting `sections=0` is visibly broken; the same emptiness
-  reporting `sections=2` looks healthy, and the finding gets harder to
-  see the closer someone comes to fixing it**: 2026-08-26, the 15.1.0
-  step-16 self-review. A 2026-08-22 bug-log entry recorded that
-  `bug-predict` produces ZERO structured findings — "6/6 runs have
-  `sections=0, findings=0` while every one reports completed / exit 0".
-  Re-checking three weeks later, today's run reported **`sections=2`**.
-  I read that as fixed and said so. It was not. The sections are
-  `[Bugs=0, Next steps=6]` — **the findings section is still empty in
-  every completed run**, and all 15 bugs exist only as prose in a
-  markdown table that nothing structured consumes. Somebody added
-  section SCAFFOLDING without wiring findings into it, and in doing so
-  converted a loud zero into a quiet two. **The original detection
-  signal — "is `sections` non-empty?" — now returns true for a surface
-  that is still dead.** Rules: (1) when re-checking a known-empty
-  surface, assert on CONTENT (`sum(len(s.rows) for s in sections)`),
-  never on the container count that first exposed it; (2) write the
-  original finding's check in terms of the thing that matters, because
-  whatever predicate you record WILL be the one re-run months later by
-  someone who did not see the original emptiness; (3) treat a
-  previously-zero metric turning non-zero as a HYPOTHESIS to verify,
-  not as closure — partial remediation is the common case and it is
-  the one that silences alarms. Kin to the units error in
-  `grep-files-vs-references-scope-estimate` (written the same morning,
-  files vs references) — same shape, different nouns, and hitting both
-  in one day suggests the class is "counted the wrapper, meant the
-  contents" rather than anything specific to greps or reports.
+- **Print the container's KEYS before counting anything inside it —
+  three times in one session I counted the wrong noun and reported a
+  confident, load-bearing, wrong number**: 2026-08-26. (1) Costing a
+  rename, `grep -rl | wc -l` gave **"8 sites"**; the real figure was
+  **127 references across 21 files**. The number was load-bearing —
+  the counter-case I put to the chair was denominated in it, and the
+  ruling cited it. (2) Re-checking a known-empty report surface,
+  `len(sections)` returned **2** and I called a three-week-old bug
+  fixed; the sections were `[Bugs=0, Next steps=6]`. (3) On the
+  recheck of THAT, I counted `s.get("rows") or s.get("items")` and
+  got **0** for the Bugs section — so I wrote up a regression that
+  did not exist, into a bug-log entry on main, a lesson, and a retro
+  item the chair then ruled `do now`. The section stores its rows
+  under **`findings`**; `rows`/`items` are empty for it by
+  construction. Fifteen real findings read as zero. **Every instance
+  has the same shape: a count taken through a key or granularity
+  that is ADJACENT to the one that matters, producing a plausible
+  number that survives review because nobody re-derives it.** An
+  import is one line and a usage is many; a container is not its
+  contents; a section's row key varies by section kind. **The rule
+  is mechanical and costs one line: before counting, print the
+  keys** — `sorted(obj.keys())`, `grep -o` the actual matches, `ls`
+  the actual entries — and only then count. Report BOTH numbers when
+  they can differ ("127 references across 21 files"), so a reader
+  never has to guess which you measured. Corollary: when a
+  previously-zero metric turns non-zero, that is a HYPOTHESIS, not
+  closure — the second and third instances above were both "it looks
+  fixed now" readings that were not.
 
 - **An LLM review's SEVERITY is a claim like any other — verify the
   impact before it changes a decision, because a confidently-worded
