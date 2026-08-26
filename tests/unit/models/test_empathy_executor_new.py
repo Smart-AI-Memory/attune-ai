@@ -305,92 +305,48 @@ class TestEmpathyLLMExecutorErrorHandling:
                 )
 
 
-class TestEmpathyLLMExecutorLoadHybridConfig:
-    """Tests for _load_hybrid_config and hybrid config initialization."""
+class TestEmpathyLLMExecutorHybridConfigInjection:
+    """Hybrid tier->model mapping is INJECTED, never read by this layer.
 
-    def test_load_hybrid_config_with_matching_config(self):
-        """Test _load_hybrid_config sets _hybrid_config when hybrid key exists."""
-        from unittest.mock import MagicMock
+    The executor used to call ``_load_hybrid_config``, which imported
+    ``attune.workflows.config`` — the #2239 Edge 1 upward import. That read
+    now lives at the workflows-layer call site
+    (``workflows.executor_mixin._load_hybrid_tier_models``); these tests pin
+    the models-layer half of the contract. The boundary itself is guarded by
+    ``tests/unit/models/test_sdk_adapter_layering.py``.
+    """
 
-        from attune.models.empathy_executor import EmpathyLLMExecutor
-        from attune.workflows.config import WorkflowConfig
+    def test_injected_config_is_stored(self):
+        """A mapping passed to the constructor becomes _hybrid_config."""
+        mapping = {"cheap": "claude-haiku-4", "capable": "claude-sonnet-4"}
+        executor = EmpathyLLMExecutor(provider="hybrid", hybrid_config=mapping)
+        assert executor._hybrid_config == mapping
 
-        executor = EmpathyLLMExecutor.__new__(EmpathyLLMExecutor)
-        executor._provider = "hybrid"
-        executor._hybrid_config = None
-        executor._hybrid_llms = {}
-        executor._api_key = None
-        executor._llm = None
-        executor._llm_kwargs = {}
-        executor._telemetry = None
+    def test_no_injection_leaves_config_none(self):
+        """Hybrid provider without an injected mapping gets None, not a read.
 
-        mock_config = MagicMock(spec=WorkflowConfig)
-        mock_config.custom_models = {
-            "hybrid": {"cheap": "claude-haiku-4", "capable": "claude-sonnet-4"}
-        }
-
-        with patch("attune.workflows.config.WorkflowConfig.load", return_value=mock_config):
-            executor._load_hybrid_config()
-
-        assert executor._hybrid_config == {"cheap": "claude-haiku-4", "capable": "claude-sonnet-4"}
-
-    def test_load_hybrid_config_no_hybrid_key(self):
-        """Test _load_hybrid_config leaves _hybrid_config as None when no hybrid key."""
-        from unittest.mock import MagicMock
-
-        from attune.models.empathy_executor import EmpathyLLMExecutor
-        from attune.workflows.config import WorkflowConfig
-
-        executor = EmpathyLLMExecutor.__new__(EmpathyLLMExecutor)
-        executor._provider = "hybrid"
-        executor._hybrid_config = None
-        executor._hybrid_llms = {}
-        executor._api_key = None
-        executor._llm = None
-        executor._llm_kwargs = {}
-        executor._telemetry = None
-
-        mock_config = MagicMock(spec=WorkflowConfig)
-        mock_config.custom_models = {}
-
-        with patch("attune.workflows.config.WorkflowConfig.load", return_value=mock_config):
-            executor._load_hybrid_config()
-
+        This is the pre-inversion behavior for an absent ``hybrid`` key:
+        _get_llm_for_tier falls back to the single configured provider.
+        """
+        executor = EmpathyLLMExecutor(provider="hybrid")
         assert executor._hybrid_config is None
 
-    def test_load_hybrid_config_exception_swallowed(self):
-        """Test _load_hybrid_config silently handles exceptions."""
-        from attune.models.empathy_executor import EmpathyLLMExecutor
-
-        executor = EmpathyLLMExecutor.__new__(EmpathyLLMExecutor)
-        executor._provider = "hybrid"
-        executor._hybrid_config = None
-        executor._hybrid_llms = {}
-        executor._api_key = None
-        executor._llm = None
-        executor._llm_kwargs = {}
-        executor._telemetry = None
-
-        with patch(
-            "attune.workflows.config.WorkflowConfig.load",
-            side_effect=Exception("config error"),
-        ):
-            # Should not raise - exception is logged/swallowed
-            executor._load_hybrid_config()
-
+    def test_empty_mapping_normalizes_to_none(self):
+        """An empty dict means "no hybrid routing", same as absent."""
+        executor = EmpathyLLMExecutor(provider="hybrid", hybrid_config={})
         assert executor._hybrid_config is None
 
-    def test_hybrid_constructor_calls_load(self):
-        """Test that hybrid provider triggers _load_hybrid_config."""
-        with patch.object(EmpathyLLMExecutor, "_load_hybrid_config") as mock_load:
-            EmpathyLLMExecutor(provider="hybrid")
-            mock_load.assert_called_once()
+    def test_non_hybrid_provider_ignores_nothing_and_still_stores(self):
+        """Injection is provider-agnostic; only routing consults the mapping."""
+        mapping = {"cheap": "claude-haiku-4"}
+        executor = EmpathyLLMExecutor(provider="anthropic", hybrid_config=mapping)
+        assert executor._hybrid_config == mapping
+        # _get_llm_for_tier short-circuits on provider != "hybrid"
+        assert executor._provider == "anthropic"
 
-    def test_non_hybrid_constructor_skips_load(self):
-        """Test that non-hybrid provider does not call _load_hybrid_config."""
-        with patch.object(EmpathyLLMExecutor, "_load_hybrid_config") as mock_load:
-            EmpathyLLMExecutor(provider="anthropic")
-            mock_load.assert_not_called()
+    def test_executor_has_no_config_loader(self):
+        """The upward-importing loader is gone, not merely unused."""
+        assert not hasattr(EmpathyLLMExecutor, "_load_hybrid_config")
 
 
 class TestEmpathyLLMExecutorGetLlm:
