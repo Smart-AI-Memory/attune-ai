@@ -34,7 +34,11 @@ class Provider(str, Enum):
 
 
 class WorkflowMode(str, Enum):
-    """Workflow execution modes."""
+    """Workflow execution modes.
+
+    DEPRECATED — REMOVE IN v16.0.0 alongside :class:`WorkflowConfig`, its
+    only remaining consumer.
+    """
 
     SEQUENTIAL = "sequential"
     PARALLEL = "parallel"
@@ -254,7 +258,15 @@ class BookProductionConfig(BaseModel):
 
 
 class WorkflowConfig(BaseModel):
-    """Configuration for agent workflows."""
+    """Configuration for agent workflows.
+
+    DEPRECATED — REMOVE IN v16.0.0. A field-for-field pydantic twin of
+    :class:`attune.agent_factory.base.WorkflowConfig` with no consumer in
+    this tree; re-exported as ``attune.config.AgentWorkflowConfig``, which
+    now warns on access. Spec ``models-workflows-layering`` D4 ruled the
+    deletion; D6 scheduled it for the next major rather than removing a
+    six-month-old public export without notice.
+    """
 
     name: str = Field(..., min_length=1)
     description: str = Field(default="")
