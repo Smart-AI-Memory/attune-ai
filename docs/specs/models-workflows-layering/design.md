@@ -1,8 +1,8 @@
 # Models↔Workflows Layering — Design
 
-**Status:** draft (2026-08-26) — executes D2 (rename-by-role) with
-per-class names verified against the tree, plus one finding that D2's
-ruling did not have in front of it. Awaiting chair read.
+**Status:** approved (2026-08-26) — chair ruled the two open
+questions same-day as D4 (delete the orphan) and D5 (`AgentGraphConfig`);
+see `decisions.md`. Q3 (#2239 closure) remains with the chair.
 **Scope:** R3 only. Edge 1 (R1) shipped in #2314; R4/R5 are constraints
 carried here, not work.
 
@@ -108,14 +108,24 @@ the same diff as #2's three-line change.
   (`test_no_models_module_imports_workflows_at_any_scope`, #2314), so
   none of this work can silently reopen the cycle.
 
-## Open questions for the chair
+## Open questions — RULED (2026-08-26, see decisions.md)
 
-1. **Delete #3, or rename it to `AgentWorkflowConfig`?** Recommendation:
-   delete. It has no consumer and duplicates #4.
-2. **Is `AgentGraphConfig` right for #4**, given it is already coherent
-   inside its own module? Recommendation: yes — D2's one-bare-name
-   intent outranks local coherence, and the alias absorbs the churn.
-3. **Does #2239 close when these land?** R6 says it closes when Edge 1
-   is dead and R3 is ruled. Edge 1 died in #2314; R3 is ruled once the
-   chair reads this. The renames themselves could execute after the
-   close.
+1. Delete #3 or rename it? → **D4: delete**, together with the
+   `AgentWorkflowConfig` alias export. The chair took the
+   recommendation; it does not reopen D2's declined
+   consolidation-to-one-class, since that concerned live classes.
+2. Is `AgentGraphConfig` right for #4? → **D5: yes**, chair ruling
+   made with the lead's counter-case in front of it (the name is
+   already coherent inside its own module; D2's one-bare-name intent
+   outranks local coherence).
+3. Does #2239 close when R3 is ruled? → **still with the chair.** The
+   lead's recommendation: close it when #2314 merges, and track the
+   renames here. R3 was a GUARD on the layering work ("no move without
+   a ruling"), not an independent deliverable — and the relocation it
+   guarded never happened, since the cycle died by inversion instead.
+   The issue's subject, the dependency cycle, is finished and
+   mechanically gated. D2's "hard rename at the next major" is a
+   better deadline for the renames than an open issue nobody re-reads.
+   If a visible anchor is wanted, prefer closing #2239 and opening a
+   small follow-up issue that says what it is, over leaving a
+   cycle-titled issue open for naming work.

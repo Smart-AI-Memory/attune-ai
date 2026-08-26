@@ -54,10 +54,48 @@ constraints on the triggered split:
   (`tests/unit/models/test_sdk_adapter_layering.py`, extended per
   amended R1) is the boundary's enforcer.
 
+## D4 — `config/agent_config.WorkflowConfig` is DELETED, not renamed (ruled 2026-08-26)
+
+The design phase found what D2's ruling did not have in front of it:
+that class is field-for-field identical to `agent_factory/base.py`'s
+(same ten fields, pydantic twin of a dataclass) and has NO consumer —
+`AgentWorkflowConfig` appears exactly twice in the tree, both in
+`config/__init__.py` (the aliased import and its `__all__` entry). No
+src caller, no test, no doc. It entered in `dc6c8f69e` AFTER the
+dataclass (`faeac70db`), as consolidation leftover.
+
+Against `removing-dead-code.md` this trips zero-usage-evidence and
+orphaned-motivation, whose gate says stop renaming the surface and
+remove the engine. The chair took the lead's recommendation to delete
+rather than rename, together with the `AgentWorkflowConfig` alias
+export. This does NOT reopen D2's declined
+consolidation-to-one-class: that ruling concerned LIVE classes, and
+this one is not live.
+
+## D5 — `agent_factory/base.WorkflowConfig` -> `AgentGraphConfig` (ruled 2026-08-26)
+
+Chair ruled yes, having read the counter-case the lead raised against
+its own recommendation: inside its own module the current name is
+already coherent beside `AgentConfig`/`BaseAgent`/`BaseWorkflow`, so
+the collision is only visible globally, and the rename costs 8 sites.
+D2's intent — that exactly one class holds the bare name — outranks
+local coherence, and the deprecation alias absorbs the churn.
+
+`config/sections/workflows.py` -> `WorkflowsConfig` was not in
+dispute: its six sibling sections are all `<module>Config`
+(`AnalysisConfig`, `AuthConfig`, `EnvironmentConfig`,
+`PersistenceConfig`, `RoutingConfig`, `TelemetryConfig`) and it is
+the only one breaking the pattern. 3 import sites.
+
 ## Sequencing after these rulings
 
-1. D1 inversion PR (R1 as amended by the 2026-08-25 cross-review
-   lane: `dict[str, str]` primitive arg, injection chains upward).
-2. D2 renames, spread over the design phase's proposal — aliases
-   first, hard rename at the next major.
-3. D3 sleeps until its trigger; no scheduled work.
+1. D1 inversion PR — SHIPPED as #2314 (Edge 1 dead; the boundary is
+   now gated by a static AST scan, since the subprocess probe R1
+   originally named proved blind to lazy function-local imports).
+2. D4 delete first — it removes a third of the collision and the
+   duplication question in one step.
+3. `config/sections` rename (3 sites), then D5 (8 sites). One PR per
+   class: each independently revertible, and the test churn should
+   not ride with the three-line change. Aliases first, hard rename at
+   the next major, per D2.
+4. D3 sleeps until its trigger; no scheduled work.
