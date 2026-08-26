@@ -2,7 +2,7 @@
 type: tip
 name: weekly-review
 tags: [discovery]
-source: src/attune/discovery.py
+source: scripts/generate_tip_templates.py
 ---
 
 # Tip: Weekly reminder: Run 'attune workflow run security-audit' to check for issues

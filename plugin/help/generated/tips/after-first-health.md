@@ -2,7 +2,7 @@
 type: tip
 name: after-first-health
 tags: [discovery]
-source: src/attune/discovery.py
+source: scripts/generate_tip_templates.py
 ---
 
 # Tip: Use 'ruff check --fix . && ruff format .' to auto-fix lint and format issues

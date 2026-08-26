@@ -137,7 +137,6 @@ _BASELINE: dict[str, int] = {
     "src/attune/curator/sources/specs.py": 2,
     "src/attune/diagnosis/priors.py": 1,
     "src/attune/diagnosis/triage.py": 1,
-    "src/attune/discovery.py": 1,
     "src/attune/handoff/memory_link.py": 5,
     "src/attune/help/feedback.py": 1,
     "src/attune/help/polish.py": 1,

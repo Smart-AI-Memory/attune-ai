@@ -2,7 +2,7 @@
 type: tip
 name: after-first-inspect
 tags: [discovery]
-source: src/attune/discovery.py
+source: scripts/generate_tip_templates.py
 ---
 
 # Tip: Try 'attune workflow run ship' before commits for pre-flight checks

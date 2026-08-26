@@ -4835,14 +4835,14 @@
     "generated_at": "2026-08-24T13:19:28.904203+00:00"
   },
   "tip-after-10-inspects": {
-    "source": "src/attune/discovery.py",
-    "hash": "534f94c3a60fe9c599bb0190e73a0e067f2798b9c72b85a499f7291aa30bf5ea",
-    "generated_at": "2026-08-24T13:19:28.904203+00:00"
+    "source": "scripts/generate_tip_templates.py",
+    "hash": "8416937aafea7d4ff02c14c7824b93d35a9dbba61f59ca583b7b10b42a81a989",
+    "generated_at": "2026-08-26T20:32:12.713694+00:00"
   },
   "tip-after-5-ships": {
-    "source": "src/attune/discovery.py",
-    "hash": "534f94c3a60fe9c599bb0190e73a0e067f2798b9c72b85a499f7291aa30bf5ea",
-    "generated_at": "2026-08-24T13:19:28.904203+00:00"
+    "source": "scripts/generate_tip_templates.py",
+    "hash": "8416937aafea7d4ff02c14c7824b93d35a9dbba61f59ca583b7b10b42a81a989",
+    "generated_at": "2026-08-26T20:32:12.713694+00:00"
   },
   "tip-after-bug-predict": {
     "source": "src/attune/workflows/suggestions.py",
@@ -4860,14 +4860,14 @@
     "generated_at": "2026-08-24T13:19:28.904203+00:00"
   },
   "tip-after-first-health": {
-    "source": "src/attune/discovery.py",
-    "hash": "534f94c3a60fe9c599bb0190e73a0e067f2798b9c72b85a499f7291aa30bf5ea",
-    "generated_at": "2026-08-24T13:19:28.904203+00:00"
+    "source": "scripts/generate_tip_templates.py",
+    "hash": "8416937aafea7d4ff02c14c7824b93d35a9dbba61f59ca583b7b10b42a81a989",
+    "generated_at": "2026-08-26T20:32:12.713694+00:00"
   },
   "tip-after-first-inspect": {
-    "source": "src/attune/discovery.py",
-    "hash": "534f94c3a60fe9c599bb0190e73a0e067f2798b9c72b85a499f7291aa30bf5ea",
-    "generated_at": "2026-08-24T13:19:28.904203+00:00"
+    "source": "scripts/generate_tip_templates.py",
+    "hash": "8416937aafea7d4ff02c14c7824b93d35a9dbba61f59ca583b7b10b42a81a989",
+    "generated_at": "2026-08-26T20:32:12.713694+00:00"
   },
   "tip-after-perf-audit": {
     "source": "src/attune/workflows/suggestions.py",
@@ -4925,9 +4925,9 @@
     "generated_at": "2026-08-24T13:19:28.904203+00:00"
   },
   "tip-cost-savings": {
-    "source": "src/attune/discovery.py",
-    "hash": "534f94c3a60fe9c599bb0190e73a0e067f2798b9c72b85a499f7291aa30bf5ea",
-    "generated_at": "2026-08-24T13:19:28.904203+00:00"
+    "source": "scripts/generate_tip_templates.py",
+    "hash": "8416937aafea7d4ff02c14c7824b93d35a9dbba61f59ca583b7b10b42a81a989",
+    "generated_at": "2026-08-26T20:32:12.713694+00:00"
   },
   "tip-cross-review": {
     "source": "content/features/cross-review.md",
@@ -4965,9 +4965,9 @@
     "generated_at": "2026-08-24T13:19:28.904203+00:00"
   },
   "tip-high-tech-debt": {
-    "source": "src/attune/discovery.py",
-    "hash": "534f94c3a60fe9c599bb0190e73a0e067f2798b9c72b85a499f7291aa30bf5ea",
-    "generated_at": "2026-08-24T13:19:28.904203+00:00"
+    "source": "scripts/generate_tip_templates.py",
+    "hash": "8416937aafea7d4ff02c14c7824b93d35a9dbba61f59ca583b7b10b42a81a989",
+    "generated_at": "2026-08-26T20:32:12.713694+00:00"
   },
   "tip-hooks": {
     "source": "content/features/hooks.md",
@@ -4990,9 +4990,9 @@
     "generated_at": "2026-08-24T13:19:28.904203+00:00"
   },
   "tip-no-patterns": {
-    "source": "src/attune/discovery.py",
-    "hash": "534f94c3a60fe9c599bb0190e73a0e067f2798b9c72b85a499f7291aa30bf5ea",
-    "generated_at": "2026-08-24T13:19:28.904203+00:00"
+    "source": "scripts/generate_tip_templates.py",
+    "hash": "8416937aafea7d4ff02c14c7824b93d35a9dbba61f59ca583b7b10b42a81a989",
+    "generated_at": "2026-08-26T20:32:12.713694+00:00"
   },
   "tip-ops-dashboard": {
     "source": "content/features/ops-dashboard.md",
@@ -5060,9 +5060,9 @@
     "generated_at": "2026-08-24T13:19:28.904203+00:00"
   },
   "tip-weekly-review": {
-    "source": "src/attune/discovery.py",
-    "hash": "534f94c3a60fe9c599bb0190e73a0e067f2798b9c72b85a499f7291aa30bf5ea",
-    "generated_at": "2026-08-24T13:19:28.904203+00:00"
+    "source": "scripts/generate_tip_templates.py",
+    "hash": "8416937aafea7d4ff02c14c7824b93d35a9dbba61f59ca583b7b10b42a81a989",
+    "generated_at": "2026-08-26T20:32:12.713694+00:00"
   },
   "tip-wizards": {
     "source": "content/features/wizards.md",
