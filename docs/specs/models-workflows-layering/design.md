@@ -1,6 +1,6 @@
 # Models↔Workflows Layering — Design
 
-**Status:** proposed (2026-08-26) — executes D2 (rename-by-role) with
+**Status:** draft (2026-08-26) — executes D2 (rename-by-role) with
 per-class names verified against the tree, plus one finding that D2's
 ruling did not have in front of it. Awaiting chair read.
 **Scope:** R3 only. Edge 1 (R1) shipped in #2314; R4/R5 are constraints
