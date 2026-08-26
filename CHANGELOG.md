@@ -7,6 +7,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [15.1.0] - 2026-08-26
+
+15.1.0 closes the models↔workflows dependency cycle
+([#2239](https://github.com/Smart-AI-Memory/attune-ai/issues/2239)) and
+resolves the four-way `WorkflowConfig` name collision it exposed. No
+breaking changes: every renamed or retired name still works and now
+warns, so upgrading is a no-op today and a one-line edit before 16.0.0.
+
+### Changed
+
+- **The `attune.models` layer no longer imports `attune.workflows`.**
+  `EmpathyLLMExecutor` read `workflows.yaml` itself through a lazy
+  upward import — the last edge of the cycle. It now takes a
+  models-owned `hybrid_config: dict[str, str] | None`, and the config
+  read moved to the workflows-layer call site, where it fires only for
+  hybrid providers. Pure wiring inversion; tier mapping is unchanged.
+- **`config.sections.WorkflowConfig` is now `WorkflowsConfig`.** It was
+  the only one of seven config sections not named after its own module
+  (`AnalysisConfig`, `AuthConfig`, `EnvironmentConfig`,
+  `PersistenceConfig`, `RoutingConfig`, `TelemetryConfig`).
+- **`agent_factory.WorkflowConfig` is now `AgentGraphConfig`**, naming
+  what it configures — `mode`, `state_schema`, `checkpointing`,
+  `framework_options` are graph-construction concerns — and matching
+  its neighbours `AgentRole` / `AgentCapability` / `AgentConfig`.
+
+### Deprecated
+
+Each of these still resolves and still works, emits a
+`DeprecationWarning` on access, and is removed in **16.0.0**:
+
+| Deprecated | Use instead |
+|---|---|
+| `attune.config.AgentWorkflowConfig` | `attune.agent_factory.AgentGraphConfig` |
+| `attune.config.WorkflowMode` | — (removed with the class above) |
+| `attune.config.sections.WorkflowConfig` | `WorkflowsConfig` |
+| `attune.config.sections.workflows.WorkflowConfig` | `WorkflowsConfig` |
+| `attune.agent_factory.WorkflowConfig` | `AgentGraphConfig` |
+| `attune.agent_factory.base.WorkflowConfig` | `AgentGraphConfig` |
+
+Warnings fire on **access**, not on import, so packages that never
+touch these names stay silent.
+
+### Fixed
+
+- Test fixtures no longer invoke the user's GPG signing key. A fixture's
+  `git commit` inherited a global `commit.gpgsign=true` and could block
+  indefinitely on a passphrase prompt no automated run can answer,
+  wedging the whole suite with no output.
+- A failed cross-provider seat now reports why it failed, and a call
+  that never authenticated is no longer counted as spend.
+
+### Internal
+
+- The layering boundary is enforced by a static AST scan asserting no
+  module under `attune/models/` imports `attune.workflows` at any scope.
+  The previous subprocess probe observed only what an import *loads*,
+  so it could not see a lazy function-local import — the shape both
+  cycle edges actually had.
+- A shrink-only gate pins the `WorkflowConfig` collision as resolved:
+  new classes by that name fail, and the one definition still awaiting
+  deletion is allowed only while it carries its removal marker.
+
+
 ## [15.0.0] - 2026-08-26
 
 15.0.0 finishes the Empathy-framework excision begun in 9.0.0: the
