@@ -175,6 +175,52 @@ def run_command(
     return proc.returncode, out[-TAIL_CHARS:]
 
 
+#: Output signatures of a failure that never reached the provider, so
+#: no tokens were consumed. Matched case-insensitively against the CLI's
+#: combined output. Kept DELIBERATELY tight: a false positive here
+#: under-reports real spend, which is worse than over-reporting, so only
+#: messages that unambiguously mean "never authenticated" belong.
+_UNBILLED_SIGNATURES: tuple[str, ...] = (
+    "failed to authenticate",
+    "oauth session expired",
+    "invalid api key",
+    "authentication_error",
+    "please run /login",
+)
+
+#: run_command maps a missing binary to this — nothing ever spawned.
+_EXIT_NOT_FOUND = 127
+
+
+def unbilled_failure(exit_code: int, output: str) -> bool:
+    """Did this seat invocation provably consume nothing?
+
+    A successful call always bills, and an ambiguous failure (a timeout,
+    a crash mid-stream) MAY have billed — both return False so the
+    ledger keeps its conservative default. Only two cases are provably
+    free: the binary was never found, and the CLI refused before
+    authenticating.
+
+    The auth case was invisible until issue #2311: three release-audit
+    sittings each recorded a flat seat estimate against a ``claude``
+    seat whose OAuth session had expired, so the session cap was being
+    eaten by calls that never reached the provider.
+
+    Args:
+        exit_code: The seat process's exit status.
+        output: Its combined stdout/stderr tail, as run_command returns.
+
+    Returns:
+        True only when no provider call can have happened.
+    """
+    if exit_code == _EXIT_NOT_FOUND:
+        return True
+    if exit_code == 0:
+        return False
+    haystack = (output or "").lower()
+    return any(signature in haystack for signature in _UNBILLED_SIGNATURES)
+
+
 def default_invoke_seat(
     recipe: Sequence[str],
     brief: str,
@@ -207,9 +253,9 @@ def default_invoke_seat(
     else:
         argv = [brief if part == "{brief}" else part for part in recipe]
         result = run_command(argv, provider_clean=True, reply_chars=reply_chars)
-    if billed and result[0] != 127:
-        # 127 = binary not found — nothing spawned, nothing billed.
-        # Every other exit (including a timeout) may have billed.
+    if billed and not unbilled_failure(*result):
+        # Everything not provably free may have billed — a timeout most
+        # of all — so the conservative default is still to record.
         session_ledger.record(f"seat:{recipe[0]}", session_ledger.seat_estimate_usd())
     return result
 

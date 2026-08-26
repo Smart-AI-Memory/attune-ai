@@ -19,6 +19,16 @@ An ABSENT seat is a valid outcome, never a fabricated one. A seat whose
 reply does not parse is recorded as ``format_noncompliant`` with its raw
 text preserved; the stage does not invent amendments on its behalf.
 
+A seat that was never reachable (``absent``) and a seat that RAN and
+FAILED (``failed``) are different facts and are recorded differently.
+Conflating them cost three consecutive sittings: the ``claude`` seat's
+OAuth session had expired, the CLI said so on stdout and exited 1, and
+every run recorded a bare ``absent`` while discarding the diagnosis
+(issue #2311). Every non-replied seat now carries a ``reason`` into
+:meth:`SeatReply.as_dict`, so the emitted sitting states WHY a seat did
+not speak. Contract principle 7 — a failed gatekeeper fails the gate;
+absence is not a pass — applies to the seats themselves.
+
 Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
@@ -51,6 +61,13 @@ SEATS: tuple[str, ...] = ("claude", "codex", "antigravity")
 #: than this is composing rather than amending.
 SEAT_REPLY_CHARS = 4000
 
+#: How much of a non-replied seat's output is kept as its ``reason``.
+#: Enough for a CLI's one-line diagnosis plus context, not a dump.
+REASON_CHARS = 400
+
+#: ``run_command`` maps a missing binary to 127 and a timeout to 124.
+_EXIT_NOT_FOUND = 127
+
 _AMEND = re.compile(
     r"^\s*AMEND\s+(?P<item>\S+)\s*->\s*(?P<disp>[A-Z-]+)\s*:\s*(?P<reason>.+?)\s*$",
     re.MULTILINE,
@@ -77,20 +94,25 @@ class SeatReply:
     """What one seat said. ``status`` is never inferred as agreement."""
 
     seat: str
-    status: str  # "replied" | "absent" | "format_noncompliant"
+    status: str  # "replied" | "absent" | "failed" | "format_noncompliant"
     amendments: tuple[SeatAmendment, ...] = field(default=())
     gate_ranking: tuple[str, ...] = field(default=())
     closing: str = ""
     raw: str = ""
 
     def as_dict(self) -> dict[str, Any]:
-        return {
+        emitted: dict[str, Any] = {
             "seat": self.seat,
             "status": self.status,
             "amendments": [a.as_dict() for a in self.amendments],
             "gate_ranking": list(self.gate_ranking),
             "closing": self.closing,
         }
+        # A seat that did not reply must say why. Dropping this is what
+        # let an expired credential read as three silent absences.
+        if self.status != "replied":
+            emitted["reason"] = self.raw[:REASON_CHARS].strip()
+        return emitted
 
 
 @dataclass(frozen=True)
@@ -104,11 +126,39 @@ class Sitting:
         return {
             "packet_hash": self.packet_hash,
             "replies": [r.as_dict() for r in self.replies],
+            # Stated, not left to be counted. Three sittings ran at two
+            # seats without that ever being visible in the output.
+            "census": self.census,
         }
 
     @property
     def seats_present(self) -> tuple[str, ...]:
         return tuple(r.seat for r in self.replies if r.status == "replied")
+
+    @property
+    def seats_failed(self) -> tuple[str, ...]:
+        """Seats that ran and failed — a different fact from absent."""
+        return tuple(r.seat for r in self.replies if r.status == "failed")
+
+    @property
+    def census(self) -> dict[str, Any]:
+        """How many of the expected seats actually spoke, and who did not.
+
+        ``short_handed`` is the loud bit: a sitting below full strength
+        is a degraded cross-model check, and the chair should read that
+        from the record rather than infer it from a missing name.
+        """
+        present = self.seats_present
+        return {
+            "expected": len(self.replies),
+            "replied": len(present),
+            "short_handed": len(present) < len(self.replies),
+            "not_replied": {
+                r.seat: {"status": r.status, "reason": r.raw[:REASON_CHARS].strip()}
+                for r in self.replies
+                if r.status != "replied"
+            },
+        }
 
     def amendments_for(self, item_id: str) -> tuple[SeatAmendment, ...]:
         """Every seat amendment naming ``item_id``."""
@@ -161,10 +211,21 @@ def build_sitting_brief(packet: Packet) -> str:
 
 
 def parse_seat_reply(seat: str, exit_code: int, text: str) -> SeatReply:
-    """Parse one seat's reply. Never fabricates content on its behalf."""
+    """Parse one seat's reply. Never fabricates content on its behalf.
+
+    Non-zero exits split two ways, because they are different facts: 127
+    means the seat was never reachable (``absent``), anything else means
+    it RAN and FAILED (``failed``) and its output carries the diagnosis.
+    Both keep that output as ``raw``, which ``as_dict`` emits as
+    ``reason`` — see the module docstring and issue #2311.
+    """
     body = (text or "").strip()
-    if exit_code != 0 or not body:
+    if exit_code == _EXIT_NOT_FOUND:
         return SeatReply(seat=seat, status="absent", raw=body)
+    if exit_code != 0:
+        return SeatReply(seat=seat, status="failed", raw=body)
+    if not body:
+        return SeatReply(seat=seat, status="absent", raw="exited 0 with no output")
 
     amendments = tuple(
         SeatAmendment(
@@ -219,8 +280,9 @@ def hold_sitting(
         seats: Seat names, in stable order.
 
     Returns:
-        A :class:`Sitting`. Seats that fail or say nothing are ABSENT —
-        absence is recorded, never read as agreement.
+        A :class:`Sitting`. A seat that was unreachable is ``absent``, a
+        seat that ran and failed is ``failed``, and both carry the
+        reason — neither is ever read as agreement.
 
     """
     from attune.roundtable.routine import SEAT_RECIPES, default_invoke_seat
@@ -240,7 +302,7 @@ def hold_sitting(
         try:
             exit_code, text = runner(recipe, brief)
         except (OSError, ValueError) as exc:  # a seat CLI that is not installed
-            replies.append(SeatReply(seat=seat, status="absent", raw=str(exc)))
+            replies.append(SeatReply(seat=seat, status="failed", raw=str(exc)))
             continue
         replies.append(parse_seat_reply(seat, exit_code, text))
 

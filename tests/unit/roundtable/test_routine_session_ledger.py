@@ -61,12 +61,63 @@ class TestSeatSeam:
         assert not _ledger_path().exists()
 
     def test_failed_but_spawned_seat_still_records(self, monkeypatch) -> None:
-        """A timeout or auth failure may still have billed — overcount,
-        never undercount (D5)."""
+        """An AMBIGUOUS failure may still have billed — overcount, never
+        undercount (D5).
+
+        Narrowed 2026-08-25 (#2311): this docstring used to read "a
+        timeout or auth failure", but D5's text rules the ESTIMATE'S
+        MAGNITUDE, not whether a call that never reached the provider
+        records. A refusal-before-authentication is provably free and is
+        now excluded; a timeout, which may have billed, still records.
+        """
         monkeypatch.setattr(routine, "run_command", lambda *a, **k: (124, "timed out"))
         default_invoke_seat(("claude", "-p", "{brief}"), "hi")
         entries = [json.loads(line) for line in _ledger_path().read_text().splitlines()]
         assert len(entries) == 1
+
+    def test_an_ambiguous_nonzero_exit_still_records(self, monkeypatch) -> None:
+        """The conservative default survives the #2311 narrowing: only
+        recognised never-authenticated output is excluded, not every
+        failure."""
+        monkeypatch.setattr(routine, "run_command", lambda *a, **k: (1, "segmentation fault"))
+        default_invoke_seat(("claude", "-p", "{brief}"), "hi")
+        entries = [json.loads(line) for line in _ledger_path().read_text().splitlines()]
+        assert len(entries) == 1
+
+    def test_a_never_authenticated_seat_records_nothing(self, monkeypatch) -> None:
+        """#2311: three release-audit sittings each charged $0.25 against
+        a claude seat whose OAuth session had expired. No token was ever
+        consumed — auth precedes the request — so the cap was being eaten
+        by calls that never reached the provider.
+
+        The failure string is the one the CLI actually emitted, captured
+        live on 2026-08-25.
+        """
+        monkeypatch.setattr(
+            routine,
+            "run_command",
+            lambda *a, **k: (
+                1,
+                "Failed to authenticate: OAuth session expired and could not be refreshed",
+            ),
+        )
+        code, _ = default_invoke_seat(("claude", "-p", "{brief}"), "hi")
+
+        assert code == 1
+        assert not _ledger_path().exists(), "an unauthenticated call is not spend"
+
+    def test_the_cap_check_still_fires_before_an_auth_failure(self, monkeypatch) -> None:
+        """Excluding auth failures from RECORDING must not weaken the
+        pre-spawn refusal — the cap is checked before we know how the
+        call will fail."""
+        monkeypatch.setenv("ATTUNE_SESSION_SPEND_CAP_USD", "0")
+        monkeypatch.setattr(
+            routine,
+            "run_command",
+            lambda *a, **k: pytest.fail("subprocess spawned despite the spend refusal"),
+        )
+        with pytest.raises(SessionSpendCapError):
+            default_invoke_seat(("claude", "-p", "{brief}"), "hi")
 
 
 class TestRoutineUpfrontRefusal:

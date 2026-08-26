@@ -1,9 +1,12 @@
 # Session Spend Ledger — Decisions
 
-All decisions below are **PROPOSED** (lead, 2026-08-24), implemented
-in the same PR so the chair reads working code, not hypotheticals.
-Each is cheap to re-rule; none is one-way. Counter-cases are stated
-per D11d COUNTER-CASE.
+D1–D6 are **PROPOSED** (lead, 2026-08-24), implemented in the same PR
+so the chair reads working code, not hypotheticals. Each is cheap to
+re-rule; none is one-way. Counter-cases are stated per D11d
+COUNTER-CASE.
+
+**D7 is CONFIRMED** (chair, 2026-08-25) — it clarifies D5's scope
+rather than ratifying it, so D5 itself stays PROPOSED.
 
 ---
 
@@ -112,6 +115,62 @@ and are neither checked nor recorded (R4).
   mid-workflow records the per-run budget cap, not $0 — its
   cost_report is lost with the exception, and the conservative
   bound is the most it could have billed (D11 lane, 2026-08-24).
+
+---
+
+## D7 — D5 sizes the estimate, not what counts as spend (CONFIRMED 2026-08-25)
+
+Raised while fixing #2311. The `claude` seat was recorded absent at
+three consecutive release-audit sittings; root cause was an expired
+OAuth session, reproduced live (exit 1, stdout `Failed to authenticate:
+OAuth session expired and could not be refreshed`). Each of those runs
+had recorded the flat `$0.25` seat estimate — roughly `$0.75` of spend
+against the cap for calls that never reached a provider.
+
+`tests/unit/roundtable/test_routine_session_ledger.py::
+test_failed_but_spawned_seat_still_records` asserted in its docstring
+that "a timeout **or auth failure** may still have billed — overcount,
+never undercount (D5)". That reading would keep charging for calls that
+provably consumed nothing.
+
+**RULING (chair, 2026-08-25): D5 does not say that.** Its scope is the
+MAGNITUDE of the estimate recorded for a call that did, or may have,
+consumed tokens. It is silent on a call that never reached the
+provider, and such a call is not spend. Verified across all three
+surfaces stating D5 — the first reading of this question cited only
+one, which was not enough to support the claim:
+
+| Surface | Text | Covers a never-authenticated call? |
+|---|---|---|
+| D5 above, in this file | flat estimate "deliberately above the typical single-reply `claude -p` cost, so the ledger overcounts rather than undercounts" | no — magnitude only |
+| `src/attune/gates/session_ledger.py` `seat_estimate_usd` | "Flat conservative estimate for one **billed** `claude` seat call" | no — presupposes the call billed |
+| `scripts/workflow_probe_runner.py` (crashed-probe path) | "A probe that crashed mid-workflow **may have billed** … record the per-run budget cap as the conservative bound" | no — conditions on "may have billed" |
+
+The probe-runner surface is the closest analogue in the tree and draws
+the same line: the conservative bound applies BECAUSE the call may have
+billed.
+
+Consequences, shipped in #2312:
+
+- `attune.roundtable.routine.unbilled_failure(exit_code, output)`
+  excludes only provably-free failures — binary-not-found (127) and a
+  deliberately tight set of never-authenticated output signatures.
+- Ambiguous failures (timeouts, mid-stream crashes) still record, so
+  the conservative default is unchanged everywhere else.
+- The test's docstring is narrowed in place, with the reason recorded
+  next to it.
+
+**Counter-case (D11d COUNTER-CASE).** The exclusion matches on output
+text, so a call that billed and *then* emitted a matching auth message
+would be undercounted. Judged unreachable for a single short
+`claude -p` invocation, since authentication precedes the request — but
+a signature list that grows carelessly could make it reachable, which
+is why the list is kept tight and its rationale is stated at the
+constant. If seat estimates ever drift from `usage.jsonl` actuals, this
+exclusion is the first thing to re-measure.
+
+D5 itself remains PROPOSED; this clarifies its scope, and does not
+ratify it.
 
 ---
 

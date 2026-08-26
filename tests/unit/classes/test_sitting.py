@@ -80,8 +80,17 @@ class TestBriefEncodesTheRoleLimits:
 
 
 class TestAbsenceIsNeverAgreement:
-    def test_nonzero_exit_is_absent(self):
+    def test_nonzero_exit_is_failed_not_absent(self):
+        """It RAN and failed — a different fact from never reachable."""
         reply = parse_seat_reply("codex", 1, "boom")
+
+        assert reply.status == "failed"
+        assert reply.amendments == ()
+        assert reply.raw == "boom", "the diagnosis is kept, not discarded"
+
+    def test_binary_not_found_is_absent(self):
+        """127 is the one exit that means nothing ever spawned."""
+        reply = parse_seat_reply("codex", 127, "codex: not found")
 
         assert reply.status == "absent"
         assert reply.amendments == ()
@@ -101,14 +110,49 @@ class TestAbsenceIsNeverAgreement:
 
         assert reply.status == "format_noncompliant"
 
-    def test_a_missing_seat_binary_is_absent_not_fatal(self):
+    def test_a_seat_runner_that_raises_is_not_fatal(self):
         def explode(recipe, brief):
             raise OSError("codex: command not found")
 
         sitting = hold_sitting(_packet(1), invoke=explode)
 
-        assert {r.status for r in sitting.replies} == {"absent"}
+        assert {r.status for r in sitting.replies} == {"failed"}
         assert sitting.seats_present == ()
+
+    def test_a_seat_that_did_not_reply_says_why(self):
+        """Issue #2311: three sittings recorded a bare 'absent' while the
+        CLI's own one-line diagnosis sat in raw and was never emitted.
+        """
+        auth_error = "Failed to authenticate: OAuth session expired and could not be refreshed"
+
+        emitted = parse_seat_reply("claude", 1, auth_error).as_dict()
+
+        assert emitted["status"] == "failed"
+        assert auth_error in emitted["reason"]
+
+    def test_a_replying_seat_carries_no_reason_field(self):
+        emitted = parse_seat_reply(
+            "codex", 0, "NO AMENDMENTS\nGATE-RANK: C4b\nCLOSING: fine"
+        ).as_dict()
+
+        assert emitted["status"] == "replied"
+        assert "reason" not in emitted
+
+    def test_census_states_short_handedness_rather_than_implying_it(self):
+        """A two-seat sitting must SAY it was short-handed."""
+
+        def only_codex_answers(recipe, brief):
+            if recipe[0] == "codex":
+                return 0, "NO AMENDMENTS\nGATE-RANK: C4b\nCLOSING: ok"
+            return 1, "Failed to authenticate: OAuth session expired"
+
+        census = hold_sitting(_packet(1), invoke=only_codex_answers).as_dict()["census"]
+
+        assert census["replied"] == 1
+        assert census["expected"] == 3
+        assert census["short_handed"] is True
+        assert set(census["not_replied"]) == {"claude", "antigravity"}
+        assert "authenticate" in census["not_replied"]["claude"]["reason"].lower()
 
 
 class TestParsingAReply:
