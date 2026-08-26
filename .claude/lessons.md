@@ -25314,3 +25314,633 @@ launched in parallel.
   pre-scripting the next steps. Closed without merging; `.github/`
   diffs are out of class for every auto-merge lane (D8 carve-out),
   which held correctly.
+
+- **The worktree path guard makes "create a fresh worktree for this
+  task" unworkable from inside a session — Edit/Write to the new tree
+  is BLOCKED; switch the SESSION worktree's branch instead**:
+  2026-08-25, the core-promotion PR (#2293). A task prompt said "use a
+  fresh worktree/branch off origin/main", and creating one worked for
+  a Bash-driven step (`docs_outbox apply` writes via subprocess, which
+  the guard does not see) — but the first Edit tool call into the new
+  worktree was blocked by `worktree_path_guard.py` (session worktree ≠
+  target worktree). The guard is right: its job is to catch the
+  wrong-tree write class, and it cannot distinguish deliberate from
+  accidental. The clean pattern when the session's own branch is clean
+  and has no unique commits: `git worktree remove` the just-created
+  tree, then `git switch <task-branch>` IN the session worktree — all
+  Edit/Write tools then work, one branch per worktree holds, and the
+  guard stays intact. Do NOT bypass via Bash heredoc writes or the
+  ATTUNE_WORKTREE_GUARD_ALLOW hatch for ordinary task work; the env
+  hatch is for standing external roots (attune-help etc.), not for
+  dodging the session-tree invariant. Corollary: a task that MUST run
+  in a separate tree (e.g. parallel-agent isolation) belongs in a
+  separate session, not in cross-tree writes from this one.
+
+- **A sweep-sed that migrates old-path references across tests/ silently rewrites the ONE test whose job is to reference both sides — turning a facade/shim identity guard into a self-comparison that can never fail**: hit 2026-08-25 executing #2239 slice 1 (PR #2295). The migration moved `attune.workflows.sdk_errors` definitions to `attune.models.sdk_errors` and repointed test monkeypatch targets with a blanket `sed 's/attune\.workflows\.sdk_errors/attune.models.sdk_errors/g' $(grep -rln ...)`. The grep-selected file list included the brand-new `test_sdk_adapter_layering.py` — whose shim-identity assertion deliberately imports BOTH `attune.workflows.sdk_errors` (the shim) and `attune.models.sdk_errors` (the defining module) to assert their bindings are the same objects. The sed rewrote the shim import to the defining module, so the test compared the defining module with itself: green forever, guarding nothing — the same vacuous-by-construction shape as the #2162 mock-transport class, created by the very tooling used to prevent it. Caught only because the harness surfaced the file's post-write diff. **Rules:** (1) when migrating references from old-path to new-path, any test that GUARDS the old path's compat surface (facade identity, shim re-export, deprecation warning tests) is a deliberate old-path holdout — exclude it from the sweep by name, or better, write the guard AFTER the sweep; (2) after any blanket sed over tests/, `git diff` the guard/regression files specifically before running the suite — a guard test that still passes after being rewritten is the failure, not the receipt; (3) the grep-pipe-sed idiom (`sed ... $(grep -rln pattern tests/)`) selects on CONTENT, so it cannot distinguish "stale reference to migrate" from "intentional reference to preserve" — when both exist, enumerate files explicitly.
+
+- **`git push origin <named-branch>` from a checkout on a DIFFERENT branch exits 0 having pushed nothing of yours — and the "did it land" check most likely to follow (`git log -1`) reads the wrong branch, so both the commit and the push report success while the target ref never moved**: 2026-08-25, mid-15.0.0 release work with two stacked branches in one worktree (PR A `claude/15-empathy-level-removal`, PR B `claude/15-legacy-name-removal`). A chair-ruled atomicity fix was written, tested, committed, and pushed — every step reporting success — onto **PR B's branch**, because the worktree had been switched to PR B earlier and never switched back. The push command named PR A's branch explicitly (`git push -q origin claude/15-empathy-level-removal && echo PUSHED`), so git pushed PR A's *unchanged* ref, exited 0, and printed PUSHED. `git log --format=... -1` then showed the new commit — but of the CURRENT branch, not the pushed one. **Both receipts confirmed something true and irrelevant.** The PR was then armed for auto-merge on a head that did not contain the fix; only comparing the GitHub API's `headRefOid` against `git rev-parse HEAD` exposed the divergence, with the defective head armed to merge on green. **The existing "branch-vs-worktree commit tangle" lesson covers committing to the wrong branch; this is the PUSH-side twin, and it is worse because naming the branch explicitly FEELS like it removes the ambiguity — it actually just makes the wrong-branch push silent instead of erroring.** Rules: (1) **never `git push origin <name>` — always `git push origin HEAD:<name>`**, which fails loudly when HEAD is not what you meant, or plainly `git push` with an upstream set; (2) the only push receipt that proves anything is `git ls-remote origin <branch>` vs `git rev-parse HEAD` — **compare the two strings**, never trust exit 0 (`&& echo PUSHED` is theater); (3) in a multi-branch worktree, `git branch --show-current` belongs immediately before `git add`, not merely "before every commit" as the older lesson says — the window between switching branches for an unrelated task and returning is exactly where this fires; (4) before arming ANY auto-merge, assert `gh pr view N --json headRefOid` equals local HEAD — the D13b disclose-before-arm step should carry this as its mechanical check, since a stale-head arm is indistinguishable from a correct one in every UI. Same family as the "claims carry their basis" core lesson: `echo PUSHED` is an inference wearing the grammar of a verified fact.
+
+- **Python's `sqlite3` implicit transaction does NOT cover DDL, so a multi-statement schema migration is not atomic by default — an interrupted one leaves an orphan table that makes every later retry fail permanently**: 2026-08-25, the 15.0.0 `MetricsCollector` migration that drops the legacy `empathy_level` column (PR #2299). The `DROP COLUMN` path needs SQLite >= 3.35, so a `CREATE metrics_new` / `INSERT ... SELECT` / `DROP metrics` / `RENAME` rebuild is the fallback for older SQLite (Ubuntu 20.04 ships 3.31 — reachable in the wild, not theoretical). Under the driver's default `isolation_level=""`, a transaction opens implicitly only before `INSERT`/`UPDATE`/`DELETE`/`REPLACE`; **DDL statements do not open one and run in autocommit**. So `CREATE TABLE metrics_new` commits IMMEDIATELY, outside any transaction. **Probe receipt (before the fix):** killing the connection mid-rebuild left `tables == ['metrics', 'metrics_new']` — the data table correctly rolled back with its row intact, but the orphan SURVIVED, and the retry then died `OperationalError: table metrics_new already exists`. Because that raise happens inside the `except sqlite3.OperationalError:` handler for the DROP COLUMN probe, it propagates out of the constructor: `MetricsCollector()` fails permanently until someone hand-drops the table. Silent data loss it is not; a bricked collector it is. **Fix, and why it works:** SQLite's DDL *is* transactional even though the Python driver won't start a transaction for it, so set `conn.isolation_level = None` and issue an explicit `BEGIN IMMEDIATE` around the whole rebuild — now the rollback removes the orphan too — plus a leading `DROP TABLE IF EXISTS metrics_new` to clear an orphan left by any pre-fix build (idempotent retry). Restore the previous `isolation_level` after `COMMIT`. **Probe receipt (after):** same crash leaves `tables == ['metrics']`, row intact, and the retry completes. **Two generalizations worth more than the SQLite specifics:** (1) any defensive fallback branch that modern environments never take ships UNPROVEN unless you force it — this one had 0% coverage and `codecov/patch` is what surfaced it, so treat a red patch-coverage check on a migration as a finding, not a formality; force the branch in a test by wrapping the cursor/connection to raise the error the old environment would; (2) **do not reason about transaction semantics from the docs — crash-probe it.** My first read of this code called it "implicit but safe", which was true about the DATA and wrong about the ORPHAN; a ten-line probe that opens a connection, runs the statements, and closes WITHOUT committing settled in seconds what the prose could not.
+
+- **A symbol absent from the submodule you GUESSED is not an absent symbol — check the package root before concluding "it doesn't exist", and never let that conclusion trigger a dependency upgrade**: 2026-08-25, following this repo's own D21 rule, which names `form_to_widget_html` without naming its module. Its sibling renderer `form_to_askuserquestion` lives in `attune_forms.bridge`, so I imported the widget renderer from `bridge` too, got an ImportError, and concluded the installed package "lacks the widget renderer". It does not: `form_to_widget_html` is defined in `attune_forms.widget` AND exported from the package root, so plain `from attune_forms import form_to_widget_html` (and `attune.elicitation`'s re-export, which the rule actually points at) resolve fine. **The cost of the wrong conclusion was not the failed import — it was everything downstream:** I then reported the absence as a version-staleness problem, upgraded attune-forms 0.7.0 → 0.8.0 on two environments chasing it, and confirmed the function was *still* missing — restating the same wrong claim with more confidence because an upgrade had "ruled out" the other explanation. The version bump was harmless and the diagnosis was fiction. **Diagnostic order for any "this library doesn't have X": (1) `python -c "import pkg; print(hasattr(pkg,'X'))"` — the package root, not the submodule you assumed; (2) `grep -rn "def X" $(python -c "import pkg,pathlib;print(pathlib.Path(pkg.__file__).parent)")` — find where it IS defined; (3) only then consider version.** A `from pkg.submodule import X` failure establishes exactly one thing: X is not in THAT submodule. Related, and the reason this is worth a lesson rather than a shrug: sibling functions in a renderer/adapter family routinely live in different modules for real reasons — here `widget` imports from `bridge`, so `bridge` cannot import `widget` back without a circular import, and the split is correct layering, not an oversight (fixed for callers in attune-forms#60 with a lazy `__getattr__`, deliberately not a top-level re-export). Same family as the core "claims carry their basis" entry: "the package lacks X" is a load-bearing claim with a one-line probe available, and I asserted it twice without running it.
+
+- **Fixing a duration to `time.monotonic()` does NOT buy you a
+  tighter timing assertion — on Windows the flake mechanism is clock
+  GRANULARITY, which makes measured elapsed come out SMALLER than the
+  real sleep (possibly `0.0`), and monotonic is coarse there too**:
+  2026-08-25, `test_slow_operation_logs_warning` in
+  `tests/agent_factory/test_llm_toolkit_decorators.py`. It asserted
+  that `asyncio.sleep(0.02)` tripped a `threshold_seconds=0.01`
+  decorator, and failed on `test (windows-latest, 3.11)` for PR #2301
+  (run 32874932128) on a diff that only removed the EmpathyMCPServer
+  alias and legacy entry-point groups — code that cannot influence a
+  timing decorator — while `main` was green on the same test. Cost a
+  full ~14-minute Windows lane rerun. This is the granularity sibling
+  of the existing #1846 "wall-clock timing assertion standing in for a
+  REGIME check" lesson, which attributes the failure to LOAD. Load
+  makes elapsed too BIG (an operation that should look fast measures
+  slow); granularity makes it too SMALL (a `0.02` sleep measured on a
+  ~15.6ms-resolution clock can read `0.0156` or `0.0`, so a `0.01`
+  threshold is not cleared). A 2x margin has no room for either.
+  **The trap worth carrying: the obvious repair — the duration was
+  read from `time.time()`, so move it to `time.monotonic()` — fixes a
+  REAL and different bug (an NTP or manual clock adjustment mid-call
+  yields a negative elapsed that silently suppresses the warning, or a
+  huge one that fabricates a false alarm) but does NOT make the clock
+  finer on Windows.** CPython's `time.monotonic()` on Windows is
+  `GetTickCount64` (~15.6ms) until 3.13 switches it to
+  `QueryPerformanceCounter` — *inferred from CPython history, NOT
+  verified on a Windows runner in this session; the one-line probe is
+  `time.get_clock_info("monotonic").resolution` printed from the lane
+  itself.* So a reader who sees the monotonic fix land and concludes
+  "the clock is precise now, the margin can shrink" reintroduces the
+  flake. Fix applied: pin both directions deterministically by
+  monkeypatching the module's `time` with a scripted clock (no
+  sleeping, exact elapsed), keep at most ONE real-sleep test for
+  integration realism at ≥10x (used 15x: `0.15` sleep vs `0.01`
+  threshold), and say "do not narrow it" in a comment at the
+  assertion site — the same don't-re-tighten note #1846 prescribes.
+  **Second half, the receipt:** a regression guard for a clock bug is
+  fiction until you prove it fails against the pre-fix code. Reverting
+  the source to `time.time()` and re-running produced exactly the two
+  predicted symptoms — a forward jump fabricated `Slow operation:
+  fast_operation took 500.00s`, a backward jump suppressed the warning
+  — then restore. Cheap, and it is the difference between a test that
+  guards the fix and a test that merely passes alongside it (same
+  discipline as the vacuous-emptiness-assertion lesson).
+
+- **A shell `cmd && echo "(empty above means X)"` asserts a conclusion
+  the exit code cannot support — the echo fires on SUCCESS, not on
+  EMPTINESS, so a command that succeeds WITH output prints your
+  reassuring text right above the data that contradicts it**: 2026-08-25,
+  checking whether 24 incoming commits collided with an uncommitted
+  change before pulling a dirty `main`. I ran
+  `git diff --name-only HEAD..origin/main -- website/vercel.json && echo
+  "(empty above = no overlap, autostash reapplies cleanly)"`. The file
+  WAS in the incoming set, git printed it, exited 0, and the echo then
+  told the reader there was no overlap. I relayed "no overlap" to the
+  chair before re-reading git's actual output and correcting myself.
+  **The bug is a narrator that cannot see the thing it narrates** —
+  same family as the failed-mask lesson (a redaction that silently
+  does nothing) and the exit-0-on-rate-limit lesson (a task reporting
+  success while its output says otherwise). Fixes, in order: (1) make
+  the CLAIM the computation — `n=$(cmd | wc -l); [ "$n" = 0 ] && echo
+  "no overlap" || echo "OVERLAP: $n file(s)"`; (2) never pair a
+  human-language conclusion with `&&` on a command whose exit code is
+  independent of the property you are claiming — `grep` is the rare
+  one where exit code DOES track emptiness, which is exactly why the
+  habit transfers wrongly to `git diff`, `find`, and `ls`; (3) when a
+  command's output and your own narration disagree, the output wins,
+  always. General rule: **the exit status answers "did it run", almost
+  never "what did it find".**
+
+- **Fixing broken infrastructure UN-SKIPS tests, so a green suite from
+  while it was down proves less than it looked — the new red is
+  pre-existing, not a regression you just caused**: 2026-08-25. After
+  bringing local Redis + the Agent Memory Server back up, the next
+  full run went red on
+  `tests/memory/test_ams_backend_integration.py::test_search_is_namespace_isolated`,
+  which had been reporting as a SKIP for the whole session (the module
+  gates on an AMS health probe and "skips cleanly when absent"). The
+  diff in flight was a markdown table and a read-only script — it
+  could not touch that test. **The reflex to resist is treating the
+  first red run after an infra fix as caused by the work in flight;
+  the infra fix widened the suite, and everything newly reachable is
+  reporting for the first time in however long the service was down.**
+  Triage order that settled it in two commands: (1) re-run the failing
+  test ALONE — it passed (6 passed), so not a hard failure; (2) re-run
+  the full suite — green (25,216 passed), so an intermittent
+  write-then-search indexing-lag flake under xdist. Report it, do not
+  fold it into the unrelated PR. Two riders. **CI is not a control
+  here**: the same test skips in CI (no AMS there), so a green CI
+  history is not evidence the test ever passed — only local runs with
+  the service up exercise it at all. And **the skip count is the
+  metric to watch across an infra change**: 263 skipped before, 257
+  after — six tests went from silently-not-run to actually-run, which
+  is the number that predicts new red. Pairs with the vacuous-test
+  lesson (a test satisfied by the failure it should catch); this is
+  its sibling — a test that reports SKIP is not evidence of anything,
+  and a suite's greenness is only as broad as its running set.
+
+- **Running the drift-guard TEST is not running the CI AUDIT SCRIPT —
+  same subject, different mechanism, and only one of them is the
+  required check**: 2026-08-25, PR #2304. Before pushing an upgrade
+  guide I ran `tests/unit/test_generated_doc_import_drift.py`, saw it
+  green, and reported "doc-import gates pass". The required CI check
+  `doc-import-audit` runs `scripts/audit_doc_imports.py` — a different
+  program with different findings — and it failed on
+  `from attune.mcp import EmpathyMCPServer`, blocking the PR. The
+  local test never examines that file. **The tell is a NAME MATCH
+  standing in for a MECHANISM match**: "doc import drift" and
+  "doc-import-audit" sound like the same guard, so the green test was
+  read as covering the red job. Diagnostic, and it is the core
+  claims-carry-their-basis question applied to CI: before citing a
+  local run as a receipt for a named check, open the workflow and read
+  what that job actually EXECUTES (`grep -A3 '<job-name>:'
+  .github/workflows/*.yml` → the `run:` line), then run THAT. Cost:
+  one required-check failure and a disarm/re-arm cycle on an armed PR.
+  Corollary worth carrying: when a gate legitimately fires on content
+  that must exist (an upgrade guide MUST show the removed import),
+  look for the gate's reason-carrying hatch rather than deleting the
+  content — `audit_doc_imports.py` honors
+  `<!-- doc-import-skip: <reason> -->`, which `docs/migration/9.0.0.md`
+  already used three times. And scope the hatch as narrowly as the
+  content allows: splitting a before/after fence into two, skipping
+  only the "before", keeps the gate verifying the replacement symbol —
+  the line readers actually migrate TO, and the one most worth
+  checking.
+
+- **"Start Redis as a brew service" fails because `redis-stack-server`
+  is a CASK, and the durable mechanism usually already exists and is
+  crash-looping — check for the LaunchAgent and read its log before
+  installing anything**: 2026-08-25, chasing a dead memory index.
+  `brew services start redis-stack-server` returns `Error: No available
+  formula with the name "redis-stack-server". Did you mean
+  redis-leveldb?` — `brew services` manages FORMULAE only, and the
+  stack ships as a cask (`brew list` shows it under casks; the formula
+  `redis` is the vanilla one). The real mechanism on this machine was
+  already installed: `~/Library/LaunchAgents/com.attune.redis-stack.plist`
+  (`RunAtLoad` + `KeepAlive`), and `launchctl list | grep redis` showed
+  it loaded the whole time. It was crash-looping on the KNOWN
+  duplicate-`loadmodule` bug (the wrapper passes `--loadmodule` for all
+  five modules AND the cask conf declared them again), so `KeepAlive`
+  turned one bad config line into **20,651 crash entries and a 51 MB
+  log** at `~/.attune/ams/redis-stack.log`. **The diagnostic that
+  should come first: `launchctl list | grep <name>` plus
+  `wc -l`/`grep -c "server aborting"` on its StandardErrorPath — a
+  multi-megabyte agent log IS the diagnosis, and nobody reads it
+  because the user-visible symptom is only "Redis isn't working".**
+  Two riders. Removing the conf's `loadmodule` lines fixed it, and
+  `KeepAlive` then restarted the server automatically the moment I shut
+  down my own hand-started instance — so the fix verified itself. And
+  the naive intermediate step is a trap in its own right: starting
+  plain `redis-server` (no RediSearch) answers `PING` with `PONG` while
+  every `FT.*` command fails, so hydration aborts and the index never
+  exists while the server looks healthy — the same masking the existing
+  bare-server-auto-start lesson describes, reached by the OPERATOR
+  rather than by attune's bootstrap. Confirm the stack, never the
+  socket: `redis-cli MODULE LIST | grep -c search`, or
+  `FT._LIST` returning empty (not "unknown command").
+
+- **Replacing a stale published metric table: a cell whose VALUE TYPE
+  disagrees with its column is a stronger signal than staleness, and a
+  new measurement method is validated by what SHOULDN'T move**:
+  2026-08-25, `docs/ARCHITECTURE.md`. Two tables stamped `(v11.0.0)`
+  still claimed 23,597 tests where the suite collected 25,510. The
+  sharper defect was structural: the coupling table's column means
+  "Dependents = files importing the module", every row was such a
+  count, and the `mcp` row held `49 core tools` — a TOOL count in a
+  DEPENDENTS column, and wrong besides (the true core count is 48).
+  **A cell in the wrong unit is not drift, it is a category error, and
+  it survives review precisely because it reads as informative.** My
+  first instinct was a footnote on that one row; the chair pushed back
+  ("why not delete the v11 table and create a current one?") and was
+  right — footnoting one cell of a wholesale-stale table patches a
+  rotting surface. Two techniques worth keeping. (1) **Refuse to ship a
+  number you cannot re-derive**: my first dependents measurement was a
+  grep that reported `config=44` where the table said 26; since it
+  could not reproduce the table's own baseline it was discarded, not
+  published (the over-count came from crediting any `from .config` to
+  top-level `attune.config` — relative imports must resolve against the
+  IMPORTING file's package, which needs AST, not grep). (2) **Validate
+  a replacement method against unreproducible predecessors by checking
+  the metrics that should barely move**: functions 5,154 -> 5,310 and
+  classes 889 -> 892 (small growth, plausible), lines-per-file 261
+  against the old 260 — agreement there licenses trusting the numbers
+  that DID move a lot (`workflows` 59 -> 27, tracking the layering work
+  that removed `models`->`workflows` imports). Finally, **commit the
+  measurement script** (`scripts/measure_architecture_metrics.py`) so
+  "regenerate before a major" is an instruction someone can run rather
+  than an aspiration — an unrepeatable number is how the table got
+  stale the first time.
+
+- **A shell block that dies at PARSE time runs NOTHING — so the backup
+  you "took" on line 1 does not exist, and the danger is assuming
+  partial execution**: 2026-08-25, verifying a test guard. I ran a
+  block that began `cp tests/...py /tmp/ams_test.bak` and later
+  contained a stray `timeout_guard() { :; }` mid-pipeline; zsh rejected
+  the whole thing with `parse error near '()'` and executed NOT ONE
+  command — including the `cp`. I then sabotaged the test file to prove
+  a guard fired, and only discovered on restore that
+  `cp: /tmp/ams_test.bak: No such file or directory`. Recovery was easy
+  (I knew the exact strings and reversed the edit with a `python` block
+  that asserted the sabotage line count), but the near-miss is real:
+  the file had been deliberately corrupted with no backup. **This is the
+  INVERSE of the known "interrupted compound command may have PARTIALLY
+  executed" lesson, and the two failure modes need opposite
+  reflexes: an interrupted/denied command demands you check what DID
+  run; a PARSE error means nothing ran, so anything you believe it set
+  up is absent.** The tell distinguishing them: a parse/syntax error
+  names a syntax construct and appears with NO output from any earlier
+  command in the block — no `cp` confirmation, no echo. Practices: (1)
+  **take the backup in its own call** and verify it (`ls -l <backup>`)
+  before the destructive step — a backup inside the same block as the
+  thing it protects is not a backup; (2) prefer a reversible edit with
+  an asserted marker (`assert s.count(SABOTAGE) == 1`) over a
+  copy-restore dance, since the assertion proves the reversal in a way
+  a silent `cp` does not; (3) when any block fails, re-establish state
+  before continuing rather than reasoning about which half ran.
+
+- **De-flaking by RELAXING an assertion can introduce vacuity — keep
+  the guarantee by replacing it with a STRONGER precondition, and check
+  whether the old assertion even proved the property the test claims**:
+  2026-08-25, `test_search_is_namespace_isolated` (PR #2307). The test
+  writes the same semantic content under two namespaces with distinct
+  markers, then asserts B's marker is absent from A's namespace-scoped
+  search. It flaked because `assert be_b.remember(...) is True` gates on
+  a readback deliberately bounded at ~6.3s (it runs inside a Stop hook,
+  where a stalled server would hold the hook past its runner limit), and
+  a loaded parallel run can exceed that for a write that lands moments
+  later. **The obvious de-flake — drop the assertion, it's just
+  latency — would have made the test VACUOUS: "B's marker is absent
+  from A" is trivially true when B was never indexed, so the isolation
+  claim would pass hardest exactly when the setup failed.** The fix is
+  not to delete the guarantee but to re-express it: poll until BOTH
+  records are searchable IN THEIR OWN NAMESPACE, then assert isolation.
+  **The rider is the part worth carrying: auditing the old assertion
+  showed it had never proved the right property either.** `remember()`
+  confirms via `get_long_term_memory(id)` — a readback BY ID — while the
+  isolation claim is about the SEARCH INDEX. A record readable by id but
+  not yet indexed satisfied the old gate and left the isolation
+  assertion partly vacuous already; the replacement is strictly
+  stronger, not merely equivalent. Two durable practices: (1) when
+  relaxing any setup assertion to fix a flake, ask what the assertion
+  was PROTECTING and whether the remaining test can pass while the setup
+  silently failed — if yes, you converted a flaky test into a false one;
+  (2) prove the new guard fires: sabotaging B's write to never land
+  failed with "without this the isolation assertion below would pass
+  vacuously", then reverse the sabotage and re-verify the diff (the
+  sabotage line count back to 0). Also: **a production retry budget
+  sized for a hook is the wrong gate for a test.** Extending the
+  readback to suit the suite would have traded a real hook timeout for
+  test convenience — fix the test, leave the budget.
+
+- **Making a health check STRICTER: add an opt-in gate beside the
+  general one, never tighten the general one — and pin the
+  independence with a test so a later "simplification" cannot merge
+  them**: 2026-08-25, `classify_memory_index_health` (PR #2306). The
+  existing `classify_redis_health` returns HEALTHY on "resolved
+  connection answers PING", which is exactly how a module-less
+  `redis-server` masks a dead memory index (`FT.CREATE` fails,
+  hydration aborts, recall goes dark behind a server that pings fine).
+  The tempting fix is to make the existing classifier also require the
+  search module. **That would be wrong: plain Redis is legitimate for
+  key/value use, and `check_redis()` gates callers that never wanted
+  search — tightening it turns a working deployment into a broken
+  one.** The two questions are genuinely different ("does the
+  connection work" vs "can the derived index exist") and deserve
+  different functions. Shape that worked: a new classifier delegates to
+  the old one, returns its verdict UNCHANGED for every
+  connection-level state, and only downgrades a HEALTHY connection when
+  the capability probe fails; a new `check_memory_index()` is the
+  opt-in gate; the new state joins the loud-once classes only because
+  it never self-heals (a missing module needs a different binary).
+  **Then pin the boundary**: a test asserting `check_redis()` is
+  UNAFFECTED by a missing module, so the next refactor that notices
+  "these two look similar" fails instead of quietly widening the gate.
+  Two riders from building it. (1) **Thread the injected env through
+  the new probe** — the first draft classified against the injected
+  env but probed the AMBIENT resolver, so an injected config was
+  verified against one server and probed against another: untestable,
+  and wrong under any non-default config. (2) **Live-fire both
+  directions before writing the mocked tests** — a plain
+  `redis-server` on a scratch port returned `degraded_search` and the
+  stack returned `healthy`, so the mocks encode observed behavior
+  rather than a guess about the reply shape (`MODULE LIST` returns
+  per-module mappings whose keys/values are `str` or `bytes` depending
+  on `decode_responses`, which is why the detector flattens and matches
+  case-insensitively instead of indexing a shape).
+
+- **A hook merged into `plugin/hooks/` does NOT go live when the PR
+  merges — Claude Code loads the plugin from a CACHED copy pinned at
+  an installed version, which can lag the repo by several majors**:
+  2026-08-25. A new PreToolUse guard was shipped to
+  `plugin/hooks/macos_timeout_guard.py`, and the follow-up task was
+  written as "delete the machine-local copy once #2308 merges". That
+  gate was wrong, and only checking revealed why: the plugin resolves
+  from `~/.claude/plugins/cache/attune-ai/attune-ai/<VERSION>/hooks/`,
+  and that cache held **11.6.0 while the repo was at 14.1.0**. The
+  merged file existed in git and in the worktree and in
+  `~/attune-ai/plugin/hooks/` after the merge — and in none of the
+  places the running session actually reads. **Merging a plugin hook
+  changes what SHIPS, not what RUNS; the two are separated by a
+  release plus a plugin-cache refresh.** Diagnostics, all cheap:
+  `find ~/.claude/plugins -name hooks.json -path '*<plugin>*'` names
+  the real load path; `ls ~/.claude/plugins/cache/<mp>/<plugin>/`
+  shows the installed version; `[ -f <that>/hooks/<file>.py ]`
+  answers "is my hook live" directly. **The consequence that makes
+  this worth carrying: a machine-local copy of a hook is not a
+  redundant twin until the plugin cache actually carries it.** Here
+  the local copy was the ONLY working guard, so deleting it as a
+  principle-3 cleanup would have silently removed the protection
+  entirely — and the failure would have surfaced only the next time
+  the guard was needed. Ruled: keep the duplicate, accept the
+  principle-3 violation explicitly in the note, and gate the cleanup
+  on "the plugin cache carries the file AND it is confirmed firing
+  with the local copy temporarily renamed" — never on "the PR
+  merged". Generalizes to any plugin-delivered surface (hooks,
+  skills, MCP tools): the repo is the source, the cache is the
+  runtime, and only the runtime can be dogfooded.
+
+- **If your preprocessing already STRIPS a construct, handling it again
+  in the regex is not belt-and-braces — the redundancy IS the
+  ambiguity, and CodeQL will call it ReDoS**: 2026-08-25, alert 185
+  (`py/redos`, HIGH) on a PreToolUse hook shipped the same hour
+  (#2308). The detector matched an optional env-assignment prefix as
+  `(?:NAME=(?:"[^"]*"|'[^']*'|\S*)\s+)*`. The quoted branches were
+  pure superstition: a `_strip_noise` step already blanked every
+  quoted string BEFORE the pattern ran. Worse, `\S*` also matches a
+  quoted string, so `""` was matchable two ways inside a repetition —
+  the textbook ambiguous-alternation shape. CodeQL named the input
+  exactly: a string starting `&A=` followed by many repetitions of
+  `""\tA=`. **Measured, because a fix for a performance defect should
+  demonstrate the regime change rather than assert it** — search time
+  on that input: 14 reps 0.0041s, 18 reps 0.0575s, 22 reps 0.9147s,
+  40 reps did not finish in 5s; the fixed pattern was 0.0000s at every
+  size. Roughly doubling every two repetitions is the exponential
+  signature. The severity is a function of WHERE it ran: a PreToolUse
+  hook fires on EVERY Bash command, so an exponential path there is a
+  self-inflicted DoS on the session, not a theoretical finding.
+  Three durable practices: (1) **when a preprocessing step removes a
+  construct, delete the regex branch that handles it** — keeping both
+  is how the ambiguity gets in, and the branch is unreachable anyway;
+  (2) **bound the repetition** (`{0,8}` not `*`) so no future widening
+  of the value class can reintroduce super-linearity, and pin the
+  bound with a test that a long-but-in-range prefix still matches, so
+  the bound cannot be tightened into a silent false negative; (3) pin
+  the pathological input as a REGRESSION test with a bound sized to
+  separate REGIMES (2s — linear vs exponential), not to measure speed.
+  Meta-note worth carrying: the hook was itself a guard, built to
+  catch one class of mistake, and it shipped carrying a
+  higher-severity one. A required pre-merge check caught it. The
+  argument for gates, made against their author.
+
+- **`autoMergeRequest` NEVER goes non-null on an already-green PR — it
+  merges outright, so the ratified "verify autoMergeRequest non-null"
+  postcondition reports a successful arm as a failure**: 2026-08-25,
+  #2302. The corpus carries several lessons hardening the arm check
+  (async lag, don't re-apply the label, labeled-events don't replay),
+  all of which assume the PARKED-REQUEST path: label -> GitHub records
+  an auto-merge request -> checks finish -> merge. When every required
+  check is ALREADY green at label time, there is nothing to park: the
+  arming job merges immediately and `autoMergeRequest` stays null
+  forever. I polled it four times over ~90s, saw null each time, and
+  was one step from the documented recovery (remove + re-add the
+  label) — on a PR that had already merged at 20:20:09Z. **The correct
+  postcondition is `autoMergeRequest` non-null OR `mergedAt` set**;
+  checking only the first makes the happiest path look like the
+  failure path, and the prescribed recovery (re-label) would fire
+  against a merged PR. Cheap probe that settles it in one call:
+  `gh pr view <n> --json state,mergedAt,autoMergeRequest`. Same family
+  as the "exit 0 proves nothing" lesson — a check whose success
+  condition does not cover every successful outcome will manufacture
+  false alarms exactly when things went WELL, and the reflex it
+  triggers (retry the arm) is wasted at best and confusing at worst.
+
+- **Refreshing a stale plugin cache is TWO commands, and `claude plugin
+  update <name>` fails with "not found" unless you pass
+  `<plugin>@<marketplace>`**: 2026-08-25, recovering a plugin pinned at
+  11.6.0 while the repo was at 14.1.0 (three majors of drift, so every
+  plugin-surface behavior observed locally was 11.6.0's). Working
+  sequence: (1) `claude plugin marketplace update <marketplace>` —
+  refreshes the marketplace CLONE at
+  `~/.claude/plugins/marketplaces/<name>/`, whose stale
+  `.claude-plugin/marketplace.json` is what pins the version; (2)
+  `claude plugin update <plugin>@<marketplace>` — the bare plugin name
+  returns `✘ Failed to update plugin "<name>": Plugin "<name>" not
+  found` even for a plugin `claude plugin list` shows as installed,
+  because the installed id is the `plugin@marketplace` pair. Step 1 is
+  not optional: the plugin update resolves against the marketplace
+  clone, so updating the plugin against a stale clone is a no-op that
+  reports success. Verification, per the version-pinned-cache
+  behavior: the update ADDS a version dir beside the stale one
+  (`ls ~/.claude/plugins/cache/<mp>/<plugin>/` showed `11.6.0` AND
+  `14.1.0`), so check the NEW dir specifically, never the cache root.
+  And the CLI's "Restart to apply changes" is literal — the running
+  session keeps the old plugin surface until it restarts, which
+  matters when the reason for refreshing was to dogfood something.
+
+- **A shell `cmd && echo YES || echo NO` probe prints NO both when the
+  answer is genuinely no AND when the command ERRORED on a malformed
+  argument — so an empty capture variable yields a uniform, confident,
+  entirely fabricated finding**: 2026-08-25, triaging the 15.0.0
+  release-audit residual. To decide whether five flagged loci were
+  introduced by the release or merely lived in files it touched, I ran
+  `sha=$(git blame -L "$2,$2" --porcelain "$1" | head -1 | cut -d' ' -f1)`
+  followed by
+  `git merge-base --is-ancestor "$sha" v14.1.0 && echo PRE-EXISTING || echo NEW-IN-RANGE`.
+  The capture came back EMPTY (the `set -- $spec` / `cut` combination in
+  that loop did not yield the SHA), so `merge-base --is-ancestor ""`
+  errored — and the `||` branch dutifully printed `NEW-IN-RANGE` for all
+  five. That output is indistinguishable in shape from a real result:
+  five rows, one per locus, each with a verdict. Had I reported it, the
+  chair would have been told the release INTRODUCED five defect-class
+  instances when the truth (after fixing the probe) was that four were
+  pre-existing and the single new one was a false positive — the exact
+  inversion of the ruling that mattered. **The tell was uniformity**:
+  every row returned the same verdict, and the printed `blame=` field
+  was visibly empty in the output. **Three rules**: (1) never put a
+  captured variable straight into a test whose failure branch is a
+  MEANINGFUL answer — an errored command and a false condition are the
+  same exit status, so the fallback silently absorbs both; validate the
+  capture first (`[ -n "$sha" ] || { echo "PROBE BROKEN"; return 1; }`)
+  so a broken probe is LOUD rather than merely wrong; (2) echo the
+  intermediate value in the probe's own output — I only caught this
+  because the empty `blame=` was printed next to the verdict, and a
+  tidier one-line-per-row format would have hidden it; (3) treat a
+  uniform verdict across N independent inputs as a smell to re-derive,
+  not a clean signal — real data on five unrelated loci rarely agrees
+  perfectly. Same family as the "never trust a redaction you have not
+  tested" lesson (the DEFENSE produced the leak) and contract principle
+  16 (claims carry their basis): here the probe wore the grammar of a
+  verified fact while establishing nothing at all.
+
+- **Release copy written after internals work defaults to the AUTHOR's
+  frame ("what we finished") and reads as an apology — and the reliable
+  fix is not more empathy, it is picking an artifact SHAPE whose
+  structure cannot answer your own question**: 2026-08-25, the 15.0.0
+  README rotating slot. 15.0.0 is a removal release, and my first draft
+  headlined it "one name, no ghosts", opened with "the Empathy-framework
+  excision that began in 9.0.0 is finished", and stacked four negations
+  into the first sentence before promising the reader "this is a no-op
+  upgrade". Patrick's whole review was three words — "sort of negative
+  tone" — and he was right: the value proposition had become *nothing
+  will hurt you*, and the words doing the work (`excision`, `ghosts`,
+  `no longer carries`) describe OUR cleanup history, which no user has a
+  stake in. The rewrite led with the property the library now HAS (one
+  name, one contract, one place to register) and surfaced the genuinely
+  new user benefit the first draft buried — three entry-point groups
+  used to be in play with only some actually read, so a correct-looking
+  registration could silently never load. **The generalizable part is
+  the diagnosis, not the fix.** The upgrade guide, written the same day
+  by the same process for the same release, did NOT have this problem:
+  it opens "Do you need to change anything?" over a ten-row table keyed
+  to the reader's situation. Nobody was more empathetic writing it — its
+  FORMAT made the reader's question structurally unavoidable, while a
+  free-prose "New in X" section imposes no such constraint and drifts
+  back to the author's frame by default. So: when the work has been
+  internal, distrust free-prose public copy specifically, and prefer a
+  shape (situation table, are-you-affected matrix, question-led heading)
+  that forces the reader's question to the front. Patrick's own framing,
+  worth carrying verbatim: perspective-taking is one of the hardest
+  skills, and his best results come not from imagining the other view
+  but from asking context-establishing questions and using active
+  listening to confirm understanding. That maps exactly onto this
+  repo's standing discipline — imagining the reader is INFERENCE,
+  asking is VERIFICATION, and only one of them carries a receipt.
+  Corollary for review: a tone objection on public copy is a
+  frame problem until proven otherwise; fix the frame, not the
+  adjectives.
+
+- **An immutability rule protects a record from changing AFTER it was
+  relied on — applied before anything relied on it, it preserves a
+  falsehood instead; say which of the two you are in before invoking
+  the rule**: 2026-08-25, the 15.0.0 release-audit manifest.
+  `write_manifest` refuses to overwrite, documented as "manifests are
+  immutable; a re-run writes a new tag" (R7), so that "a recorded
+  decision cannot change after it was relied on." I wrote the v15.0.0
+  manifest against a sitting where the `claude` seat had failed to
+  authenticate; its `chair_receipt` asserted the seat was absent and
+  its `sitting_delta` was all-`False`. Half an hour later the
+  credential was restored, the sitting re-run, and all three seats
+  replied with five amendments — so BOTH recorded facts were now
+  false, and the mechanism forbade fixing them. Note the escape hatch
+  did not fit either: the path is keyed to the tag
+  (`<tag>.json`), so "a re-run writes a new tag" has no meaning when
+  the tag is the one you are about to cut. **The resolution turns on a
+  question the rule does not ask: has anything relied on this record
+  yet?** Nothing had — no tag existed, the file was untracked, local,
+  and thirty minutes old — so replacing it was correct, and shipping a
+  knowingly-false receipt to honor the letter of an immutability rule
+  would have inverted the rule's purpose, which is that the record be
+  TRUE. It was replaced by chair ruling, with the replacement's own
+  receipt recording that it replaced an earlier manifest, why, and
+  that nothing had relied on the original — a correction that
+  documents itself rather than a quietly tidied record. **Two durable
+  rules**: (1) when an immutability guard blocks you, state explicitly
+  whether you are pre- or post-reliance; the guard is only load-bearing
+  post-reliance, and "reliance" means something concrete (a tag exists,
+  it was committed, it was handed to someone), not merely "it was
+  written"; (2) a system that can only APPEND corrections needs a
+  defined pre-reliance correction path, or its operators will either
+  ship known-false records or route around the guard silently — worth
+  designing deliberately rather than deciding at 11pm on a release
+  night.
+
+- **A status field that records the CATEGORY of a failure while
+  discarding its REASON turns a one-line fixable bug into a recurring
+  mystery — and repetition then reads as ambient noise rather than a
+  signal**: 2026-08-25, the release-audit sitting's `claude` seat. It
+  was recorded `absent` at three consecutive sittings. Root cause was
+  one expired OAuth session, and the CLI said so every single time —
+  `Failed to authenticate: OAuth session expired and could not be
+  refreshed`, on stdout, exit 1. `run_command` captured it,
+  `parse_seat_reply` filed it into `SeatReply.raw`, and `as_dict()`
+  emitted `{"seat": "claude", "status": "absent", "amendments": [],
+  "gate_ranking": [], "closing": ""}` — every field except the one
+  that explained anything. The diagnosis existed on all three runs and
+  never reached a human. **The compounding effect is the real lesson:
+  because the output was identical each time, the third absence looked
+  like "the seat is often absent" — a property of the world — instead
+  of "the same fixable error happened three times".** A category
+  repeated is indistinguishable from a category that is simply common.
+  I personally flagged it three times in one session as a footnote
+  before opening it, and what I found took one command. **Two further
+  costs stacked underneath, both invisible for the same reason:**
+  (1) the seat billed a flat $0.25 estimate on every failed run
+  because the biller keyed on "exit != 127" rather than on whether a
+  provider call could have happened — roughly $0.75 of phantom spend
+  eating a $10 session cap for calls that never authenticated; (2) the
+  sitting proceeded at two seats for three releases without the output
+  ever stating it was short-handed, quietly degrading the cross-model
+  check the D11 discipline depends on. **Rules**: (a) any status
+  enum that can mean "it failed" must carry the failure text into the
+  EMITTED record, not merely into an in-memory field — the test is
+  whether a reader of the serialized output can act on it; (b)
+  distinguish "never reachable" from "ran and failed" (127 vs
+  everything else) — they have different fixes and conflating them
+  hides one behind the other; (c) state degraded capacity explicitly
+  (`expected` / `replied` / `short_handed`), because a missing NAME is
+  something a reader must notice, while a `short_handed: true` is
+  something the record says; (d) when you find yourself mentioning the
+  same anomaly a second time without opening it, that is the signal —
+  open it then. Contract principle 7 (a failed gatekeeper fails the
+  gate; absence is not a pass) applies to the reviewing seats
+  themselves, not only to the audits they review. Fixed in PR #2312;
+  issue #2311 carries the full defect list.
+
+- **A test docstring can silently WIDEN a spec decision into something
+  the decision never said — and because the test then enforces the wide
+  reading in code, the drift becomes real behavior nobody ratified**:
+  2026-08-25, fixing the seat-billing half of #2311. Session-spend
+  ledger **D5** reads: a seat subprocess reports no cost, so record a
+  flat estimate "deliberately above the typical single-reply
+  `claude -p` cost, so the ledger overcounts rather than undercounts."
+  That governs the estimate's MAGNITUDE. The test
+  `test_failed_but_spawned_seat_still_records` carried the docstring
+  "a timeout **or auth failure** may still have billed — overcount,
+  never undercount (D5)", and the implementation matched it
+  (`if billed and result[0] != 127: record(...)`). Nobody amended D5;
+  a test comment generalised "may have billed" into "any non-zero
+  exit", and that reading then billed $0.25 per never-authenticated
+  call. **The asymmetry that makes this class dangerous: a test
+  docstring is written once, in passing, by whoever implemented the
+  behavior — but it is READ later as though it reports the decision,
+  because it cites the decision by name.** A `(D5)` citation confers
+  the decision's authority on the sentence next to it, whether or not
+  that sentence is in the decision. **Procedure, when a test cites a
+  spec decision and you are about to rely on that citation: open the
+  spec and read the decision's own words, then grep EVERY surface that
+  states it — a repo with projections has more than one.** Here there
+  were three (`decisions.md`, `seat_estimate_usd`'s docstring, and the
+  crashed-probe path in `workflow_probe_runner.py`); the first reading
+  cited only one, which was not enough to support the claim, and the
+  third turned out to be the strongest evidence — it applies the
+  overcount rule explicitly to a probe that "**may have billed**",
+  drawing exactly the line the fix needed. **Do not silently correct
+  the test**: the widened reading may be what the chair actually
+  wants, so state the discrepancy, quote both texts, and let the chair
+  rule — then record the ruling in the spec (D7 here) so the next
+  reader finds it in the decision rather than in a comment. Related:
+  the spec's decisions were `PROPOSED`, which makes a test-encoded
+  reading even more load-bearing, since there is no ratified text to
+  fall back on.
+
+- **A guard that silently ALLOWS everything is indistinguishable from a working guard until you test the BLOCK case — and a double-applied edit inside a regex is how one gets that way**: 2026-08-26, retiring the user-level `macos_timeout_guard.py` twin after 15.0.0 shipped the plugin copy. The standing plan (recorded in the session starter, and re-affirmed once after a removal request was declined) said the user-level copy was "the ONLY working guard, not a redundant twin — deleting it removes the protection entirely." **It was backwards: the user-level copy had never blocked anything.** Its pattern was built from two adjacent string literals, which Python concatenates:
+  ```python
+  _TIMEOUT_CMD = re.compile(
+      r"(?:^|[;&|(]|\n)\s*(?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+){0,8}timeout(?=\s)"
+      r"timeout(?=\s)"
+  )
+  ```
+  The result is `…timeout(?=\s)timeout(?=\s)`. Because `(?=\s)` is ZERO-WIDTH, the pattern demands the literal text `timeout` immediately followed by another `timeout` — which no real command contains. It matched nothing, exited 0 on every input, and looked exactly like a guard doing its job. The duplicated fragment is the known double-apply class (the corpus already warns: prefer an `old_string` that is NOT a strict prefix of the `new_string`, so a double-apply fails loudly) — **what is new is the class landing in a GUARD, where the failure mode is silence.** A broken formatter throws; a broken test goes red; a broken guard just... permits, and every subsequent session reads "no block fired" as "nothing needed blocking."
+  **The diagnostic is one line and nobody had run it in at least the 18 sessions the guard's own message cites:** feed the hook its BLOCK case through the real protocol and assert the exit code, not just the ALLOW case.
+  ```
+  echo '{"tool_name":"Bash","tool_input":{"command":"timeout 5 echo x"}}' > in.json
+  python3 <guard> < in.json; echo "exit=$?"   # MUST be 2
+  ```
+  Plugin copy: 2 / 0 / 0 across block, allow, and in-command override. User-level copy: **0** on the block case. Same filename, 13 lines apart, opposite behaviour.
+  **Three durable rules.** (1) Every hook/guard needs a NEGATIVE test — "it blocks the thing it exists to block" — because the positive test (normal commands still run) passes just as well when the guard is inert. (2) When two copies of a guard exist, do not reason about which is authoritative from a doc or a starter note; RUN both against the same fixture and compare exit codes — the note here was confidently wrong and had survived one round of scrutiny. (3) A zero-width assertion (`(?=…)`, `(?!…)`, `\b`) immediately before a repeated literal is a smell: it makes an impossible pattern LOOK plausible, since nothing about `timeout(?=\s)timeout(?=\s)` reads as obviously unmatchable.
+  Rider from the same episode: verifying the exit code via `${PIPESTATUS[1]:-$?}` reported 0 for a command that exited 2 — zsh's array is lowercase `pipestatus`, so the bash spelling is unset and the `:-$?` fallback silently returns the LAST pipe stage's status. **The check that was supposed to catch the dead guard was itself reporting a fabricated pass.** Drop the pipe and capture `$?` directly.
+
+- **A remediation one-liner you hand to a HUMAN inherits every defaulting bug of the command it wraps — and when it fails, the human reads the failure as THEIR error, not your instruction's**: 2026-08-26, blocked mid-sweep on a GPG-signed commit. I told Patrick to re-cache his signing key with `echo probe | gpg --clearsign -o /dev/null`. That form has no `--local-user`, and with no `default-key` in `~/.gnupg/gpg.conf` gpg signs with the FIRST secret key in the ring — here `rsa3072/749DBA3FEC3A4E74` (patrick.roebuck1955@gmail.com), not `git config user.signingkey` = `ed25519/D36957ACAE09C705` (smartaimemory.com). So the pinentry dialog asked for a DIFFERENT key's passphrase; he typed the right passphrase for the key he thought he was unlocking, it was rejected, and the natural reading of that is "I misremembered my passphrase." He lost an attempt and a little confidence in his own key, to my bug. Caching is per-keygrip besides, so even a successful unlock of the RSA key would not have moved the commit one inch. Correct forms: `echo probe | gpg --clearsign --local-user "$(git config user.signingkey)" -o /dev/null` to cache, and to CHECK without ever hanging, `echo probe | gpg --pinentry-mode cancel --status-fd=1 -bsau <key> -o /dev/null 2>&1 | grep -q SIG_CREATED` (that mode succeeds iff already cached and fails in milliseconds otherwise — strictly better than a bare `--clearsign` probe, which hangs on the uncached path and is what a peer session and I both had in draft lessons). **Three durable points, in ascending order of generality.** (1) Any command you EMIT AS ADVICE deserves the same verify-first discipline as a command you RUN: `--local-user`, `--repo`, `-C <path>`, an explicit branch — pin every argument the tool would otherwise default, because the reader cannot see the default and has no way to attribute the failure. (2) **Asymmetric blame is the real cost.** A wrong command I run fails visibly as mine; a wrong command I hand over fails in the user's hands and looks like user error, so it gets misattributed by BOTH of us and the actual defect survives the incident. Prefer probes whose failure message names the cause (`gpg: signing failed` + the key id) over ones that merely fail. (3) **This was a repeat, not a discovery, and that is the point.** `.claude/lessons.md` already carried the fix verbatim, from 2026-08-23, written by the session that generated that very ed25519 key: "Bare `gpg --clearsign` and `git commit -S` can use DIFFERENT keys — test signing with `-u $(git config user.signingkey)`." It even names stray wrong-key pinentry dialogs as the symptom. JIT recall DID surface it — one beat too late, attached to the message discussing the failure rather than to the moment either of us composed the one-liner. That is not a corpus gap and not a retrieval miss; it is the recall GEOMETRY already recorded in the memory-injection-surfaces lesson, seen from a new angle: PreToolUse recall fires at a tool call, and **composing prose advice for a human has no tool call**, so the highest-leverage sentences an agent writes — the ones another person will execute — sit in the one blind spot the tool-call surface cannot cover. Treat "I am about to hand someone a command" as a manual recall trigger, because nothing will fire it for you.
