@@ -19,9 +19,6 @@ from attune.config.agent_config import (
     UnifiedAgentConfig,
     WorkflowMode,
 )
-from attune.config.agent_config import (
-    WorkflowConfig as AgentWorkflowConfig,
-)
 
 # Original config module (formerly the sibling config.py, loaded via
 # spec_from_file_location under a synthetic name; now a real submodule
@@ -72,6 +69,5 @@ __all__ = [
     "Provider",
     "RedisConfig",
     "UnifiedAgentConfig",
-    "AgentWorkflowConfig",
     "WorkflowMode",
 ]
