@@ -13,7 +13,7 @@ from attune.config.sections.environment import EnvironmentConfig
 from attune.config.sections.persistence import PersistenceConfig
 from attune.config.sections.routing import RoutingConfig
 from attune.config.sections.telemetry import TelemetryConfig
-from attune.config.sections.workflows import WorkflowConfig
+from attune.config.sections.workflows import WorkflowsConfig
 from attune.config.unified import UnifiedConfig
 from attune.config.validation import ConfigValidator, ValidationError, validate_config
 
@@ -295,7 +295,7 @@ class TestWorkflowsValidation:
 
     def test_timeout_zero(self):
         """Test that timeout_seconds <= 0 is invalid."""
-        workflows = WorkflowConfig(timeout_seconds=0)
+        workflows = WorkflowsConfig(timeout_seconds=0)
         validator = ConfigValidator()
         errors = validator.validate_section(workflows, "workflows")
         matched = [e for e in errors if e.key == "workflows.timeout_seconds"]
@@ -303,15 +303,15 @@ class TestWorkflowsValidation:
 
     def test_timeout_negative(self):
         """Test that negative timeout_seconds is invalid."""
-        workflows = WorkflowConfig(timeout_seconds=-10)
+        workflows = WorkflowsConfig(timeout_seconds=-10)
         validator = ConfigValidator()
         errors = validator.validate_section(workflows, "workflows")
         matched = [e for e in errors if e.key == "workflows.timeout_seconds"]
         assert len(matched) == 1
 
     def test_valid_workflows_config(self):
-        """Test that a default WorkflowConfig produces no errors."""
-        workflows = WorkflowConfig()
+        """Test that a default WorkflowsConfig produces no errors."""
+        workflows = WorkflowsConfig()
         validator = ConfigValidator()
         errors = validator.validate_section(workflows, "workflows")
         assert errors == []
@@ -521,7 +521,7 @@ class TestValidateSection:
         [
             ("auth", lambda: AuthConfig(strategy="subscription")),
             ("routing", RoutingConfig),
-            ("workflows", WorkflowConfig),
+            ("workflows", WorkflowsConfig),
             ("analysis", AnalysisConfig),
             ("persistence", PersistenceConfig),
             ("telemetry", TelemetryConfig),
