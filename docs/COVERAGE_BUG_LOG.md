@@ -1587,6 +1587,82 @@ retro-tooling PR (bcrypt added to the [dev] extra + dev group);
 tests/unit/test_no_dead_suites.py now guards the class with an empty
 allowlist.
 
+## 2026-08-26 — post-release self-review, 15.1.0 (release-execute step 16)
+
+Two runner-launched runs against the shipped tree (`src` at
+`6f259a86e`, verified from the filesystem — `pyproject.toml` on disk
+AND the imported `__version__` both read 15.1.0, tree clean, 0 behind
+`origin/main`): `code-review` run `19ddfd91bd4c` (334s, cost not
+reported by the runner) and `bug-predict` run `ca0c52c6c121`, **58/100**
+(263s, **$2.19**). Both exit 0 with `sdk_error_kind: None` and a report
+present, so neither is the exit-0-with-traceback false success.
+
+**No finding blocked the release.** Every one sits in code 15.1.0 did
+not touch — the inverse of the 14.0.0 precedent, where the release's own
+headline feature carried the worst defect. Four worth recording:
+
+- **The 2026-08-22 "bug-predict emits zero structured findings" finding
+  STANDS, and has acquired a shape that hides it — classification: dead
+  surface, regressed in legibility.** That entry recorded 6/6 runs with
+  `sections=0, findings=0`. Today's run reports `sections=2`, which
+  reads as fixed to any check that counts sections. It is not: the
+  sections are `[Bugs=0, Next steps=6]`. **The findings section is still
+  empty in every completed run** (`ca0c52c6c121` Bugs=0,
+  `410497bd6f90` Bugs=0, `a6e92650d199` sections=0). All 15 bugs below
+  exist ONLY as prose in a markdown table; nothing structured consumes
+  them. Verified by reading `rows` per section across three run records,
+  not by counting sections — the first pass here DID count containers
+  and wrongly reported the bug fixed, which is the same units error as
+  the `grep -l` files-vs-references lesson from the same morning. Not
+  yet fixed.
+
+- **`agents/release/release_parsing.py:43` — contract violation,
+  HIGH, verified in source.** `_parse_response` is typed `-> dict` and
+  documented "never returns None", but Strategy 1 (XML delimiters) and
+  Strategy 2 (markdown-fenced) both `return json.loads(...)` unguarded.
+  An LLM emitting a fenced JSON ARRAY or bare scalar parses fine and
+  returns a non-dict; consumers (`quality_agent.py:79-84`,
+  `security_agent.py:158-163`) then raise TypeError, which is swallowed
+  and surfaces as a spurious release-gate failure with
+  `quality_score 0.0`. Strategy 3 already guards with
+  `text.startswith("{")` — the other two were never given the same
+  check. Failure mode bites DURING a release, which is where it is
+  least welcome. Fix: `isinstance(result, dict)` guard after each
+  `json.loads`, else fall through to the existing `{'parse_error': ...}`
+  default. Not yet fixed.
+
+- **`lessons/__init__.py:89` — unchecked negative index, HIGH, verified
+  in source.** `text[text.find(_LESSONS_HEADING):]`. When the heading is
+  absent `find` returns `-1` and `text[-1:]` silently slices the LAST
+  CHARACTER instead of raising, producing a silently-wrong lesson parse
+  rather than a loud failure. Not yet fixed.
+
+- **`workflow_patterns/structural.py:37` + `output.py:36` — reported
+  HIGH by code-review as "codegen silently ignores caller-supplied
+  names, ships silently broken output today". DOWNGRADED to Low on
+  verification.** Both lines do discard a `.get()` return value, but
+  each file discards exactly the name its own templates never reference
+  — confirmed by AST: `class_name` appears 1x in `structural.py`'s
+  `generate_code_sections` (the dead call itself) and `workflow_name`
+  1x in `output.py`'s. Nothing is ignored and no broken output ships;
+  they are vestigial statements worth deleting for clarity. Ruff cannot
+  catch them because `context.get(...)` is a CALL, so `B018`
+  (useless-expression) does not fire. **Recorded because the severity
+  was wrong, not the observation** — an unverified read of this finding
+  would have held the release.
+
+Remaining findings (structural, none blocking): two competing config
+systems half-migrated (`config/legacy.py` vs UnifiedConfig);
+`ModelTier` defined 5+ times and `ModelProvider` twice; `BaseWorkflow`
+composing 14 mixins behind a ~20-param constructor; a parallel
+mixin-AND-service layer for the same capabilities; `workflows/` as a
+133-file catch-all; `ops/routes/specs.py:93` doing synchronous
+filesystem work inside `async def` handlers on the event loop.
+`BaseWorkflow` is genuinely defined 3x (`agent_factory/base.py`,
+`plugins/base.py`, `workflows/base.py`) — unlike the `WorkflowConfig`
+collision, which 15.1.0 resolved and which now has a shrink-only gate.
+
+
 ## 2026-08-22 — post-release self-review, 14.0.0 (release-execute step 16)
 
 Two dashboard-launched runs against the shipped tree (`src` at
