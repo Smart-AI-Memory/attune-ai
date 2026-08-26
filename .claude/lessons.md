@@ -25944,3 +25944,338 @@ launched in parallel.
   Rider from the same episode: verifying the exit code via `${PIPESTATUS[1]:-$?}` reported 0 for a command that exited 2 — zsh's array is lowercase `pipestatus`, so the bash spelling is unset and the `:-$?` fallback silently returns the LAST pipe stage's status. **The check that was supposed to catch the dead guard was itself reporting a fabricated pass.** Drop the pipe and capture `$?` directly.
 
 - **A remediation one-liner you hand to a HUMAN inherits every defaulting bug of the command it wraps — and when it fails, the human reads the failure as THEIR error, not your instruction's**: 2026-08-26, blocked mid-sweep on a GPG-signed commit. I told Patrick to re-cache his signing key with `echo probe | gpg --clearsign -o /dev/null`. That form has no `--local-user`, and with no `default-key` in `~/.gnupg/gpg.conf` gpg signs with the FIRST secret key in the ring — here `rsa3072/749DBA3FEC3A4E74` (patrick.roebuck1955@gmail.com), not `git config user.signingkey` = `ed25519/D36957ACAE09C705` (smartaimemory.com). So the pinentry dialog asked for a DIFFERENT key's passphrase; he typed the right passphrase for the key he thought he was unlocking, it was rejected, and the natural reading of that is "I misremembered my passphrase." He lost an attempt and a little confidence in his own key, to my bug. Caching is per-keygrip besides, so even a successful unlock of the RSA key would not have moved the commit one inch. Correct forms: `echo probe | gpg --clearsign --local-user "$(git config user.signingkey)" -o /dev/null` to cache, and to CHECK without ever hanging, `echo probe | gpg --pinentry-mode cancel --status-fd=1 -bsau <key> -o /dev/null 2>&1 | grep -q SIG_CREATED` (that mode succeeds iff already cached and fails in milliseconds otherwise — strictly better than a bare `--clearsign` probe, which hangs on the uncached path and is what a peer session and I both had in draft lessons). **Three durable points, in ascending order of generality.** (1) Any command you EMIT AS ADVICE deserves the same verify-first discipline as a command you RUN: `--local-user`, `--repo`, `-C <path>`, an explicit branch — pin every argument the tool would otherwise default, because the reader cannot see the default and has no way to attribute the failure. (2) **Asymmetric blame is the real cost.** A wrong command I run fails visibly as mine; a wrong command I hand over fails in the user's hands and looks like user error, so it gets misattributed by BOTH of us and the actual defect survives the incident. Prefer probes whose failure message names the cause (`gpg: signing failed` + the key id) over ones that merely fail. (3) **This was a repeat, not a discovery, and that is the point.** `.claude/lessons.md` already carried the fix verbatim, from 2026-08-23, written by the session that generated that very ed25519 key: "Bare `gpg --clearsign` and `git commit -S` can use DIFFERENT keys — test signing with `-u $(git config user.signingkey)`." It even names stray wrong-key pinentry dialogs as the symptom. JIT recall DID surface it — one beat too late, attached to the message discussing the failure rather than to the moment either of us composed the one-liner. That is not a corpus gap and not a retrieval miss; it is the recall GEOMETRY already recorded in the memory-injection-surfaces lesson, seen from a new angle: PreToolUse recall fires at a tool call, and **composing prose advice for a human has no tool call**, so the highest-leverage sentences an agent writes — the ones another person will execute — sit in the one blind spot the tool-call surface cannot cover. Treat "I am about to hand someone a command" as a manual recall trigger, because nothing will fire it for you.
+
+- **An import-time "no upward import" probe is BLIND to a lazy
+  function-local import — so a layering receipt can pass on the exact
+  code it claims to forbid**: 2026-08-26, executing #2239 Edge 1. The
+  `models-workflows-layering` spec named, as R1's receipt, "the
+  subprocess no-upward-import probe extended to
+  `attune.models.empathy_executor`" — a probe that imports the modules
+  in a clean subprocess and asserts no `attune.workflows` entry appears
+  in `sys.modules`. Mutation-tested it by reinstating the original lazy
+  `_load_hybrid_config` (a function-local
+  `from attune.workflows.config import WorkflowConfig`): **the probe
+  stayed GREEN**. A function-local import loads nothing until the
+  function is CALLED, and the probe never calls it. Both #2239 cycle
+  edges were exactly that shape, so the receipt could never have
+  detected either one — which also means slice 1's probe (#2295) never
+  proved slice 1; it pins the eager import graph, real but weaker than
+  the PR claimed. **The general trap: a probe that observes RUNTIME
+  EFFECT can only see the code paths it actually executes, so it is
+  structurally blind to any construct that defers its effect** —
+  function-local imports, lazy properties, `if TYPE_CHECKING` bodies,
+  registrations behind a feature flag. **Fix: pair it with a STATIC
+  scan.** Added `test_no_models_module_imports_workflows_at_any_scope`,
+  an AST walk over `src/attune/models/**/*.py` flagging `ast.Import` /
+  `ast.ImportFrom` targeting `attune.workflows` at any scope (plus
+  `level >= 2` relative `from ..workflows`), mutation-verified RED
+  against all three shapes — eager, lazy-function-local, and relative —
+  and green on the clean tree. Keep both: the runtime probe still pins
+  the eager import graph, which the AST scan cannot see. **Diagnostic
+  you can apply anywhere: write down the code shape the guard is
+  supposed to forbid, then WRITE THAT SHAPE and watch the guard fail.
+  If it does not fail, the guard is decoration.** Same family as the
+  #2162 vacuous-test class and the `dead-guard-silently-allows` /
+  `relaxing-assertion-introduces-vacuity` lessons — this is the
+  "guard tests the wrong layer" member.
+
+- **A mutation test run against the WRONG source silently reports the
+  opposite verdict — resolve `module.__file__` before trusting any
+  local probe result**: 2026-08-26, worktree session on #2239. Ran a
+  mutation test (reintroduce the forbidden import, expect RED) and the
+  probe stayed GREEN — I nearly concluded the guard was vacuous. It
+  was not: bare `python` in this worktree resolved `attune` to an
+  INSTALLED WHEEL in
+  `~/.pyenv/versions/3.10.11/lib/python3.10/site-packages/attune/`, so
+  the subprocess never saw my edited file at all. Every local `pytest`
+  run before that point had tested the installed wheel, not the branch.
+  One command settled it:
+  `python -c "import attune.models.empathy_executor as m; print(m.__file__)"`
+  — and with `PYTHONPATH=$PWD/src` prepended it pointed at the worktree
+  and the mutation went correctly red. **This EXTENDS the existing
+  editable-install lesson in a way that matters: that lesson says the
+  MAPPING points at the MAIN checkout, and the remedy is
+  `PYTHONPATH=<absolute-worktree>/src`. Here it did not resolve to main
+  either — it resolved to a third location, a site-packages wheel — so
+  "am I running main or my worktree?" is the wrong question. The right
+  question is "what does `__file__` say?"** **Why mutation tests
+  specifically are the dangerous case: a normal test run against stale
+  source usually fails loudly (missing symbol, changed signature), but
+  a mutation test's expected outcome is FAILURE, so wrong-source
+  resolution produces a plausible-looking "the guard didn't catch it"
+  and invites you to rewrite a guard that was fine — or, in the
+  opposite direction, a "restored → green" that proves nothing.** Rule:
+  before any mutation test, print `__file__` for the module you are
+  mutating; make the resolution part of the receipt, not an assumption.
+  Pairs with the core "Claims carry their basis" rule — the property a
+  green mutation run establishes is "the guard behaved thus ON THE
+  SOURCE PYTHON ACTUALLY LOADED", which is only the property you want
+  once you have checked which source that was.
+
+- **`pinentry-mode loopback` in `~/.gnupg/gpg.conf` is why agent
+  sessions hang on `git commit` — it makes gpg read the passphrase
+  ITSELF from the tty, so no pinentry ever spawns, and it silently
+  removes the "Save in Keychain" affordance that every durability fix
+  depends on**: 2026-08-26, three sessions and most of a morning spent
+  on a two-line config file. Symptom: `git commit -F msg.txt` burns the
+  whole tool timeout and dies on SIGTERM having printed only its own
+  echo; a full `pytest tests` sits at **0% CPU for 3.5 hours** with
+  zero output, wedged on a fixture's `git commit -qm seed`. Everyone
+  reads it as "gpg-agent is not launching pinentry" and hunts for a
+  stuck GUI dialog. There is none, and there never was: **loopback
+  bypasses `pinentry-program` entirely.** It explains every symptom at
+  once — no pinentry process to find, `gpg: cannot open '/dev/tty':
+  Device not configured` headless, a plain terminal `Enter
+  passphrase:` under an allocated pty, and "approve the dialog on your
+  Mac" that could never work. **The sting in the tail: "tick Save in
+  Keychain" is `pinentry-mac`'s feature, so under loopback the checkbox
+  never appears** — meaning the standard advice for making an unlock
+  survive an agent restart is not merely ineffective, it is
+  unfollowable, and the user hunting for a checkbox that cannot render
+  reads as user error. Remedy (the user's call — it is global config
+  outside any repo, affecting every GPG operation on the machine):
+  remove `pinentry-mode loopback` from `gpg.conf` while KEEPING
+  `allow-loopback-pinentry` in `gpg-agent.conf`, which only PERMITS the
+  mode for callers that request it explicitly, as diagnostic probes do
+  on the command line. Two probe traps to avoid while diagnosing:
+  `gpg --clearsign --batch --no-tty` HANGS even when the commit would
+  succeed, and — **absent a `default-key` directive in `gpg.conf`** —
+  bare `gpg --clearsign` signs with the FIRST SECRET KEY IN THE RING,
+  not `user.signingkey`. On a multi-key machine that prompts for an
+  unrelated identity, so the user's correct passphrase is rejected and
+  reads as a lost secret; caching is per-keygrip, so unlocking the
+  wrong key unblocks nothing. **Check with
+  `grep default-key ~/.gnupg/gpg.conf` before concluding either way** —
+  and note the state can CHANGE mid-incident: on the machine this was
+  written from, the user added `default-key` at 06:10, seven minutes
+  after his three rejected attempts at 06:03 (shell-history epochs vs
+  the file mtime settle it). A peer session testing at 10:00 found bare
+  clearsign resolving correctly and concluded key selection was never
+  the cause — a correct measurement of a config that had changed since
+  the event. **When you diagnose a past failure from present config,
+  date the config** — with timestamped shell history or line ORDER in
+  a dated backup (`default-key` on line 2, below the pre-existing
+  loopback on line 1, is what `>>` produces), NOT with mtime, which
+  dates only the last write and here was overwritten by the very fix
+  this lesson describes. Pairs with
+  `static-scan-vocabulary-vs-behavioral-gate`, whose rider carries the
+  third variant: your OWN earlier reading expires the moment you write
+  to what you measured, and re-citing it later feels like recall
+  rather than inference, so the staleness check never fires. Both
+  errors here ran in OPPOSITE directions — one concluded a file had
+  been tampered with, the other that a cause was impossible — and
+  neither session caught its own; it took the other one each time.
+  That is the argument for the rule: this class is not caught by care,
+  only by someone holding a different prior. The probe that is right on
+  every count, instant and non-hanging:
+
+      gpg --pinentry-mode cancel --status-fd=1 \
+        -bsau "$(git config user.signingkey)" -o /dev/null </dev/null \
+        2>&1 | grep -q SIG_CREATED && echo CACHED || echo "NOT cached"
+
+  The zero-crypto alternative is `gpg-connect-agent 'keyinfo --list'
+  /bye` (field 7 = cached, field 8 = protection). Read the status line
+  or the direct exit code, never `${PIPESTATUS[0]}` under zsh — the
+  array is lowercase `pipestatus` there. And note any session running
+  `gpgconf --kill gpg-agent` as a diagnostic flushes the cache,
+  invalidating every "it works now" claim made before it.
+
+- **A grep's silence covers ONLY its pattern — reporting "not set" from
+  a probe that could not have matched the thing is how two agents
+  independently concluded a user's config had been edited behind his
+  back**: 2026-08-26. Diagnosing a GPG hang, I ran
+  `grep -E '^default-key|^local-user' ~/.gnupg/gpg.conf`, got nothing,
+  and told the user "none set". A peer session ran
+  `grep -E '^\s*(default-key|local-user)' …` and reported "NONE".
+  Later the file read:
+
+      pinentry-mode loopback
+      default-key D36957ACAE09C705
+
+  and I told the user **"neither line was there earlier — both are
+  new"**, implying an agent had written to his global config unasked.
+  Half of that was false. `default-key` he had appended himself
+  (one shell-history occurrence, epoch matching the file mtime to the
+  second); `pinentry-mode loopback` had been there for days — zero
+  shell-history occurrences ever, editor-written, alongside
+  `gpg-agent.conf`'s companion line dated three days earlier.
+  **Neither grep could match `pinentry-mode` by construction, so both
+  "absent" reports covered only the two tokens actually asked about —
+  yet both were phrased as statements about the FILE.** The bug is not
+  the narrow pattern (narrow is correct for a targeted question); it is
+  reporting a pattern-scoped negative in file-scoped grammar, then
+  building an inference on top of it. **A negative grep establishes
+  "this pattern did not match", never "the file does not contain
+  anything relevant"** — and the gap between those is invisible in the
+  output, because both look like empty stdout. **Rules: (1) when a
+  negative result is about to become load-bearing, `cat` the file (or
+  grep with an inclusive pattern) rather than trusting the targeted
+  probe you already ran; (2) phrase negatives in the scope you actually
+  checked — "no `default-key` line" not "nothing set"; (3) mtime plus
+  shell history dates a change far better than "it was not there when I
+  looked", since when you looked is not when it changed; (4) before
+  telling a user another agent modified their environment, treat it as
+  the accusation it is and verify with provenance, not with absence.**
+  Both sessions here hit the identical blind spot on the identical
+  file, which is the tell that this is a probe-design failure and not
+  carelessness. Kin to the core "claims carry their basis" rule, of
+  which this is the negative-result member: name the property your
+  check establishes, then ask whether it is the property your next
+  claim depends on.
+
+- **Counting "unsafe call sites" is a VOCABULARY problem, not a grep
+  problem — every safe idiom your scanner does not know becomes a false
+  positive, and a helper imported from a sibling conftest is invisible
+  to any per-file scan**: 2026-08-26, PR #2316 (test fixtures invoking
+  the user's GPG key and hanging forever). The intake reported "~133
+  git-commit call sites, exactly ONE references `gpgsign`" plus five
+  named offenders. Every number was wrong: **68** commit-ish sites
+  across **26** files, **26** files reference `gpgsign`, and **2 of 5**
+  named offenders were real — `test_fix_loop.py` and `test_teeth.py`
+  already disabled signing on a line ABOVE the cited commit line, which
+  a line-anchored grep cannot see. My own first scanner was no better.
+  Calibrated on the real tree before shipping anything:
+
+      per-site (no inline `-c commit.gpgsign=false`):  63 flagged, 3 real -> 5%
+      per-file (file never mentions `gpgsign`):         5 flagged, 2 real -> 40%
+
+  The false positives came from FOUR safe idioms already in the tree:
+  (1) inline `-c commit.gpgsign=false`; (2) `git config commit.gpgsign
+  false` in the temp repo's local config; (3) `--no-gpg-sign` on the
+  commit itself (`test_dirty_switch_guard.py`, `test_chair_arm.py`);
+  (4) a signing-disabled helper IMPORTED FROM A SIBLING CONFTEST
+  (`test_verify.py` does `from .conftest import git`). **Idiom 4 is the
+  one that kills the whole approach: no per-file text scan can ever see
+  it, because the safety lives in another file.** Static detection here
+  needs cross-module import resolution — at which point you are writing
+  an interpreter, not a gate. **Rule: when the property you care about
+  is "does this code path do X AT RUNTIME", ship a behavioral gate, not
+  a static scan.** The shipped gate asserts the effective config and
+  commits for real; it fails if the fix is removed on a signing dev
+  machine (`gpgsign` -> `true`) AND on a keyless CI runner (no global
+  config at all), reaching the failure by different routes — and it
+  points `gpg.program` at a NONEXISTENT PATH so a regression fails in
+  0.3s instead of waiting out a timeout or re-hanging the suite. The
+  decisive argument against the static rule was forward-looking: once
+  the fix is suite-wide (one autouse fixture pinning
+  `GIT_CONFIG_GLOBAL`), per-file disabling is UNNECESSARY, so a scan
+  demanding it would flag correct code forever. **A gate that will be
+  wrong after your own fix lands should not be written.** Three riders
+  from the same session:
+  - **Bracket an environmental precondition, or the receipt is
+    vacuous.** The proof required "GPG key locked", so I probed the lock
+    BEFORE and AFTER the run. Good thing: a later re-run printed `using
+    "D36957AC…" as default secret key` instead of `No pinentry` — the
+    key had been re-cached mid-session by a parallel session, so that
+    run's "51 passed" established NOTHING about the locked case. Same
+    shape as the vacuous-emptiness-assertion class: the run passes
+    either way, so only the precondition probe distinguishes them.
+  - **A mutation EDIT can silently no-op.** A `python3 -c` string
+    replace disabling the fixture matched nothing and printed nothing;
+    the "before" run then passed and I nearly filed it as "the bug does
+    not reproduce". Assert the anchor count in the mutation script
+    (`assert s.count(old) == 1`) so a missed match is loud. Pairs with
+    `mutation-test-wrong-source-inverts-verdict` — that one is the
+    wrong SOURCE, this one is the edit that never landed; both produce
+    a plausible, inverted verdict.
+  - **`default-key` in `gpg.conf` overrides ring order — but a
+    PRESENT-TENSE config check cannot date a PAST failure, and mtime
+    will not save you.** The companion lesson's rule (bare `gpg
+    --clearsign` signs with the FIRST key in the ring, not
+    `user.signingkey`) holds only ABSENT a `default-key` directive. I
+    measured `gpg.conf` at 10:00, found `default-key D36957ACAE09C705`
+    (which IS `git config user.signingkey`), and argued from it that
+    key selection could NOT have caused the morning's rejected
+    passphrases. Wrong — and wrong in an instructive way: `~/.zsh_history`
+    epochs showed `echo "default-key ..." >> ~/.gnupg/gpg.conf` ran at
+    **06:10:40**, seven minutes AFTER the 06:03:28 failure and three
+    minutes after an explicit `--local-user` probe SUCCEEDED with the
+    same passphrase. At the moment that mattered, ring order did govern
+    and key selection WAS the cause. **A correct measurement of a
+    config that has since changed is evidence about now, not about
+    then.** Two forensic riders: (a) `mtime` dates the LAST write, not
+    the one you care about — here `gpg.conf` mtime read 06:29:48
+    because a later unrelated edit overwrote it, so a peer citing
+    "mtime matches the append to the second" was citing a stamp that no
+    longer existed; (b) what DOES date a past state is timestamped
+    shell history, a dated backup, and line ORDER within the file (the
+    06:29 backup showed `default-key` appended BELOW a pre-existing
+    line); (c) the subtlest variant — **a measurement you took yourself
+    EXPIRES THE MOMENT YOU WRITE to what you measured.** That 06:10:40
+    mtime was genuinely accurate when first read: nothing touched
+    gpg.conf between the 06:10:40 append and the 06:29:47 backup, so it
+    held for ~19 minutes. It became false only because the reader's own
+    later edit invalidated it, and it was then re-cited hours later in
+    the present tense. **That one is the easiest of the three to miss,
+    because re-citing your own earlier reading feels like RECALL rather
+    than inference — so the staleness check never fires.** Three angles
+    on the same error surfaced in a single morning across two sessions:
+    present config as evidence about the past (twice, in OPPOSITE
+    directions — one concluding a file had been tampered with, one
+    concluding a cause was impossible), and a self-invalidated own
+    reading re-asserted as live. The `-bsau "$(git config
+    user.signingkey)"` form remains the right one to WRITE — correct on
+    every machine, and immune to this whole question.
+
+- **`grep -l` counts FILES, `grep` counts REFERENCES — quoting the first
+  as a rename's cost understates it by an order of magnitude, and a
+  chair ruling made against that number was made against wrong
+  information**: 2026-08-26, spec `models-workflows-layering` D5. The
+  design phase costed the `agent_factory.WorkflowConfig` ->
+  `AgentGraphConfig` rename at **"8 sites"**, derived from the files
+  that IMPORT the class. At execution time the real figure was **127
+  references across 21 files** — 23 in `src/`, 104 in tests. A 15x
+  underestimate. The number had already propagated into `design.md`,
+  `decisions.md`, and two merged PRs, and the chair's ruling cited it.
+  **It was load-bearing, not decorative:** the counter-case put to the
+  chair was literally "it costs 8 sites of churn to fix something
+  invisible from inside the module", and at 127 that argument is
+  materially stronger. Re-put with the true number; re-ruled proceed —
+  but the point is the chair got to decide with the real figure instead
+  of discovering it in the diff. **The mechanism is that an import is
+  one line and a usage is many**: a class imported by 7 test modules and
+  used 15 times in each is "7 files" by one count and "105 references"
+  by the other, and for a rename the second is the work. **Rule: cost a
+  rename with `grep -c` / `grep -rn | wc -l` over the reference regex,
+  never `grep -rl | wc -l`; report BOTH numbers (`N references across M
+  files`) so nobody has to guess which you measured.** And when a
+  previously-quoted estimate turns out wrong mid-execution, stop and
+  re-put it before doing 15x the approved work — the alternative is
+  delivering a diff the approver would not have approved. Corollary that
+  saved this one: before a scoped mass rename, verify NO in-scope file
+  references a same-named symbol from a different module
+  (`grep -rln '\bTarget\b' <scope> | xargs grep -ln '<other.module>'`);
+  here it came back empty, which is what made a regex rename safe rather
+  than reckless. Pairs with the core lesson on spec-named scope drifting
+  from code reality — same family, but this one is about the SIZE of the
+  named scope rather than its membership.
+
+- **A background test run PINS you to the branch it started on —
+  switching mid-run produces failures in exactly the code you just
+  wrote, which reads as "my change is broken" and is really "the tree
+  moved under a collected suite"**: 2026-08-26. Launched
+  `pytest tests` in the background on a deprecation branch, then
+  switched to another branch to record a decision while it ran. Result:
+  **2 failed, 25330 passed** — and both failures were the deprecation
+  tests I had just written and just watched pass. The natural reading is
+  that the new shim is broken; the actual cause is that pytest had
+  COLLECTED the test files before the switch and then executed them
+  against a working tree from which the shim had vanished (it lived only
+  on the other branch). Re-running on the correct branch with no
+  switching: **25332 passed, 0 failed.** **The tell is that the failures
+  are all in the newest code and nowhere else** — a real regression from
+  a small diff usually lands somewhere you did not expect, while a
+  branch-switch artifact lands precisely on the files that differ
+  between the two branches. **Rule: a long background test run makes the
+  worktree read-only for its duration. Do decision-recording, spec
+  edits, and anything needing another branch in a DIFFERENT worktree, or
+  wait.** Second, independent trap in the same episode: **the background
+  task reported `exit code 0` while carrying 2 failures** — the harness
+  reports the shell pipeline's status, and `pytest | tail -N` exits with
+  tail's status, so the exit code says nothing about the suite. This
+  repo's corpus already carries "background pytest can complete exit 0
+  with ZERO output"; this is the sibling case — exit 0 WITH output that
+  contains failures. **Always read the summary line, never the exit
+  status**, and grep it for `failed` rather than eyeballing the tail.
+  Pairs with the existing worktree-vs-main execution lessons: those are
+  about WHICH tree runs, this one is about the tree CHANGING mid-run.
