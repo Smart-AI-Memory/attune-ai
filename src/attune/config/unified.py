@@ -13,7 +13,7 @@ from attune.config.sections.environment import EnvironmentConfig
 from attune.config.sections.persistence import PersistenceConfig
 from attune.config.sections.routing import RoutingConfig
 from attune.config.sections.telemetry import TelemetryConfig
-from attune.config.sections.workflows import WorkflowConfig
+from attune.config.sections.workflows import WorkflowsConfig
 
 
 @dataclass
@@ -39,7 +39,7 @@ class UnifiedConfig:
 
     auth: AuthConfig = field(default_factory=AuthConfig)
     routing: RoutingConfig = field(default_factory=RoutingConfig)
-    workflows: WorkflowConfig = field(default_factory=WorkflowConfig)
+    workflows: WorkflowsConfig = field(default_factory=WorkflowsConfig)
     analysis: AnalysisConfig = field(default_factory=AnalysisConfig)
     persistence: PersistenceConfig = field(default_factory=PersistenceConfig)
     telemetry: TelemetryConfig = field(default_factory=TelemetryConfig)
@@ -89,7 +89,7 @@ class UnifiedConfig:
         return cls(
             auth=AuthConfig.from_dict(data.get("auth", {})),
             routing=RoutingConfig.from_dict(data.get("routing", {})),
-            workflows=WorkflowConfig.from_dict(data.get("workflows", {})),
+            workflows=WorkflowsConfig.from_dict(data.get("workflows", {})),
             analysis=AnalysisConfig.from_dict(data.get("analysis", {})),
             persistence=PersistenceConfig.from_dict(data.get("persistence", {})),
             telemetry=TelemetryConfig.from_dict(data.get("telemetry", {})),

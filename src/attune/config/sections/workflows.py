@@ -8,7 +8,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class WorkflowConfig:
+class WorkflowsConfig:
     """Workflow execution configuration.
 
     Controls default workflow behavior, execution settings,
@@ -37,7 +37,7 @@ class WorkflowConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "WorkflowConfig":
+    def from_dict(cls, data: dict) -> "WorkflowsConfig":
         """Create from dictionary."""
         return cls(
             default_workflow=data.get("default_workflow", "code-review"),
@@ -45,3 +45,27 @@ class WorkflowConfig:
             timeout_seconds=data.get("timeout_seconds", 300),
             cache_results=data.get("cache_results", True),
         )
+
+
+# REMOVE IN v16.0.0 — deprecated alias for the pre-rename name.
+# Renamed to `WorkflowsConfig` so it matches its module and config key,
+# as its six sibling sections already do (AnalysisConfig, AuthConfig,
+# EnvironmentConfig, PersistenceConfig, RoutingConfig, TelemetryConfig).
+# Spec models-workflows-layering D2/D5.
+#
+# Served via module __getattr__ (PEP 562) so the warning fires on ACCESS.
+# A plain module-level alias would be silent, and a user would learn of
+# the rename only when v16.0.0 broke them.
+def __getattr__(name: str) -> object:
+    """Serve the deprecated `WorkflowConfig` name. REMOVE IN v16.0.0."""
+    if name != "WorkflowConfig":
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    import warnings
+
+    warnings.warn(
+        "attune.config.sections.workflows.WorkflowConfig is deprecated and "
+        "will be removed in v16.0.0. Use WorkflowsConfig instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return WorkflowsConfig
