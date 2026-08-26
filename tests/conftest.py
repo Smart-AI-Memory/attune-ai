@@ -735,6 +735,57 @@ def _disable_help_telemetry(monkeypatch):
     monkeypatch.setenv("ATTUNE_HELP_TELEMETRY", "0")
 
 
+@pytest.fixture(scope="session")
+def _hermetic_git_config(tmp_path_factory):
+    """Build the suite's stand-in global/system git config.
+
+    Session-scoped: the files are identical for every test, so writing
+    them once per worker beats writing them ~25k times.
+    """
+    root = tmp_path_factory.mktemp("gitconfig")
+    git_global = root / "global"
+    git_global.write_text(
+        "[user]\n"
+        "\tname = attune-test\n"
+        "\temail = attune-test@example.invalid\n"
+        "[commit]\n"
+        "\tgpgsign = false\n"
+        "[tag]\n"
+        "\tgpgsign = false\n",
+        encoding="utf-8",
+    )
+    git_system = root / "system"
+    git_system.write_text("", encoding="utf-8")
+    return git_global, git_system
+
+
+@pytest.fixture(autouse=True, scope="function")
+def _isolate_git_config(_hermetic_git_config, monkeypatch):
+    """Run every test's git against a hermetic global config.
+
+    Dozens of fixtures build throwaway repos and commit into them. They
+    inherit the developer's real ``~/.gitconfig``, so a global
+    ``commit.gpgsign = true`` makes each seed commit invoke GPG ->
+    pinentry. Under pytest there is no TTY for the passphrase prompt, so
+    the commit BLOCKS FOREVER at 0% CPU and pytest prints nothing — a
+    silent hang indistinguishable from a slow test (observed 2026-08-26:
+    a full run wedged 3.5h on a ``commit -qm seed`` subprocess).
+
+    Pinning ``GIT_CONFIG_GLOBAL``/``GIT_CONFIG_SYSTEM`` fixes the whole
+    class in one place instead of at each call site, and covers the other
+    signing verbs (``merge``, ``revert``, ``cherry-pick``, ``tag``) too.
+    Identity is supplied as *config*, not ``GIT_AUTHOR_*`` env vars, so a
+    fixture's own ``git config user.email ...`` still wins — env vars
+    would silently override those and change what tests observe.
+
+    Same idiom as ``tests/scripts/test_audit_worktrees.py``, promoted from
+    that one file to the whole suite.
+    """
+    git_global, git_system = _hermetic_git_config
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(git_global))
+    monkeypatch.setenv("GIT_CONFIG_SYSTEM", str(git_system))
+
+
 @pytest.fixture(autouse=True, scope="function")
 def _isolate_attune_home(tmp_path, monkeypatch):
     """Route ~/.attune writes to a per-test tmp dir.
