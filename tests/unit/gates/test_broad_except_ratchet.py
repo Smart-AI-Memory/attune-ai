@@ -235,7 +235,10 @@ _BASELINE: dict[str, int] = {
     "src/attune/metrics/prompt_metrics.py": 1,
     "src/attune/models/auth_cli.py": 4,
     "src/attune/models/auth_strategy.py": 3,
-    "src/attune/models/empathy_executor.py": 2,
+    # Lowered 2 -> 1 (#2239 Edge 1): the broad catch around the
+    # workflows.yaml read moved out of the models layer with the read
+    # itself; see workflows/executor_mixin.py below.
+    "src/attune/models/empathy_executor.py": 1,
     "src/attune/models/provider_config.py": 2,
     "src/attune/models/resilient_executor.py": 2,
     "src/attune/models/single_turn.py": 2,
@@ -327,6 +330,12 @@ _BASELINE: dict[str, int] = {
     "src/attune/wizards/builtin/security_wizard.py": 3,
     "src/attune/wizards/decomposer.py": 1,
     "src/attune/wizards/registry.py": 3,
+    # The hybrid workflows.yaml read relocated here from
+    # models/empathy_executor.py (#2239 Edge 1). The catch is
+    # best-effort by contract: a broken/absent config degrades to
+    # "no hybrid routing" rather than failing workflow construction,
+    # which is the pre-inversion behavior this PR must preserve.
+    "src/attune/workflows/executor_mixin.py": 1,
     "src/attune/workflows/__init__.py": 2,
     "src/attune/models/sdk_adapter.py": 4,
     "src/attune/workflows/base.py": 1,

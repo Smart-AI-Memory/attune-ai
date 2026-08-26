@@ -48,6 +48,7 @@ class EmpathyLLMExecutor:
         telemetry_store: TelemetryBackend | TelemetryStore | None = None,
         use_thinking: bool = False,
         thinking_budget: int = 10000,
+        hybrid_config: dict[str, str] | None = None,
         **llm_kwargs: Any,
     ):
         """Initialize the EmpathyLLM executor.
@@ -60,6 +61,10 @@ class EmpathyLLMExecutor:
             use_thinking: Enable extended thinking for complex analysis.
                 Adds a thinking step before generating output.
             thinking_budget: Max tokens for thinking (default: 10000).
+            hybrid_config: Tier -> model_id mapping for hybrid provider mode,
+                injected by the workflows-layer caller that owns the
+                ``workflows.yaml`` read. The models layer never reads that
+                config itself (#2239 Edge 1 / spec R1).
             **llm_kwargs: Additional arguments for EmpathyLLM.
 
         """
@@ -73,23 +78,12 @@ class EmpathyLLMExecutor:
         self._llm = empathy_llm
         self._telemetry = telemetry_store
         self._hybrid_llms: dict[str, Any] = {}  # Cache per-provider LLMs for hybrid mode
-        self._hybrid_config: dict[str, str] | None = None  # tier -> model_id mapping
-
-        # Load hybrid config if provider is hybrid
-        if provider == "hybrid":
-            self._load_hybrid_config()
-
-    def _load_hybrid_config(self) -> None:
-        """Load hybrid tier->model mapping from workflows.yaml."""
-        try:
-            from attune.workflows.config import WorkflowConfig
-
-            config = WorkflowConfig.load()
-            if config.custom_models and "hybrid" in config.custom_models:
-                self._hybrid_config = config.custom_models["hybrid"]
-                logger.info(f"Loaded hybrid config: {self._hybrid_config}")
-        except Exception as e:  # noqa: BLE001
-            logger.warning(f"Failed to load hybrid config: {e}")
+        # tier -> model_id mapping, injected by the workflows-layer caller.
+        # Empty mappings normalize to None so `not self._hybrid_config`
+        # keeps meaning "no hybrid routing" (see _get_llm_for_tier).
+        self._hybrid_config: dict[str, str] | None = hybrid_config or None
+        if provider == "hybrid" and self._hybrid_config:
+            logger.info(f"Hybrid config injected: {self._hybrid_config}")
 
     def _get_provider_for_model(self, model_id: str) -> str:
         """Determine which provider a model belongs to based on its ID."""

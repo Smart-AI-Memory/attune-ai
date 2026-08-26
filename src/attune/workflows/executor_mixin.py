@@ -19,6 +19,7 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
@@ -27,6 +28,8 @@ from attune.models import (
     ExecutionContext,
     LLMExecutor,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -53,6 +56,26 @@ class StepResult:
 
 if TYPE_CHECKING:
     from .step_config import WorkflowStepConfig
+
+
+def _load_hybrid_tier_models() -> dict[str, str] | None:
+    """Read the hybrid tier -> model_id mapping from ``workflows.yaml``.
+
+    Owns the config read on behalf of the models layer, which must not
+    import ``attune.workflows.config`` (#2239 Edge 1). Returns ``None``
+    when the mapping is absent or unreadable — hybrid routing then falls
+    back to the single configured provider, preserving the behavior the
+    executor had while it read the config itself.
+    """
+    try:
+        from attune.workflows.config import WorkflowConfig
+
+        config = WorkflowConfig.load()
+        if config.custom_models and "hybrid" in config.custom_models:
+            return config.custom_models["hybrid"]
+    except Exception as e:  # noqa: BLE001 - config read is best-effort
+        logger.warning(f"Failed to load hybrid config: {e}")
+    return None
 
 
 class ExecutorMixin:
@@ -129,6 +152,13 @@ class ExecutorMixin:
         if getattr(self, "_use_thinking", False):
             executor_kwargs["use_thinking"] = True
             executor_kwargs["thinking_budget"] = getattr(self, "_thinking_budget", 10000)
+
+        # Hybrid mode routes each tier to a different model. The workflows
+        # layer owns the workflows.yaml read and injects the resolved
+        # mapping; the models layer never imports the config type (#2239
+        # Edge 1 / models-workflows-layering R1).
+        if self._provider_str == "hybrid":
+            executor_kwargs["hybrid_config"] = _load_hybrid_tier_models()
 
         base_executor = EmpathyLLMExecutor(**executor_kwargs)
 

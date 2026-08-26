@@ -56,17 +56,45 @@ Two adjacent structural problems make a naive move actively harmful:
   explicitly NON-compliant: the annotation alone re-creates
   Edge 1 (cross-review finding, 2026-08-25).
   **Config-construction ownership:** the `workflows.yaml` read
-  happens at the topmost workflows-layer call site only;
-  models-layer intermediaries (`models/resilient_executor.py`)
-  receive the mapping through their own constructors and pass it
-  down — injection chains upward, no models module reads
-  `workflows.yaml` or imports the config type (cross-review
-  finding, 2026-08-25). Callers to migrate (verified 2026-08-24):
-  `workflows/escalation/chain.py`,
-  `workflows/escalation/evaluator.py`,
-  `workflows/executor_mixin.py`, `models/resilient_executor.py`.
-  The receipt is the slice-1 pattern: the subprocess
-  no-upward-import probe extended to `attune.models.empathy_executor`.
+  happens at the topmost workflows-layer call site only; no models
+  module reads `workflows.yaml` or imports the config type
+  (cross-review finding, 2026-08-25).
+
+  **Caller list corrected 2026-08-26 (execution).** The
+  2026-08-24 list named four sites; re-grepped against the tree at
+  execution time, only ONE is a migration site:
+  - `workflows/executor_mixin.py:133` — constructs with
+    `provider=self._provider_str`, the only path that can be
+    `"hybrid"`. **The injection site.**
+  - `workflows/escalation/chain.py:112` and
+    `workflows/escalation/evaluator.py:163` — both hardcode
+    `provider="anthropic"`, so the hybrid read never fired for
+    them. Nothing to inject; untouched.
+  - `models/resilient_executor.py` — **not a caller.** The
+    `EmpathyLLMExecutor` mentions at lines 40–41 are a `>>>`
+    docstring example; the class takes a pre-built
+    `executor: Any`. There is no constructor to thread a mapping
+    through, so "injection chains upward through models-layer
+    intermediaries" describes a chain that does not exist. The
+    requirement's intent is unchanged — it is one hop, not a chain.
+
+  **Receipt amended 2026-08-26 — the named probe is NOT sufficient
+  on its own.** R1 originally named "the subprocess
+  no-upward-import probe extended to
+  `attune.models.empathy_executor`". Verified by mutation at
+  execution time: that probe observes what a module import LOADS,
+  so it is blind to a LAZY function-local import — and both #2239
+  cycle edges were exactly that shape. Reinstating the original
+  lazy `_load_hybrid_config` left the subprocess probe GREEN.
+  (This also means slice 1's probe never proved slice 1; it proves
+  the eager import graph stays clean, which is real but weaker
+  than claimed.) The binding receipt is therefore a **static AST
+  scan** — `test_no_models_module_imports_workflows_at_any_scope`
+  — asserting no module under `src/attune/models/` imports
+  `attune.workflows` at any scope, mutation-verified red against
+  eager, lazy-function-local, and relative (`from ..workflows`)
+  shapes. The subprocess probe is extended as specified and kept,
+  since it additionally pins the eager import graph.
 - **R2 — sequencing against the 15.0.0 empathy excision (#2238).**
   Edge 1 lives in `EmpathyLLMExecutor`'s module — the LIVE EmpathyLLM,
   not the dead EmpathyOS — so the excision does NOT moot it (verified
