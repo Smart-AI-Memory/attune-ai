@@ -16,7 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, EmailStr
 
-from backend.services.auth_service import AuthService
+from services.auth_service import AuthService
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 security = HTTPBearer()

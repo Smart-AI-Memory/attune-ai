@@ -1,35 +1,48 @@
 """Behavioral tests for backend/api/analysis.py.
 
 Tests the Pydantic request models and their validators.
-Imports the module directly (not via the api package __init__)
-to avoid pulling in bcrypt and other heavy backend deps.
+Imports the module under a stub ``api`` package (bypassing the real
+api/__init__.py) to avoid pulling in bcrypt, email-validator, and
+other heavy backend deps. All sys.modules edits are reverted after
+the load so other tests in the same worker see a clean module table.
 """
 
 import importlib
 import sys
+import types
 from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
+from pydantic import ValidationError
 
 # Add backend/ to sys.path so the module can be imported
 _backend_dir = str(Path(__file__).resolve().parents[3] / "backend")
 if _backend_dir not in sys.path:
     sys.path.insert(0, _backend_dir)
 
-# Mock the services dependency so we don't pull in bcrypt/database
-sys.modules.setdefault("services", MagicMock())
-sys.modules.setdefault("services.empathy_service", MagicMock())
-
-from pydantic import ValidationError  # noqa: E402
-
-# Import the module directly, bypassing api/__init__.py
-_spec = importlib.util.spec_from_file_location(
-    "api_analysis",
-    Path(__file__).resolve().parents[3] / "backend" / "api" / "analysis.py",
-)
-_mod = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(_mod)
+# Stub parent packages: a fake "api" package with the real search path
+# (so ``from .deps import ...`` resolves) and a mocked services package
+# (so analysis.py's EmpathyService import stays lightweight).
+_api_pkg = types.ModuleType("api")
+_api_pkg.__path__ = [str(Path(_backend_dir) / "api")]
+_STUBS = {
+    "api": _api_pkg,
+    "services": MagicMock(),
+    "services.empathy_service": MagicMock(),
+}
+_saved = {name: sys.modules.get(name) for name in _STUBS}
+_saved["api.deps"] = sys.modules.get("api.deps")
+_saved["api.analysis"] = sys.modules.get("api.analysis")
+sys.modules.update(_STUBS)
+try:
+    _mod = importlib.import_module("api.analysis")
+finally:
+    for _name, _val in _saved.items():
+        if _val is None:
+            sys.modules.pop(_name, None)
+        else:
+            sys.modules[_name] = _val
 
 ProjectAnalysisRequest = _mod.ProjectAnalysisRequest
 SessionConfig = _mod.SessionConfig

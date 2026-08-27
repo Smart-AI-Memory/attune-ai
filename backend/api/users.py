@@ -5,11 +5,11 @@ Handles user profile management and settings.
 from typing import Any
 
 from fastapi import APIRouter, Depends
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, EmailStr
 
+from .deps import get_verified_principal
+
 router = APIRouter(prefix="/api/users", tags=["users"])
-security = HTTPBearer()
 
 
 class UpdateProfileRequest(BaseModel):
@@ -21,11 +21,11 @@ class UpdateProfileRequest(BaseModel):
 
 
 @router.get("/profile")
-async def get_profile(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def get_profile(principal: dict[str, Any] = Depends(get_verified_principal)):
     """Get user profile information.
 
     Args:
-        credentials: Bearer token
+        principal: Verified JWT payload of the authenticated caller
 
     Returns:
         User profile data
@@ -44,13 +44,13 @@ async def get_profile(credentials: HTTPAuthorizationCredentials = Depends(securi
 @router.put("/profile")
 async def update_profile(
     request: UpdateProfileRequest,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    principal: dict[str, Any] = Depends(get_verified_principal),
 ):
     """Update user profile.
 
     Args:
         request: Profile update data
-        credentials: Bearer token
+        principal: Verified JWT payload of the authenticated caller
 
     Returns:
         Updated profile
@@ -68,11 +68,11 @@ async def update_profile(
 
 
 @router.get("/usage")
-async def get_usage_stats(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def get_usage_stats(principal: dict[str, Any] = Depends(get_verified_principal)):
     """Get user usage statistics.
 
     Args:
-        credentials: Bearer token
+        principal: Verified JWT payload of the authenticated caller
 
     Returns:
         Usage statistics
@@ -87,11 +87,11 @@ async def get_usage_stats(credentials: HTTPAuthorizationCredentials = Depends(se
 
 
 @router.delete("/account")
-async def delete_account(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def delete_account(principal: dict[str, Any] = Depends(get_verified_principal)):
     """Delete user account.
 
     Args:
-        credentials: Bearer token
+        principal: Verified JWT payload of the authenticated caller
 
     Returns:
         Deletion confirmation

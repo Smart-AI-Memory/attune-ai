@@ -7,13 +7,13 @@ Input validation and error handling included for security.
 from typing import Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, field_validator
 
 from services.empathy_service import EmpathyService
 
+from .deps import get_verified_principal
+
 router = APIRouter(prefix="/api/analysis", tags=["analysis"])
-security = HTTPBearer()
 
 
 def get_empathy_service() -> EmpathyService:
@@ -111,14 +111,14 @@ class SessionConfig(BaseModel):
 async def create_session(
     request: SessionConfig,
     service: EmpathyService = Depends(get_empathy_service),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    principal: dict[str, Any] = Depends(get_verified_principal),
 ):
     """Create a new analysis session.
 
     Args:
         request: Session configuration
         service: EmpathyService instance
-        credentials: Bearer token
+        principal: Verified JWT payload of the authenticated caller
 
     Returns:
         Session ID and metadata
@@ -140,14 +140,14 @@ async def create_session(
 async def get_session(
     session_id: str,
     service: EmpathyService = Depends(get_empathy_service),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    principal: dict[str, Any] = Depends(get_verified_principal),
 ):
     """Get analysis session results.
 
     Args:
         session_id: Session identifier
         service: EmpathyService instance
-        credentials: Bearer token
+        principal: Verified JWT payload of the authenticated caller
 
     Returns:
         Session results and status
@@ -163,14 +163,14 @@ async def get_session(
 async def analyze_project(
     request: ProjectAnalysisRequest,
     service: EmpathyService = Depends(get_empathy_service),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    principal: dict[str, Any] = Depends(get_verified_principal),
 ):
     """Analyze an entire project.
 
     Args:
         request: Project analysis configuration
         service: EmpathyService instance
-        credentials: Bearer token
+        principal: Verified JWT payload of the authenticated caller
 
     Returns:
         Project analysis results
@@ -195,7 +195,7 @@ async def analyze_file(
     file: UploadFile = File(...),
     language: str = "python",
     service: EmpathyService = Depends(get_empathy_service),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    principal: dict[str, Any] = Depends(get_verified_principal),
 ):
     """Analyze a single uploaded file.
 
@@ -203,7 +203,7 @@ async def analyze_file(
         file: Uploaded file (max 10MB)
         language: Programming language (python, javascript, typescript, java, go, rust)
         service: EmpathyService instance
-        credentials: Bearer token
+        principal: Verified JWT payload of the authenticated caller
 
     Returns:
         File analysis results
@@ -275,14 +275,14 @@ async def analyze_file(
 async def get_analysis_history(
     limit: int = 10,
     offset: int = 0,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    principal: dict[str, Any] = Depends(get_verified_principal),
 ):
     """Get user's analysis history.
 
     Args:
         limit: Number of results to return (max 100, default 10)
         offset: Pagination offset (min 0)
-        credentials: Bearer token
+        principal: Verified JWT payload of the authenticated caller
 
     Returns:
         List of past analyses
@@ -325,13 +325,13 @@ async def get_analysis_history(
 @router.delete("/session/{session_id}")
 async def delete_session(
     session_id: str,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    principal: dict[str, Any] = Depends(get_verified_principal),
 ):
     """Delete an analysis session.
 
     Args:
         session_id: Session identifier
-        credentials: Bearer token
+        principal: Verified JWT payload of the authenticated caller
 
     Returns:
         Deletion confirmation

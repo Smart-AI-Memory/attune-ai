@@ -2,12 +2,14 @@
 Handles license purchases, subscriptions, and team management.
 """
 
+from typing import Any
+
 from fastapi import APIRouter, Depends
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, EmailStr
 
+from .deps import get_verified_principal
+
 router = APIRouter(prefix="/api/subscriptions", tags=["subscriptions"])
-security = HTTPBearer()
 
 
 class PurchaseRequest(BaseModel):
@@ -26,11 +28,11 @@ class TeamMemberRequest(BaseModel):
 
 
 @router.get("/")
-async def get_subscriptions(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def get_subscriptions(principal: dict[str, Any] = Depends(get_verified_principal)):
     """Get user's active subscriptions.
 
     Args:
-        credentials: Bearer token
+        principal: Verified JWT payload of the authenticated caller
 
     Returns:
         List of active subscriptions
@@ -55,13 +57,13 @@ async def get_subscriptions(credentials: HTTPAuthorizationCredentials = Depends(
 @router.post("/purchase")
 async def purchase_subscription(
     request: PurchaseRequest,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    principal: dict[str, Any] = Depends(get_verified_principal),
 ):
     """Purchase a new subscription or additional licenses.
 
     Args:
         request: Purchase details
-        credentials: Bearer token
+        principal: Verified JWT payload of the authenticated caller
 
     Returns:
         Purchase confirmation and license keys
@@ -81,11 +83,11 @@ async def purchase_subscription(
 
 
 @router.get("/team")
-async def get_team_members(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def get_team_members(principal: dict[str, Any] = Depends(get_verified_principal)):
     """Get team members for organization subscription.
 
     Args:
-        credentials: Bearer token
+        principal: Verified JWT payload of the authenticated caller
 
     Returns:
         List of team members
@@ -110,13 +112,13 @@ async def get_team_members(credentials: HTTPAuthorizationCredentials = Depends(s
 @router.post("/team/members")
 async def add_team_member(
     request: TeamMemberRequest,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    principal: dict[str, Any] = Depends(get_verified_principal),
 ):
     """Add a new team member.
 
     Args:
         request: Team member details
-        credentials: Bearer token
+        principal: Verified JWT payload of the authenticated caller
 
     Returns:
         Added team member info
@@ -132,13 +134,13 @@ async def add_team_member(
 @router.delete("/team/members/{user_id}")
 async def remove_team_member(
     user_id: str,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    principal: dict[str, Any] = Depends(get_verified_principal),
 ):
     """Remove a team member.
 
     Args:
         user_id: User ID to remove
-        credentials: Bearer token
+        principal: Verified JWT payload of the authenticated caller
 
     Returns:
         Removal confirmation
@@ -148,11 +150,11 @@ async def remove_team_member(
 
 
 @router.get("/licenses")
-async def get_licenses(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def get_licenses(principal: dict[str, Any] = Depends(get_verified_principal)):
     """Get license information for the user's account.
 
     Args:
-        credentials: Bearer token
+        principal: Verified JWT payload of the authenticated caller
 
     Returns:
         License details
@@ -178,13 +180,13 @@ async def get_licenses(credentials: HTTPAuthorizationCredentials = Depends(secur
 @router.post("/licenses/{license_id}/deactivate")
 async def deactivate_license(
     license_id: str,
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    principal: dict[str, Any] = Depends(get_verified_principal),
 ):
     """Deactivate a license from a machine.
 
     Args:
         license_id: License ID to deactivate
-        credentials: Bearer token
+        principal: Verified JWT payload of the authenticated caller
 
     Returns:
         Deactivation confirmation

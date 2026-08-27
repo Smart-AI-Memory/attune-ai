@@ -23,7 +23,7 @@ from typing import Any
 import jwt
 from fastapi import HTTPException, status
 
-from backend.services.database import AuthDatabase
+from .database import AuthDatabase
 
 logger = logging.getLogger(__name__)
 
