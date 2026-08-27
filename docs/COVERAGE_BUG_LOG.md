@@ -1798,3 +1798,34 @@ workflow run <wf> --path <main>/src/attune`):
 Pair total $7.11 (estimate band $3–8). The step-16 obligation for
 14.1.0 is now DISCHARGED with receipts; findings above are triage
 candidates, not yet filed issues.
+
+## 2026-08-27 — 16.0.0 post-release self-review (step 16 receipt)
+
+Both runs ops-runner-launched (server on the merge-SHA-identical
+worktree tree, `85252d3a7`; tree identity verified by tree-hash
+compare) and persisted to `~/.attune/ops/runs/`:
+
+- **code-review** run `58395f0fbc57` — score **72/100**, $5.92,
+  440s. 39 findings (Security 10: 3 High; Quality 11; Performance 7;
+  Architecture 11). Top finding [HIGH, verify-the-claim: read
+  `backend/api/users.py:24` and trace `Depends(security)` vs
+  `verify_token` call sites]: **17 backend endpoints inject
+  HTTPBearer but never call verify_token — any syntactically valid
+  bearer header authenticates destructive routes** (account
+  deletion, purchases, license deactivation). Same class as the
+  2026-08-02 review's "Critical backend auth gap" — RECURRING,
+  strongest candidate for immediate triage.
+- **bug-predict** run `8ba0979ddd58` — risk **44/100**
+  (moderate-low), $3.09, 298s. 16 findings (5 HIGH). Tops
+  [verify-the-claim notes inline]: `classes/reconcile.py:122`
+  fail-open — `r.get('headSha', head_sha)` treats a record MISSING
+  headSha as matching the target SHA (read the dict-get default);
+  `orchestration/ghosts/worktree.py` — four `subprocess.run` git
+  calls with no `timeout=` (grep confirms); `release_parsing.py`
+  `_parse_response` — raw `json.loads` of model text with no schema
+  validation feeding decision logic (the known silent-green LLM
+  parsing class).
+
+Pair total **$9.01** (band $5–10). Step 16 for 16.0.0 is DISCHARGED
+with receipts; findings are triage candidates, not filed issues. The
+release notes may now claim the review happened.
