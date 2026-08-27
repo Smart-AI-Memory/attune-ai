@@ -33,19 +33,6 @@ class Provider(str, Enum):
     ANTHROPIC = "anthropic"
 
 
-class WorkflowMode(str, Enum):
-    """Workflow execution modes.
-
-    DEPRECATED — REMOVE IN v16.0.0 alongside :class:`WorkflowConfig`, its
-    only remaining consumer.
-    """
-
-    SEQUENTIAL = "sequential"
-    PARALLEL = "parallel"
-    GRAPH = "graph"
-    CONVERSATION = "conversation"
-
-
 class AgentOperationError(Exception):
     """Error during agent operation with context."""
 
@@ -255,36 +242,3 @@ class BookProductionConfig(BaseModel):
     def retry_delay(self) -> float:
         """Get retry delay for backward compatibility."""
         return self.agent_config.retry_delay
-
-
-class WorkflowConfig(BaseModel):
-    """Configuration for agent workflows.
-
-    DEPRECATED — REMOVE IN v16.0.0. A field-for-field pydantic twin of
-    :class:`attune.agent_factory.base.WorkflowConfig` with no consumer in
-    this tree; re-exported as ``attune.config.AgentWorkflowConfig``, which
-    now warns on access. Spec ``models-workflows-layering`` D4 ruled the
-    deletion; D6 scheduled it for the next major rather than removing a
-    six-month-old public export without notice.
-    """
-
-    name: str = Field(..., min_length=1)
-    description: str = Field(default="")
-    mode: WorkflowMode = Field(default=WorkflowMode.SEQUENTIAL)
-
-    # Execution settings
-    max_iterations: int = Field(default=10, ge=1, le=100)
-    timeout_seconds: int = Field(default=300, ge=1)
-
-    # State management
-    state_schema: dict[str, Any] | None = Field(default=None)
-    checkpointing: bool = Field(default=True)
-
-    # Error handling
-    retry_on_error: bool = Field(default=True)
-    max_retries: int = Field(default=3, ge=0)
-
-    # Framework options
-    framework_options: dict[str, Any] = Field(default_factory=dict)
-
-    model_config = ConfigDict(use_enum_values=True)

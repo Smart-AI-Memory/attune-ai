@@ -97,9 +97,6 @@ src/attune/platform_utils.py
 src/attune/plugins/registry.py
 src/attune/project_index/models.py
 src/attune/redis_config.py
-src/attune/redis_memory_patterns.py
-src/attune/redis_memory_storage.py
-src/attune/state_manager.py
 src/attune/telemetry/agent_coordination.py
 src/attune/telemetry/agent_tracking.py
 src/attune/telemetry/cli_analysis.py

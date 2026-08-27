@@ -36,8 +36,8 @@ KEY EXPORTS:
 REMOVED in 9.0.0 — legacy "Empathy" framework (see CHANGELOG):
     EmpathyOS, Level1Reactive…Level5Systems, FeedbackLoopDetector,
     LeveragePointAnalyzer. The 5-level maturity model is gone; attune-ai
-    is the Claude Code workflow plugin. StateManager is now deprecated and
-    will be removed in a future release.
+    is the Claude Code workflow plugin. StateManager (the last vestige)
+    was removed in 16.0.0 with the attune.persistence facade.
 
 REMOVED in 14.0.0 — the `attune.exceptions` hierarchy (see CHANGELOG):
     EmpathyFrameworkError and its eight subclasses. They were the last
@@ -111,8 +111,9 @@ if TYPE_CHECKING:
         get_redis_config,
         get_redis_memory,
     )
+    from .metrics_collector import MetricsCollector
     from .pattern_library import Pattern, PatternLibrary, PatternMatch
-    from .persistence import MetricsCollector, PatternPersistence, StateManager
+    from .pattern_persistence import PatternPersistence
 
 # Mapping of attribute names to their module paths
 _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
@@ -172,43 +173,18 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "Pattern": (".pattern_library", "Pattern"),
     "PatternLibrary": (".pattern_library", "PatternLibrary"),
     "PatternMatch": (".pattern_library", "PatternMatch"),
-    # persistence
-    "MetricsCollector": (".persistence", "MetricsCollector"),
-    "PatternPersistence": (".persistence", "PatternPersistence"),
-    "StateManager": (".persistence", "StateManager"),
+    # persistence impls (the attune.persistence facade was removed in 16.0.0)
+    "MetricsCollector": (".metrics_collector", "MetricsCollector"),
+    "PatternPersistence": (".pattern_persistence", "PatternPersistence"),
 }
 
 # Cache for loaded modules
 _loaded_modules: dict[str, object] = {}
 
 
-# Legacy "Empathy" framework surface. The EmpathyOS core + 5-level
-# maturity model were REMOVED in 9.0.0. StateManager is the last vestige
-# still importable; it is not used by the Claude Code workflow plugin at
-# runtime and is slated for removal in a future release. Accessing it
-# emits DeprecationWarning. See CHANGELOG and
-# the EmpathyOS retirement spec under docs/specs/.
-_DEPRECATED_FRAMEWORK: frozenset[str] = frozenset(
-    {
-        "StateManager",
-    }
-)
-
-
 def __getattr__(name: str) -> object:
     """Lazy import handler - loads modules only when accessed."""
     if name in _LAZY_IMPORTS:
-        if name in _DEPRECATED_FRAMEWORK:
-            import warnings
-
-            warnings.warn(
-                f"attune.{name} belongs to the legacy Empathy framework and is "
-                "deprecated. attune-ai now focuses on the Claude Code workflow "
-                "plugin (MCP tools), which does not use it. The framework API "
-                "will be removed in a future release.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
         module_path, attr_name = _LAZY_IMPORTS[name]
 
         # Check cache first
@@ -278,7 +254,6 @@ __all__ = [
     "SecurityViolation",
     "Severity",
     "StagedPattern",
-    "StateManager",
     "TTLStrategy",
     "TeamMetrics",
     # Unified Memory Interface

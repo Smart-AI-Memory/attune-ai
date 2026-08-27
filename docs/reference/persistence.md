@@ -4,16 +4,19 @@ description: Persistence API for pattern storage. Redis, file-based, or in-memor
 
 # Persistence
 
-Data persistence for patterns, metrics, and collaboration state.
+Data persistence for pattern libraries and usage metrics.
+
+!!! note "16.0.0"
+    The `attune.persistence` facade and `StateManager` were removed in
+    16.0.0. Import `PatternPersistence` from `attune.pattern_persistence`
+    and `MetricsCollector` from `attune.metrics_collector`.
 
 ## Overview
 
 The persistence layer provides storage and retrieval for:
 
 - **Pattern Libraries**: Save/load pattern collections (JSON, SQLite)
-- **Collaboration State**: Persist user trust levels and interaction history
 - **Metrics**: Track usage, performance, and success rates
-- **State Management**: Save/restore complete system state
 
 ## Backends
 
@@ -29,7 +32,7 @@ The persistence layer provides storage and retrieval for:
 
 ### PatternPersistence
 
-::: attune.persistence.PatternPersistence
+::: attune.pattern_persistence.PatternPersistence
     options:
       show_root_heading: false
       show_source: false
@@ -46,7 +49,7 @@ Save and load pattern libraries.
 **Example:**
 ```python
 from attune.pattern_library import PatternLibrary
-from attune.persistence import PatternPersistence
+from attune.pattern_persistence import PatternPersistence
 
 # Create and populate library
 library = PatternLibrary()
@@ -66,45 +69,9 @@ print(f"Loaded {len(json_library.patterns)} patterns from JSON")
 print(f"Loaded {len(sqlite_library.patterns)} patterns from SQLite")
 ```
 
-### StateManager
-
-::: attune.persistence.StateManager
-    options:
-      show_root_heading: false
-      show_source: false
-      heading_level: 4
-
-Manage user collaboration states.
-
-**Methods:**
-- `save_state(user_id, state)` - Save user's collaboration state
-- `load_state(user_id)` - Load user's collaboration state
-- `list_users()` - List all users with saved states
-- `delete_state(user_id)` - Delete user's state
-
-**Example:**
-```python
-from attune.persistence import StateManager
-
-# Initialize state manager
-state_manager = StateManager(state_dir=".attune/state")
-
-# Save a user's collaboration state
-state = {"trust_level": 0.65, "interaction_count": 50}
-state_manager.save_state("user_123", state)
-
-# Later, load state
-saved_state = state_manager.load_state("user_123")
-print(f"Restored state: {saved_state}")
-
-# List all saved users
-users = state_manager.list_users()
-print(f"Users with saved states: {users}")
-```
-
 ### MetricsCollector
 
-::: attune.persistence.MetricsCollector
+::: attune.metrics_collector.MetricsCollector
     options:
       show_root_heading: false
       show_source: false
@@ -120,7 +87,7 @@ Track usage metrics and performance.
 
 **Example:**
 ```python
-from attune.persistence import MetricsCollector
+from attune.metrics_collector import MetricsCollector
 
 # Initialize collector
 collector = MetricsCollector(db_path=".attune/metrics.db")
@@ -152,11 +119,8 @@ print(f"Total interactions: {global_stats['total_interactions']}")
 ```python
 from attune import AttuneConfig
 from attune.pattern_library import PatternLibrary
-from attune.persistence import (
-    PatternPersistence,
-    StateManager,
-    MetricsCollector
-)
+from attune.metrics_collector import MetricsCollector
+from attune.pattern_persistence import PatternPersistence
 
 # Initialize persistence components
 config = AttuneConfig(
@@ -166,7 +130,6 @@ config = AttuneConfig(
 )
 
 pattern_library = PatternLibrary()
-state_manager = StateManager(state_dir=".attune/state")
 metrics = MetricsCollector(db_path=".attune/metrics.db")
 
 # Load existing patterns if available
@@ -176,13 +139,6 @@ try:
 except FileNotFoundError:
     print("No existing patterns, starting fresh")
 
-# Try to load saved state
-try:
-    saved_state = state_manager.load_state(config.user_id)
-    print(f"Restored state: {saved_state}")
-except FileNotFoundError:
-    print("No saved state, starting fresh")
-
 # Record metrics for an interaction
 metrics.record_interaction(
     user_id=config.user_id,
@@ -190,9 +146,6 @@ metrics.record_interaction(
     success=True,
     response_time_ms=145.3
 )
-
-# Save state after interaction
-state_manager.save_state(config.user_id, {"trust_level": 0.65})
 
 # Save patterns
 PatternPersistence.save_to_sqlite(pattern_library, ".attune/patterns.db")
@@ -203,7 +156,7 @@ print("All data persisted successfully")
 ### JSON Pattern Export/Import
 
 ```python
-from attune.persistence import PatternPersistence
+from attune.pattern_persistence import PatternPersistence
 
 # Export for backup or sharing
 library = PatternPersistence.load_from_sqlite("patterns.db")
@@ -219,7 +172,7 @@ print(f"Migrated {len(imported.patterns)} patterns")
 ### Metrics Dashboard
 
 ```python
-from attune.persistence import MetricsCollector
+from attune.metrics_collector import MetricsCollector
 
 collector = MetricsCollector(db_path="metrics.db")
 
@@ -252,26 +205,6 @@ print("Global Statistics:")
 print(f"  Total users: {global_stats['total_users']}")
 print(f"  Total interactions: {global_stats['total_interactions']}")
 print(f"  Overall success rate: {global_stats['success_rate']:.0%}")
-```
-
-### State Migration
-
-```python
-from attune.persistence import StateManager
-
-# Migrate states between systems
-old_manager = StateManager(state_dir="/old/system/.attune/state")
-new_manager = StateManager(state_dir="/new/system/.attune/state")
-
-users = old_manager.list_users()
-print(f"Migrating {len(users)} user states...")
-
-for user_id in users:
-    state = old_manager.load_state(user_id)
-    new_manager.save_state(user_id, state)
-    print(f"  Migrated {user_id}: trust={state.trust_level:.0%}, level={state.current_level}")
-
-print("Migration complete!")
 ```
 
 ## Database Schema
@@ -362,29 +295,13 @@ CREATE INDEX idx_interactions_timestamp ON interactions(timestamp);
 }
 ```
 
-### Collaboration State JSON
-
-```json
-{
-  "user_id": "user_123",
-  "trust_level": 0.65,
-  "current_level": 3,
-  "target_level": 4,
-  "interaction_count": 50,
-  "success_count": 45,
-  "failure_count": 5,
-  "last_interaction": "2025-01-20T15:00:00",
-  "created_at": "2025-01-01T00:00:00"
-}
-```
-
 ## Best Practices
 
 ### Backup Strategy
 
 ```python
 from datetime import datetime
-from attune.persistence import PatternPersistence
+from attune.pattern_persistence import PatternPersistence
 
 def backup_patterns():
     """Daily backup of pattern library"""
