@@ -1829,3 +1829,41 @@ compare) and persisted to `~/.attune/ops/runs/`:
 Pair total **$9.01** (band $5–10). Step 16 for 16.0.0 is DISCHARGED
 with receipts; findings are triage candidates, not filed issues. The
 release notes may now claim the review happened.
+
+## 2026-08-27 — backend/api bearer-token verification (dormant-code hardening)
+
+Verified and fixed the code-review lead (run `58395f0fbc57`) that
+"17 endpoints skip `verify_token`". **Classification: Class 1
+(latent security defect) in DORMANT code** — the `backend/`
+FastAPI app is deployed nowhere (verified 2026-08-27: no Vercel
+Python project, `smartaimemory.com/api/health` 404s, `BACKEND_URL`
+unset in prod), so this is hardening, not a live incident.
+
+**Verification (traced all 20 `Depends(security)` sites):** the "17"
+is confirmed exactly. The bare `HTTPBearer` proved a header was
+*present* (missing header → auto-reject) but never validated the
+token, so any non-empty bearer — forged or expired — was accepted
+and the handler returned 2xx.
+- **Genuinely unverified (17):** `analysis.py` ×6 (`create_session`,
+  `get_session`, `analyze_project`, `analyze_file`,
+  `get_analysis_history`, `delete_session`), `subscriptions.py` ×7,
+  `users.py` ×4.
+- **Already verified (3):** `auth.py` `refresh_token`,
+  `get_current_user`, `validate_license` — all reach
+  `AuthService.verify_token` (`jwt.decode`, raises 401).
+- **Adjacent finding, out of the 17-scope:** `wizards.py` has *zero*
+  auth dependency on its routes.
+
+**Fix:** single-sourced the JWT decode into module-level
+`auth_service.verify_access_token`; new `backend/api/dependencies.py`
+`require_principal` dependency verifies the token and returns the
+principal; the 17 routes now use `Depends(require_principal)`.
+Regression guard: `tests/unit/backend/test_api_bearer_verification.py`
+(58 tests) proves a forged bearer → 401 on each of the 17 via a real
+`TestClient`, plus expired-token and helper unit coverage. No new
+`except` sites (the two in `verify_token` were relocated within
+`auth_service.py`), so the broad-except ratchet is unaffected.
+
+Note: this is the FIX receipt for the finding recorded in the
+step-16 self-review entry above (run `58395f0fbc57`). Shipped in
+PR #2342.
