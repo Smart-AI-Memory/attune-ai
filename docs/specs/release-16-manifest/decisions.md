@@ -66,3 +66,31 @@ code search ≈ 0 importers, control query ~30) is verified; the
 in-process-extension demand is the chair's forecast, stated as such
 — the design is sized so that if the demand never materializes, the
 carrying cost is the extension module + CLI, not a framework.
+
+## D2 — D1's mechanism CONFIRMED on the author-experience criterion (chair-ruled 2026-08-27)
+
+After 16.0.0's destructive half shipped, the chair revisited the
+extension-system mechanism (a downsized config-key-loader revision
+had been drafted in-session on 2026-08-26 and deliberately slept on).
+The lead put the question as WHICH CRITERION RULES — security posture
+from day one, smallest frozen surface, or third-party author
+experience — with the full argument set already on the round-table
+board (threads `q-core-plugins-vs-post-framework-001` and
+`q-16-release-reliability-001`). **The chair ruled: author
+experience.** Under that criterion D1 stands as written: the unified
+`attune.extensions` system with trust gating and the
+`enable`/`doctor` CLI ships as passenger 4, because the polished
+`pip install` + `enable` path is the ecosystem-creating surface the
+config-key loader cannot offer.
+
+Recorded against the counter-cases (all argued in-session, held on
+the board): the security delta between the designs is ~zero until
+third-party wheels exist; the reliability round located the
+least-tested layer exactly where D1 lives (mitigated by the
+now-permanent `scripts/release_artifact_smoke.py` gate); and the
+smallest-frozen-surface argument favored the downsize. The chair
+weighed the author-experience criterion as dominant with those
+counter-cases in front of them — the fourth and final lean on this
+decision, resolved by naming the criterion rather than re-litigating
+the designs. The phased-shipping open question in requirements.md
+remains open (contracts-first within 16.x is compatible with D1).

@@ -1,8 +1,10 @@
 # 16.0.0 Major-Release Manifest
 
-**Status:** draft (seeded 2026-08-26 from the round-table promotion
-on thread `q-core-plugins-vs-post-framework-001`; D1 is chair-ruled,
-the manifest as a whole awaits chair review)
+**Status:** active (2026-08-27) — destructive half shipped as 16.0.0
+(PRs #2331, #2333, #2334 + release PR; passengers 1-3 and 5 executed,
+D6's deprecations discharged). Remaining scope: passenger 4 (the
+extension system, 16.x) per D1 as ruled — confirmed by D2
+(criterion: author experience).
 **Slug:** `release-16-manifest`
 **Provenance:** 16.0.0-class breaking work began accumulating the
 day 15.1.0 shipped — the dead-module deletion PR #2331, the D4/D6
@@ -25,7 +27,7 @@ the dissent register.
 
 ## Passengers
 
-### 1. Dead framework-era root modules — PR #2331 (open)
+### 1. Dead framework-era root modules — ✅ SHIPPED (#2331)
 
 Nine modules (~2,200 lines) deleted with caller-grep receipts:
 `discovery`, `pattern_cache`, `cache_stats`, `cache_monitor`,
@@ -34,7 +36,7 @@ Nine modules (~2,200 lines) deleted with caller-grep receipts:
 into its only consumer (`scripts/generate_tip_templates.py`).
 Merging this PR is what commits the next release to being 16.0.0.
 
-### 2. Root-level deprecation shims — delete
+### 2. Root-level deprecation shims — ✅ SHIPPED (#2333)
 
 The already-declared shims at package root, each announcing its
 replacement today: `coordination` (shim since 6.8.0),
@@ -42,7 +44,7 @@ replacement today: `coordination` (shim since 6.8.0),
 `redis_memory_patterns` (all "use attune_redis"), `persistence`
 (facade), `state_manager` (deprecated at 9.0.0).
 
-### 3. `models-workflows-layering` scheduled removals (D4/D6, D5/D2)
+### 3. `models-workflows-layering` scheduled removals — ✅ SHIPPED (#2333)
 
 - `config/agent_config.AgentWorkflowConfig` + `WorkflowMode` —
   deletion pre-ruled by that spec's D4, timing ruled by its D6; the
@@ -76,7 +78,7 @@ The shared consensus core plus Codex's mechanism, as ruled in D1:
   startup; a standalone package works without attune while its
   adapter works with it).
 
-### 5. Seam collapses (D1 — the destructive half)
+### 5. Seam collapses — ✅ SHIPPED (#2334)
 
 - `attune.plugins` and `attune.wizards` entry-point groups collapse
   to direct imports/registration (both have exactly one effective
