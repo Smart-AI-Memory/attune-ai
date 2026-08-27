@@ -341,7 +341,6 @@ class TestWizardRegistry:
 
         monkeypatch.setattr(reg, "_WIZARD_REGISTRY", {})
         monkeypatch.setattr(reg, "_CUSTOM_WIZARD_INSTANCES", {})
-        monkeypatch.setattr(reg, "_discovered", True)  # skip entry-point scan
         monkeypatch.setattr(reg, "_custom_loaded", True)  # skip YAML scan
 
     def _dummy_wizard_class(self, wizard_id: str = "dummy") -> type:
@@ -826,7 +825,6 @@ class TestRegistryCustomWizardLoading:
 
         monkeypatch.setattr(reg, "_WIZARD_REGISTRY", {})
         monkeypatch.setattr(reg, "_CUSTOM_WIZARD_INSTANCES", {})
-        monkeypatch.setattr(reg, "_discovered", True)
         monkeypatch.setattr(reg, "_custom_loaded", False)
 
     def test_load_custom_wizards_from_directory(self, tmp_path, monkeypatch):

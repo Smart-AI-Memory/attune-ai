@@ -450,26 +450,6 @@ Changelog = "https://github.com/Smart-AI-Memory/attune-ai/blob/main/CHANGELOG.md
 [project.entry-points.pytest11]
 attune_crypto_pin = "attune._pytest_crypto_pin"
 
-# Plugin entry points for auto-discovery
-[project.entry-points."attune.plugins"]
-software = "attune_software.plugin:SoftwarePlugin"
-redis = "attune_redis.plugin:RedisPlugin"
-
-# NOTE on workflow entry points: attune's own built-in workflows are
-# registered in attune.workflows._DEFAULT_WORKFLOW_NAMES (lazy-loaded);
-# they are deliberately NOT duplicated as "attune.workflows" entry
-# points, which discover_workflows() now reads and would import eagerly.
-# Third-party packages register theirs under
-# [project.entry-points."attune.workflows"].
-
-# Wizard entry points for auto-discovery
-[project.entry-points."attune.wizards"]
-debug = "attune.wizards.builtin.debug_wizard:DebugWizard"
-test-gen = "attune.wizards.builtin.test_gen_wizard:TestGenWizard"
-refactor = "attune.wizards.builtin.refactor_wizard:RefactorWizard"
-security = "attune.wizards.builtin.security_wizard:SecurityWizard"
-release-prep = "attune.wizards.builtin.release_prep_wizard:ReleasePrepWizard"
-
 # Memory backend plugin entry points
 [project.entry-points."attune.memory_backends"]
 file = "attune.memory.file_stash:FileStashBackend"

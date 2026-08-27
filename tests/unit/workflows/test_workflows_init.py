@@ -75,9 +75,9 @@ class TestDiscoverWorkflows:
 
         result = discover_workflows(include_defaults=False)
 
-        # Without defaults, only entry_points are loaded
-        # (likely empty in test environment)
-        assert isinstance(result, dict)
+        # Without defaults nothing else is loaded — the entry-point
+        # reading path was removed in 16.0.0 (release-16-manifest D1).
+        assert result == {}
 
     def test_discover_with_disabled_workflows(self):
         """Disabled workflows are excluded from results."""
@@ -269,89 +269,6 @@ class TestDiscoverWorkflowsWithConfig:
 
         assert "code-review" not in result
         assert "bug-predict" not in result
-
-    def test_discover_entry_points_exception_swallowed(self):
-        """discover_workflows handles entry_points() exceptions silently."""
-        from unittest.mock import patch
-
-        from attune.workflows import discover_workflows
-
-        with patch(
-            "importlib.metadata.entry_points",
-            side_effect=Exception("ep error"),
-        ):
-            result = discover_workflows()
-
-        assert isinstance(result, dict)
-
-    def test_discover_entry_point_load_failure_skipped(self):
-        """discover_workflows skips entry points that fail to load."""
-        from unittest.mock import MagicMock, patch
-
-        from attune.workflows import discover_workflows
-
-        mock_ep = MagicMock()
-        mock_ep.name = "failing-workflow"
-        mock_ep.load.side_effect = Exception("load failed")
-
-        with patch("importlib.metadata.entry_points", return_value=[mock_ep]):
-            result = discover_workflows()
-
-        assert "failing-workflow" not in result
-
-    def test_discover_entry_point_not_type_skipped(self):
-        """discover_workflows skips entry points that are not types."""
-        from unittest.mock import MagicMock, patch
-
-        from attune.workflows import discover_workflows
-
-        mock_ep = MagicMock()
-        mock_ep.name = "not-a-type"
-        mock_ep.load.return_value = "just a string"  # Not a type
-
-        with patch("importlib.metadata.entry_points", return_value=[mock_ep]):
-            result = discover_workflows()
-
-        assert "not-a-type" not in result
-
-    def test_discover_entry_point_with_execute_added(self):
-        """discover_workflows adds entry points that are types with execute attr."""
-        from unittest.mock import MagicMock, patch
-
-        from attune.workflows import discover_workflows
-
-        class FakeWorkflow:
-            execute = lambda self: None  # noqa: E731
-
-        mock_ep = MagicMock()
-        mock_ep.name = "fake-ep-workflow"
-        mock_ep.load.return_value = FakeWorkflow
-
-        with patch("importlib.metadata.entry_points", return_value=[mock_ep]):
-            result = discover_workflows(include_defaults=False)
-
-        assert "fake-ep-workflow" in result
-
-    def test_discover_entry_point_disabled_not_added(self):
-        """discover_workflows respects config.disabled_workflows for entry points."""
-        from unittest.mock import MagicMock, patch
-
-        from attune.workflows import discover_workflows
-        from attune.workflows.config import WorkflowConfig
-
-        class FakeWorkflow:
-            execute = lambda self: None  # noqa: E731
-
-        mock_ep = MagicMock()
-        mock_ep.name = "disabled-ep-workflow"
-        mock_ep.load.return_value = FakeWorkflow
-
-        config = WorkflowConfig(disabled_workflows=["disabled-ep-workflow"])
-
-        with patch("importlib.metadata.entry_points", return_value=[mock_ep]):
-            result = discover_workflows(include_defaults=False, config=config)
-
-        assert "disabled-ep-workflow" not in result
 
 
 class TestGetOptInWorkflows:

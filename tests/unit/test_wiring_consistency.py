@@ -112,18 +112,6 @@ class TestWorkflowEntryPoints:
     must still load correctly.
     """
 
-    def test_workflow_entry_points_are_loadable(self):
-        eps = list(importlib.metadata.entry_points(group="attune.workflows"))
-
-        for ep in eps:
-            cls = ep.load()
-            assert isinstance(
-                cls, type
-            ), f"Entry point '{ep.name}' did not load a class (got {type(cls).__name__})"
-            assert hasattr(
-                cls, "execute"
-            ), f"Entry point '{ep.name}' loaded {cls.__name__} which has no execute method"
-
     def test_builtin_workflows_stay_out_of_entry_points(self):
         """The retired built-in block must not re-enter pyproject (#2238)."""
         pyproject = Path(__file__).resolve().parents[2] / "pyproject.toml"
@@ -198,23 +186,3 @@ class TestCLIRouterWiring:
         assert not undocumented, (
             f"Hubs used in _keyword_to_skill but missing from _hub_descriptions: " f"{undocumented}"
         )
-
-
-# ---------------------------------------------------------------------------
-# 6. Wizard entry points: every wizard is importable
-# ---------------------------------------------------------------------------
-
-
-class TestWizardEntryPoints:
-    """Every attune.wizards entry point must load successfully."""
-
-    def test_wizard_entry_points_are_loadable(self):
-        eps = list(importlib.metadata.entry_points(group="attune.wizards"))
-        assert eps, "No attune.wizards entry points found — is the package installed?"
-
-        for ep in eps:
-            cls = ep.load()
-            assert isinstance(cls, type), (
-                f"Wizard entry point '{ep.name}' did not load a class "
-                f"(got {type(cls).__name__})"
-            )

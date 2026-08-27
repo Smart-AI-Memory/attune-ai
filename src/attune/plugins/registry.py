@@ -7,19 +7,24 @@ Licensed under the Apache License, Version 2.0
 """
 
 import logging
-from importlib.metadata import entry_points
 
 from .base import BasePlugin, BaseWorkflow, PluginValidationError
 
 logger = logging.getLogger(__name__)
 
-# Sole entry point group — the legacy "attune_framework.plugins" and
-# "empathy_framework.plugins" groups were removed in 15.0.0.
-_ENTRY_POINT_GROUP = "attune.plugins"
+# The bundled plugins, loaded directly. The "attune.plugins" entry-point
+# group was removed in 16.0.0 (release-16-manifest D1: both registered
+# plugins ship in the wheel, so the discovery indirection had exactly one
+# configuration). Third-party extension returns via the ruled extension
+# system; the BasePlugin contract is unchanged.
+_BUILTIN_PLUGINS: tuple[tuple[str, str, str], ...] = (
+    ("software", "attune_software.plugin", "SoftwarePlugin"),
+    ("redis", "attune_redis.plugin", "RedisPlugin"),
+)
 
-# Module-level discovery cache: avoids repeated importlib.metadata scans.
-# Maps entry-point name -> loaded plugin class.  Populated on first
-# auto_discover() and reused by subsequent PluginRegistry instances.
+# Module-level discovery cache: maps plugin name -> loaded plugin class.
+# Populated on first auto_discover() and reused by subsequent
+# PluginRegistry instances.
 _discovery_cache: dict[str, type] | None = None
 
 
@@ -27,11 +32,11 @@ class PluginRegistry:
     """Central registry for managing domain plugins.
 
     Features:
-    - Auto-discovery via entry points
+    - Built-in plugin loading (direct imports; no entry-point scan)
     - Manual registration
     - Lazy initialization
     - Graceful degradation (missing plugins don't crash)
-    - Discovery caching (avoids repeated entry_points scans)
+    - Discovery caching (avoids repeated plugin imports)
     """
 
     def __init__(self):
@@ -41,38 +46,36 @@ class PluginRegistry:
         self.logger = logging.getLogger("attune.plugins.registry")
 
     def auto_discover(self) -> None:
-        """Automatically discover plugins via entry points.
+        """Load the built-in plugins via direct imports.
 
-        Plugins register themselves in pyproject.toml:
-
-        [project.entry-points."attune.plugins"]
-        software = "attune_software.plugin:SoftwarePlugin"
-        healthcare = "attune_healthcare.plugin:HealthcarePlugin"
-
-        Discovery results are cached at module level so that repeated
-        PluginRegistry instances (e.g. after global reset) skip the
-        importlib.metadata scan.
+        The plugin set is the static ``_BUILTIN_PLUGINS`` table — both
+        plugins ship in the attune-ai wheel, so there is nothing to
+        scan. Loading stays best-effort (a broken plugin logs and is
+        skipped, never crashes), and results are cached at module level
+        so repeated PluginRegistry instances skip the imports.
         """
         global _discovery_cache
 
         if self._auto_discovered:
             return
 
-        self.logger.info("Auto-discovering plugins...")
+        self.logger.info("Loading built-in plugins...")
 
         # Build or reuse the discovery cache
         if _discovery_cache is None:
+            import importlib
+
             _discovery_cache = {}
-            for ep in entry_points(group=_ENTRY_POINT_GROUP):
-                if ep.name not in _discovery_cache:
-                    try:
-                        _discovery_cache[ep.name] = ep.load()
-                    except Exception as e:  # noqa: BLE001
-                        # INTENTIONAL: entry point load is best-effort
-                        self.logger.warning(
-                            f"Failed to load plugin '{ep.name}': {e}",
-                            exc_info=True,
-                        )
+            for name, module_path, class_name in _BUILTIN_PLUGINS:
+                try:
+                    module = importlib.import_module(module_path)
+                    _discovery_cache[name] = getattr(module, class_name)
+                except Exception as e:  # noqa: BLE001
+                    # INTENTIONAL: built-in plugin load is best-effort
+                    self.logger.warning(
+                        f"Failed to load plugin '{name}': {e}",
+                        exc_info=True,
+                    )
 
         # Instantiate and register from cache
         for name, plugin_class in _discovery_cache.items():
@@ -88,7 +91,7 @@ class PluginRegistry:
                 self.logger.warning(f"Failed to init plugin '{name}': {e}", exc_info=True)
 
         self._auto_discovered = True
-        self.logger.info(f"Auto-discovery complete. {len(self._plugins)} plugins loaded.")
+        self.logger.info(f"Built-in plugin loading complete. {len(self._plugins)} plugins loaded.")
 
     def register_plugin(self, name: str, plugin: BasePlugin) -> None:
         """Manually register a plugin.
@@ -272,7 +275,7 @@ def get_global_registry() -> PluginRegistry:
 def clear_discovery_cache() -> None:
     """Clear the module-level discovery cache.
 
-    Useful in tests or when entry points have changed at runtime
+    Useful in tests or when plugin modules have changed at runtime
     (e.g. after installing a new plugin package).
     """
     global _discovery_cache, _global_registry

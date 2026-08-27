@@ -3,7 +3,7 @@
 Tests cover:
 - register_wizard / get_wizard / list_wizards
 - save_custom_wizard / delete_custom_wizard
-- _discover_wizards, _load_builtins, _load_custom_wizards
+- _load_builtins, _load_custom_wizards
 - Path validation for save operations
 - Protection of built-in wizards from deletion
 
@@ -11,7 +11,7 @@ Created: 2026-02-15
 """
 
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -46,7 +46,6 @@ def _clean_registry():
     """Reset registry state between tests."""
     original_registry = registry._WIZARD_REGISTRY.copy()
     original_custom = registry._CUSTOM_WIZARD_INSTANCES.copy()
-    original_discovered = registry._discovered
     original_custom_loaded = registry._custom_loaded
 
     yield
@@ -55,7 +54,6 @@ def _clean_registry():
     registry._WIZARD_REGISTRY.update(original_registry)
     registry._CUSTOM_WIZARD_INSTANCES.clear()
     registry._CUSTOM_WIZARD_INSTANCES.update(original_custom)
-    registry._discovered = original_discovered
     registry._custom_loaded = original_custom_loaded
 
 
@@ -100,17 +98,15 @@ class TestGetWizard:
         result = registry.get_wizard("fake")
         assert result is FakeWizard
 
-    @patch.object(registry, "_discover_wizards")
     @patch.object(registry, "_load_builtins")
     @patch.object(registry, "_load_custom_wizards")
-    def test_get_triggers_discovery(self, mock_custom, mock_builtins, mock_discover):
+    def test_get_triggers_discovery(self, mock_custom, mock_builtins):
         """Test that get_wizard triggers discovery for unknown IDs."""
         registry._WIZARD_REGISTRY.clear()
 
         result = registry.get_wizard("nonexistent")
 
         assert result is None
-        mock_discover.assert_called_once()
         mock_builtins.assert_called_once()
         mock_custom.assert_called_once()
 
@@ -123,10 +119,9 @@ class TestGetWizard:
 class TestListWizards:
     """Test list_wizards."""
 
-    @patch.object(registry, "_discover_wizards")
     @patch.object(registry, "_load_builtins")
     @patch.object(registry, "_load_custom_wizards")
-    def test_list_returns_configs(self, mock_custom, mock_builtins, mock_discover):
+    def test_list_returns_configs(self, mock_custom, mock_builtins):
         """Test list_wizards returns sorted configs."""
         registry._WIZARD_REGISTRY.clear()
         registry._WIZARD_REGISTRY["fake"] = FakeWizard
@@ -137,10 +132,9 @@ class TestListWizards:
         assert configs[0].wizard_id == "fake"
         assert configs[0].name == "Fake Wizard"
 
-    @patch.object(registry, "_discover_wizards")
     @patch.object(registry, "_load_builtins")
     @patch.object(registry, "_load_custom_wizards")
-    def test_list_sorts_by_id(self, mock_custom, mock_builtins, mock_discover):
+    def test_list_sorts_by_id(self, mock_custom, mock_builtins):
         """Test configs are sorted by wizard_id."""
         registry._WIZARD_REGISTRY.clear()
 
@@ -273,21 +267,7 @@ class TestDeleteCustomWizard:
 
 
 class TestDiscovery:
-    """Test entry-point discovery and loading."""
-
-    def test_discover_runs_once(self):
-        """Test _discover_wizards only runs once."""
-        registry._discovered = False
-
-        with patch("importlib.metadata.entry_points") as mock_eps:
-            mock_eps.return_value = MagicMock()
-            mock_eps.return_value.select = MagicMock(return_value=[])
-
-            registry._discover_wizards()
-            registry._discover_wizards()
-
-            # entry_points should only be called once
-            mock_eps.assert_called_once()
+    """Test builtin/custom wizard loading."""
 
     def test_load_builtins(self):
         """Test _load_builtins loads built-in wizards."""
@@ -329,177 +309,6 @@ class TestDiscovery:
         registry._load_custom_wizards()
 
         assert registry._custom_loaded is True
-
-    def test_discover_with_entry_points_select(self):
-        """Test _discover_wizards loads entry points via select()."""
-        registry._discovered = False
-        registry._WIZARD_REGISTRY.clear()
-
-        mock_ep = MagicMock()
-        mock_ep.name = "ep-wizard"
-        mock_wizard_class = MagicMock()
-        mock_wizard_class.config = WizardConfig(
-            wizard_id="ep-wizard", name="EP", description="From entry point"
-        )
-        mock_ep.load.return_value = mock_wizard_class
-
-        mock_eps = MagicMock()
-        mock_eps.select = MagicMock(return_value=[mock_ep])
-
-        with patch("importlib.metadata.entry_points", return_value=mock_eps):
-            registry._discover_wizards()
-
-        assert "ep-wizard" in registry._WIZARD_REGISTRY
-        assert registry._WIZARD_REGISTRY["ep-wizard"] is mock_wizard_class
-
-    def test_discover_with_entry_points_dict_fallback(self):
-        """Test _discover_wizards handles dict-style entry_points (no select)."""
-        registry._discovered = False
-        registry._WIZARD_REGISTRY.clear()
-
-        mock_ep = MagicMock()
-        mock_ep.name = "dict-wizard"
-        mock_wizard_class = MagicMock()
-        mock_wizard_class.config = WizardConfig(
-            wizard_id="dict-wizard", name="Dict", description="From dict"
-        )
-        mock_ep.load.return_value = mock_wizard_class
-
-        # No .select attribute — simulates older Python
-        mock_eps = {"attune.wizards": [mock_ep]}
-
-        with patch("importlib.metadata.entry_points", return_value=mock_eps):
-            registry._discover_wizards()
-
-        assert "dict-wizard" in registry._WIZARD_REGISTRY
-
-    def test_discover_loads_from_legacy_empathy_wizards_group(self):
-        """Wizards declared under the deprecated ``empathy.wizards`` group
-        still load (with a DeprecationWarning) for one release window."""
-        registry._discovered = False
-        registry._WIZARD_REGISTRY.clear()
-
-        mock_ep = MagicMock()
-        mock_ep.name = "legacy-wizard"
-        mock_wizard_class = MagicMock()
-        mock_wizard_class.config = WizardConfig(
-            wizard_id="legacy-wizard",
-            name="Legacy",
-            description="From legacy group",
-        )
-        mock_ep.load.return_value = mock_wizard_class
-
-        # Dict-style: only the legacy group is populated.
-        mock_eps = {"empathy.wizards": [mock_ep]}
-
-        import warnings as _warnings
-
-        with patch("importlib.metadata.entry_points", return_value=mock_eps):
-            with _warnings.catch_warnings(record=True) as caught:
-                _warnings.simplefilter("always")
-                registry._discover_wizards()
-
-        assert "legacy-wizard" in registry._WIZARD_REGISTRY
-        deprecation_msgs = [
-            str(w.message) for w in caught if issubclass(w.category, DeprecationWarning)
-        ]
-        assert any("empathy.wizards" in msg for msg in deprecation_msgs)
-        assert any("attune.wizards" in msg for msg in deprecation_msgs)
-
-    def test_discover_prefers_new_group_over_legacy_on_name_collision(self):
-        """When the same entry-point name appears in both groups, the new
-        group wins and no deprecation warning fires for that name."""
-        registry._discovered = False
-        registry._WIZARD_REGISTRY.clear()
-
-        new_ep = MagicMock()
-        new_ep.name = "dual-wizard"
-        new_class = MagicMock()
-        new_class.config = WizardConfig(
-            wizard_id="dual-wizard", name="New", description="From new group"
-        )
-        new_ep.load.return_value = new_class
-
-        legacy_ep = MagicMock()
-        legacy_ep.name = "dual-wizard"
-        legacy_class = MagicMock()
-        legacy_class.config = WizardConfig(
-            wizard_id="dual-wizard",
-            name="Legacy",
-            description="From legacy group",
-        )
-        legacy_ep.load.return_value = legacy_class
-
-        mock_eps = {
-            "attune.wizards": [new_ep],
-            "empathy.wizards": [legacy_ep],
-        }
-
-        import warnings as _warnings
-
-        with patch("importlib.metadata.entry_points", return_value=mock_eps):
-            with _warnings.catch_warnings(record=True) as caught:
-                _warnings.simplefilter("always")
-                registry._discover_wizards()
-
-        assert registry._WIZARD_REGISTRY["dual-wizard"] is new_class
-        legacy_ep.load.assert_not_called()
-        deprecation_msgs = [
-            str(w.message) for w in caught if issubclass(w.category, DeprecationWarning)
-        ]
-        assert not any("dual-wizard" in msg for msg in deprecation_msgs)
-
-    def test_discover_skips_entry_point_without_config_attr(self):
-        """Wizard classes missing a ``config`` attribute are silently
-        skipped — not registered, no exception raised."""
-        registry._discovered = False
-        registry._WIZARD_REGISTRY.clear()
-
-        mock_ep = MagicMock()
-        mock_ep.name = "no-config"
-        # Object without a ``config`` attribute.
-        mock_ep.load.return_value = object()
-
-        mock_eps = MagicMock()
-        mock_eps.select = MagicMock(return_value=[mock_ep])
-
-        with patch("importlib.metadata.entry_points", return_value=mock_eps):
-            registry._discover_wizards()
-
-        assert "no-config" not in registry._WIZARD_REGISTRY
-        assert not any(
-            getattr(v, "__class__", None) is object for v in registry._WIZARD_REGISTRY.values()
-        )
-
-    def test_discover_skips_broken_entry_point(self):
-        """Test _discover_wizards gracefully handles broken entry points."""
-        registry._discovered = False
-        registry._WIZARD_REGISTRY.clear()
-
-        mock_ep = MagicMock()
-        mock_ep.name = "broken"
-        mock_ep.load.side_effect = ImportError("missing dependency")
-
-        mock_eps = MagicMock()
-        mock_eps.select = MagicMock(return_value=[mock_ep])
-
-        with patch("importlib.metadata.entry_points", return_value=mock_eps):
-            registry._discover_wizards()
-
-        assert "broken" not in registry._WIZARD_REGISTRY
-
-    def test_discover_handles_entry_points_exception(self):
-        """Test _discover_wizards handles total failure gracefully."""
-        registry._discovered = False
-
-        with patch(
-            "importlib.metadata.entry_points",
-            side_effect=RuntimeError("metadata broken"),
-        ):
-            registry._discover_wizards()
-
-        # Should not raise, just mark as discovered
-        assert registry._discovered is True
 
 
 # =========================================================================

@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- **BREAKING (16.0.0-class): the `attune.plugins` and `attune.wizards`
+  entry-point groups are collapsed to direct registration**
+  (release-16-manifest D1 — both groups had exactly one effective
+  configuration: attune registering its own bundled code). The plugin
+  registry now loads a static builtin table (`software`, `redis`); the
+  wizard registry loads its five built-ins directly; the dead
+  `attune.workflows` entry-point *reading* path is deleted (nothing
+  ever populated the group). If you registered an external wizard or
+  plugin via these entry points, that path is gone — Python-level
+  extension returns via the 16.x extension system, and YAML wizards in
+  `.attune/wizards/` continue to work. The `BasePlugin` /
+  `register_mcp_tools()` contract and the `attune.memory_backends`
+  entry-point group (the one seam the architecture ruling keeps) are
+  unchanged. A drift guard pins the collapsed groups absent from
+  pyproject.
+
 - **BREAKING (16.0.0-class): the six 15.x deprecation aliases from the
   `WorkflowConfig` collision are gone** (spec `models-workflows-layering`
   D2/D4/D5/D6, timing pre-ruled): `attune.config.AgentWorkflowConfig`,
