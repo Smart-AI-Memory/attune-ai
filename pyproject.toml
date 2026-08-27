@@ -238,6 +238,7 @@ dev = [
     "tiktoken>=0.7.0,<1.0.0",
     "aiohttp>=3.14.3,<4.0.0",  # webhook hooks + their SSRF/DNS-pinning tests; CVE floor per [all]
     "bcrypt>=4.0.0,<6.0.0",  # backend auth + its security tests (dead-suite class, 2026-08-16)
+    "email-validator>=2.0.0,<3.0.0",  # backend EmailStr routers + bearer-verification tests (dead-suite class, 2026-08-27)
 ]
 
 # Individual developers - lightweight, software development focused
@@ -424,6 +425,7 @@ dev = [
     "tiktoken>=0.7.0,<1.0.0",
     "aiohttp>=3.14.3,<4.0.0",  # webhook hooks + their SSRF/DNS-pinning tests; CVE floor per [all]
     "bcrypt>=4.0.0,<6.0.0",  # backend auth + its security tests (dead-suite class, 2026-08-16)
+    "email-validator>=2.0.0,<3.0.0",  # backend EmailStr routers + bearer-verification tests (dead-suite class, 2026-08-27)
 ]
 
 [project.scripts]
