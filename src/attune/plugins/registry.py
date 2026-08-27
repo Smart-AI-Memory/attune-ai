@@ -59,6 +59,12 @@ class PluginRegistry:
         if self._auto_discovered:
             return
 
+        # One-time advisory scan for external dists still registering
+        # the entry-point groups 16.0.0 collapsed (silent non-loading).
+        from .stale_entry_points import warn_stale_entry_points
+
+        warn_stale_entry_points()
+
         self.logger.info("Loading built-in plugins...")
 
         # Build or reuse the discovery cache

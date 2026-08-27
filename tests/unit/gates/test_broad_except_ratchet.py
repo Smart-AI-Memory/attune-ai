@@ -280,6 +280,11 @@ _BASELINE: dict[str, int] = {
     "src/attune/patterns/resolver.py": 1,
     "src/attune/pipeline/orchestrator.py": 3,
     "src/attune/plugins/registry.py": 3,
+    # stale_entry_points.py added at 1 (2026-08-27): the 16.0.0 stale
+    # entry-point detector is fail-open by contract — reading arbitrary
+    # installed packages' metadata can raise anything, and the advisory
+    # scan must never affect startup.
+    "src/attune/plugins/stale_entry_points.py": 1,
     "src/attune/project_index/index.py": 1,
     "src/attune/redis_config.py": 1,
     "src/attune/resilience/circuit_breaker.py": 2,
