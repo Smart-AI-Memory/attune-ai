@@ -211,6 +211,46 @@ class TestReconcile:
         assert results["pypi"] == "1.2.3"
 
 
+# --- release_state_headline() -----------------------------------------
+
+
+class TestReleaseStateHeadline:
+    def _seed(self, home, project, body):
+        d = home / ".claude" / "projects" / project / "memory"
+        d.mkdir(parents=True)
+        (d / "release_state.md").write_text(body, encoding="utf-8")
+
+    def test_reads_headline_version(self, hook_module, tmp_path):
+        self._seed(tmp_path, "-Users-x-attune-ai", "**16.0.0 IS PUBLISHED** attune-ai wheel")
+        assert hook_module.release_state_headline("attune-ai", home=tmp_path) == "16.0.0"
+
+    def test_none_when_pkg_absent_from_file(self, hook_module, tmp_path):
+        self._seed(tmp_path, "-Users-x-other", "**2.0.0 IS PUBLISHED** other-pkg")
+        assert hook_module.release_state_headline("attune-ai", home=tmp_path) is None
+
+    def test_none_when_no_memory_exists(self, hook_module, tmp_path):
+        assert hook_module.release_state_headline("attune-ai", home=tmp_path) is None
+
+    def test_none_for_empty_pkg(self, hook_module, tmp_path):
+        assert hook_module.release_state_headline("", home=tmp_path) is None
+
+    def test_newest_file_wins(self, hook_module, tmp_path):
+        import os
+
+        self._seed(tmp_path, "-Users-x-a", "**15.0.0 IS PUBLISHED** attune-ai")
+        self._seed(tmp_path, "-Users-x-b", "**16.0.0 IS PUBLISHED** attune-ai")
+        old = tmp_path / ".claude/projects/-Users-x-a/memory/release_state.md"
+        os.utime(old, (1, 1))
+        assert hook_module.release_state_headline("attune-ai", home=tmp_path) == "16.0.0"
+
+    def test_unreadable_file_degrades(self, hook_module, tmp_path, monkeypatch):
+        self._seed(tmp_path, "-Users-x-attune-ai", "**16.0.0 IS PUBLISHED** attune-ai")
+        monkeypatch.setattr(
+            hook_module.Path, "read_text", lambda *a, **k: (_ for _ in ()).throw(OSError("nope"))
+        )
+        assert hook_module.release_state_headline("attune-ai", home=tmp_path) is None
+
+
 # --- format_banner() --------------------------------------------------
 
 
@@ -233,6 +273,31 @@ class TestFormatBanner:
         assert "claude/foo gone" in out
         assert "PyPI attune-ai latest=9.0.0" in out
         assert "starter mentions: 9.0.0, 8.5.0" in out
+
+    def test_release_state_drift_warns(self, hook_module, tmp_path):
+        results = {
+            "prs": {},
+            "branches": {},
+            "pypi": "16.0.0",
+            "versions": [],
+            "pkg": "attune-ai",
+            "release_state": "14.1.0",
+        }
+        out = hook_module.format_banner(results, "global", tmp_path / "s.md")
+        assert "release_state memory headlines 14.1.0" in out
+        assert "latest=16.0.0" in out
+
+    def test_release_state_in_sync_is_silent(self, hook_module, tmp_path):
+        results = {
+            "prs": {},
+            "branches": {},
+            "pypi": "16.0.0",
+            "versions": [],
+            "pkg": "attune-ai",
+            "release_state": "16.0.0",
+        }
+        out = hook_module.format_banner(results, "global", tmp_path / "s.md")
+        assert "memory headlines" not in out
 
     def test_empty_package_has_no_double_space(self, hook_module, tmp_path):
         results = {

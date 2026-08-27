@@ -439,6 +439,48 @@ def pypi_latest(pkg: str) -> str | None:
         return None
 
 
+#: Where per-project Claude memories keep the release-state pointer.
+RELEASE_STATE_GLOB = ".claude/projects/*/memory/release_state.md"
+RELEASE_STATE_MAX_BYTES = 65536
+_RELEASE_HEADLINE_RE = re.compile(r"\*\*(\d+\.\d+\.\d+[^\s*]*) IS PUBLISHED")
+
+
+def release_state_headline(pkg: str | None, home: Path | None = None) -> str | None:
+    """Headline version from the newest release_state memory naming ``pkg``.
+
+    The release-state memory is supposed to be updated at every release
+    (release-execute step 14) but nothing noticed when sessions skipped
+    it — it sat two majors stale on 2026-08-27. Comparing its headline
+    against the PyPI latest the reconciler already fetches turns that
+    silent staleness into a startup banner. Local file reads only; the
+    memory layer is optional, so every failure path degrades to None.
+    """
+    if not pkg:
+        return None
+    try:
+        root = home or Path.home()
+        best: tuple[float, str] | None = None
+        for path in root.glob(RELEASE_STATE_GLOB):
+            try:
+                text = path.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            text = text[:RELEASE_STATE_MAX_BYTES]
+            if pkg not in text:
+                continue
+            match = _RELEASE_HEADLINE_RE.search(text)
+            if not match:
+                continue
+            mtime = path.stat().st_mtime
+            if best is None or mtime > best[0]:
+                best = (mtime, match.group(1))
+        return best[1] if best else None
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: session start must never break on the optional
+        # memory layer (odd layouts, permissions, glob errors).
+        return None
+
+
 def reconcile(text: str, pkg: str | None, cwd: Path | None) -> dict:
     """Check every extracted thread concurrently under ``WALL_BUDGET``.
 
@@ -457,6 +499,7 @@ def reconcile(text: str, pkg: str | None, cwd: Path | None) -> dict:
         "pr_ceiling": None,
         # Local file reads — outside the network executor by design.
         "specs": check_specs(text, cwd),
+        "release_state": release_state_headline(pkg),
     }
     # Widening: a starter is also stale when newer PRs landed on main that
     # it never names. Only worth a git call if it names *any* PR (else
@@ -517,6 +560,26 @@ def _spec_lines(specs: dict[str, str]) -> list[str]:
     return lines
 
 
+def _pypi_lines(results: dict) -> list[str]:
+    """Banner lines for the PyPI version and release-state drift."""
+    pypi = results["pypi"]
+    if pypi is None:
+        return []
+    versions = results["versions"]
+    suffix = f" (starter mentions: {', '.join(versions)})" if versions else ""
+    pkg = results.get("pkg") or ""
+    label_pkg = f"PyPI {pkg}".rstrip()
+    lines = [f"  {label_pkg} latest={pypi}{suffix}"]
+    headline = results.get("release_state")
+    if headline is not None and headline != pypi:
+        lines.append(
+            f"  ⚠ release_state memory headlines {headline} but PyPI"
+            f" latest={pypi} — the memory missed a release"
+            " (release-execute step 14); update it"
+        )
+    return lines
+
+
 def format_banner(
     results: dict,
     label: str,
@@ -533,7 +596,6 @@ def format_banner(
     prs = results["prs"]
     branches = results["branches"]
     pypi = results["pypi"]
-    versions = results["versions"]
     newer = results.get("newer_merges") or []
     specs = results.get("specs") or {}
     if not prs and not branches and pypi is None and not newer and not specs and not header_lines:
@@ -556,11 +618,7 @@ def format_banner(
             " — work may have landed since it was written"
         )
     lines.extend(_spec_lines(specs))
-    if pypi is not None:
-        suffix = f" (starter mentions: {', '.join(versions)})" if versions else ""
-        pkg = results.get("pkg") or ""
-        label_pkg = f"PyPI {pkg}".rstrip()
-        lines.append(f"  {label_pkg} latest={pypi}{suffix}")
+    lines.extend(_pypi_lines(results))
     return "\n".join(lines)
 
 

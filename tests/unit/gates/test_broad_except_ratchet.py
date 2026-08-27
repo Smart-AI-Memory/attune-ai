@@ -159,7 +159,11 @@ _BASELINE: dict[str, int] = {
     # is wrapped to exit 0 instead of crashing to a non-blocking 1.
     "src/attune/hooks/scripts/security_guard.py": 1,
     "src/attune/hooks/scripts/starter_prompt_nudge.py": 1,
-    "src/attune/hooks/scripts/starter_reconciler.py": 3,
+    # starter_reconciler raised 3 -> 4 for the release-state drift check
+    # (2026-08-27 retro item): the optional memory-layer read must never
+    # break session start — glob/permission/layout failures degrade to
+    # "no headline", matching the hook's every-failure-is-a-no-op contract.
+    "src/attune/hooks/scripts/starter_reconciler.py": 4,
     # telemetry_hook added 1 for library-review L2 (PR #2117): the
     # PostToolUse exit-0-always contract must survive a non-dict
     # payload reaching record_telemetry, not only OSError.
