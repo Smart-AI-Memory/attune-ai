@@ -13,7 +13,7 @@ from attune.agent_factory import (
     AgentRole,          # Agent role enum
     AgentCapability,    # Agent capability enum
     AgentConfig,        # Agent configuration dataclass
-    WorkflowConfig,     # Workflow configuration dataclass
+    AgentGraphConfig,   # Agent-graph configuration dataclass
     BaseAgent,          # Abstract agent interface
     BaseAdapter,        # Abstract adapter interface
 )
@@ -331,11 +331,13 @@ Dataclass for agent creation configuration.
 
 ---
 
-## WorkflowConfig
+## AgentGraphConfig
 
 **Module:** `attune.agent_factory.base`
 
-Dataclass for workflow creation configuration.
+Dataclass for agent-graph creation configuration (named
+`WorkflowConfig` before 16.0.0; renamed per spec
+`models-workflows-layering` D5).
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|

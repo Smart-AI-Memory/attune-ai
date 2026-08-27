@@ -257,11 +257,11 @@ from attune.agent_factory import (
     AgentCapability,
     AgentConfig,
     AgentFactory,
+    AgentGraphConfig,
     AgentRole,
     BaseAdapter,
     BaseAgent,
     Framework,
-    WorkflowConfig,
 )
 ```
 
