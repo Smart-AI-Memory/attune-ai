@@ -465,41 +465,7 @@ def discover_workflows(
         for workflow_name in config.disabled_workflows:
             discovered.pop(workflow_name, None)
 
-    # Discover via entry points — "attune.workflows" only (the legacy
-    # "empathy.workflows" group was removed in 15.0.0).
-    _load_entry_point_workflows(discovered, config, "attune.workflows")
-
     return discovered
-
-
-def _load_entry_point_workflows(
-    discovered: dict[str, type["BaseWorkflow"]],
-    config: "WorkflowConfig | None",
-    group: str,
-) -> set[str]:
-    """Load one entry-point group into ``discovered``; return names loaded."""
-    loaded: set[str] = set()
-    try:
-        eps = importlib.metadata.entry_points(group=group)
-    except Exception as e:  # noqa: BLE001
-        # INTENTIONAL: entry_points() may not be available; log but don't break
-        logger.debug("Entry point discovery unavailable: %s", e)
-        return loaded
-
-    for ep in eps:
-        try:
-            workflow_cls = ep.load()
-        except Exception as e:  # noqa: BLE001
-            # INTENTIONAL: entry point plugins may fail; log but don't break
-            logger.warning("Failed to load workflow entry point '%s': %s", ep.name, e)
-            continue
-        if not (isinstance(workflow_cls, type) and hasattr(workflow_cls, "execute")):
-            continue
-        if config is not None and ep.name in config.disabled_workflows:
-            continue
-        discovered[ep.name] = workflow_cls
-        loaded.add(ep.name)
-    return loaded
 
 
 def refresh_workflow_registry(config: "WorkflowConfig | None" = None) -> None:

@@ -94,18 +94,18 @@ class MockPlugin(BasePlugin):
         return None
 
 
-@patch("attune.plugins.registry.entry_points", return_value=[])
+@patch("attune.plugins.registry._BUILTIN_PLUGINS", ())
 class TestPluginRegistryBasics:
     """Test basic registry operations"""
 
-    def test_registry_initialization(self, _mock_ep):
+    def test_registry_initialization(self):
         """Test registry can be created"""
         registry = PluginRegistry()
         assert registry is not None
         assert registry._plugins == {}
         assert registry._auto_discovered is False
 
-    def test_register_plugin(self, _mock_ep):
+    def test_register_plugin(self):
         """Test manual plugin registration"""
         registry = PluginRegistry()
         plugin = MockPlugin(name="test", domain="software")
@@ -115,7 +115,7 @@ class TestPluginRegistryBasics:
         assert "test" in registry._plugins
         assert registry._plugins["test"] == plugin
 
-    def test_register_plugin_without_name(self, _mock_ep):
+    def test_register_plugin_without_name(self):
         """Test registering plugin with invalid metadata raises error"""
         registry = PluginRegistry()
         plugin = MockPlugin(name="", domain="software")  # Empty name
@@ -123,7 +123,7 @@ class TestPluginRegistryBasics:
         with pytest.raises(PluginValidationError, match="missing 'name'"):
             registry.register_plugin("test", plugin)
 
-    def test_register_plugin_without_domain(self, _mock_ep):
+    def test_register_plugin_without_domain(self):
         """Test registering plugin without domain raises error"""
         registry = PluginRegistry()
         plugin = MockPlugin(name="test", domain="")  # Empty domain
@@ -131,7 +131,7 @@ class TestPluginRegistryBasics:
         with pytest.raises(PluginValidationError, match="missing 'domain'"):
             registry.register_plugin("test", plugin)
 
-    def test_get_plugin(self, _mock_ep):
+    def test_get_plugin(self):
         """Test retrieving a registered plugin"""
         registry = PluginRegistry()
         plugin = MockPlugin(name="test", domain="software")
@@ -142,7 +142,7 @@ class TestPluginRegistryBasics:
         assert retrieved == plugin
         assert retrieved._initialized is True  # Should be initialized on retrieval
 
-    def test_get_nonexistent_plugin(self, _mock_ep):
+    def test_get_nonexistent_plugin(self):
         """Test retrieving non-existent plugin returns None"""
         registry = PluginRegistry()
 
@@ -150,7 +150,7 @@ class TestPluginRegistryBasics:
 
         assert result is None
 
-    def test_list_plugins(self, _mock_ep):
+    def test_list_plugins(self):
         """Test listing all registered plugins"""
         registry = PluginRegistry()
         plugin1 = MockPlugin(name="plugin1", domain="software")
@@ -167,74 +167,64 @@ class TestPluginRegistryBasics:
 
 
 class TestPluginRegistryAutoDiscovery:
-    """Test auto-discovery functionality"""
+    """Test built-in plugin loading (the entry-point scan died in 16.0.0)."""
 
-    @patch("attune.plugins.registry.entry_points")
-    def test_auto_discover_no_plugins(self, mock_entry_points):
-        """Test auto-discovery with no plugins"""
-        mock_entry_points.return_value = []
-
+    @patch("attune.plugins.registry._BUILTIN_PLUGINS", ())
+    def test_auto_discover_empty_table(self):
+        """An empty builtin table loads nothing."""
         registry = PluginRegistry()
         registry.auto_discover()
 
         assert registry._auto_discovered is True
         assert len(registry._plugins) == 0
 
-    @patch("attune.plugins.registry.entry_points")
-    def test_auto_discover_with_plugins(self, mock_entry_points):
-        """Test auto-discovery successfully loads plugins"""
-        # Create mock entry point
-        mock_ep = Mock()
-        mock_ep.name = "test_plugin"
-        mock_ep.load.return_value = MockPlugin
+    @patch(
+        "attune.plugins.registry._BUILTIN_PLUGINS",
+        (("test_plugin", "_fake_builtin_plugin_mod", "MockPlugin"),),
+    )
+    def test_auto_discover_loads_builtin_table(self):
+        """Table entries are imported and registered."""
+        import sys
+        import types
 
-        mock_entry_points.return_value = [mock_ep]
-
-        registry = PluginRegistry()
-        registry.auto_discover()
+        mod = types.ModuleType("_fake_builtin_plugin_mod")
+        mod.MockPlugin = MockPlugin
+        with patch.dict(sys.modules, {"_fake_builtin_plugin_mod": mod}):
+            registry = PluginRegistry()
+            registry.auto_discover()
 
         assert registry._auto_discovered is True
         assert len(registry._plugins) == 1
         assert "test_plugin" in registry._plugins
 
-    @patch("attune.plugins.registry.entry_points")
-    def test_auto_discover_handles_load_failures(self, mock_entry_points):
-        """Test auto-discovery gracefully handles plugin load failures"""
-        # Create mock entry point that fails to load
-        mock_ep = Mock()
-        mock_ep.name = "broken_plugin"
-        mock_ep.load.side_effect = ImportError("Module not found")
-
-        mock_entry_points.return_value = [mock_ep]
-
+    @patch(
+        "attune.plugins.registry._BUILTIN_PLUGINS",
+        (("broken_plugin", "_module_that_does_not_exist", "Nope"),),
+    )
+    def test_auto_discover_handles_load_failures(self):
+        """A broken builtin logs and is skipped, never raises."""
         registry = PluginRegistry()
         registry.auto_discover()  # Should not raise exception
 
         assert registry._auto_discovered is True
         assert len(registry._plugins) == 0  # Broken plugin not added
 
-    @patch("attune.plugins.registry.entry_points")
-    def test_auto_discover_only_runs_once(self, mock_entry_points):
-        """Test auto-discovery only runs once on the same registry"""
-        mock_entry_points.return_value = []
-
+    @patch("attune.plugins.registry._BUILTIN_PLUGINS", ())
+    def test_auto_discover_only_runs_once(self):
+        """A second auto_discover on the same registry is a no-op."""
         registry = PluginRegistry()
         registry.auto_discover()
+        first = registry._auto_discovered
         registry.auto_discover()  # Call again
 
-        # entry_points is called during cache build (2 groups), but not on second auto_discover
-        assert registry._auto_discovered is True
-        # Second call should be a no-op (no additional entry_points calls)
-        initial_count = mock_entry_points.call_count
-        registry.auto_discover()
-        assert mock_entry_points.call_count == initial_count
+        assert first is True and registry._auto_discovered is True
 
 
-@patch("attune.plugins.registry.entry_points", return_value=[])
+@patch("attune.plugins.registry._BUILTIN_PLUGINS", ())
 class TestPluginRegistryWizards:
     """Test wizard-related functionality"""
 
-    def test_list_all_workflows(self, _mock_ep):
+    def test_list_all_workflows(self):
         """Test listing all wizards from all plugins"""
         registry = PluginRegistry()
 
@@ -256,7 +246,7 @@ class TestPluginRegistryWizards:
         assert len(all_workflows["plugin1"]) == 2
         assert len(all_workflows["plugin2"]) == 1
 
-    def test_get_workflow(self, _mock_ep):
+    def test_get_workflow(self):
         """Test retrieving a specific wizard"""
         registry = PluginRegistry()
 
@@ -270,7 +260,7 @@ class TestPluginRegistryWizards:
 
         assert retrieved == wizard
 
-    def test_get_workflow_from_nonexistent_plugin(self, _mock_ep):
+    def test_get_workflow_from_nonexistent_plugin(self):
         """Test getting wizard from non-existent plugin returns None"""
         registry = PluginRegistry()
 
@@ -278,7 +268,7 @@ class TestPluginRegistryWizards:
 
         assert result is None
 
-    def test_get_workflow_info(self, _mock_ep):
+    def test_get_workflow_info(self):
         """Test retrieving wizard information"""
         registry = PluginRegistry()
 
@@ -293,7 +283,7 @@ class TestPluginRegistryWizards:
         assert info is not None
         assert info["id"] == "test_wizard"
 
-    def test_find_workflows_by_domain(self, _mock_ep):
+    def test_find_workflows_by_domain(self):
         """Test finding wizards by domain"""
         registry = PluginRegistry()
 
@@ -318,11 +308,11 @@ class TestPluginRegistryWizards:
             assert "plugin" in wizard_info
 
 
-@patch("attune.plugins.registry.entry_points", return_value=[])
+@patch("attune.plugins.registry._BUILTIN_PLUGINS", ())
 class TestPluginRegistryStatistics:
     """Test statistics functionality"""
 
-    def test_get_statistics_empty_registry(self, _mock_ep):
+    def test_get_statistics_empty_registry(self):
         """Test statistics for empty registry"""
         registry = PluginRegistry()
 
@@ -331,7 +321,7 @@ class TestPluginRegistryStatistics:
         assert stats["total_plugins"] == 0
         assert stats["total_workflows"] == 0
 
-    def test_get_statistics_with_plugins(self, _mock_ep):
+    def test_get_statistics_with_plugins(self):
         """Test statistics with registered plugins"""
         registry = PluginRegistry()
 
@@ -371,19 +361,17 @@ class TestGlobalRegistry:
     @patch("attune.plugins.registry._global_registry", None)
     def test_global_registry_auto_discovers(self):
         """Test global registry auto-discovers on first access"""
-        with patch("attune.plugins.registry.entry_points") as mock_ep:
-            mock_ep.return_value = []
-
+        with patch("attune.plugins.registry._BUILTIN_PLUGINS", ()):
             registry = get_global_registry()
 
             assert registry._auto_discovered is True
 
 
-@patch("attune.plugins.registry.entry_points", return_value=[])
+@patch("attune.plugins.registry._BUILTIN_PLUGINS", ())
 class TestPluginRegistryEdgeCases:
     """Test edge cases and error conditions"""
 
-    def test_register_plugin_with_get_metadata_error(self, _mock_ep):
+    def test_register_plugin_with_get_metadata_error(self):
         """Test registering plugin that raises error in get_metadata"""
         registry = PluginRegistry()
 
@@ -393,7 +381,7 @@ class TestPluginRegistryEdgeCases:
         with pytest.raises(PluginValidationError, match="Invalid plugin metadata"):
             registry.register_plugin("broken", plugin)
 
-    def test_list_plugins_triggers_auto_discover(self, _mock_ep):
+    def test_list_plugins_triggers_auto_discover(self):
         """Test that list_plugins triggers auto-discovery"""
         registry = PluginRegistry()
         assert registry._auto_discovered is False
@@ -402,7 +390,7 @@ class TestPluginRegistryEdgeCases:
 
         assert registry._auto_discovered is True
 
-    def test_get_plugin_triggers_auto_discover(self, _mock_ep):
+    def test_get_plugin_triggers_auto_discover(self):
         """Test that get_plugin triggers auto-discovery"""
         registry = PluginRegistry()
         assert registry._auto_discovered is False
@@ -411,7 +399,7 @@ class TestPluginRegistryEdgeCases:
 
         assert registry._auto_discovered is True
 
-    def test_find_workflows_with_none_info(self, _mock_ep):
+    def test_find_workflows_with_none_info(self):
         """Test finding wizards when get_workflow_info returns None"""
         registry = PluginRegistry()
 
@@ -428,7 +416,7 @@ class TestPluginRegistryEdgeCases:
         results = registry.find_workflows_by_domain("software")
         assert results == []
 
-    def test_get_workflow_info_from_nonexistent_plugin(self, _mock_ep):
+    def test_get_workflow_info_from_nonexistent_plugin(self):
         """Test get_workflow_info from non-existent plugin returns None"""
         registry = PluginRegistry()
 
@@ -436,7 +424,7 @@ class TestPluginRegistryEdgeCases:
 
         assert result is None
 
-    def test_list_all_workflows_triggers_auto_discover(self, _mock_ep):
+    def test_list_all_workflows_triggers_auto_discover(self):
         """Test that list_all_workflows triggers auto-discovery"""
         registry = PluginRegistry()
         assert registry._auto_discovered is False
@@ -445,7 +433,7 @@ class TestPluginRegistryEdgeCases:
 
         assert registry._auto_discovered is True
 
-    def test_find_workflows_by_domain_triggers_auto_discover(self, _mock_ep):
+    def test_find_workflows_by_domain_triggers_auto_discover(self):
         """Test that find_workflows_by_domain triggers auto-discovery"""
         registry = PluginRegistry()
         assert registry._auto_discovered is False
@@ -454,7 +442,7 @@ class TestPluginRegistryEdgeCases:
 
         assert registry._auto_discovered is True
 
-    def test_get_statistics_triggers_auto_discover(self, _mock_ep):
+    def test_get_statistics_triggers_auto_discover(self):
         """Test that get_statistics triggers auto-discovery"""
         registry = PluginRegistry()
         assert registry._auto_discovered is False
@@ -463,7 +451,7 @@ class TestPluginRegistryEdgeCases:
 
         assert registry._auto_discovered is True
 
-    def test_get_plugin_skips_auto_discover_when_already_discovered(self, _mock_ep):
+    def test_get_plugin_skips_auto_discover_when_already_discovered(self):
         """Test get_plugin skips auto-discover when already run."""
         registry = PluginRegistry()
         plugin = MockPlugin(name="test", domain="software")
@@ -474,7 +462,7 @@ class TestPluginRegistryEdgeCases:
         retrieved = registry.get_plugin("test")
         assert retrieved == plugin
 
-    def test_list_plugins_skips_auto_discover_when_already_discovered(self, _mock_ep):
+    def test_list_plugins_skips_auto_discover_when_already_discovered(self):
         """Test list_plugins skips auto-discover when already run."""
         registry = PluginRegistry()
         plugin = MockPlugin(name="test", domain="software")
@@ -484,7 +472,7 @@ class TestPluginRegistryEdgeCases:
         plugins = registry.list_plugins()
         assert "test" in plugins
 
-    def test_list_all_workflows_skips_auto_discover_when_already_discovered(self, _mock_ep):
+    def test_list_all_workflows_skips_auto_discover_when_already_discovered(self):
         """Test list_all_workflows skips auto-discover when already run."""
         registry = PluginRegistry()
         plugin = MockPlugin(name="test", domain="software")
@@ -496,7 +484,7 @@ class TestPluginRegistryEdgeCases:
         assert "test" in all_wf
         assert "w1" in all_wf["test"]
 
-    def test_find_workflows_by_domain_skips_auto_discover_when_already_discovered(self, _mock_ep):
+    def test_find_workflows_by_domain_skips_auto_discover_when_already_discovered(self):
         """Test find_workflows_by_domain skips auto-discover when already run."""
         registry = PluginRegistry()
         plugin = MockPlugin(name="test", domain="software")
@@ -507,7 +495,7 @@ class TestPluginRegistryEdgeCases:
         results = registry.find_workflows_by_domain("software")
         assert len(results) == 1
 
-    def test_get_statistics_skips_auto_discover_when_already_discovered(self, _mock_ep):
+    def test_get_statistics_skips_auto_discover_when_already_discovered(self):
         """Test get_statistics skips auto-discover when already run."""
         registry = PluginRegistry()
         plugin = MockPlugin(name="test", domain="software")
@@ -519,7 +507,7 @@ class TestPluginRegistryEdgeCases:
         assert stats["total_plugins"] == 1
         assert stats["total_workflows"] == 1
 
-    def test_find_workflows_by_domain_with_none_info(self, _mock_ep):
+    def test_find_workflows_by_domain_with_none_info(self):
         """Test find_workflows_by_domain when get_workflow_info returns None."""
         registry = PluginRegistry()
 

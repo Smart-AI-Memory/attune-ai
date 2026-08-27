@@ -327,14 +327,13 @@ _BASELINE: dict[str, int] = {
     "src/attune/wizards/builtin/refactor_wizard.py": 2,
     "src/attune/wizards/builtin/security_wizard.py": 3,
     "src/attune/wizards/decomposer.py": 1,
-    "src/attune/wizards/registry.py": 3,
+    "src/attune/wizards/registry.py": 1,
     # The hybrid workflows.yaml read relocated here from
     # models/empathy_executor.py (#2239 Edge 1). The catch is
     # best-effort by contract: a broken/absent config degrades to
     # "no hybrid routing" rather than failing workflow construction,
     # which is the pre-inversion behavior this PR must preserve.
     "src/attune/workflows/executor_mixin.py": 1,
-    "src/attune/workflows/__init__.py": 2,
     "src/attune/models/sdk_adapter.py": 4,
     "src/attune/workflows/base.py": 1,
     "src/attune/workflows/bug_predict.py": 1,

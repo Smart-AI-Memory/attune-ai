@@ -94,7 +94,6 @@ src/attune/pattern_library.py
 src/attune/patterns/debugging/all_patterns.json
 src/attune/patterns/debugging/workflow_20260107_1770825e.json
 src/attune/platform_utils.py
-src/attune/plugins/registry.py
 src/attune/project_index/models.py
 src/attune/redis_config.py
 src/attune/telemetry/agent_coordination.py
@@ -102,9 +101,7 @@ src/attune/telemetry/agent_tracking.py
 src/attune/telemetry/cli_analysis.py
 src/attune/voice/personality.py
 src/attune/wizards/decomposer.py
-src/attune/wizards/registry.py
 src/attune/workflow_patterns/behavior.py
-src/attune/workflows/__init__.py
 src/attune/workflows/bug_predict_patterns.py
 src/attune/workflows/config.py
 src/attune/workflows/doc_audit/checks.py
