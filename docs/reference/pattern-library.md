@@ -195,7 +195,7 @@ for match in matches:
 
 ```python
 from attune.pattern_library import PatternLibrary
-from attune.persistence import PatternPersistence
+from attune.pattern_persistence import PatternPersistence
 
 # Create and populate library
 library = PatternLibrary()

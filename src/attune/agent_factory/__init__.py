@@ -50,20 +50,4 @@ __all__ = [
     "BaseAgent",
     "Framework",
     "AgentGraphConfig",
-    "WorkflowConfig",  # REMOVE IN v16.0.0 — deprecated alias
 ]
-
-
-def __getattr__(name: str) -> object:
-    """Serve the deprecated `WorkflowConfig` name. REMOVE IN v16.0.0."""
-    if name != "WorkflowConfig":
-        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-    import warnings
-
-    warnings.warn(
-        "attune.agent_factory.WorkflowConfig is deprecated and will be "
-        "removed in v16.0.0. Use AgentGraphConfig instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return AgentGraphConfig

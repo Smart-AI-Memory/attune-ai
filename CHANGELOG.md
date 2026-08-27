@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- **BREAKING (16.0.0-class): the six 15.x deprecation aliases from the
+  `WorkflowConfig` collision are gone** (spec `models-workflows-layering`
+  D2/D4/D5/D6, timing pre-ruled): `attune.config.AgentWorkflowConfig`,
+  `attune.config.WorkflowMode` (and their defining classes in
+  `config.agent_config`), `attune.config.sections.WorkflowConfig`
+  (→ `WorkflowsConfig`), and `attune.agent_factory.WorkflowConfig`
+  (→ `AgentGraphConfig`). Every alias warned with this exact removal
+  version throughout the 15.x line; the collision gate now pins the
+  aliases as *absent*.
+- **BREAKING (16.0.0-class): seven root-level deprecation shims and
+  facades deleted**:
+  - `attune.coordination` — an ImportError shim since 6.8.0.
+  - `attune.redis_memory`, `attune.redis_memory_storage`,
+    `attune.redis_memory_coordination`, `attune.redis_memory_patterns`
+    — the pre-plugin Redis memory implementation, superseded by
+    `attune_redis.AMSMemoryBackend` (bundled in the wheel; see
+    `docs/migration/redis-plugin-migration.md`).
+  - `attune.persistence` — a re-export facade. `PatternPersistence`
+    and `MetricsCollector` are unchanged and still exported from
+    `attune`; import them directly from
+    `attune.pattern_persistence` / `attune.metrics_collector`.
+  - `attune.state_manager` — `StateManager`, deprecated since the
+    9.0.0 Empathy retirement, is removed along with the last of the
+    legacy-framework deprecation machinery in `attune.__init__`.
 - **BREAKING (16.0.0-class): nine dead framework-era root modules
   deleted** (~2,200 lines, none imported anywhere in the live tree —
   verified by caller grep per module):

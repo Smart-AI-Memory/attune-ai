@@ -282,7 +282,6 @@ _BASELINE: dict[str, int] = {
     "src/attune/plugins/registry.py": 3,
     "src/attune/project_index/index.py": 1,
     "src/attune/redis_config.py": 1,
-    "src/attune/redis_memory_storage.py": 1,
     "src/attune/resilience/circuit_breaker.py": 2,
     "src/attune/resilience/fallback.py": 5,
     "src/attune/resilience/health.py": 4,
