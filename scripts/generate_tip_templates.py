@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Generate Tip templates from discovery tips and workflow transitions.
+"""Generate Tip templates from the static tip catalog and workflow transitions.
 
 Sources:
-  1. DISCOVERY_TIPS dict in src/attune/discovery.py (8 tips)
+  1. DISCOVERY_TIPS catalog below (8 tips — formerly parsed out of the
+     retired src/attune/discovery.py)
   2. Workflow transition registry in src/attune/workflows/suggestions.py
      (static extraction of workflow-name mappings)
 
@@ -39,81 +40,81 @@ class TipTemplate:
     related_topics: list[dict[str, str]] = field(default_factory=list)
 
 
-def parse_discovery_tips(discovery_path: Path) -> list[TipTemplate]:
-    """Parse DISCOVERY_TIPS from discovery.py source.
+# The tip catalog. These tips originated as the runtime DISCOVERY_TIPS
+# dict in src/attune/discovery.py (progressive-discovery engine, removed
+# 2026-08-26 with zero runtime callers); the generated help pages
+# outlived the engine, so the catalog now lives here, in its only
+# consumer.
+DISCOVERY_TIPS: list[dict[str, str]] = [
+    {
+        "name": "after-first-inspect",
+        "tip": "Try 'attune workflow run ship' before commits for pre-flight checks",
+        "context": "After using 'inspect' 1+ times",
+        "why": "Productivity improvement suggestion",
+    },
+    {
+        "name": "after-first-health",
+        "tip": "Use 'ruff check --fix . && ruff format .' to auto-fix lint and format issues",
+        "context": "After using 'health' 1+ times",
+        "why": "Productivity improvement suggestion",
+    },
+    {
+        "name": "after-10-inspects",
+        "tip": "Run 'attune workflow run code-review' for AI-powered code analysis",
+        "context": "After using 'inspect' 10+ times",
+        "why": "High-priority workflow recommendation",
+    },
+    {
+        "name": "after-5-ships",
+        "tip": "Run 'attune doctor' for a comprehensive environment health check",
+        "context": "After using 'ship' 5+ times",
+        "why": "High-priority workflow recommendation",
+    },
+    {
+        "name": "high-tech-debt",
+        "tip": "Tech debt is trending up. Run 'attune doctor' for priority focus areas",
+        "context": "Based on project state analysis",
+        "why": "High-priority workflow recommendation",
+    },
+    {
+        "name": "no-patterns",
+        "tip": "Run 'attune workflow run code-review' to analyze your codebase",
+        "context": "Based on project state analysis",
+        "why": "High-priority workflow recommendation",
+    },
+    {
+        "name": "cost-savings",
+        "tip": "Check your API savings with 'attune costs' - model routing can save 80%!",
+        "context": "Based on project state analysis",
+        "why": "Productivity improvement suggestion",
+    },
+    {
+        "name": "weekly-review",
+        "tip": "Weekly reminder: Run 'attune workflow run security-audit' to check for issues",
+        "context": "Based on project state analysis",
+        "why": "Productivity improvement suggestion",
+    },
+]
 
-    Extracts tip entries using regex on the source file to
-    avoid importing the module (which has runtime deps).
 
-    Args:
-        discovery_path: Path to discovery.py.
+def discovery_tip_templates() -> list[TipTemplate]:
+    """Build TipTemplate objects from the static tip catalog.
 
     Returns:
         List of TipTemplate objects.
     """
-    text = discovery_path.read_text(encoding="utf-8")
-
-    # Extract entries between DISCOVERY_TIPS = { ... }
-    tips_match = re.search(
-        r"DISCOVERY_TIPS\s*=\s*\{(.+?)^\}",
-        text,
-        re.MULTILINE | re.DOTALL,
-    )
-    if not tips_match:
-        return []
-
-    tips_block = tips_match.group(1)
-
-    # Parse each entry: "tip_id": { "tip": "...", ... }
-    entry_pattern = re.compile(
-        r'"(\w+)":\s*\{([^}]+)\}',
-        re.DOTALL,
-    )
-
-    templates: list[TipTemplate] = []
-    for match in entry_pattern.finditer(tips_block):
-        tip_id = match.group(1)
-        block = match.group(2)
-
-        # Extract fields
-        tip_text = _extract_field(block, "tip")
-        trigger = _extract_field(block, "trigger")
-        priority = _extract_int_field(block, "priority")
-        min_uses = _extract_int_field(block, "min_uses")
-
-        if not tip_text:
-            continue
-
-        # Build context from trigger/condition info
-        if trigger and min_uses:
-            context = f"After using '{trigger}' {min_uses}+ times"
-        elif trigger:
-            context = f"After using '{trigger}' for the first time"
-        else:
-            context = "Based on project state analysis"
-
-        # Build why from priority
-        why_map = {
-            1: "High-priority workflow recommendation",
-            2: "Productivity improvement suggestion",
-            3: "Nice-to-know efficiency tip",
-        }
-        why = why_map.get(priority, "Workflow efficiency")
-
-        name = slugify(tip_id.replace("_", "-"))
-        templates.append(
-            TipTemplate(
-                name=name,
-                title=tip_text,
-                context=context,
-                recommendation=tip_text,
-                why=why,
-                tags=["discovery"],
-                source="src/attune/discovery.py",
-            )
+    return [
+        TipTemplate(
+            name=entry["name"],
+            title=entry["tip"],
+            context=entry["context"],
+            recommendation=entry["tip"],
+            why=entry["why"],
+            tags=["discovery"],
+            source="scripts/generate_tip_templates.py",
         )
-
-    return templates
+        for entry in DISCOVERY_TIPS
+    ]
 
 
 def parse_workflow_transitions(suggestions_path: Path) -> list[TipTemplate]:
@@ -181,34 +182,6 @@ def parse_workflow_transitions(suggestions_path: Path) -> list[TipTemplate]:
     return templates
 
 
-def _extract_field(block: str, field_name: str) -> str:
-    """Extract a quoted string field from a dict block.
-
-    Args:
-        block: Raw text of dict contents.
-        field_name: Field name to extract.
-
-    Returns:
-        Extracted string value, or empty string.
-    """
-    match = re.search(rf'"{field_name}":\s*"([^"]+)"', block)
-    return match.group(1) if match else ""
-
-
-def _extract_int_field(block: str, field_name: str) -> int:
-    """Extract an integer field from a dict block.
-
-    Args:
-        block: Raw text of dict contents.
-        field_name: Field name to extract.
-
-    Returns:
-        Extracted int value, or 0.
-    """
-    match = re.search(rf'"{field_name}":\s*(\d+)', block)
-    return int(match.group(1)) if match else 0
-
-
 def main(argv: list[str] | None = None) -> int:
     """Entry point for the Tip template generator.
 
@@ -224,7 +197,6 @@ def main(argv: list[str] | None = None) -> int:
     check = "--check" in argv
 
     repo_root = Path(__file__).resolve().parent.parent
-    discovery_path = repo_root / "src" / "attune" / "discovery.py"
     suggestions_path = repo_root / "src" / "attune" / "workflows" / "suggestions.py"
     templates_dir = repo_root / "plugin" / "help" / "templates"
     output_dir = repo_root / "plugin" / "help" / "generated" / "tips"
@@ -234,11 +206,8 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     # Step 1: Discover from both sources
-    tips: list[TipTemplate] = []
-
-    if discovery_path.exists():
-        tips.extend(parse_discovery_tips(discovery_path))
-        print(f"  Discovery tips: {len(tips)} found")
+    tips: list[TipTemplate] = list(discovery_tip_templates())
+    print(f"  Discovery tips: {len(tips)} found")
 
     transition_tips: list[TipTemplate] = []
     if suggestions_path.exists():

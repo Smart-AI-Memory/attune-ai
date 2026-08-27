@@ -2,7 +2,7 @@
 type: tip
 name: cost-savings
 tags: [discovery]
-source: src/attune/discovery.py
+source: scripts/generate_tip_templates.py
 ---
 
 # Tip: Check your API savings with 'attune costs' - model routing can save 80%!

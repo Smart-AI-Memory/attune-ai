@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- **BREAKING (16.0.0-class): nine dead framework-era root modules
+  deleted** (~2,200 lines, none imported anywhere in the live tree —
+  verified by caller grep per module):
+  - `attune.discovery` — the progressive-discovery engine had zero
+    runtime callers. Its 8 tips live on: the tip catalog moved into
+    `scripts/generate_tip_templates.py` (its only consumer, which
+    previously regex-parsed the module's source), and the generated
+    help pages are unchanged apart from their `source:` line.
+  - `attune.pattern_cache`, `attune.cache_stats`,
+    `attune.cache_monitor` — a self-contained cache-monitoring
+    cluster whose only importers were each other.
+  - `attune.vscode_bridge` — its only known consumer was the
+    Empathy-era `empathy-telemetry` VS Code extension (retired with
+    the Empathy framework in 9.0.0; the bridge API was still
+    `get_empathy_dir()`).
+  - `attune.template_engine`, `attune.template_defs_basic`,
+    `attune.template_defs_web`, `attune.templates` — the project
+    scaffolding family. Its CLI handler (`cmd_new`) was never
+    registered in any CLI parser, so the feature was unreachable.
+
+  None of these were exported via `attune.__init__`. If you imported
+  them directly, there is no replacement — they were dead code.
+
 ## [15.1.0] - 2026-08-26
 
 15.1.0 closes the models↔workflows dependency cycle

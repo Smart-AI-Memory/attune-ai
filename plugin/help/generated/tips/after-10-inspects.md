@@ -2,7 +2,7 @@
 type: tip
 name: after-10-inspects
 tags: [discovery]
-source: src/attune/discovery.py
+source: scripts/generate_tip_templates.py
 ---
 
 # Tip: Run 'attune workflow run code-review' for AI-powered code analysis

@@ -2,7 +2,7 @@
 type: tip
 name: no-patterns
 tags: [discovery]
-source: src/attune/discovery.py
+source: scripts/generate_tip_templates.py
 ---
 
 # Tip: Run 'attune workflow run code-review' to analyze your codebase

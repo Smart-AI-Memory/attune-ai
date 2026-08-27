@@ -2,7 +2,7 @@
 type: tip
 name: after-5-ships
 tags: [discovery]
-source: src/attune/discovery.py
+source: scripts/generate_tip_templates.py
 ---
 
 # Tip: Run 'attune doctor' for a comprehensive environment health check

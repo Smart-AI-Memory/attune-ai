@@ -2,7 +2,7 @@
 type: tip
 name: high-tech-debt
 tags: [discovery]
-source: src/attune/discovery.py
+source: scripts/generate_tip_templates.py
 ---
 
 # Tip: Tech debt is trending up. Run 'attune doctor' for priority focus areas

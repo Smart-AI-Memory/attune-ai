@@ -104,7 +104,6 @@ src/attune/telemetry/agent_coordination.py
 src/attune/telemetry/agent_tracking.py
 src/attune/telemetry/cli_analysis.py
 src/attune/voice/personality.py
-src/attune/vscode_bridge.py
 src/attune/wizards/decomposer.py
 src/attune/wizards/registry.py
 src/attune/workflow_patterns/behavior.py
