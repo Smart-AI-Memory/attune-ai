@@ -94,3 +94,27 @@ counter-cases in front of them — the fourth and final lean on this
 decision, resolved by naming the criterion rather than re-litigating
 the designs. The phased-shipping open question in requirements.md
 remains open (contracts-first within 16.x is compatible with D1).
+
+**Amended on the chair's cold re-read (2026-08-27, post-release —
+"stands, amended"):**
+
+- **The affirmative case is a strategic bet, stated as such.** "The
+  polished install-and-enable path creates the ecosystem" is an
+  inference about how ecosystems form, not a verified fact — made
+  knowing the calibrated external-author population currently
+  measures zero and the community-directory listing is still absent.
+  Its falsifier is named: if no external extension exists by the end
+  of the 16.x line, the criterion is re-examinable at 17.0.0
+  planning.
+- **The criterion sequences the phases.** Under
+  author-experience-as-dominant, the author-facing surface (the
+  `enable` UX, the extension-author docs page, a working example
+  extension) ships in the FIRST constructive increment, not the
+  last — contracts-first phasing may not defer it.
+- **Process note, recorded honestly:** the criterion answer arrived
+  mid-CI-firefight and was recorded within minutes; the ruling was
+  then re-read cold by the chair after the release closed, with the
+  lead's critical read (four findings, all record-completeness, none
+  attacking the criterion) in front of them, and ratified. Durable
+  copies of both cited board threads are machine-local at
+  `~/.attune/reports/roundtable/` (the board itself is TTL'd).
