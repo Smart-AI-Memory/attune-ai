@@ -7,9 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.0.0] - 2026-08-27
+
+16.0.0 is the destructive half of the harness-lite architecture
+ruling (`docs/specs/release-16-manifest/` D1, chair-ruled via the
+full round table): dead framework-era modules deleted, every 15.x
+deprecation executed, ceremony entry-point seams collapsed. The
+constructive half — the extension system — ships in 16.x. Users of
+the CLI, plugin, and MCP tools upgrade with no code changes; see
+`docs/migration/upgrading-to-16.0.0.md` for the one grep that tells
+you whether any of this touches your code.
+
 ### Removed
 
-- **BREAKING (16.0.0-class): the `attune.plugins` and `attune.wizards`
+- **BREAKING: the `attune.plugins` and `attune.wizards`
   entry-point groups are collapsed to direct registration**
   (release-16-manifest D1 — both groups had exactly one effective
   configuration: attune registering its own bundled code). The plugin
@@ -25,7 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   unchanged. A drift guard pins the collapsed groups absent from
   pyproject.
 
-- **BREAKING (16.0.0-class): the six 15.x deprecation aliases from the
+- **BREAKING: the six 15.x deprecation aliases from the
   `WorkflowConfig` collision are gone** (spec `models-workflows-layering`
   D2/D4/D5/D6, timing pre-ruled): `attune.config.AgentWorkflowConfig`,
   `attune.config.WorkflowMode` (and their defining classes in
@@ -34,7 +45,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (→ `AgentGraphConfig`). Every alias warned with this exact removal
   version throughout the 15.x line; the collision gate now pins the
   aliases as *absent*.
-- **BREAKING (16.0.0-class): seven root-level deprecation shims and
+- **BREAKING: seven root-level deprecation shims and
   facades deleted**:
   - `attune.coordination` — an ImportError shim since 6.8.0.
   - `attune.redis_memory`, `attune.redis_memory_storage`,
@@ -49,7 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `attune.state_manager` — `StateManager`, deprecated since the
     9.0.0 Empathy retirement, is removed along with the last of the
     legacy-framework deprecation machinery in `attune.__init__`.
-- **BREAKING (16.0.0-class): nine dead framework-era root modules
+- **BREAKING: nine dead framework-era root modules
   deleted** (~2,200 lines, none imported anywhere in the live tree —
   verified by caller grep per module):
   - `attune.discovery` — the progressive-discovery engine had zero
