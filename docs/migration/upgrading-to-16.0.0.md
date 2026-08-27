@@ -48,8 +48,19 @@ The `attune.plugins` and `attune.wizards` entry-point groups are no
 longer read; the dead `attune.workflows` reading path is deleted. The
 bundled plugins and built-in wizards load directly. If you registered
 an external wizard or plugin via these groups, that path is gone —
-the 16.x extension system is the successor. Two things still work
-unchanged:
+the 16.x extension system is the successor.
+
+Because an unread entry point fails by *silent non-loading* (nothing
+in your own code errors), attune detects this at startup: if any
+installed package other than attune-ai still declares entries in
+these groups, the first plugin/wizard registry load logs one warning
+per package, naming it and pointing here. The scan runs once per
+process and is fail-open — a metadata error never affects startup.
+Until you migrate, Python wizard classes can be re-registered at
+runtime with `attune.wizards.registry.register_wizard()`, and plugin
+instances with `PluginRegistry.register_plugin()`.
+
+Two things still work unchanged:
 
 - **`attune.memory_backends`** — the one entry-point seam kept
   (custom memory backends keep working as before).

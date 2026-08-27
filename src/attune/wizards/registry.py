@@ -1,7 +1,7 @@
 """Wizard registry and discovery.
 
-Maintains a registry of wizard classes, supports both programmatic
-registration, entry-point-based auto-discovery, and custom YAML wizards.
+Maintains a registry of wizard classes, supports programmatic
+registration, built-in loading, and custom YAML wizards.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
@@ -51,7 +51,7 @@ def get_wizard(wizard_id: str) -> type[BaseWizard] | None:
     """Get a wizard class by ID.
 
     Checks the in-memory registry first, then falls back to
-    entry-point discovery, built-in loading, and custom YAML loading.
+    built-in loading and custom YAML loading.
 
     Args:
         wizard_id: Short identifier.
@@ -63,7 +63,7 @@ def get_wizard(wizard_id: str) -> type[BaseWizard] | None:
     if wizard_id in _WIZARD_REGISTRY:
         return _WIZARD_REGISTRY[wizard_id]
 
-    # Try entry point discovery and built-in loading
+    # Try built-in loading and custom YAML loading
     _load_builtins()
     _load_custom_wizards()
     return _WIZARD_REGISTRY.get(wizard_id)
@@ -188,6 +188,12 @@ def _load_builtins() -> None:
     """Load built-in wizards into the registry if not already loaded."""
     if "debug" in _WIZARD_REGISTRY:
         return  # Already loaded
+
+    # One-time advisory scan for external dists still registering the
+    # entry-point groups 16.0.0 collapsed (silent non-loading).
+    from attune.plugins.stale_entry_points import warn_stale_entry_points
+
+    warn_stale_entry_points()
 
     try:
         from .builtin import BUILTIN_WIZARDS

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Stale entry-point detector**: at the plugin/wizard registries'
+  first load, attune scans installed distribution metadata once per
+  process and logs one warning per external package still declaring
+  entries in the removed `attune.plugins` / `attune.wizards` groups,
+  pointing at `docs/migration/upgrading-to-16.0.0.md`. Without it,
+  such extensions fail by silent non-loading with nothing greppable
+  in the user's own code. The scan is cached and fail-open — a
+  metadata error never affects startup.
+
 ## [16.0.0] - 2026-08-27
 
 16.0.0 is the destructive half of the harness-lite architecture
