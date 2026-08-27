@@ -1,10 +1,10 @@
 # 16.0.0 Major-Release Manifest
 
-**Status:** destructive half SHIPPED as 16.0.0 (2026-08-27 — PRs
-#2331, #2333, #2334, release PR; passengers 1-3 and 5 executed, D6's
-deprecations discharged). Remaining scope: passenger 4 (the
-extension system, 16.x) pending the chair's D2 ruling — see the
-`project_release16_d2_pending` state.
+**Status:** active (2026-08-27) — destructive half shipped as 16.0.0
+(PRs #2331, #2333, #2334 + release PR; passengers 1-3 and 5 executed,
+D6's deprecations discharged). Remaining scope: passenger 4 (the
+extension system, 16.x) per D1 as ruled — confirmed by D2
+(criterion: author experience).
 **Slug:** `release-16-manifest`
 **Provenance:** 16.0.0-class breaking work began accumulating the
 day 15.1.0 shipped — the dead-module deletion PR #2331, the D4/D6
