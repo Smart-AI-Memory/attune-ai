@@ -207,8 +207,6 @@ All pages now have proper Open Graph tags including:
 
 #### Files Created:
 - `vercel.json` - Vercel deployment config
-- `.github/workflows/deploy.yml` - GitHub Actions for Railway
-- `railway.toml` - Railway configuration (already existed)
 - `DEPLOYMENT.md` - Comprehensive deployment guide
 
 #### Deployment Options:
@@ -220,28 +218,16 @@ All pages now have proper Open Graph tags including:
 - Serverless functions
 - Easy environment variable management
 
-**2. Railway**
-- GitHub Actions workflow included
-- Automatic deployment on push to main
-- Simple configuration with railway.toml
-- Database support if needed
-
-**3. Self-Hosted**
+**2. Self-Hosted**
 - PM2 process manager config
 - Nginx reverse proxy setup
 - SSL with Let's Encrypt
 - Full control over infrastructure
 
-**4. Docker**
+**3. Docker**
 - Dockerfile example included
 - Docker Compose configuration
 - Production-ready containerization
-
-#### GitHub Actions Workflow:
-- Runs on push to main
-- Builds and tests application
-- Deploys to Railway automatically
-- Requires `RAILWAY_TOKEN` secret
 
 ---
 
@@ -290,7 +276,7 @@ All pages now have proper Open Graph tags including:
 15. ✅ **Sitemap & robots.txt** (SEO)
 16. ✅ **Privacy policy** (GDPR compliant)
 17. ✅ **Terms of service** (comprehensive)
-18. ✅ **Deployment configs** (Vercel, Railway, Docker)
+18. ✅ **Deployment configs** (Vercel, Docker)
 
 ---
 

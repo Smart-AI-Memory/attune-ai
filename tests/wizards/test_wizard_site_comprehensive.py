@@ -769,7 +769,7 @@ if __name__ == "__main__":
     print(f"  - Software Wizards: {len(SOFTWARE_WIZARDS)}")
     print(f"  - AI Wizards: {len(AI_WIZARDS)}")
     print("\nTo run tests:")
-    print("  1. Start backend: python backend/api/wizard_api.py")
+    print("  1. Start the wizard API server on http://localhost:8001")
     print("  2. Run tests: pytest tests/test_wizard_site_comprehensive.py -v")
     print("\nOr run integration test:")
     print("  pytest tests/test_wizard_site_comprehensive.py::TestWizardIntegration -v")

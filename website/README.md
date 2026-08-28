@@ -27,8 +27,9 @@ To learn more about Next.js, take a look at the following resources:
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
 - [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-## Deploy on Railway
+## Deploy on Vercel
 
-This project is deployed on [Railway](https://railway.app). Railway provides a simple deployment workflow for Next.js applications.
+This project is deployed on [Vercel](https://vercel.com). Build settings live in
+[`vercel.json`](./vercel.json), which runs `npm run build:vercel`.
 
 Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.

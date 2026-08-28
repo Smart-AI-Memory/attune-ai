@@ -6,7 +6,6 @@ This guide covers deploying the Smart AI Memory website to various platforms.
 
 - [Environment Variables](#environment-variables)
 - [Vercel Deployment](#vercel-deployment)
-- [Railway Deployment](#railway-deployment)
 - [Self-Hosted Deployment](#self-hosted-deployment)
 - [Docker Deployment](#docker-deployment)
 
@@ -75,67 +74,9 @@ vercel --prod
 The `vercel.json` file is already configured. Key settings:
 
 - **Framework**: Next.js
-- **Build Command**: `npm run build`
+- **Build Command**: `npm run build:vercel`
 - **Region**: Washington DC (iad1)
 - **Environment Variables**: Managed via Vercel dashboard
-
-## Railway Deployment
-
-### Setup
-
-1. Install Railway CLI:
-```bash
-npm install -g @railway/cli
-```
-
-2. Login to Railway:
-```bash
-railway login
-```
-
-3. Initialize project:
-```bash
-cd website
-railway init
-```
-
-4. Add environment variables:
-```bash
-railway variables set SENDGRID_API_KEY=your_key
-railway variables set NEXT_PUBLIC_PLAUSIBLE_DOMAIN=smartaimemory.com
-# Add all other variables...
-```
-
-5. Deploy:
-```bash
-railway up
-```
-
-### Railway Configuration
-
-The `railway.toml` file configures:
-
-- Build command
-- Start command
-- Health checks
-- Environment detection
-
-### GitHub Actions (Automatic Deployment)
-
-The repository includes a GitHub Actions workflow (`.github/workflows/deploy.yml`) that automatically deploys to Railway on push to `main`.
-
-**Setup:**
-
-1. Add `RAILWAY_TOKEN` to GitHub Secrets:
-   - Go to repository Settings > Secrets and variables > Actions
-   - Add new secret: `RAILWAY_TOKEN`
-   - Get token from Railway dashboard
-
-2. Add other secrets:
-   - `NEXT_PUBLIC_PLAUSIBLE_DOMAIN`
-   - `NEXT_PUBLIC_SITE_URL`
-
-3. Push to main branch - automatic deployment!
 
 ## Self-Hosted Deployment
 
@@ -301,12 +242,6 @@ docker-compose up -d
 - Built-in analytics dashboard
 - Real-time logs
 - Performance insights
-
-### Railway
-
-- Deployment logs
-- Metrics dashboard
-- Health checks
 
 ### Self-Hosted
 

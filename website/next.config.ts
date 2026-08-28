@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
-  // standalone is for self-hosted deploys (Railway). On Vercel it must
+  // standalone is for self-hosted deploys and `next start`. On Vercel it must
   // be off: Next 16's Turbopack build routes trace output into the
   // standalone bundle, and Vercel's onBuildComplete then fails with
   // ENOENT on .next/next-server.js.nft.json.
