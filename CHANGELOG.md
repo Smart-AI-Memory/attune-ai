@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.1.0] - 2026-08-28
+
+16.1.0 is a maintenance release on top of 16.0.0's destructive half.
+Its user-visible weight is the stale entry-point detector: after
+16.0.0 removed the `attune.plugins` / `attune.wizards` entry-point
+groups, an external extension still declaring them failed by silent
+non-loading, with nothing in the user's own code to grep for. That
+now warns, once per process, pointing at the migration guide. The
+rest is round-table plumbing and a release-state integrity check.
+
 ### Added
 
 - **Stale entry-point detector**: at the plugin/wizard registries'
@@ -17,6 +27,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   such extensions fail by silent non-loading with nothing greppable
   in the user's own code. The scan is cached and fail-open — a
   metadata error never affects startup.
+
+- **Round-table `receipt` message kind**: the board allowlist accepts
+  `receipt` — moderator-posted evidence that a promoted or agreed
+  action was actually executed, closing the loop the board previously
+  left open between a ruling and its execution.
+
+### Changed
+
+- **Starter reconciler flags a stale `release_state` memory**: the
+  SessionStart reconciler now reports when the recorded release state
+  has fallen behind what the repository and PyPI actually show,
+  instead of letting a session start from a stale premise.
+
+### Fixed
+
+- **Round-table kind list is single-sourced**: the Lua allowlist and
+  the "must be one of" error message are now generated from the
+  Python `KINDS` tuple. The error message had silently omitted
+  `event` and `candidate` since V2-P4 — it named six of the nine
+  valid kinds, so a caller rejected for a typo was told an incomplete
+  list of what to use instead.
 
 ## [16.0.0] - 2026-08-27
 
