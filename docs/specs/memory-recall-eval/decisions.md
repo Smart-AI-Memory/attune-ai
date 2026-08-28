@@ -320,3 +320,88 @@ benchmark run once against current `PersonalMemory`, this file
 carries the numbers + failure example + verdict. Status flipped to
 shipped across the three phase files; the cross-stamped status line
 was corrected in the design-approval entry above.
+
+## 2026-08-28 — Re-run (chair-directed): D3's zero-FP verdict no longer holds
+
+R6 made longitudinal re-runs a non-goal "unless a live recall complaint
+ever contradicts this verdict". This run was chair-directed rather than
+complaint-driven, so R6 is not amended — the chair asked for a recall
+quality measurement while assessing whether the Redis/memory
+implementation was acceptable.
+
+Run exactly as run 1 (D1–D4): `ANTHROPIC_API_KEY=""
+scripts/eval_personal_memory_recall.py`, 18-entry corpus, 26 positive /
+6 negative queries, isolated tmp roots, keyless.
+
+| metric | 2026-07-20 (run 1) | 2026-08-28 | delta |
+|---|---|---|---|
+| hit@1 | 25/26 (96%) | 24/26 (92%) | −1 query |
+| hit@3 | 26/26 (100%) | 26/26 (100%) | unchanged |
+| FP rate (D3) | **0/6 (0%)** | **2/6 (33%)** | **regressed** |
+| threshold (min correct-positive top-1) | 3.0 | 3.5 | — |
+
+**The run-1 verdict's load-bearing sentence — "ranking is accurate at
+k=3 with zero false-positive over-confidence on no-match queries" — is
+now false on its second clause.** Retrieval is unaffected: hit@3 is
+still 26/26, so when the answer exists the corpus still surfaces it.
+What degraded is the ability to tell that an answer does NOT exist.
+
+**Concrete: one document is acting as an attractor.** Both false
+positives resolve to the SAME topic at an IDENTICAL score:
+
+- "which GraphQL schema versioning scheme do we use?" → `status-vocabulary` · 5.0 · FP
+- "which CSS framework does the marketing site use?" → `status-vocabulary` · 5.0 · FP
+
+Neither query shares subject matter with that document. At run 1 the
+same six negatives produced three zero-hit results and three weak hits
+(2.5) below a 3.0 threshold.
+
+**Ruling (chair, 2026-08-28): record the measurement, do not fix.** The
+run-1 decision to leave precision alone rested on the premise
+"`attune.memory.PersonalMemory` is still lightly used". That premise was
+previously unquantified; it is now measured and it HOLDS:
+
+    ~/.attune/telemetry/memory_events.jsonl — 6,870 events
+      lesson_recall   2,070      session_recall  1,559
+      jit_recall      1,439      memory_signal   1,436
+      personal_query     45   <- 0.65% of memory traffic
+
+The surfaces carrying >99% of recall traffic are the hook/Redis paths,
+not `PersonalMemory.query`. Tuning a keyword-overlap formula against an
+18-document synthetic corpus to serve 0.65% of traffic — where ranking
+is already perfect — is not a trade worth making today.
+
+**Trip-wire (revisit when EITHER fires):**
+
+1. `personal_query` exceeds ~5% of events in
+   `memory_events.jsonl`, or
+2. `PersonalMemory` gains a production consumer beyond the CLI
+   (`cli_commands/memory_commands.py`) and the four
+   `personal_memory_*` MCP tools.
+
+At that point the recommended fix is NOT IDF/BM25 re-weighting —
+ranking needs no help — but an **abstain path**: normalize the unbounded
+keyword-overlap count into a bounded confidence and let `query()` return
+empty below a threshold, so a caller can trust "found nothing". That
+targets the clause that actually regressed and leaves hit@3 alone.
+
+**Methodology warning for the next reader, learned the hard way in this
+session.** There are TWO benchmark scripts and they are NOT
+interchangeable:
+
+- `scripts/eval_personal_memory_recall.py` — 26 positive / 6 negative.
+  **This is the one run 1 used; it is the only valid baseline
+  comparison.**
+- `scripts/memory_recall_eval.py` — 18 positive / 5 negative, adds
+  `--phase persistence` (run 3, cross-process).
+
+They have different corpora and different query sets. This session first
+compared the second script's output against run 1's numbers and derived
+a "score separation regression" that was an artifact of comparing two
+different benchmarks. Always re-run the SAME script whose numbers you
+are comparing against.
+
+For completeness, the other script's run today (not comparable to run 1,
+recorded only so the number exists): hit@1 18/18, hit@3 18/18, and
+identical results under `--phase persistence`, confirming recall
+survives process death.
