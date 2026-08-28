@@ -982,7 +982,11 @@ class TestSharedDeadline:
         monkeypatch.setattr(hook_module.subprocess, "run", fake_run)
         monkeypatch.setattr(hook_module, "_DEADLINE", time.monotonic() + 0.5)
         hook_module._run(["git", "status"], None)
-        assert captured["timeout"] <= 0.5
+        # Tolerate monotonic-clock float epsilon: (T0 + 0.5) - time.monotonic()
+        # can round to just over 0.5 because the ULP at monotonic's magnitude
+        # (~1e5-1e6 s) exceeds the microscopic elapsed time. Seen on
+        # windows-3.10 as 0.5000000000000568 (reddened main after #2338).
+        assert captured["timeout"] <= 0.5 + 1e-6
         assert captured["timeout"] < hook_module.SUBPROC_TIMEOUT
 
     def test_global_budget_under_registered_timeout(self, hook_module):
