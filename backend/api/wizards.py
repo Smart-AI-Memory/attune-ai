@@ -1,22 +1,27 @@
 #!/usr/bin/env python3
-"""Wizard Dashboard Backend API
-Provides REST endpoints for wizard data.
+"""Wizard catalog API endpoints.
+
+Serves the public catalog of available wizards. These routes are
+INTENTIONALLY UNAUTHENTICATED: they return only static, non-sensitive
+capability metadata (names, icons, feature lists, compliance tags,
+popularity) with no user data and no principal-scoped filtering, so a
+frontend can render the catalog before a user signs in. Unlike the
+user-scoped sibling routers (``users``, ``subscriptions``, ``analysis``),
+there is nothing here to gate behind a verified principal.
+
+Mounted by ``backend/main.py`` as ``wizards.router`` (prefix
+``/api/wizards``).
+
+Copyright 2025 Smart-AI-Memory
+Licensed under the Apache License, Version 2.0
 """
 
 import time
+from typing import Any
 
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import APIRouter, HTTPException
 
-app = FastAPI(title="Empathy Wizard API", version="1.0.0")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+router = APIRouter(prefix="/api/wizards", tags=["wizards"])
 
 # Calculate timestamps for realistic created/updated dates
 NOW = int(time.time() * 1000)
@@ -1061,21 +1066,38 @@ WIZARDS_DATA = [
 ]
 
 
-@app.get("/api/wizards")
-async def get_wizards():
+@router.get("")
+async def get_wizards() -> dict[str, Any]:
+    """List the full public catalog of available wizards.
+
+    Requires no authentication: this returns only static, public
+    capability metadata.
+
+    Returns:
+        The complete wizard catalog and its total count.
+
+    """
     return {"wizards": WIZARDS_DATA, "total": len(WIZARDS_DATA)}
 
 
-@app.get("/api/wizards/{wizard_id}")
-async def get_wizard(wizard_id: str):
+@router.get("/{wizard_id}")
+async def get_wizard(wizard_id: str) -> dict[str, Any]:
+    """Return public metadata for a single wizard by id.
+
+    Requires no authentication: this returns only static, public
+    capability metadata.
+
+    Args:
+        wizard_id: The wizard identifier (e.g. ``"healthcare"``).
+
+    Returns:
+        The wizard's public metadata.
+
+    Raises:
+        HTTPException: 404 if no wizard has the given id.
+
+    """
     wizard = next((w for w in WIZARDS_DATA if w["id"] == wizard_id), None)
     if not wizard:
         raise HTTPException(status_code=404, detail="Wizard not found")
     return wizard
-
-
-if __name__ == "__main__":
-    import uvicorn
-
-    print("🧙 Starting API at http://localhost:8000")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
