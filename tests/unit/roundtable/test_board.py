@@ -11,6 +11,7 @@ tests skip when localhost:6379 is unreachable.
 from __future__ import annotations
 
 import json
+import re
 import uuid
 
 import pytest
@@ -73,13 +74,35 @@ class TestSchemaAndKeys:
             "receipt",
         }
 
-    def test_lua_allowlist_admits_every_python_kind(self) -> None:
-        # The Lua KINDS table is the enforcing copy (AC-1); pin it to
-        # the Python tuple so the two allowlists cannot drift.
+    def test_lua_allowlist_matches_python_kinds_exactly(self) -> None:
+        """Both directions, anchored to the KINDS table itself.
+
+        The earlier form (``f"{kind} = true" in LIBRARY_SOURCE``) proved
+        only Python ⊆ Lua, and matched anywhere in the source: a kind
+        added to the Lua table alone left it green, which is the drift
+        it claimed to prevent.
+        """
         from attune.roundtable.board import LIBRARY_SOURCE
 
-        for kind in KINDS:
-            assert f"{kind} = true" in LIBRARY_SOURCE
+        table = re.search(r"local KINDS = \{(.*?)\}", LIBRARY_SOURCE, re.DOTALL)
+        assert table is not None, "no KINDS table in the Lua library"
+        assert set(re.findall(r"(\w+)\s*=\s*true", table.group(1))) == set(KINDS)
+
+    def test_lua_error_message_enumerates_every_kind(self) -> None:
+        """The 'must be one of' message is generated, not hand-listed.
+
+        It had silently omitted ``event``/``candidate`` from V2-P4 until
+        2026-08-27 — a third hand-maintained copy of the same list.
+        """
+        from attune.roundtable.board import LIBRARY_SOURCE
+
+        assert f"must be one of: {'|'.join(KINDS)}" in LIBRARY_SOURCE
+
+    def test_no_template_placeholder_reaches_redis(self) -> None:
+        """A missed substitution must never ship as loadable Lua."""
+        from attune.roundtable.board import LIBRARY_SOURCE
+
+        assert "@@" not in LIBRARY_SOURCE
 
     def test_thread_key_uses_board_keyspace(self) -> None:
         assert Board.thread_key("t1") == THREAD_KEY_PREFIX + "t1"
