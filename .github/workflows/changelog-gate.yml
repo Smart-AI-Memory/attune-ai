@@ -1,0 +1,47 @@
+name: Changelog Entry Gate
+
+# Asks every PR that touches shipped code to DECLARE its user-visibility:
+# either an entry under CHANGELOG.md's [Unreleased], or the `no-changelog`
+# label. See .github/scripts/changelog_gate.py for why this is a declaration
+# rather than an inference from the PR title.
+#
+# NO path filter, deliberately. A path-filtered required check reports as
+# "missing" on a PR that touches none of its paths, which blocks that PR
+# forever — the trap that needed admin-merges for #1141/#1143/#1144 on
+# 2026-06-28. This workflow always runs and the script no-ops green when the
+# PR ships nothing, the same discipline as docs.yml and tests.yml's
+# website_only guard.
+#
+# `labeled`/`unlabeled` are present so applying `no-changelog` re-runs the
+# gate and flips it green without an empty commit to force a re-check.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: changelog-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changelog-entry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Full history: the gate diffs against origin/<base>...HEAD.
+          fetch-depth: 0
+
+      - name: Check for a changelog entry or an explicit opt-out
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        # Runner python3 on purpose — the gate is stdlib-only, so pulling in
+        # setup-python would add a step and a pip-cache requirement for
+        # nothing.
+        run: python3 .github/scripts/changelog_gate.py
