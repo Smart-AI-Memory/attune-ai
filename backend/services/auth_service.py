@@ -74,6 +74,41 @@ JWT_SECRET_KEY = _get_jwt_secret_key()
 JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_MINUTES = 30
 
+
+def verify_access_token(token: str) -> dict[str, Any]:
+    """Decode and validate a JWT access token.
+
+    Stateless single-source of token verification, reused by both
+    ``AuthService.verify_token`` and the ``require_principal`` FastAPI
+    dependency so protected routes reject forged/expired bearers without
+    constructing the auth database.
+
+    Args:
+        token: JWT token string extracted from the ``Authorization`` header.
+
+    Returns:
+        The decoded token payload (``sub``, ``user_id``, ``name``, ...).
+
+    Raises:
+        HTTPException: 401 if the token is invalid or expired.
+
+    """
+    try:
+        return jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+    except jwt.ExpiredSignatureError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has expired",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from e
+    except jwt.InvalidTokenError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from e
+
+
 # Rate limiting configuration
 MAX_FAILED_ATTEMPTS = 5
 LOCKOUT_MINUTES = 15
@@ -128,21 +163,7 @@ class AuthService:
             HTTPException: If token is invalid or expired
 
         """
-        try:
-            payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
-            return payload
-        except jwt.ExpiredSignatureError as e:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token has expired",
-                headers={"WWW-Authenticate": "Bearer"},
-            ) from e
-        except jwt.InvalidTokenError as e:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token",
-                headers={"WWW-Authenticate": "Bearer"},
-            ) from e
+        return verify_access_token(token)
 
     def login(self, email: str, password: str, ip_address: str | None = None) -> dict[str, Any]:
         """Authenticate user and return access token.

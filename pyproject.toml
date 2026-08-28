@@ -204,6 +204,11 @@ dev = [
     # Test dependencies for API and integration tests
     "httpx>=0.27.0,<1.0.0",  # For API testing
     "fastapi>=0.110.0,<1.0.0",  # For wizard API tests + attune.ops dashboard
+    # backend/api/*.py define pydantic EmailStr models (auth, users,
+    # subscriptions); pydantic imports email_validator at schema-build
+    # (import) time, so the backend bearer-verification + behavioral
+    # tests fail at collection without it. Matches backend/requirements.txt.
+    "email-validator>=2.3.0,<3.0.0",
     # attune.ops dashboard runtime ([ops] extra) — mirrored into [dev]
     # so worktree/dev syncs can run and test `python -m attune.ops`
     # without a separate `--extra ops`. Keep pins in lock-step with the
@@ -390,6 +395,11 @@ dev = [
     # Test dependencies for API and integration tests
     "httpx>=0.27.0,<1.0.0",  # For API testing
     "fastapi>=0.110.0,<1.0.0",  # For wizard API tests + attune.ops dashboard
+    # backend/api/*.py define pydantic EmailStr models (auth, users,
+    # subscriptions); pydantic imports email_validator at schema-build
+    # (import) time, so the backend bearer-verification + behavioral
+    # tests fail at collection without it. Matches backend/requirements.txt.
+    "email-validator>=2.3.0,<3.0.0",
     # attune.ops dashboard runtime ([ops] extra) — mirrored into [dev]
     # so worktree/dev syncs can run and test `python -m attune.ops`
     # without a separate `--extra ops`. Keep pins in lock-step with the
