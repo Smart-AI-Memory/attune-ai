@@ -63,16 +63,24 @@ THREAD_TTL_SECONDS = 604_800
 #: clobber each other.
 LIBRARY_NAME = "attune_roundtable"
 
+#: Placeholders filled from :data:`KINDS` at import. Deliberately not
+#: valid Lua: if a substitution ever fails to fire, ``FUNCTION LOAD``
+#: rejects the library loudly instead of silently shipping an allowlist
+#: that disagrees with the Python tuple.
+_KINDS_PLACEHOLDER = "@@KINDS@@"
+_KIND_LIST_PLACEHOLDER = "@@KIND_LIST@@"
+
 #: The server-side library. Validation is deliberately here, not in
 #: Python: AC-1 requires Redis itself to reject a malformed message
 #: atomically no matter what client sent it.
-LIBRARY_SOURCE = """#!lua name=attune_roundtable
+#:
+#: The allowlist table and the error message that enumerates it are BOTH
+#: generated from :data:`KINDS` — they were hand-maintained copies, and
+#: the error message had silently omitted ``event``/``candidate`` from
+#: V2-P4 until 2026-08-27.
+_LIBRARY_TEMPLATE = """#!lua name=attune_roundtable
 
-local KINDS = {
-  question = true, position = true, synthesis = true,
-  ruling = true, suggestion = true, halt = true,
-  event = true, candidate = true, receipt = true,
-}
+local KINDS = { @@KINDS@@ }
 
 local function validate(msg)
   if type(msg) ~= 'table' then
@@ -82,9 +90,7 @@ local function validate(msg)
     return 'author is required'
   end
   if type(msg.kind) ~= 'string' or not KINDS[msg.kind] then
-    return 'kind is required and must be one of: ' ..
-      'question|position|synthesis|ruling|suggestion|halt|' ..
-      'event|candidate|receipt'
+    return 'kind is required and must be one of: @@KIND_LIST@@'
   end
   if type(msg.body) ~= 'string' or #msg.body == 0 then
     return 'body is required'
@@ -189,6 +195,12 @@ redis.register_function('rt_promote', promote)
 redis.register_function('rt_ledger_reserve', ledger_reserve)
 redis.register_function('rt_ledger_record', ledger_record)
 """
+
+#: The library actually loaded into Redis, with both copies of the kind
+#: allowlist resolved from :data:`KINDS`.
+LIBRARY_SOURCE = _LIBRARY_TEMPLATE.replace(
+    _KINDS_PLACEHOLDER, ", ".join(f"{kind} = true" for kind in KINDS)
+).replace(_KIND_LIST_PLACEHOLDER, "|".join(KINDS))
 
 
 @dataclass
