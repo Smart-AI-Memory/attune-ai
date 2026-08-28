@@ -59,7 +59,8 @@ def _fresh_thread() -> str:
 
 class TestSchemaAndKeys:
     def test_kinds_cover_spec_enum(self) -> None:
-        # question..halt: P0 enum; event + candidate: V2-P4 (RR-1/RR-6).
+        # question..halt: P0 enum; event + candidate: V2-P4 (RR-1/RR-6);
+        # receipt: moderator-posted execution evidence (2026-08-27).
         assert set(KINDS) == {
             "question",
             "position",
@@ -69,7 +70,16 @@ class TestSchemaAndKeys:
             "halt",
             "event",
             "candidate",
+            "receipt",
         }
+
+    def test_lua_allowlist_admits_every_python_kind(self) -> None:
+        # The Lua KINDS table is the enforcing copy (AC-1); pin it to
+        # the Python tuple so the two allowlists cannot drift.
+        from attune.roundtable.board import LIBRARY_SOURCE
+
+        for kind in KINDS:
+            assert f"{kind} = true" in LIBRARY_SOURCE
 
     def test_thread_key_uses_board_keyspace(self) -> None:
         assert Board.thread_key("t1") == THREAD_KEY_PREFIX + "t1"
@@ -145,6 +155,21 @@ class TestAgainstRealRedis:
         assert [m.id for m in msgs] == [id1, id2]
         assert msgs[0].ts is not None
         assert msgs[1].reply_to == id1
+
+    def test_receipt_kind_accepted_unknown_kind_rejected(self) -> None:
+        """The server-side allowlist admits ``receipt``; unknown kinds
+        (e.g. the ``note`` mislabel hit live 2026-08-27) still raise."""
+        redis = pytest.importorskip("redis")
+        board = _real_board_or_skip()
+        thread = _fresh_thread()
+        msg_id = board.post_message(
+            thread, author="claude@moderator", kind="receipt", body="executed: PR merged"
+        )
+        msgs = board.read_thread(thread)
+        assert [m.id for m in msgs] == [msg_id]
+        assert msgs[0].kind == "receipt"
+        with pytest.raises(redis.ResponseError, match="must be one of"):
+            board.post_message(thread, author="claude@moderator", kind="note", body="x")
 
     def test_ac1_malformed_message_rejected_atomically(self) -> None:
         """AC-1: server-side rejection, no partial write."""

@@ -31,7 +31,8 @@ from typing import Any
 #: member-originated ``question``/``suggestion`` as first-class;
 #: V2-P4 adds ``event`` — append-only role-provenance events, RR-1 —
 #: and ``candidate`` — staged promotable items from producing runs,
-#: RR-6).
+#: RR-6; ``receipt`` is moderator-posted evidence that a promoted or
+#: agreed action was executed).
 KINDS: tuple[str, ...] = (
     "question",
     "position",
@@ -41,6 +42,7 @@ KINDS: tuple[str, ...] = (
     "halt",
     "event",
     "candidate",
+    "receipt",
 )
 
 #: Every board key lives under this prefix (R3).
@@ -69,7 +71,7 @@ LIBRARY_SOURCE = """#!lua name=attune_roundtable
 local KINDS = {
   question = true, position = true, synthesis = true,
   ruling = true, suggestion = true, halt = true,
-  event = true, candidate = true,
+  event = true, candidate = true, receipt = true,
 }
 
 local function validate(msg)
@@ -81,7 +83,8 @@ local function validate(msg)
   end
   if type(msg.kind) ~= 'string' or not KINDS[msg.kind] then
     return 'kind is required and must be one of: ' ..
-      'question|position|synthesis|ruling|suggestion|halt'
+      'question|position|synthesis|ruling|suggestion|halt|' ..
+      'event|candidate|receipt'
   end
   if type(msg.body) ~= 'string' or #msg.body == 0 then
     return 'body is required'
