@@ -1867,3 +1867,91 @@ Regression guard: `tests/unit/backend/test_api_bearer_verification.py`
 Note: this is the FIX receipt for the finding recorded in the
 step-16 self-review entry above (run `58395f0fbc57`). Shipped in
 PR #2342.
+
+## 2026-08-28 — post-release self-review, 16.1.0 (release-execute step 16)
+
+Two runner-launched runs against the shipped tree (`8f65df82a` = tag
+`v16.1.0`, verified FROM THE FILESYSTEM — `pyproject.toml` on disk AND
+the imported `__version__` both read 16.1.0, imported from this
+worktree's `src/`, HEAD == the tag): `code-review` run `a233ac84e95b`,
+**84/100** (310s, **$5.62**) and `bug-predict` run `7060f5cac173`,
+**58/100** (248s, **$2.54**). Total **$8.17**. Both exit 0 with
+`sdk_error_kind: None` and a report present, so neither is the
+exit-0-with-traceback false success. 23 findings (15 + 8); **no
+Critical, and no High in Security or Bugs** — the three Highs are all
+architectural.
+
+**Launch-path note:** a server was already listening on the default
+port 8765 reporting **version 15.1.0 with `project_root` = the MAIN
+checkout**. Running the review through it would have reviewed the wrong
+tree with older code and still produced a confident-looking receipt.
+These runs used a second server on **:8766** pinned to
+`--project-root <this worktree at v16.1.0>` with
+`PYTHONPATH=<worktree>/src`; `/api/info` confirmed `16.1.0` + the
+worktree path before either run started. The stale 8765 process was
+left alone (it may belong to another session).
+
+**Spend-mode note:** the first server launch could NOT see
+`ANTHROPIC_API_KEY` (verified by counting the var in the process
+environment, never printing it). It was relaunched with the key
+sourced; the non-zero costs above are the receipt that these were real
+runs and not $0 simulated no-ops.
+
+### Verified findings (probe run, not relayed)
+
+Five load-bearing claims were checked against the tree. **All five
+CONFIRMED, and two are worse than the finding states:**
+
+- **[High] Layering inversion, `models/` -> `ops/` — CONFIRMED, and it
+  is BIDIRECTIONAL.** `models/sdk_adapter.py:30` and
+  `models/sdk_errors.py:28` both `from attune.ops.session_redaction
+  import redact`, and `ops/runner.py:843` imports
+  `attune.models.telemetry.run_context`. The finding named the first
+  direction only. `session_redaction` is stdlib-only and misfiled.
+- **[High] Duplicate `WORKFLOW_REGISTRY` — CONFIRMED, but there are
+  THREE, not two, and their VALUE TYPES DIFFER:**
+  `workflows/__init__.py:373` (`dict[str, type[BaseWorkflow]]`),
+  `routing/workflow_registry.py:38` (`dict[str, WorkflowInfo]`), and
+  `orchestration/_strategies/nesting.py:193`
+  (`dict[str, WorkflowDefinition]`). Three same-named globals with three
+  incompatible types is a sharper hazard than the reported duplication.
+- **[High] MCP god-class — CONFIRMED structurally.** `mcp/server.py`,
+  `mcp/tool_schemas.py`, and the handler mixins
+  (`workflow_handlers.py`, `memory_handlers.py`, `handoff_handlers.py`)
+  all exist as separate edit sites, consistent with the 3-site claim.
+- **[MEDIUM] `ops/server.py:162` fire-and-forget task — CONFIRMED.**
+  `asyncio.create_task(watch_and_persist(run, config))` with no
+  reference retained; per CPython docs the loop keeps only a weak
+  reference, so the task can be GC'd mid-flight.
+- **[MEDIUM] `project_index/index.py` per-file `ProjectScanner` —
+  CONFIRMED.** Three separate constructions (`:401`, `:407`, and one
+  inside `_is_excluded`), the last called per file, recompiling the glob
+  regex set O(N) times per refresh.
+
+### Not verified (relayed as reported)
+
+The remaining **18** findings were NOT probed and are recorded as
+model claims, not established facts — chiefly the two Low security
+items (non-defused XML parsing in `validation/xml_validator.py:95`;
+caller-supplied command string in `workflows/test_runner.py:70`), the
+duplicated `_post` helper across three roundtable modules, the
+remaining async-task-loss sites (`llm/interaction.py:162`,
+`workflows/discovery_sweep/workflow.py:425`), and the coverage-omit
+gap naming production modules excluded from the gate. Each needs its
+own probe before it is treated as real.
+
+**No finding blocked the release**, and — as with 15.1.0 and unlike the
+14.0.0 precedent — none sits in code 16.1.0 actually changed. The
+release's own diff (the stale entry-point detector, the round-table
+kind single-sourcing) drew no findings at all.
+
+**Reach baseline (US-4): incomplete.** Quoted verbatim from
+`scripts/reach_snapshot.py --verify-before 2026-08-28`:
+
+> WARNING: NO COMPLETE BEFORE-SNAPSHOT in the 24-72h pre-tag window
+> (planned tag 2026-08-28T00:00:00+00:00). the 24h window floor has
+> passed — the release may continue only with this incomplete-receipt
+> warning attached (US-4); do not capture a substitute at tag time.
+
+No substitute was captured at tag time, per US-4. The AFTER snapshot is
+queued for 24-72h post-tag.
