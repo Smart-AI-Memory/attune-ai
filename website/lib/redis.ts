@@ -6,7 +6,7 @@
  * - Healthcare wizard session management
  * - Usage tracking and rate limiting
  *
- * Uses ioredis for Railway/standard Redis connections.
+ * Uses ioredis for standard Redis connections.
  * Gracefully falls back to in-memory storage when Redis is unavailable.
  */
 

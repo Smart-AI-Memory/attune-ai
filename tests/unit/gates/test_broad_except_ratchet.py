@@ -69,10 +69,6 @@ _BASELINE: dict[str, int] = {
     "attune_redis/signals.py": 2,
     "attune_redis/tests/test_integration.py": 1,
     "attune_redis/vector_db_int8.py": 1,
-    "backend/api/analysis.py": 3,
-    "backend/services/analyzers/multi_layer_analyzer.py": 1,
-    "backend/services/auth_service.py": 1,
-    "backend/services/database/auth_db.py": 1,
     "src/attune/__init__.py": 1,
     "src/attune/classes/scan.py": 1,  # rule-crash evidence collector; recorded + non-zero exit (2026-08-22)
     "src/attune/agent_factory/adapters/autogen_adapter.py": 2,

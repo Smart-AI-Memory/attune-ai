@@ -358,7 +358,7 @@ class TestPytestConfig:
 
     # Exclusions that intentionally block real test dirs — document the reason here
     # so the test stays green and the intent is explicit.
-    # (Currently empty — JWT_SECRET_KEY is now in .env so tests/backend/ collects fine.)
+    # (Currently empty — no test dir is intentionally excluded.)
     _INTENTIONAL_EXCLUSIONS: set[str] = set()
 
     def test_norecursedirs_does_not_exclude_real_test_dirs(self):

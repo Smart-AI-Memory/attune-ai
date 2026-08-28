@@ -35,12 +35,7 @@ First, decide where you'll deploy each subdomain. Options:
 - Free SSL certificates
 - Global CDN
 
-### Option B: Railway
-- Railway provides a deployment URL
-- Use CNAME record pointing to Railway's domain
-- Automatic SSL
-
-### Option C: Self-Hosted VPS
+### Option B: Self-Hosted VPS
 - You'll need the server IP address
 - Use A records pointing to your server IP
 - Example: `123.456.789.012`
@@ -59,7 +54,7 @@ First, decide where you'll deploy each subdomain. Options:
    ```
    Type: A Record
    Host: wizards
-   Value: [Your server IP or use CNAME for Vercel/Railway]
+   Value: [Your server IP, or use CNAME for Vercel]
    TTL: 3600 (1 hour) or Auto
    ```
 
@@ -67,17 +62,17 @@ First, decide where you'll deploy each subdomain. Options:
    ```
    Type: A Record
    Host: healthcare
-   Value: [Your server IP or use CNAME for Vercel/Railway]
+   Value: [Your server IP, or use CNAME for Vercel]
    TTL: 3600 (1 hour) or Auto
    ```
 
-3. **Alternative: CNAME Records (for Vercel/Railway)**
+3. **Alternative: CNAME Records (for Vercel)**
 
    **For wizards subdomain:**
    ```
    Type: CNAME Record
    Host: wizards
-   Value: cname.vercel-dns.com (or your Railway domain)
+   Value: cname.vercel-dns.com
    TTL: 3600 (1 hour) or Auto
    ```
 
@@ -85,7 +80,7 @@ First, decide where you'll deploy each subdomain. Options:
    ```
    Type: CNAME Record
    Host: healthcare
-   Value: cname.vercel-dns.com (or your Railway domain)
+   Value: cname.vercel-dns.com
    TTL: 3600 (1 hour) or Auto
    ```
 
@@ -128,23 +123,7 @@ If your server IP is `192.0.2.100`:
    ```
    - Add `healthcare.smartaimemory.com` in Vercel dashboard
 
-### Option 2: Railway Deployment
-
-1. **Deploy wizards subdomain:**
-   ```bash
-   cd wizards-app
-   railway init
-   railway up
-   ```
-
-2. **Add custom domain in Railway dashboard:**
-   - Go to your project settings
-   - Add custom domain: `wizards.smartaimemory.com`
-   - Railway will provide CNAME value
-
-3. **Repeat for healthcare subdomain**
-
-### Option 3: Self-Hosted VPS
+### Option 2: Self-Hosted VPS
 
 1. **Set up Nginx virtual hosts:**
 
@@ -227,7 +206,7 @@ cd wizards-showcase
 npm run build
 ```
 
-Deploy to your chosen platform (Vercel/Railway/VPS)
+Deploy to your chosen platform (Vercel/VPS)
 
 ### Healthcare Subdomain (AI Nurse Florence)
 
@@ -285,7 +264,7 @@ npm run build
 
 ### SSL Certificate Issues
 
-- **Vercel/Railway**: Automatic, no action needed
+- **Vercel**: Automatic, no action needed
 - **Let's Encrypt**: Run `sudo certbot renew` if expired
 - **Verify ports**: Port 80 and 443 must be open
 
@@ -313,7 +292,7 @@ NEXT_PUBLIC_PLAUSIBLE_DOMAIN=healthcare.smartaimemory.com
 
 ## Security Checklist
 
-- [ ] SSL certificates installed (automatic with Vercel/Railway)
+- [ ] SSL certificates installed (automatic with Vercel)
 - [ ] HTTPS redirect enabled
 - [ ] CORS configured if APIs are used
 - [ ] Environment variables secured
@@ -330,7 +309,7 @@ NEXT_PUBLIC_PLAUSIBLE_DOMAIN=healthcare.smartaimemory.com
 ## Need Help?
 
 If you encounter issues:
-- Check Vercel/Railway documentation
+- Check Vercel documentation
 - Verify DNS with `dig` or online tools
 - Contact your DNS provider support
 - Email: patrick.roebuck@pm.me
@@ -339,7 +318,6 @@ If you encounter issues:
 
 **Estimated Time to Deploy Tonight:**
 - Vercel (CNAME): 10-30 minutes
-- Railway (CNAME): 10-30 minutes
 - Self-hosted (A records): 30-60 minutes + DNS propagation time
 
 **Recommended: Use Vercel for fastest deployment tonight.**

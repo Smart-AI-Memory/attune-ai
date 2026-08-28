@@ -203,12 +203,7 @@ dev = [
     "pre-commit>=3.0,<5.0",  # Updated for pre-commit 4.x
     # Test dependencies for API and integration tests
     "httpx>=0.27.0,<1.0.0",  # For API testing
-    "fastapi>=0.110.0,<1.0.0",  # For wizard API tests + attune.ops dashboard
-    # backend/api/*.py define pydantic EmailStr models (auth, users,
-    # subscriptions); pydantic imports email_validator at schema-build
-    # (import) time, so the backend bearer-verification + behavioral
-    # tests fail at collection without it. Matches backend/requirements.txt.
-    "email-validator>=2.3.0,<3.0.0",
+    "fastapi>=0.110.0,<1.0.0",  # attune.ops dashboard + its API tests
     # attune.ops dashboard runtime ([ops] extra) — mirrored into [dev]
     # so worktree/dev syncs can run and test `python -m attune.ops`
     # without a separate `--extra ops`. Keep pins in lock-step with the
@@ -242,7 +237,6 @@ dev = [
     "langchain-anthropic>=0.3.0,<2.0.0",
     "tiktoken>=0.7.0,<1.0.0",
     "aiohttp>=3.14.3,<4.0.0",  # webhook hooks + their SSRF/DNS-pinning tests; CVE floor per [all]
-    "bcrypt>=4.0.0,<6.0.0",  # backend auth + its security tests (dead-suite class, 2026-08-16)
 ]
 
 # Individual developers - lightweight, software development focused
@@ -394,12 +388,7 @@ dev = [
     "pre-commit>=3.0,<5.0",  # Updated for pre-commit 4.x
     # Test dependencies for API and integration tests
     "httpx>=0.27.0,<1.0.0",  # For API testing
-    "fastapi>=0.110.0,<1.0.0",  # For wizard API tests + attune.ops dashboard
-    # backend/api/*.py define pydantic EmailStr models (auth, users,
-    # subscriptions); pydantic imports email_validator at schema-build
-    # (import) time, so the backend bearer-verification + behavioral
-    # tests fail at collection without it. Matches backend/requirements.txt.
-    "email-validator>=2.3.0,<3.0.0",
+    "fastapi>=0.110.0,<1.0.0",  # attune.ops dashboard + its API tests
     # attune.ops dashboard runtime ([ops] extra) — mirrored into [dev]
     # so worktree/dev syncs can run and test `python -m attune.ops`
     # without a separate `--extra ops`. Keep pins in lock-step with the
@@ -433,7 +422,6 @@ dev = [
     "langchain-anthropic>=0.3.0,<2.0.0",
     "tiktoken>=0.7.0,<1.0.0",
     "aiohttp>=3.14.3,<4.0.0",  # webhook hooks + their SSRF/DNS-pinning tests; CVE floor per [all]
-    "bcrypt>=4.0.0,<6.0.0",  # backend auth + its security tests (dead-suite class, 2026-08-16)
 ]
 
 [project.scripts]
@@ -510,7 +498,6 @@ exclude = [
     "website/",  # Next.js website - separate linting
     "docs/archive/",  # Archived code
     "examples/",  # Example code
-    "deployments/",  # Deployment scripts
     ".archive/",  # Archived files
     "src/attune/workflows/new_sample_workflow1.py",  # Test workflow
     "src/attune/workflows/test5.py",  # Test workflow
@@ -551,14 +538,12 @@ known-first-party = ["attune", "attune_software"]
 "*_test.py" = ["BLE001"]  # Test files can catch broad exceptions
 "tests/**/*.py" = ["BLE001", "B017"]  # Test files can catch/assert broad exceptions
 "agents/**/*.py" = ["BLE001"]  # Agent files need broad exception handling for resilience
-"backend/**/*.py" = ["BLE001", "E402"]  # Backend files need broad exception handling
 "*_wizard.py" = ["BLE001"]  # Wizard files need broad exception handling
 "*_agent.py" = ["BLE001"]  # Agent files need broad exception handling
 # attune_llm removed in v2.9.0
 "src/attune/**/*.py" = ["BLE001"]  # Core framework needs broad exception handling
 "*_adapter.py" = ["BLE001"]  # Adapter files need broad exception handling
 "*_crew.py" = ["BLE001"]  # Crew files need broad exception handling
-"deployments/**/*.py" = ["BLE001"]  # Deployment scripts need broad exception handling
 "docs/archive/**/*.py" = ["BLE001"]  # Archived code
 "attune_software/**/*.py" = ["BLE001"]  # Plugin needs broad exception handling
 "examples/**/*.py" = ["BLE001"]  # Examples can use broad exception handling
@@ -593,7 +578,6 @@ exclude = [
     "examples/",  # Example scripts (not part of main packages)
     "src/",  # Exclude src/ as top-level package (use via mypy_path instead)
     "build/",  # Build artifacts
-    "backend/",  # Backend service (separate project)
     "scripts/",  # Utility scripts (not production code)
     "docs/",  # Documentation scripts
     "book-indesign/",  # Book publishing scripts
