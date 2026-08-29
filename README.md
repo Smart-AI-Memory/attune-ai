@@ -135,59 +135,37 @@ memory storage and recall, and every local transform.
      release with the headline feature; the displaced content moves to
      a permanent section below. Don't stack a second "New in" here. -->
 
-## New in 15.0.0 — one obvious way to do each thing
+## New in 16.1.0 — harness-lite lands
 
-**Every attune surface now has exactly one name, one contract, and one
-place to register.** 15.0.0 completes a consolidation that has run
-across the last several releases: what the docs describe is what the
-library has, with no second spelling of it kept alive out of habit.
+16.0.0 executed the destructive half of the harness-lite
+architecture ruling: nine dead framework-era modules deleted
+(~2,200 lines, each verified caller-free before removal), every
+15.x deprecation executed on schedule, and the ceremony
+entry-point seams collapsed to direct registration. 16.1.0 closes
+the loop on the removal: an extension still declaring the removed
+`attune.plugins` / `attune.wizards` entry points used to fail by
+silent non-loading — now a once-per-process warning names the
+package and points at the migration guide.
 
-What that buys you:
-
-- **One entry point per extension.** Workflows register under
-  `attune.workflows`, plugins under `attune.plugins`. That is the whole
-  rule. Three groups used to be in play and only some were actually
-  read, so a registration that looked correct could quietly never
-  load — that class of silent miss is gone.
-- **One name for the MCP server**, `AttuneMCPServer`, everywhere it
-  appears.
-- **Nothing vestigial to learn.** The 1–5 level dial is retired from
-  every public API — the plugin contract, both agent configs, the
-  registries, and the two MCP tools that read it. Its meaning came
-  from a framework attune no longer ships, so every new user had to
-  ask what it did. Now nobody has to. The core MCP tool surface is 48
-  tools, all of them live.
-- **A smaller surface to hold in your head**, which is the whole
-  point: less API, and all of it real.
-
-**Upgrading is a no-op** if you use the CLI, the plugin, or the MCP
-tools. If you write third-party plugins or workflows, the
-[15.0.0 upgrade guide](docs/migration/upgrading-to-15.0.0.md) opens
-with an "are you affected?" table — ten rows, each with its one-line
-fix, and two that need nothing from you at all: a legacy
-`empathy_level:` key in `agents.md` is now ignored rather than an
-error, and an existing metrics database migrates itself on first open.
+**Upgrading is a no-op** if you use the CLI, the plugin, or the
+MCP tools. The
+[16.0.0 upgrade guide](docs/migration/upgrading-to-16.0.0.md)
+opens with the one grep that tells you whether any of this touches
+your code. The constructive half — the extension system — ships
+later in 16.x.
 
 <details>
-<summary>Previously new in 14.1.0 — workflows that prove they work</summary>
+<summary>Previously new in 15.0.0 — one obvious way to do each thing</summary>
 
-Every workflow in your catalog comes with evidence behind it. 14.1.0
-shipped a **planted-defect validation harness**: each workflow is run
-against a fixture carrying a known bug — a real `eval` call, a real
-CVE pin, a module with no docstrings — and has to *find it* to keep
-its "working" badge. Not "exited 0": actually caught the planted
-defect, with the cost and verdict recorded in a tracked registry you
-can read.
-
-That shows up in three places: `secure-release` reads its sub-audits'
-real findings (a planted-critical fixture that used to sail through as
-GO comes back NO_GO); the documentation orchestrator detects missing
-docstrings and says "not assessed" rather than fabricating "no gaps
-found"; and every discovery-sweep lane gets a measured-cost budget
-floor, so a lane either runs with enough money to finish or tells you
-it skipped. The few workflows still being repaired are hidden from the
-dashboard, CLI list, and MCP catalog until their probes pass — so
-everything you *can* click actually works.
+**Every attune surface has exactly one name, one contract, and one
+place to register.** 15.0.0 completed a consolidation that ran
+across several releases: what the docs describe is what the
+library has, with no second spelling of it kept alive out of
+habit. One name for the MCP server (`AttuneMCPServer`); one
+registration path per extension (collapsed further to direct
+registration in 16.0.0); the 1–5 level dial retired from every
+public API. A smaller surface to hold in your head, which is the
+whole point: less API, and all of it real.
 
 </details>
 
@@ -242,6 +220,13 @@ agent's own word is never the evidence.
   *fails* the Security gate; spec-closure claims draw a rotating
   skeptic seat; risk-class diffs authored by the lead model are
   reviewed by a *different* model before promotion.
+- **Workflows prove they work** — a planted-defect harness runs
+  every catalog workflow against a fixture carrying a known bug (a
+  real `eval` call, a real CVE pin, a module with no docstrings);
+  *finding it* is what keeps the workflow's "working" badge, with
+  cost and verdict recorded in a tracked registry. Workflows under
+  repair are hidden from the dashboard, CLI list, and MCP catalog
+  until their probes pass.
 
 ---
 
@@ -309,7 +294,7 @@ Ready-made Claude Code subagents (`security-reviewer`, `spec-author`,
 </details>
 
 <details>
-<summary><b>All 61 MCP tools</b> — 50 core in 7 categories, plus 11
+<summary><b>All 59 MCP tools</b> — 48 core in 7 categories, plus 11
 memory tools registered by the bundled Redis plugin</summary>
 
 **Workflow (22):** `security_audit` `code_review` `bug_predict`
@@ -330,9 +315,8 @@ memory tools registered by the bundled Redis plugin</summary>
 `personal_memory_recall` `personal_memory_topics`
 `personal_memory_forget`
 
-**Utility (8):** `auth_status` `auth_recommend` `telemetry_stats`
-`context_get` `context_set` `attune_get_level` `attune_set_level`
-`list_capabilities`
+**Utility (6):** `auth_status` `auth_recommend` `telemetry_stats`
+`context_get` `context_set` `list_capabilities`
 
 **Elicitation (5):** `elicitation_ask` `elicitation_render_form`
 `elicitation_collect_response` `elicitation_render_widget`
