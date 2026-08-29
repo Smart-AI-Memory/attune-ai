@@ -99,7 +99,7 @@ The plugin ships two security hooks:
 ## Python Package (optional — unlocks CLI + MCP)
 
 The plugin works standalone. Add the Python package
-for CLI automation, <!-- cap:mcp_registered_tool_count -->59 MCP tools<!-- /cap -->, multi-agent
+for CLI automation, <!-- cap:mcp_registered_tool_count -->61 MCP tools<!-- /cap -->, multi-agent
 workflows, and cost tracking:
 
 ```bash
@@ -110,7 +110,7 @@ pip install 'attune-ai[developer]'
 | ---------- | ----------- | ----- |
 | <!-- cap:skill_count -->28 auto-triggering skills<!-- /cap --> | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
-| <!-- cap:mcp_registered_tool_count -->59 MCP tools<!-- /cap --> | -- | Yes |
+| <!-- cap:mcp_registered_tool_count -->61 MCP tools<!-- /cap --> | -- | Yes |
 | `attune` CLI | -- | Yes |
 | Multi-agent workflows | -- | Yes |
 | Cost tracking | -- | Yes |

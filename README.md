@@ -60,7 +60,7 @@ each, validated on the way back. One form renders to whatever surface
 your client draws: a native dialog, a rich widget, or a plain menu
 ([the vocabulary](#interactive-forms--the-agent-asks-with-structure)).
 
-Around that core: 21 workflows and <!-- cap:mcp_registered_tool_count -->59 MCP tools<!-- /cap -->
+Around that core: 21 workflows and <!-- cap:mcp_registered_tool_count -->61 MCP tools<!-- /cap -->
 dispatching 2–6 domain-specific subagents behind Socratic quality
 gates, RAG grounding with a citation-per-claim contract, and
 generation fact-checking — one install, one MCP server. We run our
@@ -111,7 +111,7 @@ Setup fight you? [Tell me where](https://github.com/Smart-AI-Memory/attune-ai/di
 | <!-- cap:skill_count -->28 auto-triggering skills<!-- /cap --> | Yes | Yes |
 | Security hooks | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
-| <!-- cap:mcp_registered_tool_count -->59 MCP tools<!-- /cap --> | -- | Yes |
+| <!-- cap:mcp_registered_tool_count -->61 MCP tools<!-- /cap --> | -- | Yes |
 | `attune` CLI + multi-agent workflows | -- | Yes |
 | Ops dashboard (`attune ops`) — run history, cost tiles, telemetry | -- | Yes |
 
@@ -298,7 +298,7 @@ Ready-made Claude Code subagents (`security-reviewer`, `spec-author`,
 </details>
 
 <details>
-<summary><b>All 59 MCP tools</b> — 48 core in 7 categories, plus 11
+<summary><b>All 61 MCP tools</b> — 50 core in 7 categories, plus 11
 memory tools registered by the bundled Redis plugin</summary>
 
 **Workflow (22):** `security_audit` `code_review` `bug_predict`
@@ -322,9 +322,10 @@ memory tools registered by the bundled Redis plugin</summary>
 **Utility (6):** `auth_status` `auth_recommend` `telemetry_stats`
 `context_get` `context_set` `list_capabilities`
 
-**Elicitation (5):** `elicitation_ask` `elicitation_render_form`
+**Elicitation (7):** `elicitation_ask` `elicitation_render_form`
 `elicitation_collect_response` `elicitation_render_widget`
-`chart_render_widget`
+`chart_render_widget` `fix_workspace_preview`
+`fix_workspace_collect_action`
 
 **Handoff (2):** `handoff_create` `handoff_resume`
 

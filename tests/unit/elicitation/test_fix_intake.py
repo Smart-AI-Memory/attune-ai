@@ -158,7 +158,7 @@ def test_probe_candidates_from_scope_dir_and_tests_tree(tmp_path: Path) -> None:
 def test_form_builds_with_candidates_and_offers_other(tmp_path: Path) -> None:
     form = build_fix_intake_form(["src/pkg"], ["pytest tests/test_x.py"])
     ids = [q.id for q in form.questions]
-    assert ids == ["request", "scope", "probes", "mode"]
+    assert ids == ["request", "scope", "probes"]
     scope_q = form.questions[1]
     assert scope_q.type.value == "single_select"
     assert scope_q.options[-1] == OTHER
@@ -173,7 +173,7 @@ def test_form_degrades_to_free_text_without_candidates() -> None:
     assert scope_q.required and probes_q.required
 
 
-def test_compose_full_run_command_quotes_everything() -> None:
+def test_compose_command_quotes_everything_but_never_authorizes_run() -> None:
     cmd = compose_fix_command(
         {
             "request": "boundary must be 'bulk' at 100",
@@ -187,7 +187,7 @@ def test_compose_full_run_command_quotes_everything() -> None:
     assert argv[2] == "boundary must be 'bulk' at 100"
     assert argv.count("--probe") == 2
     assert ["--scope", "src/pkg"] == argv[argv.index("--scope") : argv.index("--scope") + 2]
-    assert argv[-1] == "--run"
+    assert "--run" not in argv
 
 
 def test_compose_preview_mode_omits_run_and_other_scope() -> None:
@@ -297,7 +297,7 @@ def test_main_default_prints_form_payload(tmp_path, monkeypatch, capsys) -> None
     assert payload["scopes"] == ["mod.py"]
     assert payload["probes"] == []
     field_ids = [f["id"] for f in payload["form"]["fields"]]
-    assert field_ids == ["request", "scope", "probes", "mode"]
+    assert field_ids == ["request", "scope", "probes"]
     assert payload["form"]["title"] == "Fix intake"
     request_field = payload["form"]["fields"][0]
     assert request_field["required"] is True

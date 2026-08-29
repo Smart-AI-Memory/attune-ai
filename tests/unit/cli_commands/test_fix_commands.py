@@ -15,13 +15,17 @@ import pytest
 from attune.cli_commands.fix_commands import (
     _TRAILER,
     FixContract,
+    StructuredFixPreview,
+    StructuredVerificationProbe,
     VerificationProbe,
     build_contract,
+    build_structured_preview,
     cmd_fix,
 )
 from attune.cli_minimal import main
 
 CANONICAL_PROBE = "pytest tests/fixtures/outcome_first_fix/pricing_suite.py"
+CANONICAL_SCOPE = "tests/fixtures/outcome_first_fix/pricing.py"
 
 
 def _args(**overrides) -> Namespace:
@@ -94,6 +98,68 @@ def test_scope_escaping_repo_rejected() -> None:
     assert error is not None and "--scope" in error
 
 
+def test_structured_preview_round_trips_and_binds_exact_future_argv() -> None:
+    preview, error = build_structured_preview(
+        _args(workflow="fix", scope=CANONICAL_SCOPE, run=False)
+    )
+    assert error is None
+    assert preview is not None
+
+    restored = StructuredFixPreview.from_dict(preview.to_dict())
+
+    assert restored == preview
+    assert restored.contract_hash() == preview.contract_hash()
+    assert restored.scope == CANONICAL_SCOPE
+    assert restored.command_argv[-1] == "--run"
+    assert restored.command_argv[:2] == ("attune", "fix")
+
+
+def test_structured_hash_is_independent_of_client_run_bit() -> None:
+    preview, _ = build_structured_preview(_args(workflow="fix", scope=CANONICAL_SCOPE, run=False))
+    run_preview, _ = build_structured_preview(
+        _args(workflow="fix", scope=CANONICAL_SCOPE, run=True)
+    )
+    assert preview is not None and run_preview is not None
+    assert preview.contract_hash() == run_preview.contract_hash()
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        _args(request="", workflow="fix", scope=CANONICAL_SCOPE),
+        _args(workflow="no-such-workflow", scope=CANONICAL_SCOPE),
+        _args(workflow="fix", scope=None),
+    ],
+)
+def test_structured_preview_abstains_when_contract_is_not_executable(args: Namespace) -> None:
+    preview, error = build_structured_preview(args)
+    assert preview is None
+    assert error
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        [],
+        {"argv": [], "description": "", "expected_exit": 0},
+        {"argv": ["pytest"], "description": "", "expected_exit": True},
+        {"argv": ["pytest"], "description": ""},
+    ],
+)
+def test_structured_probe_rejects_invalid_documents(payload) -> None:
+    with pytest.raises((TypeError, ValueError)):
+        StructuredVerificationProbe.from_dict(payload)
+
+
+def test_structured_preview_rejects_schema_drift() -> None:
+    preview, _ = build_structured_preview(_args(workflow="fix", scope=CANONICAL_SCOPE))
+    assert preview is not None
+    raw = preview.to_dict()
+    raw["unknown"] = True
+    with pytest.raises(ValueError, match="missing or unknown"):
+        StructuredFixPreview.from_dict(raw)
+
+
 # ---------------------------------------------------------------
 # Selection: --workflow or abstain (never guess)
 # ---------------------------------------------------------------
@@ -134,7 +200,6 @@ def _first_registered_workflow() -> str:
 TARGET_PROBE = (
     "pytest tests/fixtures/outcome_first_fix/pricing_suite.py::test_boundary_order_is_bulk"
 )
-CANONICAL_SCOPE = "tests/fixtures/outcome_first_fix/pricing.py"
 
 
 def test_representative_preview_is_truthful(capsys: pytest.CaptureFixture[str]) -> None:

@@ -376,11 +376,22 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
     # declarative enum, so "boolean" stays a valid field type here.
     # Localized import: a forms API reshape breaks only the elicitation
     # tools, loudly, at server startup — never the whole schema module.
-    from attune_forms.mcp_server import _form_schema
+    from attune_forms.mcp_server import _form_schema, _workspace_response_schema
 
     # _form_schema() embeds _field_schema() as its fields' items, so the
     # field contract rides along — no separate field-schema local needed.
     rich_form_schema = _form_schema()
+    workspace_response_schema = _workspace_response_schema()
+    # Fix actions are always authority-bound. The generic forms collector
+    # also supports unbound informational actions, so strengthen its shared
+    # response schema at this host boundary instead of duplicating it.
+    workspace_response_schema["required"] = [
+        *workspace_response_schema["required"],
+        "workspace_id",
+        "revision",
+        "action_nonce",
+        "contract_hash",
+    ]
 
     # v1 stable surface — AskUserQuestion's four native controls. Hand-
     # declared and kept minimal on purpose: AskUserQuestion has no native
@@ -469,6 +480,61 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
                     },
                 },
                 "required": ["form", "answers"],
+            },
+        },
+        "fix_workspace_preview": {
+            "description": (
+                "Build and render a canonical Fix preview from validated "
+                "intake answers. The server stores the authoritative state "
+                "and returns widget HTML plus a Markdown fallback bound to "
+                "a one-time nonce and deterministic contract hash. Nothing "
+                "executes. To revise an existing workspace after its "
+                "edit_contract action, pass that workspace_id."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "answers": {
+                        "type": "object",
+                        "properties": {
+                            "request": {"type": "string", "minLength": 1},
+                            "scope": {"type": "string", "minLength": 1},
+                            "probes": {
+                                "oneOf": [
+                                    {"type": "string", "minLength": 1},
+                                    {
+                                        "type": "array",
+                                        "minItems": 1,
+                                        "items": {"type": "string", "minLength": 1},
+                                    },
+                                ]
+                            },
+                        },
+                        "required": ["request", "scope", "probes"],
+                        "additionalProperties": False,
+                    },
+                    "workspace_id": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+                    },
+                },
+                "required": ["answers"],
+                "additionalProperties": False,
+            },
+        },
+        "fix_workspace_collect_action": {
+            "description": (
+                "Validate one returned Fix workspace action against the "
+                "server's canonical revision, nonce, and recomputed contract "
+                "hash. Stale, mutated, unknown, and replayed actions fail "
+                "closed. A valid run_fix response returns the exact approved "
+                "argv but does not execute it."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {"response": workspace_response_schema},
+                "required": ["response"],
+                "additionalProperties": False,
             },
         },
         "elicitation_ask": {

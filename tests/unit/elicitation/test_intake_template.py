@@ -81,16 +81,6 @@ def _hand_fix_form(scopes: list[str], probes: list[str]):
                 "required": True,
             }
         )
-    fields.append(
-        {
-            "id": "mode",
-            "text": "Run it, or preview only?",
-            "type": "single_select",
-            "options": ["preview only", "preview then run"],
-            "default": "preview only",
-            "help_text": "Preview renders the contract and executes nothing.",
-        }
-    )
     return form_from_dict(
         {
             "title": "Fix intake",
@@ -292,7 +282,7 @@ def test_cold_import_resolves_builtin_templates(tmp_path: Path) -> None:
 def test_registered_intakes_resolve_via_intake_form(tmp_path: Path) -> None:
     form = intake_form("fix", repo_root=tmp_path)
     assert form is not None
-    assert [q.id for q in form.questions] == ["request", "scope", "probes", "mode"]
+    assert [q.id for q in form.questions] == ["request", "scope", "probes"]
     spec_form = intake_form("spec-intake", repo_root=tmp_path)
     assert spec_form is not None
     assert [q.id for q in spec_form.questions][0] == "outcome"

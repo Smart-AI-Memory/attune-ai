@@ -331,6 +331,21 @@ class TestGetElicitationTools:
         tools = get_elicitation_tools()
         assert "elicitation_render_widget" in tools
         assert "elicitation_ask" in tools
+        assert "fix_workspace_preview" in tools
+        assert "fix_workspace_collect_action" in tools
+
+    def test_fix_workspace_action_requires_full_authority_binding(self) -> None:
+        schema = get_elicitation_tools()["fix_workspace_collect_action"]["input_schema"]
+        response = schema["properties"]["response"]
+        assert set(
+            {
+                "workspace_id",
+                "revision",
+                "action_nonce",
+                "contract_hash",
+            }
+        ).issubset(response["required"])
+        assert response["additionalProperties"] is False
 
     def test_v1_render_form_stays_four_types(self) -> None:
         # AskUserQuestion has no native number/date — v1 must NOT claim them.

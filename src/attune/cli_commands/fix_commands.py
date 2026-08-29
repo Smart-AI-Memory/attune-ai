@@ -18,10 +18,12 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
+import hashlib
+import json
 import shlex
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from argparse import Namespace
@@ -80,6 +82,145 @@ class FixContract:
     done_conditions: list[str] = field(default_factory=list)
     constraints: list[str] = field(default_factory=list)
     probes: list[VerificationProbe] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class StructuredVerificationProbe:
+    """Immutable, serializable verification authority."""
+
+    argv: tuple[str, ...]
+    description: str = ""
+    expected_exit: int = 0
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "argv", tuple(self.argv))
+        if not self.argv or not all(isinstance(token, str) and token for token in self.argv):
+            raise ValueError("structured probe argv must contain non-empty strings")
+        if not isinstance(self.description, str):
+            raise TypeError("structured probe description must be a string")
+        if isinstance(self.expected_exit, bool) or not isinstance(self.expected_exit, int):
+            raise TypeError("structured probe expected_exit must be an integer")
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return the stable JSON projection."""
+        return {
+            "argv": list(self.argv),
+            "description": self.description,
+            "expected_exit": self.expected_exit,
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> StructuredVerificationProbe:
+        """Restore a probe from its strict JSON projection."""
+        if not isinstance(data, dict):
+            raise ValueError("structured probe must be a mapping")
+        expected = {"argv", "description", "expected_exit"}
+        if set(data) != expected:
+            raise ValueError("structured probe keys must be argv, description, expected_exit")
+        argv = data["argv"]
+        if not isinstance(argv, list):
+            raise ValueError("structured probe argv must be a list")
+        return cls(tuple(argv), data["description"], data["expected_exit"])
+
+
+@dataclass(frozen=True)
+class StructuredFixPreview:
+    """Immutable authority projection for one future Fix execution.
+
+    Rendered HTML and presentation-only state are deliberately absent.
+    Ordered arrays and user strings are preserved; mapping keys are
+    sorted only when canonical JSON is encoded for the approval hash.
+    """
+
+    schema_version: int
+    goal: str
+    scope: str
+    done_conditions: tuple[str, ...]
+    constraints: tuple[str, ...]
+    probes: tuple[StructuredVerificationProbe, ...]
+    workflow: str
+    command_argv: tuple[str, ...]
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "done_conditions", tuple(self.done_conditions))
+        object.__setattr__(self, "constraints", tuple(self.constraints))
+        object.__setattr__(self, "probes", tuple(self.probes))
+        object.__setattr__(self, "command_argv", tuple(self.command_argv))
+        if isinstance(self.schema_version, bool) or self.schema_version != 1:
+            raise ValueError("structured Fix preview schema_version must be 1")
+        for name in ("goal", "scope", "workflow"):
+            value = getattr(self, name)
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(f"structured Fix preview {name} must not be empty")
+        if not self.probes:
+            raise ValueError("structured Fix preview requires at least one probe")
+        if not all(isinstance(probe, StructuredVerificationProbe) for probe in self.probes):
+            raise TypeError("structured Fix preview probes must be structured probes")
+        if not all(isinstance(value, str) and value for value in self.done_conditions):
+            raise ValueError("structured Fix preview done conditions must be non-empty strings")
+        if not all(isinstance(value, str) and value for value in self.constraints):
+            raise ValueError("structured Fix preview constraints must be non-empty strings")
+        if not self.command_argv or not all(
+            isinstance(token, str) and token for token in self.command_argv
+        ):
+            raise ValueError("structured Fix preview command argv must contain non-empty strings")
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return the versioned authority document."""
+        return {
+            "schema_version": self.schema_version,
+            "goal": self.goal,
+            "scope": self.scope,
+            "done_conditions": list(self.done_conditions),
+            "constraints": list(self.constraints),
+            "probes": [probe.to_dict() for probe in self.probes],
+            "workflow": self.workflow,
+            "command_argv": list(self.command_argv),
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> StructuredFixPreview:
+        """Restore a preview while rejecting schema drift and coercion."""
+        if not isinstance(data, dict):
+            raise ValueError("structured Fix preview must be a mapping")
+        expected = {
+            "schema_version",
+            "goal",
+            "scope",
+            "done_conditions",
+            "constraints",
+            "probes",
+            "workflow",
+            "command_argv",
+        }
+        if set(data) != expected:
+            raise ValueError("structured Fix preview has missing or unknown keys")
+        for name in ("done_conditions", "constraints", "probes", "command_argv"):
+            if not isinstance(data[name], list):
+                raise ValueError(f"structured Fix preview {name} must be a list")
+        return cls(
+            schema_version=data["schema_version"],
+            goal=data["goal"],
+            scope=data["scope"],
+            done_conditions=tuple(data["done_conditions"]),
+            constraints=tuple(data["constraints"]),
+            probes=tuple(StructuredVerificationProbe.from_dict(raw) for raw in data["probes"]),
+            workflow=data["workflow"],
+            command_argv=tuple(data["command_argv"]),
+        )
+
+    def canonical_json(self) -> str:
+        """Serialize deterministically without normalizing user strings."""
+        return json.dumps(
+            self.to_dict(),
+            ensure_ascii=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+
+    def contract_hash(self) -> str:
+        """SHA-256 approval digest of the exact authority projection."""
+        return hashlib.sha256(self.canonical_json().encode("utf-8")).hexdigest()
 
 
 def _repo_root() -> Path:
@@ -191,6 +332,70 @@ def _select_workflow(args: Namespace) -> tuple[str | None, str]:
         "For a code fix, add --workflow fix (the only workflow --run can execute):\n"
         '  attune fix "<request>" --workflow fix --probe "<verify command>" --scope <path> --run\n'
         "Registered candidates: " + (", ".join(names) if names else "(none registered)")
+    )
+
+
+def build_structured_preview(
+    args: Namespace,
+) -> tuple[StructuredFixPreview | None, str | None]:
+    """Build the deterministic authority projection without executing.
+
+    This reuses the CLI's validation and workflow registry boundary, then
+    replaces machine-specific absolute scope text with one repo-relative
+    POSIX spelling. ``run`` is intentionally not consulted: approval is an
+    event applied *to* this document, not a property the client can place
+    inside it.
+    """
+    contract, error = build_contract(args)
+    if contract is None:
+        return None, error
+
+    workflow, detail = _select_workflow(args)
+    if workflow is None:
+        return None, detail
+
+    raw_scope = getattr(args, "scope", None)
+    if not raw_scope:
+        return None, "a structured Fix preview requires --scope"
+    scope = Path(raw_scope).resolve().relative_to(_repo_root()).as_posix()
+
+    probes = tuple(
+        StructuredVerificationProbe(
+            argv=tuple(probe.argv),
+            description=probe.description,
+            expected_exit=probe.expected_exit,
+        )
+        for probe in contract.probes
+    )
+    done_conditions = tuple(
+        [
+            f"probe passes: {probe.description or ' '.join(probe.argv)} "
+            f"(expect exit {probe.expected_exit})"
+            for probe in probes
+        ]
+        + [f"diff confined to {scope}"]
+    )
+    constraints = (
+        f"workflow edits confined to {scope}",
+        "verification probes run independently as argv without a shell",
+    )
+    command: list[str] = ["attune", "fix", contract.goal, "--workflow", workflow]
+    for probe in probes:
+        command.extend(("--probe", shlex.join(probe.argv)))
+    command.extend(("--scope", scope, "--run"))
+
+    return (
+        StructuredFixPreview(
+            schema_version=1,
+            goal=contract.goal,
+            scope=scope,
+            done_conditions=done_conditions,
+            constraints=constraints,
+            probes=probes,
+            workflow=workflow,
+            command_argv=tuple(command),
+        ),
+        None,
     )
 
 

@@ -3,8 +3,8 @@ type: concept
 name: elicitation-forms-concept
 feature: elicitation-forms
 depth: concept
-generated_at: 2026-08-29T19:11:14.981234+00:00
-source_hash: f7f628e6b3f2e6ef1fa119a382a5bce3e75ebb4ee2beb22666b8f89e45fd278b
+generated_at: 2026-08-29T23:25:57.407014+00:00
+source_hash: adc929d111b4cf4bf48479bf6b325ab34d6f63740017d7fc0df1383da12ed22e
 status: generated
 ---
 
@@ -27,6 +27,26 @@ once with `collect_form_response`, and rendered by surface-specific
 renderers. The same artifact renders richly on a widget-capable client
 and degrades gracefully everywhere else; the answer is validated the
 same way regardless of surface.
+
+### Forms are input grammar; workspaces are task projections
+
+A form is best for one bounded input turn. A command workspace is the
+larger protocol for a task that persists across turns: intake, preview,
+execution, and receipt are versioned views over host-owned state. The
+view document is still declarative data and still renders to widget or
+Markdown, but it is disposable — it never becomes execution authority.
+
+Fix is the first live workspace. `fix_workspace_preview` rebuilds its
+validated CLI contract, stores canonical state in the MCP session, and
+binds the rendered actions to the workspace id, revision, one-time nonce,
+and SHA-256 hash of the exact future argv. `fix_workspace_collect_action`
+rebuilds that contract again before accepting `edit_contract` or
+`run_fix`; it consumes the nonce and returns the approved argv but does
+not execute it. This separates three things that should not be conflated:
+
+1. the form records intent;
+2. the workspace explains the exact consequence;
+3. the existing Fix CLI remains the executor and receipt boundary.
 
 On top of that shared substrate sits a small, growing **communication
 grammar** — a family of constructs, each a member of the one form model:
