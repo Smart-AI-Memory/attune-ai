@@ -125,12 +125,37 @@ halves contradicting the drift-guarded METRICS guidance ("say mean
 0.97, CI-gated, never 'gated at ≥ 0.97'"); normalized to the
 canonical phrasing.
 
+### DEC-16 — Plugin-first at first contact; harness stays the architecture term (2026-08-29, closes the open item)
+
+Grounded in a survey first: "AI Workflow-harness" appears nowhere
+in public copy today — the only public "harness" uses are the
+generic test-rig sense (planted-defect harness, evaluation
+harness). Ruling ratifies the de facto state as policy:
+
+- **"Plugin" is the first-contact noun** on all public surfaces —
+  hero-adjacent copy, marketplace, PyPI, install sections. It
+  pattern-matches to "small thing I can try", the truth of the
+  two-command install and what the DEC-12 solo buyer needs.
+- **Depth formula** wherever more-than-a-plugin must be signaled:
+  "a Claude Code plugin that grows into a full CLI + MCP stack."
+  Lead light, reveal depth; never lead heavy.
+- **"AI Workflow-harness" remains the ratified
+  internal/architecture term** (the 2026-07-29 ruling is
+  untouched). Public use only as a defined term in
+  architecture-explaining contexts (docs, the discipline article) —
+  never in a hero, tagline, or install block. A supporting reason:
+  the site already uses "harness" in the test-rig sense, and one
+  word carrying two meanings is the overload the "one name, one
+  contract" story exists to prevent.
+- Counter-case recorded: "agent harness" is an emerging term of
+  art and attune genuinely is one — if the term takes off
+  industry-wide, revisiting costs one ruling; adopting early and
+  retracting later costs credibility. Revisit trigger: the term
+  becoming common buyer vocabulary.
+
 ## Open (not ruled)
 
-- **Harness vs. plugin first-contact framing.** "AI
-  Workflow-harness" is the ratified internal/architecture term;
-  whether first-contact copy should say "plugin" (try-me light)
-  instead was discussed, not ruled.
+- *(none — DEC-16 closed the last open item of this review.)*
 
 ## Evidence base (session findings, 2026-08-29)
 
