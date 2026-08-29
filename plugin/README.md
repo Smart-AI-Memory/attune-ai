@@ -1,7 +1,8 @@
 # attune-ai
 
-Spec-driven development for Claude Code — turn requirements
-into reliable software. <!-- cap:skill_count -->28 auto-triggering skills<!-- /cap -->, zero
+Persistent memory and receipt-verified workflows for Claude
+Code. Your agent stops starting from zero, and its word stops
+being the evidence. <!-- cap:skill_count -->28 auto-triggering skills<!-- /cap -->, zero
 commands: say what you need and Claude picks the right skill.
 
 **Version:** 16.1.0 | **License:** Apache 2.0

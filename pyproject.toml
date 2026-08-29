@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "attune-ai"
 version = "16.1.0"
-description = "Persistent memory and receipt-verified workflows for Claude Code — plugin, MCP server, and spec-driven dev framework."
+description = "Persistent memory and receipt-verified workflows for Claude Code — plugin, MCP server, and CLI."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
 license = {file = "LICENSE"}
