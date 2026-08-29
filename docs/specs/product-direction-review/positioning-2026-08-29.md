@@ -94,6 +94,37 @@ not "orchestration" (DEC-12 vocabulary rule). Lesson for future
 folds: folding a pillar means relocating its story, not shrinking
 it to a bullet.
 
+### DEC-15 — Engines get credit at the point of proof; help is right-sized (2026-08-29, later same day)
+
+The chair proposed sharing billing across attune-rag, attune-verify,
+and the other bundled packages instead of attune-help's inherited
+prominence. Ratified with the lead's amendment: **attribution, not
+product billing** — rag and verify are bundled core deps whose
+invisibility ("built in, no extra install") is itself a selling
+point, so they are credited by name where their receipts appear,
+never promoted to sibling products. Three parts:
+
+1. attune-help's cross-ad inside attune-ai's marketplace description
+   is cut (help keeps its own listing and card — true and real, just
+   no longer piggybacking).
+2. Every engine-powered proof-point names its engine ("powered by
+   attune-rag", "powered by attune-verify").
+3. The README Ecosystem table's information appears on the site,
+   **benefit-framed** (chair's amendment): a homepage "one install"
+   section — each engine as a benefit inside `pip install attune-ai`,
+   with two constraints from the lead's pushback: (a) framed as
+   components of ONE install, never a product grid (only attune-help
+   carries a separate install line, marked optional); (b) placed low
+   on the page near the install decision, not above the fold. Data
+   single-sourced as `ECOSYSTEM` in features.ts, roles only, no
+   versions — so it cannot go stale on a release.
+
+Rider: executing this surfaced a README accuracy drift — the
+Accuracy section claimed "0.98 mean, CI-gated at ≥ 0.97", both
+halves contradicting the drift-guarded METRICS guidance ("say mean
+0.97, CI-gated, never 'gated at ≥ 0.97'"); normalized to the
+canonical phrasing.
+
 ## Open (not ruled)
 
 - **Harness vs. plugin first-contact framing.** "AI

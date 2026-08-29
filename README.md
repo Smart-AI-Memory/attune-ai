@@ -354,8 +354,9 @@ types).
 
 ## Accuracy & Faithfulness
 
-RAG generation enforces citation-per-claim: **0.98 mean per-claim
-faithfulness, CI-gated at ≥ 0.97** (40-query golden set, N=20 runs).
+RAG generation — powered by the bundled `attune-rag` engine —
+enforces citation-per-claim: **0.97 mean per-claim faithfulness,
+CI-gated** (40-query golden set, N=20 runs).
 The contract was chosen by A/B measurement — the per-query
 hallucination bucket rate dropped from 46.7% to 6.7% with it
 ([methodology](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/rag/faithfulness-decision-2026-04-19.md)).
