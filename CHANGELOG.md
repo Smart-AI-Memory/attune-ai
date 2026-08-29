@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **worktree-path-guard teaches the multi-PR pattern**: when the
+  guard blocks a cross-worktree write, its message now also explains
+  the supported alternative — switch branches sequentially in the
+  session's own checkout — instead of only naming the block. Same
+  protection, faster recovery.
+
+
 ## [16.1.0] - 2026-08-28
 
 16.1.0 is a maintenance release on top of 16.0.0's destructive half.
