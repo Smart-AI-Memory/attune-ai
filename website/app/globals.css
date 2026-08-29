@@ -89,16 +89,17 @@
   --border: var(--semantic-border);
 
   --surface: var(--semantic-surface);
-  --surface-container-low: #132438;
-  --surface-container: var(--semantic-surface-raised);
-  --surface-container-high: #213145;
-  --surface-container-highest: #2a3b50;
+  --surface-container-low: var(--semantic-surface-raised);
+  --surface-container: #213145;
+  --surface-container-high: #2a3b50;
+  --surface-container-highest: #38485d;
   --surface-variant: #38485d;
 
   --text-primary: var(--semantic-text);
   --text-secondary: #b7c8e1;
   --text-muted: var(--semantic-muted);
   --action-foreground: #0b1c30;
+  --secondary-dark: #3db57e;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -109,16 +110,17 @@
     --border: var(--semantic-border);
 
     --surface: var(--semantic-surface);
-    --surface-container-low: #132438;
-    --surface-container: var(--semantic-surface-raised);
-    --surface-container-high: #213145;
-    --surface-container-highest: #2a3b50;
+    --surface-container-low: var(--semantic-surface-raised);
+    --surface-container: #213145;
+    --surface-container-high: #2a3b50;
+    --surface-container-highest: #38485d;
     --surface-variant: #38485d;
 
     --text-primary: var(--semantic-text);
     --text-secondary: #b7c8e1;
     --text-muted: var(--semantic-muted);
     --action-foreground: #0b1c30;
+    --secondary-dark: #3db57e;
   }
 }
 
@@ -137,7 +139,7 @@ body {
   outline-offset: 2px;
 }
 
-:where(input, textarea, select) {
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), textarea, select) {
   min-height: var(--semantic-target-min);
   border-color: var(--semantic-border);
   border-radius: var(--semantic-radius-control);

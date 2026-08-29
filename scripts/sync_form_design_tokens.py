@@ -12,6 +12,7 @@ import argparse
 import importlib.metadata
 import importlib.resources
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -43,9 +44,10 @@ CSS_COLOR_NAMES = {
 
 
 def _version_tuple(value: str) -> tuple[int, int, int]:
-    core = value.split("+", 1)[0].split("-", 1)[0]
-    parts = [int(part) for part in core.split(".")[:3]]
-    return tuple((parts + [0, 0, 0])[:3])  # type: ignore[return-value]
+    match = re.match(r"^(?:\d+!)?(\d+)(?:\.(\d+))?(?:\.(\d+))?", value)
+    if match is None:
+        raise ValueError(f"invalid package version: {value!r}")
+    return tuple(int(part or 0) for part in match.groups())  # type: ignore[return-value]
 
 
 def _load_source(path: Path | None) -> tuple[dict[str, Any], str]:
@@ -97,6 +99,11 @@ def render_css(tokens: dict[str, Any], source_version: str) -> str:
     return "\n".join(lines)
 
 
+def _projection_is_stale(path: Path, expected: str) -> bool:
+    """Treat a missing generated asset as drift, not an internal error."""
+    return not path.is_file() or path.read_text(encoding="utf-8") != expected
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--source", type=Path, help="semantic_tokens.json from a checkout")
@@ -107,7 +114,11 @@ def main() -> int:
     css_text = render_css(tokens, source_version if args.source is None else "0.9.0")
     expected = ((JSON_DEST, json_text), (CSS_DEST, css_text))
     if args.check:
-        stale = [str(path.relative_to(ROOT)) for path, text in expected if path.read_text() != text]
+        stale = [
+            str(path.relative_to(ROOT))
+            for path, text in expected
+            if _projection_is_stale(path, text)
+        ]
         if stale:
             raise SystemExit("semantic token projection drift: " + ", ".join(stale))
         print(f"semantic token projection clean (attune-forms {source_version})")
