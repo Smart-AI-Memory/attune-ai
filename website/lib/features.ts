@@ -60,15 +60,23 @@ export const CAPABILITIES = {
  *     freshness-guarded by scripts/check_badge_freshness.py in CI —
  *     it fails the build if actual collected tests fall below the
  *     floor or exceed it by more than the margin.
- *   coverageFloorPct: --cov-fail-under in pyproject + the codecov
- *     project/patch gates (one number, chair-ruled 2026-08-22).
+ *   coverageFloorPct: the CI coverage RATCHET — the
+ *     `--cov-fail-under` value in tests.yml's coverage job (a
+ *     raise-only valve; the authoritative merge gate). Displayed
+ *     as "NN%+": actual coverage sits at or above it by
+ *     construction, so the claim needs no freshness script.
+ *     Drift-guarded: test_coverage_floor_matches_ci_gate fails if
+ *     this number diverges from the workflow's gate (bump both
+ *     together when the ratchet rises). pyproject's fail_under=85
+ *     and the codecov 85% targets are looser secondary floors —
+ *     not this number.
  *   ragFaithfulness: attune-rag's measured MEAN faithfulness (40-query
  *     golden set, N=20 runs). The CI regression gate is locked at
  *     ≥ 0.9686 — say "mean 0.97, CI-gated", never "gated at ≥ 0.97".
  */
 export const METRICS = {
   testsFloor: "25,000+",
-  coverageFloorPct: 85,
+  coverageFloorPct: 94,
   ragFaithfulness: "0.97",
 } as const;
 

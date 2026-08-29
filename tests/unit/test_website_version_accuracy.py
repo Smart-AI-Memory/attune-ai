@@ -82,6 +82,29 @@ class TestFeaturesVersionSync:
             "update the <span>vX.Y.Z</span> badge in website/app/page.tsx"
         )
 
+    def test_coverage_floor_matches_ci_gate(self):
+        """The site's coverage stat must equal the CI ratchet it advertises.
+
+        METRICS.coverageFloorPct renders as "NN%+" — a claim guaranteed by
+        the coverage job's --cov-fail-under gate in tests.yml, which is a
+        raise-only ratchet. If the ratchet rises without the site following,
+        the site silently undersells (the failure mode this stat replaced:
+        it showed the 85 secondary floor while actual coverage was ~96).
+        Bump METRICS.coverageFloorPct in the same PR that raises the gate.
+        """
+        workflow = REPO / ".github" / "workflows" / "tests.yml"
+        wf_matches = re.findall(r"--cov-fail-under=(\d+)", workflow.read_text(encoding="utf-8"))
+        assert wf_matches, "no --cov-fail-under gate found in tests.yml coverage job"
+        gate = max(int(m) for m in wf_matches)
+
+        site = re.search(r"coverageFloorPct:\s*(\d+)", FEATURES.read_text(encoding="utf-8"))
+        assert site, "no coverageFloorPct in website/lib/features.ts METRICS"
+        assert int(site.group(1)) == gate, (
+            f"features.ts coverageFloorPct {site.group(1)} != CI coverage gate "
+            f"{gate} (tests.yml --cov-fail-under) — the site stat must track "
+            "the ratchet; bump both together"
+        )
+
 
 # --- Layer 2: hermetic tests of the PyPI audit script -----------------
 

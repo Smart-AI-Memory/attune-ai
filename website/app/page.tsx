@@ -236,8 +236,8 @@ export default function Home() {
                 <div className="text-sm text-[var(--text-muted)] mt-1">automated tests</div>
               </div>
               <div>
-                <div className="text-4xl font-extrabold text-[var(--primary)]">{METRICS.coverageFloorPct}%</div>
-                <div className="text-sm text-[var(--text-muted)] mt-1">coverage floor, CI-enforced</div>
+                <div className="text-4xl font-extrabold text-[var(--primary)]">{METRICS.coverageFloorPct}%+</div>
+                <div className="text-sm text-[var(--text-muted)] mt-1">test coverage, CI-gated</div>
               </div>
               <div>
                 <div className="text-4xl font-extrabold text-[var(--primary)]">{METRICS.ragFaithfulness}</div>

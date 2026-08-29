@@ -47,22 +47,23 @@ const METHODOLOGIES: Methodology[] = [
     ],
   },
   {
-    stat: `${METRICS.coverageFloorPct}%`,
-    label: 'coverage floor, CI-enforced',
+    stat: `${METRICS.coverageFloorPct}%+`,
+    label: 'test coverage, CI-gated',
     what:
-      'The minimum line coverage the project accepts — a floor the build ' +
-      'enforces, not a marketing average. Actual coverage sits at or above ' +
-      'it by construction.',
+      'The line coverage CI enforces on every merge — a raise-only ' +
+      'ratchet, not a marketing average. Actual coverage sits at or above ' +
+      'it by construction: a run below this number fails the build.',
     how:
-      'Enforced identically in three places: pytest runs with ' +
-      '--cov-fail-under=85 (pyproject.toml), and Codecov gates both the ' +
-      'project total and every patch at 85%. One number everywhere — a PR ' +
-      'that drops changed-code coverage below the floor cannot merge.',
+      `The coverage job runs pytest with --cov-fail-under=${METRICS.coverageFloorPct} ` +
+      '(a one-way valve: raised when main climbs, never lowered to make a ' +
+      'red PR pass). Codecov additionally gates the project total and ' +
+      'every patch at 85%. The live figure is on Codecov.',
     gate:
-      'The threshold itself is drift-guarded: a unit test fails CI if the ' +
-      'configured coverage gate is ever lowered.',
+      'Drift-guarded twice: a unit test fails CI if the configured gate is ' +
+      'ever lowered, and another fails if this displayed number diverges ' +
+      'from the gate the workflow actually enforces.',
     sources: [
-      { label: 'pyproject.toml', href: `${REPO}/blob/main/pyproject.toml` },
+      { label: 'CI coverage gate (tests.yml)', href: `${REPO}/blob/main/.github/workflows/tests.yml` },
       { label: 'codecov.yml', href: `${REPO}/blob/main/codecov.yml` },
       { label: 'Live coverage on Codecov', href: 'https://codecov.io/gh/Smart-AI-Memory/attune-ai' },
     ],
