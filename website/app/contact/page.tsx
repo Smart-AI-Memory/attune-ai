@@ -251,7 +251,7 @@ export default function ContactPage() {
                     <button
                       type="button"
                       onClick={startDictation}
-                      className={`flex items-center gap-2 px-3 py-1 rounded-lg text-sm font-bold transition-all ${
+                      className={`flex min-h-[var(--semantic-target-min)] items-center gap-2 px-3 py-1 rounded-lg text-sm font-bold transition-all ${
                         isRecording
                           ? 'bg-[var(--error)] text-white'
                           : 'bg-[var(--accent)] bg-opacity-10 text-[var(--accent)] hover:bg-opacity-20'

@@ -71,7 +71,7 @@ export default function Navigation() {
             <button
               type="button"
               onClick={toggleTheme}
-              className="p-2 rounded-lg hover:bg-[var(--border)] transition-colors"
+              className="min-h-[var(--semantic-target-min)] min-w-[var(--semantic-target-min)] p-2 rounded-lg hover:bg-[var(--border)] transition-colors"
               aria-label={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
               title={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
             >
@@ -207,7 +207,7 @@ export default function Navigation() {
                 <button
                   type="button"
                   onClick={toggleTheme}
-                  className="flex items-center gap-2 text-sm font-medium"
+                  className="flex min-h-[var(--semantic-target-min)] items-center gap-2 text-sm font-medium"
                   aria-label={`Switch to ${resolvedTheme === 'dark' ? 'light' : 'dark'} mode`}
                 >
                   {resolvedTheme === 'dark' ? '☀️ Light' : '🌙 Dark'} Mode
