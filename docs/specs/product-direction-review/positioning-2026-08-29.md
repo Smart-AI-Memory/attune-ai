@@ -169,6 +169,14 @@ skills?"), preserving DEC-16's lead-light spirit. Surfaces:
 README Get Started, homepage get-started section (both cards now
 carry the recommended emphasis), attune-ai.dev install block.
 
+**Watch-item (retro pushback, ratified 2026-08-29):** the
+free-framing defused the billing trap but not the INSTALL trap —
+recommending pip+plugin routes first contact through Python
+packaging, where the setup-friction-log says people got hurt.
+Measure the 2026-09-01 first-user onboarding against this; if
+setup friction recurs at first contact, revisit DEC-17's
+recommendation ordering.
+
 ### DEC-18 — Spec Ladders sells the engine, not just the brakes (2026-08-29)
 
 Chair flagged that spec-driven *execution* was undersold: every

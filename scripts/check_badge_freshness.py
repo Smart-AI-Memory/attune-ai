@@ -54,6 +54,35 @@ def collected_test_count() -> int | None:
     return n or None
 
 
+def newin_problem(readme_text: str, pkg_version: str) -> str | None:
+    """Check 4 — the rotating "New in X" slot must match the package.
+
+    The slot sat two releases stale (still "New in 15.0.0" while
+    16.1.0 shipped) before the 2026-08-29 truth pass caught it by
+    hand; this makes the rotation mechanical (retro ruling, item 1).
+    Returns a problem string, or None when fresh.
+    """
+    m = re.search(r"^## New in (\d+\.\d+\.\d+)", readme_text, re.M)
+    if not m:
+        return 'README "New in <version>" rotating slot not found.'
+    if m.group(1) != pkg_version:
+        return (
+            f'README "New in {m.group(1)}" slot is STALE: package is '
+            f"{pkg_version} — rotate the slot (headline feature in, "
+            "displaced content to its permanent section)."
+        )
+    return None
+
+
+def _pkg_version() -> str | None:
+    m = re.search(
+        r'^version = "(\d+\.\d+\.\d+)"',
+        (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8"),
+        re.M,
+    )
+    return m.group(1) if m else None
+
+
 def main() -> int:
     text = README.read_text(encoding="utf-8")
     problems: list[str] = []
@@ -86,11 +115,23 @@ def main() -> int:
             "(img.shields.io/codecov/c/github/...)."
         )
 
+    # 4 — the rotating "New in X" slot must match the package version
+    pkg = _pkg_version()
+    if pkg is None:
+        print("  (note: could not parse pyproject version; skipping New-in check)")
+    else:
+        newin = newin_problem(text, pkg)
+        if newin:
+            problems.append(newin)
+
     if problems:
         print("Badge freshness check FAILED:")
         for p in problems:
             print("  -", p)
-        print("\nFix: bump the README tests floor and/or restore the dynamic coverage badge.")
+        print(
+            "\nFix: bump the README tests floor, restore the dynamic "
+            'coverage badge, and/or rotate the "New in" slot.'
+        )
         return 1
 
     print("Badge freshness OK.")
