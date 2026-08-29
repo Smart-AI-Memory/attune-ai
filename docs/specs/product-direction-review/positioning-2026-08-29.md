@@ -82,6 +82,18 @@ portability is a property of the memory (DEC-13);
 cross-review/roundtable are properties of the receipts culture.
 Fewer top-level concepts at first contact, each carrying more.
 
+**DEC-14a rider (2026-08-29, chair-directed, same session):** the
+fold's first execution under-weighted the round table — pillar
+copy became a single bullet, and the chair flagged it as one of
+the site's strongest points. The fold STANDS (no sixth parallel
+pillar), but the round table gets marquee treatment as the vivid
+case of the receipts culture across models: a dedicated
+how-it-works section ("Three models. One table. You chair." —
+deliberate / you decide / receipts-still), selling the CHAIRING,
+not "orchestration" (DEC-12 vocabulary rule). Lesson for future
+folds: folding a pillar means relocating its story, not shrinking
+it to a bullet.
+
 ## Open (not ruled)
 
 - **Harness vs. plugin first-contact framing.** "AI
