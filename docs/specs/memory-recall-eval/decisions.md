@@ -346,6 +346,14 @@ now false on its second clause.** Retrieval is unaffected: hit@3 is
 still 26/26, so when the answer exists the corpus still surfaces it.
 What degraded is the ability to tell that an answer does NOT exist.
 
+**Probable cause: the retriever changed under us.** `attune-rag` was
+locked 1.0.0 and then 1.1.0 on 2026-08-10 (#2033, #2034 — the latter
+titled "abstention-by-default + confidence-gated retrieval"), both AFTER
+run 1 on 2026-07-20. `KeywordRetriever` lives in that dependency, not in
+this repo, so the scorer moved between baseline and re-run. Corpus drift
+is not excluded but the dependency bump is the stronger hypothesis and
+was not chased further.
+
 **Concrete: one document is acting as an attractor.** Both false
 positives resolve to the SAME topic at an IDENTICAL score:
 
@@ -379,11 +387,40 @@ is already perfect — is not a trade worth making today.
    (`cli_commands/memory_commands.py`) and the four
    `personal_memory_*` MCP tools.
 
-At that point the recommended fix is NOT IDF/BM25 re-weighting —
-ranking needs no help — but an **abstain path**: normalize the unbounded
-keyword-overlap count into a bounded confidence and let `query()` return
-empty below a threshold, so a caller can trust "found nothing". That
-targets the clause that actually regressed and leaves hit@3 alone.
+**Fix direction — corrected 2026-08-28 by measurement, after an
+earlier draft of this entry recommended the wrong thing.** The first
+recommendation here was an "abstain path": surface a bounded confidence
+and let `query()` return empty below a threshold. `RagResult` ALREADY
+carries a bounded `confidence` (plus `fallback_used`), and
+`PersonalMemory.query()` ([personal.py:285-294](../../../src/attune/memory/personal.py#L285))
+discards it, ranking on raw `hit.score` instead — so the fix looked like
+a few lines. Measured against this benchmark's own corpus and queries,
+using the EXACT pipeline construction `personal.py` uses
+(`DirectoryCorpus(root, summaries_file=_SUMMARIES_FILE, glob="**/*.md")`):
+
+    confidence, positives (n=26): 0.875 x2, 1.0 x24
+    confidence, negatives (n=6) : 0.0 x1, 0.5 x3, 1.0 x2
+
+**Two of six negatives score confidence 1.0** — maximum confidence on
+questions the corpus cannot answer. The minimum positive (0.875) sits
+BELOW the maximum negative (1.0), so any threshold excluding the
+negatives drops all 26 true positives. Confidence is not an abstain
+signal on this corpus; it is over-confident on exactly the queries that
+fail. (Constructing the same pipeline WITHOUT `summaries_file` moves
+those two negatives from 1.0 down to 0.5 — the summaries file is
+implicated in the over-confidence and is the first thing to look at.)
+
+The remaining lever is the RETRIEVER, not the score. `attune-rag` 1.1.0
+already ships `EmbeddingRetriever`, `HybridRetriever`,
+`TransformerRetriever`, `LLMReranker` and `QueryExpander`, and
+`RagPipeline(corpus, retriever, expander, reranker)` takes them as
+constructor arguments — `PersonalMemory` passes none of them and gets
+the `KeywordRetriever` default. Keyword-only retrieval failing on
+"which X do we use?" phrasings that share generic vocabulary with an
+unrelated document IS the documented failure mode, and semantic or
+hybrid retrieval addresses it by construction. That is a configuration
+change before it is a code change, but it adds a real dependency and
+latency cost, so it needs its own measurement — not adoption on faith.
 
 **Methodology warning for the next reader, learned the hard way in this
 session.** There are TWO benchmark scripts and they are NOT
