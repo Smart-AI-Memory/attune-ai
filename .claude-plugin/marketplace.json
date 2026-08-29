@@ -12,7 +12,7 @@
   "plugins": [
     {
       "name": "attune-ai",
-      "description": "Persistent memory and receipt-verified workflows for Claude Code. /spec carries an idea through brainstorm, requirements, design, and task execution with quality gates and your approval at each stage. Backed by 28 auto-triggering skills — security audits, code reviews, test generation, bug prediction, and release preparation. For help content tools, also install attune-help from this marketplace; authoring ships built in via the attune.authoring module.",
+      "description": "Persistent memory and receipt-verified workflows for Claude Code. /spec carries an idea through brainstorm, requirements, design, and task execution with quality gates and your approval at each stage. Backed by 28 auto-triggering skills — security audits, code reviews, test generation, bug prediction, and release preparation.",
       "source": "./plugin",
       "version": "16.1.0",
       "author": {

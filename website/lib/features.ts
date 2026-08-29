@@ -199,7 +199,8 @@ export const RELIABILITY_LOOP: LoopStage[] = [
     n: "03",
     name: "Build",
     description:
-      `${CAPABILITIES.workflows} workflows: review, tests, bug prediction, refactor.`,
+      // DEC-18: engine-framing — the spec drives the agents.
+      `The agent executes the spec'd tasks — ${CAPABILITIES.workflows} workflows: review, tests, bug prediction, refactor.`,
   },
   {
     n: "04",
@@ -315,15 +316,77 @@ export const PILLARS: Pillar[] = [
       "import, CLI flags are real, links resolve, and counts match — " +
       "before the change reaches main.",
     points: [
+      // DEC-15: name the engine at the point of proof.
+      "Powered by attune-verify — built in, no extra install",
       "Verifies docs, code, and generated content",
       "Closes the loop the spec opened",
       // DEC-14: cross-model review/deliberation live under the
       // receipts culture, not a standalone multi-LLM pillar.
       "Cross-model review and roundtable deliberation — advisory; you decide",
-      "Built from the discipline that runs this project",
     ],
     icon: "✅",
     color: "accent",
+  },
+];
+
+// --- Ecosystem (DEC-15) ---
+
+/**
+ * What ships inside `pip install attune-ai` — benefit-framed, ONE
+ * install, never a product grid (DEC-15's constraint: packages are
+ * components of one install, not sibling products; only attune-help
+ * is a genuinely separate optional install). Mirrors the README
+ * Ecosystem table's information; no versions here — roles only, so
+ * the section can't go stale on a release.
+ */
+export interface EcosystemEngine {
+  name: string;
+  benefit: string;
+  detail: string;
+  bundled: boolean;
+}
+
+export const ECOSYSTEM: EcosystemEngine[] = [
+  {
+    name: "attune-rag",
+    benefit: "Answers cite your code",
+    detail:
+      "The retrieval engine grounding every generated claim in your " +
+      `actual source — mean faithfulness ${METRICS.ragFaithfulness}, CI-gated.`,
+    bundled: true,
+  },
+  {
+    name: "attune-verify",
+    benefit: "Hallucinations caught before merge",
+    detail:
+      "The fact-checker: imports import, CLI flags exist, links " +
+      "resolve, counts match — checked against source-of-truth.",
+    bundled: true,
+  },
+  {
+    name: "attune-redis",
+    benefit: "Memory served fast, owned by you",
+    detail:
+      "Serves your git-tracked memory corpus from local Redis; the " +
+      "files stay the store, and everything degrades gracefully " +
+      "without a server.",
+    bundled: true,
+  },
+  {
+    name: "attune-forms",
+    benefit: "Questions become one tap",
+    detail:
+      "The decision, pushback, and progress cards — structured " +
+      "questions validated on the way back, on every surface.",
+    bundled: true,
+  },
+  {
+    name: "attune-help",
+    benefit: "Progressive help for your own project",
+    detail:
+      "Optional standalone reader: concept → task → reference depth " +
+      "for docs generated from your codebase. pip install attune-help.",
+    bundled: false,
   },
 ];
 

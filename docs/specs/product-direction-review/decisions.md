@@ -44,3 +44,11 @@ stay in the assessment files themselves.
   (homepage hero + pillar fold), #2361 (attune-ai.dev landing,
   chair-directed extension). All merged 2026-08-29; merge states
   verified via `gh pr view` before this note was written.
+  **Later same day** — DEC-14a (roundtable marquee, #2363),
+  coverage stat truth-up to the CI ratchet (#2364), and the #2365
+  omnibus: DEC-15 (engine credit + one-install ecosystem section),
+  DEC-16 (plugin-first at first contact; harness stays the
+  architecture term — closed the review's last open item), DEC-17
+  (recommended install = the full stack, framed both-and-free),
+  and DEC-18 (Spec Ladders engine-framing; three-provider
+  execution claim held pending the Antigravity probe).

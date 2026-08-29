@@ -82,24 +82,23 @@ maintained by Attune's own stack.
 
 ## Get Started in 60 Seconds
 
-### Plugin (works standalone)
+**Recommended: install both — still free, no API key needed.**
 
 ```bash
 claude plugin marketplace add Smart-AI-Memory/attune-ai
 claude plugin install attune-ai@attune-ai
-```
-
-Then say "what can attune do?" in Claude Code.
-
-### Add the Python package (unlocks CLI + MCP)
-
-```bash
 pip install attune-ai
-attune            # shows your next steps
 ```
 
-Then check your setup with `attune validate` and run your first
-workflow: `attune workflow run code-review --path src/`.
+Then say "what can attune do?" in Claude Code, and run `attune` in
+your terminal — it shows your next steps (`attune validate` checks
+the setup). The plugin runs on your Claude subscription, and
+memory, forms, and hooks never call a model; an API key is only
+for direct CLI workflow runs
+([What this costs](#what-this-costs)).
+
+*Just want the skills?* The plugin alone (the first two commands)
+works standalone — no Python required.
 
 Setup fight you? [Tell me where](https://github.com/Smart-AI-Memory/attune-ai/discussions/1325) — I'm actively fixing this.
 
@@ -210,9 +209,11 @@ agent's own word is never the evidence.
   contract (done conditions, constraints, probes) with nothing
   executing; add `--run` for an attributed diff whose probes are
   re-run independently. Exit 0 only when the probes pass.
-- **Spec Ladders** (`/spec`) — goal-driven specs you approve rung by
-  rung: requirements, design, and a gated task ladder, every ruling
-  recorded in a decision file that outlives the session.
+- **Spec Ladders** (`/spec`) — spec-driven development, with
+  receipts: the approved spec *drives the agents*. Requirements,
+  design, and a gated task ladder the agent executes between your
+  approvals — workflows dispatched, every ruling recorded in a
+  decision file that outlives the session.
 - **Guided intakes** — `/fix` and `/spec` compose their contracts
   through a form: goal pre-filled, scope picker from paths you've
   touched, probe suggestions from matching tests.
@@ -354,8 +355,9 @@ types).
 
 ## Accuracy & Faithfulness
 
-RAG generation enforces citation-per-claim: **0.98 mean per-claim
-faithfulness, CI-gated at ≥ 0.97** (40-query golden set, N=20 runs).
+RAG generation — powered by the bundled `attune-rag` engine —
+enforces citation-per-claim: **0.97 mean per-claim faithfulness,
+CI-gated** (40-query golden set, N=20 runs).
 The contract was chosen by A/B measurement — the per-query
 hallucination bucket rate dropped from 46.7% to 6.7% with it
 ([methodology](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/rag/faithfulness-decision-2026-04-19.md)).

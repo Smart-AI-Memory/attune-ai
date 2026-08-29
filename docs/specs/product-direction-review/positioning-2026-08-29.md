@@ -94,12 +94,114 @@ not "orchestration" (DEC-12 vocabulary rule). Lesson for future
 folds: folding a pillar means relocating its story, not shrinking
 it to a bullet.
 
+### DEC-15 — Engines get credit at the point of proof; help is right-sized (2026-08-29, later same day)
+
+The chair proposed sharing billing across attune-rag, attune-verify,
+and the other bundled packages instead of attune-help's inherited
+prominence. Ratified with the lead's amendment: **attribution, not
+product billing** — rag and verify are bundled core deps whose
+invisibility ("built in, no extra install") is itself a selling
+point, so they are credited by name where their receipts appear,
+never promoted to sibling products. Three parts:
+
+1. attune-help's cross-ad inside attune-ai's marketplace description
+   is cut (help keeps its own listing and card — true and real, just
+   no longer piggybacking).
+2. Every engine-powered proof-point names its engine ("powered by
+   attune-rag", "powered by attune-verify").
+3. The README Ecosystem table's information appears on the site,
+   **benefit-framed** (chair's amendment): a homepage "one install"
+   section — each engine as a benefit inside `pip install attune-ai`,
+   with two constraints from the lead's pushback: (a) framed as
+   components of ONE install, never a product grid (only attune-help
+   carries a separate install line, marked optional); (b) placed low
+   on the page near the install decision, not above the fold. Data
+   single-sourced as `ECOSYSTEM` in features.ts, roles only, no
+   versions — so it cannot go stale on a release.
+
+Rider: executing this surfaced a README accuracy drift — the
+Accuracy section claimed "0.98 mean, CI-gated at ≥ 0.97", both
+halves contradicting the drift-guarded METRICS guidance ("say mean
+0.97, CI-gated, never 'gated at ≥ 0.97'"); normalized to the
+canonical phrasing.
+
+### DEC-16 — Plugin-first at first contact; harness stays the architecture term (2026-08-29, closes the open item)
+
+Grounded in a survey first: "AI Workflow-harness" appears nowhere
+in public copy today — the only public "harness" uses are the
+generic test-rig sense (planted-defect harness, evaluation
+harness). Ruling ratifies the de facto state as policy:
+
+- **"Plugin" is the first-contact noun** on all public surfaces —
+  hero-adjacent copy, marketplace, PyPI, install sections. It
+  pattern-matches to "small thing I can try", the truth of the
+  two-command install and what the DEC-12 solo buyer needs.
+- **Depth formula** wherever more-than-a-plugin must be signaled:
+  "a Claude Code plugin that grows into a full CLI + MCP stack."
+  Lead light, reveal depth; never lead heavy.
+- **"AI Workflow-harness" remains the ratified
+  internal/architecture term** (the 2026-07-29 ruling is
+  untouched). Public use only as a defined term in
+  architecture-explaining contexts (docs, the discipline article) —
+  never in a hero, tagline, or install block. A supporting reason:
+  the site already uses "harness" in the test-rig sense, and one
+  word carrying two meanings is the overload the "one name, one
+  contract" story exists to prevent.
+- Counter-case recorded: "agent harness" is an emerging term of
+  art and attune genuinely is one — if the term takes off
+  industry-wide, revisiting costs one ruling; adopting early and
+  retracting later costs credibility. Revisit trigger: the term
+  becoming common buyer vocabulary.
+
+### DEC-17 — Recommended install is the full stack, framed as both-and-free (2026-08-29)
+
+Chair leaned toward recommending "the full platform" as the
+download; ratified with the lead's two amendments: (1) the word is
+**"the full stack"**, never "platform" (DEC-12 vocabulary); (2)
+the recommendation is framed **"install both — still free, no API
+key needed"**, defusing the #1 documented user confusion (a Claude
+subscription does not include API credits) at the exact moment it
+would arise: `pip install attune-ai` itself is free and most of
+what it unlocks runs keyless; the key gates only direct CLI
+workflow runs, which are step three, not step one. The plugin-only
+path stays visible as the lighter fallback ("just want the
+skills?"), preserving DEC-16's lead-light spirit. Surfaces:
+README Get Started, homepage get-started section (both cards now
+carry the recommended emphasis), attune-ai.dev install block.
+
+### DEC-18 — Spec Ladders sells the engine, not just the brakes (2026-08-29)
+
+Chair flagged that spec-driven *execution* was undersold: every
+`/spec` mention was control-framed ("approve rung by rung", gates,
+rulings) with nothing saying the agent executes the ladder between
+approvals — workflows dispatched, native agent capabilities
+driving the work. Partly this session's own doing: DEC-11 retired
+the spec-first hero and nothing re-housed the execution half (the
+DEC-14a fold-drops-the-story class again). Ratified with the
+lead's two amendments:
+
+- **Category vocabulary inside the receipts story, no new
+  pillar/shelf**: say "spec-driven development, with receipts" —
+  borrows the hot category's vocabulary (Kiro, Spec Kit made it
+  searched) while differentiating inside it (they generate specs;
+  attune independently verifies execution against them). Memory =
+  shelf and receipts = differentiator (DEC-10) stand.
+- **The three-provider execution claim ships only with a
+  receipt**: Claude Code is lived daily and Codex installs the
+  same plugin; `/spec` executing end-to-end under Antigravity is
+  inferred, not checked — copy stays narrower ("agent" generic /
+  the two receipted providers) until a live-fire probe passes.
+  Chair authorized the probe same-session ("go and verify").
+
+Copy: README Spec Ladders bullet, plugin README callout,
+how-it-works spec-gate card, and the reliability loop's Build
+stage all gain engine-framing ("the approved spec drives the
+agents" / "the agent executes the spec'd tasks").
+
 ## Open (not ruled)
 
-- **Harness vs. plugin first-contact framing.** "AI
-  Workflow-harness" is the ratified internal/architecture term;
-  whether first-contact copy should say "plugin" (try-me light)
-  instead was discussed, not ruled.
+- *(none — DEC-16 closed the review's last open item; DEC-17 and
+  DEC-18 were ratified after closure.)*
 
 ## Evidence base (session findings, 2026-08-29)
 

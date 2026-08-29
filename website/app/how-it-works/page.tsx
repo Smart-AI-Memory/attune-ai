@@ -257,7 +257,8 @@ export default function HowItWorksPage() {
                       <span className="text-[var(--primary)] mt-1 shrink-0">&#x2022;</span>
                       <span>
                         The spec is the contract the build is measured
-                        against
+                        against &mdash; and the ladder the agent executes
+                        between your approvals
                       </span>
                     </li>
                   </ul>

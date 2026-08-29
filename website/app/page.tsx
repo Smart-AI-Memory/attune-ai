@@ -4,7 +4,7 @@ import Footer from '@/components/Footer';
 import GitHubStarsBadge from '@/components/GitHubStarsBadge';
 import TestsBadge from '@/components/TestsBadge';
 import { generateStructuredData } from '@/lib/metadata';
-import { METRICS, RELIABILITY_LOOP } from '@/lib/features';
+import { ECOSYSTEM, METRICS, RELIABILITY_LOOP } from '@/lib/features';
 
 // What a coding agent re-learns every session — and what Attune
 // persists. Shared by the problem and memory sections.
@@ -256,8 +256,42 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 7 — Open source */}
-        <section className="py-24 px-6 max-w-3xl mx-auto text-center" aria-label="Open source">
+        {/* 7 — Ecosystem (DEC-15): what one install actually contains,
+            benefit-framed — components of ONE install, never a product
+            grid; only attune-help is a separate optional install. */}
+        <section className="py-24 px-6" aria-label="What ships in one install">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-14">
+              <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-4 block">One install</span>
+              <h2 className="text-4xl md:text-5xl font-extrabold">
+                <code className="text-3xl md:text-4xl">pip install attune-ai</code> is the whole stack
+              </h2>
+              <p className="text-[var(--text-secondary)] mt-4 max-w-2xl mx-auto">
+                The engines below ship inside the one package &mdash; no
+                assembly, no extra keys. Each one earns its place with a
+                benefit you can point at.
+              </p>
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {ECOSYSTEM.map((e) => (
+                <div key={e.name} className="glass-panel rounded-xl p-7">
+                  <div className="flex items-center gap-2 mb-3">
+                    <code className="text-sm font-bold text-[var(--primary)]">{e.name}</code>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${e.bundled ? 'bg-[var(--primary)]/10 text-[var(--primary)]' : 'bg-[var(--surface-container-highest)] text-[var(--text-muted)]'}`}>
+                      {e.bundled ? 'bundled' : 'optional'}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-bold mb-2">{e.benefit}</h3>
+                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{e.detail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 8 — Open source */}
+        <section className="py-24 px-6 bg-[var(--surface-container-low)]" aria-label="Open source">
+          <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-extrabold mb-6">Inspect everything.</h2>
           <p className="text-lg text-[var(--text-secondary)] leading-relaxed mb-8">
             Attune is open source under the Apache License 2.0. Every
@@ -273,13 +307,21 @@ export default function Home() {
           >
             View the source on GitHub
           </a>
+          </div>
         </section>
 
-        {/* 8 — Get started */}
-        <section id="get-started" className="py-24 px-6 bg-[var(--surface-container-low)]" aria-label="Get started">
+        {/* 9 — Get started */}
+        <section id="get-started" className="py-24 px-6" aria-label="Get started">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-4xl md:text-5xl font-extrabold">Get started</h2>
+              {/* DEC-17: the recommended path is BOTH layers — still
+                  free; an API key only gates direct CLI workflow runs. */}
+              <p className="text-[var(--text-secondary)] mt-4 max-w-2xl mx-auto">
+                <span className="font-bold text-[var(--foreground)]">Recommended: install both.</span>{' '}
+                Free to start, no API key needed &mdash; a key only gates
+                direct CLI workflow runs.
+              </p>
             </div>
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               {/* Marketplace-first, matching the README's own ordering:
@@ -304,7 +346,7 @@ export default function Home() {
                   to start.
                 </p>
               </div>
-              <div className="bg-[var(--surface)] rounded-2xl p-7 border border-[var(--border)]/40">
+              <div className="bg-[var(--surface)] rounded-2xl p-7 border-2 border-[var(--primary)]/40">
                 <div className="flex items-center gap-2 mb-3">
                   <h3 className="font-bold text-lg">Python package</h3>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)] bg-[var(--surface-container-high)] px-2 py-0.5 rounded-full">
@@ -334,7 +376,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 9 — Final CTA */}
+        {/* 10 — Final CTA */}
         <section className="max-w-7xl mx-auto px-6 py-24" aria-label="Call to action">
           <div className="hero-gradient rounded-3xl p-12 md:p-16 text-white relative overflow-hidden text-center">
             <div className="relative z-10 max-w-2xl mx-auto">
