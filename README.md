@@ -39,6 +39,7 @@ get back a receipt — not a promise:
 
 ```bash
 attune fix "imports resolve after the rename" \
+  --workflow fix \
   --scope src/attune/cli_minimal.py \
   --probe "pytest tests/unit/test_cli_minimal.py" \
   --run
