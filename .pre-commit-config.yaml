@@ -97,6 +97,15 @@ repos:
   # Regenerates patterns_summary.md when pattern JSON files change
   - repo: local
     hooks:
+      # next-dev flips website/tsconfig.json's jsx to "preserve" on
+      # every startup; this auto-reverts the flip if it gets staged
+      # (retro 2026-08-29 item 6a — auto-revert, not reject).
+      - id: normalize-website-tsconfig
+        name: Revert next-dev's tsconfig jsx flip
+        entry: python scripts/normalize_website_tsconfig.py
+        language: python
+        pass_filenames: false
+        files: ^website/tsconfig\.json$
       - id: regenerate-patterns
         name: Regenerate Pattern Summary
         entry: python -m attune.patterns.summary
