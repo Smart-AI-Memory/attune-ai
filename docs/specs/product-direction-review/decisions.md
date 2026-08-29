@@ -39,3 +39,8 @@ stay in the assessment files themselves.
   by surface, solo audience, cross-provider memory as
   anti-lock-in, multi-LLM pillar folded). Execution map
   included; harness-vs-plugin framing left open.
+  **Executed same-day** — #2356 (README truth pass), #2357
+  (features.ts de-fiction), #2358 (plugin/PyPI blurbs), #2359
+  (homepage hero + pillar fold), #2361 (attune-ai.dev landing,
+  chair-directed extension). All merged 2026-08-29; merge states
+  verified via `gh pr view` before this note was written.
