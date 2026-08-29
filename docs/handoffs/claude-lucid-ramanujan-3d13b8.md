@@ -3,7 +3,15 @@
 Verify everything below against the current tree and CI before acting.
 A handoff is context, not authority.
 
-## Shipped and verified
+## Goal
+
+Land the `lesson_recall` correction and its first abstention
+measurement (this PR), then pick up the two recall questions that
+are recorded but unruled.
+
+## Current state
+
+### Shipped and verified
 
 | PR | What | Merge SHA |
 |---|---|---|
@@ -19,7 +27,7 @@ Closed unmerged: #2344, #2341 (both landed inside the deleted `backend/` tree).
 **v16.1.0 is live on PyPI**, verified by clean-room smoke against the
 artifact installed FROM PyPI (not the source tree).
 
-## Live infrastructure changes
+### Live infrastructure changes
 
 - **`changelog-entry` is a REQUIRED status check.** A PR touching `src/`
   or `attune_redis/` must edit `CHANGELOG.md` or carry `no-changelog`
@@ -29,7 +37,7 @@ artifact installed FROM PyPI (not the source tree).
 - **25 stale worktrees reaped**, 16.8 GB reclaimed. 12 live sessions and
   all uncommitted work preserved.
 
-## The recall thread — where it actually landed
+### The recall thread — where it actually landed
 
 Cause of the `PersonalMemory` recall change is **LOCATED, by experiment**:
 `7c6836c8d` (#2118) fixed `polish_fn` being called without two required
@@ -47,7 +55,7 @@ Open, recorded but not ruled:
 2. `jit_recall` and `session_recall` abstention — still unmeasured.
    `lesson_recall` now has a first measurement (this PR).
 
-## Corrections this session made, worth knowing
+### Corrections this session made, worth knowing
 
 Six false readings were reported and then caught, all one class: a
 conclusion drawn from a constructed view rather than raw output
@@ -58,11 +66,11 @@ extraction read as "CHANGED"). Also one absence-claim asserted without a
 probe, which merged. **The tell that generalises: a uniform or empty
 result across all items means suspect the probe, not the world.**
 
-## Outbox
+### Outbox
 
 23 pending artifacts, 13 from this session. Needs a curating sweep.
 
-## Immediate next actions
+## Next action
 
 1. Review/merge this PR (the `lesson_recall` correction + measurement).
 2. Watch the first `src/`-touching PR — it is the changelog gate's first
