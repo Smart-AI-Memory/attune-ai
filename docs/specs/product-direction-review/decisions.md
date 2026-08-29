@@ -33,3 +33,9 @@ stay in the assessment files themselves.
 - **2026-07-17** — outbound drafts for Patrick to edit and send
   (`outbound-drafts-2026-07-17.md`); ledger reconciliation PRs
   #1417/#1422/#1423/#1426.
+- **2026-08-29** — positioning review
+  (`positioning-2026-08-29.md`): DEC-10…14 ratified in session
+  (memory = shelf / receipts = scoped differentiator, taglines
+  by surface, solo audience, cross-provider memory as
+  anti-lock-in, multi-LLM pillar folded). Execution map
+  included; harness-vs-plugin framing left open.
