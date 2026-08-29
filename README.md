@@ -210,10 +210,11 @@ agent's own word is never the evidence.
   executing; add `--run` for an attributed diff whose probes are
   re-run independently. Exit 0 only when the probes pass.
 - **Spec Ladders** (`/spec`) — spec-driven development, with
-  receipts: the approved spec *drives the agents*. Requirements,
-  design, and a gated task ladder the agent executes between your
-  approvals — workflows dispatched, every ruling recorded in a
-  decision file that outlives the session.
+  receipts: the approved spec *drives the agents* — Claude Code,
+  Codex, or Antigravity alike. Requirements, design, and a gated
+  task ladder the agent executes between your approvals —
+  workflows dispatched, every ruling recorded in a decision file
+  that outlives the session.
 - **Guided intakes** — `/fix` and `/spec` compose their contracts
   through a form: goal pre-filled, scope picker from paths you've
   touched, probe suggestions from matching tests.

@@ -193,6 +193,23 @@ lead's two amendments:
   the two receipted providers) until a live-fire probe passes.
   Chair authorized the probe same-session ("go and verify").
 
+  **Probe receipt (2026-08-29, later same session): PASSED.** A
+  minimal throwaway spec (requirements/tasks/decisions) was
+  executed by Antigravity (`agy` 1.1.22, scoped workspace): the
+  seat created the spec'd file, checked the ladder box, and
+  appended the ruling — all three verified by the LEAD re-running
+  them centrally (file prints the exact required string, exit 0;
+  box checked; ruling line present), never by the seat's
+  self-report. Scope honestly stated: one rung with recorded
+  ruling, not the full gated /spec interview flow. This authorizes
+  the three-provider execution line in copy. Environment notes for
+  reproduction: agy's bundled datacloud_telemetry PreToolUse hook
+  is version-skewed against agy 1.1.22 (blocks ALL tool calls;
+  chair disabled it for the probe), and headless agy needs either
+  a permissions allow-rule or a scoped workspace with
+  auto-approval. Transcript: agy brain run d160cfba (10:54),
+  rendered copy delivered to the chair in-session.
+
 Copy: README Spec Ladders bullet, plugin README callout,
 how-it-works spec-gate card, and the reliability loop's Build
 stage all gain engine-framing ("the approved spec drives the
