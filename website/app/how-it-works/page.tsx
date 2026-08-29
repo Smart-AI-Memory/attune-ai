@@ -161,14 +161,15 @@ export default function HowItWorksPage() {
                   The round table
                 </span>
                 <h2 className="text-3xl font-bold mb-4">
-                  Three models. One table. You chair.
+                  Three models. One project brain. You chair.
                 </h2>
                 <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
                   The final QA check before you ship:{' '}
                   <code className="text-base">/roundtable</code> convenes
-                  Claude Code, OpenAI Codex, and Google Antigravity to
-                  deliberate the question on a shared board. Every seat is
-                  advisory. Nothing is adopted until you promote it.
+                  Claude Code, OpenAI Codex, and Google Antigravity —
+                  three agents sharing one project memory — to deliberate
+                  the question on a shared board. Every seat is advisory.
+                  Nothing is adopted until you promote it.
                 </p>
               </div>
 
@@ -180,7 +181,9 @@ export default function HowItWorksPage() {
                     Each model posts positions and critiques to a shared,
                     Redis-backed board — three different frontier models
                     reasoning about the same question, not one model
-                    agreeing with itself.
+                    agreeing with itself. Work crosses seats as
+                    git-verified handoff packets, re-verified against the
+                    actual tree on resume.
                   </p>
                 </div>
                 <div className="glass-panel rounded-xl p-8">
