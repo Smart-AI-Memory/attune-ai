@@ -319,8 +319,8 @@ export default function Home() {
                   free; an API key only gates direct CLI workflow runs. */}
               <p className="text-[var(--text-secondary)] mt-4 max-w-2xl mx-auto">
                 <span className="font-bold text-[var(--foreground)]">Recommended: install both.</span>{' '}
-                Still free, no API key needed &mdash; everything local runs
-                on your Claude subscription.
+                Free to start, no API key needed &mdash; a key only gates
+                direct CLI workflow runs.
               </p>
             </div>
             <div className="grid md:grid-cols-2 gap-6 mb-8">

@@ -92,8 +92,9 @@ pip install attune-ai
 
 Then say "what can attune do?" in Claude Code, and run `attune` in
 your terminal — it shows your next steps (`attune validate` checks
-the setup). Everything local runs on your Claude subscription; an
-API key is only for direct CLI workflow runs
+the setup). The plugin runs on your Claude subscription, and
+memory, forms, and hooks never call a model; an API key is only
+for direct CLI workflow runs
 ([What this costs](#what-this-costs)).
 
 *Just want the skills?* The plugin alone (the first two commands)
