@@ -44,8 +44,9 @@ attune fix "imports resolve after the rename" \
   --run
 ```
 
-<!-- demo-gif-slot: 30-second recording of the command above producing
-     an attributed diff + probe receipt goes here. -->
+<!-- Recorded via scripts/demo/fix-receipts.tape (chair-approved
+     2026-08-29); absolute URL so the image renders on PyPI too. -->
+![attune fix repairing a broken import and producing a receipt: contract preview, attributed diff, probes re-run independently, exit 0](https://raw.githubusercontent.com/Smart-AI-Memory/attune-ai/main/scripts/demo/fix-receipts.gif)
 
 The probes are re-run *independently* of the workflow that claims it
 finished. Exit 0 means the probes passed — not that the agent felt
