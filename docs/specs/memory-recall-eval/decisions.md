@@ -325,11 +325,20 @@ was corrected in the design-approval entry above.
 
 R6 made longitudinal re-runs a non-goal "unless a live recall complaint
 ever contradicts this verdict". This run was chair-directed rather than
-complaint-driven, so R6 is not amended.
+complaint-driven, so R6 is not amended: R6 continues to govern ad-hoc
+longitudinal re-runs. Revisit trigger 3 below (the benchmark as a
+dependency-upgrade canary) is a separate mechanism — a gate in the
+release path, not a standing re-run cadence — and does not conflict
+with it.
 
 Run exactly as run 1 (D1-D4): `ANTHROPIC_API_KEY=""
 scripts/eval_personal_memory_recall.py`, 18-entry corpus, 26 positive /
 6 negative queries, isolated tmp roots, keyless.
+
+**Endpoints pinned so the next re-run can reconstruct both:** baseline
+tree `f4ee8c7eb990d4b7ebba63140170ee677e74ddeb` (run 1, 2026-07-20);
+this run `8f65df82aedf98c5ca27971316fa642760127c62` (tag `v16.1.0`). The
+"6+ commits to personal.py" span below is `f4ee8c7eb..8f65df82a`.
 
 | metric | 2026-07-20 (run 1) | 2026-08-28 |
 |---|---|---|
@@ -364,18 +373,22 @@ cheapest high-value action available on this spec and is not yet done.
 Until it exists, nobody knows whether abstention regressed or two
 queries got unlucky.
 
-### Cause: located, and it is OURS
+### Cause: narrowed — the scorer is excluded, our capture path leads
 
 Three candidates were tested rather than assumed:
 
-1. **The retriever dependency — REFUTED.** `KeywordRetriever` lives in
-   `attune-rag`, which moved 0.9.0 -> 1.1.0 between the baseline and
-   this run, so it was the leading hypothesis. Both scoring modules are
-   **byte-identical** across that span: `retrieval.py` unchanged,
-   `_scoring.py` unchanged (2,646 bytes both). The scorer did not move.
-   (`pipeline.py` DID change — that is where `confidence` is computed,
-   consistent with 1.1.0's "abstention-by-default" framing — but it does
-   not touch the keyword score.)
+1. **The retriever dependency — NARROWED, not refuted.**
+   `KeywordRetriever` lives in `attune-rag`, which moved 0.9.0 -> 1.1.0
+   between the baseline and this run, so it was the leading hypothesis.
+   Both scoring modules are **byte-identical** across that span:
+   `retrieval.py` unchanged, `_scoring.py` unchanged (2,646 bytes both).
+   **That establishes the SCORER did not move — not that the dependency
+   did not move the outcome.** `pipeline.py` DID change, and the
+   pipeline decides what reaches the scorer (candidate selection, top-k,
+   dedup, expansion); an identical scorer fed a different candidate set
+   produces different rankings. That effect is UNTESTED. An earlier
+   draft asserted the pipeline change "does not touch the keyword score"
+   with no basis; that claim is withdrawn.
 2. **Fixture drift — REFUTED.** `scripts/eval_personal_memory_recall.py`
    carries the corpus inline and has not been modified since the commit
    that created it (#1538). Same corpus, same queries.
@@ -390,9 +403,25 @@ Three candidates were tested rather than assumed:
 capture-time boilerplate — provenance and status lines added to every
 document — would let generic query tokens match that shared boilerplate
 across unrelated documents, manufacturing attractors. It is consistent
-with the attractor being `status-vocabulary` specifically. Two round-table
-seats reached this mechanism independently. Verify by diffing a captured
-document's on-disk text against its 2026-07-20 shape before acting.
+with the attractor being `status-vocabulary` specifically.
+
+Attribution, stated precisely because this entry's thesis is that claims
+carry their basis: ONE seat (Antigravity) named fixture-or-capture-time
+token saturation; the capture-text specifics came from the moderator's
+commit-log read. This is NOT independent convergence and must not be
+cited as evidence.
+
+**One measured datum already bears on it:** constructing the pipeline
+WITHOUT `summaries_file` moves the two offending negatives from
+confidence 1.0 down to 0.5 (see the retracted-fix section). That is the
+only measurement touching the shared-text-across-documents mechanism,
+and it partially corroborates it.
+
+**A strictly better probe than diffing captured text** (round table,
+round 2): run the 2x2 — baseline `personal.py` against current
+attune-rag, and current `personal.py` against attune-rag 0.9.0. Two runs
+of a keyless script settle ours-versus-theirs outright, including the
+untested `pipeline.py` effect above.
 
 ### Confidence is NOT the fix (measured, retracted)
 
@@ -438,9 +467,10 @@ the FREQUENCY of exposure; it does not bound the per-invocation harm.
 
 The first draft of this entry proposed revisiting when `personal_query`
 exceeded ~5% of memory events. The round table rejected that unanimously
-and the objection is decisive: **nothing is trying to grow
-`personal_query`, so a share trigger can only trip upward and will never
-fire.** A trip-wire that cannot fire is a decision never to revisit,
+and the objection is decisive: **`personal_query` has no identified
+growth driver and no automatic monitor, so a share trigger has nothing
+to move it and nothing to detect a crossing — it is not a dependable
+trigger.** A trip-wire that cannot fire is a decision never to revisit,
 written in the grammar of a decision to revisit later. It also requires
 a human to periodically compute a ratio — vigilance, where this repo's
 house style is ratchets.
@@ -453,10 +483,16 @@ Replaced with triggers that can actually fire:
    background hook, or default agent toolset. Mechanizable as a grep
    gate; today's bounded blast radius rests entirely on this staying
    false.
-2. **Behavior.** Any negative-query result above the shipped 0%
-   contract, or any high-confidence no-match, observed on an EXPANDED
-   negative set run as a CI gate. This fires itself and needs no
-   ratio-watching.
+2. **Behavior — PENDING, not armed today.** Run 1 observed 0-of-6 on
+   negatives. That is an observation, NOT a shipped contract: the same
+   n=6 argument that voids "33%" voids certifying the zero, and
+   promoting it to a contract is the identical error in the opposite
+   direction. **No component enforces abstention today, and no
+   abstention criterion exists.** Arming this trigger means, in order:
+   define the acceptance criterion (threshold, allowed failures,
+   dataset, owning component), expand the negative set to 30-50, wire it
+   as a CI gate. Until those land only triggers 1 and 3 are operable —
+   a reader must not assume CI is guarding this.
 3. **Dependency canary.** Keep the benchmark in the release /
    dependency-upgrade path, since this run only detected the change
    because someone ran it by hand.
@@ -473,8 +509,10 @@ open question below.
 
 **Open question raised by the table, unresolved:** the only recall path
 with a measured abstention property is the one carrying 0.65% of the
-traffic. `lesson_recall`, `session_recall` and `jit_recall` carry 6,870
-events between them with no abstention instrument at all. The usage
+traffic. `lesson_recall`, `session_recall` and `jit_recall` carry **5,068**
+events between them (6,504 including `memory_signal`; 6,870 is the whole
+file, the remaining 366 being `session_stash`, `memory_feedback` and
+others) — with no abstention instrument at all. The usage
 number arguably argues for porting this benchmark OUTWARD to those
 paths, rather than for deferring work where a ruler happens to exist.
 Recorded, not ruled.
