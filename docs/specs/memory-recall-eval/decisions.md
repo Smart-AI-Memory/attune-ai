@@ -320,3 +320,204 @@ benchmark run once against current `PersonalMemory`, this file
 carries the numbers + failure example + verdict. Status flipped to
 shipped across the three phase files; the cross-stamped status line
 was corrected in the design-approval entry above.
+
+## 2026-08-28 — Re-run (chair-directed): D3's zero-FP clause no longer holds
+
+R6 made longitudinal re-runs a non-goal "unless a live recall complaint
+ever contradicts this verdict". This run was chair-directed rather than
+complaint-driven, so R6 is not amended: R6 continues to govern ad-hoc
+longitudinal re-runs. Revisit trigger 3 below (the benchmark as a
+dependency-upgrade canary) is a separate mechanism — a gate in the
+release path, not a standing re-run cadence — and does not conflict
+with it.
+
+Run exactly as run 1 (D1-D4): `ANTHROPIC_API_KEY=""
+scripts/eval_personal_memory_recall.py`, 18-entry corpus, 26 positive /
+6 negative queries, isolated tmp roots, keyless.
+
+**Endpoints pinned so the next re-run can reconstruct both:** baseline
+tree `f4ee8c7eb990d4b7ebba63140170ee677e74ddeb` (run 1, 2026-07-20);
+this run `8f65df82aedf98c5ca27971316fa642760127c62` (tag `v16.1.0`). The
+"6+ commits to personal.py" span below is `f4ee8c7eb..8f65df82a`.
+
+| metric | 2026-07-20 (run 1) | 2026-08-28 |
+|---|---|---|
+| hit@1 | 25/26 | 24/26 |
+| hit@3 | 26/26 | 26/26 (unchanged) |
+| negatives above threshold | **0 of 6** | **2 of 6** |
+
+Run 1's verdict was "ranking is accurate at k=3 with zero false-positive
+over-confidence on no-match queries". Clause one holds. Clause two does
+not.
+
+### What is measured, and what is NOT a rate
+
+**The finding is a MECHANISM, not a rate.** Two semantically unrelated
+queries resolve to the SAME document at an IDENTICAL score:
+
+- "which GraphQL schema versioning scheme do we use?" -> `status-vocabulary` · 5.0
+- "which CSS framework does the marketing site use?" -> `status-vocabulary` · 5.0
+
+That is deterministic, reproducible, and independent of how many
+negatives are in the set. It is the durable observation.
+
+**"2 of 6" must NOT be read as a 33% false-positive rate.** With n=6 the
+Wilson interval is roughly 4%-78%; the point estimate carries a
+precision its basis cannot support, which is the failure core lesson #16
+forbids. An earlier draft of this entry recorded "FP rate 33%" and the
+round table flagged it (thread below) before it reached main.
+
+**The negative set IS the instrument, and n=6 cannot measure
+abstention.** Expanding it to 30-50 hand-authored negatives is the
+cheapest high-value action available on this spec and is not yet done.
+Until it exists, nobody knows whether abstention regressed or two
+queries got unlucky.
+
+### Cause: LOCATED by experiment — #2118 restored a dead polish pass
+
+Superseding the "narrowed" framing in an earlier draft. The round table
+(round 2) proposed a decisive experiment instead of diffing captured
+text; it was run, and it resolved the question outright.
+
+**Experiment 1 — hold the dependency constant, swap our code.** Baseline
+`personal.py` (from `f4ee8c7eb`) against TODAY's attune-rag 1.1.0:
+
+    hit@1 25/26 (96%) · FP 0/6 (0%) · threshold 3.0
+
+That reproduces run 1 exactly, and both offending queries return
+`(none) · 0.0000` — perfect abstention. This cell and today's run share
+the same attune-rag and differ only in `personal.py`. **The dependency
+is exonerated: it cannot be the cause, since holding it at 1.1.0 still
+yields clean results.** (`pipeline.py`'s changed candidate selection,
+flagged UNTESTED in the previous draft, is covered — it is held at 1.1.0
+in both cells.)
+
+**Experiment 2 — bisect the seven `personal.py` commits in
+`f4ee8c7eb..8f65df82a`:**
+
+    #2021 99ee729d5 curated serve telemetry      25/26 · 0/6  CLEAN
+    #2118 7c6836c8d restore personal polish      24/26 · 2/6  DIRTY  <-
+    #2128 5dda6d8fd the durability set           24/26 · 2/6  (inherits)
+
+**Mechanism, now known rather than hypothesised.** #2118's one-line
+change to this file:
+
+    - result = polish_fn(text, template_type=kind)
+    + result = polish_fn(text, "", "", template_type=kind)
+
+`polish_template` requires two positionals; omitting them raised
+`TypeError` on EVERY call, silently killing the polish pass (found in
+library review as M2). #2118 fixed that. **So before #2118 polish never
+ran, and run 1's corpus was UNPOLISHED.** Restoring polish enriches every
+captured document, and keyword retrieval is measurably less precise on
+the richer text — shared vocabulary across documents creates the
+attractors, which is why two unrelated queries land on
+`status-vocabulary` at an identical score.
+
+**This reframes the finding.** It is not a defect introduced into recall.
+It is the RETRIEVAL COST OF A CORRECT FIX: run 1's 0-of-6 was a property
+of a degraded corpus produced by a broken polish step, not a property of
+the retriever. The honest baseline for "what abstention does this system
+have" is the post-#2118 number, and the pre-#2118 number should not be
+cited as a target to restore. Antigravity named capture-time token
+saturation in round 1 before any of this was measured.
+
+**What this does NOT establish:** that polish is wrong, or that #2118
+should be reverted — it fixed a real silent failure and its own change
+is correct. The open engineering question is whether keyword retrieval
+is the right retriever for polished documents, which is the retriever
+lever recorded below.
+
+### Confidence is NOT the fix (measured, retracted)
+
+`RagResult` carries a bounded `confidence` that
+`PersonalMemory.query()` ([personal.py:285-294](../../../src/attune/memory/personal.py#L285))
+discards, ranking on raw unbounded `hit.score` — so gating on it looked
+like a few lines. Measured with the exact pipeline `personal.py`
+constructs (`DirectoryCorpus(root, summaries_file=_SUMMARIES_FILE,
+glob="**/*.md")`):
+
+    confidence, positives (n=26): 0.875 x2, 1.0 x24
+    confidence, negatives (n=6) : 0.0 x1, 0.5 x3, 1.0 x2
+
+**Two of six negatives score confidence 1.0.** The minimum positive
+(0.875) sits BELOW the maximum negative (1.0), so any threshold
+excluding the negatives drops all 26 true positives. Confidence is
+over-confident on exactly the failing queries. (Constructing the same
+pipeline WITHOUT `summaries_file` moves those two negatives to 0.5 — the
+summaries file is implicated.)
+
+The untried lever is the RETRIEVER: `attune-rag` ships
+`EmbeddingRetriever`, `HybridRetriever`, `TransformerRetriever`,
+`LLMReranker` and `QueryExpander`, and `RagPipeline(corpus, retriever,
+expander, reranker)` accepts them; `PersonalMemory` passes none. That
+needs its own measurement, not adoption on faith.
+
+### Ruling (chair, 2026-08-28): record, do not fix
+
+Run 1 left precision alone on the premise that `PersonalMemory` "is
+still lightly used". That premise is now measured — 45 of 6,870 events
+in `~/.attune/telemetry/memory_events.jsonl` (0.65%), against
+`lesson_recall` 2,070, `session_recall` 1,559, `jit_recall` 1,439 and
+`memory_signal` 1,436.
+
+**Read the denominator honestly (round table, unanimous):** those other
+surfaces are AUTOMATIC — they fire unbidden on every prompt and tool
+call. `personal_query` is DELIBERATE: a human asked, and will believe
+the answer. Dividing deliberate asks by background chatter makes any
+human-initiated surface round to zero by construction. The 0.65% bounds
+the FREQUENCY of exposure; it does not bound the per-invocation harm.
+
+### Revisit triggers — NOT a usage share
+
+The first draft of this entry proposed revisiting when `personal_query`
+exceeded ~5% of memory events. The round table rejected that unanimously
+and the objection is decisive: **`personal_query` has no identified
+growth driver and no automatic monitor, so a share trigger has nothing
+to move it and nothing to detect a crossing — it is not a dependable
+trigger.** A trip-wire that cannot fire is a decision never to revisit,
+written in the grammar of a decision to revisit later. It also requires
+a human to periodically compute a ratio — vigilance, where this repo's
+house style is ratchets.
+
+Replaced with triggers that can actually fire:
+
+1. **Consumer topology.** The first `PersonalMemory.query` consumer
+   outside `cli_commands/memory_commands.py` and the four
+   `personal_memory_*` MCP tools — in particular any automated prompt,
+   background hook, or default agent toolset. Mechanizable as a grep
+   gate; today's bounded blast radius rests entirely on this staying
+   false.
+2. **Behavior — PENDING, not armed today.** Run 1 observed 0-of-6 on
+   negatives. That is an observation, NOT a shipped contract: the same
+   n=6 argument that voids "33%" voids certifying the zero, and
+   promoting it to a contract is the identical error in the opposite
+   direction. **No component enforces abstention today, and no
+   abstention criterion exists.** Arming this trigger means, in order:
+   define the acceptance criterion (threshold, allowed failures,
+   dataset, owning component), expand the negative set to 30-50, wire it
+   as a CI gate. Until those land only triggers 1 and 3 are operable —
+   a reader must not assume CI is guarding this.
+3. **Dependency canary.** Keep the benchmark in the release /
+   dependency-upgrade path, since this run only detected the change
+   because someone ran it by hand.
+
+### Provenance
+
+Round table `q-personal-memory-recall-read-001` (2026-08-28, all three
+seats, converged round 1, halt posted). No seat defended the original
+read; the ruling itself was not contested. The seats' unchallenged
+contributions are carried above: the unsound rate and the n=6 instrument
+limit, the wrong-denominator argument, the never-fires trip-wire, and
+the capture-boilerplate mechanism. Their reframing is recorded as the
+open question below.
+
+**Open question raised by the table, unresolved:** the only recall path
+with a measured abstention property is the one carrying 0.65% of the
+traffic. `lesson_recall`, `session_recall` and `jit_recall` carry **5,068**
+events between them (6,504 including `memory_signal`; 6,870 is the whole
+file, the remaining 366 being `session_stash`, `memory_feedback` and
+others) — with no abstention instrument at all. The usage
+number arguably argues for porting this benchmark OUTWARD to those
+paths, rather than for deferring work where a ruler happens to exist.
+Recorded, not ruled.
