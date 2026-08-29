@@ -80,7 +80,7 @@ AUDIT: dict[str, Any] = {
             "id": "tier",
             "type": "single_select",
             "text": "Model tier for the LLM pass",
-            "options": ["Cheap (Haiku)", "Capable (Sonnet)", "Premium (Opus)"],
+            "options": ["Cheap (Haiku)", "Capable (Sonnet)", "Premium (Fable 5)"],
             "default": "Capable (Sonnet)",
             "help_text": ("Escalation is automatic when findings need a second look."),
         },
