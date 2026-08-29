@@ -45,8 +45,8 @@ safe preview/action round trip bound to the exact canonical contract.
 - Risks or open questions: execution has no truthful four-stage event
   seam yet; Task 4A does not fabricate progress and its validator executes
   nothing. Publishing `attune-forms` 0.9.1 remains an explicit chair gate.
-  The environment requires a new explicit authorization before it will send
-  these private diffs to Antigravity for the approved advisory review.
+  Antigravity's advisory review is complete and clean; publishing remains the
+  only external dependency gate before downstream promotion.
 
 ## Verification
 
@@ -61,10 +61,11 @@ safe preview/action round trip bound to the exact canonical contract.
 | Authority slice coverage | serial pytest + branch coverage | pass — 86.66%, 129 tests; 85% required |
 | Complete keyless suite | `pytest -q --ignore=tests/memory/test_redis_integration.py` | pass — 24,971 passed, 232 skipped, 4 xfailed |
 | Repository gates | `pre-commit run --all-files` | pass — all blocking hooks green; unrelated broken-link warnings remain non-blocking |
-| External review dispatch | Antigravity cross-review | blocked — specific private-diff transmission authorization required |
+| Upstream external review | Antigravity branch review | clean — 11 sent, 0 omitted, 0 findings |
+| Downstream external review | Antigravity branch review + scoped re-lane | clean — 10 primary + 13 scoped substantive files, 0 findings; generated mirrors covered by freshness gates |
 
 ## Next action
 
-Receive the specific Antigravity diff-sharing authorization, run advisory
-review on both branches, disposition verified findings, then publish the
-reviewed `attune-forms` 0.9.1 only after the separate release approval.
+Push the reviewed `attune-forms` branch and open its PR. Publish 0.9.1 only
+after the separate release approval; then raise the downstream dependency
+floor, refresh the lock, rerun gates, and open the `attune-ai` PR.
