@@ -313,6 +313,16 @@ the host seams, the attune-specific intake templates, and the MCP
 tools that expose the forms. <em>When</em> a construct fires in a
 conversation is a judgment call governed by the agent's decision
 routine, not by this subsystem.</p>
+<p>Two of these forms run <strong>live</strong> on the website — rendered by the
+production <code>form_from_dict</code> → <code>form_to_widget_html</code> pipeline, not
+mockups: a five-control audit-scoping decision form at
+<a href="https://smartaimemory.com/forms-demo/audit.html">smartaimemory.com/forms-demo/audit.html</a>
+and a session-retro triage form at
+<a href="https://smartaimemory.com/forms-demo/retro.html">smartaimemory.com/forms-demo/retro.html</a>
+(both embedded on
+<a href="https://smartaimemory.com/how-it-works/">how-it-works</a>). They are
+regenerated from <code>scripts/render_demo_forms.py</code>, so the demos cannot
+drift from the API these docs describe.</p>
 <h2>Concepts</h2>
 <h3>One substrate, many constructs</h3>
 <p>A construct is not a parallel system — it is meaning and presentation
@@ -473,6 +483,21 @@ are already answerable.</li>
 orders it first.</li>
 <li>Keep option labels short. For richer options, the widget surface shows
 <code>option_notes</code> under each card.</li>
+<li><code>options</code> is a list of plain strings — per-option detail never nests
+inside it. A dict in <code>options</code> fails validation; the notes belong in
+<code>option_notes</code> keyed by the option string, and the recommendation in
+<code>recommended</code> (which must match one of the options exactly).</li>
+<li>Any key the parser does not read — top-level or field-level — is a
+definition <strong>error</strong>, not ignorable extra data (a typo'd key would
+otherwise silently drop the bound it meant to declare). If
+<code>form_from_dict</code> rejects a key you expected to work, check the
+Quickstart example for the canonical spelling.</li>
+<li>To try a form without wiring a surface: the live demos at
+<a href="https://smartaimemory.com/forms-demo/audit.html">smartaimemory.com/forms-demo/audit.html</a>
+and
+<a href="https://smartaimemory.com/forms-demo/retro.html">smartaimemory.com/forms-demo/retro.html</a>
+are these exact renderers on static pages
+(<code>scripts/render_demo_forms.py</code> regenerates them).</li>
 </ul>
 
   </article>
