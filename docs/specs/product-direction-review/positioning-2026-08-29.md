@@ -223,10 +223,23 @@ how-it-works spec-gate card, and the reliability loop's Build
 stage all gain engine-framing ("the approved spec drives the
 agents" / "the agent executes the spec'd tasks").
 
+### DEC-18a — Live-fire receipts are the standing bar for cross-provider capability claims (2026-08-29, retro item 10)
+
+Ratified from the retro: a cross-provider capability claim in
+PUBLIC copy (a named provider executing an attune capability)
+ships only with a **live-fire receipt, centrally re-run by the
+lead** — never the seat's self-report — with the receipt's scope
+stated honestly in the decision record before the claim lands.
+Worked example and template: the DEC-18 Antigravity probe
+(throwaway spec, scoped sandbox, central re-run of every
+artifact). Recorded here rather than in the collaboration
+contract deliberately: this is a marketing-claims bar, not a
+governance rule, and the contract is the wrong blast radius.
+
 ## Open (not ruled)
 
-- *(none — DEC-16 closed the review's last open item; DEC-17 and
-  DEC-18 were ratified after closure.)*
+- *(none — DEC-16 closed the review's last open item; DEC-17,
+  DEC-18, and DEC-18a were ratified after closure.)*
 
 ## Evidence base (session findings, 2026-08-29)
 
