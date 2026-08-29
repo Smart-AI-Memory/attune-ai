@@ -24,15 +24,15 @@ Type "clear"
 Enter
 Show
 
-# The take: the README's own command, verbatim shape.
-Type `attune fix "imports resolve after the rename" --scope src/app.py --probe "pytest tests/test_app.py" --run`
+# The take. NOTE: --workflow fix is REQUIRED for --run (discovered
+# in the 2026-08-29 timed run — Fix never guesses a route; the
+# README's own command needs the same correction).
+Type `attune fix "imports resolve after the rename" --workflow fix --scope src/app.py --probe "pytest tests/test_app.py" --run`
 Sleep 800ms
 Enter
 
-# Let the contract preview, diff attribution, and probe re-run
-# scroll through. Tune this after the first supervised take —
-# real workflow wall-time varies.
-Sleep 45s
+# Timed 2026-08-29: the real run took ~16.4s end to end.
+Sleep 22s
 
 # Hold the receipt (exit 0, probes passed) on screen.
-Sleep 4s
+Sleep 5s
