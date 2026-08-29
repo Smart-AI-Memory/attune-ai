@@ -82,24 +82,22 @@ maintained by Attune's own stack.
 
 ## Get Started in 60 Seconds
 
-### Plugin (works standalone)
+**Recommended: install both — still free, no API key needed.**
 
 ```bash
 claude plugin marketplace add Smart-AI-Memory/attune-ai
 claude plugin install attune-ai@attune-ai
-```
-
-Then say "what can attune do?" in Claude Code.
-
-### Add the Python package (unlocks CLI + MCP)
-
-```bash
 pip install attune-ai
-attune            # shows your next steps
 ```
 
-Then check your setup with `attune validate` and run your first
-workflow: `attune workflow run code-review --path src/`.
+Then say "what can attune do?" in Claude Code, and run `attune` in
+your terminal — it shows your next steps (`attune validate` checks
+the setup). Everything local runs on your Claude subscription; an
+API key is only for direct CLI workflow runs
+([What this costs](#what-this-costs)).
+
+*Just want the skills?* The plugin alone (the first two commands)
+works standalone — no Python required.
 
 Setup fight you? [Tell me where](https://github.com/Smart-AI-Memory/attune-ai/discussions/1325) — I'm actively fixing this.
 

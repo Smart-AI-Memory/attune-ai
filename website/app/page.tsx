@@ -315,6 +315,13 @@ export default function Home() {
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-12">
               <h2 className="text-4xl md:text-5xl font-extrabold">Get started</h2>
+              {/* DEC-17: the recommended path is BOTH layers — still
+                  free; an API key only gates direct CLI workflow runs. */}
+              <p className="text-[var(--text-secondary)] mt-4 max-w-2xl mx-auto">
+                <span className="font-bold text-[var(--foreground)]">Recommended: install both.</span>{' '}
+                Still free, no API key needed &mdash; everything local runs
+                on your Claude subscription.
+              </p>
             </div>
             <div className="grid md:grid-cols-2 gap-6 mb-8">
               {/* Marketplace-first, matching the README's own ordering:
@@ -339,7 +346,7 @@ export default function Home() {
                   to start.
                 </p>
               </div>
-              <div className="bg-[var(--surface)] rounded-2xl p-7 border border-[var(--border)]/40">
+              <div className="bg-[var(--surface)] rounded-2xl p-7 border-2 border-[var(--primary)]/40">
                 <div className="flex items-center gap-2 mb-3">
                   <h3 className="font-bold text-lg">Python package</h3>
                   <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)] bg-[var(--surface-container-high)] px-2 py-0.5 rounded-full">

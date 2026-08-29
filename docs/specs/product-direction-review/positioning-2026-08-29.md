@@ -153,9 +153,26 @@ harness). Ruling ratifies the de facto state as policy:
   retracting later costs credibility. Revisit trigger: the term
   becoming common buyer vocabulary.
 
+### DEC-17 — Recommended install is the full stack, framed as both-and-free (2026-08-29)
+
+Chair leaned toward recommending "the full platform" as the
+download; ratified with the lead's two amendments: (1) the word is
+**"the full stack"**, never "platform" (DEC-12 vocabulary); (2)
+the recommendation is framed **"install both — still free, no API
+key needed"**, defusing the #1 documented user confusion (a Claude
+subscription does not include API credits) at the exact moment it
+would arise: `pip install attune-ai` itself is free and most of
+what it unlocks runs keyless; the key gates only direct CLI
+workflow runs, which are step three, not step one. The plugin-only
+path stays visible as the lighter fallback ("just want the
+skills?"), preserving DEC-16's lead-light spirit. Surfaces:
+README Get Started, homepage get-started section (both cards now
+carry the recommended emphasis), attune-ai.dev install block.
+
 ## Open (not ruled)
 
-- *(none — DEC-16 closed the last open item of this review.)*
+- *(none — DEC-16 closed the last open item of this review;
+  DEC-17 was ratified after closure.)*
 
 ## Evidence base (session findings, 2026-08-29)
 

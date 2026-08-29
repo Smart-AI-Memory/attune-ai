@@ -120,6 +120,16 @@
     }
     .install button:hover { color: var(--primary); }
 
+    .pair {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin: -2rem 0 3rem;
+    }
+    .pair code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.85em;
+    }
+
     nav ul {
       list-style: none;
       padding: 0;
@@ -200,6 +210,11 @@
       <code id="install-cmd">pip install attune-ai</code>
       <button type="button" onclick="copyInstall()" aria-label="Copy install command">copy</button>
     </div>
+    <p class="pair">
+      Recommended together with the Claude Code plugin
+      (<code>claude plugin install attune-ai@attune-ai</code>) —
+      both free; an API key is only for direct CLI workflow runs.
+    </p>
 
     <nav aria-label="Primary">
       <ul>
