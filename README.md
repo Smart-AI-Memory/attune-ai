@@ -346,6 +346,18 @@ done / in-flight / blocked; and has you **rank**, **triage**,
 Every question is validated on the way back, so a malformed answer is
 re-asked, not silently accepted.
 
+![An attune-forms decision form being filled: an empty submit is
+caught by validation, then a recommended decision card, multi-select
+checkboxes, a dropdown, a number field, and a path are set and
+submitted](https://raw.githubusercontent.com/Smart-AI-Memory/attune-ai/main/docs/assets/images/attune-forms-audit-demo.gif)
+
+*One question, five control types — a recommended decision card with
+per-option tradeoffs, multi-select, dropdown, bounded number, free
+text. An empty submit is caught by validation, never silently
+accepted. Rendered by the production widget pipeline
+([regenerate](scripts/render_demo_forms.py)); [try it
+live](https://smartaimemory.com/forms-demo/audit.html).*
+
 One declarative form, written once, renders to the richest surface your
 client supports — a native dialog, a rich HTML widget, or a plain
 multiple-choice menu on a text-only surface — so the same question

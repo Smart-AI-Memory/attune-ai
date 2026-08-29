@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Dynamic form demos now use the production renderer**: the README
+  and website show live, same-origin audit and retro fixtures generated
+  through `attune-forms`, with light/dark support and the released 0.9.0
+  theme projection kept byte-for-byte in sync.
+
 - **worktree-path-guard teaches the multi-PR pattern**: when the
   guard blocks a cross-worktree write, its message now also explains
   the supported alternative — switch branches sequentially in the

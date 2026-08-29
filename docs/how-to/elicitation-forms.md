@@ -156,4 +156,4 @@ three construct types `decision`, `pushback`, `progress` — ten in all.
 `elicitation_collect_response`, and `elicitation_ask` — the same model,
 exposed for agents that drive forms through the MCP server.
 
-<!-- attune-generated: source_hash=1d0bd5af58687db6aab66d7cc8fc7057e34be8f79d6c76e2ef2e46758496302b feature=elicitation-forms kind=how-to generated_at=2026-08-12 -->
+<!-- attune-generated: source_hash=f7f628e6b3f2e6ef1fa119a382a5bce3e75ebb4ee2beb22666b8f89e45fd278b feature=elicitation-forms kind=how-to generated_at=2026-08-29 -->

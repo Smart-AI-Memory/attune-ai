@@ -3,8 +3,8 @@ type: note
 name: elicitation-forms-note
 feature: elicitation-forms
 depth: note
-generated_at: 2026-08-12T13:06:18.469671+00:00
-source_hash: 1d0bd5af58687db6aab66d7cc8fc7057e34be8f79d6c76e2ef2e46758496302b
+generated_at: 2026-08-29T19:11:14.981234+00:00
+source_hash: f7f628e6b3f2e6ef1fa119a382a5bce3e75ebb4ee2beb22666b8f89e45fd278b
 status: generated
 ---
 
@@ -53,6 +53,17 @@ the host seams, the attune-specific intake templates, and the MCP
 tools that expose the forms. *When* a construct fires in a
 conversation is a judgment call governed by the agent's decision
 routine, not by this subsystem.
+
+Two of these forms run **live** on the website — rendered by the
+production `form_from_dict` → `form_to_widget_html` pipeline, not
+mockups: a five-control audit-scoping decision form at
+[smartaimemory.com/forms-demo/audit.html](https://smartaimemory.com/forms-demo/audit.html)
+and a session-retro triage form at
+[smartaimemory.com/forms-demo/retro.html](https://smartaimemory.com/forms-demo/retro.html)
+(both embedded on
+[how-it-works](https://smartaimemory.com/how-it-works/)). They are
+regenerated from `scripts/render_demo_forms.py`, so the demos cannot
+drift from the API these docs describe.
 
 ## Concepts
 
@@ -215,3 +226,18 @@ render option on the select types, **not** a separate construct.
   orders it first.
 - Keep option labels short. For richer options, the widget surface shows
   `option_notes` under each card.
+- `options` is a list of plain strings — per-option detail never nests
+  inside it. A dict in `options` fails validation; the notes belong in
+  `option_notes` keyed by the option string, and the recommendation in
+  `recommended` (which must match one of the options exactly).
+- Any key the parser does not read — top-level or field-level — is a
+  definition **error**, not ignorable extra data (a typo'd key would
+  otherwise silently drop the bound it meant to declare). If
+  `form_from_dict` rejects a key you expected to work, check the
+  Quickstart example for the canonical spelling.
+- To try a form without wiring a surface: the live demos at
+  [smartaimemory.com/forms-demo/audit.html](https://smartaimemory.com/forms-demo/audit.html)
+  and
+  [smartaimemory.com/forms-demo/retro.html](https://smartaimemory.com/forms-demo/retro.html)
+  are these exact renderers on static pages
+  (`scripts/render_demo_forms.py` regenerates them).

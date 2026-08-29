@@ -44,6 +44,17 @@ tools that expose the forms. *When* a construct fires in a
 conversation is a judgment call governed by the agent's decision
 routine, not by this subsystem.
 
+Two of these forms run **live** on the website — rendered by the
+production `form_from_dict` → `form_to_widget_html` pipeline, not
+mockups: a five-control audit-scoping decision form at
+[smartaimemory.com/forms-demo/audit.html](https://smartaimemory.com/forms-demo/audit.html)
+and a session-retro triage form at
+[smartaimemory.com/forms-demo/retro.html](https://smartaimemory.com/forms-demo/retro.html)
+(both embedded on
+[how-it-works](https://smartaimemory.com/how-it-works/)). They are
+regenerated from `scripts/render_demo_forms.py`, so the demos cannot
+drift from the API these docs describe.
+
 ## Concepts
 
 ### One substrate, many constructs
@@ -219,4 +230,4 @@ per-type "rejects out-of-option" test is the cheap guard that catches a
 missed validation site. Prove it with a non-mocked round-trip — render,
 submit, collect — not just unit tests.
 
-<!-- attune-generated: source_hash=1d0bd5af58687db6aab66d7cc8fc7057e34be8f79d6c76e2ef2e46758496302b feature=elicitation-forms kind=architecture generated_at=2026-08-12 -->
+<!-- attune-generated: source_hash=f7f628e6b3f2e6ef1fa119a382a5bce3e75ebb4ee2beb22666b8f89e45fd278b feature=elicitation-forms kind=architecture generated_at=2026-08-29 -->

@@ -1,8 +1,21 @@
+#attune-elicit-form {
+  --ae-action:var(--primary,#004ac6); --ae-action-hover:var(--primary-dark,#003ea8);
+  --ae-action-text:var(--on-primary,#fff);
+  --ae-success:var(--text-success,#006c49); --ae-warning:var(--text-accent,#a1571c);
+  --ae-danger:var(--text-danger,#ba1a1a); --ae-recommendation:var(--accent,#7c3aed);
+  --ae-text:var(--text-primary,#0b1c30); --ae-muted:var(--text-muted,#5f6470);
+  --ae-surface:var(--surface-1,#f8f9ff); --ae-surface-raised:var(--surface-2,#eff4ff);
+  --ae-border:var(--border,#c3c6d7); --ae-focus:var(--focus-ring,#2563eb);
+  --ae-radius-control:8px; --ae-radius-panel:12px;
+  --ae-space-md:1rem;
+  --ae-motion-fast:120ms; --ae-motion-normal:200ms; --ae-target-min:2.5rem;
+  --ae-font-body:Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; --ae-font-heading:Manrope, Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; --ae-font-mono:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 #attune-elicit-form { display:block; width:100%; padding:1rem 0;
-  color:var(--text-primary,#2c2c2a); line-height:1.5; }
+  color:var(--ae-text,#0b1c30); line-height:1.5; font-family:var(--ae-font-body,system-ui); }
 #attune-elicit-form .sr-only { position:absolute; width:1px; height:1px;
   overflow:hidden; clip:rect(0 0 0 0); }
-#attune-elicit-form h3 { font-size:18px; font-weight:500; margin:0 0 .25rem; }
+#attune-elicit-form h3 { font-family:var(--ae-font-heading,system-ui); font-size:18px;
+  font-weight:650; letter-spacing:-.015em; margin:0 0 .25rem; }
 #attune-elicit-form .ae-msg { margin:0 0 .5rem; color:var(--text-secondary,#5f5e59); }
 #attune-elicit-form .ae-desc { margin:0 0 1rem; color:var(--text-muted,#8a887f);
   font-size:15px; }
@@ -23,16 +36,29 @@
 #attune-elicit-form .ae-help { font-size:13px; color:var(--text-muted,#8a887f);
   margin:0 0 .35rem; }
 #attune-elicit-form .ae-submit { margin-top:.5rem; padding:.55rem 1.1rem;
-  font-size:15px; font-weight:500; cursor:pointer; color:var(--text-primary,#2c2c2a);
-  background:var(--bg-accent,#f3ece4); border:1px solid var(--border-accent,#d8b89a);
-  border-radius:var(--radius,8px); }
+  min-height:var(--ae-target-min,2.5rem); font-size:15px; font-weight:600; cursor:pointer;
+  color:#fff; background:var(--ae-action,#004ac6); border:1px solid var(--ae-action,#004ac6);
+  border-radius:var(--ae-radius-control,8px); transition:background var(--ae-motion-fast,120ms); }
+#attune-elicit-form .ae-submit:hover { background:var(--ae-action-hover,#003ea8); }
 #attune-elicit-form .ae-submit:disabled { opacity:.6; cursor:default; }
+#attune-elicit-form .ae-submit-consequence { color:var(--ae-muted,#5f6470);
+  font-size:13px; margin:.25rem 0; }
 #attune-elicit-form .ae-error { margin-top:.5rem; font-size:14px;
   color:var(--text-accent,#a1571c); }
 #attune-elicit-form .ae-field-missing { border-left:3px solid
-  var(--text-accent,#a1571c); padding-left:.6rem; }
+  var(--ae-danger,#ba1a1a); padding-left:.6rem; }
+#attune-elicit-form :is(input,select,textarea,button):focus-visible {
+  outline:3px solid var(--ae-focus,#2563eb); outline-offset:2px; }
+#attune-elicit-form :is(input,select,textarea,button):disabled { opacity:.6; cursor:not-allowed; }
+#attune-elicit-form .ae-detail-block { flex-basis:100%; white-space:pre-wrap;
+  font-family:var(--ae-font-mono,ui-monospace);
+  overflow-x:auto; }
+@media (prefers-reduced-motion:reduce) { #attune-elicit-form * {
+  scroll-behavior:auto!important; transition-duration:0ms!important;
+  animation-duration:0ms!important; } }
 #attune-elicit-form .ae-input { width:100%; box-sizing:border-box;
-  padding:.5rem .6rem; font-size:15px; color:var(--text-primary,#2c2c2a);
+  min-height:var(--ae-target-min,2.5rem); padding:.5rem .6rem;
+  font-size:15px; color:var(--text-primary,#2c2c2a);
   background:var(--surface-1,#f7f6f3); border:1px solid var(--border,#e3e1dc);
   border-radius:var(--radius,8px); }
 #attune-elicit-form .ae-textarea { resize:vertical; min-height:3.5rem; }
@@ -50,7 +76,9 @@
   border:1px solid var(--border,#e3e1dc); border-radius:var(--radius,8px);
   cursor:pointer; }
 #attune-elicit-form .ae-card:hover { border-color:var(--text-muted,#8a887f); }
-#attune-elicit-form .ae-card-rec { border-color:var(--border-accent,#d8b89a); }
+#attune-elicit-form .ae-card-rec { border-color:var(--ae-recommendation,#7c3aed); }
+#attune-elicit-form .ae-card:has(input:checked) { border-color:var(--ae-action,#004ac6);
+  background:var(--ae-surface-raised,#eff4ff); }
 #attune-elicit-form .ae-card input { position:absolute; top:.7rem; right:.6rem; }
 #attune-elicit-form .ae-card-title { font-weight:500; }
 #attune-elicit-form .ae-card-note { font-size:13px; color:var(--text-muted,#8a887f); }
@@ -72,7 +100,7 @@
 #attune-elicit-form .ae-progress { display:flex; flex-direction:column; gap:.5rem; }
 #attune-elicit-form .ae-prog-rows { display:flex; flex-direction:column; gap:.25rem; }
 #attune-elicit-form .ae-prog-row { display:flex; align-items:baseline; gap:.5rem;
-  font-size:14px; color:var(--text-secondary,#5f5e59); }
+  flex-wrap:wrap; font-size:14px; color:var(--text-secondary,#5f5e59); }
 #attune-elicit-form .ae-prog-icon { flex:none; font-weight:700; width:1.1em;
   text-align:center; }
 #attune-elicit-form .ae-prog-done .ae-prog-icon { color:var(--text-success,#3fb950); }
@@ -111,7 +139,7 @@
 #attune-elicit-form .ae-gate-h { font-size:11px; font-weight:600;
   text-transform:uppercase; letter-spacing:.03em; color:var(--text-accent,#a1571c); }
 #attune-elicit-form .ae-gate-row { display:flex; align-items:baseline; gap:.5rem;
-  font-size:14px; color:var(--text-secondary,#5f5e59); }
+  flex-wrap:wrap; font-size:14px; color:var(--text-secondary,#5f5e59); }
 #attune-elicit-form .ae-gate-label { color:var(--text-primary,#2c2c2a); }
 #attune-elicit-form .ae-gate-detail { font-size:13px; color:var(--text-muted,#8a887f); }
 #attune-elicit-form .ae-gate-tag { flex:none; font-size:10px; font-weight:600;
