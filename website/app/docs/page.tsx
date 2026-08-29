@@ -45,8 +45,7 @@ const faqItems = [
   },
   {
     question: 'What Claude Code skills are included?',
-    answer:
-      '26 auto-invoking skills: security audit, smart test, code quality, bug prediction, doc generation, refactor planning, release prep, planning, spec-driven development, fix-test, workflow orchestration, RAG-grounded code generation, content verification, cross-session recall, memory and context, personal memory, image analysis, batch processing, capability catalog, discovery sweep, form-driven elicitation, the coach help system, the attune hub router, single-source feature-page authoring, cross-model diff review, and the multi-LLM round table.',
+    answer: `${CAPABILITIES.skills} auto-invoking skills, including security audit, smart test, code quality, bug prediction, doc generation, refactor planning, release prep, spec-driven development, outcome-first fixing, RAG-grounded code generation, cross-session recall, image analysis, batch processing, cross-model diff review, and the multi-LLM round table. Run the catalog skill for the full, always-current list.`,
   },
   {
     question: 'Where do I install attune-help from?',
