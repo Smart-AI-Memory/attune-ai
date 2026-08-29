@@ -373,55 +373,60 @@ cheapest high-value action available on this spec and is not yet done.
 Until it exists, nobody knows whether abstention regressed or two
 queries got unlucky.
 
-### Cause: narrowed — the scorer is excluded, our capture path leads
+### Cause: LOCATED by experiment — #2118 restored a dead polish pass
 
-Three candidates were tested rather than assumed:
+Superseding the "narrowed" framing in an earlier draft. The round table
+(round 2) proposed a decisive experiment instead of diffing captured
+text; it was run, and it resolved the question outright.
 
-1. **The retriever dependency — NARROWED, not refuted.**
-   `KeywordRetriever` lives in `attune-rag`, which moved 0.9.0 -> 1.1.0
-   between the baseline and this run, so it was the leading hypothesis.
-   Both scoring modules are **byte-identical** across that span:
-   `retrieval.py` unchanged, `_scoring.py` unchanged (2,646 bytes both).
-   **That establishes the SCORER did not move — not that the dependency
-   did not move the outcome.** `pipeline.py` DID change, and the
-   pipeline decides what reaches the scorer (candidate selection, top-k,
-   dedup, expansion); an identical scorer fed a different candidate set
-   produces different rankings. That effect is UNTESTED. An earlier
-   draft asserted the pipeline change "does not touch the keyword score"
-   with no basis; that claim is withdrawn.
-2. **Fixture drift — REFUTED.** `scripts/eval_personal_memory_recall.py`
-   carries the corpus inline and has not been modified since the commit
-   that created it (#1538). Same corpus, same queries.
-3. **Our own code — the remaining candidate.**
-   `src/attune/memory/personal.py` took 6+ commits since the baseline,
-   including #1979 (R1 provenance framing), #2018 (epistemic status
-   tiers), #2021 (curated serve telemetry) and #2128 (the durability
-   set). Several of those change what text is WRITTEN INTO each captured
-   document.
+**Experiment 1 — hold the dependency constant, swap our code.** Baseline
+`personal.py` (from `f4ee8c7eb`) against TODAY's attune-rag 1.1.0:
 
-**Named mechanism to check first (hypothesis, not yet measured):**
-capture-time boilerplate — provenance and status lines added to every
-document — would let generic query tokens match that shared boilerplate
-across unrelated documents, manufacturing attractors. It is consistent
-with the attractor being `status-vocabulary` specifically.
+    hit@1 25/26 (96%) · FP 0/6 (0%) · threshold 3.0
 
-Attribution, stated precisely because this entry's thesis is that claims
-carry their basis: ONE seat (Antigravity) named fixture-or-capture-time
-token saturation; the capture-text specifics came from the moderator's
-commit-log read. This is NOT independent convergence and must not be
-cited as evidence.
+That reproduces run 1 exactly, and both offending queries return
+`(none) · 0.0000` — perfect abstention. This cell and today's run share
+the same attune-rag and differ only in `personal.py`. **The dependency
+is exonerated: it cannot be the cause, since holding it at 1.1.0 still
+yields clean results.** (`pipeline.py`'s changed candidate selection,
+flagged UNTESTED in the previous draft, is covered — it is held at 1.1.0
+in both cells.)
 
-**One measured datum already bears on it:** constructing the pipeline
-WITHOUT `summaries_file` moves the two offending negatives from
-confidence 1.0 down to 0.5 (see the retracted-fix section). That is the
-only measurement touching the shared-text-across-documents mechanism,
-and it partially corroborates it.
+**Experiment 2 — bisect the seven `personal.py` commits in
+`f4ee8c7eb..8f65df82a`:**
 
-**A strictly better probe than diffing captured text** (round table,
-round 2): run the 2x2 — baseline `personal.py` against current
-attune-rag, and current `personal.py` against attune-rag 0.9.0. Two runs
-of a keyless script settle ours-versus-theirs outright, including the
-untested `pipeline.py` effect above.
+    #2021 99ee729d5 curated serve telemetry      25/26 · 0/6  CLEAN
+    #2118 7c6836c8d restore personal polish      24/26 · 2/6  DIRTY  <-
+    #2128 5dda6d8fd the durability set           24/26 · 2/6  (inherits)
+
+**Mechanism, now known rather than hypothesised.** #2118's one-line
+change to this file:
+
+    - result = polish_fn(text, template_type=kind)
+    + result = polish_fn(text, "", "", template_type=kind)
+
+`polish_template` requires two positionals; omitting them raised
+`TypeError` on EVERY call, silently killing the polish pass (found in
+library review as M2). #2118 fixed that. **So before #2118 polish never
+ran, and run 1's corpus was UNPOLISHED.** Restoring polish enriches every
+captured document, and keyword retrieval is measurably less precise on
+the richer text — shared vocabulary across documents creates the
+attractors, which is why two unrelated queries land on
+`status-vocabulary` at an identical score.
+
+**This reframes the finding.** It is not a defect introduced into recall.
+It is the RETRIEVAL COST OF A CORRECT FIX: run 1's 0-of-6 was a property
+of a degraded corpus produced by a broken polish step, not a property of
+the retriever. The honest baseline for "what abstention does this system
+have" is the post-#2118 number, and the pre-#2118 number should not be
+cited as a target to restore. Antigravity named capture-time token
+saturation in round 1 before any of this was measured.
+
+**What this does NOT establish:** that polish is wrong, or that #2118
+should be reverted — it fixed a real silent failure and its own change
+is correct. The open engineering question is whether keyword retrieval
+is the right retriever for polished documents, which is the retriever
+lever recorded below.
 
 ### Confidence is NOT the fix (measured, retracted)
 
