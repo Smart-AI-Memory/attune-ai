@@ -517,7 +517,68 @@ with a measured abstention property is the one carrying 0.65% of the
 traffic. `lesson_recall`, `session_recall` and `jit_recall` carry **5,068**
 events between them (6,504 including `memory_signal`; 6,870 is the whole
 file, the remaining 366 being `session_stash`, `memory_feedback` and
-others) — with no abstention instrument at all. The usage
+others) — with no abstention BENCHMARK. The usage
 number arguably argues for porting this benchmark OUTWARD to those
 paths, rather than for deferring work where a ruler happens to exist.
 Recorded, not ruled.
+
+## 2026-08-28 — CORRECTION + first measurement of `lesson_recall` abstention
+
+**The entry above claimed the hook/Redis recall paths have "no abstention
+instrument at all". That was FALSE and is corrected in place** (to "no
+abstention BENCHMARK"). It was asserted without a probe, survived a
+three-seat round table and three of my own correction passes, and
+reached `main` in #2351. `plugin/hooks/lesson_recall.py` filters
+
+    hits = [h for h in index.retrieve(prompt, k=3) if h.score >= floor]
+
+with `floor = 8.0` (`ATTUNE_LESSON_RECALL_FLOOR`). **That path has an
+abstention MECHANISM, and a stricter one than `PersonalMemory`, which
+has none.** What it lacks is a benchmark. Unmeasured is not
+uninstrumented; the earlier sentence collapsed the two.
+
+### First measurement (n=12/12, real instrument, no spend)
+
+`LessonsIndex.retrieve(prompt, k=3)` against the live lessons corpus at
+its real floor of 8.0. Positives are prompts on subjects the corpus
+demonstrably covers; negatives are subjects genuinely absent from an
+attune-ai lessons corpus (office wifi, parental leave, CSS framework,
+Terraform state locking, and so on).
+
+| | surfaced above floor | top-1 range |
+|---|---|---|
+| positives (n=12) | **11/12** | 5.0 – 26.0 |
+| negatives (n=12) | **2/12** | 4.5 – 9.0 |
+
+**Not separated:** min-positive 5.0 sits BELOW max-negative 9.0.
+
+- **Two false positives, both at exactly 9.0** — "which CSS framework
+  does the marketing site use?" and "how many vacation days carry over
+  each year?" Both cleared the 8.0 floor on a corpus with nothing on
+  either subject.
+- **One suppressed true positive at 5.0** — "the rebase dropped my GPG
+  signature", despite a lesson on exactly that existing and having
+  fired as JIT recall the same day.
+
+### Read
+
+1. **The floor does real work.** It suppressed 10 of 12 off-topic
+   prompts. This is not an unguarded surface.
+2. **It shows the SAME failure shape as `PersonalMemory`** — off-topic
+   queries scoring at or above on-topic ones, from unnormalized keyword
+   overlap where generic vocabulary accumulates. The two surfaces share
+   a root cause, which the "0.65% vs 99%" framing obscured.
+3. **The floor is mis-set, not missing.** At 8.0 it admits two clear
+   negatives and rejects one clear positive; no single value separates
+   these distributions, which is the same non-separation measured on
+   `PersonalMemory`.
+
+### Status
+
+Measurement only — no ruling requested and none made, and nothing here
+changes the "record, do not fix" decision above. n=12/12 is small and is
+NOT a rate; it is a first data point on a surface that had none.
+Provenance: round table `q-personal-memory-recall-read-001` asked what
+the abstention behaviour of the 99% paths was; this is the beginning of
+an answer for the largest of them (`lesson_recall`, 2,070 events).
+`jit_recall` and `session_recall` remain unmeasured.
