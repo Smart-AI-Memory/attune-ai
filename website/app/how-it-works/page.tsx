@@ -150,6 +150,60 @@ export default function HowItWorksPage() {
           </div>
         </section>
 
+        {/* Forms, live — the communication pillar made touchable:
+            a real widget-pipeline render you can fill in, beside a
+            capture of the session-retro triage being ruled. */}
+        <section className="py-20 bg-[var(--surface-container-low)]">
+          <div className="container">
+            <div className="max-w-5xl mx-auto">
+              <div className="text-center mb-12">
+                <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-4 block">
+                  Try a form
+                </span>
+                <h2 className="text-3xl font-bold mb-4">
+                  The agent asks with structure — go ahead, answer it
+                </h2>
+                <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
+                  This is a live render from the production form
+                  pipeline, not a mockup: a recommended decision card
+                  with tradeoffs, multi-select, a dropdown, a bounded
+                  number, free text. Submit it empty and validation
+                  catches you.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6 items-start">
+                <div className="bg-[var(--background)] rounded-xl border border-[var(--border)] overflow-hidden">
+                  <iframe
+                    src="/forms-demo/audit.html"
+                    title="Live attune-forms demo: scope a security audit"
+                    className="w-full bg-[#faf9f5]"
+                    style={{ height: 880 }}
+                    loading="lazy"
+                  />
+                  <p className="text-xs text-[var(--text-secondary)] px-4 py-3 border-t border-[var(--border)]">
+                    Live embed — filling it here goes nowhere; in a
+                    session, answers come back validated.
+                  </p>
+                </div>
+                <div className="bg-[var(--background)] rounded-xl border border-[var(--border)] overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/images/attune-forms-retro-demo.gif"
+                    alt="A session-retro triage form being ruled: five real items under Opportunities, Friction, and Keep sections, each dispatched with one tap, then submitted"
+                    className="w-full"
+                    loading="lazy"
+                  />
+                  <p className="text-xs text-[var(--text-secondary)] px-4 py-3 border-t border-[var(--border)]">
+                    The session retro as a triage form — real items from
+                    the session that built this demo, ruled one tap each.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Round table — the receipts culture across models (DEC-14a:
             the multi-LLM fold stands, but the roundtable gets marquee
             treatment here as the vivid case of receipts + chairing) */}

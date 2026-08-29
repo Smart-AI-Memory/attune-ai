@@ -22,6 +22,16 @@ const nextConfig: NextConfig = {
           { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none'" },
         ],
       },
+      // The static form-demo fixtures are embedded in an iframe on
+      // /how-it-works, so this path alone allows SAME-ORIGIN framing
+      // (later matching rules override same-named keys above).
+      {
+        source: '/forms-demo/:path*',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'self'" },
+        ],
+      },
     ];
   },
   async rewrites() {
