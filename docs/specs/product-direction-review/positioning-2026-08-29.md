@@ -169,10 +169,39 @@ skills?"), preserving DEC-16's lead-light spirit. Surfaces:
 README Get Started, homepage get-started section (both cards now
 carry the recommended emphasis), attune-ai.dev install block.
 
+### DEC-18 — Spec Ladders sells the engine, not just the brakes (2026-08-29)
+
+Chair flagged that spec-driven *execution* was undersold: every
+`/spec` mention was control-framed ("approve rung by rung", gates,
+rulings) with nothing saying the agent executes the ladder between
+approvals — workflows dispatched, native agent capabilities
+driving the work. Partly this session's own doing: DEC-11 retired
+the spec-first hero and nothing re-housed the execution half (the
+DEC-14a fold-drops-the-story class again). Ratified with the
+lead's two amendments:
+
+- **Category vocabulary inside the receipts story, no new
+  pillar/shelf**: say "spec-driven development, with receipts" —
+  borrows the hot category's vocabulary (Kiro, Spec Kit made it
+  searched) while differentiating inside it (they generate specs;
+  attune independently verifies execution against them). Memory =
+  shelf and receipts = differentiator (DEC-10) stand.
+- **The three-provider execution claim ships only with a
+  receipt**: Claude Code is lived daily and Codex installs the
+  same plugin; `/spec` executing end-to-end under Antigravity is
+  inferred, not checked — copy stays narrower ("agent" generic /
+  the two receipted providers) until a live-fire probe passes.
+  Chair authorized the probe same-session ("go and verify").
+
+Copy: README Spec Ladders bullet, plugin README callout,
+how-it-works spec-gate card, and the reliability loop's Build
+stage all gain engine-framing ("the approved spec drives the
+agents" / "the agent executes the spec'd tasks").
+
 ## Open (not ruled)
 
-- *(none — DEC-16 closed the last open item of this review;
-  DEC-17 was ratified after closure.)*
+- *(none — DEC-16 closed the review's last open item; DEC-17 and
+  DEC-18 were ratified after closure.)*
 
 ## Evidence base (session findings, 2026-08-29)
 

@@ -21,8 +21,10 @@ commands: say what you need and Claude picks the right skill.
 > becomes requirements, design, and a gated task ladder — then
 > climbs it only as fast as you approve: every task behind your
 > explicit go, every quality gate scored, every ruling recorded in
-> a decision file that outlives the session. The spec isn't a plan
-> you wrote once; it's a contract that stays true.
+> a decision file that outlives the session. Between your
+> approvals, the agent does the climbing — dispatching attune
+> workflows and its own native tools. The spec isn't a plan you
+> wrote once; it's a contract that drives the work.
 
 ## Install
 

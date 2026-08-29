@@ -199,7 +199,8 @@ export const RELIABILITY_LOOP: LoopStage[] = [
     n: "03",
     name: "Build",
     description:
-      `${CAPABILITIES.workflows} workflows: review, tests, bug prediction, refactor.`,
+      // DEC-18: engine-framing — the spec drives the agents.
+      `The agent executes the spec'd tasks — ${CAPABILITIES.workflows} workflows: review, tests, bug prediction, refactor.`,
   },
   {
     n: "04",
