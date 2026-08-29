@@ -110,6 +110,10 @@ map below:
 ## Execution map
 
 Ordered; each item is a separate small PR unless noted.
+**Status: all executed and merged 2026-08-29** — item 1 → #2356,
+item 2 → #2357, item 3 → #2359, item 4 → #2358, plus a
+chair-directed extension of item 3 to the attune-ai.dev landing
+(#2361). Merge states verified via `gh pr view` at note time.
 
 1. **README truth pass** (root `README.md`) — reconcile the MCP
    tool counts to the one registry-derived number, drop retired
