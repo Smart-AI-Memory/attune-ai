@@ -29,7 +29,7 @@ export default function TestsBadge({
         <polyline points="20 6 9 17 4 12" />
       </svg>
       <span>
-        {tests} tests | {coverage}% coverage
+        {tests} tests | {coverage}%+ coverage
       </span>
     </span>
   );
