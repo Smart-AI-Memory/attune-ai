@@ -20,6 +20,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   session's own checkout — instead of only naming the block. Same
   protection, faster recovery.
 
+### Fixed
+
+- Pattern review queue and persistent pattern library now degrade
+  gracefully when the memory backend fails (unreachable Redis, disk
+  error, third-party backend missing a method) instead of raising
+  into the caller — all 11 backend I/O sites route through a single
+  logged fail-open choke point, honoring collaboration principle 15
+  ("work is never blocked on the memory layer"). Found by the
+  passenger-4 call-site audit.
 
 ## [16.1.0] - 2026-08-28
 

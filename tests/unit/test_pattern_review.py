@@ -351,3 +351,88 @@ class TestBatchRetrieve:
         assert batch_q._backend.retrieve_many_calls == 1
         assert batch_q._backend.retrieve_calls == 0
         assert loop_q._backend.retrieve_calls == 3
+
+
+class _ExplodingBackend:
+    """Every MemoryBackend method raises — the memory layer at its worst.
+
+    Simulates an unreachable Redis, a corrupt store, or a third-party
+    backend missing methods entirely: any touch raises. Principle 15 says
+    no queue/library operation may propagate this to the caller.
+    """
+
+    def __getattr__(self, name):
+        def _boom(*args, **kwargs):
+            raise RuntimeError(f"backend down ({name})")
+
+        return _boom
+
+
+class TestFailOpenDegradation:
+    """Regression guard: backend failure degrades, never raises (P15)."""
+
+    def test_stage_survives_backend_failure(self):
+        queue = PatternReviewQueue(backend=_ExplodingBackend())
+        assert queue.stage(_staged()) == "p1"
+
+    def test_get_degrades_to_none(self):
+        queue = PatternReviewQueue(backend=_ExplodingBackend())
+        assert queue.get("p1") is None
+
+    def test_list_degrades_to_empty(self):
+        queue = PatternReviewQueue(backend=_ExplodingBackend())
+        assert queue.list() == []
+
+    def test_reject_degrades_to_false(self):
+        queue = PatternReviewQueue(backend=_ExplodingBackend())
+        assert queue.reject("p1", "reason") is False
+
+    def test_promote_missing_pattern_degrades_to_none(self):
+        queue = PatternReviewQueue(backend=_ExplodingBackend())
+        assert queue.promote("p1", PatternLibrary()) is None
+
+    def test_promote_delete_failure_still_returns_pattern(self, tmp_path):
+        """Contribute succeeds, then the staged-copy delete fails: the
+        promote must still report success — the library write is the
+        operation of record, the cleanup is best-effort."""
+        good = FileStashBackend(base_dir=str(tmp_path))
+        queue = PatternReviewQueue(backend=good)
+        queue.stage(_staged())
+
+        real_delete = good.delete
+
+        def failing_delete(key):
+            raise RuntimeError("delete down")
+
+        good.delete = failing_delete
+        try:
+            promoted = queue.promote("p1", PatternLibrary())
+        finally:
+            good.delete = real_delete
+        assert promoted is not None
+        assert promoted.id == "p1"
+
+    def test_persistent_library_constructs_on_dead_backend(self):
+        lib = PersistentPatternLibrary(backend=_ExplodingBackend())
+        assert lib.patterns == {}
+
+    def test_persistent_library_contribute_survives_stash_failure(self):
+        lib = PersistentPatternLibrary(backend=_ExplodingBackend())
+        pattern = Pattern(
+            id="p1",
+            agent_id="a1",
+            pattern_type="behavioral",
+            name="n",
+            description="d",
+            context={},
+            code="x = 1",
+            confidence=0.8,
+        )
+        lib.contribute_pattern("a1", pattern)
+        assert "p1" in lib.patterns  # in-memory add held; persist degraded
+
+    def test_backend_failures_are_logged_not_silent(self, caplog):
+        queue = PatternReviewQueue(backend=_ExplodingBackend())
+        with caplog.at_level("ERROR", logger="attune.pattern_review"):
+            queue.list()
+        assert any("backend keys failed" in r.message for r in caplog.records)

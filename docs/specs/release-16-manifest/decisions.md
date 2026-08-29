@@ -118,3 +118,119 @@ remains open (contracts-first within 16.x is compatible with D1).
   attacking the criterion) in front of them, and ratified. Durable
   copies of both cited board threads are machine-local at
   `~/.attune/reports/roundtable/` (the board itself is TTL'd).
+
+## D3 — Passenger 4 phasing (PROPOSED 2026-08-28 — NOT RULED)
+
+**PROPOSED by the lead — the chair has not ruled this.**
+Resolves the requirements.md open question "whether passenger 4
+ships whole in 16.0.0 or contracts-first with the CLI following in
+a 16.x minor."
+
+### The question as written can no longer be answered as written
+
+Both of its options are foreclosed, for different reasons:
+
+- **"Whole in 16.0.0" is moot.** 16.0.0 shipped 2026-08-27 without
+  passenger 4, and 16.1.0 followed. Verified: no
+  `src/attune/extensions` module exists on `main`, and
+  `pyproject.toml` declares no `attune.extensions` entry-point
+  group.
+- **"Contracts-first, CLI following" is forbidden by D2.** D2's
+  cold-re-read amendment requires the author-facing surface — the
+  `enable` UX, the author docs page, a working example extension —
+  in the FIRST constructive increment. `enable` IS the author
+  surface. A phasing that lands contracts in 16.2.0 and the CLI in
+  16.3.0 defers exactly what the ruling criterion protects.
+
+So the answer is **neither**. The proposal below slices the work
+**vertically by capability** — each increment a complete
+install-to-enable author path — rather than **horizontally by
+layer**, which is the split D2 rules out.
+
+### Phase A — memory backends, whole loop (target 16.2.0)
+
+One capability contract, the entire author path working end to end.
+
+Ships:
+
+- `attune.extensions` public API module; frozen `Extension`
+  manifest dataclass at `api_version = 1`
+- the single `attune.extensions` entry-point group
+- loader with trust gating: discovery reads distribution metadata
+  without importing; only an enabled extension is imported
+- `list / inspect / enable / disable / doctor` — the complete CLI,
+  not a subset
+- enablement persisted in attune config (the `attune config`
+  surface already exists)
+- the memory-backend capability contract (see D3a below)
+- `attune.memory_backends` compatibility adapter, translating
+  legacy entries into manifests internally
+- `attune.testing` contract test kit for memory backends
+- a minimal example extension in-repo, plus the extension-author
+  docs page
+- all four D1 receipts, with receipt 2 reading "enablement loads
+  and constructs its BACKEND in-process"
+
+Why memory backends lead: the seam is the only one D1 kept on its
+own merits, and it is already real on disk — `resolve_backend()` at
+[session_stash.py:45](src/attune/memory/session_stash.py:45)
+resolves `attune.memory_backends` today, with two live
+implementations and fail-open degradation. Phase A therefore
+freezes a contract over behavior that already works, and needs no
+change to any of the 72 workflow modules.
+
+### Phase B — workflow contract (target 16.3.0, additive)
+
+Adds `WorkflowRequest` / `WorkflowContext` / `WorkflowResult` and
+populates the manifest's `workflows` field. Additive: the field
+already carries a default in D1's dataclass, so no `api_version`
+bump.
+
+The containment that makes B affordable is stated as a constraint,
+not left to the implementer: **built-ins dogfood the public
+workflow contract through an adapter at the runner boundary, not
+by rewriting workflow modules.** `BaseWorkflow` today is
+stage-based (`_scan` / `_analyze` / `_report` via `run_stage`) and
+does not match `async def run(request, context)`; 72 modules
+subclass it. Codex's migration step 4 already says "keep the
+implementations in their current modules" — this names the
+mechanism that honors it.
+
+Dogfooding is proven by a **ratcheted count** of built-ins actually
+resolved through the public path, drift-guarded, starting small.
+Not all 72 at once.
+
+### Phase C — hardening (demand-gated, unscheduled)
+
+Raise the dogfooding ratchet; emit the `attune.memory_backends`
+deprecation warning on read; re-examine whether `api_version` stays
+`1`. Opens only when a real extension exists, per D2's named
+falsifier.
+
+### D3a — freeze the NARROW memory contract, not today's protocol
+
+The public frozen surface should be the small contract Codex
+specified (construct / store / retrieve / health, with optional
+operations advertised as capabilities), **not** the protocol at
+[memory/backend.py](src/attune/memory/backend.py) as it stands —
+`MemoryBackend` carries 10 methods and `SearchableMemoryBackend`
+adds 6 more. Freezing 16 methods as semver-stable contradicts D1
+consensus core item 3 (dependency-light contracts, small frozen
+surface) and would bind attune to every accident of the current
+interface. The bundled backends keep the fat protocol internally;
+the compatibility adapter bridges. No breaking change to either
+bundled backend.
+
+### D3b — the freeze anchor moved
+
+D1 reads "contract modules frozen at 16.0.0, semver-stable."
+16.0.0 has shipped without them, so the anchor is now whichever
+release first ships the contracts — 16.2.0 under this proposal.
+This is a spec-text correction, not a change of intent.
+
+### Open, deliberately not proposed
+
+Timing. The other requirements.md open question (whether 16.x
+carries the 15-manifest's shipped-by urgency) stays unruled here.
+Phase A has no external dependency and no forced date; it is
+schedulable whenever the chair wants it.

@@ -274,6 +274,12 @@ _BASELINE: dict[str, int] = {
     "src/attune/orchestration/tools/security.py": 1,
     "src/attune/orchestration/tools/test_generation.py": 5,
     "src/attune/orchestration/tools/testing.py": 7,
+    # pattern_review.py 0 -> 1 (2026-08-28, passenger-4 call-site audit
+    # follow-up): _safe_backend_call is the single choke point wrapping
+    # all 11 backend I/O sites — the review queue is a side channel, so
+    # a memory-layer failure degrades (logged at ERROR) instead of
+    # blocking the caller's work (collaboration principle 15).
+    "src/attune/pattern_review.py": 1,
     "src/attune/patterns/confidence.py": 1,
     "src/attune/patterns/contextual.py": 1,
     "src/attune/patterns/git_extractor.py": 4,
