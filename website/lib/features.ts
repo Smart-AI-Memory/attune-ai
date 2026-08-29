@@ -238,29 +238,13 @@ export const PILLARS: Pillar[] = [
       "Local-first by default — no cloud required",
       "Redis semantic tier, client included (local Ollama embeddings)",
       "Automatic recall, or on demand with /recall",
+      // DEC-13/14: cross-provider portability is a property of the
+      // memory, not a separate pillar — anti-lock-in framing, exactly
+      // the three verified providers.
+      "Git-tracked files in your repo — served to Claude Code, Codex, or Antigravity alike. Switch agents; keep everything.",
     ],
     icon: "🧠",
     color: "secondary",
-  },
-  // 10.6.0 multi-LLM wave (launch plan; wording aligned with the
-  // shipped README "Multi-LLM collaboration" section).
-  {
-    id: "multi-llm",
-    tag: "Multi-LLM",
-    title: "Three AI agents, one project brain",
-    description:
-      "Claude Code, Codex, and Antigravity share the same project " +
-      "memory, hand off work with git-verified packets, and give " +
-      "each other second opinions on real diffs. The round table " +
-      "lets them deliberate a question — you chair what gets " +
-      "adopted.",
-    points: [
-      "Shared session memory via MCP — same tools in every agent",
-      "Handoffs re-verified against the actual git tree on resume",
-      "Cross-model review and deliberation — advisory; you decide",
-    ],
-    icon: "🤝",
-    color: "accent",
   },
   {
     id: "communication",
@@ -325,6 +309,9 @@ export const PILLARS: Pillar[] = [
     points: [
       "Verifies docs, code, and generated content",
       "Closes the loop the spec opened",
+      // DEC-14: cross-model review/deliberation live under the
+      // receipts culture, not a standalone multi-LLM pillar.
+      "Cross-model review and roundtable deliberation — advisory; you decide",
       "Built from the discipline that runs this project",
     ],
     icon: "✅",
