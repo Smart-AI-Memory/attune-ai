@@ -321,124 +321,160 @@ carries the numbers + failure example + verdict. Status flipped to
 shipped across the three phase files; the cross-stamped status line
 was corrected in the design-approval entry above.
 
-## 2026-08-28 — Re-run (chair-directed): D3's zero-FP verdict no longer holds
+## 2026-08-28 — Re-run (chair-directed): D3's zero-FP clause no longer holds
 
 R6 made longitudinal re-runs a non-goal "unless a live recall complaint
 ever contradicts this verdict". This run was chair-directed rather than
-complaint-driven, so R6 is not amended — the chair asked for a recall
-quality measurement while assessing whether the Redis/memory
-implementation was acceptable.
+complaint-driven, so R6 is not amended.
 
-Run exactly as run 1 (D1–D4): `ANTHROPIC_API_KEY=""
+Run exactly as run 1 (D1-D4): `ANTHROPIC_API_KEY=""
 scripts/eval_personal_memory_recall.py`, 18-entry corpus, 26 positive /
 6 negative queries, isolated tmp roots, keyless.
 
-| metric | 2026-07-20 (run 1) | 2026-08-28 | delta |
-|---|---|---|---|
-| hit@1 | 25/26 (96%) | 24/26 (92%) | −1 query |
-| hit@3 | 26/26 (100%) | 26/26 (100%) | unchanged |
-| FP rate (D3) | **0/6 (0%)** | **2/6 (33%)** | **regressed** |
-| threshold (min correct-positive top-1) | 3.0 | 3.5 | — |
+| metric | 2026-07-20 (run 1) | 2026-08-28 |
+|---|---|---|
+| hit@1 | 25/26 | 24/26 |
+| hit@3 | 26/26 | 26/26 (unchanged) |
+| negatives above threshold | **0 of 6** | **2 of 6** |
 
-**The run-1 verdict's load-bearing sentence — "ranking is accurate at
-k=3 with zero false-positive over-confidence on no-match queries" — is
-now false on its second clause.** Retrieval is unaffected: hit@3 is
-still 26/26, so when the answer exists the corpus still surfaces it.
-What degraded is the ability to tell that an answer does NOT exist.
+Run 1's verdict was "ranking is accurate at k=3 with zero false-positive
+over-confidence on no-match queries". Clause one holds. Clause two does
+not.
 
-**Probable cause: the retriever changed under us.** `attune-rag` was
-locked 1.0.0 and then 1.1.0 on 2026-08-10 (#2033, #2034 — the latter
-titled "abstention-by-default + confidence-gated retrieval"), both AFTER
-run 1 on 2026-07-20. `KeywordRetriever` lives in that dependency, not in
-this repo, so the scorer moved between baseline and re-run. Corpus drift
-is not excluded but the dependency bump is the stronger hypothesis and
-was not chased further.
+### What is measured, and what is NOT a rate
 
-**Concrete: one document is acting as an attractor.** Both false
-positives resolve to the SAME topic at an IDENTICAL score:
+**The finding is a MECHANISM, not a rate.** Two semantically unrelated
+queries resolve to the SAME document at an IDENTICAL score:
 
-- "which GraphQL schema versioning scheme do we use?" → `status-vocabulary` · 5.0 · FP
-- "which CSS framework does the marketing site use?" → `status-vocabulary` · 5.0 · FP
+- "which GraphQL schema versioning scheme do we use?" -> `status-vocabulary` · 5.0
+- "which CSS framework does the marketing site use?" -> `status-vocabulary` · 5.0
 
-Neither query shares subject matter with that document. At run 1 the
-same six negatives produced three zero-hit results and three weak hits
-(2.5) below a 3.0 threshold.
+That is deterministic, reproducible, and independent of how many
+negatives are in the set. It is the durable observation.
 
-**Ruling (chair, 2026-08-28): record the measurement, do not fix.** The
-run-1 decision to leave precision alone rested on the premise
-"`attune.memory.PersonalMemory` is still lightly used". That premise was
-previously unquantified; it is now measured and it HOLDS:
+**"2 of 6" must NOT be read as a 33% false-positive rate.** With n=6 the
+Wilson interval is roughly 4%-78%; the point estimate carries a
+precision its basis cannot support, which is the failure core lesson #16
+forbids. An earlier draft of this entry recorded "FP rate 33%" and the
+round table flagged it (thread below) before it reached main.
 
-    ~/.attune/telemetry/memory_events.jsonl — 6,870 events
-      lesson_recall   2,070      session_recall  1,559
-      jit_recall      1,439      memory_signal   1,436
-      personal_query     45   <- 0.65% of memory traffic
+**The negative set IS the instrument, and n=6 cannot measure
+abstention.** Expanding it to 30-50 hand-authored negatives is the
+cheapest high-value action available on this spec and is not yet done.
+Until it exists, nobody knows whether abstention regressed or two
+queries got unlucky.
 
-The surfaces carrying >99% of recall traffic are the hook/Redis paths,
-not `PersonalMemory.query`. Tuning a keyword-overlap formula against an
-18-document synthetic corpus to serve 0.65% of traffic — where ranking
-is already perfect — is not a trade worth making today.
+### Cause: located, and it is OURS
 
-**Trip-wire (revisit when EITHER fires):**
+Three candidates were tested rather than assumed:
 
-1. `personal_query` exceeds ~5% of events in
-   `memory_events.jsonl`, or
-2. `PersonalMemory` gains a production consumer beyond the CLI
-   (`cli_commands/memory_commands.py`) and the four
-   `personal_memory_*` MCP tools.
+1. **The retriever dependency — REFUTED.** `KeywordRetriever` lives in
+   `attune-rag`, which moved 0.9.0 -> 1.1.0 between the baseline and
+   this run, so it was the leading hypothesis. Both scoring modules are
+   **byte-identical** across that span: `retrieval.py` unchanged,
+   `_scoring.py` unchanged (2,646 bytes both). The scorer did not move.
+   (`pipeline.py` DID change — that is where `confidence` is computed,
+   consistent with 1.1.0's "abstention-by-default" framing — but it does
+   not touch the keyword score.)
+2. **Fixture drift — REFUTED.** `scripts/eval_personal_memory_recall.py`
+   carries the corpus inline and has not been modified since the commit
+   that created it (#1538). Same corpus, same queries.
+3. **Our own code — the remaining candidate.**
+   `src/attune/memory/personal.py` took 6+ commits since the baseline,
+   including #1979 (R1 provenance framing), #2018 (epistemic status
+   tiers), #2021 (curated serve telemetry) and #2128 (the durability
+   set). Several of those change what text is WRITTEN INTO each captured
+   document.
 
-**Fix direction — corrected 2026-08-28 by measurement, after an
-earlier draft of this entry recommended the wrong thing.** The first
-recommendation here was an "abstain path": surface a bounded confidence
-and let `query()` return empty below a threshold. `RagResult` ALREADY
-carries a bounded `confidence` (plus `fallback_used`), and
+**Named mechanism to check first (hypothesis, not yet measured):**
+capture-time boilerplate — provenance and status lines added to every
+document — would let generic query tokens match that shared boilerplate
+across unrelated documents, manufacturing attractors. It is consistent
+with the attractor being `status-vocabulary` specifically. Two round-table
+seats reached this mechanism independently. Verify by diffing a captured
+document's on-disk text against its 2026-07-20 shape before acting.
+
+### Confidence is NOT the fix (measured, retracted)
+
+`RagResult` carries a bounded `confidence` that
 `PersonalMemory.query()` ([personal.py:285-294](../../../src/attune/memory/personal.py#L285))
-discards it, ranking on raw `hit.score` instead — so the fix looked like
-a few lines. Measured against this benchmark's own corpus and queries,
-using the EXACT pipeline construction `personal.py` uses
-(`DirectoryCorpus(root, summaries_file=_SUMMARIES_FILE, glob="**/*.md")`):
+discards, ranking on raw unbounded `hit.score` — so gating on it looked
+like a few lines. Measured with the exact pipeline `personal.py`
+constructs (`DirectoryCorpus(root, summaries_file=_SUMMARIES_FILE,
+glob="**/*.md")`):
 
     confidence, positives (n=26): 0.875 x2, 1.0 x24
     confidence, negatives (n=6) : 0.0 x1, 0.5 x3, 1.0 x2
 
-**Two of six negatives score confidence 1.0** — maximum confidence on
-questions the corpus cannot answer. The minimum positive (0.875) sits
-BELOW the maximum negative (1.0), so any threshold excluding the
-negatives drops all 26 true positives. Confidence is not an abstain
-signal on this corpus; it is over-confident on exactly the queries that
-fail. (Constructing the same pipeline WITHOUT `summaries_file` moves
-those two negatives from 1.0 down to 0.5 — the summaries file is
-implicated in the over-confidence and is the first thing to look at.)
+**Two of six negatives score confidence 1.0.** The minimum positive
+(0.875) sits BELOW the maximum negative (1.0), so any threshold
+excluding the negatives drops all 26 true positives. Confidence is
+over-confident on exactly the failing queries. (Constructing the same
+pipeline WITHOUT `summaries_file` moves those two negatives to 0.5 — the
+summaries file is implicated.)
 
-The remaining lever is the RETRIEVER, not the score. `attune-rag` 1.1.0
-already ships `EmbeddingRetriever`, `HybridRetriever`,
-`TransformerRetriever`, `LLMReranker` and `QueryExpander`, and
-`RagPipeline(corpus, retriever, expander, reranker)` takes them as
-constructor arguments — `PersonalMemory` passes none of them and gets
-the `KeywordRetriever` default. Keyword-only retrieval failing on
-"which X do we use?" phrasings that share generic vocabulary with an
-unrelated document IS the documented failure mode, and semantic or
-hybrid retrieval addresses it by construction. That is a configuration
-change before it is a code change, but it adds a real dependency and
-latency cost, so it needs its own measurement — not adoption on faith.
+The untried lever is the RETRIEVER: `attune-rag` ships
+`EmbeddingRetriever`, `HybridRetriever`, `TransformerRetriever`,
+`LLMReranker` and `QueryExpander`, and `RagPipeline(corpus, retriever,
+expander, reranker)` accepts them; `PersonalMemory` passes none. That
+needs its own measurement, not adoption on faith.
 
-**Methodology warning for the next reader, learned the hard way in this
-session.** There are TWO benchmark scripts and they are NOT
-interchangeable:
+### Ruling (chair, 2026-08-28): record, do not fix
 
-- `scripts/eval_personal_memory_recall.py` — 26 positive / 6 negative.
-  **This is the one run 1 used; it is the only valid baseline
-  comparison.**
-- `scripts/memory_recall_eval.py` — 18 positive / 5 negative, adds
-  `--phase persistence` (run 3, cross-process).
+Run 1 left precision alone on the premise that `PersonalMemory` "is
+still lightly used". That premise is now measured — 45 of 6,870 events
+in `~/.attune/telemetry/memory_events.jsonl` (0.65%), against
+`lesson_recall` 2,070, `session_recall` 1,559, `jit_recall` 1,439 and
+`memory_signal` 1,436.
 
-They have different corpora and different query sets. This session first
-compared the second script's output against run 1's numbers and derived
-a "score separation regression" that was an artifact of comparing two
-different benchmarks. Always re-run the SAME script whose numbers you
-are comparing against.
+**Read the denominator honestly (round table, unanimous):** those other
+surfaces are AUTOMATIC — they fire unbidden on every prompt and tool
+call. `personal_query` is DELIBERATE: a human asked, and will believe
+the answer. Dividing deliberate asks by background chatter makes any
+human-initiated surface round to zero by construction. The 0.65% bounds
+the FREQUENCY of exposure; it does not bound the per-invocation harm.
 
-For completeness, the other script's run today (not comparable to run 1,
-recorded only so the number exists): hit@1 18/18, hit@3 18/18, and
-identical results under `--phase persistence`, confirming recall
-survives process death.
+### Revisit triggers — NOT a usage share
+
+The first draft of this entry proposed revisiting when `personal_query`
+exceeded ~5% of memory events. The round table rejected that unanimously
+and the objection is decisive: **nothing is trying to grow
+`personal_query`, so a share trigger can only trip upward and will never
+fire.** A trip-wire that cannot fire is a decision never to revisit,
+written in the grammar of a decision to revisit later. It also requires
+a human to periodically compute a ratio — vigilance, where this repo's
+house style is ratchets.
+
+Replaced with triggers that can actually fire:
+
+1. **Consumer topology.** The first `PersonalMemory.query` consumer
+   outside `cli_commands/memory_commands.py` and the four
+   `personal_memory_*` MCP tools — in particular any automated prompt,
+   background hook, or default agent toolset. Mechanizable as a grep
+   gate; today's bounded blast radius rests entirely on this staying
+   false.
+2. **Behavior.** Any negative-query result above the shipped 0%
+   contract, or any high-confidence no-match, observed on an EXPANDED
+   negative set run as a CI gate. This fires itself and needs no
+   ratio-watching.
+3. **Dependency canary.** Keep the benchmark in the release /
+   dependency-upgrade path, since this run only detected the change
+   because someone ran it by hand.
+
+### Provenance
+
+Round table `q-personal-memory-recall-read-001` (2026-08-28, all three
+seats, converged round 1, halt posted). No seat defended the original
+read; the ruling itself was not contested. The seats' unchallenged
+contributions are carried above: the unsound rate and the n=6 instrument
+limit, the wrong-denominator argument, the never-fires trip-wire, and
+the capture-boilerplate mechanism. Their reframing is recorded as the
+open question below.
+
+**Open question raised by the table, unresolved:** the only recall path
+with a measured abstention property is the one carrying 0.65% of the
+traffic. `lesson_recall`, `session_recall` and `jit_recall` carry 6,870
+events between them with no abstention instrument at all. The usage
+number arguably argues for porting this benchmark OUTWARD to those
+paths, rather than for deferring work where a ruler happens to exist.
+Recorded, not ruled.
