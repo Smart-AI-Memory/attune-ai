@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "color": {
+    "light": {
+      "action": "#004ac6",
+      "action_hover": "#003ea8",
+      "success": "#006c49",
+      "warning": "#a1571c",
+      "danger": "#ba1a1a",
+      "recommendation": "#7c3aed",
+      "neutral_text": "#0b1c30",
+      "neutral_muted": "#5f6470",
+      "surface": "#f8f9ff",
+      "surface_raised": "#eff4ff",
+      "border": "#c3c6d7",
+      "focus": "#2563eb"
+    },
+    "dark": {
+      "action": "#8db2ff",
+      "action_hover": "#b4c9ff",
+      "success": "#4edea3",
+      "warning": "#ffb77d",
+      "danger": "#ffb4ab",
+      "recommendation": "#c5b4ff",
+      "neutral_text": "#f8f9ff",
+      "neutral_muted": "#b7c8e1",
+      "surface": "#0b1c30",
+      "surface_raised": "#1a2d42",
+      "border": "#38485d",
+      "focus": "#b4c9ff"
+    }
+  },
+  "radius": {
+    "control": "8px",
+    "panel": "12px"
+  },
+  "spacing": {
+    "xs": "0.25rem",
+    "sm": "0.5rem",
+    "md": "1rem",
+    "lg": "1.5rem"
+  },
+  "motion": {
+    "fast": "120ms",
+    "normal": "200ms"
+  },
+  "control": {
+    "minimum_target": "2.5rem"
+  },
+  "typography": {
+    "body": "Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
+    "heading": "Manrope, Inter, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif",
+    "mono": "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+  }
+}

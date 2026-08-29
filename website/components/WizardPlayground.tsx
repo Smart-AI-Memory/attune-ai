@@ -148,8 +148,8 @@ export default function WizardPlayground({ category }: WizardPlaygroundProps) {
           </h3>
 
           {error && (
-            <div className="mb-4 p-4 bg-[var(--error)] bg-opacity-10 border-2 border-[var(--error)] rounded-lg">
-              <p className="text-[var(--error)]">{error}</p>
+            <div className="form-error mb-4 p-4" role="alert">
+              <p>{error}</p>
             </div>
           )}
 

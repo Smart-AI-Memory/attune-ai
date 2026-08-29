@@ -485,8 +485,8 @@ export default function SBARWizard() {
           </div>
 
           {error && (
-            <div className="mb-6 p-4 bg-[var(--error)] bg-opacity-10 border-2 border-[var(--error)] rounded-lg">
-              <p className="text-[var(--error)]">{error}</p>
+            <div className="form-error mb-6 p-4" role="alert">
+              <p>{error}</p>
             </div>
           )}
 
@@ -777,8 +777,8 @@ export default function SBARWizard() {
         )}
 
         {error && (
-          <div className="mb-6 p-4 bg-[var(--error)] bg-opacity-10 border-2 border-[var(--error)] rounded-lg">
-            <p className="text-[var(--error)]">{error}</p>
+          <div className="form-error mb-6 p-4" role="alert">
+            <p>{error}</p>
           </div>
         )}
 
