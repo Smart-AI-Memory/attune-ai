@@ -56,6 +56,17 @@ tools that expose the forms. *When* a construct fires in a
 conversation is a judgment call governed by the agent's decision
 routine, not by this subsystem.
 
+Two of these forms run **live** on the website — rendered by the
+production `form_from_dict` → `form_to_widget_html` pipeline, not
+mockups: a five-control audit-scoping decision form at
+[smartaimemory.com/forms-demo/audit.html](https://smartaimemory.com/forms-demo/audit.html)
+and a session-retro triage form at
+[smartaimemory.com/forms-demo/retro.html](https://smartaimemory.com/forms-demo/retro.html)
+(both embedded on
+[how-it-works](https://smartaimemory.com/how-it-works/)). They are
+regenerated from `scripts/render_demo_forms.py`, so the demos cannot
+drift from the API these docs describe.
+
 ## Concepts
 
 ### One substrate, many constructs
@@ -217,3 +228,18 @@ render option on the select types, **not** a separate construct.
   orders it first.
 - Keep option labels short. For richer options, the widget surface shows
   `option_notes` under each card.
+- `options` is a list of plain strings — per-option detail never nests
+  inside it. A dict in `options` fails validation; the notes belong in
+  `option_notes` keyed by the option string, and the recommendation in
+  `recommended` (which must match one of the options exactly).
+- Any key the parser does not read — top-level or field-level — is a
+  definition **error**, not ignorable extra data (a typo'd key would
+  otherwise silently drop the bound it meant to declare). If
+  `form_from_dict` rejects a key you expected to work, check the
+  Quickstart example for the canonical spelling.
+- To try a form without wiring a surface: the live demos at
+  [smartaimemory.com/forms-demo/audit.html](https://smartaimemory.com/forms-demo/audit.html)
+  and
+  [smartaimemory.com/forms-demo/retro.html](https://smartaimemory.com/forms-demo/retro.html)
+  are these exact renderers on static pages
+  (`scripts/render_demo_forms.py` regenerates them).

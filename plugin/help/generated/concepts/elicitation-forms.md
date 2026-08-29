@@ -56,6 +56,17 @@ tools that expose the forms. *When* a construct fires in a
 conversation is a judgment call governed by the agent's decision
 routine, not by this subsystem.
 
+Two of these forms run **live** on the website — rendered by the
+production `form_from_dict` → `form_to_widget_html` pipeline, not
+mockups: a five-control audit-scoping decision form at
+[smartaimemory.com/forms-demo/audit.html](https://smartaimemory.com/forms-demo/audit.html)
+and a session-retro triage form at
+[smartaimemory.com/forms-demo/retro.html](https://smartaimemory.com/forms-demo/retro.html)
+(both embedded on
+[how-it-works](https://smartaimemory.com/how-it-works/)). They are
+regenerated from `scripts/render_demo_forms.py`, so the demos cannot
+drift from the API these docs describe.
+
 ## Concepts
 
 ### One substrate, many constructs
