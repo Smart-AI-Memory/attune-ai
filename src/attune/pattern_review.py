@@ -19,8 +19,9 @@ from __future__ import annotations
 
 import logging
 import os
+from collections.abc import Callable
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from attune.memory.types import StagedPattern
 from attune.pattern_library import Pattern, PatternLibrary
@@ -44,6 +45,29 @@ REVIEW_ENABLED_ENV = "ATTUNE_PATTERN_REVIEW"
 _TRUTHY = frozenset({"1", "true", "yes", "on"})
 
 
+_T = TypeVar("_T")
+
+
+def _safe_backend_call(operation: str, default: _T, call: Callable[[], _T]) -> _T:
+    """Run one backend operation, degrading to ``default`` on any failure.
+
+    Contract principle 15: work is never blocked on the memory layer. The
+    review queue is a SIDE CHANNEL — a staging write that fails must not
+    take down the orchestration path that produced the pattern, and a
+    third-party backend missing an optional method must not crash a CLI.
+    Failures are logged at ERROR (loud, on the record), never swallowed
+    silently.
+    """
+    try:
+        return call()
+    except Exception as exc:  # noqa: BLE001 - INTENTIONAL: the memory layer
+        # is best-effort by contract. Any backend failure (unreachable
+        # Redis, absent optional method, disk error) degrades here rather
+        # than propagating into the caller's real work.
+        logger.error("pattern review backend %s failed: %s", operation, exc)
+        return default
+
+
 def _retrieve_all(backend: MemoryBackend, keys: list[str]) -> dict[str, Any]:
     """Fetch many keys from the backend, batched when it supports it.
 
@@ -54,8 +78,10 @@ def _retrieve_all(backend: MemoryBackend, keys: list[str]) -> dict[str, Any]:
     """
     retrieve_many = getattr(backend, "retrieve_many", None)
     if callable(retrieve_many):
-        return retrieve_many(keys)
-    return {key: backend.retrieve(key) for key in keys}
+        return _safe_backend_call("retrieve_many", {}, lambda: retrieve_many(keys))
+    return {
+        key: _safe_backend_call("retrieve", None, lambda k=key: backend.retrieve(k)) for key in keys
+    }
 
 
 def _default_backend() -> MemoryBackend:
@@ -90,13 +116,20 @@ class PatternReviewQueue:
         Returns the pattern's id. Staging the same id again overwrites the
         prior staged copy (last write wins), matching backend KV semantics.
         """
-        self._backend.stash(STAGED_PREFIX + pattern.pattern_id, pattern.to_dict())
-        logger.info("staged pattern %s for review", pattern.pattern_id)
+        stored = _safe_backend_call(
+            "stash",
+            False,
+            lambda: self._backend.stash(STAGED_PREFIX + pattern.pattern_id, pattern.to_dict()),
+        )
+        if stored:
+            logger.info("staged pattern %s for review", pattern.pattern_id)
         return pattern.pattern_id
 
     def get(self, pattern_id: str) -> StagedPattern | None:
         """Return one staged pattern, or ``None`` if not staged / unreadable."""
-        raw = self._backend.retrieve(STAGED_PREFIX + pattern_id)
+        raw = _safe_backend_call(
+            "retrieve", None, lambda: self._backend.retrieve(STAGED_PREFIX + pattern_id)
+        )
         if not raw:
             return None
         return _parse(raw, pattern_id)
@@ -114,7 +147,9 @@ class PatternReviewQueue:
         ``min_confidence``. Unparseable entries are skipped, not fatal.
         """
         out: list[StagedPattern] = []
-        staged_keys = self._backend.keys(STAGED_PREFIX + "*")
+        staged_keys = _safe_backend_call(
+            "keys", [], lambda: self._backend.keys(STAGED_PREFIX + "*")
+        )
         for key, raw in _retrieve_all(self._backend, staged_keys).items():
             if not raw:
                 continue
@@ -146,7 +181,9 @@ class PatternReviewQueue:
         # May raise ValueError (e.g. duplicate id) — intentionally NOT caught:
         # leave the entry staged so the reviewer can act on the conflict.
         library.contribute_pattern(staged.agent_id, pattern)
-        self._backend.delete(STAGED_PREFIX + pattern_id)
+        _safe_backend_call(
+            "delete", False, lambda: self._backend.delete(STAGED_PREFIX + pattern_id)
+        )
         logger.info("promoted staged pattern %s into the library", pattern_id)
         return pattern
 
@@ -160,7 +197,9 @@ class PatternReviewQueue:
             pattern_id,
             reason or "<none>",
         )
-        return self._backend.delete(STAGED_PREFIX + pattern_id)
+        return _safe_backend_call(
+            "delete", False, lambda: self._backend.delete(STAGED_PREFIX + pattern_id)
+        )
 
     @staticmethod
     def _to_pattern(staged: StagedPattern) -> Pattern:
@@ -305,7 +344,9 @@ class PersistentPatternLibrary(PatternLibrary):
         the ``retrieve_many`` batch extension serves the whole library in
         one round-trip instead of one ``retrieve`` per stored pattern.
         """
-        active_keys = self._backend.keys(ACTIVE_PREFIX + "*")
+        active_keys = _safe_backend_call(
+            "keys", [], lambda: self._backend.keys(ACTIVE_PREFIX + "*")
+        )
         for value in _retrieve_all(self._backend, active_keys).values():
             pattern = _pattern_from_dict(value)
             if pattern is None:
@@ -316,7 +357,9 @@ class PersistentPatternLibrary(PatternLibrary):
             except ValueError:
                 # Duplicate id already loaded — skip the redundant copy.
                 continue
-        stored_graph = self._backend.retrieve(GRAPH_KEY)
+        stored_graph = _safe_backend_call(
+            "retrieve", None, lambda: self._backend.retrieve(GRAPH_KEY)
+        )
         if isinstance(stored_graph, dict):
             for pid, related in stored_graph.items():
                 if pid in self.patterns and isinstance(related, list):
@@ -325,7 +368,11 @@ class PersistentPatternLibrary(PatternLibrary):
     def contribute_pattern(self, agent_id: str, pattern: Pattern) -> None:
         """Validate + add in memory (base behaviour), then persist to the backend."""
         PatternLibrary.contribute_pattern(self, agent_id, pattern)
-        self._backend.stash(ACTIVE_PREFIX + pattern.id, _pattern_to_dict(pattern))
+        _safe_backend_call(
+            "stash",
+            False,
+            lambda: self._backend.stash(ACTIVE_PREFIX + pattern.id, _pattern_to_dict(pattern)),
+        )
 
     def record_pattern_outcome(self, pattern_id: str, success: bool) -> None:
         """Record the outcome (base behaviour), then re-persist the pattern.
@@ -334,9 +381,17 @@ class PersistentPatternLibrary(PatternLibrary):
         the life of the process and every reload resets ``success_rate``.
         """
         PatternLibrary.record_pattern_outcome(self, pattern_id, success)
-        self._backend.stash(ACTIVE_PREFIX + pattern_id, _pattern_to_dict(self.patterns[pattern_id]))
+        _safe_backend_call(
+            "stash",
+            False,
+            lambda: self._backend.stash(
+                ACTIVE_PREFIX + pattern_id, _pattern_to_dict(self.patterns[pattern_id])
+            ),
+        )
 
     def link_patterns(self, pattern_id_1: str, pattern_id_2: str) -> None:
         """Create the bidirectional link (base behaviour), then persist the graph."""
         PatternLibrary.link_patterns(self, pattern_id_1, pattern_id_2)
-        self._backend.stash(GRAPH_KEY, dict(self.pattern_graph))
+        _safe_backend_call(
+            "stash", False, lambda: self._backend.stash(GRAPH_KEY, dict(self.pattern_graph))
+        )

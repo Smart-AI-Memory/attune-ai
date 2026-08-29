@@ -121,7 +121,7 @@ remains open (contracts-first within 16.x is compatible with D1).
 
 ## D3 — Passenger 4 phasing (PROPOSED 2026-08-28 — NOT RULED)
 
-**Status: PROPOSED by the lead. The chair has not ruled this.**
+**PROPOSED by the lead — the chair has not ruled this.**
 Resolves the requirements.md open question "whether passenger 4
 ships whole in 16.0.0 or contracts-first with the CLI following in
 a 16.x minor."
