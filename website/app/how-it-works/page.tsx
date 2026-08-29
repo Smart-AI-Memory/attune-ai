@@ -151,8 +151,10 @@ export default function HowItWorksPage() {
         </section>
 
         {/* Forms, live — the communication pillar made touchable:
-            a real widget-pipeline render you can fill in, beside a
-            capture of the session-retro triage being ruled. */}
+            two real widget-pipeline renders you can fill in (the
+            capture GIF at /images/attune-forms-retro-demo.gif stays
+            published for blog embeds). Iframe heights fit each full
+            form so nothing is cut short. */}
         <section className="py-20 bg-[var(--surface-container-low)]">
           <div className="container">
             <div className="max-w-5xl mx-auto">
@@ -164,11 +166,12 @@ export default function HowItWorksPage() {
                   The agent asks with structure — go ahead, answer it
                 </h2>
                 <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
-                  This is a live render from the production form
-                  pipeline, not a mockup: a recommended decision card
-                  with tradeoffs, multi-select, a dropdown, a bounded
-                  number, free text. Submit it empty and validation
-                  catches you.
+                  Both of these are live renders from the production
+                  form pipeline, not mockups. Left: scope an audit — a
+                  recommended decision card with tradeoffs,
+                  multi-select, a dropdown, a bounded number, free
+                  text. Right: a session retro triaged one tap per
+                  item. Submit either empty and validation catches you.
                 </p>
               </div>
 
@@ -178,7 +181,7 @@ export default function HowItWorksPage() {
                     src="/forms-demo/audit.html"
                     title="Live attune-forms demo: scope a security audit"
                     className="w-full bg-[#faf9f5]"
-                    style={{ height: 880 }}
+                    style={{ height: 1050 }}
                     loading="lazy"
                   />
                   <p className="text-xs text-[var(--text-secondary)] px-4 py-3 border-t border-[var(--border)]">
@@ -187,11 +190,11 @@ export default function HowItWorksPage() {
                   </p>
                 </div>
                 <div className="bg-[var(--background)] rounded-xl border border-[var(--border)] overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/images/attune-forms-retro-demo.gif"
-                    alt="A session-retro triage form being ruled: five real items under Opportunities, Friction, and Keep sections, each dispatched with one tap, then submitted"
-                    className="w-full"
+                  <iframe
+                    src="/forms-demo/retro.html"
+                    title="Live attune-forms demo: rule a session retro, one tap per item"
+                    className="w-full bg-[#faf9f5]"
+                    style={{ height: 1310 }}
                     loading="lazy"
                   />
                   <p className="text-xs text-[var(--text-secondary)] px-4 py-3 border-t border-[var(--border)]">
