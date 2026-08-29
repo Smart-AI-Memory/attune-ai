@@ -4,6 +4,13 @@
  * All pages should import from here to ensure consistency.
  * Update counts and descriptions here when features change.
  *
+ * PRODUCTS is unrendered but load-bearing: its pypiName/version
+ * pairs are the version-sync anchor parsed by
+ * scripts/audit_website_versions.py and
+ * tests/unit/test_website_version_accuracy.py. Positioning copy
+ * follows DEC-10..14
+ * (docs/specs/product-direction-review/positioning-2026-08-29.md).
+ *
  * Marketplace mapping (consolidated 2026-06-22, retiring the
  * 2026-04-10 attune-docs split): both plugins live in the single
  * Smart-AI-Memory/attune-ai marketplace.
@@ -86,21 +93,24 @@ export const PRODUCTS: Product[] = [
     name: "Attune AI",
     pypiName: "attune-ai",
     version: "16.1.0",
-    tagline: "Generate, maintain, and serve help from your code",
+    tagline:
+      "Persistent memory and receipt-verified workflows for Claude Code",
     installCommand: "pip install attune-ai",
     marketplaceInstall:
       "claude plugin marketplace add Smart-AI-Memory/attune-ai",
     description:
-      "Full framework for bootstrapping a knowledge base from source code. " +
-      "Scans your codebase, generates concept/task/reference templates, " +
-      "detects when code drifts from docs, and regenerates stale content.",
+      "Your agent stops starting from zero and its word stops being the " +
+      "evidence. A stash → recall → promote loop carries decisions, bugs, " +
+      "and lessons across sessions; workflows verify their claims with " +
+      "independently re-run probes; interactive forms replace walls of " +
+      "prose at every fork.",
     features: [
-      "Bootstrap help from any codebase",
-      "Generate concept, task, and reference templates",
-      "Staleness detection via source hashing",
-      "Auto-regeneration of stale templates",
-      `${CAPABILITIES.skills} Claude Code skills included`,
-      `MCP server with ${CAPABILITIES.mcpTools} registered tools`,
+      "Cross-session memory: stash on stop, recall at the door, promote what endures",
+      "Your memory is git-tracked files in your repo — served to Claude Code, Codex, or Antigravity alike",
+      "Fix Receipts (attune fix): probes re-run independently of the agent's claim",
+      "Decision, pushback, and progress forms — one tap each",
+      `${CAPABILITIES.workflows} multi-agent workflows with cost-tiered routing`,
+      `One MCP server, ${CAPABILITIES.mcpTools} core tools`,
     ],
   },
   {
@@ -130,154 +140,27 @@ export const PRODUCTS: Product[] = [
     name: "Claude Code Plugin",
     pypiName: "attune-ai",
     version: "16.1.0",
-    tagline: "Progressive help right in your terminal",
+    tagline: "Skills, hooks, and forms on your Claude subscription",
     installCommand:
       "claude plugin marketplace add Smart-AI-Memory/attune-ai",
     marketplaceInstall:
       "claude plugin install attune-ai@attune-ai",
     description:
       "Install as a Claude Code plugin (this repo doubles as the " +
-      "plugin marketplace source). Type /coach to get " +
-      "progressive help on any topic. Init, status, maintain, and " +
-      "update your help system without leaving the terminal.",
+      "plugin marketplace source). Skills trigger from natural " +
+      "language, security hooks guard every tool call, and " +
+      "interactive forms structure the agent's questions — no API " +
+      "key, no extra charge.",
     features: [
-      "/coach <topic> — progressive depth lookup",
-      "/coach init — bootstrap .help/ for your project",
-      "/coach status — check template freshness",
-      "/coach maintain — regenerate stale templates",
-      "Auto-triggers on natural language (help, explain, learn)",
-      `${CAPABILITIES.skills} auto-triggering skills (security, testing, review, etc.)`,
+      `${CAPABILITIES.skills} auto-triggering skills (security, testing, review, memory)`,
+      "Security hooks: eval/exec blocking, path validation",
+      "Decision, pushback, and progress forms at every fork",
+      '"what can attune do?" — Socratic discovery entry point',
+      "/coach <topic> — progressive-depth help",
+      "Runs on your Claude subscription — no API credits needed",
     ],
   },
 ];
-
-// --- Help System Model ---
-
-export interface DepthLevel {
-  level: number;
-  type: string;
-  description: string;
-  color: string;
-}
-
-export const HELP_DEPTH_LEVELS: DepthLevel[] = [
-  {
-    level: 0,
-    type: "Concept",
-    description: "What is it? When to use it?",
-    color: "blue",
-  },
-  {
-    level: 1,
-    type: "Task",
-    description: "Step-by-step: how to do it",
-    color: "green",
-  },
-  {
-    level: 2,
-    type: "Reference",
-    description: "Full detail, edge cases, API",
-    color: "purple",
-  },
-];
-
-export interface LifecycleStep {
-  step: number;
-  name: string;
-  verb: string;
-  description: string;
-  detail: string;
-}
-
-export const LIFECYCLE_STEPS: LifecycleStep[] = [
-  {
-    step: 1,
-    name: "Bootstrap",
-    verb: "Scan",
-    description: "Scan your codebase and discover features",
-    detail:
-      "The scanner reads your project structure, finds modules, " +
-      "classes, and functions. It proposes features with file " +
-      "patterns, descriptions, and tags. You review and confirm.",
-  },
-  {
-    step: 2,
-    name: "Generate",
-    verb: "Create",
-    description: "AI creates templates from your source code",
-    detail:
-      "For each feature, three templates are generated: concept " +
-      "(what is it?), task (how to use it), and reference (full " +
-      "API detail). Content is extracted from actual source — " +
-      "docstrings, class hierarchies, function signatures.",
-  },
-  {
-    step: 3,
-    name: "Serve",
-    verb: "Deliver",
-    description: "Progressive help via attune-help or /coach",
-    detail:
-      "Users get concept on first ask, task on repeat, reference " +
-      "on third. The reader auto-advances depth. Works standalone " +
-      "(attune-help), in Claude Code (/coach), or embedded in " +
-      "your own tools.",
-  },
-  {
-    step: 4,
-    name: "Maintain",
-    verb: "Refresh",
-    description: "Detect drift and regenerate stale templates",
-    detail:
-      "Source file hashes are stored in template frontmatter. " +
-      "When code changes, staleness detection finds which " +
-      "features drifted. Regeneration updates only stale " +
-      "templates — hand-written ones are preserved.",
-  },
-];
-
-export interface Differentiator {
-  title: string;
-  description: string;
-  icon: string;
-}
-
-export const DIFFERENTIATORS: Differentiator[] = [
-  {
-    title: "Rooted in Code",
-    description:
-      "Templates are generated from actual source — docstrings, " +
-      "signatures, class hierarchies. Not wiki pages that drift.",
-    icon: "🌱",
-  },
-  {
-    title: "Progressive Depth",
-    description:
-      "Concept → task → reference. Each repeat goes deeper. " +
-      "New topic resets to concept. No information overload.",
-    icon: "📊",
-  },
-  {
-    title: "Human-Enhanceable",
-    description:
-      "Edit generated templates or write from scratch. " +
-      "Hand-written templates are preserved during regeneration.",
-    icon: "✏️",
-  },
-  {
-    title: "Auto-Freshness",
-    description:
-      "Source hashes detect when code changes. Stale templates " +
-      "are flagged and regenerated. Docs can't drift silently.",
-    icon: "🔄",
-  },
-];
-
-/**
- * @deprecated Use {@link CAPABILITIES} instead. Kept for
- * backward compatibility with any consumer that may still
- * import the old name.
- */
-export const LEGACY_CAPABILITIES = CAPABILITIES;
 
 // --- Platform positioning (spec-driven dev) ---
 
@@ -453,23 +336,4 @@ export const PILLARS: Pillar[] = [
 
 export function getPricingSummary(): string {
   return "Everything open source — Apache 2.0";
-}
-
-/** Icon used in homepage product cards for each product. */
-const PRODUCT_ICONS: Record<string, string> = {
-  "attune-ai": "🛠️",
-  "attune-help": "📖",
-  "claude-code-plugin": "⚡",
-};
-
-export function getHomepageFeatures(): Array<{
-  icon: string;
-  title: string;
-  description: string;
-}> {
-  return PRODUCTS.map((p) => ({
-    icon: PRODUCT_ICONS[p.id] ?? "📦",
-    title: p.name,
-    description: p.tagline,
-  }));
 }
