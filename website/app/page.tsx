@@ -43,13 +43,14 @@ export default function Home() {
               <span className="opacity-80">Persistent memory for AI coding agents</span>
             </div>
             <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter mb-8 leading-[1.1]">
-              Build software from{' '}
-              <span className="text-gradient">specifications</span>, not prompts.
+              Give your agent a <span className="text-gradient">memory</span>.
+              Make it show <span className="text-gradient">receipts</span>.
             </h1>
             <p className="text-lg md:text-xl text-[var(--text-secondary)] mb-10 max-w-2xl mx-auto leading-relaxed">
-              Attune gives AI coding agents persistent project memory and a
-              reliability layer that keeps changes grounded in your code,
-              aligned with your requirements, and verified before they ship.
+              Your agent stops starting from zero &mdash; and its word stops
+              being the evidence. Attune carries decisions, bugs, and lessons
+              across sessions, and verifies every change with probes re-run
+              independently of the agent that claims it finished.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
