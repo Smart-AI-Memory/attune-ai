@@ -8,7 +8,7 @@ import { RELIABILITY_LOOP, PILLARS } from '@/lib/features';
 export const metadata: Metadata = genMeta({
   title: 'How It Works',
   description:
-    'How Attune AI turns requirements into reliable software: specify, ground, build, remember, and verify — the loop your AI coding agent runs every time.',
+    'How Attune AI gives your coding agent a memory and makes it show receipts: specify, ground, build, remember, verify — and a multi-model round table you chair.',
   url: 'https://smartaimemory.com/how-it-works',
 });
 
@@ -43,8 +43,8 @@ export default function HowItWorksPage() {
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-5xl font-bold mb-4">How It Works</h1>
               <p className="text-xl opacity-90">
-                From a requirement to reliable software — the loop your
-                AI coding agent runs every time.
+                The loop that gives your agent a memory and makes it show
+                receipts — every session, every change.
               </p>
             </div>
           </div>
@@ -150,8 +150,78 @@ export default function HowItWorksPage() {
           </div>
         </section>
 
-        {/* You stay in control */}
+        {/* Round table — the receipts culture across models (DEC-14a:
+            the multi-LLM fold stands, but the roundtable gets marquee
+            treatment here as the vivid case of receipts + chairing) */}
         <section className="py-20">
+          <div className="container">
+            <div className="max-w-5xl mx-auto">
+              <div className="text-center mb-12">
+                <span className="text-xs font-bold text-[var(--accent)] tracking-[0.2em] uppercase mb-4 block">
+                  The round table
+                </span>
+                <h2 className="text-3xl font-bold mb-4">
+                  Three models. One project brain. You chair.
+                </h2>
+                <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
+                  The final QA check before you ship:{' '}
+                  <code className="text-base">/roundtable</code> convenes
+                  Claude Code, OpenAI Codex, and Google Antigravity —
+                  three agents sharing one project memory — to deliberate
+                  the question on a shared board. Every seat is advisory.
+                  Nothing is adopted until you promote it.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="glass-panel rounded-xl p-8">
+                  <div className="text-3xl mb-4" aria-hidden="true">&#x1f5e3;&#xfe0f;</div>
+                  <h3 className="text-xl font-bold mb-3">Deliberate</h3>
+                  <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
+                    Each model posts positions and critiques to a shared,
+                    Redis-backed board — three different frontier models
+                    reasoning about the same question, not one model
+                    agreeing with itself. Work crosses seats as
+                    git-verified handoff packets, re-verified against the
+                    actual tree on resume.
+                  </p>
+                </div>
+                <div className="glass-panel rounded-xl p-8">
+                  <div className="text-3xl mb-4" aria-hidden="true">&#x1fa91;</div>
+                  <h3 className="text-xl font-bold mb-3">You decide</h3>
+                  <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
+                    The seats advise; only the chair promotes. You rule on
+                    what gets adopted, and the ruling is recorded — a
+                    decision that outlives the session.
+                  </p>
+                </div>
+                <div className="glass-panel rounded-xl p-8">
+                  <div className="text-3xl mb-4" aria-hidden="true">&#x1f9fe;</div>
+                  <h3 className="text-xl font-bold mb-3">Receipts, still</h3>
+                  <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
+                    A claim without a receipt doesn&apos;t ship — even
+                    between AIs. Promoted actions get an executed receipt
+                    posted back to the board, closing the loop between a
+                    ruling and its execution.
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-center text-[var(--text-secondary)] mt-10 max-w-2xl mx-auto">
+                For a lighter touch,{' '}
+                <code className="text-base">/cross-review</code> gets one
+                advisory second opinion on a real diff from a different
+                model than the one that wrote it. It earns its keep: one
+                release exists because a cross-provider receipt probe
+                caught a protocol bug the primary client silently
+                tolerated.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* You stay in control */}
+        <section className="py-20 bg-[var(--surface-container-low)]">
           <div className="container">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-12">
@@ -226,11 +296,11 @@ export default function HowItWorksPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-20 bg-[var(--surface-container-low)]">
+        <section className="py-20">
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="text-3xl font-bold mb-4">
-                Ready to turn requirements into reliable software?
+                Ready to give your agent a memory?
               </h2>
               <p className="text-xl text-[var(--text-secondary)] mb-8">
                 Install from PyPI and run <code className="text-base">/spec</code>{' '}
