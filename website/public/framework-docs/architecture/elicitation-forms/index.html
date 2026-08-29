@@ -4900,6 +4900,16 @@ the host seams, the attune-specific intake templates, and the MCP
 tools that expose the forms. <em>When</em> a construct fires in a
 conversation is a judgment call governed by the agent's decision
 routine, not by this subsystem.</p>
+<p>Two of these forms run <strong>live</strong> on the website — rendered by the
+production <code>form_from_dict</code> → <code>form_to_widget_html</code> pipeline, not
+mockups: a five-control audit-scoping decision form at
+<a href="https://smartaimemory.com/forms-demo/audit.html">smartaimemory.com/forms-demo/audit.html</a>
+and a session-retro triage form at
+<a href="https://smartaimemory.com/forms-demo/retro.html">smartaimemory.com/forms-demo/retro.html</a>
+(both embedded on
+<a href="https://smartaimemory.com/how-it-works/">how-it-works</a>). They are
+regenerated from <code>scripts/render_demo_forms.py</code>, so the demos cannot
+drift from the API these docs describe.</p>
 <h2 id="concepts">Concepts<a class="headerlink" href="#concepts" title="Permanent link">&para;</a></h2>
 <h3 id="one-substrate-many-constructs">One substrate, many constructs<a class="headerlink" href="#one-substrate-many-constructs" title="Permanent link">&para;</a></h3>
 <p>A construct is not a parallel system — it is meaning and presentation
@@ -5070,7 +5080,7 @@ MCP tool schema (and its count guard), and the driving skill's docs. A
 per-type "rejects out-of-option" test is the cheap guard that catches a
 missed validation site. Prove it with a non-mocked round-trip — render,
 submit, collect — not just unit tests.</p>
-<!-- attune-generated: source_hash=1d0bd5af58687db6aab66d7cc8fc7057e34be8f79d6c76e2ef2e46758496302b feature=elicitation-forms kind=architecture generated_at=2026-08-12 -->
+<!-- attune-generated: source_hash=f7f628e6b3f2e6ef1fa119a382a5bce3e75ebb4ee2beb22666b8f89e45fd278b feature=elicitation-forms kind=architecture generated_at=2026-08-29 -->
 
 
 
