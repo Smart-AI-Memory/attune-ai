@@ -288,6 +288,24 @@ once with <code>collect_form_response</code>, and rendered by surface-specific
 renderers. The same artifact renders richly on a widget-capable client
 and degrades gracefully everywhere else; the answer is validated the
 same way regardless of surface.</p>
+<h3>Forms are input grammar; workspaces are task projections</h3>
+<p>A form is best for one bounded input turn. A command workspace is the
+larger protocol for a task that persists across turns: intake, preview,
+execution, and receipt are versioned views over host-owned state. The
+view document is still declarative data and still renders to widget or
+Markdown, but it is disposable — it never becomes execution authority.</p>
+<p>Fix is the first live workspace. <code>fix_workspace_preview</code> rebuilds its
+validated CLI contract, stores canonical state in the MCP session, and
+binds the rendered actions to the workspace id, revision, one-time nonce,
+and SHA-256 hash of the exact future argv. <code>fix_workspace_collect_action</code>
+rebuilds that contract again before accepting <code>edit_contract</code> or
+<code>run_fix</code>; it consumes the nonce and returns the approved argv but does
+not execute it. This separates three things that should not be conflated:</p>
+<ol>
+<li>the form records intent;</li>
+<li>the workspace explains the exact consequence;</li>
+<li>the existing Fix CLI remains the executor and receipt boundary.</li>
+</ol>
 <p>On top of that shared substrate sits a small, growing <strong>communication
 grammar</strong> — a family of constructs, each a member of the one form model:</p>
 <ul>
