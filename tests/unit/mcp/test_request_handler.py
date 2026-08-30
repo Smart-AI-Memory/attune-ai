@@ -15,6 +15,8 @@ import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from attune_forms import MCP_APP_RESOURCE_URI, mcp_app_resource, mcp_app_tool_meta
+from mcp.types import ClientCapabilities
 
 from attune.mcp.server import (
     _handle_call_tool,
@@ -22,6 +24,7 @@ from attune.mcp.server import (
     _handle_list_prompts,
     _handle_list_resources,
     _handle_list_tools,
+    _handle_read_resource,
 )
 
 
@@ -98,6 +101,40 @@ class TestHandleListTools:
         names = {t.name for t in result}
         assert names == {"a", "b"}
 
+    async def test_mcp_apps_metadata_is_negotiated_for_fix_preview_only(self) -> None:
+        """A positively advertised UI profile decorates only its renderer."""
+        capabilities = ClientCapabilities.model_validate(
+            {
+                "extensions": {
+                    "io.modelcontextprotocol/ui": {"mimeTypes": ["text/html;profile=mcp-app"]}
+                }
+            }
+        )
+        sdk_server = MagicMock()
+        sdk_server.request_context.session.client_params.capabilities = capabilities
+        app = _make_app(
+            tools={
+                "fix_workspace_preview": {"input_schema": {"type": "object"}},
+                "fix_workspace_collect_action": {"input_schema": {"type": "object"}},
+            }
+        )
+        with (
+            patch("attune.mcp.server._mcp_server", sdk_server),
+            patch("attune.mcp.server._get_app", return_value=app),
+        ):
+            tools = await _handle_list_tools()
+
+        assert tools[0].meta == mcp_app_tool_meta()
+        assert tools[1].meta is None
+
+    async def test_no_request_context_keeps_tool_metadata_absent(self) -> None:
+        """Negotiation fails closed for direct calls and legacy clients."""
+        app = _make_app(tools={"fix_workspace_preview": {"input_schema": {"type": "object"}}})
+        with patch("attune.mcp.server._get_app", return_value=app):
+            tools = await _handle_list_tools()
+
+        assert tools[0].meta is None
+
 
 @pytest.mark.unit
 class TestHandleCallTool:
@@ -162,6 +199,24 @@ class TestHandleListResources:
         with patch("attune.mcp.server._get_app", return_value=app):
             result = await _handle_list_resources()
         assert result == []
+
+    async def test_shared_ui_resource_maps_metadata_and_reads_exact_html(self) -> None:
+        """The listed resource is the released attune-forms source of truth."""
+        resource = mcp_app_resource()
+        app = _make_app(resources={"dynamic_surface": resource})
+        with patch("attune.mcp.server._get_app", return_value=app):
+            listed = await _handle_list_resources()
+            contents = await _handle_read_resource(MCP_APP_RESOURCE_URI)
+
+        assert listed[0].meta == resource["meta"]
+        assert contents[0].content == resource["text"]
+        assert contents[0].mime_type == resource["mime_type"]
+
+    async def test_unknown_resource_fails_closed(self) -> None:
+        app = _make_app(resources={"dynamic_surface": mcp_app_resource()})
+        with patch("attune.mcp.server._get_app", return_value=app):
+            with pytest.raises(ValueError, match="Unknown or unreadable resource"):
+                await _handle_read_resource("attune://missing")
 
 
 @pytest.mark.unit

@@ -11,7 +11,15 @@ import os
 from pathlib import Path
 from typing import Any
 
+from attune_forms import (
+    MCP_APP_MIME_TYPE,
+    MCP_APPS_EXTENSION,
+    client_supports_mcp_apps,
+    mcp_app_resource,
+    mcp_app_tool_meta,
+)
 from mcp.server import Server
+from mcp.server.lowlevel.helper_types import ReadResourceContents
 from mcp.server.stdio import stdio_server
 from mcp.types import (
     GetPromptResult,
@@ -186,7 +194,9 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
             Dictionary of resource definitions
 
         """
-        return get_resources()
+        resources = get_resources()
+        resources["dynamic_surface"] = mcp_app_resource()
+        return resources
 
     @staticmethod
     def _register_prompts() -> dict[str, dict[str, Any]]:
@@ -877,6 +887,7 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
         from attune_forms import (
             WorkspaceActionBinding,
             WorkspaceValidationError,
+            mcp_app_result,
             workspace_from_dict,
             workspace_to_markdown,
             workspace_to_widget_html,
@@ -931,6 +942,10 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
             "state": state.to_dict(),
             "html": html,
             "markdown": markdown,
+            "mcp_app": mcp_app_result(
+                collect_tool="fix_workspace_collect_action",
+                collect_mode="response",
+            ),
             "execution_started": False,
         }
 
@@ -1505,6 +1520,11 @@ def _get_app() -> AttuneMCPServer:
 @_mcp_server.list_tools()
 async def _handle_list_tools() -> list[Tool]:
     app = _get_app()
+    try:
+        capabilities = _mcp_server.request_context.session.client_params.capabilities
+    except (AttributeError, LookupError, RuntimeError):
+        capabilities = None
+    app_meta = mcp_app_tool_meta() if client_supports_mcp_apps(capabilities) else None
     return [
         Tool(
             name=name,
@@ -1513,6 +1533,7 @@ async def _handle_list_tools() -> list[Tool]:
                 "input_schema",
                 {"type": "object", "properties": {}},
             ),
+            **({"_meta": app_meta} if name == "fix_workspace_preview" and app_meta else {}),
         )
         for name, defn in app.tools.items()
     ]
@@ -1542,8 +1563,26 @@ async def _handle_list_resources() -> list[Resource]:
             name=defn["name"],
             description=defn.get("description"),
             mimeType=defn.get("mime_type"),
+            **({"_meta": defn["meta"]} if defn.get("meta") else {}),
         )
         for defn in app.resources.values()
+    ]
+
+
+@_mcp_server.read_resource()
+async def _handle_read_resource(uri: Any) -> list[ReadResourceContents]:
+    app = _get_app()
+    resource = next(
+        (defn for defn in app.resources.values() if defn["uri"] == str(uri)),
+        None,
+    )
+    if resource is None or "text" not in resource:
+        raise ValueError(f"Unknown or unreadable resource: {uri}")
+    return [
+        ReadResourceContents(
+            content=resource["text"],
+            mime_type=resource.get("mime_type"),
+        )
     ]
 
 
@@ -1601,13 +1640,25 @@ def create_server() -> AttuneMCPServer:
     return AttuneMCPServer()
 
 
+def _initialization_options() -> Any:
+    """Advertise the stable MCP Apps extension alongside core MCP."""
+    options = _mcp_server.create_initialization_options()
+    extensions = {
+        MCP_APPS_EXTENSION: {
+            "mimeTypes": [MCP_APP_MIME_TYPE],
+        }
+    }
+    capabilities = options.capabilities.model_copy(update={"extensions": extensions})
+    return options.model_copy(update={"capabilities": capabilities})
+
+
 async def _run_stdio() -> None:
     """Run the MCP server over stdio transport."""
     async with stdio_server() as (read_stream, write_stream):
         await _mcp_server.run(
             read_stream,
             write_stream,
-            _mcp_server.create_initialization_options(),
+            _initialization_options(),
         )
 
 
