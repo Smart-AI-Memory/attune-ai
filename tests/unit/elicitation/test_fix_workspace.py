@@ -298,6 +298,11 @@ async def test_live_server_render_edit_rerender_run_and_replay_receipt(
     assert first["success"] is True
     assert "Fix preview" in first["html"]
     assert "Run Fix" in first["markdown"]
+    assert first["mcp_app"] == {
+        "resource_uri": "ui://attune-forms/dynamic-surface/v1",
+        "collect_tool": "fix_workspace_collect_action",
+        "collect_mode": "response",
+    }
     assert first["execution_started"] is False
     first_state = FixWorkspaceState.from_dict(first["state"])
 

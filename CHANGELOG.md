@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Fix previews now negotiate portable MCP Apps rendering**: clients that
+  advertise the standard Attune UI MIME profile receive the shared
+  `attune-forms 0.10.0` `ui://` resource and tool metadata. The app posts
+  authority-bound responses back through `fix_workspace_collect_action`;
+  clients without the extension keep the existing HTML/Markdown fallback.
+
 - **Fix now has a state-bound dynamic preview workspace**: the plugin can
   render the exact future `attune fix --run` argv as a widget or Markdown,
   bind its actions to a canonical server-owned revision, nonce, and SHA-256

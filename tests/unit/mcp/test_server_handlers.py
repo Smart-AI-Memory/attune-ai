@@ -485,14 +485,22 @@ async def test_run_stdio_delegates_streams_to_sdk_server():
 
     sdk_server = MagicMock()
     sdk_server.run = AsyncMock()
-    sdk_server.create_initialization_options.return_value = "options"
     with (
         patch.object(server_module, "stdio_server", return_value=StdioContext()),
         patch.object(server_module, "_mcp_server", sdk_server),
+        patch.object(server_module, "_initialization_options", return_value="options"),
     ):
         await server_module._run_stdio()
 
     sdk_server.run.assert_awaited_once_with("read", "write", "options")
+
+
+def test_initialization_options_advertise_mcp_apps_profile():
+    options = server_module._initialization_options()
+
+    assert options.capabilities.extensions == {
+        server_module.MCP_APPS_EXTENSION: {"mimeTypes": [server_module.MCP_APP_MIME_TYPE]}
+    }
 
 
 def test_main_tolerates_missing_dotenv_and_keyboard_interrupt():
@@ -520,10 +528,14 @@ def test_runtime_registered_shapes_match_protocol_contract(tmp_path):
         "attune://workflows",
         "attune://auth/config",
         "attune://telemetry",
+        "ui://attune-forms/dynamic-surface/v1",
     }
-    assert all(
-        set(resource) == {"uri", "name", "description", "mime_type"} for resource in resources
+    base_resource_fields = {"uri", "name", "description", "mime_type"}
+    assert all(base_resource_fields.issubset(resource) for resource in resources)
+    dynamic_surface = next(
+        resource for resource in resources if resource["uri"].startswith("ui://")
     )
+    assert set(dynamic_surface) == base_resource_fields | {"text", "meta"}
     assert {prompt["name"] for prompt in app.get_prompt_list()} == {
         "security-scan",
         "test-gen",
