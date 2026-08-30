@@ -1142,8 +1142,19 @@ class TestCmdDoctorInstallDiagnostics:
         """Run cmd_doctor with the environment fully mocked.
 
         subprocess.run and shutil.which are always patched so no real
-        ``claude`` process can ever spawn from a test.
+        ``claude`` process can ever spawn from a test. Patches use direct
+        module-object references (monkeypatch.setattr on the modules the
+        code under test holds), NOT patch("attune....") target strings:
+        with sys.modules["attune"] faked, Python 3.10's mock resolves
+        such strings THROUGH the MagicMock (getattr chain) and patches a
+        mock attribute instead of the real module — 3.11+ uses
+        pkgutil.resolve_name and is unaffected, so the miss is invisible
+        on newer interpreters.
         """
+        import importlib.metadata as importlib_metadata
+        import shutil as shutil_module
+        import subprocess as subprocess_module
+
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
         args = types.SimpleNamespace()
 
@@ -1166,24 +1177,16 @@ class TestCmdDoctorInstallDiagnostics:
         elif run_result is not None:
             run_mock.return_value = run_result
 
-        version_patch = patch(
-            "importlib.metadata.version",
+        monkeypatch.setattr(
+            importlib_metadata,
+            "version",
             pkg_version if pkg_version is not None else MagicMock(return_value="0.0.0"),
         )
+        monkeypatch.setattr(shutil_module, "which", MagicMock(return_value=which))
+        monkeypatch.setattr(subprocess_module, "run", run_mock)
 
-        with (
-            version_patch,
-            patch(
-                "attune.cli_commands.utility_commands.shutil.which",
-                MagicMock(return_value=which),
-            ),
-            patch(
-                "attune.cli_commands.utility_commands.subprocess.run",
-                run_mock,
-            ),
-        ):
-            self._last_run_mock = run_mock
-            return cmd_doctor(args)
+        self._last_run_mock = run_mock
+        return cmd_doctor(args)
 
     def test_related_packages_installed(
         self,
