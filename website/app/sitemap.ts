@@ -15,6 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // High-priority product pages
   const highPriority = [
     '/how-it-works',
+    '/fix-workspace',
     '/docs',
     '/pricing',
   ].map((route) => ({

@@ -32,6 +32,16 @@ const nextConfig: NextConfig = {
           { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'self'" },
         ],
       },
+      // The Fix sandbox is the byte-for-byte static projection embedded
+      // by /fix-workspace. It may frame only on this same deployment and
+      // has no network or executor boundary of its own.
+      {
+        source: '/fix-workspace-demo/:path*',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; frame-ancestors 'self'" },
+        ],
+      },
     ];
   },
   async rewrites() {

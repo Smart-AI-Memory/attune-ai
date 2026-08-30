@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Interactive Fix approval workspace — attune-ai</title>
+  <meta name="description" content="Try attune-ai's hashed, one-time Fix approval contract in a safe browser-only sandbox. Edit, approve, and prove replay rejection without executing a workflow." />
+  <meta property="og:title" content="Approve the contract you can see — attune-ai" />
+  <meta property="og:description" content="An interactive, non-executing sandbox for hashed Fix contracts and one-time approval." />
+  <meta property="og:url" content="https://attune-ai.dev/fix-workspace" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://attune-ai.dev/og.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="canonical" href="https://attune-ai.dev/fix-workspace" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/fix-workspace/demo.css" />
+  <script type="module" src="/fix-workspace/demo.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <div class="topline">
+      <a class="brand" href="/" target="_top">attune-ai</a>
+      <span class="safe-chip">BROWSER-ONLY SANDBOX · EXECUTION DISCONNECTED</span>
+    </div>
+
+    <section class="hero">
+      <div class="eyebrow">Dynamic UI · Fix workspace</div>
+      <h1>Approve the contract you can see.</h1>
+      <p>
+        Edit a scoped Fix contract, inspect the exact command and SHA-256
+        approval hash, authorize it once, then try to replay it.
+      </p>
+    </section>
+
+    <p class="truth-note">
+      <strong>What is real:</strong> the production contract vocabulary,
+      canonical JSON ordering, hash algorithm, and fail-closed state
+      transitions. <strong>What is intentionally absent:</strong> MCP,
+      workflow execution, subprocesses, persistence, probes, and file writes.
+    </p>
+
+    <div class="layout">
+      <section class="panel" aria-label="Interactive Fix workspace">
+        <div class="panel-head">
+          <strong>Fix workspace</strong>
+          <span class="stage" id="stage">intake</span>
+        </div>
+
+        <form class="intake" id="intake">
+          <p class="form-error" id="form-error" role="alert" hidden></p>
+          <label>
+            Request
+            <textarea id="request" name="request" required>Prevent replayed Fix approvals after a contract edit</textarea>
+          </label>
+          <label>
+            Scope
+            <input id="scope" name="scope" required value="src/attune/elicitation/fix_workspace.py" />
+          </label>
+          <label>
+            Verification probes — one argv command per line
+            <textarea id="probes" name="probes" required>python -m pytest -q tests/unit/elicitation/test_fix_workspace.py</textarea>
+          </label>
+          <button class="button primary" id="render" type="submit">
+            Render exact Fix preview
+          </button>
+        </form>
+
+        <div class="workspace" id="workspace-view" hidden>
+          <header>
+            <h2>Fix preview</h2>
+            <p>Review the exact scoped command. Nothing has executed.</p>
+          </header>
+
+          <section class="workspace-section">
+            <h3>Contract</h3>
+            <dl class="contract">
+              <dt>Goal</dt><dd id="goal"></dd>
+              <dt>Scope</dt><dd id="scope-value"></dd>
+              <dt>Workflow</dt><dd id="workflow"></dd>
+            </dl>
+            <ul id="conditions"></ul>
+            <code class="command" id="command"></code>
+            <p class="hash-line">SHA-256: <code id="preview-hash"></code></p>
+          </section>
+
+          <section class="workspace-section">
+            <h3>Safety constraints</h3>
+            <ul id="constraints"></ul>
+          </section>
+
+          <div class="actions">
+            <button class="button secondary" id="edit-contract" type="button">Edit contract</button>
+            <button class="button primary" id="run-fix" type="button">Run Fix</button>
+            <p class="consequence">Authorize only the exact hashed command above. Approval is one-time.</p>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel side" aria-label="Canonical state inspector">
+        <div class="eyebrow">Canonical state</div>
+        <dl class="meter">
+          <dt>Workspace</dt><dd id="workspace-id">—</dd>
+          <dt>Revision</dt><dd id="revision">—</dd>
+          <dt>Contract hash</dt><dd id="contract-hash">—</dd>
+          <dt>Action nonce</dt><dd id="nonce">—</dd>
+          <dt>Execution</dt><dd id="execution">not started</dd>
+        </dl>
+
+        <div class="receipt" id="receipt" hidden>
+          <h3>Approval validated</h3>
+          <code id="approved-argv"></code>
+          <p>Approved hash: <code id="approved-hash"></code></p>
+        </div>
+
+        <button class="button warning" id="replay" type="button" hidden>
+          Replay the same approval
+        </button>
+
+        <div>
+          <div class="eyebrow events-label">Event trace</div>
+          <ol class="events" id="events" aria-live="polite"></ol>
+        </div>
+        <p class="fine">
+          Every transition occurs inside this tab. Contract inputs and
+          actions are neither transmitted nor retained; reloading resets the
+          educational sandbox.
+        </p>
+      </aside>
+    </div>
+
+    <footer>
+      <span>Smart AI Memory · open source under Apache 2.0</span>
+      <span>
+        <a href="https://smartaimemory.com/how-it-works" target="_top">How Attune works</a>
+        &nbsp;·&nbsp;
+        <a href="https://github.com/Smart-AI-Memory/attune-ai" target="_top">Inspect the source</a>
+      </span>
+    </footer>
+  </main>
+
+  <dialog id="approval-dialog" aria-labelledby="approval-title">
+    <div class="dialog-body">
+      <div class="eyebrow">One-time authority</div>
+      <h2 id="approval-title">Authorize this exact Fix contract?</h2>
+      <p>The real product would pass only this argv across the executor boundary. This sandbox still executes nothing.</p>
+      <code class="command" id="approval-command"></code>
+      <p class="hash-line">Approval hash: <code id="approval-hash"></code></p>
+      <div class="dialog-actions">
+        <button class="button secondary" id="cancel-approval" type="button">Cancel</button>
+        <button class="button primary" id="authorize-once" type="button">Authorize once</button>
+      </div>
+    </div>
+  </dialog>
+
+</body>
+</html>
