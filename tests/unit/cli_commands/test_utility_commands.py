@@ -1119,3 +1119,237 @@ class TestCmdDoctor:
         captured = capsys.readouterr()
         assert "not installed" in captured.out
         assert "optional" in captured.out
+
+
+# ---------------------------------------------------------------------------
+# cmd_doctor — related packages + Claude Code plugin checks
+# ---------------------------------------------------------------------------
+
+
+class TestCmdDoctorInstallDiagnostics:
+    """Tests for the related-package and Claude plugin doctor checks."""
+
+    def _run_doctor(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        fake_module,
+        *,
+        which: str | None = None,
+        run_result: MagicMock | None = None,
+        run_side_effect: Exception | None = None,
+        pkg_version: MagicMock | None = None,
+    ) -> int:
+        """Run cmd_doctor with the environment fully mocked.
+
+        subprocess.run and shutil.which are always patched so no real
+        ``claude`` process can ever spawn from a test.
+        """
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+        args = types.SimpleNamespace()
+
+        mock_version = MagicMock()
+        mock_version.__version__ = "5.0.0"
+        fake_module("attune", mock_version)
+        fake_module(
+            "attune.workflows",
+            MagicMock(discover_workflows=MagicMock(return_value={})),
+        )
+        fake_module(
+            "attune.wizards",
+            MagicMock(list_wizards=MagicMock(return_value=[])),
+        )
+        fake_module("attune.mcp.server", MagicMock())
+
+        run_mock = MagicMock()
+        if run_side_effect is not None:
+            run_mock.side_effect = run_side_effect
+        elif run_result is not None:
+            run_mock.return_value = run_result
+
+        version_patch = patch(
+            "importlib.metadata.version",
+            pkg_version if pkg_version is not None else MagicMock(return_value="0.0.0"),
+        )
+
+        with (
+            version_patch,
+            patch(
+                "attune.cli_commands.utility_commands.shutil.which",
+                MagicMock(return_value=which),
+            ),
+            patch(
+                "attune.cli_commands.utility_commands.subprocess.run",
+                run_mock,
+            ),
+        ):
+            self._last_run_mock = run_mock
+            return cmd_doctor(args)
+
+    def test_related_packages_installed(
+        self,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        fake_module,
+    ) -> None:
+        """Installed related packages report their versions as [OK] rows."""
+        result = self._run_doctor(
+            monkeypatch,
+            fake_module,
+            pkg_version=MagicMock(return_value="1.2.3"),
+        )
+
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "[OK]   attune-rag 1.2.3" in out
+        assert "[OK]   attune-verify 1.2.3" in out
+        assert "[OK]   attune-forms 1.2.3" in out
+
+    def test_related_packages_not_installed(
+        self,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        fake_module,
+    ) -> None:
+        """Missing related packages degrade to [--] rows, never raise."""
+        from importlib.metadata import PackageNotFoundError
+
+        result = self._run_doctor(
+            monkeypatch,
+            fake_module,
+            pkg_version=MagicMock(side_effect=PackageNotFoundError("x")),
+        )
+
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "[--]   attune-rag not installed (optional)" in out
+        assert "[--]   attune-verify not installed (optional)" in out
+        assert "[--]   attune-forms not installed (optional)" in out
+
+    def test_related_packages_broken_metadata(
+        self,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        fake_module,
+    ) -> None:
+        """Arbitrary metadata errors degrade to 'version unknown'."""
+        result = self._run_doctor(
+            monkeypatch,
+            fake_module,
+            pkg_version=MagicMock(side_effect=RuntimeError("boom")),
+        )
+
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "[--]   attune-rag version unknown (optional)" in out
+
+    def test_claude_cli_not_found(
+        self,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        fake_module,
+    ) -> None:
+        """No claude on PATH is an optional [--] row, not a failure."""
+        result = self._run_doctor(monkeypatch, fake_module, which=None)
+
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "[--]   claude CLI not found (optional)" in out
+        self._last_run_mock.assert_not_called()
+
+    def test_claude_plugin_installed(
+        self,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        fake_module,
+    ) -> None:
+        """Plugin present in `claude plugin list` reports [OK]."""
+        proc = MagicMock(returncode=0, stdout="attune-ai@attune-ai v16.1.0\n")
+        result = self._run_doctor(
+            monkeypatch,
+            fake_module,
+            which="/usr/local/bin/claude",
+            run_result=proc,
+        )
+
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "[OK]   Claude Code plugin attune-ai@attune-ai installed" in out
+        call = self._last_run_mock.call_args
+        assert call.args[0] == ["/usr/local/bin/claude", "plugin", "list"]
+        assert call.kwargs["timeout"] == 10
+
+    def test_claude_plugin_not_installed(
+        self,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        fake_module,
+    ) -> None:
+        """claude present but plugin absent reports optional [--]."""
+        proc = MagicMock(returncode=0, stdout="some-other-plugin@market\n")
+        result = self._run_doctor(
+            monkeypatch,
+            fake_module,
+            which="/usr/local/bin/claude",
+            run_result=proc,
+        )
+
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "[--]   Claude Code plugin attune-ai not installed (optional)" in out
+
+    def test_claude_plugin_list_nonzero_exit(
+        self,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        fake_module,
+    ) -> None:
+        """A failing `claude plugin list` degrades to [--], never raises."""
+        proc = MagicMock(returncode=1, stdout="", stderr="broken install")
+        result = self._run_doctor(
+            monkeypatch,
+            fake_module,
+            which="/usr/local/bin/claude",
+            run_result=proc,
+        )
+
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "[--]   claude plugin list failed (optional)" in out
+
+    def test_claude_plugin_list_timeout(
+        self,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        fake_module,
+    ) -> None:
+        """A hung claude CLI times out and degrades to [--]."""
+        import subprocess as _subprocess
+
+        result = self._run_doctor(
+            monkeypatch,
+            fake_module,
+            which="/usr/local/bin/claude",
+            run_side_effect=_subprocess.TimeoutExpired(cmd="claude", timeout=10),
+        )
+
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "[--]   claude plugin list unavailable (optional)" in out
+
+    def test_claude_plugin_list_oserror(
+        self,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        fake_module,
+    ) -> None:
+        """An unexecutable claude binary degrades to [--]."""
+        result = self._run_doctor(
+            monkeypatch,
+            fake_module,
+            which="/usr/local/bin/claude",
+            run_side_effect=OSError("not executable"),
+        )
+
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "[--]   claude plugin list unavailable (optional)" in out
