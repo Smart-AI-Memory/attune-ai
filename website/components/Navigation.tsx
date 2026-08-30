@@ -7,6 +7,7 @@ import { HELP_VIDEOS } from '@/lib/videos';
 
 const navItems = [
   { label: 'How It Works', href: '/how-it-works' },
+  { label: 'Fix Demo', href: '/fix-workspace' },
   { label: 'Docs', href: '/docs' },
   // The Learn link appears only once the video registry has entries.
   ...(HELP_VIDEOS.length > 0 ? [{ label: 'Learn', href: '/learn' }] : []),

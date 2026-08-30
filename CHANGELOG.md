@@ -26,8 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Dynamic form demos now use the production renderer**: the README
   and website show live, same-origin audit and retro fixtures generated
-  through `attune-forms`, with light/dark support and the released 0.9.0
-  theme projection kept byte-for-byte in sync.
+  through `attune-forms`, with light/dark support and the released 0.10.0
+  MCP Apps transport. The Fix approval sandbox links to the exact PyPI
+  and GitHub release receipts, explains host fallbacks, and stays
+  byte-for-byte in sync across both public sites.
 
 - **worktree-path-guard teaches the multi-PR pattern**: when the
   guard blocks a cross-worktree write, its message now also explains
