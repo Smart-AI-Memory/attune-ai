@@ -24,10 +24,9 @@ safe preview/action round trip bound to the exact canonical contract.
 - Provider/session: Codex GPT-5.6 Sol, Extra High; Patrick is chair;
   no paid model calls or live Fix execution authorized.
 - Assumptions: PR:2354 and PR:2371 are merged. The generic workspace
-  binding seam is locally committed in `attune-forms` at `b0ce424` as
-  proposed 0.9.1; downstream development may use that local source,
-  but no downstream PR may claim the dependency until 0.9.1 is
-  reviewed, merged, and published.
+  binding seam shipped from attune-forms PR:64 at merge `83501ae6` and
+  is published on PyPI as 0.9.1. The downstream floor and lock now resolve
+  that released package directly.
 
 ## Current state
 
@@ -44,9 +43,8 @@ safe preview/action round trip bound to the exact canonical contract.
   is checked evidence, never authority.
 - Risks or open questions: execution has no truthful four-stage event
   seam yet; Task 4A does not fabricate progress and its validator executes
-  nothing. Publishing `attune-forms` 0.9.1 remains an explicit chair gate.
-  Antigravity's advisory review is complete and clean; publishing remains the
-  only external dependency gate before downstream promotion.
+  nothing. Antigravity's advisory review is complete and clean. The upstream
+  dependency gate is closed; downstream PR promotion is now safe.
 
 ## Verification
 
@@ -63,9 +61,11 @@ safe preview/action round trip bound to the exact canonical contract.
 | Repository gates | `pre-commit run --all-files` | pass — all blocking hooks green; unrelated broken-link warnings remain non-blocking |
 | Upstream external review | Antigravity branch review | clean — 11 sent, 0 omitted, 0 findings |
 | Downstream external review | Antigravity branch review + scoped re-lane | clean — 10 primary + 13 scoped substantive files, 0 findings; generated mirrors covered by freshness gates |
+| Upstream release | PR:64 + signed `v0.9.1` + PyPI simple index | pass — merge `83501ae6`; wheel and sdist published |
+| Released dependency import | `.venv/bin/python` import receipt | pass — attune-forms 0.9.1 and workspace APIs imported from site-packages |
+| Final released-dependency suite | `.venv/bin/python -m pytest -q --ignore=tests/memory/test_redis_integration.py` | pass — 24,985 passed, 231 skipped, 4 xfailed |
 
 ## Next action
 
-Push the reviewed `attune-forms` branch and open its PR. Publish 0.9.1 only
-after the separate release approval; then raise the downstream dependency
-floor, refresh the lock, rerun gates, and open the `attune-ai` PR.
+Commit the released dependency floor/lock, push the rebased feature branch,
+open the `attune-ai` PR, and merge only after all required checks pass.

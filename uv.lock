@@ -531,7 +531,7 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'enterprise'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'full'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40.0" },
-    { name = "attune-forms", specifier = ">=0.9.0,<1.0" },
+    { name = "attune-forms", specifier = ">=0.9.1,<1.0" },
     { name = "attune-help", marker = "extra == 'dev'", specifier = ">=0.10.0" },
     { name = "attune-rag", specifier = ">=0.1.5,<2.0" },
     { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.5,<2.0" },
@@ -709,14 +709,14 @@ dev = [
 
 [[package]]
 name = "attune-forms"
-version = "0.9.0"
+version = "0.9.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "structlog" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f4/d2/3f82cac1c68afdcfcad9748a864342ffa1a0d794ead170b1276b0a999b4c/attune_forms-0.9.0.tar.gz", hash = "sha256:59ab74b2dc5edc5e385a69da99f381b4db3c1605021f0f7427ab5c19fc7c5c34", size = 196862, upload-time = "2026-08-29T21:04:35.676Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/61/44/4fcc84c11635c74375d73eb4e6cb337f506d5aacc748c07ab7a83c27b8a5/attune_forms-0.9.1.tar.gz", hash = "sha256:c2c1fa336cfd1ca925d539c8e640ce85e16e20d22867ab6ed1e2a09e99952e12", size = 205482, upload-time = "2026-08-29T23:59:55.379Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/5c/c7/47eccadee9e337bb65106f9bd8b741068e4bddbbecdaf18382e21f80c99a/attune_forms-0.9.0-py3-none-any.whl", hash = "sha256:3a4f5aeba36d495ee8a436ae0a97e824cd73bc0eb9ff021cfed775d2eb0db707", size = 112681, upload-time = "2026-08-29T21:04:34.338Z" },
+    { url = "https://files.pythonhosted.org/packages/3d/d1/b67f99cc198f9470c7b133f3828daf64dc6abd445e3fbf70ed89f7a69cd3/attune_forms-0.9.1-py3-none-any.whl", hash = "sha256:b0303cce5eb0a50601de77535cb7b50498c55b75fa8927a4c980f11e7041f049", size = 117864, upload-time = "2026-08-29T23:59:53.649Z" },
 ]
 
 [[package]]
