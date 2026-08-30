@@ -47,7 +47,7 @@
 export const CAPABILITIES = {
   workflows: 21,
   skills: 28,
-  mcpTools: 48,
+  mcpTools: 50,
   templateKinds: 15,
   wizards: 5,
 } as const;

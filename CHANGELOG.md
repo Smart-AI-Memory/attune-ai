@@ -7,7 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Fix now has a state-bound dynamic preview workspace**: the plugin can
+  render the exact future `attune fix --run` argv as a widget or Markdown,
+  bind its actions to a canonical server-owned revision, nonce, and SHA-256
+  contract hash, and validate `edit_contract` / `run_fix` without executing.
+  Serialized state restores the validated intake; changed, stale, unknown,
+  unconfirmed, and replayed actions fail closed.
+
 ### Changed
+
+- **Interactive Fix execution is separated from intake**: the old combined
+  "preview then run" form choice is removed. Intake only gathers goal,
+  scope, and probes; the later one-time workspace action is the execution
+  approval boundary. The scriptable `attune fix` CLI and its exit behavior
+  are unchanged.
 
 - **Dynamic form demos now use the production renderer**: the README
   and website show live, same-origin audit and retro fixtures generated

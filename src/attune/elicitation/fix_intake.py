@@ -213,7 +213,7 @@ PROVIDERS["fix_scopes"] = _provider_fix_scopes
 PROVIDERS["fix_probes"] = _provider_fix_probes
 
 #: The fix intake, declaratively (Phase 2a). Slot keys are CLI
-#: composition keys (request/scope/probes/mode), not the fix
+#: composition keys (request/scope/probes), not the fix
 #: workflow's input_schema keys, so the template is standalone
 #: (unbound) by design — recorded in the Phase 2 execution notes.
 FIX_TEMPLATE = FormTemplate(
@@ -243,13 +243,6 @@ FIX_TEMPLATE = FormTemplate(
             fallback_text="How do we verify the fix? (one command, e.g. pytest tests/x.py)",
             help_text="Each probe is verified independently in the receipt.",
         ),
-        FieldSlot(
-            key="mode",
-            text="Run it, or preview only?",
-            options=["preview only", "preview then run"],
-            default="preview only",
-            help_text="Preview renders the contract and executes nothing.",
-        ),
     ],
 )
 
@@ -260,7 +253,7 @@ def build_fix_intake_form(
     scopes: list[str],
     probes: list[str],
 ) -> FormSchema:
-    """The one intake form: request + scope + probes + mode (D21).
+    """The one intake form: request + scope + probes (D21).
 
     Phase 2a: built from :data:`FIX_TEMPLATE` with the pre-derived
     candidates as overrides — the hand-written construction this
@@ -278,8 +271,9 @@ def build_fix_intake_form(
 def compose_fix_command(answers: dict[str, Any]) -> str:
     """Render answers as a copy-safe ``attune fix`` command line.
 
-    Everything is ``shlex.quote``d; the ``--run`` flag appears only
-    for the explicit "preview then run" answer.
+    Everything is ``shlex.quote``d. The command is always preview-only;
+    the separate state-bound workspace action is the only interactive
+    route to a ``--run`` authorization.
     """
     request = str(answers.get("request", "")).strip()
     scope = str(answers.get("scope", "")).strip()
@@ -300,8 +294,6 @@ def compose_fix_command(answers: dict[str, Any]) -> str:
             parts += ["--probe", shlex.quote(probe_text)]
     if scope and scope != OTHER:
         parts += ["--scope", shlex.quote(scope)]
-    if str(answers.get("mode", "")).strip() == "preview then run":
-        parts.append("--run")
     return " ".join(parts)
 
 

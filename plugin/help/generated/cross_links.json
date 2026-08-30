@@ -1,7 +1,7 @@
 {
   "version": 1,
   "stats": {
-    "total_templates": 1288,
+    "total_templates": 1286,
     "linked_templates": 910,
     "total_tags": 121
   },
@@ -9025,20 +9025,6 @@
         "workflow"
       ]
     },
-    "ref-tool-attune-get-level": {
-      "tags": [
-        "mcp",
-        "tool",
-        "utility"
-      ]
-    },
-    "ref-tool-attune-set-level": {
-      "tags": [
-        "mcp",
-        "tool",
-        "utility"
-      ]
-    },
     "ref-tool-auth-recommend": {
       "tags": [
         "mcp",
@@ -13864,8 +13850,6 @@
       "ref-mcp-server",
       "ref-tool-analyze-batch",
       "ref-tool-analyze-image",
-      "ref-tool-attune-get-level",
-      "ref-tool-attune-set-level",
       "ref-tool-auth-recommend",
       "ref-tool-auth-status",
       "ref-tool-bug-predict",
@@ -15361,8 +15345,6 @@
     "tool": [
       "ref-tool-analyze-batch",
       "ref-tool-analyze-image",
-      "ref-tool-attune-get-level",
-      "ref-tool-attune-set-level",
       "ref-tool-auth-recommend",
       "ref-tool-auth-status",
       "ref-tool-bug-predict",
@@ -15409,8 +15391,6 @@
       "war-mcp-server"
     ],
     "utility": [
-      "ref-tool-attune-get-level",
-      "ref-tool-attune-set-level",
       "ref-tool-auth-recommend",
       "ref-tool-auth-status",
       "ref-tool-context-get",

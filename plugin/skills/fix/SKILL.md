@@ -43,7 +43,7 @@ default rather than asking again.
 
 ## Step 2 — Render the form (communication grammar)
 
-Render ONE form — request, scope, probes, mode. The enhanced
+Render ONE form — request, scope, probes. The enhanced
 widget is the DEFAULT surface: build the `FormSchema` from the
 Step 1 payload, route it through `select_form_surface`, and when
 it returns "widget" render `form_to_widget_html(form)` on the
@@ -81,14 +81,31 @@ echo '<answers JSON>' | python -m attune.elicitation.fix_intake --compose
 ```
 
 Run the composed command WITHOUT `--run` first and show the user
-the rendered contract preview (goal, done conditions, constraints,
-probes). This is the checkpoint: the user confirms or edits before
-anything executes.
+the text preview only when the dynamic workspace tools are unavailable.
 
-## Step 4 — Run and read the receipt
+On the normal path, pass the validated Step 2 responses to
+`fix_workspace_preview`. It rebuilds the CLI contract, normalizes the
+repo-relative scope, hashes the exact future argv, stores canonical
+server state, and returns workspace HTML plus a Markdown fallback. Pass
+the HTML to the widget surface when available; otherwise show the
+Markdown. Do not hand-build or modify the workspace, binding, nonce, or
+hash. Nothing has executed at this checkpoint.
 
-On confirmation (or when the form answered "preview then run"),
-re-run with `--run`. Walk the user through the receipt:
+## Step 4 — Validate approval, then run and read the receipt
+
+Parse the workspace's `__elicitation_response__` JSON and pass it
+unchanged to `fix_workspace_collect_action`. An `edit_contract` result
+invalidates the old preview; return to the intake, then call
+`fix_workspace_preview` again with its `workspace_id` and the revised
+answers. A failed action result is terminal for that response — never
+repair a nonce, revision, or hash yourself.
+
+Only a successful `run_fix` result authorizes execution. Execute the
+returned `approved_command_argv` exactly once through the existing CLI
+boundary; never reconstruct it from the rendered widget or the original
+form answers. The action validator itself executes nothing and consumes
+the nonce before returning, so stale or replayed clicks fail closed.
+Walk the user through the resulting receipt:
 
 - **Changes made (attributed to this run)** — what the fix touched,
   measured against a pre-run baseline, never blamed onto the user's
