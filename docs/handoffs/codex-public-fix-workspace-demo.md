@@ -14,6 +14,8 @@ workflow, subprocess, persistence, or file-mutation boundary.
   approval hash, authorize it once, and observe replay rejection.
 - The page states clearly that it is an educational simulation and
   never executes Fix.
+- The page distinguishes the released `attune-forms 0.10.0` MCP Apps
+  transport from the sandbox and links to exact PyPI and GitHub receipts.
 - Both sites expose a discoverable route and include it in their
   sitemap.
 - Projection drift, contract construction, hash generation, and state
@@ -32,14 +34,16 @@ workflow, subprocess, persistence, or file-mutation boundary.
 
 ## Current state
 
-- Status: implementation, primary verification, advisory review, and
-  remediation re-review complete; commit and PR publication remain
+- Status: PR:2373 is published; the 0.10.0 release-proof update passes
+  local verification and awaits push plus refreshed Vercel verification
 - Changed files: canonical static sandbox under
   `attune-ai-dev/fix-workspace/`, host-adapted website projection,
   Next route/embed, navigation/sitemaps/CSP, projection script, tests,
   and this handoff
 - Decisions: no server/API route; exact production contract vocabulary
-  and canonical JSON ordering are reproduced in browser-only code.
+  and canonical JSON ordering are reproduced in browser-only code. The
+  release notice describes MCP Apps transport separately and preserves
+  native, text, and Markdown fallback truthfulness.
 - Risks or open questions: final marketing placement may need chair copy
   tuning after the live preview.
 
@@ -56,6 +60,10 @@ workflow, subprocess, persistence, or file-mutation boundary.
 | Website claim guards | verified Python env + `test_website_version_accuracy.py` | pass: 16/16 |
 | Type/lint | `npx tsc --noEmit`; scoped ESLint | pass |
 | Production build | `VERCEL=1 npx next build --webpack` | pass: 111 static pages; `/fix-workspace` prerendered |
+| 0.10.0 release/fallback guard | isolated project env + `npm test` | pass: 33/33 website tests |
+| Current claim + Fix contract checks | isolated project env + focused pytest | pass: 47/47 |
+| Current lint/type | `npm run lint`; `npx tsc --noEmit` | pass: zero errors; 3 pre-existing warnings |
+| Current production build | `VERCEL=1 npx next build --webpack` | pass: 111 static pages; `/fix-workspace` prerendered |
 | Turbopack local build | `VERCEL=1 npx next build` | host-blocked: CSS worker cannot bind IPC port; Vercel PR check remains authoritative |
 | Advisory primary lane | Antigravity staged review | clean on 12 sent files; 4 omissions re-laned |
 | Advisory scoped lane | Antigravity review of 4 omitted files | 3 findings verified: clean-URL asset bug real/medium; form names real/low and hardened; `_top` external navigation rejected as intentional iframe escape |
@@ -63,4 +71,5 @@ workflow, subprocess, persistence, or file-mutation boundary.
 
 ## Next action
 
-Create a signed commit, push the branch, and open the PR.
+Push the verified release-proof update to PR:2373 and inspect both
+refreshed Vercel deployments before requesting merge.

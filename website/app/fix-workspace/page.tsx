@@ -7,7 +7,7 @@ import { generateMetadata as genMeta, generateStructuredData } from '@/lib/metad
 export const metadata: Metadata = genMeta({
   title: 'Interactive Fix Approval Workspace',
   description:
-    'Try Attune AI’s hashed, one-time Fix approval contract in a safe browser-only sandbox. Edit, approve, and prove replay rejection without executing a workflow.',
+    'Try Attune AI’s hashed, one-time Fix approval contract in a safe browser-only sandbox, and inspect the released attune-forms 0.10.0 MCP Apps transport.',
   url: 'https://smartaimemory.com/fix-workspace',
 });
 

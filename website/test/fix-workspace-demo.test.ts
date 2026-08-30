@@ -93,4 +93,20 @@ describe('public Fix workspace contract', () => {
     );
     expect(projectionHtml).toBe(expectedHtml);
   });
+
+  it('publishes exact attune-forms 0.10.0 release receipts without overstating the sandbox', () => {
+    const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
+    const sourceHtml = readFileSync(
+      resolve(root, 'attune-ai-dev', 'fix-workspace', 'index.html'),
+      'utf8',
+    );
+
+    expect(sourceHtml).toContain('Now shipping · attune-forms 0.10.0');
+    expect(sourceHtml).toContain('https://pypi.org/project/attune-forms/0.10.0/');
+    expect(sourceHtml).toContain(
+      'https://github.com/Smart-AI-Memory/attune-forms/releases/tag/v0.10.0',
+    );
+    expect(sourceHtml).toContain('Other hosts keep native, text, or Markdown fallbacks.');
+    expect(sourceHtml).toContain('What is intentionally absent:</strong> MCP');
+  });
 });

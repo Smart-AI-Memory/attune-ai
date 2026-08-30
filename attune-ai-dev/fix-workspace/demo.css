@@ -66,6 +66,32 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 h1, h2, h3 { font-family: Manrope, Inter, sans-serif; letter-spacing: -.035em; line-height: 1.08; }
 h1 { margin: 7px 0 12px; font-size: clamp(35px, 7vw, 66px); }
 .hero p { max-width: 760px; margin: 0; color: var(--muted); font-size: clamp(17px, 2vw, 21px); }
+.release-note {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: center;
+  margin: 0 0 20px;
+  padding: 18px 20px;
+  border: 1px solid color-mix(in srgb, var(--primary) 40%, var(--rule));
+  border-radius: 14px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 9%, var(--surface)), var(--surface));
+}
+.release-note h2 { margin: 5px 0 7px; font-size: clamp(20px, 3vw, 28px); }
+.release-note p { max-width: 760px; margin: 0; color: var(--muted); font-size: 14px; }
+.release-links { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 9px; }
+.release-links a {
+  border: 1px solid var(--rule);
+  border-radius: 9px;
+  padding: 9px 12px;
+  background: var(--surface);
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.release-links a:hover { border-color: var(--primary); }
 .truth-note {
   margin: 0 0 20px;
   padding: 11px 14px;
@@ -165,6 +191,8 @@ footer a { color: var(--primary); }
 
 @media (max-width: 850px) {
   .layout { grid-template-columns: 1fr; }
+  .release-note { grid-template-columns: 1fr; }
+  .release-links { justify-content: flex-start; }
   .topline { margin-bottom: 34px; }
 }
 @media (max-width: 520px) {
