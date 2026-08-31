@@ -30,11 +30,53 @@ _JPEG_SOF = frozenset(
 )
 
 
+def _jpeg_info(data: bytes) -> tuple[str, int, int] | None:
+    index = 2
+    while index + 8 <= len(data):
+        while index < len(data) and data[index] != 0xFF:
+            index += 1
+        while index < len(data) and data[index] == 0xFF:
+            index += 1
+        if index >= len(data):
+            return None
+        marker = data[index]
+        index += 1
+        if marker in {0xD8, 0xD9}:
+            continue
+        if index + 2 > len(data):
+            return None
+        segment_length = int.from_bytes(data[index : index + 2], "big")
+        if marker in _JPEG_SOF and index + 7 <= len(data):
+            height = int.from_bytes(data[index + 3 : index + 5], "big")
+            width = int.from_bytes(data[index + 5 : index + 7], "big")
+            return "image/jpeg", width, height
+        if segment_length < 2:
+            return None
+        index += segment_length
+    return None
+
+
+def _webp_info(data: bytes) -> tuple[str, int, int] | None:
+    subtype = data[12:16]
+    if subtype == b"VP8X":
+        width = 1 + int.from_bytes(data[24:27], "little")
+        height = 1 + int.from_bytes(data[27:30], "little")
+        return "image/webp", width, height
+    if subtype == b"VP8L" and data[20] == 0x2F:
+        b1, b2, b3, b4 = data[21:25]
+        width = 1 + b1 + ((b2 & 0x3F) << 8)
+        height = 1 + ((b2 & 0xC0) >> 6) + (b3 << 2) + ((b4 & 0x0F) << 10)
+        return "image/webp", width, height
+    if subtype == b"VP8 " and data[23:26] == b"\x9d\x01\x2a":
+        width = int.from_bytes(data[26:28], "little") & 0x3FFF
+        height = int.from_bytes(data[28:30], "little") & 0x3FFF
+        return "image/webp", width, height
+    return None
+
+
 def _image_info(data: bytes) -> tuple[str, int, int]:
     if len(data) >= 24 and data.startswith(b"\x89PNG\r\n\x1a\n"):
-        width = int.from_bytes(data[16:20], "big")
-        height = int.from_bytes(data[20:24], "big")
-        return "image/png", width, height
+        return "image/png", int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
     if len(data) >= 10 and data[:6] in {b"GIF87a", b"GIF89a"}:
         return (
             "image/gif",
@@ -42,43 +84,13 @@ def _image_info(data: bytes) -> tuple[str, int, int]:
             int.from_bytes(data[8:10], "little"),
         )
     if len(data) >= 4 and data.startswith(b"\xff\xd8"):
-        index = 2
-        while index + 8 <= len(data):
-            while index < len(data) and data[index] != 0xFF:
-                index += 1
-            while index < len(data) and data[index] == 0xFF:
-                index += 1
-            if index >= len(data):
-                break
-            marker = data[index]
-            index += 1
-            if marker in {0xD8, 0xD9}:
-                continue
-            if index + 2 > len(data):
-                break
-            segment_length = int.from_bytes(data[index : index + 2], "big")
-            if marker in _JPEG_SOF and index + 7 <= len(data):
-                height = int.from_bytes(data[index + 3 : index + 5], "big")
-                width = int.from_bytes(data[index + 5 : index + 7], "big")
-                return "image/jpeg", width, height
-            if segment_length < 2:
-                break
-            index += segment_length
+        info = _jpeg_info(data)
+        if info is not None:
+            return info
     if len(data) >= 30 and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
-        subtype = data[12:16]
-        if subtype == b"VP8X":
-            width = 1 + int.from_bytes(data[24:27], "little")
-            height = 1 + int.from_bytes(data[27:30], "little")
-            return "image/webp", width, height
-        if subtype == b"VP8L" and data[20] == 0x2F:
-            b1, b2, b3, b4 = data[21:25]
-            width = 1 + b1 + ((b2 & 0x3F) << 8)
-            height = 1 + ((b2 & 0xC0) >> 6) + (b3 << 2) + ((b4 & 0x0F) << 10)
-            return "image/webp", width, height
-        if subtype == b"VP8 " and data[23:26] == b"\x9d\x01\x2a":
-            width = int.from_bytes(data[26:28], "little") & 0x3FFF
-            height = int.from_bytes(data[28:30], "little") & 0x3FFF
-            return "image/webp", width, height
+        info = _webp_info(data)
+        if info is not None:
+            return info
     raise CommandWorkspaceError(["Image content is not a supported PNG, JPEG, GIF, or WebP"])
 
 

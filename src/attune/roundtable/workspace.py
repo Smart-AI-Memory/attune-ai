@@ -290,74 +290,92 @@ class RoundtableWorkspaceAdapter:
             raise CommandWorkspaceError(["Roundtable adapter received incompatible state"])
         kind = event.get("kind")
         if kind == "seat_progress":
-            if state.stage not in {"running", "synthesizing"}:
-                raise CommandWorkspaceError(["seat progress requires an active Roundtable stage"])
-            raw = event.get("receipt")
-            if not isinstance(raw, Mapping):
-                raise CommandWorkspaceError(["seat_progress requires a receipt mapping"])
-            receipt = _receipt(raw, state.round_number)
-            retained = tuple(item for item in state.seat_receipts if item.seat != receipt.seat)
-            return CommandWorkspaceTransition(
-                replace(state, seat_receipts=(*retained, receipt)),
-                result={"seat": receipt.seat, "status": receipt.status},
-                authority_changed=False,
-            )
+            return self._publish_seat_progress(state, event)
         if kind == "round_complete":
-            if state.stage != "running":
-                raise CommandWorkspaceError(["round_complete requires a running round"])
-            raw_receipts = event.get("receipts")
-            if not isinstance(raw_receipts, Sequence) or isinstance(raw_receipts, str | bytes):
-                raise CommandWorkspaceError(["round_complete requires receipt mappings"])
-            receipts = tuple(
-                _receipt(raw, state.round_number)
-                for raw in raw_receipts
-                if isinstance(raw, Mapping)
+            return self._publish_round_complete(state, event)
+        if kind == "synthesis":
+            return self._publish_synthesis(state, event)
+        raise CommandWorkspaceError([f"unknown Roundtable event {kind!r}"])
+
+    @staticmethod
+    def _publish_seat_progress(
+        state: RoundtableWorkspaceState,
+        event: Mapping[str, object],
+    ) -> CommandWorkspaceTransition:
+        if state.stage not in {"running", "synthesizing"}:
+            raise CommandWorkspaceError(["seat progress requires an active Roundtable stage"])
+        raw = event.get("receipt")
+        if not isinstance(raw, Mapping):
+            raise CommandWorkspaceError(["seat_progress requires a receipt mapping"])
+        receipt = _receipt(raw, state.round_number)
+        retained = tuple(item for item in state.seat_receipts if item.seat != receipt.seat)
+        return CommandWorkspaceTransition(
+            replace(state, seat_receipts=(*retained, receipt)),
+            result={"seat": receipt.seat, "status": receipt.status},
+            authority_changed=False,
+        )
+
+    @staticmethod
+    def _publish_round_complete(
+        state: RoundtableWorkspaceState,
+        event: Mapping[str, object],
+    ) -> CommandWorkspaceTransition:
+        if state.stage != "running":
+            raise CommandWorkspaceError(["round_complete requires a running round"])
+        raw_receipts = event.get("receipts")
+        if not isinstance(raw_receipts, Sequence) or isinstance(raw_receipts, str | bytes):
+            raise CommandWorkspaceError(["round_complete requires receipt mappings"])
+        receipts = tuple(
+            _receipt(raw, state.round_number) for raw in raw_receipts if isinstance(raw, Mapping)
+        )
+        if len(receipts) != len(raw_receipts):
+            raise CommandWorkspaceError(["round_complete receipt is not a mapping"])
+        if {receipt.seat for receipt in receipts} != set(CANONICAL_SEATS):
+            raise CommandWorkspaceError(
+                ["round_complete requires exactly the fixed Roundtable roster"]
             )
-            if len(receipts) != len(raw_receipts):
-                raise CommandWorkspaceError(["round_complete receipt is not a mapping"])
-            if {receipt.seat for receipt in receipts} != set(CANONICAL_SEATS):
-                raise CommandWorkspaceError(
-                    ["round_complete requires exactly the fixed Roundtable roster"]
-                )
-            followups_raw = event.get("followups", ())
-            if not isinstance(followups_raw, Sequence) or isinstance(followups_raw, str | bytes):
-                raise CommandWorkspaceError(["Roundtable followups must be a list"])
-            successor = replace(
+        followups_raw = event.get("followups", ())
+        if not isinstance(followups_raw, Sequence) or isinstance(followups_raw, str | bytes):
+            raise CommandWorkspaceError(["Roundtable followups must be a list"])
+        return CommandWorkspaceTransition(
+            replace(
                 state,
                 stage="checkpoint",
                 seat_receipts=receipts,
                 followups=tuple(str(item) for item in followups_raw),
                 halt_reason=str(event.get("halt_reason", "")),
             )
-            return CommandWorkspaceTransition(successor)
-        if kind == "synthesis":
-            if state.stage != "synthesizing":
-                raise CommandWorkspaceError(["synthesis event requires synthesizing stage"])
-            body = str(event.get("body", "")).strip()
-            if not body:
-                raise CommandWorkspaceError(["Roundtable synthesis must not be empty"])
-            raw_candidates = event.get("candidates", ())
-            if not isinstance(raw_candidates, Sequence) or isinstance(raw_candidates, str | bytes):
-                raise CommandWorkspaceError(["Roundtable candidates must be a list"])
-            candidates = tuple(
-                _candidate(raw) for raw in raw_candidates if isinstance(raw, Mapping)
-            )
-            if len(candidates) != len(raw_candidates):
-                raise CommandWorkspaceError(["Roundtable candidate is not a mapping"])
-            terminal = not candidates
-            successor = replace(
-                state,
-                stage="receipt" if terminal else "triage",
-                synthesis=body,
-                candidates=candidates,
-                triage_index=0,
-            )
-            return CommandWorkspaceTransition(
-                successor,
-                terminal=terminal,
-                result={"candidate_count": len(candidates)},
-            )
-        raise CommandWorkspaceError([f"unknown Roundtable event {kind!r}"])
+        )
+
+    @staticmethod
+    def _publish_synthesis(
+        state: RoundtableWorkspaceState,
+        event: Mapping[str, object],
+    ) -> CommandWorkspaceTransition:
+        if state.stage != "synthesizing":
+            raise CommandWorkspaceError(["synthesis event requires synthesizing stage"])
+        body = str(event.get("body", "")).strip()
+        if not body:
+            raise CommandWorkspaceError(["Roundtable synthesis must not be empty"])
+        raw_candidates = event.get("candidates", ())
+        if not isinstance(raw_candidates, Sequence) or isinstance(raw_candidates, str | bytes):
+            raise CommandWorkspaceError(["Roundtable candidates must be a list"])
+        candidates = tuple(_candidate(raw) for raw in raw_candidates if isinstance(raw, Mapping))
+        if len(candidates) != len(raw_candidates):
+            raise CommandWorkspaceError(["Roundtable candidate is not a mapping"])
+        terminal = not candidates
+        successor = replace(
+            state,
+            stage="receipt" if terminal else "triage",
+            synthesis=body,
+            candidates=candidates,
+            triage_index=0,
+        )
+        return CommandWorkspaceTransition(
+            successor,
+            terminal=terminal,
+            result={"candidate_count": len(candidates)},
+        )
 
     def _apply_triage(
         self,

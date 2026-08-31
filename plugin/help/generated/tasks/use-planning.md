@@ -21,21 +21,21 @@ Invoke with: `/planning <what to plan: feature, tdd, architecture>`
 
 3. **Define scope**
    "How deep? Quick outline or detailed plan?" **Surface.** The **Subject** phrasing branches on **Type**, so don't
-batch all three — ask **Type** first (a single `AskUserQuestion`) when
-it isn't already given by the `<what to plan>` argument. Once the type
-is known, **Subject** (a textarea) and **Scope** (quick / detailed) are
-independent and open: gather *those two* as one form via the `elicit`
-skill, **preferring the rich widget surface** (`elicitation_render_widget`
-→ `show_widget`) with the AskUserQuestion mapping as fallback. If only
-one dimension is open, ask it as a single question — never force a
-one-field form (the §4 batching rule).
+   batch all three — ask **Type** first (a single `AskUserQuestion`) when
+   it isn't already given by the `<what to plan>` argument. Once the type
+   is known, **Subject** (a textarea) and **Scope** (quick / detailed) are
+   independent and open: gather *those two* as one form via the `elicit`
+   skill, **preferring the rich widget surface** (`elicitation_render_widget`
+   → `show_widget`) with the AskUserQuestion mapping as fallback. If only
+   one dimension is open, ask it as a single question — never force a
+   one-field form (the §4 batching rule).
 
-4. **Execute the planning workflow**
+4. **Review planning execution guidance**
    1. Use `EnterPlanMode` to create a structured plan
-2. If context from multiple files is needed, call
-   `research_synthesis` first to gather insights
-3. Present the plan for user approval before any
-   implementation
+   2. If context from multiple files is needed, call
+      `research_synthesis` first to gather insights
+   3. Present the plan for user approval before any
+      implementation
 
 
 ## Related Topics

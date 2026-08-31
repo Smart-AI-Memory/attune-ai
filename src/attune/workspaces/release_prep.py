@@ -217,58 +217,72 @@ class ReleasePrepWorkspaceAdapter:
             raise CommandWorkspaceError(["release-prep adapter received incompatible state"])
         kind = event.get("kind")
         if kind == "gate_result":
-            if state.stage != "running":
-                raise CommandWorkspaceError(["Release gate result requires running stage"])
-            raw = event.get("receipt")
-            if not isinstance(raw, Mapping):
-                raise CommandWorkspaceError(["Release gate result requires receipt mapping"])
-            receipt = _gate_receipt(raw)
-            retained = tuple(gate for gate in state.gates if gate.name != receipt.name)
-            return CommandWorkspaceTransition(
-                replace(state, gates=(*retained, receipt)),
-                result={"gate": receipt.name, "status": receipt.status},
-                authority_changed=False,
-            )
+            return self._publish_gate_result(state, event)
         if kind == "assessment_complete":
-            if state.stage != "running":
-                raise CommandWorkspaceError(["Release completion requires running stage"])
-            gates = list(state.gates)
-            present = {gate.name for gate in gates}
-            for name in GATE_ORDER:
-                if name not in present:
-                    gates.append(
-                        ReleaseGateReceipt(
-                            name,
-                            "MISSING",
-                            "gatekeeper did not return a receipt",
-                            "no probe receipt",
-                        )
-                    )
-            ordered = tuple(sorted(gates, key=lambda gate: GATE_ORDER.index(gate.name)))
-            recommendations_raw = event.get("recommendations", [])
-            if not isinstance(recommendations_raw, list) or any(
-                not str(item).strip() for item in recommendations_raw
-            ):
-                raise CommandWorkspaceError(["Release recommendations must be a list"])
-            review_gate = next(
-                (name for name in GATE_ORDER if name not in state.accepted_gates),
-                "",
-            )
-            return CommandWorkspaceTransition(
-                replace(
-                    state,
-                    stage="gate_review" if review_gate else "approval",
-                    gates=ordered,
-                    review_gate=review_gate,
-                    recommendations=tuple(str(item) for item in recommendations_raw),
-                ),
-                result={
-                    "blocker_count": len(
-                        [gate for gate in ordered if gate.critical and not gate.passed]
-                    )
-                },
-            )
+            return self._publish_assessment_complete(state, event)
         raise CommandWorkspaceError([f"unknown release-prep event {kind!r}"])
+
+    @staticmethod
+    def _publish_gate_result(
+        state: ReleasePrepWorkspaceState,
+        event: Mapping[str, object],
+    ) -> CommandWorkspaceTransition:
+        if state.stage != "running":
+            raise CommandWorkspaceError(["Release gate result requires running stage"])
+        raw = event.get("receipt")
+        if not isinstance(raw, Mapping):
+            raise CommandWorkspaceError(["Release gate result requires receipt mapping"])
+        receipt = _gate_receipt(raw)
+        retained = tuple(gate for gate in state.gates if gate.name != receipt.name)
+        return CommandWorkspaceTransition(
+            replace(state, gates=(*retained, receipt)),
+            result={"gate": receipt.name, "status": receipt.status},
+            authority_changed=False,
+        )
+
+    @staticmethod
+    def _publish_assessment_complete(
+        state: ReleasePrepWorkspaceState,
+        event: Mapping[str, object],
+    ) -> CommandWorkspaceTransition:
+        if state.stage != "running":
+            raise CommandWorkspaceError(["Release completion requires running stage"])
+        gates = list(state.gates)
+        present = {gate.name for gate in gates}
+        for name in GATE_ORDER:
+            if name not in present:
+                gates.append(
+                    ReleaseGateReceipt(
+                        name,
+                        "MISSING",
+                        "gatekeeper did not return a receipt",
+                        "no probe receipt",
+                    )
+                )
+        ordered = tuple(sorted(gates, key=lambda gate: GATE_ORDER.index(gate.name)))
+        recommendations_raw = event.get("recommendations", [])
+        if not isinstance(recommendations_raw, list) or any(
+            not str(item).strip() for item in recommendations_raw
+        ):
+            raise CommandWorkspaceError(["Release recommendations must be a list"])
+        review_gate = next(
+            (name for name in GATE_ORDER if name not in state.accepted_gates),
+            "",
+        )
+        return CommandWorkspaceTransition(
+            replace(
+                state,
+                stage="gate_review" if review_gate else "approval",
+                gates=ordered,
+                review_gate=review_gate,
+                recommendations=tuple(str(item) for item in recommendations_raw),
+            ),
+            result={
+                "blocker_count": len(
+                    [gate for gate in ordered if gate.critical and not gate.passed]
+                )
+            },
+        )
 
     def _apply_gate_review(
         self,

@@ -20,26 +20,56 @@ Invoke with: `/fix-test <test file or pattern>`
    "Did this start failing after a recent change, or has it been broken?"
 
 3. **Run the tool**
-   ### Step 1: Identify Failures Run the failing test(s) to capture the error: ### Step 2: Diagnose Root Cause Common failure patterns: | Pattern | Root Cause | Fix |
-| ------- | ---------- | --- |
-| `ModuleNotFoundError` | Import path changed | Update import |
-| `AttributeError: mock` | Mock target wrong | Match import path |
-| `AssertionError` | Expected value drift | Update assertion |
-| `TypeError: __init__` | Constructor changed | Update call site |
-| `FileNotFoundError` | Fixture path wrong | Use `tmp_path` | ### Step 3: Apply Fix and Re-run Apply the fix, then re-run the test. If it still fails,
-diagnose again with the new error. Repeat up to 3 times. ### Step 4: Report After fixing (or exhausting 3 attempts), report: ```markdown
+   ### Step 1: Identify Failures
 
-   ```
+   Run the failing test(s) to capture the error:
+
+   ```bash
    uv run pytest <target> -v --tb=short 2>&1 | tail -40
    ```
 
 4. **Run tool (option 2)**
+   ### Step 2: Diagnose Root Cause
 
-   ```
+   Common failure patterns:
+
+   | Pattern | Root Cause | Fix |
+   | ------- | ---------- | --- |
+   | `ModuleNotFoundError` | Import path changed | Update import |
+   | `AttributeError: mock` | Mock target wrong | Match import path |
+   | `AssertionError` | Expected value drift | Update assertion |
+   | `TypeError: __init__` | Constructor changed | Update call site |
+   | `FileNotFoundError` | Fixture path wrong | Use `tmp_path` |
+
+   ### Step 3: Apply Fix and Re-run
+
+   Apply the fix, then re-run the test. If it still fails,
+   diagnose again with the new error. Repeat up to 3 times.
+
+   ```bash
    uv run pytest <target> -v --tb=short
    ```
 
-5. **Choose follow-up action**
+5. **Review output example**
+   ### Step 4: Report
+
+   After fixing (or exhausting 3 attempts), report:
+
+   ```markdown
+   ## Fix Test Results
+
+   **Tests Fixed:** X/Y | **Attempts Used:** Z/3
+
+   ### Fixed
+   | Test | Root Cause | Fix Applied |
+   |------|------------|-------------|
+
+   ### Still Failing (if any)
+   | Test | Error | Attempts | Notes |
+   |------|-------|----------|-------|
+   ```
+
+6. **Choose follow-up action**
    Want me to generate missing tests for the fixed module?; Should I check for similar failures elsewhere?; Want a deeper look at the root cause?
 
 

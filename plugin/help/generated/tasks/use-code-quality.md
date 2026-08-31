@@ -20,20 +20,24 @@ Invoke with: `/code-quality <path or directory to review>`
    "Quick scan, thorough, or deep review?" - Quick: code_review only - Thorough: code_review + bug_predict combined - Deep: deep_review (security + quality + test gaps)
 
 3. **Run the tool**
-   **Quick scan:** **Thorough analysis:** Merge and deduplicate results from both tools. **Deep review** (multi-pass: security, quality, test gaps):
+   **Quick scan:**
 
    ```
    code_review(path="<user-specified path>")
    ```
 
 4. **Run tool (option 2)**
+   **Thorough analysis:**
 
    ```
    code_review(path="<user-specified path>")
-bug_predict(path="<user-specified path>")
+   bug_predict(path="<user-specified path>")
    ```
 
 5. **Run tool (option 3)**
+   Merge and deduplicate results from both tools.
+
+   **Deep review** (multi-pass: security, quality, test gaps):
 
    ```
    deep_review(path="<user-specified path>")

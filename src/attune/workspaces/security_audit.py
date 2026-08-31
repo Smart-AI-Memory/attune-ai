@@ -22,6 +22,16 @@ _SEVERITIES = ("CRITICAL", "HIGH", "MEDIUM", "LOW")
 _REMEDIATION_SEVERITIES = frozenset({"CRITICAL", "HIGH"})
 
 
+def _health_score_problem(value: object) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        return "Security health score must be between 0 and 100"
+    if not 0 <= value <= 100:
+        return "Security health score must be between 0 and 100"
+    return ""
+
+
 @dataclass(frozen=True)
 class SecurityFindingReceipt:
     """One exact categorized security finding."""
@@ -78,13 +88,9 @@ class SecurityAuditWorkspaceState:
             problems.append("Security target path and focus are required")
         if self.stage not in {"running", "review", "receipt"}:
             problems.append("Security workspace stage is invalid")
-        if self.health_score is not None and (
-            isinstance(self.health_score, bool)
-            or not isinstance(self.health_score, int | float)
-            or self.health_score < 0
-            or self.health_score > 100
-        ):
-            problems.append("Security health score must be between 0 and 100")
+        score_problem = _health_score_problem(self.health_score)
+        if score_problem:
+            problems.append(score_problem)
         if isinstance(self.files_scanned, bool) or not isinstance(self.files_scanned, int):
             problems.append("Security files_scanned must be an integer")
         elif self.files_scanned < 0:

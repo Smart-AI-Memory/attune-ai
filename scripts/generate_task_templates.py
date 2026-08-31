@@ -32,6 +32,16 @@ class Step:
     action: str
     detail: str = ""
     code: str = ""
+    code_language: str = ""
+
+
+@dataclass(frozen=True)
+class ExecutionPart:
+    """One execution code fence or trailing prose segment."""
+
+    detail: str
+    code: str
+    language: str = ""
 
 
 @dataclass
@@ -195,6 +205,17 @@ _CLI_TASKS: list[dict] = [
 ]
 
 
+_FENCE_LINE_RE = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})(.*)$")
+
+
+def _fence_line(line: str) -> tuple[str, int, str] | None:
+    match = _FENCE_LINE_RE.match(line)
+    if not match:
+        return None
+    marker = match.group(1)
+    return marker[0], len(marker), match.group(2).strip()
+
+
 def _extract_section(body: str, heading: str) -> str:
     """Extract a ## section's body from markdown.
 
@@ -205,9 +226,29 @@ def _extract_section(body: str, heading: str) -> str:
     Returns:
         Section body text, or empty string.
     """
-    pattern = rf"## {re.escape(heading)}\n+(.+?)(?=\n## |\Z)"
-    match = re.search(pattern, body, re.DOTALL)
-    return match.group(1).strip() if match else ""
+    lines = body.splitlines()
+    start: int | None = None
+    active_fence: tuple[str, int] | None = None
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        fence = _fence_line(line)
+        if active_fence is None and fence:
+            active_fence = fence[:2]
+            continue
+        if active_fence is not None:
+            if fence:
+                closes = (
+                    fence[0] == active_fence[0] and fence[1] >= active_fence[1] and not fence[2]
+                )
+                if closes:
+                    active_fence = None
+            continue
+        if start is None and stripped == f"## {heading}":
+            start = index + 1
+            continue
+        if start is not None and stripped.startswith("## "):
+            return "\n".join(lines[start:index]).strip()
+    return "\n".join(lines[start:]).strip() if start is not None else ""
 
 
 def _parse_numbered_items(text: str) -> list[tuple[str, str]]:
@@ -250,16 +291,30 @@ def _parse_bullet_items(text: str) -> list[str]:
     return items
 
 
-def _extract_all_code_blocks(text: str) -> list[str]:
-    """Extract all fenced code blocks from text.
-
-    Args:
-        text: Markdown text.
-
-    Returns:
-        List of code block contents.
-    """
-    return [m.group(1).strip() for m in re.finditer(r"```\w*\n?(.+?)\n?```", text, re.DOTALL)]
+def _execution_parts(execution: str) -> list[ExecutionPart]:
+    """Pair each fenced command with its immediately preceding Markdown."""
+    parts: list[ExecutionPart] = []
+    cursor = 0
+    active: tuple[str, int, int, int, str] | None = None
+    offset = 0
+    for line in execution.splitlines(keepends=True):
+        fence = _fence_line(line.rstrip("\r\n"))
+        if active is None and fence:
+            active = (fence[0], fence[1], offset, offset + len(line), fence[2])
+        elif active is not None and fence:
+            closes = fence[0] == active[0] and fence[1] >= active[1] and not fence[2]
+            if closes:
+                detail = re.sub(r"\n{3,}", "\n\n", execution[cursor : active[2]].strip())
+                info = active[4]
+                language = info.split(maxsplit=1)[0].lower() if info else ""
+                parts.append(ExecutionPart(detail, execution[active[3] : offset].strip(), language))
+                cursor = offset + len(line)
+                active = None
+        offset += len(line)
+    trailing = re.sub(r"\n{3,}", "\n\n", execution[cursor:].strip())
+    if trailing or not parts:
+        parts.append(ExecutionPart(trailing, ""))
+    return parts
 
 
 def parse_skill_tasks(skills_dir: Path) -> list[TaskTemplate]:
@@ -315,23 +370,31 @@ def parse_skill_tasks(skills_dir: Path) -> list[TaskTemplate]:
         # Execution: extract all code blocks
         execution = _extract_section(body, "Execution")
         if execution:
-            code_blocks = _extract_all_code_blocks(execution)
-            detail = re.sub(
-                r"```\w*\n?.+?\n?```",
-                "",
-                execution,
-                flags=re.DOTALL,
-            ).strip()
-            detail = re.sub(r"\n\s*\n", " ", detail).strip()
-            if code_blocks:
-                for i, code in enumerate(code_blocks):
-                    action = "Run the tool" if i == 0 else f"Run tool (option {i + 1})"
-                    steps.append(Step(action=action, detail=detail if i == 0 else "", code=code))
-            else:
+            code_index = 0
+            output_languages = {"markdown", "md", "json", "yaml", "yml", "toml", "text"}
+            for part in _execution_parts(execution):
+                if part.code and part.language not in output_languages:
+                    code_index += 1
+                    action = (
+                        "Run the tool" if code_index == 1 else f"Run tool (option {code_index})"
+                    )
+                elif part.code:
+                    action = "Review output example"
+                else:
+                    action = f"Review {name} execution guidance"
+                detail = part.detail
+                if not detail and part.code and part.language in output_languages:
+                    detail = "Compare the result with this expected output shape."
+                elif not detail and part.code:
+                    detail = "Run this command with the scoped parameters."
+                elif not detail:
+                    detail = "Review the execution guidance."
                 steps.append(
                     Step(
-                        action=f"Execute the {name} workflow",
-                        detail=detail or "Run the MCP tool with your parameters.",
+                        action=action,
+                        detail=detail,
+                        code=part.code,
+                        code_language=part.language,
                     )
                 )
 
@@ -428,7 +491,15 @@ def main(argv: list[str] | None = None) -> int:
             "name": t.name,
             "title": t.title,
             "introduction": t.introduction,
-            "steps": [{"action": s.action, "detail": s.detail, "code": s.code} for s in t.steps],
+            "steps": [
+                {
+                    "action": s.action,
+                    "detail": s.detail,
+                    "code": s.code,
+                    "code_language": s.code_language,
+                }
+                for s in t.steps
+            ],
             "prerequisites": t.prerequisites,
             "tags": t.tags,
             "source": t.source,

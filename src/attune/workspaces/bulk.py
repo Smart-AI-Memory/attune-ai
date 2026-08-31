@@ -119,6 +119,58 @@ def _request(raw: Mapping[str, object]) -> BulkRequest:
     )
 
 
+def _provider_status(
+    state: BulkWorkspaceState,
+    event: Mapping[str, object],
+    success: bool,
+) -> str:
+    if not success:
+        default = "failed"
+    elif state.mode == "submit":
+        default = "submitted"
+    else:
+        default = "pending"
+    status = str(event.get("status", default)).lower()
+    if status not in _PROVIDER_STATUSES:
+        raise CommandWorkspaceError(["Bulk provider status is invalid"])
+    return status
+
+
+def _accepted_count(
+    state: BulkWorkspaceState,
+    event: Mapping[str, object],
+    success: bool,
+) -> int:
+    if state.mode == "resume" and success and "accepted_count" not in event:
+        raise CommandWorkspaceError(["Successful bulk status receipt requires accepted_count"])
+    accepted = event.get("accepted_count", len(state.requests) if success else 0)
+    if isinstance(accepted, bool) or not isinstance(accepted, int) or accepted < 0:
+        raise CommandWorkspaceError(["Bulk accepted_count must be a non-negative integer"])
+    if state.mode == "submit" and accepted > len(state.requests):
+        raise CommandWorkspaceError(["Bulk accepted_count exceeds requested task count"])
+    if state.mode == "submit" and success and accepted != len(state.requests):
+        raise CommandWorkspaceError(["Successful bulk submission must accept every task"])
+    return accepted
+
+
+def _provider_batch_id(
+    state: BulkWorkspaceState,
+    event: Mapping[str, object],
+    success: bool,
+) -> str:
+    batch_id = str(event.get("batch_id", state.batch_id)).strip()
+    if success and not batch_id:
+        raise CommandWorkspaceError(["Successful bulk provider receipt requires batch_id"])
+    return batch_id
+
+
+def _provider_error(event: Mapping[str, object], success: bool) -> str:
+    error = str(event.get("error", "")).strip()
+    if not success and not error:
+        raise CommandWorkspaceError(["Failed bulk provider receipt requires error"])
+    return error
+
+
 class BulkWorkspaceAdapter:
     """Confirm paid submission once and reconnect by provider batch id."""
 
@@ -216,27 +268,10 @@ class BulkWorkspaceAdapter:
         success = event.get("success")
         if not isinstance(success, bool):
             raise CommandWorkspaceError(["Bulk provider success must be boolean"])
-        batch_id = str(event.get("batch_id", state.batch_id)).strip()
-        default_status = (
-            "failed" if not success else "submitted" if state.mode == "submit" else "pending"
-        )
-        status = str(event.get("status", default_status)).lower()
-        if status not in _PROVIDER_STATUSES:
-            raise CommandWorkspaceError(["Bulk provider status is invalid"])
-        if state.mode == "resume" and success and "accepted_count" not in event:
-            raise CommandWorkspaceError(["Successful bulk status receipt requires accepted_count"])
-        accepted = event.get("accepted_count", len(state.requests) if success else 0)
-        if isinstance(accepted, bool) or not isinstance(accepted, int) or accepted < 0:
-            raise CommandWorkspaceError(["Bulk accepted_count must be a non-negative integer"])
-        if state.mode == "submit" and accepted > len(state.requests):
-            raise CommandWorkspaceError(["Bulk accepted_count exceeds requested task count"])
-        if success and not batch_id:
-            raise CommandWorkspaceError(["Successful bulk provider receipt requires batch_id"])
-        if state.mode == "submit" and success and accepted != len(state.requests):
-            raise CommandWorkspaceError(["Successful bulk submission must accept every task"])
-        error = str(event.get("error", "")).strip()
-        if not success and not error:
-            raise CommandWorkspaceError(["Failed bulk provider receipt requires error"])
+        batch_id = _provider_batch_id(state, event, success)
+        status = _provider_status(state, event, success)
+        accepted = _accepted_count(state, event, success)
+        error = _provider_error(event, success)
         detail = str(event.get("detail", "")).strip() or status
         successor = BulkWorkspaceState(
             mode=state.mode,

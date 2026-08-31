@@ -34,6 +34,29 @@ Invariants (ratified — do not improvise around them):
 - **D3** Hard ceiling: 3 rounds per question. Halt early when
   positions converge or a round adds no information.
 
+## Shared command workspace (preferred)
+
+When the generic command-workspace tools are available, use them as the
+chair-facing surface for the lifecycle below. They do not replace the board
+or grant seats new authority:
+
+1. Open adapter `roundtable` with `command_workspace_open`, passing the
+   question, thread slug, expected rounds, and maximum seat invocations.
+2. Present its widget, or its returned Markdown verbatim when widgets are
+   unavailable. Collect only bound chair actions through
+   `command_workspace_collect_action`.
+3. After the existing moderator-only compiler and board operations succeed,
+   publish `seat_progress`, `round_complete`, and `synthesis` events through
+   `command_workspace_publish`. A compiler-dirty reply is never published.
+4. Render promotion triage one candidate at a time. Each new page carries a
+   fresh revision/nonce; a prior page is stale. This is the required baseline
+   for seven candidates because the former seven-entry form truncated in the
+   target viewport and could not be scrolled.
+
+If those tools are unavailable, follow the same steps below using compact
+text or form gates. Never weaken R1, R3, R4, or the three-round ceiling to
+work around a renderer failure.
+
 ## Step 0 — Intake and the spend gate
 
 Confirm the question with the user (one short exchange if it is
@@ -41,6 +64,9 @@ ambiguous; skip if crisp). Derive a thread slug
 (`kebab-case`, e.g. `q-cache-invalidation-002`). Then state the
 plan — roster, expected rounds (usually 1) — and get an explicit
 go before invoking any member. That go is session-durable.
+
+With the shared workspace, its spend-preview `start_roundtable` action is
+this explicit go. Do not invoke a seat until that bound action is returned.
 
 If Redis is unreachable (`Board()` raises on first call): tell the
 chair. Offer to deliberate unrecorded (transcript stays in-session;
@@ -100,6 +126,9 @@ T="<slug>" A="codex" F="/tmp/rt-codex.txt" DUR="41s" python -c "import os; from 
 ```
 
 Add token/cost figures as extra kwargs when the CLI reported them.
+After each validated post, publish the matching `seat_progress` receipt to
+the open shared workspace. After all three fixed-roster receipts (including
+explicit absent receipts), publish `round_complete`.
 
 **Absent seat (R6):** a member whose CLI is missing, unauthenticated,
 or times out never blocks the table. Post
@@ -139,12 +168,16 @@ candidates. Read the thread back any time with:
 T="<slug>" python -c "import os, json; from attune.roundtable import Board; print(json.dumps([vars(m) for m in Board().read_thread(os.environ['T'])], ensure_ascii=False, default=str))"
 ```
 
+Publish that recorded synthesis and its at-most-seven promotion candidates
+to the shared workspace only after the board post succeeds.
+
 ## Step 6 — Chair rules; promote per item (R4, R10, D2)
 
 Present the promotion candidates as discrete items — each with its
 board message id — and ask the chair per item: promote, decline, or
-another round. Use `AskUserQuestion` with `multiSelect` (or an
-elicitation form) — never assume. On promotion:
+another round. Prefer the shared workspace's one-candidate page. In fallback
+mode, use compact batches of at most three options rather than a single long
+form. Never assume a disposition. On promotion:
 
 1. Recommend an artifact tier per the contract's artifact-selection
    table — inline edit / structured one-shot / XML task / spec —

@@ -20,6 +20,16 @@ from attune.security.path_validation import _validate_file_path
 _SEVERITIES = frozenset({"HIGH", "MEDIUM", "LOW"})
 
 
+def _risk_score_problem(value: object) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        return "Bug prediction risk_score must be between 0 and 100"
+    if not 0 <= value <= 100:
+        return "Bug prediction risk_score must be between 0 and 100"
+    return ""
+
+
 @dataclass(frozen=True)
 class BugFindingReceipt:
     """One exact read-only bug prediction finding."""
@@ -69,13 +79,9 @@ class BugPredictWorkspaceState:
             problems.append("Bug prediction stage is invalid")
         if self.stage == "receipt" and self.success is None:
             problems.append("Bug prediction receipt requires a success result")
-        if self.risk_score is not None and (
-            isinstance(self.risk_score, bool)
-            or not isinstance(self.risk_score, int | float)
-            or self.risk_score < 0
-            or self.risk_score > 100
-        ):
-            problems.append("Bug prediction risk_score must be between 0 and 100")
+        score_problem = _risk_score_problem(self.risk_score)
+        if score_problem:
+            problems.append(score_problem)
         if self.success is False and not self.error.strip():
             problems.append("Failed bug prediction requires an error receipt")
         if self.success is True and self.risk_score is None:

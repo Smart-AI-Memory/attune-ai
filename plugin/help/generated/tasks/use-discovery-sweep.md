@@ -23,22 +23,24 @@ Invoke with: `/discovery-sweep <path or directory to sweep>`
    only if including LLM sources — "Spend cap? Default is $10.00."
 
 4. **Run the tool**
-   Call the `discovery_sweep` MCP tool with the scoped path: Optional knobs: Or via CLI:
+   Call the `discovery_sweep` MCP tool with the scoped path:
 
    ```
    discovery_sweep(path="<user-specified path>")
    ```
 
 5. **Run tool (option 2)**
+   Optional knobs:
 
    ```
    discovery_sweep(path="src/", no_llm=true)          # fast, free
-discovery_sweep(path="src/", budget_usd=5.0)       # cap LLM spend
+   discovery_sweep(path="src/", budget_usd=5.0)       # cap LLM spend
    ```
 
 6. **Run tool (option 3)**
+   Or via CLI:
 
-   ```
+   ```bash
    uv run attune workflow run discovery-sweep --path <target>
    ```
 

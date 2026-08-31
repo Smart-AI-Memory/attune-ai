@@ -105,6 +105,12 @@ ten cohort adapters in the chair-selected order.
   - `tests/unit/workspaces/test_security_audit.py`
   - `tests/unit/workspaces/test_cohort.py`
   - `tests/unit/test_mcp_memory_tools.py`
+  - `README.md`
+  - `plugin/README.md`
+  - `docs/getting-started/{mcp-integration,quickstart-plugin}.md`
+  - `plugin/help/generated/references/skill-*.md`
+  - `plugin/help/generated/tasks/use-*.md`
+  - `website/lib/features.ts`
   - `docs/handoffs/codex-shared-command-workspaces-t1.md`
 - Decisions: the test-proven minimum adapter seam is `create`, `project`, and
   `apply`. Legal actions and confirmation live in `WorkspaceView`; terminal
@@ -211,9 +217,17 @@ ten cohort adapters in the chair-selected order.
 | Whole cohort branch coverage | all ten `src/attune/workspaces` adapters plus package exports | 95.34%; every adapter individually at least 90% |
 | Final style and projections | Black, Ruff, skill projection drift, and `git diff --check` | 37 Python files unchanged; all checks pass; 38 projection tests pass |
 | Final Task 7 lifecycle verification | full shared host, ten adapters, registration, spec artifacts, handoff, and cohort order test | symbol-reality PASS (`8affb219609f`); falsifiability PASS (`623a7b84549a`) |
-| Required different-model review | Antigravity over the complete staged diff, re-laning every omitted path and re-reviewing remediations | 25 real board-posted runs; union covers all 69 staged files; 35 real findings accepted/fixed or accepted-modified; 10 rejected with verbatim claims/reasons in the R5 ledger; final design and skill packs clean |
+| Required different-model review | Antigravity over the complete staged diff, re-laning every omitted path and re-reviewing remediations | 31 real board-posted runs; union covers the original 69 files plus the final projector/test closure; 51 real findings accepted/fixed or accepted-modified; 10 rejected with verbatim claims/reasons in the R5 ledger; final design, skill, reference, and task-projector packs clean |
+| Production MCP `/roundtable` acceptance | actual `AttuneMCPServer` open/publish/collect flow, rendered as HTML and Markdown | seven one-candidate ruling pages; stale replay rejected; terminal receipt at revision 11/event sequence 2; 6,642 HTML chars and 246 Markdown chars |
+| Production MCP `/spec` acceptance | actual `AttuneMCPServer` create/tasks/redo/approve/execution/resume flow, rendered as HTML and Markdown | redo, approval, execution gate, and incomplete-plan resume all passed; executing state at revision 9/event sequence 5; 6,492 HTML chars and 179 Markdown chars |
+| Public capability projection | `project_capabilities.py --check`, reference/task template projectors, and claim/help drift tests | advertised counts now match 64 total MCP tools and 53 core tools; all projectors clean; 19 focused drift tests passed |
+| Complexity ratchet remediation | Radon plus complexity and six affected adapter suites after splitting event parsing and media decoding | no new D-or-worse blocks; 121 passed after pinned Black formatting |
+| Complete unit suite | `python -m pytest -n0 tests/unit -q` with localhost and real-backend fixture permissions | 21,629 passed, 109 skipped, 16 deselected, 3 expected failures in 8m53s |
+| Review-finding remediation | preserve Markdown paragraphs, bind prose to its own fence, distinguish runnable/output/guidance steps, match backtick/tilde delimiters by type and length, indent multiline detail in the canonical Jinja template, and regenerate all 26 task pages | all 16 remediation findings fixed at the source; 79 focused generator/help tests passed; generator `--check` clean; final 20-file Antigravity re-lane returned `NO FINDINGS` with no omissions |
+| Repository-wide pre-commit | `pre-commit run --all-files` after remediation | all blocking hooks passed; two pre-existing unresolved-doc-link warnings remain warn-only and outside this branch |
 
 ## Next action
 
-Run the final consolidated verification and pre-commit gates, then create the
-requested signed commit. No push, PR, or merge has been performed.
+After this handoff and its R5 receipt are committed and pushed, review the one
+feature PR and merge only on the chair's explicit action; this governance/spec
+diff is intentionally not eligible for lead-armed auto-merge.
