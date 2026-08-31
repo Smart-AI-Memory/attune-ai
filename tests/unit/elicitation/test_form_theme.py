@@ -14,10 +14,9 @@ from attune.elicitation import widget as widget_mod
 #: 8 -> 10 KB at 0.6.0 — ranking-construct D2-a, 2026-08-15, with the
 #: 10,064 B RANK+ASSUME measurement on record; 10 -> 12 KB at 0.9.0
 #: for the semantic design-contract projection (12,174 B). NOT a
-#: ratchet: the next
-#: raise needs its own ruling; a CSS consolidation pass was offered
-#: and not chosen).
-_BUDGET_BYTES = 12288
+#: ratchet: the next raise needs its own ruling; 12 -> 16 KB was
+#: chair-ratified 2026-08-30 for the project path-picker family.
+_BUDGET_BYTES = 16384
 
 #: ``var(--name)`` with NO fallback value — the pattern the theme
 #: must never contain (host-token fallbacks are the design).

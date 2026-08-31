@@ -16,6 +16,7 @@ from attune.elicitation.fix_intake import (
     compose_fix_command,
     list_subdirectories,
     probe_candidates,
+    project_path_candidates,
     scope_candidates,
 )
 
@@ -160,8 +161,10 @@ def test_form_builds_with_candidates_and_offers_other(tmp_path: Path) -> None:
     ids = [q.id for q in form.questions]
     assert ids == ["request", "scope", "probes"]
     scope_q = form.questions[1]
-    assert scope_q.type.value == "single_select"
-    assert scope_q.options[-1] == OTHER
+    assert scope_q.type.value == "text_input"
+    assert scope_q.options == []
+    assert scope_q.path_kind == "either"
+    assert scope_q.path_options == ["src/pkg"]
     assert form.questions[2].type.value == "multi_select"
 
 
@@ -171,6 +174,16 @@ def test_form_degrades_to_free_text_without_candidates() -> None:
     assert scope_q.type.value == "text_input"
     assert probes_q.type.value == "text_input"
     assert scope_q.required and probes_q.required
+    assert scope_q.path_kind == "either"
+
+
+def test_project_path_candidates_are_rooted_pruned_and_capped(tmp_path: Path) -> None:
+    (tmp_path / "src" / "pkg").mkdir(parents=True)
+    (tmp_path / "src" / "pkg" / "mod.py").write_text("x = 1\n")
+    (tmp_path / ".hidden").mkdir()
+    (tmp_path / ".hidden" / "secret.py").write_text("x\n")
+    paths = project_path_candidates(tmp_path, limit=4)
+    assert paths == [".", "src", "src/pkg", "src/pkg/mod.py"]
 
 
 def test_compose_command_quotes_everything_but_never_authorizes_run() -> None:

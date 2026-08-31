@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Fix scope fields can browse project paths**: interactive Fix intake now
+  supplies a searchable, project-confined file and folder picker through
+  `attune-forms 0.11.0`, while preserving manual text entry and the native
+  MCP string-input fallback.
+
 - **Fix previews now negotiate portable MCP Apps rendering**: clients that
   advertise the standard Attune UI MIME profile receive the shared
   `attune-forms 0.10.0` `ui://` resource and tool metadata. The app posts

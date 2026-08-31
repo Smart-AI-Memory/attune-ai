@@ -41,6 +41,38 @@ _SKIP_PARTS = frozenset({"__pycache__", ".pytest_cache", ".git", ".venv", "node_
 _TEST_PATTERNS = ("test_*.py", "*_test.py", "*_suite.py")
 
 
+def project_path_candidates(repo_root: Path, limit: int = 500) -> list[str]:
+    """Breadth-first, project-relative files and directories for path pickers.
+
+    Hidden/cache directories are pruned, symlinks escaping the repository
+    are excluded, and the result is capped so one form cannot balloon on a
+    large checkout. Directory symlinks are selectable only when their
+    resolved target stays inside the project, but are never traversed.
+    """
+    root = repo_root.resolve()
+    paths = ["."]
+    pending = [root]
+    while pending and len(paths) < limit:
+        parent = pending.pop(0)
+        try:
+            children = sorted(parent.iterdir(), key=lambda path: (not path.is_dir(), path.name))
+        except OSError:
+            continue
+        for child in children:
+            if child.name.startswith(".") or child.name in _SKIP_PARTS:
+                continue
+            try:
+                child.resolve().relative_to(root)
+            except (OSError, ValueError):
+                continue
+            paths.append(child.relative_to(root).as_posix())
+            if len(paths) >= limit:
+                break
+            if child.is_dir() and not child.is_symlink():
+                pending.append(child)
+    return paths
+
+
 def _git_changed_files(repo_root: Path) -> list[str]:
     """Changed/untracked files from ``git status --porcelain``, POSIX form.
 
@@ -230,8 +262,9 @@ FIX_TEMPLATE = FormTemplate(
         FieldSlot(
             key="scope",
             text="Where must the diff stay confined (--scope)?",
+            control="text_input",
             provider="fix_scopes",
-            other=OTHER,
+            path_kind="either",
             fallback_text="Where must the diff stay confined (--scope)? (path)",
             help_text="Changed paths first — a fix usually lands where the change is.",
         ),
@@ -252,6 +285,7 @@ TEMPLATES["fix"] = FIX_TEMPLATE
 def build_fix_intake_form(
     scopes: list[str],
     probes: list[str],
+    project_paths: list[str] | None = None,
 ) -> FormSchema:
     """The one intake form: request + scope + probes (D21).
 
@@ -261,10 +295,11 @@ def build_fix_intake_form(
     The structural-equality gate pins the output against the
     shipped hand shape.
     """
+    picker_paths = list(dict.fromkeys([*scopes, *(project_paths or [])]))[:500]
     return build_form(
         FIX_TEMPLATE,
         ProviderContext(repo_root=Path.cwd()),
-        candidates_override={"scope": scopes, "probes": probes},
+        candidates_override={"scope": picker_paths, "probes": probes},
     )
 
 
@@ -366,7 +401,7 @@ def _main(argv: list[str]) -> int:
     repo_root = Path.cwd()
     scopes = scope_candidates(repo_root)
     probes = probe_candidates(repo_root, scopes)
-    form = build_fix_intake_form(scopes, probes)
+    form = build_fix_intake_form(scopes, probes, project_path_candidates(repo_root))
     payload = {
         "form": {
             "title": form.title,
@@ -380,6 +415,8 @@ def _main(argv: list[str]) -> int:
                     "default": q.default,
                     "help_text": q.help_text,
                     "required": q.required,
+                    "path_kind": q.path_kind,
+                    "path_options": list(q.path_options),
                 }
                 for q in form.questions
             ],
