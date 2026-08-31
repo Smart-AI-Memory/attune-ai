@@ -1,9 +1,10 @@
 # Shared Command Workspaces — Requirements
 
-**Status:** implemented and verified (2026-08-31) — the chair promoted all
-seven round-table candidates, raised this initiative's changed-code coverage
-requirement to 90%, and selected auto-run for the remaining separately gated
-tasks. Tasks 1–7 and all ten cohort adapters are complete.
+**Status:** completed (2026-08-31) — implemented and verified; the chair
+promoted all seven round-table candidates, raised this initiative's
+changed-code coverage requirement to 90%, and selected auto-run for the
+remaining separately gated tasks. Tasks 1–7 and all ten cohort adapters are
+complete.
 **Slug:** `shared-command-workspaces`
 **Provenance:** round-table thread
 `shared-renderer-command-workspaces-001`; promoted board messages

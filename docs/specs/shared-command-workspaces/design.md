@@ -1,6 +1,7 @@
 # Shared Command Workspaces — Design
 
-**Status:** implemented and verified through Tasks 1–7.
+**Status:** completed (2026-08-31) — implemented and verified through Tasks
+1–7.
 **Last updated:** 2026-08-31
 
 ## Verified baseline
