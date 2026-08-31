@@ -146,7 +146,7 @@ backend = [
 
 # LSP server for editor integration (optional)
 lsp = [
-    "pygls>=1.0.0,<3.0.0",
+    "pygls>=2.1.1,<3.0.0",
     "lsprotocol>=2023.0.0,<2026.0.0",
 ]
 
@@ -326,7 +326,7 @@ all = [
     "bcrypt>=4.0.0,<6.0.0",  # Secure password hashing
     "PyJWT[crypto]>=2.12.0",  # JWT authentication; >=2.12.0 fixes GHSA-752w-5fwx-jx9f
     # LSP
-    "pygls>=1.0.0,<3.0.0",
+    "pygls>=2.1.1,<3.0.0",
     "lsprotocol>=2023.0.0,<2026.0.0",
     # Windows
     "colorama>=0.4.6,<1.0.0",
