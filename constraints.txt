@@ -7,8 +7,8 @@
 # Direct CVE fixes
 aiohttp>=3.10.0          # CVE: PYSEC-2024-24, PYSEC-2024-26, GHSA-7gpw, GHSA-5m98, GHSA-8495, GHSA-9548
 black>=24.3.0            # CVE: PYSEC-2024-48
-fastapi>=0.109.1         # CVE: PYSEC-2024-38
-starlette>=0.40.0        # CVE: GHSA-f96h, GHSA-2c2j
+fastapi>=0.141.1         # CVE: PYSEC-2024-38
+starlette>=1.6.0        # CVE: GHSA-f96h, GHSA-2c2j
 filelock>=3.16.0         # CVE: GHSA-w853-jp5j-5j7f
 urllib3>=2.3.0           # CVE: GHSA-gm62, GHSA-2xpw
 

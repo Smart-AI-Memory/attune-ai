@@ -137,9 +137,9 @@ agents = [
 
 # Backend API server (optional) - authentication
 backend = [
-    "fastapi>=0.109.1,<1.0.0",  # CVE fix: PYSEC-2024-38
-    "uvicorn>=0.20.0,<1.0.0",
-    "starlette>=0.40.0,<2.0.0",  # CVE fix: GHSA-f96h, GHSA-2c2j
+    "fastapi>=0.141.1,<1.0.0",  # CVE fix: PYSEC-2024-38
+    "uvicorn>=0.52.4,<1.0.0",
+    "starlette>=1.6.0,<2.0.0",  # CVE fix: GHSA-f96h, GHSA-2c2j
     "bcrypt>=4.0.0,<6.0.0",  # Password hashing (cost factor 12)
     "PyJWT[crypto]>=2.12.0,<3.0.0",  # JWT auth - uses cryptography (no ecdsa CVE); >=2.12.0 fixes GHSA-752w-5fwx-jx9f
 ]
@@ -158,8 +158,8 @@ windows = [
 # Operations dashboard (`attune ops`) — local FastAPI UI for workflows,
 # telemetry, memory, releases. No npm, no build step. Read-only by default.
 ops = [
-    "fastapi>=0.110.0,<1.0",
-    "uvicorn[standard]>=0.27.0,<1.0",
+    "fastapi>=0.141.1,<1.0",
+    "uvicorn[standard]>=0.52.4,<1.0",
     "jinja2>=3.1.0,<4.0",
 ]
 
@@ -203,12 +203,12 @@ dev = [
     "pre-commit>=3.0,<5.0",  # Updated for pre-commit 4.x
     # Test dependencies for API and integration tests
     "httpx>=0.27.0,<1.0.0",  # For API testing
-    "fastapi>=0.110.0,<1.0.0",  # attune.ops dashboard + its API tests
+    "fastapi>=0.141.1,<1.0.0",  # attune.ops dashboard + its API tests
     # attune.ops dashboard runtime ([ops] extra) — mirrored into [dev]
     # so worktree/dev syncs can run and test `python -m attune.ops`
     # without a separate `--extra ops`. Keep pins in lock-step with the
     # [ops] extra above.
-    "uvicorn[standard]>=0.27.0,<1.0",
+    "uvicorn[standard]>=0.52.4,<1.0",
     "jinja2>=3.1.0,<4.0",
     "requests>=2.28.0,<3.0.0",  # For notification tests
     # Redis/AMS mirror removed 2026-07-04 — redis + agent-memory-client
@@ -274,9 +274,9 @@ enterprise = [
     "python-docx>=0.8.11,<2.0.0",
     "pyyaml>=6.0,<7.0",
     # Backend API server with authentication
-    "fastapi>=0.109.1,<1.0.0",
-    "uvicorn>=0.20.0,<1.0.0",
-    "starlette>=0.40.0,<2.0.0",
+    "fastapi>=0.141.1,<1.0.0",
+    "uvicorn>=0.52.4,<1.0.0",
+    "starlette>=1.6.0,<2.0.0",
     "bcrypt>=4.0.0,<6.0.0",  # Secure password hashing
     "PyJWT[crypto]>=2.12.0",  # JWT authentication; >=2.12.0 fixes GHSA-752w-5fwx-jx9f
     # OpenTelemetry for enterprise telemetry
@@ -320,9 +320,9 @@ all = [
     "python-docx>=0.8.11,<2.0.0",
     "pyyaml>=6.0,<7.0",
     # Backend with authentication
-    "fastapi>=0.109.1,<1.0.0",  # CVE fix
-    "uvicorn>=0.20.0,<1.0.0",
-    "starlette>=0.40.0,<2.0.0",  # CVE fix
+    "fastapi>=0.141.1,<1.0.0",  # CVE fix
+    "uvicorn>=0.52.4,<1.0.0",
+    "starlette>=1.6.0,<2.0.0",  # CVE fix
     "bcrypt>=4.0.0,<6.0.0",  # Secure password hashing
     "PyJWT[crypto]>=2.12.0",  # JWT authentication; >=2.12.0 fixes GHSA-752w-5fwx-jx9f
     # LSP
@@ -388,12 +388,12 @@ dev = [
     "pre-commit>=3.0,<5.0",  # Updated for pre-commit 4.x
     # Test dependencies for API and integration tests
     "httpx>=0.27.0,<1.0.0",  # For API testing
-    "fastapi>=0.110.0,<1.0.0",  # attune.ops dashboard + its API tests
+    "fastapi>=0.141.1,<1.0.0",  # attune.ops dashboard + its API tests
     # attune.ops dashboard runtime ([ops] extra) — mirrored into [dev]
     # so worktree/dev syncs can run and test `python -m attune.ops`
     # without a separate `--extra ops`. Keep pins in lock-step with the
     # [ops] extra above.
-    "uvicorn[standard]>=0.27.0,<1.0",
+    "uvicorn[standard]>=0.52.4,<1.0",
     "jinja2>=3.1.0,<4.0",
     "requests>=2.28.0,<3.0.0",  # For notification tests
     # Redis/AMS mirror removed 2026-07-04 — redis + agent-memory-client
