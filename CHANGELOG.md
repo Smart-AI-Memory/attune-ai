@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Commands can share one state-bound dynamic workspace renderer**:
+  Roundtable, Spec, Release Prep, Bug Predict, and eight additional workflows
+  now expose their own interactive UI through the same revision-bound MCP
+  workspace contract, with Markdown/text fallbacks and terminal receipts for
+  clients that do not render widgets.
+
 - **Fix scope fields can browse project paths**: interactive Fix intake now
   supplies a searchable, project-confined file and folder picker through
   `attune-forms 0.11.0`, while preserving manual text entry and the native
