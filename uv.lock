@@ -531,7 +531,7 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'enterprise'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'full'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40.0" },
-    { name = "attune-forms", specifier = ">=0.10.0,<1.0" },
+    { name = "attune-forms", specifier = ">=0.11.0,<1.0" },
     { name = "attune-help", marker = "extra == 'dev'", specifier = ">=0.10.0" },
     { name = "attune-rag", specifier = ">=0.1.5,<2.0" },
     { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.5,<2.0" },
@@ -709,14 +709,14 @@ dev = [
 
 [[package]]
 name = "attune-forms"
-version = "0.10.0"
+version = "0.11.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "structlog" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ed/03/8751d7bcdcbab1209584ec24a66a79492f5c3a0f7e7bff598f036d8523d9/attune_forms-0.10.0.tar.gz", hash = "sha256:d0a046858d5c72c0424fcb4f8bd3c18dfc29a5824d3e66060bb70cbdd852b678", size = 215716, upload-time = "2026-08-30T04:32:04.878Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b6/ba/971ca5c8e21eeab45e1d9e001d9fa49a82f9d4b5a636a25f0fc39d1d03c1/attune_forms-0.11.0.tar.gz", hash = "sha256:5d3f1866d67b53c54511b652676a5cdbf082f9367a5d75c8474ec7061d6a32dd", size = 218119, upload-time = "2026-08-31T03:43:35.63Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ff/7d/d09fa18dc9f4f4ff353c72b811c686412f9331044bc10c69e4e25e330af7/attune_forms-0.10.0-py3-none-any.whl", hash = "sha256:6fb41ef2ddb4b79aa348f8111d57d5c74775d577c1052e307cac97f612790a2b", size = 124680, upload-time = "2026-08-30T04:32:03.406Z" },
+    { url = "https://files.pythonhosted.org/packages/c8/f3/1bfca65892558818b6b62c490e6c4a3e3b4546bd48f70a01af7f910fa51b/attune_forms-0.11.0-py3-none-any.whl", hash = "sha256:275021e6d05770f858caa50cc09448953638d5aa0a4f4205f4d26891039b8fc4", size = 126439, upload-time = "2026-08-31T03:43:33.999Z" },
 ]
 
 [[package]]

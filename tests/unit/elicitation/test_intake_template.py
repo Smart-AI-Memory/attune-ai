@@ -48,8 +48,10 @@ def _hand_fix_form(scopes: list[str], probes: list[str]):
             {
                 "id": "scope",
                 "text": "Where must the diff stay confined (--scope)?",
-                "type": "single_select",
-                "options": [*scopes, fix_intake.OTHER],
+                "type": "text_input",
+                "required": True,
+                "path_kind": "either",
+                "path_options": scopes,
                 "help_text": "Changed paths first — a fix usually lands where the change is.",
             }
         )
@@ -57,9 +59,12 @@ def _hand_fix_form(scopes: list[str], probes: list[str]):
         fields.append(
             {
                 "id": "scope",
-                "text": "Where must the diff stay confined (--scope)? (path)",
+                "text": "Where must the diff stay confined (--scope)?",
                 "type": "text_input",
                 "required": True,
+                "path_kind": "either",
+                "path_options": [],
+                "help_text": "Changed paths first — a fix usually lands where the change is.",
             }
         )
     if probes:
