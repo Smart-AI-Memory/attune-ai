@@ -482,6 +482,74 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
                 "required": ["form", "answers"],
             },
         },
+        "command_workspace_open": {
+            "description": (
+                "Open a registered command adapter on the shared workspace "
+                "renderer. The server owns canonical state, revision and "
+                "one-time action authority; the adapter owns command "
+                "semantics. Returns widget HTML and an equivalent Markdown "
+                "fallback without executing the command."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "adapter_id": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+                    },
+                    "intake": {
+                        "type": "object",
+                        "description": "Adapter-owned validated intake values",
+                    },
+                    "workspace_id": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+                        "description": (
+                            "Existing workspace to replace after an adapter-approved edit"
+                        ),
+                    },
+                },
+                "required": ["adapter_id", "intake"],
+                "additionalProperties": False,
+            },
+        },
+        "command_workspace_collect_action": {
+            "description": (
+                "Validate and consume one returned action against the exact "
+                "canonical command workspace revision, nonce and contract "
+                "hash. Stale, altered, replayed, unknown and concurrent "
+                "actions fail closed."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {"response": workspace_response_schema},
+                "required": ["response"],
+                "additionalProperties": False,
+            },
+        },
+        "command_workspace_publish": {
+            "description": (
+                "Publish one trusted moderator/executor event to an open "
+                "command workspace. The adapter validates the event; "
+                "progress-only events advance event_sequence without "
+                "invalidating action authority."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "workspace_id": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+                    },
+                    "event": {
+                        "type": "object",
+                        "description": "Adapter-owned moderator/executor event",
+                    },
+                },
+                "required": ["workspace_id", "event"],
+                "additionalProperties": False,
+            },
+        },
         "fix_workspace_preview": {
             "description": (
                 "Build and render a canonical Fix preview from validated "

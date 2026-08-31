@@ -30,6 +30,23 @@ Before running, ask:
 
 ## Execution
 
+### Shared command workspace (preferred)
+
+Open adapter `memory-and-context` with the selected operation and scoped
+arguments. Present its widget or returned Markdown and collect its bound
+action before calling the existing memory tool. Store and forget are external
+writes and require explicit confirmation; retrieve and search remain
+read-only. Publish the exact tool response as `operation_result`.
+
+After a successful store or forget, follow the workspace's returned
+`memory_retrieve` verification request and publish it as
+`verification_result`. Store succeeds only when the same value and
+classification are retrieved; forget succeeds only when the post-delete read
+misses. Never render stored values—especially SENSITIVE values—in the
+workspace. A failed backend call must say “did not complete.” Preserve these
+decisions and verification receipts in compact text when the shared tools are
+unavailable.
+
 Based on the user's answer, call the appropriate MCP
 tool:
 

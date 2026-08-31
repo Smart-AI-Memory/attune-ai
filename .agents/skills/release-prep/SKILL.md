@@ -40,6 +40,23 @@ Before running, ask:
 > deterministic 4-agent gate (real bandit/ruff/pytest + hard
 > thresholds) is CLI-only: `attune workflow run release-gate`.
 
+## Shared command workspace (preferred)
+
+When the generic command-workspace tools are available, open adapter
+`release-prep` with the selected version, scope, and project path. Present its
+widget or returned Markdown and collect its bound `start_release_prep` action
+before invoking checks. Publish each real Security, Testing, Documentation,
+and Versioning receipt as `gate_result`, then publish
+`assessment_complete`.
+
+The workspace reviews one gate at a time and then issues a separate final
+release approval. A critical `FAIL`, `ERROR`, or synthesized `MISSING` receipt
+can only be fixed and rerun; it cannot be accepted. A Documentation warning
+may be accepted only through its explicit bound action. Publish tool crashes
+as `ERROR` receipts — a failed gatekeeper fails the gate and never disappears.
+If the shared tools are unavailable, retain the same repeated decisions in
+compact text/form gates.
+
 ## Execution
 
 Call the `release_notes` MCP tool for a changelog draft and

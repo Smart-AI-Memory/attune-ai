@@ -2,14 +2,18 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from attune_forms import WorkspaceActionResponse, WorkspaceViewId
 
 from attune.elicitation.fix_workspace import (
+    FixAdapterState,
+    FixWorkspaceAdapter,
     FixWorkspaceError,
     FixWorkspaceState,
     preview_workspace_dict,
@@ -244,12 +248,32 @@ def test_action_time_rebuild_rejects_changed_answers(
         validate_fix_workspace_action(mutated, _response(mutated))
 
 
+def test_action_time_rebuild_is_authoritative_over_stored_projection(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _repo(tmp_path, monkeypatch)
+    state = FixWorkspaceState.create_preview(_answers())
+    assert state.preview is not None
+    rebuilt = replace(state.preview, goal="different canonical goal")
+
+    with patch(
+        "attune.elicitation.fix_workspace._preview_from_answers",
+        return_value=rebuilt,
+    ) as rebuild:
+        with pytest.raises(FixWorkspaceError, match="changed after it was rendered"):
+            validate_fix_workspace_action(state, _response(state))
+
+    rebuild.assert_called_once_with(state.validated_answers)
+
+
 @pytest.mark.parametrize(
     ("change", "problem"),
     [
         ({"action": "delete_repo"}, "not allowed"),
+        ({"workspace_id": "fix-other"}, "workspace id does not match"),
         ({"contract_hash": "0" * 64}, "contract hash does not match"),
         ({"revision": 99}, "revision does not match"),
+        ({"action_nonce": "n" * 32}, "nonce does not match"),
         ({"confirmed": False}, "requires explicit confirmation"),
     ],
 )
@@ -282,6 +306,70 @@ def test_edit_invalidates_authority(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     assert result.state.action_nonce == ""
     with pytest.raises(FixWorkspaceError, match="not awaiting"):
         validate_fix_workspace_action(result.state, _response(state))
+
+
+def test_fix_adapter_state_rejects_incoherent_domain_combinations(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _repo(tmp_path, monkeypatch)
+    adapter = FixWorkspaceAdapter()
+    state = adapter.create(_answers())
+    assert state.preview is not None
+
+    invalid = (
+        (state.validated_answers_json, state.preview, "unknown", ""),
+        (state.validated_answers_json, state.preview, "intake", ""),
+        (state.validated_answers_json, None, "preview", ""),
+        (state.validated_answers_json, state.preview, "approved", "0" * 64),
+        (state.validated_answers_json, state.preview, "preview", "0" * 64),
+    )
+    for args in invalid:
+        with pytest.raises(FixWorkspaceError):
+            FixAdapterState(*args)
+
+
+def test_fix_adapter_rejects_invalid_reentry_state_and_actions(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _repo(tmp_path, monkeypatch)
+    adapter = FixWorkspaceAdapter()
+    state = adapter.create(_answers())
+    with pytest.raises(FixWorkspaceError, match="select edit_contract"):
+        adapter.create(_answers(), prior_state=state)
+    with pytest.raises(FixWorkspaceError, match="incompatible state"):
+        adapter.project("not-fix-state")
+    with pytest.raises(FixWorkspaceError, match="not awaiting"):
+        adapter.apply(
+            "not-fix-state",
+            WorkspaceActionResponse(WorkspaceViewId.PREVIEW, "run_fix", True),
+        )
+    with pytest.raises(FixWorkspaceError, match="unsupported Fix action"):
+        adapter.apply(
+            state,
+            WorkspaceActionResponse(WorkspaceViewId.PREVIEW, "unknown", True),
+        )
+    with pytest.raises(FixWorkspaceError, match="not a Fix command workspace"):
+        adapter.compatibility_state("not-a-record")
+
+
+def test_fix_adapter_rebuild_rejects_changed_contract(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _repo(tmp_path, monkeypatch)
+    adapter = FixWorkspaceAdapter()
+    state = adapter.create(_answers())
+    assert state.preview is not None
+    changed = replace(state.preview, goal="changed during approval")
+
+    with patch(
+        "attune.elicitation.fix_workspace._preview_from_answers",
+        return_value=changed,
+    ):
+        with pytest.raises(FixWorkspaceError, match="changed after it was rendered"):
+            adapter.apply(
+                state,
+                WorkspaceActionResponse(WorkspaceViewId.PREVIEW, "run_fix", True),
+            )
 
 
 @pytest.mark.asyncio
@@ -344,3 +432,88 @@ async def test_live_server_render_edit_rerender_run_and_replay_receipt(
     )
     assert replay["success"] is False
     assert any("consumed" in problem for problem in replay["problems"])
+
+
+@pytest.mark.asyncio
+async def test_concurrent_confirmations_return_at_most_one_approved_argv(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo = _repo(tmp_path, monkeypatch)
+    server = _server(repo)
+    rendered = await server.call_tool("fix_workspace_preview", {"answers": _answers()})
+    state = FixWorkspaceState.from_dict(rendered["state"])
+
+    results = await asyncio.gather(
+        server.call_tool(
+            "fix_workspace_collect_action",
+            {"response": _response(state)},
+        ),
+        server.call_tool(
+            "fix_workspace_collect_action",
+            {"response": _response(state)},
+        ),
+    )
+
+    approved = [result for result in results if result.get("approved")]
+    assert len(approved) == 1
+    assert approved[0]["approved_command_argv"][-1] == "--run"
+    assert sum(result["success"] for result in results) == 1
+
+
+@pytest.mark.asyncio
+async def test_terminal_state_rejects_mutated_follow_up_without_state_change(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo = _repo(tmp_path, monkeypatch)
+    server = _server(repo)
+    rendered = await server.call_tool("fix_workspace_preview", {"answers": _answers()})
+    state = FixWorkspaceState.from_dict(rendered["state"])
+    approved = await server.call_tool(
+        "fix_workspace_collect_action",
+        {"response": _response(state)},
+    )
+    assert approved["approved"] is True
+    terminal_record = server._command_workspaces.get(state.workspace_id)
+    assert terminal_record is not None
+
+    mutated = _response(state)
+    mutated.update(
+        revision=state.revision + 1,
+        action_nonce="n" * 32,
+        contract_hash="0" * 64,
+    )
+    rejected = await server.call_tool(
+        "fix_workspace_collect_action",
+        {"response": mutated},
+    )
+
+    assert rejected["success"] is False
+    assert server._command_workspaces.get(state.workspace_id) == terminal_record
+    terminal_state = server._fix_workspace_adapter.compatibility_state(terminal_record)
+    assert terminal_state.approved_contract_hash == state.contract_hash
+    assert terminal_state.action_nonce == ""
+
+
+@pytest.mark.asyncio
+async def test_widget_markdown_and_headless_projection_have_action_parity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo = _repo(tmp_path, monkeypatch)
+    server = _server(repo)
+    rendered = await server.call_tool("fix_workspace_preview", {"answers": _answers()})
+    state = FixWorkspaceState.from_dict(rendered["state"])
+    assert state.preview is not None
+    headless_actions = {action["id"] for action in preview_workspace_dict(state.preview)["actions"]}
+
+    assert headless_actions == {"edit_contract", "run_fix"}
+    for action_id in headless_actions:
+        assert f'data-workspace-action="{action_id}"' in rendered["html"]
+        assert f"`{action_id}`" in rendered["markdown"]
+    for binding_value in (
+        state.workspace_id,
+        str(state.revision),
+        state.action_nonce,
+        state.contract_hash,
+    ):
+        assert binding_value in rendered["html"]
+        assert binding_value in rendered["markdown"]

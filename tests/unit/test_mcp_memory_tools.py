@@ -23,15 +23,22 @@ def server():
 
 
 class TestToolRegistration:
-    """Verify all tools are registered (48 core + 6 optional redis plugin)."""
+    """Verify all core, workspace, and optional Redis tools are registered."""
 
     def test_tools_list_returns_at_least_core_count(self, server: AttuneMCPServer):
         """Core tools (48) are always registered; attune-redis adds 6 more."""
         tools = server.get_tool_list()
         tool_names = {t["name"] for t in tools}
 
-        # 48 core tools must always be present (incl. chart_render_widget)
-        assert len(tools) >= 48
+        # The shared renderer adds three generic workspace tools to the
+        # previous 48-tool core surface.
+        workspace_tools = {
+            "command_workspace_open",
+            "command_workspace_collect_action",
+            "command_workspace_publish",
+        }
+        assert len(tools) >= 51
+        assert workspace_tools.issubset(tool_names)
 
         # When attune-redis plugin is installed, all 6 redis tools are present
         redis_tools = {
@@ -45,7 +52,7 @@ class TestToolRegistration:
         if redis_tools.issubset(tool_names):
             # attune-redis also registers 5 session_memory_* tools when the
             # core session stash is importable (conditional registration).
-            expected = 61 if "session_memory_status" in tool_names else 56
+            expected = 64 if "session_memory_status" in tool_names else 59
             assert (
                 len(tools) == expected
             ), f"Expected {expected} tools with redis plugin, got {len(tools)}"

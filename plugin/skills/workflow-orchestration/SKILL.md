@@ -62,6 +62,21 @@ Based on the answer, route to the appropriate workflow.
 
 ## Execution
 
+### Shared command workspace (preferred)
+
+Open adapter `workflow-orchestration` with the goal, validated path, and exact
+ordered child list. Present its widget or returned Markdown. The bound
+`run_workflows` action requires explicit confirmation because it can invoke
+multiple paid workflows. Run only the returned children.
+
+Publish every real child outcome as one `child_result` carrying its name,
+status, detail, and exact probe. Then publish `orchestration_complete`. The
+adapter restores the requested order and synthesizes `MISSING` for any absent
+child; `FAIL`, `ERROR`, or `MISSING` keeps the aggregate failed, while warnings
+produce a visibly degraded receipt. Never collapse mixed outcomes into a
+clean summary. Preserve the same per-child receipts in compact text when the
+shared tools are unavailable.
+
 Route to the matching MCP tool with the scoped path:
 
 ```

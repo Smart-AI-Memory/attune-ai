@@ -331,6 +331,9 @@ class TestGetElicitationTools:
         tools = get_elicitation_tools()
         assert "elicitation_render_widget" in tools
         assert "elicitation_ask" in tools
+        assert "command_workspace_open" in tools
+        assert "command_workspace_collect_action" in tools
+        assert "command_workspace_publish" in tools
         assert "fix_workspace_preview" in tools
         assert "fix_workspace_collect_action" in tools
 
@@ -346,6 +349,23 @@ class TestGetElicitationTools:
             }
         ).issubset(response["required"])
         assert response["additionalProperties"] is False
+
+    def test_shared_workspace_action_requires_full_authority_binding(self) -> None:
+        schema = get_elicitation_tools()["command_workspace_collect_action"]["input_schema"]
+        response = schema["properties"]["response"]
+        assert {
+            "workspace_id",
+            "revision",
+            "action_nonce",
+            "contract_hash",
+        }.issubset(response["required"])
+        assert response["additionalProperties"] is False
+
+    def test_shared_workspace_publish_requires_workspace_and_event(self) -> None:
+        schema = get_elicitation_tools()["command_workspace_publish"]["input_schema"]
+        assert schema["required"] == ["workspace_id", "event"]
+        assert schema["properties"]["event"]["type"] == "object"
+        assert schema["additionalProperties"] is False
 
     def test_v1_render_form_stays_four_types(self) -> None:
         # AskUserQuestion has no native number/date — v1 must NOT claim them.

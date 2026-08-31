@@ -28,6 +28,21 @@ Before running, ask:
 
 ## Execution
 
+### Shared command workspace (preferred)
+
+Open adapter `security-audit` with the validated path and focus. The invocation
+authorizes this read-only scan, so the running workspace has no confirmation
+action. Call `security_audit` and publish its exact outcome as `scan_result`,
+including health score, files scanned, and categorized path/line/severity/CWE
+findings. An incomplete scan must say “did not complete,” never “clean.”
+
+Critical/high findings render one per page with bound Previous/Next actions,
+avoiding a tall unscrollable form. `finish_security_audit` records the report;
+`handoff_to_fix` prepares an explicit Fix input containing all critical/high
+receipts but performs no mutation. Fix retains its own exact-command approval.
+Present the terminal widget or Markdown and preserve the same pagination,
+failure, and handoff semantics in text fallback.
+
 Call the `security_audit` MCP tool with the scoped path:
 
 ```

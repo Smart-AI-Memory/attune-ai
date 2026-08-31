@@ -31,9 +31,21 @@ from .state import (
     load_state,
     save_state,
 )
+from .workspace import (
+    SpecArtifactReceipt,
+    SpecLifecycleReceipt,
+    SpecTaskGateReceipt,
+    SpecWorkspaceAdapter,
+    SpecWorkspaceState,
+)
 
 __all__ = [
     "SpecState",
+    "SpecArtifactReceipt",
+    "SpecLifecycleReceipt",
+    "SpecTaskGateReceipt",
+    "SpecWorkspaceAdapter",
+    "SpecWorkspaceState",
     "clear_state",
     "find_resumable_plans",
     "format_progress_bar",

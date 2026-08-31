@@ -21,6 +21,13 @@ from attune.roundtable.lessons import (
     WAIVER_TAG,
     LessonCandidate,
 )
+from attune.roundtable.workspace import (
+    RoundtableCandidate,
+    RoundtableRuling,
+    RoundtableSeatReceipt,
+    RoundtableWorkspaceAdapter,
+    RoundtableWorkspaceState,
+)
 
 __all__ = [
     "KINDS",
@@ -30,4 +37,9 @@ __all__ = [
     "Board",
     "BoardMessage",
     "LessonCandidate",
+    "RoundtableCandidate",
+    "RoundtableRuling",
+    "RoundtableSeatReceipt",
+    "RoundtableWorkspaceAdapter",
+    "RoundtableWorkspaceState",
 ]
