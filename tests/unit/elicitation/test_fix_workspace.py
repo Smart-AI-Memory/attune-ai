@@ -297,6 +297,8 @@ async def test_live_server_render_edit_rerender_run_and_replay_receipt(
     first = await server.call_tool("fix_workspace_preview", {"answers": _answers()})
     assert first["success"] is True
     assert "Fix preview" in first["html"]
+    assert "data-confirm-armed" in first["html"]
+    assert "window.confirm" not in first["html"]
     assert "Run Fix" in first["markdown"]
     assert first["mcp_app"] == {
         "resource_uri": "ui://attune-forms/dynamic-surface/v1",
