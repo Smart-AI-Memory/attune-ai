@@ -62,6 +62,48 @@
   background:var(--surface-1,#f7f6f3); border:1px solid var(--border,#e3e1dc);
   border-radius:var(--radius,8px); }
 #attune-elicit-form .ae-textarea { resize:vertical; min-height:3.5rem; }
+#attune-elicit-form .ae-path-control { display:flex; gap:.5rem; }
+#attune-elicit-form .ae-path-value { flex:1; min-width:0; }
+#attune-elicit-form .ae-path-open { min-width:6rem; padding:.5rem .8rem;
+  color:var(--ae-action,#004ac6); background:var(--ae-surface,#fff);
+  border:1px solid var(--ae-action,#004ac6);
+  border-radius:var(--ae-radius-control,8px); font-weight:650; cursor:pointer; }
+#attune-elicit-form .ae-path-open:hover { background:var(--ae-action-soft,#edf4ff); }
+#attune-elicit-form .ae-path-dialog { position:fixed; inset:0; z-index:1000;
+  display:grid; place-items:center; padding:1rem; box-sizing:border-box;
+  background:rgba(11,28,48,.48); }
+#attune-elicit-form .ae-path-dialog[hidden] { display:none; }
+#attune-elicit-form .ae-path-panel { width:min(42rem,calc(100% - 2rem));
+  max-height:min(38rem,calc(100vh - 2rem)); box-sizing:border-box; padding:0;
+  color:var(--ae-text,#0b1c30); background:var(--ae-surface,#fff);
+  border:1px solid var(--ae-border,#c3c6d7);
+  border-radius:var(--ae-radius-panel,14px);
+  box-shadow:0 18px 48px rgba(11,28,48,.24); overflow:hidden; }
+#attune-elicit-form .ae-path-head { display:flex; align-items:center;
+  justify-content:space-between; padding:1rem 1.1rem .75rem;
+  border-bottom:1px solid var(--ae-border,#c3c6d7); }
+#attune-elicit-form .ae-path-title { display:grid; gap:.15rem; }
+#attune-elicit-form .ae-path-title strong { font-size:16px; }
+#attune-elicit-form .ae-path-title span { color:var(--ae-muted,#5f6470);
+  font-size:12px; font-weight:400; }
+#attune-elicit-form .ae-path-close { width:2rem; height:2rem; padding:0;
+  color:var(--ae-muted,#5f6470); background:transparent; border:0;
+  border-radius:50%; font-size:20px; cursor:pointer; }
+#attune-elicit-form .ae-path-close:hover { background:var(--ae-surface-raised,#eff4ff); }
+#attune-elicit-form .ae-path-search { padding:.8rem 1.1rem; }
+#attune-elicit-form .ae-path-filter { padding-left:.75rem; }
+#attune-elicit-form .ae-path-list { display:grid; gap:.2rem; max-height:24rem;
+  overflow:auto; padding:0 1.1rem 1rem; }
+#attune-elicit-form .ae-path-choice { display:flex; align-items:center; gap:.6rem;
+  width:100%; padding:.6rem .7rem; color:var(--ae-text,#0b1c30);
+  background:transparent; border:1px solid transparent;
+  border-radius:var(--ae-radius-control,8px); text-align:left; cursor:pointer;
+  font-family:var(--ae-font-mono,ui-monospace); font-size:13px; }
+#attune-elicit-form .ae-path-choice:hover { color:var(--ae-action,#004ac6);
+  background:var(--ae-action-soft,#edf4ff); border-color:var(--ae-border,#c3c6d7); }
+#attune-elicit-form .ae-path-icon { color:var(--ae-muted,#5f6470); font-size:16px; }
+#attune-elicit-form .ae-path-empty { color:var(--ae-muted,#5f6470);
+  padding:.75rem; text-align:center; }
 #attune-elicit-form .ae-checks { display:flex; flex-direction:column;
   gap:.35rem; }
 #attune-elicit-form .ae-check { display:flex; align-items:center; gap:.5rem;

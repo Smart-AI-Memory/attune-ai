@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<!--
+  GitHub social preview card for Smart-AI-Memory/attune-ai — 1280x640.
+
+  This file is the source of truth; the rendered PNG sits beside it at
+  .github/social-preview.png. GitHub does not read either automatically:
+  upload the PNG at Settings -> General -> Social preview.
+
+  Regenerate:
+      npm i @fontsource/inter          # supplies the Inter woff2 below
+      npx playwright screenshot --viewport-size=1280,640 \
+          social-preview.html social-preview.png
+
+  Without @fontsource/inter installed the card still renders, falling back
+  to the system sans — fine for a preview, but re-install before shipping
+  a final PNG so the type matches.
+
+  Keep it under GitHub's 1 MB limit (current: ~350 KB at 1x). A 2x render
+  exceeds that ceiling, so 1x is the shipping asset.
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face{font-family:Inter;font-weight:400;src:url(node_modules/@fontsource/inter/files/inter-latin-400-normal.woff2) format('woff2');}
+  @font-face{font-family:Inter;font-weight:500;src:url(node_modules/@fontsource/inter/files/inter-latin-500-normal.woff2) format('woff2');}
+  @font-face{font-family:Inter;font-weight:600;src:url(node_modules/@fontsource/inter/files/inter-latin-600-normal.woff2) format('woff2');}
+  @font-face{font-family:Inter;font-weight:700;src:url(node_modules/@fontsource/inter/files/inter-latin-700-normal.woff2) format('woff2');}
+  @font-face{font-family:Inter;font-weight:800;src:url(node_modules/@fontsource/inter/files/inter-latin-800-normal.woff2) format('woff2');}
+
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1280px;height:640px;overflow:hidden}
+  body{
+    font-family:Inter,system-ui,sans-serif;
+    background:#0b1c30;
+    color:#fff;
+    position:relative;
+  }
+  /* depth: a soft blue bloom top-right, matching the site's navy→blue ramp */
+  .bloom{
+    position:absolute;top:-260px;right:-200px;width:900px;height:900px;border-radius:50%;
+    background:radial-gradient(circle, rgba(37,99,235,.38) 0%, rgba(37,99,235,.10) 45%, rgba(37,99,235,0) 70%);
+  }
+  .bloom2{
+    position:absolute;bottom:-320px;left:-180px;width:760px;height:760px;border-radius:50%;
+    background:radial-gradient(circle, rgba(61,181,126,.16) 0%, rgba(61,181,126,0) 68%);
+  }
+  /* hairline grid, very faint — reads as "engineered" without being busy */
+  .grid{
+    position:absolute;inset:0;
+    background-image:linear-gradient(rgba(255,255,255,.030) 1px,transparent 1px),
+                     linear-gradient(90deg,rgba(255,255,255,.030) 1px,transparent 1px);
+    background-size:64px 64px;
+    mask-image:linear-gradient(to bottom right, rgba(0,0,0,.9), transparent 75%);
+  }
+  .wrap{position:relative;height:100%;padding:64px 72px;display:flex;flex-direction:column}
+
+  .eyebrow{display:flex;align-items:center;gap:14px}
+  .mark{
+    width:34px;height:34px;border-radius:9px;
+    background:linear-gradient(140deg,#2563eb,#3db57e);
+    display:grid;place-items:center;
+    font-weight:800;font-size:18px;color:#0b1c30;letter-spacing:-0.03em;
+  }
+  .name{font-weight:700;font-size:21px;letter-spacing:.14em;text-transform:uppercase;color:#dce9ff}
+  .dot{width:4px;height:4px;border-radius:50%;background:#38485d}
+  .meta{font-weight:500;font-size:17px;color:#8ea3bf;letter-spacing:.01em}
+
+  h1{
+    margin-top:44px;
+    font-weight:800;font-size:63px;line-height:1.09;letter-spacing:-0.028em;
+    max-width:1010px;
+    color:#ffffff;
+  }
+  h1 .hi{
+    background:linear-gradient(96deg,#7fb0ff,#3db57e);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+
+  .sub{
+    margin-top:24px;font-weight:500;font-size:26px;line-height:1.42;color:#a8bcd6;max-width:880px;
+  }
+
+  .spacer{flex:1}
+
+  .foot{display:flex;align-items:center;gap:16px}
+  .cmd{
+    font-family:"DejaVu Sans Mono",ui-monospace,monospace;
+    font-size:24px;font-weight:400;color:#e6f0ff;
+    background:rgba(255,255,255,.065);
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:11px;padding:15px 22px;
+    letter-spacing:-0.01em;
+  }
+  .cmd .p{color:#6f86a4}
+  .chips{display:flex;gap:11px;margin-left:auto}
+  .chip{
+    font-size:19px;font-weight:600;color:#cfe0f7;
+    border:1px solid rgba(255,255,255,.15);
+    background:rgba(255,255,255,.04);
+    border-radius:999px;padding:12px 19px;white-space:nowrap;
+  }
+  .chip b{color:#7fd7ab;font-weight:700}
+</style>
+</head>
+<body>
+  <div class="bloom"></div>
+  <div class="bloom2"></div>
+  <div class="grid"></div>
+
+  <div class="wrap">
+    <div class="eyebrow">
+      <div class="mark">A</div>
+      <div class="name">Attune AI</div>
+      <div class="dot"></div>
+      <div class="meta">attune-ai.dev</div>
+      <div class="dot"></div>
+      <div class="meta">Apache-2.0</div>
+    </div>
+
+    <h1>Persistent memory and<br><span class="hi">receipt-verified</span> workflows<br>for Claude Code.</h1>
+
+    <div class="sub">Probes are declared up front and re-run independently — the agent&rsquo;s word is never the evidence.</div>
+
+    <div class="spacer"></div>
+
+    <div class="foot">
+      <div class="cmd"><span class="p">$</span> pip install attune-ai</div>
+      <div class="chips">
+        <div class="chip"><b>67&times;</b> fewer tokens</div>
+        <div class="chip"><b>P@3 96%</b> recall</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

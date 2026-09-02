@@ -1,6 +1,12 @@
 {
   "buildCommand": "npm run build:vercel",
   "trailingSlash": true,
+  "crons": [
+    {
+      "path": "/api/cron/usage-digest",
+      "schedule": "0 12 * * *"
+    }
+  ],
   "redirects": [
     {
       "source": "/framework-docs/:path((?!.*\\.).*[^/])",

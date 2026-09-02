@@ -531,7 +531,7 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'enterprise'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'full'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40.0" },
-    { name = "attune-forms", specifier = ">=0.10.0,<1.0" },
+    { name = "attune-forms", specifier = ">=0.11.1,<1.0" },
     { name = "attune-help", marker = "extra == 'dev'", specifier = ">=0.10.0" },
     { name = "attune-rag", specifier = ">=0.1.5,<2.0" },
     { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.5,<2.0" },
@@ -709,14 +709,14 @@ dev = [
 
 [[package]]
 name = "attune-forms"
-version = "0.10.0"
+version = "0.11.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "structlog" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ed/03/8751d7bcdcbab1209584ec24a66a79492f5c3a0f7e7bff598f036d8523d9/attune_forms-0.10.0.tar.gz", hash = "sha256:d0a046858d5c72c0424fcb4f8bd3c18dfc29a5824d3e66060bb70cbdd852b678", size = 215716, upload-time = "2026-08-30T04:32:04.878Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/fe/b6/e8cb6fd0a20149dd9280880c949af8b7536ef77cd4172a0ed0416cae9c04/attune_forms-0.11.1.tar.gz", hash = "sha256:31d8e57a8093746c61d48ae8525f38b218d77040f01a8bd93834b0608bbf2846", size = 219055, upload-time = "2026-08-31T05:03:05.015Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ff/7d/d09fa18dc9f4f4ff353c72b811c686412f9331044bc10c69e4e25e330af7/attune_forms-0.10.0-py3-none-any.whl", hash = "sha256:6fb41ef2ddb4b79aa348f8111d57d5c74775d577c1052e307cac97f612790a2b", size = 124680, upload-time = "2026-08-30T04:32:03.406Z" },
+    { url = "https://files.pythonhosted.org/packages/18/d9/9f3692d88af1b1c045ca80406b35140bc208dba85ed63ac80eed01062923/attune_forms-0.11.1-py3-none-any.whl", hash = "sha256:8d1ebac546797f315d4695753bc1b28769229632ce94c04b73eb1b4dc0171148", size = 126601, upload-time = "2026-08-31T05:03:03.596Z" },
 ]
 
 [[package]]
@@ -1530,7 +1530,7 @@ name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions" },
+    { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/50/79/66800aadf48771f6b62f7eb014e352e5d06856655206165d775e675a02c9/exceptiongroup-1.3.1.tar.gz", hash = "sha256:8b412432c6055b0b7d14c310000ae93352ed6754f70fa8f7c34141f91c4e3219", size = 30371, upload-time = "2025-11-21T23:01:54.787Z" }
 wheels = [

@@ -150,13 +150,12 @@ family of intake forms should read as ONE surface.
 
 - Zero added round trips anywhere: widgets were already inline;
   the dashboard file is cached after first load.
-- Byte budget: `FORM_THEME_CSS` ≤ 6 KB raw (AMENDED from 4 KB,
-  chair ruling 2026-07-31, execution-time measurement: the full
-  family sheet with the mandated `var()` fallback literals is
-  5,574 B — the 4 KB figure predated the fallbacks; see the spec's
-  decisions.md), enforced by a residency-style drift test
+- Byte budget: `FORM_THEME_CSS` ≤ 16 KB raw (most recently amended
+  from 12 KB for attune-forms 0.11.1, chair ruling 2026-08-31;
+  execution-time measurement: 14,926 B for the expanded grammar
+  theme — see the spec's decisions.md), enforced by a residency-style drift test
   (`test_form_theme_budget`) so the theme cannot quietly grow into
-  a framework. At ≤6 KB the render-time cost is still
+  a framework. At ≤16 KB the render-time cost is still
   sub-millisecond against the ~100–145 ms derivation baseline —
   styling is not on the latency path, and the budget test keeps it
   that way. Widgets ship per-form family SUBSETS of the sheet, so

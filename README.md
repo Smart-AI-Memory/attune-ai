@@ -78,7 +78,7 @@ maintained by Attune's own stack.
 [Forms](#interactive-forms--the-agent-asks-with-structure) ·
 [Accuracy](#accuracy--faithfulness) ·
 [Install options](#installation-options) ·
-[Privacy](#privacy--telemetry)
+[Privacy](#security-privacy--telemetry)
 
 ---
 

@@ -21,6 +21,13 @@ icon fonts, no images, no @import), and widgets continue shipping
 per-form family subsets (~2.5–3 KB class). `test_form_theme_budget`
 enforces 6,144 B; design.md amended in the same commit.
 
+**Amendment (chair, 2026-08-31):** raise the cap from 12 KB to
+16 KB for attune-forms 0.11.1. The released expanded grammar theme
+measures 14,926 B. The chair approved the cap raise after the
+dependency compatibility receipt exposed the overage; the hard bans
+and byte-budget drift guard remain unchanged, and another increase
+requires another ruling.
+
 ## D2 — Phase 2a ruled and executed same night: the merge fallback, six refinements, gate override (chair, 2026-07-31 ~22:15 ET)
 
 Roundtable `q-intake-forms-phase2-design-001` (transcript

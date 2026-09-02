@@ -13,11 +13,12 @@ from attune.elicitation import widget as widget_mod
 #: attune-forms grammar expansion raised it 6 -> 8 KB at 0.5.0 and
 #: 8 -> 10 KB at 0.6.0 — ranking-construct D2-a, 2026-08-15, with the
 #: 10,064 B RANK+ASSUME measurement on record; 10 -> 12 KB at 0.9.0
-#: for the semantic design-contract projection (12,174 B). NOT a
-#: ratchet: the next
+#: for the semantic design-contract projection (12,174 B); 12 -> 16 KB
+#: at attune-forms 0.11.1 for the 14,926 B expanded grammar theme
+#: (chair, 2026-08-31). NOT a ratchet: the next
 #: raise needs its own ruling; a CSS consolidation pass was offered
 #: and not chosen).
-_BUDGET_BYTES = 12288
+_BUDGET_BYTES = 16384
 
 #: ``var(--name)`` with NO fallback value — the pattern the theme
 #: must never contain (host-token fallbacks are the design).
