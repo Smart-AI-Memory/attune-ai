@@ -35,8 +35,14 @@ def _intake(*, max_invocations: int = 9) -> dict[str, object]:
     }
 
 
-def _payload(render, action: str, *, confirmed: bool = False) -> dict[str, object]:
-    return {
+def _payload(
+    render,
+    action: str,
+    *,
+    confirmed: bool = False,
+    responses: dict[str, object] | None = None,
+) -> dict[str, object]:
+    payload: dict[str, object] = {
         "__elicitation_response__": True,
         "title": render.record.view.title,
         "view": render.record.view.id.value,
@@ -44,6 +50,9 @@ def _payload(render, action: str, *, confirmed: bool = False) -> dict[str, objec
         "confirmed": confirmed,
         **render.record.binding.to_payload(),
     }
+    if responses is not None:
+        payload["responses"] = responses
+    return payload
 
 
 def _receipts(round_number: int = 1) -> list[dict[str, object]]:
@@ -59,11 +68,17 @@ def _receipts(round_number: int = 1) -> list[dict[str, object]]:
     ]
 
 
-def _response(action: str, *, confirmed: bool = False) -> WorkspaceActionResponse:
+def _response(
+    action: str,
+    *,
+    confirmed: bool = False,
+    responses: dict[str, object] | None = None,
+) -> WorkspaceActionResponse:
     return WorkspaceActionResponse(
         WorkspaceViewId.EXECUTION,
         action,
         confirmed,
+        responses=responses or {},
     )
 
 
@@ -212,23 +227,36 @@ async def test_nested_round_checkpoint_rejects_stale_action_and_honors_cap() -> 
 
 
 @pytest.mark.asyncio
-async def test_seven_candidates_are_paginated_and_each_ruling_is_bound() -> None:
+async def test_legacy_seven_candidate_fallback_remains_bound_and_completion_equivalent() -> None:
     host = _host()
     current = await _triage(host, 7)
     first_payload = _payload(current, "promote", confirmed=True)
 
-    assert "Item 1 of 7" in current.render.markdown
+    promote = next(action for action in current.record.view.actions if action.id == "promote")
+    assert promote.requires_explicit_choice is True
+    assert "Authorize this board message" in promote.consequence
+
+    assert "Items 1–3 of 7" in current.render.markdown
     assert "Proposal detail 10" in current.render.markdown
-    assert "Proposal detail 11" not in current.render.markdown
-    assert "Proposal detail 11" not in current.render.html
+    assert "Proposal detail 11" in current.render.markdown
+    assert "Proposal detail 12" in current.render.html
+    assert "window.confirm" not in current.render.html
+    assert "data-confirm-armed" in current.render.html
+    assert "Click again to confirm." in current.render.html
+    assert "Authorize every promote or decline ruling" in current.render.html
 
     current = await host.collect(first_payload)
     with pytest.raises(CommandWorkspaceError, match="revision|nonce|authority"):
         await host.collect(first_payload)
-    assert "Item 2 of 7" in current.render.markdown
+    assert "Items 2–4 of 7" in current.render.markdown
+    assert current.record.state.rulings == (RoundtableRuling(10, "promote"),)
 
-    for _ in range(6):
+    for message_id in range(11, 17):
         current = await host.collect(_payload(current, "decline"))
+        expected = (RoundtableRuling(10, "promote"),) + tuple(
+            RoundtableRuling(item, "decline") for item in range(11, message_id + 1)
+        )
+        assert current.record.state.rulings == expected
 
     state = current.record.state
     assert current.record.terminal is True
@@ -236,6 +264,313 @@ async def test_seven_candidates_are_paginated_and_each_ruling_is_bound() -> None
     assert state.promoted_ids == (10,)
     assert "Promoted message ids" in current.render.markdown
     assert "10" in current.render.markdown
+
+
+@pytest.mark.asyncio
+async def test_seven_candidates_complete_in_atomic_three_three_one_batches() -> None:
+    host = _host()
+    current = await _triage(host, 7)
+    starting_revision = current.record.revision
+    expected = (
+        (("10", "promote"), ("11", "decline"), ("12", "promote")),
+        (("13", "decline"), ("14", "promote"), ("15", "decline")),
+        (("16", "promote"),),
+    )
+
+    for batch_number, choices in enumerate(expected, start=1):
+        action = next(
+            action for action in current.record.view.actions if action.id == "apply_rulings"
+        )
+        assert tuple(field.id for field in action.response_fields) == tuple(
+            item_id for item_id, _ in choices
+        )
+        assert action.requires_explicit_choice is True
+        assert "Authorize every promote or decline ruling" in action.consequence
+        previous_revision = current.record.revision
+        current = await host.collect(
+            _payload(
+                current,
+                "apply_rulings",
+                confirmed=True,
+                responses=dict(choices),
+            )
+        )
+        assert current.record.revision == previous_revision + 1
+        assert current.result["batch_size"] == len(choices)
+        assert current.result["remaining"] == max(7 - batch_number * 3, 0)
+
+    assert current.record.revision == starting_revision + 3
+    assert current.record.terminal is True
+    assert current.record.state.rulings == tuple(
+        RoundtableRuling(int(item_id), disposition)
+        for choices in expected
+        for item_id, disposition in choices
+    )
+    assert current.record.state.promoted_ids == (10, 12, 14, 16)
+
+
+@pytest.mark.asyncio
+async def test_batch_rejects_unconfirmed_partial_foreign_invalid_and_stale_atomically() -> None:
+    host = _host()
+    current = await _triage(host, 4)
+    original = current.record
+    invalid_payloads = (
+        _payload(
+            current,
+            "apply_rulings",
+            responses={"10": "promote", "11": "decline", "12": "promote"},
+        ),
+        _payload(
+            current,
+            "apply_rulings",
+            confirmed=True,
+            responses={"10": "promote", "11": "decline"},
+        ),
+        _payload(
+            current,
+            "apply_rulings",
+            confirmed=True,
+            responses={"10": "promote", "11": "decline", "99": "promote"},
+        ),
+        _payload(
+            current,
+            "apply_rulings",
+            confirmed=True,
+            responses={"10": "promote", "11": "modify", "12": "decline"},
+        ),
+    )
+    for payload in invalid_payloads:
+        with pytest.raises(CommandWorkspaceError):
+            await host.collect(payload)
+        assert host.get(original.workspace_id) == original
+
+    accepted_payload = _payload(
+        current,
+        "apply_rulings",
+        confirmed=True,
+        responses={"12": "decline", "10": "promote", "11": "decline"},
+    )
+    accepted = await host.collect(accepted_payload)
+    assert accepted.record.state.rulings == (
+        RoundtableRuling(10, "promote"),
+        RoundtableRuling(11, "decline"),
+        RoundtableRuling(12, "decline"),
+    )
+    with pytest.raises(CommandWorkspaceError, match="revision|nonce|authority"):
+        await host.collect(accepted_payload)
+    assert host.get(original.workspace_id) == accepted.record
+
+
+@pytest.mark.asyncio
+async def test_batch_and_legacy_paths_have_the_same_terminal_rulings_and_projections() -> None:
+    choices = (
+        ("10", "promote"),
+        ("11", "decline"),
+        ("12", "promote"),
+        ("13", "decline"),
+    )
+    batch_host = _host()
+    batch = await _triage(batch_host, len(choices))
+    for action_id in ("apply_rulings", "promote", "decline"):
+        assert f'data-workspace-action="{action_id}"' in batch.render.html
+        assert f"`{action_id}`" in batch.render.markdown
+    assert tuple(action.id for action in batch.record.view.actions)[:3] == (
+        "apply_rulings",
+        "promote",
+        "decline",
+    )
+    batch = await batch_host.collect(
+        _payload(
+            batch,
+            "apply_rulings",
+            confirmed=True,
+            responses=dict(choices[:3]),
+        )
+    )
+    batch = await batch_host.collect(
+        _payload(
+            batch,
+            "apply_rulings",
+            confirmed=True,
+            responses=dict(choices[3:]),
+        )
+    )
+
+    fallback_host = _host()
+    fallback = await _triage(fallback_host, len(choices))
+    for _, disposition in choices:
+        fallback = await fallback_host.collect(
+            _payload(
+                fallback,
+                disposition,
+                confirmed=disposition == "promote",
+            )
+        )
+
+    assert batch.record.terminal is fallback.record.terminal is True
+    assert batch.record.state.rulings == fallback.record.state.rulings
+    assert batch.record.state.promoted_ids == fallback.record.state.promoted_ids
+    assert batch.record.view == fallback.record.view
+    assert batch.render.markdown == fallback.render.markdown
+
+
+@pytest.mark.asyncio
+async def test_interleaved_legacy_and_batch_rulings_match_pure_batch_receipt() -> None:
+    choices = (
+        ("10", "promote"),
+        ("11", "decline"),
+        ("12", "promote"),
+        ("13", "decline"),
+        ("14", "decline"),
+        ("15", "promote"),
+        ("16", "decline"),
+    )
+    batch_host = _host()
+    batch = await _triage(batch_host)
+    batch_start_revision = batch.record.revision
+    for offset in range(0, len(choices), 3):
+        batch = await batch_host.collect(
+            _payload(
+                batch,
+                "apply_rulings",
+                confirmed=True,
+                responses=dict(choices[offset : offset + 3]),
+            )
+        )
+
+    mixed_host = _host()
+    mixed = await _triage(mixed_host)
+    mixed_start_revision = mixed.record.revision
+    mixed = await mixed_host.collect(_payload(mixed, "promote", confirmed=True))
+    mixed = await mixed_host.collect(
+        _payload(
+            mixed,
+            "apply_rulings",
+            confirmed=True,
+            responses=dict(choices[1:4]),
+        )
+    )
+    mixed = await mixed_host.collect(_payload(mixed, "decline"))
+    mixed = await mixed_host.collect(
+        _payload(
+            mixed,
+            "apply_rulings",
+            confirmed=True,
+            responses=dict(choices[5:]),
+        )
+    )
+
+    assert batch.record.terminal is mixed.record.terminal is True
+    assert batch.record.revision == batch_start_revision + 3
+    assert mixed.record.revision == mixed_start_revision + 4
+    assert mixed.record.state.rulings == batch.record.state.rulings
+    assert mixed.record.state.promoted_ids == batch.record.state.promoted_ids
+    assert mixed.record.view == batch.record.view
+    assert mixed.render.markdown == batch.render.markdown
+
+
+@pytest.mark.asyncio
+async def test_duplicate_candidate_ids_cannot_create_a_ruling_batch() -> None:
+    host = _host()
+    running = await _running(host)
+    checkpoint = await host.publish(
+        running.record.workspace_id,
+        {"kind": "round_complete", "receipts": _receipts()},
+    )
+    synthesizing = await host.collect(_payload(checkpoint, "synthesize"))
+    original = synthesizing.record
+    duplicate = {
+        "message_id": 10,
+        "title": "Candidate 10",
+        "detail": "Proposal detail 10",
+    }
+    with pytest.raises(CommandWorkspaceError, match="candidate ids must be unique"):
+        await host.publish(
+            original.workspace_id,
+            {
+                "kind": "synthesis",
+                "body": "Invalid duplicate batch",
+                "candidates": [duplicate, duplicate],
+            },
+        )
+    assert host.get(original.workspace_id) == original
+
+
+def test_adapter_rejects_noncanonical_or_repeated_batch_before_mutation() -> None:
+    adapter = RoundtableWorkspaceAdapter()
+    candidates = tuple(
+        RoundtableCandidate(index, f"Candidate {index}", "Detail") for index in range(10, 13)
+    )
+    active = RoundtableWorkspaceState(
+        **_intake(max_invocations=3),
+        stage="triage",
+        candidates=candidates,
+    )
+    with pytest.raises(CommandWorkspaceError, match="explicit chair confirmation"):
+        adapter.apply(
+            active,
+            _response(
+                "apply_rulings",
+                responses={"10": "promote", "11": "decline", "12": "decline"},
+            ),
+        )
+    with pytest.raises(CommandWorkspaceError, match="canonical order"):
+        adapter.apply(
+            active,
+            _response(
+                "apply_rulings",
+                confirmed=True,
+                responses={"11": "decline", "10": "promote", "12": "decline"},
+            ),
+        )
+    with pytest.raises(CommandWorkspaceError, match="batch disposition"):
+        adapter.apply(
+            active,
+            _response(
+                "apply_rulings",
+                confirmed=True,
+                responses={"10": "promote", "11": "modify", "12": "decline"},
+            ),
+        )
+
+    already_ruled = RoundtableWorkspaceState(
+        **_intake(max_invocations=3),
+        stage="triage",
+        candidates=candidates,
+        rulings=(RoundtableRuling(10, "promote"),),
+    )
+    with pytest.raises(CommandWorkspaceError, match="ruled only once"):
+        adapter.apply(
+            already_ruled,
+            _response(
+                "apply_rulings",
+                confirmed=True,
+                responses={"10": "promote", "11": "decline", "12": "decline"},
+            ),
+        )
+
+
+def test_roundtable_contract_digest_covers_batch_field_details() -> None:
+    adapter = RoundtableWorkspaceAdapter()
+    candidates = (
+        RoundtableCandidate(10, "Candidate 10", "Original detail"),
+        RoundtableCandidate(11, "Candidate 11", "Second detail"),
+    )
+    state = RoundtableWorkspaceState(
+        **_intake(max_invocations=3),
+        stage="triage",
+        candidates=candidates,
+    )
+    changed = RoundtableWorkspaceState(
+        **_intake(max_invocations=3),
+        stage="triage",
+        candidates=(
+            RoundtableCandidate(10, "Candidate 10", "Changed detail"),
+            candidates[1],
+        ),
+    )
+
+    assert adapter.project(state).contract_hash != adapter.project(changed).contract_hash
 
 
 @pytest.mark.asyncio

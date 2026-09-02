@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.2.0] - 2026-09-02
+
+This release brings state-bound dynamic workspaces to the command cohort and
+cuts Roundtable's seven-item promotion flow from seven submissions to three,
+while preserving portable fallbacks and explicit chair authority.
+
 ### Added
 
 - **Commands can share one state-bound dynamic workspace renderer**:
@@ -34,6 +40,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   unconfirmed, and replayed actions fail closed.
 
 ### Changed
+
+- **Roundtable promotion review now applies atomic `3 + 3 + 1` batches**:
+  seven chair rulings complete in three validated submissions instead of
+  seven while retaining the one-candidate compatibility fallback. In the
+  measured portable/headless cohort, total ruling submissions fell 57.143%
+  and added navigation rounds fell 66.667%, with the same terminal receipt.
+  These figures measure interaction mechanics, not human dwell or provider
+  execution time. They require `attune-forms 0.12.2`, whose visible inline
+  two-click confirmation keeps consequential batch actions usable in hosts
+  that cannot surface native browser dialogs.
 
 - **Interactive Fix execution is separated from intake**: the old combined
   "preview then run" form choice is removed. Intake only gathers goal,

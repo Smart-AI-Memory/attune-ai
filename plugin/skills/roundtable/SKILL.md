@@ -46,10 +46,10 @@ or grant seats new authority:
 3. After the existing moderator-only compiler and board operations succeed,
    publish `seat_progress`, `round_complete`, and `synthesis` events through
    `command_workspace_publish`. A compiler-dirty reply is never published.
-4. Render promotion triage one candidate at a time. Each new page carries a
-   fresh revision/nonce; a prior page is stale. This is the required baseline
-   for seven candidates because the former seven-entry form truncated in the
-   target viewport and could not be scrolled.
+4. Render promotion triage in atomic batches of at most three candidates.
+   Each accepted `apply_rulings` batch advances one revision; a prior page is
+   stale. Seven candidates complete in `3 + 3 + 1`. Retain the one-candidate
+   `promote` / `decline` actions as the compatibility fallback.
 
 If those tools are unavailable, follow the same steps below using compact
 text or form gates. Never weaken R1, R3, R4, or the three-round ceiling to
@@ -173,9 +173,10 @@ to the shared workspace only after the board post succeeds.
 
 Present the promotion candidates as discrete items — each with its
 board message id — and ask the chair per item: promote, decline, or
-another round. Prefer the shared workspace's one-candidate page. In fallback
-mode, use compact batches of at most three options rather than a single long
-form. Never assume a disposition. On promotion:
+another round. Prefer the shared workspace's explicitly confirmed
+`apply_rulings` action with at most three candidate fields. If action-scoped
+responses are unavailable, use the one-candidate `promote` / `decline`
+fallback. Never assume a disposition. On promotion:
 
 1. Recommend an artifact tier per the contract's artifact-selection
    table — inline edit / structured one-shot / XML task / spec —

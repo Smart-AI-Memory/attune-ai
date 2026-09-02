@@ -517,8 +517,10 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
             "description": (
                 "Validate and consume one returned action against the exact "
                 "canonical command workspace revision, nonce and contract "
-                "hash. Stale, altered, replayed, unknown and concurrent "
-                "actions fail closed."
+                "hash. Action-scoped responses are structurally validated "
+                "against their declared ordered fields before dispatch. "
+                "Stale, altered, partial, foreign, invalid, replayed, unknown "
+                "and concurrent actions fail closed."
             ),
             "input_schema": {
                 "type": "object",

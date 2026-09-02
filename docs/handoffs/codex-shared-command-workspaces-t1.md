@@ -111,6 +111,14 @@ ten cohort adapters in the chair-selected order.
   - `plugin/help/generated/references/skill-*.md`
   - `plugin/help/generated/tasks/use-*.md`
   - `website/lib/features.ts`
+  - `website/app/page.tsx`
+  - `CHANGELOG.md`
+  - `pyproject.toml`
+  - `uv.lock`
+  - `.claude-plugin/marketplace.json`
+  - `plugin/.claude-plugin/{marketplace,plugin}.json`
+  - `plugin/core/__init__.py`
+  - `docs/reference/API_REFERENCE.md`
   - `docs/handoffs/codex-shared-command-workspaces-t1.md`
 - Decisions: the test-proven minimum adapter seam is `create`, `project`, and
   `apply`. Legal actions and confirmation live in `WorkspaceView`; terminal
@@ -132,6 +140,10 @@ ten cohort adapters in the chair-selected order.
 - Risks or open questions: storage is currently process-local, matching the
   prior Fix server. Durable reconnect/progress storage remains later spec
   work.
+- Release dependency: `attune-forms 0.12.2` is public and is the minimum safe
+  renderer version for consequential action-scoped forms. Its inline
+  confirmation avoids the host-blocked native-dialog failure observed during
+  final release dogfood.
 
 ## Verification
 
@@ -222,12 +234,17 @@ ten cohort adapters in the chair-selected order.
 | Production MCP `/spec` acceptance | actual `AttuneMCPServer` create/tasks/redo/approve/execution/resume flow, rendered as HTML and Markdown | redo, approval, execution gate, and incomplete-plan resume all passed; executing state at revision 9/event sequence 5; 6,492 HTML chars and 179 Markdown chars |
 | Public capability projection | `project_capabilities.py --check`, reference/task template projectors, and claim/help drift tests | advertised counts now match 64 total MCP tools and 53 core tools; all projectors clean; 19 focused drift tests passed |
 | Complexity ratchet remediation | Radon plus complexity and six affected adapter suites after splitting event parsing and media decoding | no new D-or-worse blocks; 121 passed after pinned Black formatting |
-| Complete unit suite | `python -m pytest -n0 tests/unit -q` with localhost and real-backend fixture permissions | 21,629 passed, 109 skipped, 16 deselected, 3 expected failures in 8m53s |
+| Complete unit suite | keyless `pytest tests/unit -q` under the locked release environment | 21,643 passed, 109 skipped, 3 expected failures in 68.19s |
 | Review-finding remediation | preserve Markdown paragraphs, bind prose to its own fence, distinguish runnable/output/guidance steps, match backtick/tilde delimiters by type and length, indent multiline detail in the canonical Jinja template, and regenerate all 26 task pages | all 16 remediation findings fixed at the source; 79 focused generator/help tests passed; generator `--check` clean; final 20-file Antigravity re-lane returned `NO FINDINGS` with no omissions |
-| Repository-wide pre-commit | `pre-commit run --all-files` after remediation | all blocking hooks passed; two pre-existing unresolved-doc-link warnings remain warn-only and outside this branch |
+| Repository-wide pre-commit | pinned `pre-commit run --all-files` after the 16.2 release corrections | all blocking hooks passed; two pre-existing unresolved-doc-link warnings remain warn-only and outside this branch |
+| Public renderer release | GitHub Actions publish run `33679699693`, public PyPI simple index, and clean public-wheel install | workflow passed; wheel and sdist listed; installed 0.12.2 from `site-packages`; inline explicit confirmation receipt passed without a native browser dialog |
+| 16.2 release metadata and dependency | `uv lock --check` plus plugin/version/bump tests | exact 0.12.2 public artifact hashes locked; 52 tests passed; branch is 0 behind current `origin/main` |
+| Public-renderer Roundtable integration | focused Roundtable workspace and MCP schema tests under the locked 0.12.2 environment | 81 passed; rendered batch action has visible inline confirmation/consequence and no native browser dialog |
+| Final 16.2 release artifacts | isolated `uv build`, SHA-256, Twine check, fresh wheel install, clean-room artifact smoke, and installed Roundtable render | wheel `5b09d3ae2b3eb85bfb32a23a1c2e5f2db0dbaa775874dc88e33442dbf69a1c78`; sdist `a073bb736cf0222382ee1b9e0f2af5f1bbcdb949310bdd0e763e4b0ec0f6c30b`; Twine passed; installed 16.2.0 and public `attune-forms 0.12.2` from `site-packages`; clean-room and inline-confirmation receipts passed |
+| Final 16.2 different-model review | Antigravity plan-only review of frozen staged diff SHA-256 `e49e229871303bca91da25f1d7b65af66610c72af0fddb5443fbab7b7da84afd`, followed by the required scoped completion pass | `NO FINDINGS` in both board-posted threads; 11 + 16 manifests cover all 27 authorized files with zero omissions overall |
 
 ## Next action
 
-After this handoff and its R5 receipt are committed and pushed, review the one
-feature PR and merge only on the chair's explicit action; this governance/spec
-diff is intentionally not eligible for lead-armed auto-merge.
+Create a signed commit, push PR #2384, and wait for fresh CI. Merge, tag, and
+publication remain separate explicit chair gates; this governance/spec diff is
+intentionally not eligible for lead-armed auto-merge.

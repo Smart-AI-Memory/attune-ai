@@ -299,7 +299,7 @@ wheels = [
 
 [[package]]
 name = "attune-ai"
-version = "16.1.0"
+version = "16.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "agent-memory-client" },
@@ -531,7 +531,7 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'enterprise'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'full'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40.0" },
-    { name = "attune-forms", specifier = ">=0.11.1,<1.0" },
+    { name = "attune-forms", specifier = ">=0.12.2,<1.0" },
     { name = "attune-help", marker = "extra == 'dev'", specifier = ">=0.10.0" },
     { name = "attune-rag", specifier = ">=0.1.5,<2.0" },
     { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.5,<2.0" },
@@ -709,14 +709,14 @@ dev = [
 
 [[package]]
 name = "attune-forms"
-version = "0.11.1"
+version = "0.12.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "structlog" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/fe/b6/e8cb6fd0a20149dd9280880c949af8b7536ef77cd4172a0ed0416cae9c04/attune_forms-0.11.1.tar.gz", hash = "sha256:31d8e57a8093746c61d48ae8525f38b218d77040f01a8bd93834b0608bbf2846", size = 219055, upload-time = "2026-08-31T05:03:05.015Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1e/62/28935419065ba42dc372736e445ff16a1e8bd5b6744fd9de128a1832af2a/attune_forms-0.12.2.tar.gz", hash = "sha256:2542cef995af0816772eef48b97f6344190b6fd36485d2aa3003c09e3c860f25", size = 245822, upload-time = "2026-09-02T20:32:14.269Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/18/d9/9f3692d88af1b1c045ca80406b35140bc208dba85ed63ac80eed01062923/attune_forms-0.11.1-py3-none-any.whl", hash = "sha256:8d1ebac546797f315d4695753bc1b28769229632ce94c04b73eb1b4dc0171148", size = 126601, upload-time = "2026-08-31T05:03:03.596Z" },
+    { url = "https://files.pythonhosted.org/packages/80/19/5f6620ffdebc9b79013abae07f22aed286728f4d6936faf85fe112344643/attune_forms-0.12.2-py3-none-any.whl", hash = "sha256:216877fda1a1ba96ae2028ae4ff864c98e0b8b248a7f549410e52cf1155f367e", size = 141476, upload-time = "2026-09-02T20:32:12.807Z" },
 ]
 
 [[package]]

@@ -359,6 +359,7 @@ class TestGetElicitationTools:
             "action_nonce",
             "contract_hash",
         }.issubset(response["required"])
+        assert response["properties"]["responses"] == {"type": "object"}
         assert response["additionalProperties"] is False
 
     def test_shared_workspace_publish_requires_workspace_and_event(self) -> None:

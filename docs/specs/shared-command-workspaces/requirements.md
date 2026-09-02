@@ -1,10 +1,8 @@
 # Shared Command Workspaces — Requirements
 
-**Status:** completed (2026-08-31) — implemented and verified; the chair
-promoted all seven round-table candidates, raised this initiative's
-changed-code coverage requirement to 90%, and selected auto-run for the
-remaining separately gated tasks. Tasks 1–7 and all ten cohort adapters are
-complete.
+**Status:** completed (2026-09-01) — Tasks 1–9 accepted; the version 1 cohort
+and atomic Roundtable batch amendment are complete. Live interaction metrics
+remain owned by Interaction Quality Contract Task 5.
 **Slug:** `shared-command-workspaces`
 **Provenance:** round-table thread
 `shared-renderer-command-workspaces-001`; promoted board messages
@@ -160,6 +158,36 @@ approved fallback scope)
 
 (source: promoted message 20 plus chair ruling in message 11)
 
+**SCW-8 — Action-scoped responses support bounded, atomic decisions**
+
+(table: agreed — corrected amendment chair-ratified 2026-09-01)
+
+- A workspace action may declare a command-neutral response schema using the
+  existing validated field vocabulary. `attune-forms` validates required
+  fields, stable item ids, and option membership before `attune-ai` or a
+  command adapter receives the response; an unvalidated payload bag is not an
+  acceptable substitute.
+- The canonical response schema, field order, item ids, option ids, action id,
+  and current workspace binding participate in the rendered contract. Stale,
+  altered, duplicate, partial, replayed, or malformed batches fail atomically
+  without recording any ruling or consuming unrelated authority.
+- Existing action-only responses remain backward compatible. A command may
+  retain its one-item action as the safe fallback when an action-scoped form
+  is unavailable; the fallback exposes the same legal decisions and terminal
+  outcome.
+- Roundtable is the first batch witness. One response may carry at most three
+  current promotion rulings. Because the declared choices include `promote`,
+  every `apply_rulings` batch requires explicit confirmation, and seven
+  candidates require three accepted batch
+  submissions (`3 + 3 + 1`, or `+2` after the first) rather than seven. This
+  is a target until deterministic and live receipts prove it; rendering three
+  visible candidates alone does not satisfy the requirement.
+- Shared code contains no Roundtable candidate, promotion, or ruling fields.
+  The generic layer validates declared fields and binding; the Roundtable
+  adapter alone interprets the validated values and applies its rulings.
+
+(source: chair-approved batch-ruling approach, 2026-09-01; D22)
+
 ## Non-goals
 
 - No new form-control system or renderer.
@@ -172,6 +200,8 @@ approved fallback scope)
 - No claim that one view sequence fits every adapter.
 - No automatic implementation authority from approval of this requirements
   artifact; every task retains its own chair gate.
+- No generic client-supplied mapping passed through shared core without a
+  declarative response schema and structural validation.
 
 ## Counter-case
 
@@ -182,3 +212,10 @@ adapter-issued rather than phase-implied, and require a ten-example cohort
 whose first two deliberately stress opposite ends—multi-gate release work and
 read-only diagnostics. If later adapters require domain concepts in the core,
 the adapter boundary has failed and must be simplified before rollout.
+
+## Dissent register
+
+Empty — attested after the chair accepted the lead's pushback that displaying
+three candidates alone cannot reduce submissions and approved the validated,
+action-scoped response-contract approach. Exact amendment wording remains
+subject to its lifecycle and chair review.

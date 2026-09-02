@@ -8,7 +8,11 @@ import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 
-from attune_forms import WorkspaceActionResponse, workspace_from_dict
+from attune_forms import (
+    WorkspaceActionResponse,
+    workspace_action_contract,
+    workspace_from_dict,
+)
 
 from attune.elicitation.command_workspace import (
     CommandWorkspaceError,
@@ -22,6 +26,8 @@ _STAGES = frozenset(
     {"preview", "intake", "running", "checkpoint", "synthesizing", "triage", "receipt"}
 )
 _DISPOSITIONS = frozenset({"promote", "decline", "another_round"})
+_BATCH_DISPOSITIONS = frozenset({"promote", "decline"})
+_RULING_BATCH_SIZE = 3
 
 
 @dataclass(frozen=True)
@@ -223,12 +229,12 @@ class RoundtableWorkspaceAdapter:
             "thread": state.thread_id,
             "stage": state.stage,
             "round": state.round_number,
-            "candidate": (
-                state.candidates[state.triage_index].message_id
-                if state.stage == "triage" and state.triage_index < len(state.candidates)
-                else None
+            "candidates": (
+                [candidate.message_id for candidate in self._current_ruling_batch(state)]
+                if state.stage == "triage"
+                else []
             ),
-            "actions": [action.id for action in view.actions],
+            "actions": [workspace_action_contract(action) for action in view.actions],
         }
         digest = hashlib.sha256(
             json.dumps(contract, sort_keys=True, separators=(",", ":")).encode()
@@ -384,6 +390,8 @@ class RoundtableWorkspaceAdapter:
     ) -> CommandWorkspaceTransition:
         if state.triage_index >= len(state.candidates):
             raise CommandWorkspaceError(["Roundtable triage has no current candidate"])
+        if response.action == "apply_rulings":
+            return self._apply_ruling_batch(state, response)
         candidate = state.candidates[state.triage_index]
         if response.action not in _DISPOSITIONS:
             raise CommandWorkspaceError([f"unknown Roundtable disposition {response.action!r}"])
@@ -427,6 +435,61 @@ class RoundtableWorkspaceAdapter:
             result={
                 "ruling": response.action,
                 "message_id": candidate.message_id,
+                "remaining": len(state.candidates) - next_index,
+            },
+        )
+
+    def _apply_ruling_batch(
+        self,
+        state: RoundtableWorkspaceState,
+        response: WorkspaceActionResponse,
+    ) -> CommandWorkspaceTransition:
+        """Validate and apply the current bounded ruling slice atomically."""
+        if not response.confirmed:
+            raise CommandWorkspaceError(["ruling batch requires explicit chair confirmation"])
+        candidates = self._current_ruling_batch(state)
+        expected_ids = tuple(str(candidate.message_id) for candidate in candidates)
+        actual_ids = tuple(response.responses)
+        if actual_ids != expected_ids:
+            raise CommandWorkspaceError(
+                [
+                    "ruling batch must contain exactly the current candidate ids "
+                    "in canonical order"
+                ]
+            )
+        prior_ids = {ruling.message_id for ruling in state.rulings}
+        if any(candidate.message_id in prior_ids for candidate in candidates):
+            raise CommandWorkspaceError(["Roundtable candidate may be ruled only once"])
+
+        rulings: list[RoundtableRuling] = []
+        for candidate, item_id in zip(candidates, expected_ids, strict=True):
+            disposition = response.responses[item_id]
+            if not isinstance(disposition, str) or disposition not in _BATCH_DISPOSITIONS:
+                raise CommandWorkspaceError(
+                    [f"invalid Roundtable batch disposition for candidate {item_id}"]
+                )
+            rulings.append(RoundtableRuling(candidate.message_id, disposition))
+
+        next_index = state.triage_index + len(candidates)
+        terminal = next_index == len(state.candidates)
+        successor = replace(
+            state,
+            stage="receipt" if terminal else "triage",
+            triage_index=next_index,
+            rulings=(*state.rulings, *rulings),
+        )
+        return CommandWorkspaceTransition(
+            successor,
+            terminal=terminal,
+            result={
+                "rulings": [
+                    {
+                        "message_id": ruling.message_id,
+                        "disposition": ruling.disposition,
+                    }
+                    for ruling in rulings
+                ],
+                "batch_size": len(rulings),
                 "remaining": len(state.candidates) - next_index,
             },
         )
@@ -538,6 +601,26 @@ class RoundtableWorkspaceAdapter:
             candidate = state.candidates[state.triage_index]
             actions = [
                 {
+                    "id": "apply_rulings",
+                    "label": "Apply ruling batch",
+                    "intent": "primary",
+                    "consequence": (
+                        "Authorize every promote or decline ruling in this batch "
+                        "as one atomic chair decision."
+                    ),
+                    "requires_explicit_choice": True,
+                    "response_fields": [
+                        {
+                            "id": str(item.message_id),
+                            "text": item.title,
+                            "type": "single_select",
+                            "options": ["promote", "decline"],
+                            "help_text": item.detail,
+                        }
+                        for item in self._current_ruling_batch(state)
+                    ],
+                },
+                {
                     "id": "promote",
                     "label": "Promote",
                     "consequence": "Authorize this board message for tracked promotion.",
@@ -551,8 +634,10 @@ class RoundtableWorkspaceAdapter:
                 "id": "execution",
                 "title": "Roundtable promotion triage",
                 "summary": (
-                    f"Item {state.triage_index + 1} of {len(state.candidates)} "
-                    "— one bounded decision per page."
+                    f"Items {state.triage_index + 1}–"
+                    f"{min(state.triage_index + _RULING_BATCH_SIZE, len(state.candidates))} "
+                    f"of {len(state.candidates)} — apply up to three atomically or "
+                    "use the one-candidate fallback."
                 ),
                 "sections": [
                     {
@@ -610,3 +695,9 @@ class RoundtableWorkspaceAdapter:
     def _can_run_next_round(state: RoundtableWorkspaceState) -> bool:
         next_round = state.round_number + 1
         return next_round <= 3 and next_round * len(CANONICAL_SEATS) <= state.max_invocations
+
+    @staticmethod
+    def _current_ruling_batch(
+        state: RoundtableWorkspaceState,
+    ) -> tuple[RoundtableCandidate, ...]:
+        return state.candidates[state.triage_index : state.triage_index + _RULING_BATCH_SIZE]

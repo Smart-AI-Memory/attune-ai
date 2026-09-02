@@ -1,8 +1,6 @@
 # Shared Command Workspaces — Tasks
 
-**Status:** completed (2026-08-31) — all seven tasks executed behind their
-required lifecycle gates; the ten-adapter cohort and version 1 shared renderer
-contract are verified.
+**Status:** completed (2026-09-01) — Tasks 1–9 accepted; no current task.
 
 ## Task 1 — Characterize the contract and name the extraction boundary
 
@@ -238,4 +236,69 @@ contract are verified.
 </task>
 ```
 
-<!-- spec-state: {"schema_version": 1, "completed": ["1", "2", "3", "4", "5", "6", "7"], "current": null, "auto_run": true, "last_updated": "2026-08-31T15:26:39.220698+00:00"} -->
+## Task 8 — Add validated action-scoped workspace responses
+
+```xml
+<task id="8" name="action-scoped-workspace-responses">
+  <dependencies>
+    <dep>7</dep>
+  </dependencies>
+  <objective>
+    In the separate attune-forms repository, extend workspace actions with an
+    optional declarative response schema and return only structurally
+    validated, contract-bound values while preserving every version 1
+    action-only response.
+  </objective>
+  <external-repository>Smart-AI-Memory/attune-forms</external-repository>
+  <files-to-modify>
+    <file path="src/attune_forms/workspace.py" />
+    <file path="src/attune_forms/mcp_server.py" />
+    <file path="src/attune_forms/__init__.py" />
+    <file path="tests/test_workspace.py" />
+    <file path="tests/test_mcp_server.py" />
+  </files-to-modify>
+  <validation>
+    <check id="iqc-task-4-state">Before Task 8 arms, the public load_state receipt for docs/specs/interaction-quality-contract/tasks.md contains task 4 in completed; absent or malformed state is BLOCKED.</check>
+    <check>Interaction Quality Task 4's accepted owner-routing receipt names this exact action-response gap.</check>
+    <check>Actions without response fields preserve their serialized schema, widget/Markdown output, and collected response behavior.</check>
+    <check>Action-scoped required fields, item ids, option membership, and unknown-key rejection use the public form validator rather than adapter callbacks.</check>
+    <check>The canonical response schema participates in the contract digest and altered, stale, partial, duplicate, or replayed answers fail closed.</check>
+    <check>A field-bearing action and a field-free sibling action on the same view validate only the schema associated with the selected action.</check>
+    <check>Widget, Markdown, headless, and MCP collection return the same normalized response mapping.</check>
+    <check>Changed production code coverage is at least 90% and the complete attune-forms suite passes on its supported Python versions.</check>
+  </validation>
+</task>
+```
+
+## Task 9 — Apply three-ruling Roundtable batches atomically
+
+```xml
+<task id="9" name="roundtable-three-ruling-batches">
+  <dependencies>
+    <dep>8</dep>
+  </dependencies>
+  <objective>
+    Use the validated action-scoped response contract to apply Roundtable
+    promotion rulings in bounded slices of at most three while retaining the
+    one-candidate path as a compatible fallback and preserving board R1–R10.
+  </objective>
+  <files-to-modify>
+    <file path="src/attune/roundtable/workspace.py" />
+    <file path="src/attune/mcp/tool_schemas.py" />
+    <file path="tests/unit/roundtable/test_workspace.py" />
+    <file path="tests/unit/elicitation/test_interaction_conformance.py" />
+    <file path="tests/unit/mcp/test_tool_schemas.py" />
+  </files-to-modify>
+  <validation>
+    <check>Seven candidates complete through exactly three accepted batches of 3 + 3 + 1 and report +2 added submissions after the first.</check>
+    <check>Each batch contains exactly the current item ids in canonical order; stale, partial, duplicate, foreign, or invalid members reject the whole batch without mutation.</check>
+    <check>One accepted batch advances the workspace revision exactly once while recording every ruling exactly once.</check>
+    <check>Because its declared choices include promote, every apply_rulings batch requires explicit confirmation and retains consequence text naming the authority granted.</check>
+    <check>The legacy current-candidate promote/decline path remains completion-equivalent across widget, Markdown, and headless projections.</check>
+    <check>The deterministic constrained profile proves every field and terminal batch action reachable when another_round is unavailable; the four-action state is an explicit failing sentinel owned by IQC Task 5, and unavailable native fit is not inferred.</check>
+    <check>Changed production code coverage is at least 90% and command-cohort tests remain green.</check>
+  </validation>
+</task>
+```
+
+<!-- spec-state: {"schema_version": 1, "completed": ["1", "2", "3", "4", "5", "6", "7", "8", "9"], "current": null, "auto_run": false, "last_updated": "2026-09-01T22:57:26.798869+00:00"} -->

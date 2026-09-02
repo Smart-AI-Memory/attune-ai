@@ -1,8 +1,8 @@
 # Shared Command Workspaces — Design
 
-**Status:** completed (2026-08-31) — implemented and verified through Tasks
-1–7.
-**Last updated:** 2026-08-31
+**Status:** completed (2026-09-01) — Tasks 1–9 accepted; live interaction
+measurement remains separately gated under Interaction Quality Contract Task 5.
+**Last updated:** 2026-09-01
 
 ## Verified baseline
 
@@ -24,6 +24,12 @@ The current code already contains both halves needed for a thin extraction:
 
 The gap is not rendering. It is a reusable host authority seam and typed
 command adapters.
+
+The version 1 action response is intentionally narrow—one action id,
+confirmation, and authority binding—but it has no validated place for several
+independent item choices. Showing three Roundtable candidates therefore does
+not reduce submissions: the adapter still advances one `triage_index` per
+response. Tasks 8–9 extend this seam without weakening its authority checks.
 
 ## Layer boundary
 
@@ -48,6 +54,50 @@ WorkspaceView + WorkspaceActionBinding (attune-forms, data only)
 and optional binding. `attune-ai` then compares it with canonical state,
 rebuilds the command-owned contract, consumes authority, and returns a typed
 host action. Neither layer accepts an executable callback from the client.
+
+## Action-scoped response extension
+
+An action may optionally declare `response_fields` using the existing
+`attune-forms` field vocabulary. The response collector selects the schema for
+the submitted action, validates its answers with the same required-field and
+option-membership rules as a standalone form, and returns an immutable
+normalized mapping on `WorkspaceActionResponse`. Actions without fields retain
+the version 1 response shape and an empty mapping.
+
+```text
+WorkspaceAction
+  id / label / consequence / requires_explicit_choice
+  response_fields?       declarative, command-neutral fields
+
+WorkspaceActionResponse
+  view / action / confirmed
+  responses              validated immutable field-id -> value mapping
+  workspace_id / revision / nonce / contract_hash
+```
+
+Canonical field definitions—including field order, stable item ids, option
+ids, and action association—are part of the projected contract hash. The host
+still validates the current workspace binding and rebuilds the current
+projection before the adapter sees the response. The collector rejects
+answers on an action that declares none, and rejects missing, foreign,
+duplicate, or invalid answers on an action that declares fields. No executable
+validator or command callback crosses the renderer boundary.
+
+Roundtable projects up to three current candidates as action-scoped choice
+fields whose values are `promote` or `decline`. Because those declared choices
+include `promote`, `apply_rulings` is one revision-bound action that always
+requires explicit confirmation. `another_round` remains a page-level action
+with no response fields. The adapter checks that the validated item ids are
+exactly the current `3 + 3 + 1` slice, constructs every command-owned ruling,
+and applies the slice atomically with one revision advance. Any stale or
+invalid member rejects the entire batch.
+
+The legacy current-candidate `promote` and `decline` actions remain available
+as the compatibility/fallback route. Their completion semantics and terminal
+receipt are identical. The batch path is not called a latency improvement
+until deterministic receipts prove three accepted submissions for seven
+candidates and a live available host proves reachability at its measured
+viewport; unavailable native evidence stays unavailable.
 
 ## Host contract
 
@@ -177,6 +227,9 @@ advances the revision, and reissues authority; viewport parameters never
 bypass canonical state through `project()`. If the host dialog cannot scroll,
 the portable fallback must remain operable. The seven-item truncated dialog
 observed while approving this spec is a regression fixture, not an anecdote.
+For action-scoped batches, the cursor advances by the number of atomically
+accepted item responses. Merely placing multiple display cards on one page
+does not advance the cursor or reduce interaction rounds.
 
 ## Cohort selection
 
@@ -205,6 +258,10 @@ The receipt ladder is ordered from cheapest to most boundary-sensitive:
 5. live Fix compatibility receipt;
 6. live Roundtable and Spec lifecycle receipts;
 7. one receipt per cohort adapter, including its fallback path.
+8. action-scoped response compatibility, malformed/stale/atomicity, and
+   `3 + 3 + 1` Roundtable batch receipts;
+9. live A/B completion evidence for the one-at-a-time and batch paths on every
+   available host.
 
 Changed production code must reach 90% coverage. A green unit suite cannot
 replace the live renderer/action, persistence, subprocess, or multi-provider
