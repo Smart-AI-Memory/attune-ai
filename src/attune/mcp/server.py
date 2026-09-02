@@ -61,6 +61,9 @@ _VOICE_SKIP_TOOLS: frozenset[str] = frozenset(
         "personal_memory_forget",
         "context_get",
         "context_set",
+        "command_workspace_open",
+        "command_workspace_collect_action",
+        "command_workspace_publish",
         "fix_workspace_preview",
         "fix_workspace_collect_action",
         "auth_status",
@@ -121,7 +124,57 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
         self.prompts = self._register_prompts()
         self._memory = None
         self._context: dict[str, str] = {}
-        self._fix_workspaces: dict[str, Any] = {}
+        from attune.elicitation.command_workspace import CommandWorkspaceHost
+        from attune.elicitation.fix_workspace import FixWorkspaceAdapter
+        from attune.roundtable.workspace import RoundtableWorkspaceAdapter
+        from attune.spec.workspace import SpecWorkspaceAdapter
+        from attune.workspaces.bug_predict import BugPredictWorkspaceAdapter
+        from attune.workspaces.bulk import BulkWorkspaceAdapter
+        from attune.workspaces.doc_gen import DocGenWorkspaceAdapter
+        from attune.workspaces.image_analysis import ImageAnalysisWorkspaceAdapter
+        from attune.workspaces.memory_context import MemoryContextWorkspaceAdapter
+        from attune.workspaces.release_prep import ReleasePrepWorkspaceAdapter
+        from attune.workspaces.security_audit import SecurityAuditWorkspaceAdapter
+        from attune.workspaces.smart_test import SmartTestWorkspaceAdapter
+        from attune.workspaces.verify import VerifyWorkspaceAdapter
+        from attune.workspaces.workflow_orchestration import WorkflowOrchestrationAdapter
+
+        self._command_workspaces = CommandWorkspaceHost()
+        self._fix_workspace_adapter = FixWorkspaceAdapter()
+        self._roundtable_workspace_adapter = RoundtableWorkspaceAdapter()
+        self._spec_workspace_adapter = SpecWorkspaceAdapter(Path(self._workspace_root))
+        self._release_prep_workspace_adapter = ReleasePrepWorkspaceAdapter()
+        self._security_audit_workspace_adapter = SecurityAuditWorkspaceAdapter(
+            Path(self._workspace_root)
+        )
+        self._smart_test_workspace_adapter = SmartTestWorkspaceAdapter(Path(self._workspace_root))
+        self._workflow_orchestration_adapter = WorkflowOrchestrationAdapter(
+            Path(self._workspace_root)
+        )
+        self._verify_workspace_adapter = VerifyWorkspaceAdapter(Path(self._workspace_root))
+        self._bug_predict_workspace_adapter = BugPredictWorkspaceAdapter(Path(self._workspace_root))
+        self._bulk_workspace_adapter = BulkWorkspaceAdapter()
+        self._doc_gen_workspace_adapter = DocGenWorkspaceAdapter(Path(self._workspace_root))
+        self._image_analysis_workspace_adapter = ImageAnalysisWorkspaceAdapter(
+            Path(self._workspace_root)
+        )
+        self._memory_context_workspace_adapter = MemoryContextWorkspaceAdapter()
+        self._command_workspaces.register(self._fix_workspace_adapter)
+        self._command_workspaces.register(self._roundtable_workspace_adapter)
+        self._command_workspaces.register(self._spec_workspace_adapter)
+        for adapter in (
+            self._release_prep_workspace_adapter,
+            self._bug_predict_workspace_adapter,
+            self._bulk_workspace_adapter,
+            self._memory_context_workspace_adapter,
+            self._smart_test_workspace_adapter,
+            self._doc_gen_workspace_adapter,
+            self._workflow_orchestration_adapter,
+            self._image_analysis_workspace_adapter,
+            self._verify_workspace_adapter,
+            self._security_audit_workspace_adapter,
+        ):
+            self._command_workspaces.register(adapter)
         self._plugin_handlers: dict[str, Any] = {}
         self._rate_limiter = RateLimiter(max_calls=60, window_seconds=60.0)
         self._tool_handlers = self._build_dispatch_table()
@@ -303,6 +356,9 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
             "list_capabilities": lambda _args: self._handle_list_capabilities(),
             "elicitation_render_form": self._handle_elicitation_render_form,
             "elicitation_collect_response": self._handle_elicitation_collect_response,
+            "command_workspace_open": self._handle_command_workspace_open,
+            "command_workspace_collect_action": (self._handle_command_workspace_collect_action),
+            "command_workspace_publish": self._handle_command_workspace_publish,
             "fix_workspace_preview": self._handle_fix_workspace_preview,
             "fix_workspace_collect_action": self._handle_fix_workspace_collect_action,
             "elicitation_ask": self._handle_elicitation_ask,
@@ -876,72 +932,115 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
             result["hint"] = hint
         return result
 
-    async def _handle_fix_workspace_preview(self, args: dict[str, Any]) -> dict[str, Any]:
-        """Create a canonical, state-bound Fix preview without executing.
+    async def _handle_command_workspace_open(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Open any registered command adapter on the shared renderer."""
+        from attune_forms import mcp_app_result
 
-        A caller may reuse a workspace id only after the canonical state
-        entered ``intake`` through ``edit_contract``. This makes editing an
-        explicit state transition and prevents a silent preview replacement
-        from retaining approval authority.
-        """
-        from attune_forms import (
-            WorkspaceActionBinding,
-            WorkspaceValidationError,
-            mcp_app_result,
-            workspace_from_dict,
-            workspace_to_markdown,
-            workspace_to_widget_html,
-        )
+        from attune.elicitation.command_workspace import CommandWorkspaceError
 
-        from attune.elicitation.fix_workspace import (
-            FixWorkspaceError,
-            FixWorkspaceState,
-            preview_workspace_dict,
-        )
+        adapter_id = args.get("adapter_id")
+        if not isinstance(adapter_id, str):
+            return {"success": False, "problems": ["adapter_id must be a string"]}
+        try:
+            render = await self._command_workspaces.open(
+                adapter_id,
+                args.get("intake", {}),
+                workspace_id=args.get("workspace_id"),
+            )
+        except (CommandWorkspaceError, TypeError, ValueError) as exc:
+            return {
+                "success": False,
+                "problems": getattr(exc, "problems", [str(exc)]),
+            }
+        return {
+            "success": True,
+            **render.to_dict(),
+            "mcp_app": mcp_app_result(
+                collect_tool="command_workspace_collect_action",
+                collect_mode="response",
+            ),
+        }
+
+    async def _handle_command_workspace_collect_action(
+        self, args: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Collect one bound action for any registered command adapter."""
+        from attune_forms import mcp_app_result
+
+        from attune.elicitation.command_workspace import CommandWorkspaceError
+
+        response = args.get("response", {})
+        try:
+            result = await self._command_workspaces.collect(response)
+        except (CommandWorkspaceError, TypeError, ValueError) as exc:
+            return {
+                "success": False,
+                "problems": getattr(exc, "problems", [str(exc)]),
+            }
+        return {
+            "success": True,
+            **result.to_dict(),
+            "mcp_app": mcp_app_result(
+                collect_tool="command_workspace_collect_action",
+                collect_mode="response",
+            ),
+        }
+
+    async def _handle_command_workspace_publish(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Publish one moderator/executor event to a command workspace."""
+        from attune_forms import mcp_app_result
+
+        from attune.elicitation.command_workspace import CommandWorkspaceError
 
         workspace_id = args.get("workspace_id")
-        revision = 0
-        if workspace_id is not None:
-            current = self._fix_workspaces.get(workspace_id)
-            if current is None:
-                return {"success": False, "problems": ["unknown Fix workspace_id"]}
-            if current.view != "intake":
-                return {
-                    "success": False,
-                    "problems": ["select edit_contract before replacing a Fix preview"],
-                }
-            revision = current.revision + 1
+        if not isinstance(workspace_id, str):
+            return {"success": False, "problems": ["workspace_id must be a string"]}
+        try:
+            result = await self._command_workspaces.publish(
+                workspace_id,
+                args.get("event", {}),
+            )
+        except (CommandWorkspaceError, TypeError, ValueError) as exc:
+            return {
+                "success": False,
+                "problems": getattr(exc, "problems", [str(exc)]),
+            }
+        return {
+            "success": True,
+            **result.to_dict(),
+            "mcp_app": mcp_app_result(
+                collect_tool="command_workspace_collect_action",
+                collect_mode="response",
+            ),
+        }
+
+    async def _handle_fix_workspace_preview(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Compatibility entry point backed by the shared command host."""
+        from attune_forms import mcp_app_result
+
+        from attune.elicitation.command_workspace import CommandWorkspaceError
+        from attune.elicitation.fix_workspace import FixWorkspaceError
 
         try:
-            state = FixWorkspaceState.create_preview(
+            render = await self._command_workspaces.open(
+                "fix",
                 args.get("answers", {}),
-                workspace_id=workspace_id,
-                revision=revision,
+                workspace_id=args.get("workspace_id"),
             )
-            if state.preview is None:  # invariant, kept explicit for type narrowing
-                raise FixWorkspaceError(["Fix preview state was not created"])
-            view = workspace_from_dict(preview_workspace_dict(state.preview))
-            binding = WorkspaceActionBinding(
-                workspace_id=state.workspace_id,
-                revision=state.revision,
-                action_nonce=state.action_nonce,
-                contract_hash=state.contract_hash,
-            )
-            html = workspace_to_widget_html(view, binding=binding)
-            markdown = workspace_to_markdown(view, binding=binding)
-        except (FixWorkspaceError, WorkspaceValidationError, TypeError, ValueError) as exc:
-            problems = getattr(exc, "problems", [str(exc)])
-            return {"success": False, "problems": problems}
-
-        self._fix_workspaces[state.workspace_id] = state
+            state = self._fix_workspace_adapter.compatibility_state(render.record)
+        except (CommandWorkspaceError, FixWorkspaceError, TypeError, ValueError) as exc:
+            return {
+                "success": False,
+                "problems": getattr(exc, "problems", [str(exc)]),
+            }
         return {
             "success": True,
             "workspace_id": state.workspace_id,
             "revision": state.revision,
             "contract_hash": state.contract_hash,
             "state": state.to_dict(),
-            "html": html,
-            "markdown": markdown,
+            "html": render.html,
+            "markdown": render.markdown,
             "mcp_app": mcp_app_result(
                 collect_tool="fix_workspace_collect_action",
                 collect_mode="response",
@@ -950,31 +1049,28 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
         }
 
     async def _handle_fix_workspace_collect_action(self, args: dict[str, Any]) -> dict[str, Any]:
-        """Validate and consume one action against server-owned Fix state."""
-        from attune.elicitation.fix_workspace import (
-            FixWorkspaceError,
-            validate_fix_workspace_action,
-        )
+        """Compatibility action entry point backed by the shared host."""
+        from attune.elicitation.command_workspace import CommandWorkspaceError
+        from attune.elicitation.fix_workspace import FixWorkspaceError
 
         response = args.get("response", {})
-        if not isinstance(response, dict):
-            return {"success": False, "problems": ["response must be a mapping"]}
-        workspace_id = response.get("workspace_id")
-        if not isinstance(workspace_id, str):
-            return {"success": False, "problems": ["response requires workspace_id"]}
-        state = self._fix_workspaces.get(workspace_id)
-        if state is None:
-            return {"success": False, "problems": ["unknown or expired Fix workspace_id"]}
-
         try:
-            result = validate_fix_workspace_action(state, response)
-        except FixWorkspaceError as exc:
-            return {"success": False, "problems": exc.problems}
-
-        # Consume the nonce before returning the validated action. A retry of
-        # the same payload observes this successor state and fails closed.
-        self._fix_workspaces[workspace_id] = result.state
-        return {"success": True, **result.to_dict()}
+            result = await self._command_workspaces.collect(
+                response,
+                expected_adapter_id="fix",
+            )
+            state = self._fix_workspace_adapter.compatibility_state(result.record)
+        except (CommandWorkspaceError, FixWorkspaceError, TypeError, ValueError) as exc:
+            return {
+                "success": False,
+                "problems": getattr(exc, "problems", [str(exc)]),
+            }
+        return {
+            "success": True,
+            "action": result.action,
+            "state": state.to_dict(),
+            **dict(result.result),
+        }
 
     @staticmethod
     def _maybe_keyboard_hint(form: Any = None) -> str | None:

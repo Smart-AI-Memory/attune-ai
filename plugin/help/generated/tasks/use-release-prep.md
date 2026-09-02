@@ -21,27 +21,33 @@ Invoke with: `/release-prep <version or 'check'>`
 
 3. **Run the tool**
    Call the `release_notes` MCP tool for a changelog draft and
-go/no-go recommendation: For targeted checks, use individual tools: The full release prep covers four areas: - **Security** — scans for vulnerabilities that block
-  release
-- **Testing** — checks test coverage, identifies gaps
-- **Documentation** — validates changelog, README, and
-  documentation freshness
-- **Versioning** — checks version bumps, dependency
-  compatibility, semver compliance
+   go/no-go recommendation:
 
    ```
    release_notes(path="<project root>")
    ```
 
 4. **Run tool (option 2)**
+   For targeted checks, use individual tools:
 
    ```
    health_check(path="<project root>")
-dependency_check(path="<project root>")
-secure_release(path="<project root>")
+   dependency_check(path="<project root>")
+   secure_release(path="<project root>")
    ```
 
-5. **Choose follow-up action**
+5. **Review release-prep execution guidance**
+   The full release prep covers four areas:
+
+   - **Security** — scans for vulnerabilities that block
+     release
+   - **Testing** — checks test coverage, identifies gaps
+   - **Documentation** — validates changelog, README, and
+     documentation freshness
+   - **Versioning** — checks version bumps, dependency
+     compatibility, semver compliance
+
+6. **Choose follow-up action**
    Want me to fix the blockers?; Should I update the changelog?; Ready to tag and publish?
 
 

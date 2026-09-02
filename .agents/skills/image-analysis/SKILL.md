@@ -27,6 +27,21 @@ Before running, ask:
 
 ## Execution
 
+### Shared command workspace (preferred)
+
+Open adapter `image-analysis` with the local image path and optional prompt.
+The adapter reads the real file, validates repository containment, the 10MB
+limit, magic bytes versus extension, dimensions, MIME type, and SHA-256. The
+invocation already authorizes this read-only analysis, so the running workspace
+has no synthetic confirmation action.
+
+Call `analyze_image` with the validated path and publish the exact response as
+`analysis_result`; include provider progress only as optional `progress`
+events. Success requires non-empty analysis and must match the canonical MIME
+and file size. Decode/provider failure must say “did not complete,” never
+render an empty successful analysis. Present the terminal widget or Markdown,
+and preserve the same input fingerprint and truthfulness in text fallback.
+
 Call the `analyze_image` MCP tool:
 
 **Parameters:**

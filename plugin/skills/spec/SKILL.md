@@ -76,6 +76,31 @@ echo '<answers JSON>' | python -m attune.elicitation.spec_intake --compose
 A slug collision renders as a WARNING, not an error — offer to
 amend the existing spec before forking a new one.
 
+### Shared command workspace (preferred)
+
+When the generic command-workspace tools are available, keep the existing
+tree-derived intake form above, then use adapter `spec` as the chair-facing
+lifecycle surface:
+
+1. Open it with `command_workspace_open` after intake validation (`route=new`
+   plus outcome, done_when, area, and slug), or with `route=resume` plus a
+   repository-relative XML plan path.
+2. Present the returned widget, or its returned Markdown verbatim. Collect
+   review, redo, approval, lifecycle acknowledgment, and task decisions only
+   through `command_workspace_collect_action`.
+3. Run creation, lifecycle gates, and task execution through the existing real
+   seams. Publish their exact `artifacts_created`, `lifecycle_gate`,
+   `task_started`, `execution_progress`, and `task_result` receipts with
+   `command_workspace_publish`; never fabricate a green receipt.
+4. Persist every returned `save_state` payload with `attune.spec.save_state`.
+   The renderer is not the durable store; the embedded plan comment remains
+   the resume authority.
+
+`BLOCKED` exposes only fix-and-rerun. `CHAIR_REQUIRED` exposes one explicit,
+bound acknowledgment. High-severity task results interrupt auto-run. If the
+generic tools are unavailable, follow the existing form/text stages below
+without weakening any of those semantics.
+
 ## How It Works
 
 Five stages, one flow:
@@ -372,7 +397,8 @@ If resumable plans exist, show them with
   gate) — that enriches one choice with a recommendation
   and tradeoffs; it does **not** batch multiple fields, so
   it honours the one-question rule.
-- **ALWAYS use AskUserQuestion** between stages
+- **Use the shared command workspace between stages when available; otherwise
+  ALWAYS use AskUserQuestion.**
 - **ALWAYS save_state()** after each task approval
 - **Show progress bar** before each task
 - **Voice layer**: use the attune voice personality

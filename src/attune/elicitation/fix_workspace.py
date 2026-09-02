@@ -20,7 +20,14 @@ from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from typing import Any
 
+from attune_forms import WorkspaceActionResponse, workspace_from_dict
+
 from attune.cli_commands.fix_commands import StructuredFixPreview, build_structured_preview
+from attune.elicitation.command_workspace import (
+    CommandWorkspaceProjection,
+    CommandWorkspaceRecord,
+    CommandWorkspaceTransition,
+)
 
 _STATE_KEYS = frozenset(
     {
@@ -482,3 +489,198 @@ def validate_fix_workspace_action(
         action_nonce="",
     )
     return FixWorkspaceActionResult(response.action, next_state, rebuilt.command_argv)
+
+
+@dataclass(frozen=True)
+class FixAdapterState:
+    """Fix-owned domain state stored inside the shared host envelope."""
+
+    validated_answers_json: str
+    preview: StructuredFixPreview | None
+    status: str
+    approved_contract_hash: str = ""
+
+    def __post_init__(self) -> None:
+        problems = _serialized_answer_problems(self.validated_answers_json)
+        if self.status not in {"preview", "intake", "approved"}:
+            problems.append("Fix adapter status is invalid")
+        if self.status == "intake" and self.preview is not None:
+            problems.append("Fix adapter intake cannot retain a preview")
+        if self.status != "intake" and self.preview is None:
+            problems.append("Fix adapter preview and approval require a preview")
+        if self.status == "approved":
+            if self.preview is not None and not hmac.compare_digest(
+                self.approved_contract_hash,
+                self.preview.contract_hash(),
+            ):
+                problems.append("Fix adapter approval does not match its preview")
+        elif self.approved_contract_hash:
+            problems.append("unapproved Fix adapter state cannot retain approval")
+        if problems:
+            raise FixWorkspaceError(problems)
+
+    @property
+    def validated_answers(self) -> dict[str, Any]:
+        """Return a fresh copy of the canonical Fix intake."""
+        return json.loads(self.validated_answers_json)
+
+
+class FixWorkspaceAdapter:
+    """Command adapter that keeps every Fix semantic outside shared code."""
+
+    adapter_id = "fix"
+    schema_version = 1
+
+    def create(
+        self,
+        intake: Mapping[str, object],
+        *,
+        prior_state: object | None = None,
+    ) -> FixAdapterState:
+        """Build a preview, allowing replacement only after edit_contract."""
+        if prior_state is not None and (
+            not isinstance(prior_state, FixAdapterState) or prior_state.status != "intake"
+        ):
+            raise FixWorkspaceError(["select edit_contract before replacing a Fix preview"])
+        answers_json = _answers_json(intake)
+        preview = _preview_from_answers(json.loads(answers_json))
+        return FixAdapterState(answers_json, preview, "preview")
+
+    def project(self, state: object) -> CommandWorkspaceProjection:
+        """Project Fix domain state into renderer data and its exact digest."""
+        if not isinstance(state, FixAdapterState):
+            raise FixWorkspaceError(["Fix adapter received incompatible state"])
+        if state.status == "intake":
+            view = workspace_from_dict(
+                {
+                    "id": "intake",
+                    "title": "Fix intake",
+                    "summary": "Edit the contract, then request a fresh preview.",
+                }
+            )
+            return CommandWorkspaceProjection(view)
+        if state.preview is None:
+            raise FixWorkspaceError(["Fix adapter preview is missing"])
+        contract_hash = state.preview.contract_hash()
+        if state.status == "preview":
+            return CommandWorkspaceProjection(
+                workspace_from_dict(preview_workspace_dict(state.preview)),
+                contract_hash,
+            )
+        receipt = workspace_from_dict(
+            {
+                "id": "receipt",
+                "title": "Fix approval receipt",
+                "summary": "The exact command was approved once; execution has not started.",
+                "sections": [
+                    {
+                        "heading": "Authority consumed",
+                        "tone": "success",
+                        "blocks": [
+                            {
+                                "kind": "key_value",
+                                "items": [
+                                    {"label": "Contract hash", "value": contract_hash},
+                                    {"label": "Status", "value": "approved"},
+                                ],
+                            },
+                            {
+                                "kind": "code",
+                                "title": "Approved command",
+                                "body": shlex.join(state.preview.command_argv),
+                                "language": "shell",
+                            },
+                        ],
+                    }
+                ],
+            }
+        )
+        return CommandWorkspaceProjection(receipt, contract_hash)
+
+    def apply(
+        self,
+        state: object,
+        action: WorkspaceActionResponse,
+    ) -> CommandWorkspaceTransition:
+        """Rebuild the Fix contract and apply one collected action."""
+        if not isinstance(state, FixAdapterState) or state.status != "preview":
+            raise FixWorkspaceError(["Fix workspace is not awaiting a preview action"])
+        if state.preview is None:
+            raise FixWorkspaceError(["Fix adapter preview is missing"])
+        rebuilt = _preview_from_answers(state.validated_answers)
+        rebuilt_hash = rebuilt.contract_hash()
+        if not hmac.compare_digest(rebuilt_hash, state.preview.contract_hash()):
+            raise FixWorkspaceError(["Fix contract changed after it was rendered"])
+        if action.action == "edit_contract":
+            successor = FixAdapterState(
+                state.validated_answers_json,
+                None,
+                "intake",
+            )
+            return CommandWorkspaceTransition(
+                successor,
+                result={
+                    "approved": False,
+                    "approved_command_argv": [],
+                    "approved_command": "",
+                    "execution_started": False,
+                },
+            )
+        if action.action != "run_fix":
+            raise FixWorkspaceError([f"unsupported Fix action {action.action!r}"])
+        successor = FixAdapterState(
+            state.validated_answers_json,
+            rebuilt,
+            "approved",
+            approved_contract_hash=rebuilt_hash,
+        )
+        return CommandWorkspaceTransition(
+            successor,
+            terminal=True,
+            result={
+                "approved": True,
+                "approved_command_argv": list(rebuilt.command_argv),
+                "approved_command": shlex.join(rebuilt.command_argv),
+                "execution_started": False,
+            },
+        )
+
+    def compatibility_state(
+        self,
+        record: CommandWorkspaceRecord,
+    ) -> FixWorkspaceState:
+        """Project a shared record into the legacy Fix state document."""
+        if (
+            not isinstance(record, CommandWorkspaceRecord)
+            or record.adapter_id != self.adapter_id
+            or not isinstance(record.state, FixAdapterState)
+        ):
+            raise FixWorkspaceError(["record is not a Fix command workspace"])
+        state = record.state
+        if state.status == "intake":
+            return FixWorkspaceState(
+                schema_version=1,
+                workspace_id=record.workspace_id,
+                revision=record.revision,
+                view="intake",
+                validated_answers_json=state.validated_answers_json,
+                preview=None,
+                contract_hash="",
+                approved_contract_hash="",
+                action_nonce="",
+            )
+        if state.preview is None:
+            raise FixWorkspaceError(["Fix adapter preview is missing"])
+        contract_hash = state.preview.contract_hash()
+        approved_hash = contract_hash if state.status == "approved" else ""
+        return FixWorkspaceState(
+            schema_version=1,
+            workspace_id=record.workspace_id,
+            revision=record.revision,
+            view="preview",
+            validated_answers_json=state.validated_answers_json,
+            preview=state.preview,
+            contract_hash=contract_hash,
+            approved_contract_hash=approved_hash,
+            action_nonce=record.action_nonce,
+        )

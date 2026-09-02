@@ -30,6 +30,22 @@ Before submitting, ask:
 
 ## Execution
 
+### Shared command workspace (preferred)
+
+Open adapter `bulk` with either the provider-ready `requests` list or an
+existing `batch_id`. Present the widget or returned Markdown. New submissions
+must consume the bound, explicitly confirmed `submit_batch` action before
+calling `analyze_batch`; a reconnect uses the read-only `check_batch` action.
+Publish the real provider response as `submission_result` or `status_result`.
+Only a response with the exact accepted task count and a non-empty batch id may
+render as submitted. Rejections and timeouts must render “did not submit” (or
+“did not complete” for status), never a synthetic batch id. Preserve the same
+decision and receipt in compact text when the shared tools are unavailable.
+
+The workspace status receipt completes the interactive invocation; `pending`
+does not mean the remote work completed. Reinvoke later with the returned
+`batch_id` to reconnect.
+
 Call the `analyze_batch` MCP tool with a `requests` array,
 one entry per task:
 

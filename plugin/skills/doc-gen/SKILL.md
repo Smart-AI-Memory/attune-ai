@@ -38,6 +38,21 @@ Before running, ask:
 
 ## Execution
 
+### Shared command workspace (preferred)
+
+Open adapter `doc-gen` with the validated target and documentation type. Run
+the bound read-only `doc_audit` action first and publish `audit_result` with
+the exact proposed artifact paths. Present the proposal widget or Markdown;
+only an explicitly confirmed `apply_docs` action authorizes those paths.
+
+After `doc_gen`, publish `generation_result` with the exact files reported
+from disk. The adapter hashes them independently and rejects writes outside or
+different from the approved set. Run the returned `doc-import-audit`/symbol
+reality probe and publish its exact command and outcome as
+`validation_result`. A partial write or failed reality probe must say “did not
+complete” and retain changed-file hashes for rollback. Preserve these gates
+and receipts in compact text when the shared tools are unavailable.
+
 For docstring generation:
 
 ```

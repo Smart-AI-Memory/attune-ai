@@ -24,12 +24,12 @@ source: {{ source }}
 {% for step in steps %}
 {{ loop.index }}. **{{ step.action }}**
 {% if step.detail %}
-   {{ step.detail }}
+{{ step.detail | indent(3, true) }}
 {% endif %}
 {% if step.code %}
 
-   ```
-   {{ step.code }}
+   ```{{ step.code_language }}
+{{ step.code | indent(3, true) }}
    ```
 {% endif %}
 

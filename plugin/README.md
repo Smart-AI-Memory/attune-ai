@@ -5,7 +5,7 @@ Code. Your agent stops starting from zero, and its word stops
 being the evidence. <!-- cap:skill_count -->28 auto-triggering skills<!-- /cap -->, zero
 commands: say what you need and Claude picks the right skill.
 
-**Version:** 16.1.0 | **License:** Apache 2.0
+**Version:** 16.2.0 | **License:** Apache 2.0
 
 > **Fix Receipts** (`/fix`) — new in 11.2.0. Say `fix this and
 > prove it`.
@@ -99,7 +99,7 @@ The plugin ships two security hooks:
 ## Python Package (optional — unlocks CLI + MCP)
 
 The plugin works standalone. Add the Python package
-for CLI automation, <!-- cap:mcp_registered_tool_count -->61 MCP tools<!-- /cap -->, multi-agent
+for CLI automation, <!-- cap:mcp_registered_tool_count -->64 MCP tools<!-- /cap -->, multi-agent
 workflows, and cost tracking:
 
 ```bash
@@ -110,7 +110,7 @@ pip install 'attune-ai[developer]'
 | ---------- | ----------- | ----- |
 | <!-- cap:skill_count -->28 auto-triggering skills<!-- /cap --> | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
-| <!-- cap:mcp_registered_tool_count -->61 MCP tools<!-- /cap --> | -- | Yes |
+| <!-- cap:mcp_registered_tool_count -->64 MCP tools<!-- /cap --> | -- | Yes |
 | `attune` CLI | -- | Yes |
 | Multi-agent workflows | -- | Yes |
 | Cost tracking | -- | Yes |

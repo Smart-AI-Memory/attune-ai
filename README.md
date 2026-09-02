@@ -60,7 +60,7 @@ each, validated on the way back. One form renders to whatever surface
 your client draws: a native dialog, a rich widget, or a plain menu
 ([the vocabulary](#interactive-forms--the-agent-asks-with-structure)).
 
-Around that core: 21 workflows and <!-- cap:mcp_registered_tool_count -->61 MCP tools<!-- /cap -->
+Around that core: 21 workflows and <!-- cap:mcp_registered_tool_count -->64 MCP tools<!-- /cap -->
 dispatching 2–6 domain-specific subagents behind Socratic quality
 gates, RAG grounding with a citation-per-claim contract, and
 generation fact-checking — one install, one MCP server. We run our
@@ -111,7 +111,7 @@ Setup fight you? [Tell me where](https://github.com/Smart-AI-Memory/attune-ai/di
 | <!-- cap:skill_count -->28 auto-triggering skills<!-- /cap --> | Yes | Yes |
 | Security hooks | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
-| <!-- cap:mcp_registered_tool_count -->61 MCP tools<!-- /cap --> | -- | Yes |
+| <!-- cap:mcp_registered_tool_count -->64 MCP tools<!-- /cap --> | -- | Yes |
 | `attune` CLI + multi-agent workflows | -- | Yes |
 | Ops dashboard (`attune ops`) — run history, cost tiles, telemetry | -- | Yes |
 
@@ -136,7 +136,23 @@ memory storage and recall, and every local transform.
      release with the headline feature; the displaced content moves to
      a permanent section below. Don't stack a second "New in" here. -->
 
-## New in 16.1.0 — harness-lite lands
+## New in 16.2.0 — shared workspaces, fewer ruling steps
+
+Roundtable, Spec, Release Prep, Bug Predict, and the broader command cohort
+now use one state-bound dynamic workspace renderer. The same canonical action
+contract reaches rich widgets, Markdown/text fallbacks, and terminal receipts;
+stale or replayed actions fail closed instead of relying on presentation state.
+
+Roundtable's seven-item promotion review now completes in atomic `3 + 3 + 1`
+batches: three submissions instead of seven, with the same terminal rulings.
+That is 57.143% fewer ruling submissions and 66.667% fewer added navigation
+rounds in the measured portable/headless path. These are interaction-mechanics
+figures, not claims about human dwell or provider execution time. Consequential
+actions use `attune-forms 0.12.2`'s visible inline two-click confirmation, so a
+host-blocked native browser dialog cannot make the button appear inert.
+
+<details>
+<summary>Previously new in 16.1.0 — harness-lite lands</summary>
 
 16.0.0 executed the destructive half of the harness-lite
 architecture ruling: nine dead framework-era modules deleted
@@ -154,6 +170,8 @@ MCP tools. The
 opens with the one grep that tells you whether any of this touches
 your code. The constructive half — the extension system — ships
 later in 16.x.
+
+</details>
 
 <details>
 <summary>Previously new in 15.0.0 — one obvious way to do each thing</summary>
@@ -298,7 +316,7 @@ Ready-made Claude Code subagents (`security-reviewer`, `spec-author`,
 </details>
 
 <details>
-<summary><b>All 61 MCP tools</b> — 50 core in 7 categories, plus 11
+<summary><b>All 64 MCP tools</b> — 53 core in 7 categories, plus 11
 memory tools registered by the bundled Redis plugin</summary>
 
 **Workflow (22):** `security_audit` `code_review` `bug_predict`

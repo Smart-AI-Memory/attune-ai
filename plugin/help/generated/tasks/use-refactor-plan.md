@@ -23,10 +23,14 @@ Invoke with: `/refactor-plan <path to analyze>`
    "Quick scan or detailed roadmap?"
 
 4. **Run the tool**
-   Based on scope: - Full analysis: `refactor_plan(path="<target>")`
-- Simplify only: `simplify_code(path="<target>")` Or via CLI:
+   Based on scope:
 
-   ```
+   - Full analysis: `refactor_plan(path="<target>")`
+   - Simplify only: `simplify_code(path="<target>")`
+
+   Or via CLI:
+
+   ```bash
    attune workflow run refactor-plan --path <target>
    ```
 

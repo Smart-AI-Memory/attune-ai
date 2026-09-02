@@ -41,6 +41,25 @@ It runs in two layers:
 
 ## How To Run It
 
+
+
+### Shared command workspace (preferred)
+
+Open adapter `verify` with the validated generated-content path and optional
+`hard_gate=true` for pipeline callers. The invocation authorizes this
+read-only run, so there is no confirmation action. Execute
+`attune_verify.verify` exactly as below and publish its authoritative outcome
+as `deterministic_result`, retaining every finding's kind, severity, detail,
+evidence, and location.
+
+Perform the ambient semantic pass only after the deterministic result and
+publish it as `cross_check_result`. Ambient findings remain explicitly labeled
+warnings and cannot override deterministic entity-existence results. In hard
+gate mode, any deterministic error keeps `hard_gate_passed=false`. Checker or
+cross-check failure must render “did not complete,” never a clean report.
+Present the terminal widget or Markdown and preserve the full evidence chain
+in text fallback.
+
 The deterministic layer is `attune_verify.verify(content, context)`.
 The caller declares the truth boundaries; verify performs the lookups —
 it never auto-discovers them. Run this via Bash from the project root,
