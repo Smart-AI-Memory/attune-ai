@@ -22,7 +22,9 @@ def _parse_response(text: str) -> dict[str, Any]:
     3. Raw JSON (starts with {)
     4. Regex metric extraction (last resort)
 
-    Never returns None — always returns a dict with at least empty defaults.
+    Never returns None, and never returns a non-dict: a strategy whose
+    JSON parses to an array or scalar falls through to the next one
+    rather than violating the return type (see the isinstance guards).
 
     Args:
         text: Raw response text from LLM or tool output
@@ -40,24 +42,41 @@ def _parse_response(text: str) -> dict[str, Any]:
     xml_match = re.search(r"<analysis>([\s\S]*?)</analysis>", text)
     if xml_match:
         try:
-            return json.loads(xml_match.group(1).strip())
+            parsed = json.loads(xml_match.group(1).strip())
         except json.JSONDecodeError:
             pass
+        else:
+            # A valid JSON ARRAY or scalar parses fine here and would be
+            # returned from a function typed -> dict, TypeErroring in
+            # consumers (quality_agent, security_agent) where the error is
+            # swallowed and reported as a spurious release-gate failure.
+            # Fall through to the next strategy instead.
+            if isinstance(parsed, dict):
+                return parsed
 
     # Strategy 2: Markdown-fenced JSON
     md_match = re.search(r"```(?:json)?\s*([\s\S]*?)```", text)
     if md_match:
         try:
-            return json.loads(md_match.group(1).strip())
+            parsed = json.loads(md_match.group(1).strip())
         except json.JSONDecodeError:
             pass
+        else:
+            if isinstance(parsed, dict):
+                return parsed
 
     # Strategy 3: Raw JSON
     if text.startswith("{"):
         try:
-            return json.loads(text)
+            parsed = json.loads(text)
         except json.JSONDecodeError:
             pass
+        else:
+            # Reachable only behind `text.startswith("{")`, so this guard is
+            # belt-and-braces — kept so the dict contract is enforced at
+            # EVERY return, not just the ones currently reachable otherwise.
+            if isinstance(parsed, dict):
+                return parsed
 
     # Strategy 4: Regex metric extraction (last resort)
     result: dict[str, Any] = {}
