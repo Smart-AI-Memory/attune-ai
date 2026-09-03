@@ -61,6 +61,25 @@ class TestTestCoverageAgent:
 
         assert result == pytest.approx(83.0)
 
+    def test_parse_coverage_output_ignores_non_summary_total_text(self):
+        """Only a real coverage TOTAL row may supply the percentage."""
+        agent = self._make_agent()
+        output = (
+            "test_parser.py::test_message PASSED [ 27%]\n"
+            "captured text containing TOTAL and 27%\n"
+            "TOTAL  66067  2586  20020  1058  95.27%\n"
+        )
+
+        assert agent._parse_coverage_output(output) == pytest.approx(95.27)
+
+    def test_parse_coverage_output_ignores_incidental_coverage_text(self):
+        """Captured prose is not a measured coverage report."""
+        agent = self._make_agent()
+
+        result = agent._parse_coverage_output("captured output says 95% coverage for docs only")
+
+        assert result == pytest.approx(-1.0)
+
     def test_parse_coverage_output_alternate_pattern(self):
         """Parses '75% coverage' alternate pattern."""
         agent = self._make_agent()
