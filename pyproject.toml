@@ -68,7 +68,7 @@ dependencies = [
     "rich>=13.0.0,<16.0.0",  # Beautiful CLI output
     "typer>=0.9.0,<1.0.0",  # Better CLI commands
     "pyyaml>=6.0,<7.0",  # Required by workflows (bug_predict, etc.)
-    "anthropic>=0.40.0,<2.0.0",  # Core LLM provider (direct SDK usage). Ceiling widened to <2 deliberately 2026-08-24 (#2243): core code is 1.x-compatible (sampling params route via extra_body — SDK 1.0 removed them from messages.create; no completions/with_raw_response/Stream-isinstance usage; our httpx uses are SDK-independent), verified live on BOTH a 0.125 lock env and a scratch 1.0.0 env. NOTE the dev lockfile stays on 0.x: langchain-anthropic (dev/test extra, even at latest) pins anthropic<1.0.0, so the dev resolver cannot reach 1.x until upstream widens.
+    "anthropic>=1.2.0,<2.0.0",  # Core LLM provider (direct SDK usage). Ceiling widened to <2 deliberately 2026-08-24 (#2243): core code is 1.x-compatible (sampling params route via extra_body — SDK 1.0 removed them from messages.create; no completions/with_raw_response/Stream-isinstance usage; our httpx uses are SDK-independent), verified live on BOTH a 0.125 lock env and a scratch 1.0.0 env. NOTE the dev lockfile stays on 0.x: langchain-anthropic (dev/test extra, even at latest) pins anthropic<1.0.0, so the dev resolver cannot reach 1.x until upstream widens.
     "claude-agent-sdk>=0.2.152,<0.3.0",  # Agents SDK for workflow execution. Floor >=0.2.152 keeps the control stream open while Agent tasks remain in flight, preventing programmatic hook callbacks from racing a closed stream (#2389; live release-notes receipt 2026-09-02). 0.2.x adopted deliberately 2026-06-16 (docs/specs/claude-agent-sdk-0-2-migration); workflows set setting_sources=[] everywhere and carry the Bash security guard programmatically. Ceiling <0.3.0 holds back the next major's breaking changes. Remove the cap deliberately when adopting 0.3.x.
     "mcp>=1.23.0,<2",  # MCP runtime — imported directly by attune.mcp.server (Server/stdio/types). Declared explicitly (was transitive via claude-agent-sdk) to pin the >=1.23.0 security floor. Ceiling <2 added 2026-08-18: mcp 2.0.0 removes the low-level Server.list_tools decorator API (verified by probe), and claude-agent-sdk >=0.2.140 widened its own bound to <3, so keyless CI's fresh `pip install -e .[dev]` resolution jumped to 2.0.0 and every test lane failed at collection. Remove the ceiling only with a deliberate mcp-2 migration of attune.mcp.server.
     "python-multipart>=0.0.26",  # Pin above GHSA-59g5-xgcq-4qw3 / GHSA-wp53-j4wj-2cfg / CVE-2026-40347 (transitive via mcp)
@@ -107,9 +107,9 @@ dependencies = [
 # attune.authoring package; the attune-help pin moved to [dev].
 
 # LLM provider (Claude-native architecture)
-anthropic = ["anthropic>=0.40.0"]
+anthropic = ["anthropic>=1.2.0"]
 llm = [
-    "anthropic>=0.40.0",
+    "anthropic>=1.2.0",
 ]
 
 # MemDocs integration for long-term memory
@@ -242,7 +242,7 @@ dev = [
 # Individual developers - lightweight, software development focused
 developer = [
     # LLM provider (Claude-native)
-    "anthropic>=0.40.0",
+    "anthropic>=1.2.0",
     # MemDocs integration
     "memdocs>=1.0.0",
     # Agents (updated for security fixes)
@@ -263,7 +263,7 @@ developer = [
 # Teams/enterprises - backend + authentication + compliance (excludes healthcare)
 enterprise = [
     # Everything in developer
-    "anthropic>=0.40.0",
+    "anthropic>=1.2.0",
     "memdocs>=1.0.0",
     "langchain>=1.0.0,<2.0.0",
     "langchain-core>=1.2.28,<2.0.0",  # CVE-2026-40087 fix
@@ -288,7 +288,7 @@ enterprise = [
 # Alias for backwards compatibility (maps to developer)
 full = [
     # LLM provider (Claude-native)
-    "anthropic>=0.40.0",
+    "anthropic>=1.2.0",
     # MemDocs integration
     "memdocs>=1.0.0",
     # Agents (updated for security fixes)
@@ -306,7 +306,7 @@ full = [
 # Everything including development tools
 all = [
     # LLM provider (Claude-native)
-    "anthropic>=0.40.0",
+    "anthropic>=1.2.0",
     # MemDocs integration
     "memdocs>=1.0.0",
     # Agents (updated for security fixes)
