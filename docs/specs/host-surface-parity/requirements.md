@@ -6,9 +6,10 @@ the chair promoted the round in decisions.md **D5**: R4 adopted as
 written, R1/R2/R3/R5/R7/R8 adopted as amended (binding amendment
 text lives in D5), R6 adopted with D2's routing-label mechanics,
 R9 (capability-descriptor/conformance layer) adopted as the 16.3
-foundation. D6 (R2 enforcement locus) and the coverage floor remain
-open. No implementation authority is granted by this document; every
-task in [tasks.md](tasks.md) executes only behind its own chair go.
+foundation. D6 ruled 2026-09-03 (hybrid locus); only the coverage
+floor remains open. No implementation authority is granted by this
+document; every task in [tasks.md](tasks.md) executes only behind
+its own chair go.
 **Slug:** `host-surface-parity`
 **Provenance:** Cowork session with the Claude seat, 2026-09-03,
 chair Patrick Roebuck. Companion brief: the artifact "Fable 5.1 and
