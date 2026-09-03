@@ -216,6 +216,51 @@ the enumerating gate. The synthesis notes the positions compose
 assertions). Not ruled at promotion; the chair rules the locus
 before Task 1 lands the gate.
 
+### Calibration probe (2026-09-03, lead — evidence for the ruling, per the probe-before-gate lesson)
+
+Probes run against the real tree and the installed attune-forms
+0.12.2; every claim below is verified by the named probe.
+
+1. **A filesystem enumerator in attune-ai is blind by construction,
+   not merely evadable.** `grep -r 'Surface\.RICH|Surface\.PORTABLE|
+   Surface\.HEADLESS' src/ plugin/` → **zero hits**; `grep -r
+   'ui://' src/` → zero. Every renderer lives in the separate
+   `attune-forms` distribution; attune-ai only *imports* it (10
+   modules, verified). R2's proposed
+   `tests/unit/gates/test_surface_parity.py` "enumerating every
+   RICH-tier renderer in the tree" would find nothing and pass
+   **vacuously green** — the vacuous-gate class, satisfied by the
+   very blindness it should catch. This is stronger than Codex's
+   stated brittleness argument.
+2. **The registry half-exists.** Installed attune-forms already
+   exports `ProjectionRenderers` with fields
+   `rich / portable / headless / retained` — literally the
+   three-twin record per surface — plus `HostCapabilities`,
+   `InteractionProfile`, and a `conformance` module
+   (`ConformanceReceipt/Report/Status/Finding`) matching the R9
+   convergence vocabulary (verified by import + field inspection).
+   The registry locus is wiring, not new construction.
+3. **Host hooks and templates DO live in this tree** (plugin/
+   hooks, `.claude/` hooks, and R5's future task templates), so
+   enumeration has a real domain there — and a registry-only gate
+   would miss an *unregistered* hook, which is the evasion Codex
+   worried about, pointed the other way.
+
+**Lead recommendation: hybrid, subject-local.** (a) Renderer parity
+is asserted against attune-forms' declared `ProjectionRenderers`
+registry — attune-ai's gate imports it and fails on any registered
+surface lacking a twin or receipt (same cross-package drift-guard
+pattern as the tier mirror). (b) Host-hook/template parity is
+asserted by filesystem enumeration in attune-ai, where those
+artifacts actually live. The D4 amendments (expiring allowlist,
+payload-schema receipts, lifecycle assertions) apply to both.
+**Counter-case (strongest argument against):** a hybrid is two
+mechanisms to maintain, and the registry side still trusts
+attune-forms to register every renderer — a sweep test *inside
+attune-forms* asserting "no renderer module escapes the registry"
+is the missing third leg, and it belongs to the attune-forms repo,
+which this spec does not control. NOT RULED — chair's call.
+
 ## Open
 
 - **D6 — R2 enforcement locus** (registry vs. enumeration); rule
