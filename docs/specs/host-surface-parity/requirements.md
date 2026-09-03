@@ -7,9 +7,10 @@ written, R1/R2/R3/R5/R7/R8 adopted as amended (binding amendment
 text lives in D5), R6 adopted with D2's routing-label mechanics,
 R9 (capability-descriptor/conformance layer) adopted as the 16.3
 foundation. D6 ruled 2026-09-03 (hybrid locus); D7 coverage floor
-90%; D8 grants the 16.3 execution gos — no proposed decision
-remains open. Tasks in [tasks.md](tasks.md) execute per D8; each
-lands against the 90% floor.
+90%; D8 grants the 16.3 execution gos; D9 (2026-09-03) adopts
+tier provenance as R10 — no proposed decision remains open. Tasks
+in [tasks.md](tasks.md) execute per D8; each lands against the
+90% floor.
 **Slug:** `host-surface-parity`
 **Provenance:** Cowork session with the Claude seat, 2026-09-03,
 chair Patrick Roebuck. Companion brief: the artifact "Fable 5.1 and
@@ -196,6 +197,20 @@ column green), or HEADLESS parity is a promise again. Renderers
 consult the probe instead of sniffing per call. *(Provenance: all
 three seats proposed this layer independently in round 1 — Codex
 R9, Claude R9, Antigravity's R1 capability descriptor.)*
+
+**R10 — Tier provenance on validated answers** *(chair-ruled 2026-09-03, D9 — promoted from D5's "noted" list by the guard-intervention audit)*
+Every validated answer carries the surface tier that actually
+rendered it (tier 0 host-native / RICH / PORTABLE / HEADLESS),
+derived from the response envelope — never from the render
+request, so a render claimed on a surface that never displayed it
+becomes a recorded fall-through instead of an unverifiable prose
+claim. Telemetry surfaces the tier-0 fall-through rate (forms
+exceeding the current host profile that fell to PORTABLE) and the
+Other-rate (host free-text escape usage) from existing stores — no
+new store. This is the falsifier for H1: if tier-0 answers
+diverge, fall through excessively, or drown in "Other", the host
+widget is degrading forms and the "render target, not a rival"
+claim fails visibly.
 
 ## Non-goals
 

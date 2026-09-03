@@ -1,9 +1,12 @@
 # Host Surface Parity — Tasks
 
-**Status:** draft (2026-09-03) — no task authorized. Each task
-executes only behind its own chair go; a go on one task is not a go
-on the next. Tasks 7 and 8 are additionally gated on
-release-16-manifest Phases A and B.
+**Status:** active (2026-09-03) — Tasks 0–12 authored; each task
+executes only behind its own chair go; a go on one task is not a
+go on the next. D8 (2026-09-03) granted the 16.3 execution gos for
+the ungated items: Task 2 (R1 tier 0), Task 4 (R4 receipt), Task
+10 (R9 foundation) and Task 12 (D2 placement-label wiring). Task
+11 (R10, adopted in D9) awaits its own execution go. Tasks 7 and 8
+are additionally gated on release-16-manifest Phases A and B.
 
 ## Task 0 — Characterize the surfaces, roster and projector as they are
 
@@ -241,11 +244,14 @@ release-16-manifest Phases A and B.
 
 *(Amended 2026-09-02 per the D2 ruling: routing label, not enum
 member. The tier enum, its four copies, and the attune-rag mirror do
-not change; the original enum-edit mechanics are superseded.)*
+not change; the original enum-edit mechanics are superseded.
+Amended 2026-09-03: the label field and its resolution semantics
+land earlier as Task 12 under D8's 16.3 go; this task consumes the
+label, it no longer introduces it.)*
 
 ```xml
 <task id="8" name="local-role-workflows">
-  <depends-on>6,7</depends-on>
+  <depends-on>6,7,12</depends-on>
   <gated-on>release-16-manifest Phase B shipped (workflow contract)</gated-on>
   <objective>
     Add a placement routing label (placement: local) on the role
@@ -258,7 +264,8 @@ not change; the original enum-edit mechanics are superseded.)*
   </objective>
   <files-to-modify>
     <file path="src/attune/config/agent_config.py">
-      Role routing record gains the placement label; tier enum untouched.
+      Consumes the placement label landed by Task 12; local roles
+      route to the enabled workflow extension. Tier enum untouched.
     </file>
     <file path="tests/unit/test_model_tiers_drift.py">
       Unchanged three-member assertion stands as the D2 receipt.
@@ -293,6 +300,184 @@ not change; the original enum-edit mechanics are superseded.)*
   <validation>
     <check>A session with three asks and one Fix receipt reports 3.0; a headless run with zero asks reports 0.0, not an error.</check>
     <check>No new file or store; fields live in the existing ledger JSONL.</check>
+  </validation>
+</task>
+```
+
+## Task 10 — Capability descriptor and conformance foundation (R9)
+
+*(Authored 2026-09-03 under D8's go; D9 records the motivation.
+Motivation receipt: the 2026-09-03 guard-intervention audit ("The
+Prose Gap", `~/.attune/reports/guard-intervention-record-2026-09-03.md`,
+ledger entry 2) logged a live instance of the exact failure this
+task kills — a widget emitted to a host that does not render
+MCP-app content, with the render claimed successful unverified.
+The chair ruled R9/R10 the one mechanical enforcer to adopt from
+that audit, declining all other new gates. Sequencing per D5:
+after Task 4's R4 receipt, before Task 2. D6 probe 2 verified that
+installed attune-forms already exports `HostCapabilities`,
+`InteractionProfile` and a `conformance` module
+(`ConformanceReceipt/Report/Status/Finding`) — this task wires
+against them, it does not reinvent them. The deferred round-2
+questions (attestation schema for host-UI resolutions; the single
+no-privileged-host receipt producible in CI) become concrete here
+and reopen with a fresh chair go per D5 — do not design past them
+silently.)*
+
+```xml
+<task id="10" name="capability-descriptor-foundation">
+  <depends-on>1</depends-on>
+  <objective>
+    Give every host adapter and extension a machine-readable
+    capability descriptor, an `attune surfaces doctor` probe that
+    writes capability receipts, a generated hosts × capabilities
+    matrix, and a conformance suite — all assertable in CI with no
+    host present. Renderers consult the probe instead of sniffing
+    per call; host-capability absence becomes a recorded fact, not
+    an assumption.
+  </objective>
+  <files-to-create>
+    <file path="src/attune/surfaces/__init__.py" />
+    <file path="src/attune/surfaces/descriptor.py">
+      Capability descriptor record per host adapter and extension:
+      structured-question shape, memory surfaces, ui:// profiles,
+      scheduling/monitoring support, action round-trip guarantees,
+      receipt schema versions. Reuses attune-forms
+      HostCapabilities/InteractionProfile where they fit.
+    </file>
+    <file path="src/attune/surfaces/doctor.py">
+      Probe + `attune surfaces doctor` CLI: records which
+      contracts the current host actually advertises and writes a
+      capability receipt; with no host present it writes the
+      all-fallback receipt and exits 0.
+    </file>
+    <file path="src/attune/surfaces/matrix.py">
+      Generates the hosts × capabilities matrix (each cell
+      native / fallback-receipted / absent) from accumulated
+      receipts.
+    </file>
+    <file path="docs/specs/host-surface-parity/capability-matrix.md">
+      Generated; header states it is generated and names the
+      generator; drift-guarded.
+    </file>
+    <file path="tests/unit/surfaces/test_descriptor.py" />
+    <file path="tests/unit/surfaces/test_surfaces_doctor.py" />
+    <file path="tests/unit/surfaces/test_conformance_suite.py">
+      Canonical transcripts against each adapter: unsupported
+      capabilities degrade deliberately; semantic outputs stay
+      equivalent; receipts keep provenance and replay protection;
+      removing any host adapter leaves PORTABLE and HEADLESS
+      usable; no workflow silently selects a privileged host.
+    </file>
+    <file path="tests/unit/gates/test_capability_matrix_drift.py" />
+  </files-to-create>
+  <validation>
+    <check>The doctor with no host present writes the all-fallback receipt and the matrix's fallback column is green — the whole suite passes keyless and hostless in CI.</check>
+    <check>A descriptor advertising a capability its adapter cannot demonstrate fails the conformance suite with the cell named.</check>
+    <check>A hand edit inside the generated matrix fails the drift guard; regeneration is deterministic.</check>
+    <check>With any single host adapter removed, PORTABLE and HEADLESS conformance stays green and no privileged host is silently selected.</check>
+    <check>Changed code carries ≥90% coverage (D7); no API-billed call anywhere in the task (D8 zero-spend).</check>
+  </validation>
+</task>
+```
+
+## Task 11 — Tier provenance on validated answers (R10)
+
+*(Authored 2026-09-03 under D8's go; requirement adopted in D9 from
+the same guard-intervention audit — the audit's ledger entry 2 is
+the failure made visible: with provenance stamped from the response
+envelope, a render claimed on a surface that never displayed it
+becomes a recorded fall-through instead of an unverifiable prose
+claim. Executes only behind its own chair go. Pairs with Task 10 as
+H1's falsifier: the doctor says which tiers the host offers;
+provenance says which tier each answer actually used.)*
+
+```xml
+<task id="11" name="tier-provenance">
+  <depends-on>2,10</depends-on>
+  <objective>
+    Stamp every validated answer with the surface tier that
+    actually rendered it (tier 0 host-native / RICH / PORTABLE /
+    HEADLESS), derived from the response envelope and never from
+    the render request; surface tier-0 fall-through and Other-rate
+    through the existing telemetry stores.
+  </objective>
+  <files-to-modify>
+    <file path="src/attune/elicitation/ask_payload.py">
+      Validated-answer envelope gains a rendered_tier field,
+      stamped where the response is collected.
+    </file>
+    <file path="src/attune/mcp/server.py">
+      elicitation_collect_response records the actual tier and
+      whether the host "Other" free-text escape was used.
+    </file>
+    <file path="src/attune/gates/session_ledger.py">
+      Fall-through and Other counters beside Task 9's ask/outcome
+      fields; raw counts, never ratios (D5's R8 rule applies).
+    </file>
+  </files-to-modify>
+  <files-to-create>
+    <file path="tests/unit/elicitation/test_tier_provenance.py" />
+  </files-to-create>
+  <validation>
+    <check>A form exceeding the current host profile records rendered_tier portable and increments the fall-through counter; a tier-0 answer records the host tier.</check>
+    <check>A render requested RICH whose response arrives on a fallback surface records the fallback, never the request — the audit's ledger-2 case is a recorded fall-through.</check>
+    <check>An answer via the host "Other" escape increments the Other counter; both rates are computable from the existing JSONL with no new file or store.</check>
+    <check>A headless run records rendered_tier headless and zero asks stays 0.0, not an error (aligns with Task 9).</check>
+    <check>Answer contents are never recorded in the counters (D5's R8 privacy rule).</check>
+    <check>Changed code carries ≥90% coverage (D7); no API-billed call anywhere in the task (D8 zero-spend).</check>
+  </validation>
+</task>
+```
+
+## Task 12 — Placement-label wiring (D2)
+
+*(Authored 2026-09-03 under D8's go, which names the D2
+placement-label wiring an ungated 16.3 item with its execution go
+granted. This is the label mechanics only — the field, its
+resolution semantics, and the drift-guard receipt — landed ahead of
+any local extension so Tasks 7 and 8 find the routing seam waiting.
+Before Phase A/B ships an extension, every resolution falls back
+hosted, so observable routing behavior is unchanged. The ops-tile
+"not a tier" case stays with Task 8 per D2. The tier enum, its four
+copies, and the attune-rag mirror do not change — that is the
+ruling's whole point.)*
+
+```xml
+<task id="12" name="placement-label-wiring">
+  <objective>
+    Add the D2-ruled placement routing label to the role routing
+    record: an optional placement field (default hosted) on
+    UnifiedAgentConfig expressing "CHEAP, prefer local, fall back
+    hosted". Resolution prefers an enabled local extension when one
+    provides the role and falls back hosted when none does — which,
+    pre-Phase-A, is always. No enum member anywhere.
+  </objective>
+  <files-to-modify>
+    <file path="src/attune/config/agent_config.py">
+      UnifiedAgentConfig gains placement: "local" | None (default
+      None = hosted); get_model_id()/routing consults it; with no
+      enabled local extension the resolved model is byte-identical
+      to today's.
+    </file>
+    <file path="src/attune/gates/session_ledger.py">
+      Invocation rows record placement when set, so the fall-back
+      is visible in the ledger, not inferred.
+    </file>
+  </files-to-modify>
+  <files-to-create>
+    <file path="tests/unit/config/test_placement_label.py">
+      Field default, validation (only "local" or absent), hosted
+      fall-back with no extension enabled, ledger row carries
+      placement.
+    </file>
+  </files-to-create>
+  <validation>
+    <check>tests/unit/test_model_tiers_drift.py passes UNCHANGED — the three-member enum assertion in all four copies and the attune-rag mirror is the D2 receipt.</check>
+    <check>With no local extension enabled, a role with placement local resolves to the same model id as the same role without the label.</check>
+    <check>A placement value other than "local" fails validation with the field named; absent means hosted with no warning.</check>
+    <check>No change to ModelProvider; no new routing store — the label lives on the existing record.</check>
+    <check>Changed code carries ≥90% coverage (D7); no API-billed call anywhere in the task (D8 zero-spend).</check>
   </validation>
 </task>
 ```
