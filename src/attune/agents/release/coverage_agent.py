@@ -145,10 +145,12 @@ class TestCoverageAgent(ReleaseAgent):
         """
         # Look for "TOTAL" line: "TOTAL    1234   567    54%"
         for line in output.splitlines():
-            if "TOTAL" in line:
-                match = re.search(r"(\d+)%", line)
-                if match:
-                    return float(match.group(1))
+            match = re.match(
+                r"^TOTAL\s+\d+\s+\d+(?:\s+\d+\s+\d+)?\s+(\d+(?:\.\d+)?)%\s*$",
+                line.strip(),
+            )
+            if match:
+                return float(match.group(1))
 
         # Alternate pattern: "X% coverage"
         match = re.search(
