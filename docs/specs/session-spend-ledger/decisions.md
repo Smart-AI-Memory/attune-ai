@@ -1,9 +1,14 @@
 # Session Spend Ledger — Decisions
 
-D1–D6 are **PROPOSED** (lead, 2026-08-24), implemented in the same PR
-so the chair reads working code, not hypotheticals. Each is cheap to
-re-rule; none is one-way. Counter-cases are stated per D11d
-COUNTER-CASE.
+D1–D6 are **RATIFIED** (chair, 2026-09-03, via decision form and
+follow-up — "I don't have any more money that I can afford to
+spend"). The ratification carries a budget rider: the chair's
+machine runs `ATTUNE_SESSION_SPEND_CAP_USD=0` (set in `~/.zshrc`
+2026-09-03, refusal verified live the same day), which is D4's
+designed no-budget posture — every billable attune launch refuses
+until the chair removes the line. The D2 default constant stays
+$10 for other installs. Counter-cases below remain live re-rule
+paths; none is one-way.
 
 **D7 is CONFIRMED** (chair, 2026-08-25) — it clarifies D5's scope
 rather than ratifying it, so D5 itself stays PROPOSED.
