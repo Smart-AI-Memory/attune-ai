@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Release-gate parser can no longer return a non-dict**: `_parse_response`
+  strategies for XML-wrapped and markdown-fenced JSON now fall through to the
+  next strategy when the payload parses to an array or scalar, instead of
+  escaping a `-> dict` contract and surfacing as a spurious release-gate
+  failure (`quality_score 0.0`) inside `quality_agent` / `security_agent`.
+
 ## [16.2.0] - 2026-09-02
 
 This release brings state-bound dynamic workspaces to the command cohort and
