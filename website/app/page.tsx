@@ -38,7 +38,7 @@ export default function Home() {
                 test_homepage_badge_includes_package_version guard scans
                 this file for vX.Y.Z and compares it to the package. */}
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--surface-container-high)] text-[var(--primary)] text-xs font-bold tracking-widest mb-8 uppercase">
-              <span>v16.2.0</span>
+              <span>v16.2.1</span>
               <span className="w-1 h-1 rounded-full bg-[var(--primary)]" aria-hidden="true"></span>
               <span className="opacity-80">Persistent memory for AI coding agents</span>
             </div>
