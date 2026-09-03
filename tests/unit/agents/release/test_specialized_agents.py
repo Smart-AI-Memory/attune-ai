@@ -96,9 +96,11 @@ class TestTestCoverageAgent:
             "Name              Stmts   Miss  Cover\n" "TOTAL              500     75    85%\n"
         )
 
-        def fake_run(cmd, cwd="."):
+        def fake_run(cmd, cwd=".", timeout=120):
             if "--co" in cmd:
+                assert timeout == 120
                 return (0, collect_output, "")
+            assert timeout == 900
             return (0, cov_output, "")
 
         with patch("attune.agents.release.coverage_agent._run_command", side_effect=fake_run):
@@ -116,7 +118,7 @@ class TestTestCoverageAgent:
         # Return enough ":: " lines so test_count > 200
         big_collect = "\n".join(f"test_foo::test_{i}" for i in range(250))
 
-        def fake_run(cmd, cwd="."):
+        def fake_run(cmd, cwd=".", timeout=120):
             if "--co" in cmd:
                 return (0, big_collect, "")
             return (0, "no coverage info here", "")
@@ -135,7 +137,7 @@ class TestTestCoverageAgent:
         agent = self._make_agent()
         big_collect = "\n".join(f"test_foo::test_{i}" for i in range(600))
 
-        def fake_run(cmd, cwd="."):
+        def fake_run(cmd, cwd=".", timeout=120):
             if "--co" in cmd:
                 return (0, big_collect, "")
             return (0, "no coverage info here", "")
@@ -154,7 +156,7 @@ class TestTestCoverageAgent:
         agent = self._make_agent()
         collect_output = "\n".join(f"test_foo::test_{i}" for i in range(150))
 
-        def fake_run(cmd, cwd="."):
+        def fake_run(cmd, cwd=".", timeout=120):
             if "--co" in cmd:
                 return (0, collect_output, "")
             return (0, "no coverage info here", "")
@@ -173,7 +175,7 @@ class TestTestCoverageAgent:
         agent = self._make_agent()
         collect_output = "\n".join(f"test_foo::test_{i}" for i in range(75))
 
-        def fake_run(cmd, cwd="."):
+        def fake_run(cmd, cwd=".", timeout=120):
             if "--co" in cmd:
                 return (0, collect_output, "")
             return (0, "no coverage info here", "")
@@ -192,7 +194,7 @@ class TestTestCoverageAgent:
         agent = self._make_agent()
         collect_output = "\n".join(f"test_foo::test_{i}" for i in range(25))
 
-        def fake_run(cmd, cwd="."):
+        def fake_run(cmd, cwd=".", timeout=120):
             if "--co" in cmd:
                 return (0, collect_output, "")
             return (0, "no coverage info here", "")
@@ -210,7 +212,7 @@ class TestTestCoverageAgent:
 
         agent = self._make_agent()
 
-        def fake_run(cmd, cwd="."):
+        def fake_run(cmd, cwd=".", timeout=120):
             return (0, "no coverage output", "")
 
         with patch("attune.agents.release.coverage_agent._run_command", side_effect=fake_run):
@@ -225,7 +227,7 @@ class TestTestCoverageAgent:
         agent = self._make_agent()
         cov_output = "TOTAL  200  40  80%\n"
 
-        def fake_run(cmd, cwd="."):
+        def fake_run(cmd, cwd=".", timeout=120):
             return (0, cov_output, "")
 
         with patch("attune.agents.release.coverage_agent._run_command", side_effect=fake_run):
