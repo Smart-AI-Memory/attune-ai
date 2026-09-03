@@ -154,9 +154,9 @@ class TestCoverageAgent(ReleaseAgent):
 
         # Alternate pattern: "X% coverage"
         match = re.search(
-            r"(\d+(?:\.\d+)?)\s*%\s*(?:coverage|total)",
+            r"^\s*(\d+(?:\.\d+)?)\s*%\s*(?:coverage|total)\b",
             output,
-            re.IGNORECASE,
+            re.IGNORECASE | re.MULTILINE,
         )
         if match:
             return float(match.group(1))
