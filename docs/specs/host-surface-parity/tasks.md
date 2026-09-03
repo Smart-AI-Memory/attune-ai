@@ -1,14 +1,12 @@
 # Host Surface Parity — Tasks
 
-**Status:** active (2026-09-03) — Tasks 0–11 authored; each task
-executes only behind
-its own chair go; a go on one task is not a go on the next. D8
-(2026-09-03) granted the 16.3 execution gos for the ungated items:
-Task 2 (R1 tier 0), Task 4 (R4 receipt), Task 10 (R9 foundation)
-and the D2 placement-label wiring (whose task entry is still to be
-authored). Task 11 (R10, adopted in D9) awaits its own execution
-go. Tasks 7 and 8 are additionally gated on release-16-manifest
-Phases A and B.
+**Status:** active (2026-09-03) — Tasks 0–12 authored; each task
+executes only behind its own chair go; a go on one task is not a
+go on the next. D8 (2026-09-03) granted the 16.3 execution gos for
+the ungated items: Task 2 (R1 tier 0), Task 4 (R4 receipt), Task
+10 (R9 foundation) and Task 12 (D2 placement-label wiring). Task
+11 (R10, adopted in D9) awaits its own execution go. Tasks 7 and 8
+are additionally gated on release-16-manifest Phases A and B.
 
 ## Task 0 — Characterize the surfaces, roster and projector as they are
 
@@ -246,11 +244,14 @@ Phases A and B.
 
 *(Amended 2026-09-02 per the D2 ruling: routing label, not enum
 member. The tier enum, its four copies, and the attune-rag mirror do
-not change; the original enum-edit mechanics are superseded.)*
+not change; the original enum-edit mechanics are superseded.
+Amended 2026-09-03: the label field and its resolution semantics
+land earlier as Task 12 under D8's 16.3 go; this task consumes the
+label, it no longer introduces it.)*
 
 ```xml
 <task id="8" name="local-role-workflows">
-  <depends-on>6,7</depends-on>
+  <depends-on>6,7,12</depends-on>
   <gated-on>release-16-manifest Phase B shipped (workflow contract)</gated-on>
   <objective>
     Add a placement routing label (placement: local) on the role
@@ -263,7 +264,8 @@ not change; the original enum-edit mechanics are superseded.)*
   </objective>
   <files-to-modify>
     <file path="src/attune/config/agent_config.py">
-      Role routing record gains the placement label; tier enum untouched.
+      Consumes the placement label landed by Task 12; local roles
+      route to the enabled workflow extension. Tier enum untouched.
     </file>
     <file path="tests/unit/test_model_tiers_drift.py">
       Unchanged three-member assertion stands as the D2 receipt.
@@ -423,6 +425,58 @@ provenance says which tier each answer actually used.)*
     <check>An answer via the host "Other" escape increments the Other counter; both rates are computable from the existing JSONL with no new file or store.</check>
     <check>A headless run records rendered_tier headless and zero asks stays 0.0, not an error (aligns with Task 9).</check>
     <check>Answer contents are never recorded in the counters (D5's R8 privacy rule).</check>
+    <check>Changed code carries ≥90% coverage (D7); no API-billed call anywhere in the task (D8 zero-spend).</check>
+  </validation>
+</task>
+```
+
+## Task 12 — Placement-label wiring (D2)
+
+*(Authored 2026-09-03 under D8's go, which names the D2
+placement-label wiring an ungated 16.3 item with its execution go
+granted. This is the label mechanics only — the field, its
+resolution semantics, and the drift-guard receipt — landed ahead of
+any local extension so Tasks 7 and 8 find the routing seam waiting.
+Before Phase A/B ships an extension, every resolution falls back
+hosted, so observable routing behavior is unchanged. The ops-tile
+"not a tier" case stays with Task 8 per D2. The tier enum, its four
+copies, and the attune-rag mirror do not change — that is the
+ruling's whole point.)*
+
+```xml
+<task id="12" name="placement-label-wiring">
+  <objective>
+    Add the D2-ruled placement routing label to the role routing
+    record: an optional placement field (default hosted) on
+    UnifiedAgentConfig expressing "CHEAP, prefer local, fall back
+    hosted". Resolution prefers an enabled local extension when one
+    provides the role and falls back hosted when none does — which,
+    pre-Phase-A, is always. No enum member anywhere.
+  </objective>
+  <files-to-modify>
+    <file path="src/attune/config/agent_config.py">
+      UnifiedAgentConfig gains placement: "local" | None (default
+      None = hosted); get_model_id()/routing consults it; with no
+      enabled local extension the resolved model is byte-identical
+      to today's.
+    </file>
+    <file path="src/attune/gates/session_ledger.py">
+      Invocation rows record placement when set, so the fall-back
+      is visible in the ledger, not inferred.
+    </file>
+  </files-to-modify>
+  <files-to-create>
+    <file path="tests/unit/config/test_placement_label.py">
+      Field default, validation (only "local" or absent), hosted
+      fall-back with no extension enabled, ledger row carries
+      placement.
+    </file>
+  </files-to-create>
+  <validation>
+    <check>tests/unit/test_model_tiers_drift.py passes UNCHANGED — the three-member enum assertion in all four copies and the attune-rag mirror is the D2 receipt.</check>
+    <check>With no local extension enabled, a role with placement local resolves to the same model id as the same role without the label.</check>
+    <check>A placement value other than "local" fails validation with the field named; absent means hosted with no warning.</check>
+    <check>No change to ModelProvider; no new routing store — the label lives on the existing record.</check>
     <check>Changed code carries ≥90% coverage (D7); no API-billed call anywhere in the task (D8 zero-spend).</check>
   </validation>
 </task>
