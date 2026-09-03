@@ -214,7 +214,7 @@ release-16-manifest Phases A and B.
 </task>
 ```
 
-## Task 7 — Local reranker extension (R6a) — gated on Phase A
+## Task 7 — Local reranker extension (R6a) — gated on Phase A; ships alone, first (D5, unanimous)
 
 ```xml
 <task id="7" name="local-rerank-extension">
@@ -237,33 +237,40 @@ release-16-manifest Phases A and B.
 </task>
 ```
 
-## Task 8 — Local role workflows and LOCAL tier (R6b) — gated on Phase B
+## Task 8 — Local role workflows via placement label (R6b) — gated on Phase B
+
+*(Amended 2026-09-02 per the D2 ruling: routing label, not enum
+member. The tier enum, its four copies, and the attune-rag mirror do
+not change; the original enum-edit mechanics are superseded.)*
 
 ```xml
 <task id="8" name="local-role-workflows">
   <depends-on>6,7</depends-on>
-  <gated-on>release-16-manifest Phase B shipped (workflow contract); decisions.md D2 ruled</gated-on>
+  <gated-on>release-16-manifest Phase B shipped (workflow contract)</gated-on>
   <objective>
-    Add the LOCAL tier per D2 and ship workflow extensions for
-    classification, triage pre-sort, low-stakes skeptic/countersign
-    and fact-check probes, each with a PREMIUM fallback above a
-    chair-set stakes threshold.
+    Add a placement routing label (placement: local) on the role
+    routing record per the D2 ruling, and ship workflow extensions
+    for classification, triage pre-sort, low-stakes
+    skeptic/countersign and fact-check probes, each advisory-labeled
+    with a PREMIUM fallback above a chair-set stakes threshold
+    (fact-check probes additionally hosted-model countersigned per
+    D5's H4 ruling).
   </objective>
   <files-to-modify>
-    <file path="src/attune/models/registry.py" />
-    <file path="src/attune/config/agent_config.py" />
-    <file path="src/attune/workflows/compat.py" />
-    <file path="src/attune/workflows/progressive/core.py" />
+    <file path="src/attune/config/agent_config.py">
+      Role routing record gains the placement label; tier enum untouched.
+    </file>
     <file path="tests/unit/test_model_tiers_drift.py">
-      Mirror check extended to LOCAL; attune-rag mirror bumped in the same release.
+      Unchanged three-member assertion stands as the D2 receipt.
     </file>
   </files-to-modify>
   <files-to-create>
     <file path="extensions/attune-ext-local-roles/" />
   </files-to-create>
   <validation>
-    <check>Tier drift guard green with LOCAL present in all copies and the mirror.</check>
-    <check>A low-stakes skeptic pass routed to LOCAL produces a parseable verdict; above threshold it routes to PREMIUM and the ledger shows both.</check>
+    <check>Tier drift guard green with the enum unchanged in all copies and the mirror (no LOCAL member anywhere).</check>
+    <check>A role routed "CHEAP, prefer local" runs on the local extension when present and falls back hosted when absent; the ledger shows placement.</check>
+    <check>A low-stakes skeptic pass routed local produces a parseable advisory verdict; above threshold it routes to PREMIUM and the ledger shows both.</check>
     <check>No change to ModelProvider.</check>
   </validation>
 </task>

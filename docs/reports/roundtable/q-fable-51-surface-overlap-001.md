@@ -12,7 +12,10 @@ chair go.
 claude 129s / 62,710 subagent tokens, context-free general-purpose agent
 (msg 5). Question posted verbatim from
 `docs/specs/host-surface-parity/roundtable-question.md` (msg 1).
-**Promotion status:** NOT promoted — no chair rulings yet (R4 holds).
+**Promotion status:** PROMOTED 2026-09-02 (chair) — the reviewing
+session's recommended triage was ruled in full; per-item record in
+`docs/specs/host-surface-parity/decisions.md` D5 (D2/D3 ruled, D4
+amended-adopted, R9 adopted, round 2 deferred; D6 locus open).
 Promotion candidates by board id: positions 2 (codex), 3 (antigravity),
 5 (claude); member questions 4 (antigravity), 6 (claude); synthesis 8.
 

@@ -1,16 +1,21 @@
 # Host Surface Parity — Requirements
 
-**Status:** draft (2026-09-03) — requirements proposed by the Claude
-seat; chair rulings D1a–D1c recorded in [decisions.md](decisions.md).
-No implementation authority is granted by this document; every task
-in [tasks.md](tasks.md) executes only behind its own chair go.
+**Status:** approved (2026-09-02) — round 1 of
+`q-fable-51-surface-overlap-001` deliberated R1–R8 (3/3 seats);
+the chair promoted the round in decisions.md **D5**: R4 adopted as
+written, R1/R2/R3/R5/R7/R8 adopted as amended (binding amendment
+text lives in D5), R6 adopted with D2's routing-label mechanics,
+R9 (capability-descriptor/conformance layer) adopted as the 16.3
+foundation. D6 (R2 enforcement locus) and the coverage floor remain
+open. No implementation authority is granted by this document; every
+task in [tasks.md](tasks.md) executes only behind its own chair go.
 **Slug:** `host-surface-parity`
 **Provenance:** Cowork session with the Claude seat, 2026-09-03,
 chair Patrick Roebuck. Companion brief: the artifact "Fable 5.1 and
 the Attune Surface" (Claude seat opening position, thread slug
 `q-fable-51-surface-overlap-001` proposed, not yet opened on the
-board). Antigravity and Codex have not deliberated this; the chair
-may convene the table before ruling any task.
+board). *(Update: the table was convened 2026-09-02 — all three
+seats deliberated; the round was promoted in decisions.md D5.)*
 
 ## Position in the existing stack
 
@@ -96,7 +101,7 @@ so a vendor change is a config edit, not a PR.
 
 ## Requirements
 
-**R1 — Host tier 0 renderer** *(seat: proposed; chair: not yet ruled)*
+**R1 — Host tier 0 renderer** *(chair-ruled 2026-09-02 — ADOPT as amended, D5: host-profile record, not a hardcoded vendor shape)*
 `attune-forms` gains a renderer that projects a single-question form
 onto the host's structured question contract: at most four options,
 each with label and description, optional multi-select, a
@@ -107,7 +112,7 @@ numbers, path pickers, multi-question) fall through to the existing
 PORTABLE tier — never truncated. The answer is validated on the way
 back exactly as on every other tier.
 
-**R2 — Surface parity gate** *(seat: proposed; chair: not yet ruled)*
+**R2 — Surface parity gate** *(chair-ruled 2026-09-02 — ADOPT as amended, D4/D5: expiring experiments allowlist, schema-identical payload receipts, lifecycle parity; locus open, D6)*
 A drift-guard test enumerates every RICH-tier renderer and every
 host-specific hook or template in the tree and fails when any lacks
 (a) a PORTABLE twin, (b) a HEADLESS twin, and (c) a receipt entry
@@ -115,7 +120,7 @@ naming the three renders of one form with identical validated
 output. The gate is mechanical; it implements collaboration-contract
 principle 1 for surfaces and is listed there as its enforcer.
 
-**R3 — Memory index projection** *(seat: proposed; chair: not yet ruled)*
+**R3 — Memory index projection** *(chair-ruled 2026-09-02 — ADOPT as amended, D5: bounded top-K sentinel-bracketed digest, per-host budgets)*
 The collaboration projector gains a second master — the
 promoted-lesson index — and projects it to every host memory
 surface: the Cowork project-memory `MEMORY.md` index (one line per
@@ -125,7 +130,7 @@ triggers regeneration; a line budget is drift-guarded; the projector
 refuses hand edits exactly as it does for the contract block.
 Recall is unchanged.
 
-**R4 — MCP Apps round-trip receipt** *(seat: proposed; chair: not yet ruled)*
+**R4 — MCP Apps round-trip receipt** *(chair-ruled 2026-09-02 — ADOPT as written, first among the eight, D5)*
 A recorded receipt of the Fix preview workspace rendered by the
 Cowork host through the standard `ui://` profile, with
 `fix_workspace_collect_action` returning revision, nonce and
@@ -133,7 +138,7 @@ contract hash intact, a replayed action failing closed, and — if the
 host does not advertise the profile — the Markdown fallback rendering
 correctly. No production change unless the receipt fails.
 
-**R5 — Scheduled and monitored delivery, twinned** *(seat: proposed; chair: not yet ruled)*
+**R5 — Scheduled and monitored delivery, twinned** *(chair-ruled 2026-09-02 — ADOPT as amended, D5: one master definition, generated bindings, sweep guards)*
 Templates that run `discovery-sweep`, `bug-predict`, and
 `release-prep` as host scheduled tasks and wake on a file monitor,
 each shipped with its portable twin (`cron` + `attune` CLI) and
@@ -141,17 +146,20 @@ subject to the spend gate. The first monitored path is
 `~/.attune/telemetry/context_fit.jsonl`, which also settles the
 fit_source budget clock in `TASKS.md`.
 
-**R6 — Local-model roles via extensions** *(chair-ruled D1a, D1b; mechanics proposed)*
+**R6 — Local-model roles via extensions** *(chair-ruled D1a, D1b; D2 mechanics ruled 2026-09-02 — routing label)*
 Local models (Ollama first) enter as extensions under the two ruled
 capability contracts: a **memory-backend** extension advertising an
 optional `rerank` capability (Phase A of release-16-manifest D3), and
 **workflow** extensions for classification, triage pre-sort,
 skeptic/countersign at low stakes, and fact-check probes (Phase B).
-A `LOCAL` tier is added to the tier contract for routing these roles;
-the mechanics are D2 in decisions.md. No change to `ModelProvider`;
-no third capability contract (D3).
+Local routing uses a `placement: local` **routing label** on the
+role's routing record — the tier enum stays `CHEAP / CAPABLE /
+PREMIUM` and no copy or mirror changes (D2, ruled: the label lets a
+role say "CHEAP, prefer local, fall back hosted"). No change to
+`ModelProvider`; no third capability contract (D3, ruled with the
+second-implementer tripwire).
 
-**R7 — Roster as data** *(seat: proposed; chair: not yet ruled)*
+**R7 — Roster as data** *(chair-ruled 2026-09-02 — ADOPT as amended, D5: typed slots, golden-roster receipt, loader-enforced fourth-slot gate)*
 `CANONICAL_SEATS`, `SEAT_RECIPES` and `PLAN_ONLY_SEATS` become a
 roster document of role slots — one plan-only reviewer, one
 code-native proposer, one moderator with receipts — each bound to a
@@ -160,11 +168,33 @@ in behavior. Workspace gates check roster size from the roster, not
 the literal three. A fourth slot is legal only when supplied by an
 enabled extension.
 
-**R8 — Asks-per-outcome** *(seat: proposed; chair: not yet ruled)*
+**R8 — Asks-per-outcome** *(chair-ruled 2026-09-02 — ADOPT as amended, D5: terminal outcomes, raw counts, floor)*
 The session ledger records structured asks per completed outcome
 (receipt), so "demanding" is measured as structure per result rather
 than interruptions per session. `friction_gate` reads the figure; no
 new telemetry store.
+
+**R9 — Host capability descriptor and conformance layer** *(chair-adopted 2026-09-02 at promotion, D5 — the 16.3 foundation item)*
+Every host adapter and extension publishes a machine-readable
+**capability descriptor** (structured-question shape, memory
+surfaces, `ui://` profiles, scheduling/monitoring support, action
+round-trip guarantees, receipt schema versions). An
+`attune surfaces doctor` probe records which contracts the current
+host actually advertises and writes a capability receipt; from
+accumulated receipts a generated, drift-guarded **hosts ×
+capabilities matrix** (each cell native / fallback-receipted /
+absent) lives in tree, so "no privileged surface" is a visible red
+cell rather than a vibe. A shared conformance suite runs canonical
+transcripts against each adapter and proves: unsupported
+capabilities degrade deliberately; semantic outputs stay
+equivalent; receipts keep provenance and replay protection;
+removing any host adapter leaves PORTABLE and HEADLESS execution
+usable; no workflow silently selects a privileged host. The matrix
+must be assertable in CI with **no host present** (all-fallback
+column green), or HEADLESS parity is a promise again. Renderers
+consult the probe instead of sniffing per call. *(Provenance: all
+three seats proposed this layer independently in round 1 — Codex
+R9, Claude R9, Antigravity's R1 capability descriptor.)*
 
 ## Non-goals
 
@@ -193,9 +223,10 @@ new telemetry store.
   (`src/attune/models/registry.py`, `src/attune/config/agent_config.py`,
   `src/attune/workflows/compat.py`, `src/attune/workflows/progressive/core.py`)
   and mirrored in `attune-rag`, with
-  `tests/unit/test_model_tiers_drift.py` as the alarm. Adding `LOCAL`
-  is a change to all copies and to the mirror in the same release;
-  the drift guard is the receipt.
+  `tests/unit/test_model_tiers_drift.py` as the alarm. Under the D2
+  ruling the enum does not change: `LOCAL` is a routing label, all
+  copies and the mirror stay three-member, and the drift guard
+  continues to assert exactly that.
 - R7 must not change the brief preamble's observable behavior for
   the default roster; the "three-model round table" wording becomes
   templated from the roster.
@@ -217,10 +248,13 @@ new telemetry store.
 
 ## Open questions for the chair
 
-1. Convene `q-fable-51-surface-overlap-001` before ruling R1–R8, or
-   rule from this brief? (Antigravity and Codex have not spoken.)
+1. ~~Convene before ruling R1–R8?~~ Resolved: convened 2026-09-02,
+   round 1 promoted (D5).
 2. Coverage floor for this initiative: the repository's 85% or the
    90% the chair set for shared-command-workspaces (D4 there)?
-3. D2 mechanics for `LOCAL` (enum member vs. routing label).
-4. Whether R6's workflow extensions wait for release-16-manifest
-   Phase B, or Phase A ships the reranker alone first.
+   **Still open.**
+3. ~~D2 mechanics~~ Ruled: routing label (D2).
+4. ~~Task 7 phasing~~ Ruled: the reranker ships alone on Phase A
+   (D5).
+5. D6 — R2 enforcement locus (registry vs. enumeration); rule
+   before Task 1.
