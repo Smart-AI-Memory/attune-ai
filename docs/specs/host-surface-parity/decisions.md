@@ -274,11 +274,33 @@ attune-forms* asserting "no renderer module escapes the registry"
 is the missing third leg, and it belongs to the attune-forms repo,
 which this spec does not control. NOT RULED — chair's call.
 
+## D7 — Coverage floor: 90% (RULED 2026-09-03, chair)
+
+Changed code in this initiative carries a 90% floor, matching
+shared-command-workspaces D4 — gate and renderer code is the class
+that precedent was set for. The repository-wide 85% floor is
+unchanged.
+
+## D8 — 16.3 execution gos (RULED 2026-09-03, chair, via decision form)
+
+The chair granted the go for ALL ungated 16.3 items: the R4
+receipt, the R9 capability-descriptor/conformance foundation, R1
+as amended (host-profile tier 0), and the D2 placement-label
+wiring. Task 7 remains gated on release-16-manifest Phase A
+(`attune.extensions` on disk); Phase B items are untouched. R9 and
+the D2 label wiring need tasks authored in tasks.md before
+execution — authoring them is covered by this go, executing each
+still reports against D7's 90% floor. **Zero-spend constraint
+(chair, same day): the chair has no API budget — all D8 work runs
+in-session on the subscription surface or as plain code+tests;
+no API-billed launch of any kind
+(`ATTUNE_SESSION_SPEND_CAP_USD=0` enforces this machine-wide).
+
 ## Open
 
-- Coverage floor for this initiative (85% repository floor, or 90%
-  as in shared-command-workspaces D4) — not addressed by round 1.
+- None. Every proposed decision in this spec is ruled.
 
 Resolved 2026-09-02/03: the table was convened (round 1 complete,
 promoted in D5); D2 ruled (routing label); Task 7 ships alone on
-Phase A (D5); D6 ruled (hybrid, subject-local — 2026-09-03).
+Phase A (D5); D6 ruled (hybrid, subject-local); D7 coverage floor
+90%; D8 16.3 gos granted.
