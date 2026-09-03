@@ -38,12 +38,17 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 
-def _run_command(cmd: list[str], cwd: str = ".") -> tuple[int, str, str]:
+def _run_command(
+    cmd: list[str],
+    cwd: str = ".",
+    timeout: int = 120,
+) -> tuple[int, str, str]:
     """Run a shell command safely and return (returncode, stdout, stderr).
 
     Args:
         cmd: Command and arguments as list
         cwd: Working directory
+        timeout: Maximum command runtime in seconds.
 
     Returns:
         Tuple of (return_code, stdout, stderr)
@@ -54,7 +59,7 @@ def _run_command(cmd: list[str], cwd: str = ".") -> tuple[int, str, str]:
             cmd,
             capture_output=True,
             text=True,
-            timeout=120,
+            timeout=timeout,
             cwd=cwd,
         )
         return result.returncode, result.stdout, result.stderr

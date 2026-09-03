@@ -22,6 +22,8 @@ from .release_models import Tier
 
 logger = logging.getLogger(__name__)
 
+COVERAGE_TIMEOUT_SECONDS = 900
+
 
 class TestCoverageAgent(ReleaseAgent):
     """Runs pytest --cov and parses coverage report.
@@ -84,6 +86,7 @@ class TestCoverageAgent(ReleaseAgent):
                     "--timeout=30",
                 ],
                 cwd=codebase_path,
+                timeout=COVERAGE_TIMEOUT_SECONDS,
             )
 
             coverage_percent = self._parse_coverage_output(cov_stdout)
