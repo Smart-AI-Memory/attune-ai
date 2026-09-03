@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.2.1] - 2026-09-03
+
+This patch restores strict native rendering for the guided Fix and Spec forms
+and prevents non-object model responses from escaping the release-gate parser.
+
 ### Fixed
 
 - **Release-gate parser can no longer return a non-dict**: `_parse_response`

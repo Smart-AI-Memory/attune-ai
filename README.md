@@ -136,20 +136,16 @@ memory storage and recall, and every local transform.
      release with the headline feature; the displaced content moves to
      a permanent section below. Don't stack a second "New in" here. -->
 
-## New in 16.2.0 — shared workspaces, fewer ruling steps
+## New in 16.2.1 — strict dynamic forms render again
 
-Roundtable, Spec, Release Prep, Bug Predict, and the broader command cohort
-now use one state-bound dynamic workspace renderer. The same canonical action
-contract reaches rich widgets, Markdown/text fallbacks, and terminal receipts;
-stale or replayed actions fail closed instead of relying on presentation state.
+Guided Fix and Spec intake now omit optional field properties when they are
+absent instead of serializing them as JSON `null`. Strict native MCP hosts can
+accept the generated payload unchanged, so the dynamic form, scope picker, and
+probe suggestions render instead of failing client-side schema validation.
 
-Roundtable's seven-item promotion review now completes in atomic `3 + 3 + 1`
-batches: three submissions instead of seven, with the same terminal rulings.
-That is 57.143% fewer ruling submissions and 66.667% fewer added navigation
-rounds in the measured portable/headless path. These are interaction-mechanics
-figures, not claims about human dwell or provider execution time. Consequential
-actions use `attune-forms 0.12.2`'s visible inline two-click confirmation, so a
-host-blocked native browser dialog cannot make the button appear inert.
+The release-gate parser also rejects arrays and scalar values where an object
+is required, allowing its remaining response strategies to recover instead of
+reporting a misleading `quality_score 0.0` failure.
 
 <details>
 <summary>Previously new in 16.1.0 — harness-lite lands</summary>
@@ -384,6 +380,21 @@ works everywhere and degrades gracefully. The full construct vocabulary
 ships via `attune-forms` 0.7.0 (new in 13.0.0). Chart specs render
 through the same sealed SVG kernel (`chart_render_widget`, nine chart
 types).
+
+### State-bound command workspaces
+
+Roundtable, Spec, Release Prep, Bug Predict, and the broader command cohort
+use one state-bound dynamic workspace renderer. The same canonical action
+contract reaches rich widgets, Markdown/text fallbacks, and terminal receipts;
+stale or replayed actions fail closed instead of relying on presentation state.
+
+Roundtable's seven-item promotion review completes in atomic `3 + 3 + 1`
+batches: three submissions instead of seven, with the same terminal rulings.
+That is 57.143% fewer ruling submissions and 66.667% fewer added navigation
+rounds in the measured portable/headless path. These are interaction-mechanics
+figures, not claims about human dwell or provider execution time. Consequential
+actions use `attune-forms 0.12.2`'s visible inline two-click confirmation, so a
+host-blocked native browser dialog cannot make the button appear inert.
 
 ---
 

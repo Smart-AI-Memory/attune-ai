@@ -5,7 +5,7 @@ Code. Your agent stops starting from zero, and its word stops
 being the evidence. <!-- cap:skill_count -->28 auto-triggering skills<!-- /cap -->, zero
 commands: say what you need and Claude picks the right skill.
 
-**Version:** 16.2.0 | **License:** Apache 2.0
+**Version:** 16.2.1 | **License:** Apache 2.0
 
 > **Fix Receipts** (`/fix`) — new in 11.2.0. Say `fix this and
 > prove it`.
