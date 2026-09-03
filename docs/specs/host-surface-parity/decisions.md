@@ -205,7 +205,20 @@ synthesis against the seat messages. Per-item record:
 R9 foundation, R1 as amended, D2 label, Task 7 reranker alone.
 16.4 — R3, R5, R7, R8, Phase B workflow extensions.
 
-## D6 — R2 enforcement locus (OPEN)
+## D6 — R2 enforcement locus (RULED 2026-09-03, chair — hybrid, subject-local)
+
+**Ruling: the lead's recommended hybrid** (chair picked option 1
+after the calibration probe below and a UX-impact read: the locus
+is CI-side with zero user-facing latency; the differences are in
+what each option fails to catch). Renderer parity is asserted
+against attune-forms' declared `ProjectionRenderers` registry via a
+cross-package drift guard; host-hook/template parity is asserted by
+filesystem enumeration in attune-ai where those artifacts live; the
+D4 amendments (expiring allowlist, payload-schema receipts,
+lifecycle assertions) apply to both. The counter-case's third leg —
+a "no renderer escapes the registry" sweep inside attune-forms —
+is accepted as part of the ruling and lands in the attune-forms
+repo alongside Task 1's gate here.
 
 The one real disagreement inside the round's shared direction:
 Codex would replace filesystem enumeration with a **declared
@@ -263,11 +276,9 @@ which this spec does not control. NOT RULED — chair's call.
 
 ## Open
 
-- **D6 — R2 enforcement locus** (registry vs. enumeration); rule
-  before Task 1.
 - Coverage floor for this initiative (85% repository floor, or 90%
   as in shared-command-workspaces D4) — not addressed by round 1.
 
-Resolved 2026-09-02: the table was convened (round 1 complete,
+Resolved 2026-09-02/03: the table was convened (round 1 complete,
 promoted in D5); D2 ruled (routing label); Task 7 ships alone on
-Phase A (D5).
+Phase A (D5); D6 ruled (hybrid, subject-local — 2026-09-03).

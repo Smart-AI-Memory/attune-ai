@@ -112,7 +112,7 @@ numbers, path pickers, multi-question) fall through to the existing
 PORTABLE tier — never truncated. The answer is validated on the way
 back exactly as on every other tier.
 
-**R2 — Surface parity gate** *(chair-ruled 2026-09-02 — ADOPT as amended, D4/D5: expiring experiments allowlist, schema-identical payload receipts, lifecycle parity; locus open, D6)*
+**R2 — Surface parity gate** *(chair-ruled — ADOPT as amended, D4/D5; locus ruled 2026-09-03, D6: hybrid — registry for renderers, enumeration for in-tree hooks)*
 A drift-guard test enumerates every RICH-tier renderer and every
 host-specific hook or template in the tree and fails when any lacks
 (a) a PORTABLE twin, (b) a HEADLESS twin, and (c) a receipt entry
@@ -256,5 +256,5 @@ R9, Claude R9, Antigravity's R1 capability descriptor.)*
 3. ~~D2 mechanics~~ Ruled: routing label (D2).
 4. ~~Task 7 phasing~~ Ruled: the reranker ships alone on Phase A
    (D5).
-5. D6 — R2 enforcement locus (registry vs. enumeration); rule
-   before Task 1.
+5. ~~D6 — R2 enforcement locus~~ Ruled 2026-09-03: hybrid,
+   subject-local (D6).
