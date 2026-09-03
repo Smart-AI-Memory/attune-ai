@@ -72,6 +72,10 @@ while preserving portable fallbacks and explicit chair authority.
 
 ### Fixed
 
+- Agent SDK workflows now require `claude-agent-sdk>=0.2.152`, whose task-aware
+  shutdown keeps the control stream open until spawned agents finish instead
+  of looping `Stream closed` errors in `release-notes` and `secure-release`.
+
 - Release readiness coverage parsing now accepts only the actual `TOTAL`
   summary row, preventing percentages embedded in captured test output from
   replacing the measured suite coverage.
