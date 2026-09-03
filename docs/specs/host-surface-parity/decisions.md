@@ -296,6 +296,32 @@ in-session on the subscription surface or as plain code+tests;
 no API-billed launch of any kind
 (`ATTUNE_SESSION_SPEND_CAP_USD=0` enforces this machine-wide).
 
+## D9 — Tier provenance adopted as R10 (RULED 2026-09-03, chair)
+
+Promoted from D5's "noted, not adopted" list by a fresh motivation
+receipt: the 2026-09-03 guard-intervention audit ("The Prose Gap",
+`~/.attune/reports/guard-intervention-record-2026-09-03.md`) logged
+a live instance of the exact failure R9/R10 kill — ledger entry 2:
+a widget emitted to a host that does not render MCP-app content,
+with the render claimed successful unverified. Every substantive
+failure in that audit was a prose-layer claim no mechanical gate
+could catch; the chair ruled R9 plus tier provenance **the ONE
+mechanical enforcer to adopt from the audit, declining all other
+new gates**.
+
+The ruling: tier-provenance/Other-rate telemetry (Claude's round-1
+proposal, previously folded into "R1/R9 task design" as a note)
+becomes requirement **R10** — every validated answer carries the
+surface tier that actually rendered it, derived from the response
+envelope and never from the render request, with tier-0
+fall-through and Other-rate surfaced through existing telemetry.
+It is the falsifier for H1's "tier 0 is not a rival" claim.
+
+Authoring the R9 and R10 task entries (tasks.md Tasks 10 and 11)
+is covered by D8's go. Execution: Task 10 (R9) holds D8's 16.3
+execution go; Task 11 (R10) executes only behind its own chair go.
+Both report against D7's 90% floor and D8's zero-spend constraint.
+
 ## Open
 
 - None. Every proposed decision in this spec is ruled.
@@ -303,4 +329,4 @@ no API-billed launch of any kind
 Resolved 2026-09-02/03: the table was convened (round 1 complete,
 promoted in D5); D2 ruled (routing label); Task 7 ships alone on
 Phase A (D5); D6 ruled (hybrid, subject-local); D7 coverage floor
-90%; D8 16.3 gos granted.
+90%; D8 16.3 gos granted; D9 tier provenance adopted as R10.
