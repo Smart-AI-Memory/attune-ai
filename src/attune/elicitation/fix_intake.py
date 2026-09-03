@@ -408,15 +408,19 @@ def _main(argv: list[str]) -> int:
             "description": form.description,
             "fields": [
                 {
-                    "id": q.id,
-                    "text": q.text,
-                    "type": q.type.value,
-                    "options": list(q.options),
-                    "default": q.default,
-                    "help_text": q.help_text,
-                    "required": q.required,
-                    "path_kind": q.path_kind,
-                    "path_options": list(q.path_options),
+                    key: value
+                    for key, value in {
+                        "id": q.id,
+                        "text": q.text,
+                        "type": q.type.value,
+                        "options": list(q.options),
+                        "default": q.default,
+                        "help_text": q.help_text,
+                        "required": q.required,
+                        "path_kind": q.path_kind,
+                        "path_options": list(q.path_options),
+                    }.items()
+                    if value is not None
                 }
                 for q in form.questions
             ],

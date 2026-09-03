@@ -203,13 +203,17 @@ def _main(argv: list[str]) -> int:
             "description": form.description,
             "fields": [
                 {
-                    "id": q.id,
-                    "text": q.text,
-                    "type": q.type.value,
-                    "options": list(q.options),
-                    "default": q.default,
-                    "help_text": q.help_text,
-                    "required": q.required,
+                    key: value
+                    for key, value in {
+                        "id": q.id,
+                        "text": q.text,
+                        "type": q.type.value,
+                        "options": list(q.options),
+                        "default": q.default,
+                        "help_text": q.help_text,
+                        "required": q.required,
+                    }.items()
+                    if value is not None
                 }
                 for q in form.questions
             ],

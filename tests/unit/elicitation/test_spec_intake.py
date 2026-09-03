@@ -107,6 +107,16 @@ def test_main_default_prints_form_and_areas_payload(tmp_path: Path, monkeypatch,
     outcome_field = payload["form"]["fields"][0]
     assert outcome_field["required"] is True
     assert outcome_field["type"] == "textarea"
+    assert all(
+        value is not None for field in payload["form"]["fields"] for value in field.values()
+    ), "CLI form payload must be accepted unchanged by strict MCP tool schemas"
+
+    import jsonschema
+
+    from attune.mcp.tool_schemas import get_elicitation_tools
+
+    schema = get_elicitation_tools()["elicitation_ask"]["input_schema"]["properties"]["form"]
+    jsonschema.validate(payload["form"], schema)
 
 
 def test_main_default_degrades_without_areas(tmp_path: Path, monkeypatch, capsys) -> None:

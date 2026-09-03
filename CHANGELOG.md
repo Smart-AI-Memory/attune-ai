@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   escaping a `-> dict` contract and surfacing as a spurious release-gate
   failure (`quality_score 0.0`) inside `quality_agent` / `security_agent`.
 
+- Guided Fix and Spec intake payloads now omit absent optional fields instead
+  of serializing them as JSON `null`, so strict native MCP form schemas accept
+  the generated payload unchanged and render the dynamic UI.
+
 ## [16.2.0] - 2026-09-02
 
 This release brings state-bound dynamic workspaces to the command cohort and
