@@ -172,14 +172,34 @@ def test_happy_path_returns_validated_items(isolate):
     assert client.messages.calls  # SDK was invoked
 
 
-def test_forced_tool_use_options_passed(isolate):
+def test_fable_steers_with_auto_and_strict_tool(isolate, monkeypatch):
+    """Fable 5.1 rejects forced tool_choice (400): auto + strict keeps the schema."""
+    monkeypatch.delenv("ATTUNE_MODEL_PREMIUM", raising=False)
+    assert core._curator_model().startswith("claude-fable")
+    client = _FakeClient(_tool_response("ok", []))
+    asyncio.run(core.run_curator(project_root=isolate, client=client, max_items=7))
+    call = client.messages.calls[0]
+    assert call["tool_choice"] == {"type": "auto"}
+    assert call["tools"][0]["name"] == "emit_curation"
+    assert call["tools"][0]["strict"] is True
+    # strict tool use requires additionalProperties: false on every object
+    schema = call["tools"][0]["input_schema"]
+    assert schema["additionalProperties"] is False
+    assert schema["properties"]["items"]["items"]["additionalProperties"] is False
+    # max_items flows into the schema cap
+    assert schema["properties"]["items"]["maxItems"] == 7
+    # the fable path rides the beta namespace with the fallback opt-in
+    assert call["betas"] == ["server-side-fallback-2026-06-01"]
+
+
+def test_non_fable_keeps_forced_tool_use(isolate, monkeypatch):
+    monkeypatch.setenv("ATTUNE_MODEL_PREMIUM", "claude-opus-4-8")
     client = _FakeClient(_tool_response("ok", []))
     asyncio.run(core.run_curator(project_root=isolate, client=client, max_items=7))
     call = client.messages.calls[0]
     assert call["tool_choice"] == {"type": "tool", "name": "emit_curation"}
-    assert call["tools"][0]["name"] == "emit_curation"
-    # max_items flows into the schema cap
-    assert call["tools"][0]["input_schema"]["properties"]["items"]["maxItems"] == 7
+    assert "strict" not in call["tools"][0]
+    assert "betas" not in call
 
 
 def test_fabricated_source_item_dropped(isolate, caplog):

@@ -31,7 +31,7 @@ class TestResolveModel:
 
     def test_defaults_are_the_spec_tiers(self):
         assert _DEFAULTS == {
-            "premium": "claude-fable-5",
+            "premium": "claude-fable-5-1",
             "capable": "claude-sonnet-5",
             "cheap": "claude-haiku-4-5",
         }
@@ -78,6 +78,14 @@ class TestResolveModel:
     def test_defaults_are_known_models(self):
         assert set(_DEFAULTS.values()) <= _KNOWN_MODELS
 
+    def test_both_fable_generations_are_known_overrides(self, monkeypatch, caplog):
+        """Fable 5 is still served: pinning it must not trip the typo warning."""
+        assert {"claude-fable-5-1", "claude-fable-5"} <= _KNOWN_MODELS
+        monkeypatch.setenv(_ENV["premium"], "claude-fable-5")
+        with caplog.at_level(logging.WARNING, logger="attune.model_tiers"):
+            assert resolve_model("premium") == "claude-fable-5"
+        assert not [r for r in caplog.records if r.levelno == logging.WARNING]
+
 
 class TestFableExtras:
     def test_fable_gets_betas_and_fallbacks(self):
@@ -91,6 +99,9 @@ class TestFableExtras:
 
     def test_prefix_gating_covers_future_fable_ids(self):
         assert fable_extras("claude-fable-5-20260601") != {}
+
+    def test_fable_5_1_gets_the_same_extras(self):
+        assert fable_extras("claude-fable-5-1") == fable_extras("claude-fable-5")
 
     @pytest.mark.parametrize(
         "model",

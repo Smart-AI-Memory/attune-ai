@@ -234,7 +234,7 @@ class TestUnifiedAgentConfigModelIds:
         for tier, expected in [
             (ModelTier.CHEAP, "claude-haiku-4-5"),
             (ModelTier.CAPABLE, "claude-sonnet-5"),
-            (ModelTier.PREMIUM, "claude-fable-5"),
+            (ModelTier.PREMIUM, "claude-fable-5-1"),
         ]:
             config = UnifiedAgentConfig(name="test", provider=Provider.ANTHROPIC, model_tier=tier)
             assert config.get_model_id() == expected

@@ -19,7 +19,7 @@ Claude Code workflows are multi-stage automation pipelines that combine natural 
 
 - Starts with **Haiku** (fast, cheap) for triage and analysis
 - Escalates to **Sonnet** (capable) for implementation and complex reasoning
-- Escalates to **Claude Fable 5** (premium, priced at 2× the former Opus rate) for architectural decisions and synthesis
+- Escalates to **Claude Fable 5.1** (premium, priced at 2× the former Opus rate) for architectural decisions and synthesis
 - Delivers **up to 90% cost savings** compared to using premium models exclusively
 
 This intelligent tier escalation is the core innovation of Attune AI. Instead of paying for Opus on every task, you pay for what you actually need.

@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Premium tier moves to Claude Fable 5.1** (`claude-fable-5-1`): the tier
+  default in `attune.model_tiers`, the registry premium entry, the cost
+  baseline, the spec runner default, and every projected doc that named
+  `claude-fable-5` now point at 5.1. Same $10/$50 per MTok; prompt-cache
+  reads drop to $0.25/MTok and `AnthropicProvider.calculate_actual_cost`
+  prices them from an explicit per-model rate instead of the 0.1x
+  derivation. `claude-fable-5` stays served: it is a known
+  `ATTUNE_MODEL_PREMIUM` override and remains priced by id in
+  `ADDITIONAL_MODELS`. The `attune.model_tiers` mirror is changed in step
+  with attune-rag's canonical copy — the drift guard stays green only
+  once attune-rag ships the same defaults.
+
+### Fixed
+
+- **Curator no longer forces `tool_choice` on fable models**: Fable 5.1
+  returns 400 on forced tool use (`type "tool" and "any" are not supported
+  for this model`), which would have broken every default-tier curator
+  briefing. Fable models now steer with `tool_choice: auto` (the prompt
+  already names `emit_curation`) and keep the schema guarantee through
+  strict tool use (`strict: true` plus `additionalProperties: false` on
+  every schema object); non-fable pins keep the forced call unchanged.
+
 ## [16.2.1] - 2026-09-03
 
 This patch restores strict native rendering for the guided Fix and Spec forms

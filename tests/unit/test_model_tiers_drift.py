@@ -38,7 +38,7 @@ def test_known_models_match_canonical() -> None:
 
 
 def test_fable_extras_match_canonical() -> None:
-    for model in ("claude-fable-5", "claude-sonnet-5", "claude-haiku-4-5"):
+    for model in ("claude-fable-5-1", "claude-fable-5", "claude-sonnet-5", "claude-haiku-4-5"):
         assert ai_tiers.fable_extras(model) == rag_tiers.fable_extras(model)
 
 

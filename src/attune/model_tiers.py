@@ -27,7 +27,7 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 _DEFAULTS = {
-    "premium": "claude-fable-5",
+    "premium": "claude-fable-5-1",
     "capable": "claude-sonnet-5",
     "cheap": "claude-haiku-4-5",
 }
@@ -37,11 +37,13 @@ _ENV = {
     "cheap": "ATTUNE_MODEL_CHEAP",
 }
 # Models we expect to see in overrides: the tier defaults, the fable
-# server-side fallback target, and the pre-tier defaults still pinned in
-# some environments. An override outside this set is honored but logged —
-# it usually means a typo, not a deliberate pin.
+# server-side fallback target, the still-served Fable 5 predecessor,
+# and the pre-tier defaults still pinned in some environments. An
+# override outside this set is honored but logged — it usually means a
+# typo, not a deliberate pin.
 _KNOWN_MODELS = frozenset(
     {
+        "claude-fable-5-1",
         "claude-fable-5",
         "claude-sonnet-5",
         "claude-haiku-4-5",

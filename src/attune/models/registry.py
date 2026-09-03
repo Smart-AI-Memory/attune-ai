@@ -125,7 +125,7 @@ class ModelInfo:
 MODEL_REGISTRY: dict[str, dict[str, ModelInfo]] = {
     # -------------------------------------------------------------------------
     # Anthropic Claude Models
-    # Premium tier is Fable 5 (server-side opus-4-8 fallback rides in the
+    # Premium tier is Fable 5.1 (server-side opus-4-8 fallback rides in the
     # request — see attune.model_tiers / llm.fable_call). Opus 4.8 stays
     # resolvable by id via ADDITIONAL_MODELS below (batch premium target).
     # -------------------------------------------------------------------------
@@ -151,11 +151,14 @@ MODEL_REGISTRY: dict[str, dict[str, ModelInfo]] = {
             supports_tools=True,
         ),
         "premium": ModelInfo(
-            id="claude-fable-5",
+            id="claude-fable-5-1",
             provider="anthropic",
             tier="premium",
-            # $10/$50 per MTok (prompt cache: $12.50/MTok write, $1/MTok
-            # read — derived as 1.25x / 0.1x input by cost calculators).
+            # $10/$50 per MTok, same as Fable 5. Prompt cache: $12.50/MTok
+            # write (1.25x input, derived by cost calculators); reads are
+            # $0.25/MTok — 0.025x input, a quarter of the 0.1x every other
+            # model derives — carried explicitly by
+            # AnthropicProvider.get_model_info (cost_per_1m_cache_read).
             # 1M-token context window; 128K max output tokens.
             input_cost_per_million=10.00,
             output_cost_per_million=50.00,
@@ -173,8 +176,19 @@ MODEL_REGISTRY: dict[str, dict[str, ModelInfo]] = {
 # while by-id lookups (get_model_by_id, get_pricing_for_model,
 # cost_tracker.MODEL_PRICING) still resolve them. opus-4-8 remains the
 # batch premium target (anthropic_batch._batch_premium_model) and the
-# pricing anchor for pre-fable telemetry records.
+# pricing anchor for pre-fable telemetry records; fable-5 (still served)
+# stays priced for pre-5.1 records and explicit ATTUNE_MODEL_PREMIUM pins.
 ADDITIONAL_MODELS: dict[str, ModelInfo] = {
+    "claude-fable-5": ModelInfo(
+        id="claude-fable-5",
+        provider="anthropic",
+        tier="premium",
+        input_cost_per_million=10.00,
+        output_cost_per_million=50.00,
+        max_tokens=128000,
+        supports_vision=True,
+        supports_tools=True,
+    ),
     "claude-opus-4-8": ModelInfo(
         id="claude-opus-4-8",
         provider="anthropic",
@@ -340,7 +354,7 @@ class ModelRegistry:
             >>> premium_models = registry.get_models_by_tier("premium")
             >>> for model in premium_models:
             ...     print(f"{model.provider}: {model.id}")
-            anthropic: claude-fable-5
+            anthropic: claude-fable-5-1
 
         """
         return self._tier_cache.get(tier.lower(), [])

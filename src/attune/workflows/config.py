@@ -578,7 +578,7 @@ custom_models:
   anthropic:
     cheap: claude-haiku-4-5
     capable: claude-sonnet-5
-    premium: claude-fable-5  # premium tier default — see attune.model_tiers
+    premium: claude-fable-5-1  # premium tier default — see attune.model_tiers
   openai:
     cheap: gpt-4o-mini
     capable: gpt-4o
@@ -591,7 +591,7 @@ custom_models:
   hybrid:
     cheap: gpt-4o-mini           # OpenAI - cheapest per token
     capable: claude-sonnet-5   # Anthropic - best code/reasoning
-    premium: claude-fable-5   # Anthropic - best overall (see attune.model_tiers)
+    premium: claude-fable-5-1   # Anthropic - best overall (see attune.model_tiers)
 
 # =============================================================================
 # CUSTOM PRICING (per million tokens)

@@ -1,16 +1,20 @@
 """``run_curator`` orchestrator — the curator's headless public API.
 
-Reads every source, checks the TTL cache, invokes a single Opus call
-with forced tool-use for a guaranteed-schema briefing, validates the
-cited sources, and caches the result.
+Reads every source, checks the TTL cache, invokes a single premium-tier
+call that must answer through one ``emit_curation`` tool call for a
+guaranteed-schema briefing, validates the cited sources, and caches the
+result.
 
 The synthesis is one LLM call (no subagents, no agent loop, no file
-tools), so it uses the raw ``anthropic`` SDK with forced ``tool_choice``
-— the canonical CLAUDE.md "Forced Anthropic tool-use" pattern, the same
-one ``attune_rag``'s ``FaithfulnessJudge`` uses. (The agent SDK's
-``ClaudeAgentOptions`` has no ``tool_choice`` field and its ``tools`` is
-a name-allowlist, so it can't force a single guaranteed-schema call —
-see ``docs/specs/bulletin-curator/decisions.md``.)
+tools), so it uses the raw ``anthropic`` SDK — the canonical CLAUDE.md
+"Forced Anthropic tool-use" pattern, the same one ``attune_rag``'s
+``FaithfulnessJudge`` uses. (The agent SDK's ``ClaudeAgentOptions`` has
+no ``tool_choice`` field and its ``tools`` is a name-allowlist, so it
+can't force a single guaranteed-schema call — see
+``docs/specs/bulletin-curator/decisions.md``.) Fable 5.1 rejects forced
+``tool_choice`` (400), so fable models steer with ``auto`` — the prompt
+already names the tool — and keep the schema guarantee through strict
+tool use; every other model keeps the forced call.
 """
 
 from __future__ import annotations
@@ -48,6 +52,10 @@ from .sources import (
 
 if TYPE_CHECKING:
     from anthropic import AsyncAnthropic
+
+# Fable models (``claude-fable-*``) reject forced tool_choice on 5.1 —
+# same prefix test as attune.model_tiers.fable_extras.
+_FABLE_PREFIX = "claude-fable"
 
 logger = logging.getLogger(__name__)
 
@@ -133,10 +141,11 @@ def _compute_cost(model: str, usage: Any) -> float:
 
 
 def _extract_curation_payload(response: Any) -> dict[str, Any]:
-    """Pull the structured payload from a forced-tool-use response.
+    """Pull the structured payload from the synthesis response.
 
     Walks ``response.content``: a ``tool_use`` block's ``input`` is the
-    guaranteed-schema happy path. Forced ``tool_choice`` makes the text
+    guaranteed-schema happy path. Forced ``tool_choice`` (non-fable) or
+    the prompt's tool instruction (fable, ``auto``) makes the text
     fallback rare, but it's handled for robustness.
     """
     text_fallback: str | None = None
@@ -242,17 +251,28 @@ async def _query_opus(
     client: AsyncAnthropic,
     model: str,
 ) -> CuratorResult:
-    """Run the single forced-tool-use synthesis call.
+    """Run the single tool-use synthesis call.
 
     Returns a :class:`CuratorResult` with summary, items, cost, and
     model populated. ``sources_consulted`` and ``cached_at`` are set by
     the caller.
     """
-    tool = {
+    tool: dict[str, Any] = {
         "name": "emit_curation",
         "description": _CURATION_TOOL_DESCRIPTION,
         "input_schema": schema,
     }
+    # Fable 5.1 returns 400 on forced tool_choice (type "tool"/"any" are
+    # not supported for this model), so fable models steer with ``auto``
+    # — the prompt names emit_curation and says "exactly once" — and keep
+    # the schema-valid-arguments guarantee via strict tool use. Every
+    # other model keeps the forced call. Prefix check matches
+    # attune.model_tiers.fable_extras.
+    if model.startswith(_FABLE_PREFIX):
+        tool["strict"] = True
+        tool_choice: dict[str, Any] = {"type": "auto"}
+    else:
+        tool_choice = {"type": "tool", "name": "emit_curation"}
     # Build kwargs as a plain dict and splat — the raw-dict tool param
     # doesn't match the SDK's ToolParam TypedDict overloads, and the
     # splat sidesteps that (same approach as FaithfulnessJudge).
@@ -261,7 +281,7 @@ async def _query_opus(
         "max_tokens": _MAX_OUTPUT_TOKENS,
         "system": _CURATOR_SYSTEM_PROMPT,
         "tools": [tool],
-        "tool_choice": {"type": "tool", "name": "emit_curation"},
+        "tool_choice": tool_choice,
         "messages": [{"role": "user", "content": prompt}],
     }
     # Premium default is fable — the helper routes fable models via the
