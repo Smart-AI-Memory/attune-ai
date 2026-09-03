@@ -72,6 +72,10 @@ while preserving portable fallbacks and explicit chair authority.
 
 ### Fixed
 
+- Release readiness coverage checks now allow the full test suite up to
+  15 minutes to finish instead of timing out after two minutes and replacing
+  the real measurement with a low-confidence test-count estimate.
+
 - Pattern review queue and persistent pattern library now degrade
   gracefully when the memory backend fails (unreachable Redis, disk
   error, third-party backend missing a method) instead of raising
