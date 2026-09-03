@@ -125,6 +125,28 @@ class TestEvaluateQualityGates:
 
         assert not coverage_gate.passed
 
+    def test_coverage_gate_fails_when_result_is_estimated(self):
+        """Estimated coverage cannot approve the critical release gate."""
+        team = self._make_team()
+
+        results = [
+            FakeAgentResult("Security Auditor", True, 9.0, {"critical_issues": 0}),
+            FakeAgentResult(
+                "Test Coverage",
+                True,
+                9.0,
+                {"coverage_percent": 85.0, "estimated": True},
+            ),
+            FakeAgentResult("Code Quality", True, 9.0, {"quality_score": 8.0}),
+            FakeAgentResult("Documentation", True, 9.0, {"coverage_percent": 90.0}),
+        ]
+
+        gates = team._evaluate_quality_gates(results)
+        coverage_gate = next(g for g in gates if g.name == "Test Coverage")
+
+        assert coverage_gate.actual == pytest.approx(85.0)
+        assert coverage_gate.passed is False
+
     def test_documentation_gate_not_critical(self):
         """Documentation gate is non-critical (warning only)."""
         team = self._make_team()

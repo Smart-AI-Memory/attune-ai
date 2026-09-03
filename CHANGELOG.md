@@ -74,7 +74,8 @@ while preserving portable fallbacks and explicit chair authority.
 
 - Release readiness coverage checks now allow the full test suite up to
   15 minutes to finish instead of timing out after two minutes and replacing
-  the real measurement with a low-confidence test-count estimate.
+  the real measurement with a low-confidence test-count estimate. Estimated
+  coverage remains diagnostic and can no longer approve the critical gate.
 
 - Pattern review queue and persistent pattern library now degrade
   gracefully when the memory backend fails (unreachable Redis, disk

@@ -274,13 +274,16 @@ class ReleasePrepTeam:
         coverage_pct = 0.0
         if coverage:
             coverage_pct = coverage.findings.get("coverage_percent", 0.0)
+        coverage_measured = bool(
+            coverage and coverage.success and not coverage.findings.get("estimated", False)
+        )
 
         gates.append(
             QualityGate(
                 name="Test Coverage",
                 threshold=self.quality_gates["min_coverage"],
                 actual=coverage_pct,
-                passed=coverage_pct >= self.quality_gates["min_coverage"],
+                passed=coverage_measured and coverage_pct >= self.quality_gates["min_coverage"],
                 critical=True,
             ),
         )
