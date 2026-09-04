@@ -82,7 +82,7 @@ export default function PrivacyPage() {
               <h2>4. Information Sharing and Disclosure</h2>
               <p>We do NOT sell your personal information. We may share information with:</p>
               <ul>
-                <li><strong>Service Providers:</strong> Email service providers (SendGrid), analytics (Plausible)</li>
+                <li><strong>Service Providers:</strong> Email service provider (Resend), analytics (Plausible)</li>
                 <li><strong>Legal Requirements:</strong> When required by law or to protect our rights</li>
                 <li><strong>Business Transfers:</strong> In connection with a merger, acquisition, or sale of assets</li>
               </ul>

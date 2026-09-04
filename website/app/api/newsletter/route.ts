@@ -65,9 +65,9 @@ export async function POST(request: NextRequest) {
       console.warn('Mailchimp subscription failed:', mailchimpResult.error);
     }
 
-    // Send confirmation email via SendGrid
+    // Send confirmation email via Resend
     const emailSent = await sendNewsletterConfirmation(email);
-    if (!emailSent && process.env.SENDGRID_API_KEY) {
+    if (!emailSent && process.env.RESEND_API_KEY) {
       console.warn('Failed to send newsletter confirmation email');
     }
 

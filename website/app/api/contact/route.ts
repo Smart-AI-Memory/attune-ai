@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       console.error('Database error (continuing anyway):', dbError);
     }
 
-    // Send email via SendGrid
+    // Send email via Resend
     const emailSent = await sendContactFormEmail({
       name,
       email,
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       message,
     });
 
-    if (!emailSent && process.env.SENDGRID_API_KEY) {
+    if (!emailSent && process.env.RESEND_API_KEY) {
       console.warn('Failed to send contact form email, but returning success to user');
     }
 
