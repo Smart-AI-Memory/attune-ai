@@ -1,10 +1,13 @@
-"""JSON schema for the curator's forced tool-use output.
+"""JSON schema for the curator's tool-use output.
 
-The orchestrator forces the model to call a single ``emit_curation``
-tool whose ``input`` is guaranteed to match :data:`_CURATION_SCHEMA`
-(per the CLAUDE.md lesson "Forced Anthropic tool-use is the cleanest
-path to guaranteed-schema JSON"). The schema is copied verbatim from
-``docs/specs/bulletin-curator/design.md`` "Output schema".
+The orchestrator has the model call a single ``emit_curation`` tool
+whose ``input`` is guaranteed to match :data:`_CURATION_SCHEMA` (per
+the CLAUDE.md lesson "Forced Anthropic tool-use is the cleanest path to
+guaranteed-schema JSON"; on Fable 5.1, which rejects forced
+``tool_choice``, the guarantee comes from strict tool use instead). The
+schema is the ``docs/specs/bulletin-curator/design.md`` "Output schema"
+plus ``additionalProperties: false`` on every object — strict tool use
+requires it.
 
 ``output_schema(max_items)`` returns the schema with the
 ``items.maxItems`` cap set dynamically so callers can bound how many
@@ -20,6 +23,7 @@ from typing import Any
 # safety ceiling; output_schema() overrides it per call.
 _CURATION_SCHEMA: dict[str, Any] = {
     "type": "object",
+    "additionalProperties": False,
     "required": ["summary", "items"],
     "properties": {
         "summary": {
@@ -35,6 +39,7 @@ _CURATION_SCHEMA: dict[str, Any] = {
             "maxItems": 10,
             "items": {
                 "type": "object",
+                "additionalProperties": False,
                 "required": ["id", "title", "severity", "rationale", "sources"],
                 "properties": {
                     "id": {"type": "string"},
@@ -48,6 +53,7 @@ _CURATION_SCHEMA: dict[str, Any] = {
                     },
                     "suggested_action": {
                         "type": "object",
+                        "additionalProperties": False,
                         "required": ["kind"],
                         "properties": {
                             "kind": {"enum": ["ask", "open", "run", "dismiss"]},

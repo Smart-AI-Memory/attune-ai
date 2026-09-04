@@ -345,7 +345,7 @@ class TestProgressiveWorkflowModelSelection:
 
         assert cheap in ["gpt-4o-mini", "claude-haiku-4-5"]
         assert capable in ["claude-sonnet-5", "gpt-4o"]
-        assert premium in ["claude-fable-5", "o1"]
+        assert premium in ["claude-fable-5-1", "o1"]
 
 
 class TestEscalationEdgeCases:

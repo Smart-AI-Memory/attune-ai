@@ -96,7 +96,7 @@ Attune AI's progressive tier system is designed to minimize cost:
 
 - **Tier 1 (Haiku)**: $1 per 1M input tokens. Use for fast, simple tasks
 - **Tier 2 (Sonnet)**: $3 per 1M input tokens. Use when Haiku hits complexity limits
-- **Tier 3 (Claude Fable 5)**: $10 per 1M input tokens (2× the former Opus premium rate). Use only when Sonnet isn't smart enough
+- **Tier 3 (Claude Fable 5.1)**: $10 per 1M input tokens (2× the former Opus premium rate). Use only when Sonnet isn't smart enough
 
 A typical workflow starts with Haiku, and escalates only on demand. In practice, this cuts costs by up to 90% compared to always using the premium tier.
 

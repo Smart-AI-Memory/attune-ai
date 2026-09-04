@@ -43,14 +43,14 @@ _CONCEPTS: list[dict] = [
         "what": (
             "Tier routing automatically selects the right Claude model "
             "based on task complexity: CHEAP resolves to Haiku, CAPABLE "
-            "to Sonnet, and PREMIUM to Claude Fable 5 "
-            "(`claude-fable-5`). Simple tasks use cheap models; complex "
+            "to Sonnet, and PREMIUM to Claude Fable 5.1 "
+            "(`claude-fable-5-1`). Simple tasks use cheap models; complex "
             "tasks escalate to premium."
         ),
         "why": (
             "Reduces API costs without sacrificing quality — most "
             "workflow stages don't need the most expensive model. Note "
-            "the premium tier runs `claude-fable-5` at 2x the former "
+            "the premium tier runs `claude-fable-5-1` at 2x the former "
             "Opus pricing ($10 input / $50 output per MTok), so "
             "premium-tier stages cost twice what they did on Opus."
         ),

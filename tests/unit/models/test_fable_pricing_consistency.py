@@ -1,4 +1,4 @@
-"""Fable-5 premium pricing + baseline consistency (task 7).
+"""Fable 5.1 premium pricing + baseline consistency (task 7; retargeted 2026-09-03).
 
 Per-tier pricing has historically drifted across three sites that must
 change together (twice-earned lesson): (1) the model registry —
@@ -8,8 +8,11 @@ ModelInfo entries and TIER_PRICING, (2) the AnthropicProvider
 same numbers so a future premium-price change can't land partially.
 
 Also covers the 2026-07-10 BASELINE_MODEL amendment: cost_tracker's
-baseline moves to claude-fable-5 (log-time storage keeps history at
-opus math) and the report label derives from BASELINE_MODEL.
+baseline moves to the fable premium (log-time storage keeps history at
+opus math) and the report label derives from BASELINE_MODEL. Fable 5.1
+keeps Fable 5's $10/$50 but reads prompt cache at $0.25/MTok (0.025x
+input, not the 0.1x every other model derives) — pinned below; the
+still-served claude-fable-5 stays priced by id.
 
 Mock-only — no live API calls.
 """
@@ -24,9 +27,11 @@ from attune.models.registry import (
     ModelRegistry,
 )
 
-FABLE = "claude-fable-5"
+FABLE = "claude-fable-5-1"
+FABLE_PREDECESSOR = "claude-fable-5"
 FABLE_INPUT = 10.00
 FABLE_OUTPUT = 50.00
+FABLE_CACHE_READ = 0.25
 
 
 class TestRegistryEntry:
@@ -54,19 +59,28 @@ class TestRegistryEntry:
         assert "claude-opus-4-8" in ADDITIONAL_MODELS
 
     def test_opus_not_tier_routed(self):
-        """Tier lookups see exactly one premium model: fable."""
+        """Tier lookups see exactly one premium model: fable 5.1."""
         registry = ModelRegistry()
         premium_models = registry.get_models_by_tier("premium")
         assert [m.id for m in premium_models] == [FABLE]
+
+    def test_fable_5_stays_resolvable_by_id(self):
+        """Fable 5 is still served (pins + pre-5.1 records) but not tier-routed."""
+        registry = ModelRegistry()
+        fable_5 = registry.get_model_by_id(FABLE_PREDECESSOR)
+        assert fable_5 is not None
+        assert fable_5.input_cost_per_million == FABLE_INPUT
+        assert fable_5.output_cost_per_million == FABLE_OUTPUT
+        assert FABLE_PREDECESSOR in ADDITIONAL_MODELS
 
 
 class TestProviderTable:
     """Site 2: AnthropicProvider.get_model_info pricing table."""
 
-    def _provider(self):
+    def _provider(self, model: str = FABLE):
         from attune.llm.providers import AnthropicProvider
 
-        return AnthropicProvider(api_key="test-key", model=FABLE)
+        return AnthropicProvider(api_key="test-key", model=model)
 
     def test_fable_row_matches_registry(self):
         info = self._provider().get_model_info()
@@ -75,8 +89,22 @@ class TestProviderTable:
         assert info["cost_per_1m_output"] == premium.output_cost_per_million
 
     def test_cache_pricing_derivation(self):
-        """Cache write $12.50 / read $1.00 per MTok (1.25x / 0.1x input)."""
+        """Fable 5.1: cache write $12.50 (1.25x input) / read $0.25 per MTok (explicit)."""
         cost = self._provider().calculate_actual_cost(
+            input_tokens=0,
+            output_tokens=0,
+            cache_creation_tokens=1_000_000,
+            cache_read_tokens=1_000_000,
+        )
+        assert cost["cache_write_cost"] == 12.50
+        assert cost["cache_read_cost"] == FABLE_CACHE_READ
+        # Savings are measured against full input price, so the cheaper
+        # read shows up as a bigger saving — not a silent no-op.
+        assert cost["savings"] == FABLE_INPUT - FABLE_CACHE_READ
+
+    def test_predecessor_keeps_standard_cache_read_derivation(self):
+        """Fable 5 (and every row without an explicit rate) still derives 0.1x."""
+        cost = self._provider(FABLE_PREDECESSOR).calculate_actual_cost(
             input_tokens=0,
             output_tokens=0,
             cache_creation_tokens=1_000_000,
@@ -176,8 +204,9 @@ class TestCostTrackerBaseline:
         assert "Baseline (Fable):" in report
         assert "Baseline (Opus)" not in report
 
-    def test_model_pricing_has_both_fable_and_opus(self):
+    def test_model_pricing_has_both_fable_generations_and_opus(self):
         from attune.cost_tracker import MODEL_PRICING
 
         assert MODEL_PRICING[FABLE] == {"input": FABLE_INPUT, "output": FABLE_OUTPUT}
+        assert MODEL_PRICING[FABLE_PREDECESSOR] == {"input": FABLE_INPUT, "output": FABLE_OUTPUT}
         assert MODEL_PRICING["claude-opus-4-8"] == {"input": 5.00, "output": 25.00}

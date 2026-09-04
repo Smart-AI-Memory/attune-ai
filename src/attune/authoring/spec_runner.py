@@ -136,7 +136,7 @@ class SpecDraftRunner:
         self,
         client: Any,
         *,
-        model: str = "claude-fable-5",
+        model: str = "claude-fable-5-1",
         budgets: Budgets | None = None,
         on_progress: Callable[[str, float], None] | None = None,
     ) -> None:

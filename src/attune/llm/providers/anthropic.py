@@ -463,18 +463,31 @@ class AnthropicProvider(BaseLLMProvider):
     def get_model_info(self) -> dict[str, Any]:
         """Get Claude model information with extended context capabilities."""
         model_info = {
-            "claude-fable-5": {
-                # 1M-token context window; cache write $12.50 / read $1
-                # per MTok fall out of the 1.25x / 0.1x input derivation
-                # in calculate_actual_cost.
+            "claude-fable-5-1": {
+                # 1M-token context window; cache write $12.50/MTok falls
+                # out of the 1.25x input derivation in
+                # calculate_actual_cost, but cache READS are $0.25/MTok
+                # (0.025x input — a quarter of the 0.1x other models
+                # derive), so the read price is carried explicitly.
                 "max_tokens": 1000000,
                 "cost_per_1m_input": 10.00,
                 "cost_per_1m_output": 50.00,
+                "cost_per_1m_cache_read": 0.25,
                 "supports_prompt_caching": True,
                 # Adaptive reasoning — explicit thinking config is
                 # stripped by _normalize_api_kwargs_for_model.
                 "supports_thinking": True,
                 "ideal_for": "Frontier reasoning, premium interactive work",
+            },
+            "claude-fable-5": {
+                # Predecessor, still served; same $10/$50 with the
+                # standard 0.1x cache-read derivation ($1/MTok).
+                "max_tokens": 1000000,
+                "cost_per_1m_input": 10.00,
+                "cost_per_1m_output": 50.00,
+                "supports_prompt_caching": True,
+                "supports_thinking": True,
+                "ideal_for": "Frontier reasoning (pre-5.1 pins)",
             },
             "claude-opus-4-8": {
                 "max_tokens": 200000,
@@ -546,7 +559,9 @@ class AnthropicProvider(BaseLLMProvider):
 
         Includes Anthropic prompt caching cost adjustments:
         - Cache writes: 25% markup over standard input pricing
-        - Cache reads: 90% discount from standard input pricing
+        - Cache reads: 90% discount from standard input pricing, unless
+          the model's ``get_model_info`` row carries an explicit
+          ``cost_per_1m_cache_read`` (Fable 5.1 reads at $0.25/MTok)
 
         Args:
             input_tokens: Regular input tokens (not cached)
@@ -586,8 +601,9 @@ class AnthropicProvider(BaseLLMProvider):
         cache_write_price = input_price_per_million * 1.25
         cache_write_cost = (cache_creation_tokens / 1_000_000) * cache_write_price
 
-        # Cache read cost (90% discount = 10% of input price)
-        cache_read_price = input_price_per_million * 0.1
+        # Cache read cost: 10% of input price unless the model row
+        # carries its own rate (Fable 5.1: $0.25/MTok = 2.5%).
+        cache_read_price = model_info.get("cost_per_1m_cache_read", input_price_per_million * 0.1)
         cache_read_cost = (cache_read_tokens / 1_000_000) * cache_read_price
 
         # Calculate savings from cache reads

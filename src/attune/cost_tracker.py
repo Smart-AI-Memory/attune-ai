@@ -74,9 +74,11 @@ MODEL_PRICING = _build_model_pricing()
 # Moved opus-4-8 -> fable-5 (2026-07-10 amendment, docs/specs/
 # fable-premium-tier design §3): with fable premium at 2x opus pricing,
 # an opus baseline reports negative savings on every deliberate premium
-# call. Safe for history: baseline_cost is computed at log time and
-# stored per record (see log_request), so old records keep opus math.
-BASELINE_MODEL = "claude-fable-5"
+# call. Moved fable-5 -> fable-5-1 (2026-09-03, same $10/$50 — the
+# baseline math is unchanged). Safe for history: baseline_cost is
+# computed at log time and stored per record (see log_request), so old
+# records keep the math of their day.
+BASELINE_MODEL = "claude-fable-5-1"
 
 
 def _baseline_label() -> str:

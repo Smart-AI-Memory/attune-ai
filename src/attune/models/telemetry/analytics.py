@@ -186,7 +186,7 @@ class TelemetryAnalytics:
         Tracks:
         - How often Sonnet succeeds vs needs a premium fallback
         - Cost savings vs always using the premium model (the baseline
-          is priced from the registry premium entry — fable-5 — so this
+          is priced from the registry premium entry — fable-5-1 — so this
           site cannot drift from the canonical pricing)
         - Return keys keep the legacy ``opus`` naming — they are a
           stable API consumed by the telemetry CLI and dashboards
@@ -207,7 +207,13 @@ class TelemetryAnalytics:
             for c in calls
             if c.provider == "anthropic"
             and c.model_id
-            in ["claude-sonnet-5", "claude-opus-4-6", "claude-opus-4-8", "claude-fable-5"]
+            in [
+                "claude-sonnet-5",
+                "claude-opus-4-6",
+                "claude-opus-4-8",
+                "claude-fable-5",
+                "claude-fable-5-1",
+            ]
         ]
 
         if not anthropic_calls:
@@ -234,7 +240,8 @@ class TelemetryAnalytics:
         opus_fallbacks = sum(
             1
             for c in anthropic_calls
-            if c.model_id in ("claude-opus-4-6", "claude-opus-4-8", "claude-fable-5")
+            if c.model_id
+            in ("claude-opus-4-6", "claude-opus-4-8", "claude-fable-5", "claude-fable-5-1")
             and c.fallback_used
         )
 
@@ -242,7 +249,7 @@ class TelemetryAnalytics:
         actual_cost = sum(c.estimated_cost for c in anthropic_calls)
 
         # Baseline: what it would cost if everything used the premium
-        # model. Priced from the registry premium entry (fable-5) so the
+        # model. Priced from the registry premium entry (fable-5-1) so the
         # baseline can't drift from the canonical pricing sites.
         from ..registry import MODEL_REGISTRY
 

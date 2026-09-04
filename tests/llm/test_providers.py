@@ -621,7 +621,12 @@ class TestSamplingParamNormalization:
         """Live 400 on claude-sonnet-5 (integration-auth, 2026-07-06)."""
         from attune.llm.providers.anthropic import _normalize_api_kwargs_for_model
 
-        for model in ("claude-sonnet-5", "claude-fable-5", "claude-sonnet-5-20260301"):
+        for model in (
+            "claude-sonnet-5",
+            "claude-fable-5",
+            "claude-fable-5-1",
+            "claude-sonnet-5-20260301",
+        ):
             kw = {"model": model, "temperature": 0.7, "top_p": 0.9}
             _normalize_api_kwargs_for_model(kw)
             assert "temperature" not in kw and "top_p" not in kw, model

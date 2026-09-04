@@ -41,7 +41,7 @@ Not feeling ready to configure? Try [Wizards](/wizards/) instead—they're inter
 
 ### Cost Optimization: Up to 90% Savings
 
-All Attune workflows use **progressive tier escalation**. They start with Haiku (cheap, fast), perform the analysis, then only escalate to Sonnet or Claude Fable 5 (the premium tier, priced at 2× the former Opus rate) when deeper thinking is truly needed. Result: enterprise-grade analysis at a fraction of the cost — and the pricier the premium tier gets, the more that discipline matters.
+All Attune workflows use **progressive tier escalation**. They start with Haiku (cheap, fast), perform the analysis, then only escalate to Sonnet or Claude Fable 5.1 (the premium tier, priced at 2× the former Opus rate) when deeper thinking is truly needed. Result: enterprise-grade analysis at a fraction of the cost — and the pricier the premium tier gets, the more that discipline matters.
 
 All workflows are completely free and open source under Apache 2.0. Self-host them or run with your own API keys.
 

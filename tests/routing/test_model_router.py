@@ -89,7 +89,7 @@ class TestModelRouter:
     def test_route_premium_task(self, router):
         """Test routing premium task to premium model."""
         model = router.route("coordinate")
-        assert model == "claude-fable-5"  # Fable 5 (premium tier)
+        assert model == "claude-fable-5-1"  # Fable 5.1 (premium tier)
 
     # test_route_with_openai_provider deleted - OpenAI removed in v5.0.0 (Anthropic-only)
     # test_route_with_ollama_provider deleted - Ollama removed in v5.0.0 (Anthropic-only)
@@ -152,7 +152,7 @@ class TestModelRouter:
         assert tier == ModelTier.PREMIUM
 
         model = router.route("my_special_task")
-        assert model == "claude-fable-5"  # Fable 5 (premium tier)
+        assert model == "claude-fable-5-1"  # Fable 5.1 (premium tier)
 
     def test_add_task_routing(self, router):
         """Test adding custom routing dynamically."""
