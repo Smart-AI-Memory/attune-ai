@@ -168,6 +168,39 @@ def test_zsh_word_split_fires_on_braced_var(jit_mod, monkeypatch, capsys):
     assert "word-split" in out
 
 
+def test_zsh_word_split_args_fires_on_set_dashdash(jit_mod, monkeypatch, capsys):
+    # The 2026-09-04 shape: `set -- $pair` handed "branch 2373" to $1.
+    rc, out = _run(
+        jit_mod,
+        monkeypatch,
+        capsys,
+        _bash_payload('for pair in "a 1" "b 2"; do set -- $pair; echo $1; done'),
+    )
+    assert rc == 0
+    assert "WHOLE string $1" in out
+
+
+def test_zsh_word_split_args_fires_on_files_flag(jit_mod, monkeypatch, capsys):
+    rc, out = _run(jit_mod, monkeypatch, capsys, _bash_payload("pre-commit run black --files $F"))
+    assert rc == 0
+    assert "mangled path" in out
+
+
+def test_zsh_word_split_args_silent_on_quoted_and_arrays(jit_mod, monkeypatch, capsys):
+    # Quoted scalar, array expansion, literal words, and ${=var} are fine.
+    rc, out = _run(
+        jit_mod,
+        monkeypatch,
+        capsys,
+        _bash_payload(
+            'set -- "$pair"; pre-commit run black --files "${F[@]}"; '
+            "set -- a b c; set -- ${=pair}; grep --files-with-matches x"
+        ),
+    )
+    assert rc == 0
+    assert "WHOLE string $1" not in out and "mangled path" not in out
+
+
 def test_zsh_word_split_silent_on_safe_shapes(jit_mod, monkeypatch, capsys):
     # Command substitution DOES split in zsh; explicit word lists and
     # array expansions are fine — none of these may trip the rule.
