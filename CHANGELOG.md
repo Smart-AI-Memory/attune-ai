@@ -9,8 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **`attune.model_tiers` re-exports `attune_rag.model_tiers`** instead of
-  carrying a byte-for-byte mirror; the drift guard
+- **`attune.model_tiers` re-exports `attune_rag.model_tiers`** (lazily, via
+  call-time wrappers + PEP 562 `__getattr__`, so `import attune.config`
+  still loads without attune-rag's package init) instead of carrying a
+  byte-for-byte mirror; the drift guard
   (`tests/unit/test_model_tiers_drift.py`) and its dedicated CI install
   step are removed. The mirror's premise — "attune-ai does not depend on
   attune-rag, the plugin installs standalone" — has been false since

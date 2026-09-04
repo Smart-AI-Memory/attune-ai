@@ -29,8 +29,10 @@ independent call sites. The design therefore has two halves:
 > attune-rag" premise below was already false at approval: attune-rag
 > has been a core dependency since 2026-04-30 (`c2ab06e40`). The mirror,
 > drift test, and CI install step are retired; `attune.model_tiers` is
-> now a re-export of `attune_rag.model_tiers` with a `>=1.2.0` floor.
-> The rest of §1 is kept as the historical design.
+> now a *lazy* re-export of `attune_rag.model_tiers` with a `>=1.2.0`
+> floor. The one premise that held up: `attune.config` must import
+> without attune-rag's package init (optional-dep fallback test), which
+> the lazy shim preserves. The rest of §1 is kept as the historical design.
 
 Byte-for-byte mirror of the canonical `attune_rag/model_tiers.py`
 resolution contract (same as `attune_author/model_tiers.py`):
