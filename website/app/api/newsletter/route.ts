@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendNewsletterConfirmation } from '@/lib/email/sendgrid';
+import { sendNewsletterConfirmation } from '@/lib/email';
 import { subscribeToMailchimp } from '@/lib/email/mailchimp';
 import { createSubscriber, updateSubscriberMailchimpId } from '@/lib/db';
 

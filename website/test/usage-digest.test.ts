@@ -6,7 +6,7 @@ vi.mock('@/lib/usage/digest', async () => {
   const actual = await vi.importActual<typeof import('@/lib/usage/digest')>('@/lib/usage/digest');
   return { ...actual, collectUsageDigest: vi.fn() };
 });
-vi.mock('@/lib/email/sendgrid', () => ({ sendEmail: vi.fn(async () => true) }));
+vi.mock('@/lib/email', () => ({ sendEmail: vi.fn(async () => true) }));
 
 import {
   collectUsageDigest,
@@ -15,7 +15,7 @@ import {
   prettyWorkflow,
   type UsageDigest,
 } from '@/lib/usage/digest';
-import { sendEmail } from '@/lib/email/sendgrid';
+import { sendEmail } from '@/lib/email';
 import { GET, POST, isAuthorized } from '@/app/api/cron/usage-digest/route';
 import { NextRequest } from 'next/server';
 

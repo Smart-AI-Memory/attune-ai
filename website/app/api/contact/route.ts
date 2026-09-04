@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sendContactFormEmail } from '@/lib/email/sendgrid';
+import { sendContactFormEmail } from '@/lib/email';
 import { createContact } from '@/lib/db';
 
 export async function POST(request: NextRequest) {

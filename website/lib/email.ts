@@ -1,4 +1,4 @@
-import { Resend } from 'resend';
+import { Resend, type CreateEmailOptions } from 'resend';
 
 // Lazy initialization
 let resend: Resend | null = null;
@@ -20,6 +20,145 @@ interface EmailResult {
   success: boolean;
   id?: string;
   error?: string;
+}
+
+export interface EmailOptions {
+  to: string | string[];
+  from?: string;
+  subject: string;
+  text?: string;
+  html?: string;
+  replyTo?: string;
+}
+
+/**
+ * Send one email through Resend. Fails closed and never throws: no
+ * API key, no body, or an API-level error all return `false` (and log),
+ * so callers can treat the boolean as "delivered to Resend".
+ *
+ * Resend reports API failures through `error` on the result rather than
+ * by throwing — check it, or a rejected send reads as success.
+ */
+export async function sendEmail(options: EmailOptions): Promise<boolean> {
+  if (!process.env.RESEND_API_KEY) {
+    console.error('RESEND_API_KEY is not set in environment variables');
+    return false;
+  }
+  if (!options.text && !options.html) {
+    console.error('Either text or html content must be provided');
+    return false;
+  }
+
+  const base = {
+    from: options.from || FROM_EMAIL,
+    to: options.to,
+    subject: options.subject,
+    ...(options.replyTo ? { replyTo: options.replyTo } : {}),
+  };
+  // Resend's CreateEmailOptions is a union that needs a definite `html`
+  // or `text`; pick the branch explicitly so the type is exact.
+  const payload: CreateEmailOptions = options.html
+    ? { ...base, html: options.html, ...(options.text ? { text: options.text } : {}) }
+    : { ...base, text: options.text as string };
+
+  try {
+    const { data, error } = await getResend().emails.send(payload);
+    if (error) {
+      console.error('Resend error:', error);
+      return false;
+    }
+    console.log('Email sent via Resend:', { to: options.to, subject: options.subject, id: data?.id });
+    return true;
+  } catch (error) {
+    console.error('Resend error:', error);
+    return false;
+  }
+}
+
+export async function sendContactFormEmail(data: {
+  name: string;
+  email: string;
+  company?: string;
+  topic: string;
+  message: string;
+}): Promise<boolean> {
+  const { name, email, company, topic, message } = data;
+
+  const html = `
+    <h2>New Contact Form Submission</h2>
+    <p><strong>Name:</strong> ${name}</p>
+    <p><strong>Email:</strong> ${email}</p>
+    <p><strong>Company:</strong> ${company || 'Not provided'}</p>
+    <p><strong>Topic:</strong> ${topic}</p>
+    <p><strong>Message:</strong></p>
+    <p>${message.replace(/\n/g, '<br>')}</p>
+    <hr>
+    <p><small>Sent from smartaimemory.com contact form</small></p>
+  `;
+
+  const text = `
+New Contact Form Submission
+
+Name: ${name}
+Email: ${email}
+Company: ${company || 'Not provided'}
+Topic: ${topic}
+
+Message:
+${message}
+
+---
+Sent from smartaimemory.com contact form
+  `;
+
+  return sendEmail({
+    to: process.env.CONTACT_EMAIL || 'patrick.roebuck@smartaimemory.com',
+    subject: `[Smart AI Memory] Contact: ${topic} - ${name}`,
+    text,
+    html,
+    replyTo: email,
+  });
+}
+
+export async function sendNewsletterConfirmation(email: string): Promise<boolean> {
+  const html = `
+    <h2>Welcome to Smart AI Memory Newsletter!</h2>
+    <p>Thank you for subscribing to our newsletter.</p>
+    <p>You'll receive updates about:</p>
+    <ul>
+      <li>New Attune AI releases and features</li>
+      <li>AI development insights and best practices</li>
+      <li>Community highlights and use cases</li>
+      <li>Exclusive content and early access</li>
+    </ul>
+    <p>You can unsubscribe at any time by clicking the link at the bottom of our emails.</p>
+    <hr>
+    <p><small>Smart AI Memory - Building the Future of AI-Human Collaboration</small></p>
+  `;
+
+  const text = `
+Welcome to Smart AI Memory Newsletter!
+
+Thank you for subscribing to our newsletter.
+
+You'll receive updates about:
+- New Attune AI releases and features
+- AI development insights and best practices
+- Community highlights and use cases
+- Exclusive content and early access
+
+You can unsubscribe at any time by clicking the link at the bottom of our emails.
+
+---
+Smart AI Memory - Building the Future of AI-Human Collaboration
+  `;
+
+  return sendEmail({
+    to: email,
+    subject: 'Welcome to Smart AI Memory Newsletter',
+    text,
+    html,
+  });
 }
 
 // Send purchase confirmation with license key
@@ -107,6 +246,10 @@ export async function sendLicenseEmail(data: {
       `,
     });
 
+    if (result.error) {
+      console.error('Failed to send license email:', result.error);
+      return { success: false, error: result.error.message };
+    }
     return { success: true, id: result.data?.id };
   } catch (error) {
     console.error('Failed to send license email:', error);
@@ -194,6 +337,10 @@ export async function sendBookEmail(data: {
       `,
     });
 
+    if (result.error) {
+      console.error('Failed to send book email:', result.error);
+      return { success: false, error: result.error.message };
+    }
     return { success: true, id: result.data?.id };
   } catch (error) {
     console.error('Failed to send book email:', error);
@@ -269,6 +416,10 @@ export async function sendContributionEmail(data: {
       `,
     });
 
+    if (result.error) {
+      console.error('Failed to send contribution email:', result.error);
+      return { success: false, error: result.error.message };
+    }
     return { success: true, id: result.data?.id };
   } catch (error) {
     console.error('Failed to send contribution email:', error);

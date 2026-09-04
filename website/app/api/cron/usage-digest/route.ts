@@ -22,7 +22,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { collectUsageDigest, renderUsageDigest } from '@/lib/usage/digest';
-import { sendEmail } from '@/lib/email/sendgrid';
+import { sendEmail } from '@/lib/email';
 
 // pg requires the Node.js runtime; a cron result must never be cached.
 export const runtime = 'nodejs';
