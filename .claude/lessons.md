@@ -26448,3 +26448,682 @@ launched in parallel.
   killed watcher as `failed ... exit code 144`, which is the SIGTERM
   landing, not a new problem. Cheap to prevent, invisible until someone
   looks: these two had been running 13h and 7h with zero symptoms.
+
+- **A module's consumers include text-parsers, not just importers — and a
+generator that silently skips a missing source converts deletion into
+silent content loss**: 2026-08-26, deleting `src/attune/discovery.py`
+(zero importers by caller grep). `scripts/generate_tip_templates.py`
+never imported it — it REGEX-PARSED the module's source to extract
+`DISCOVERY_TIPS` and build 8 shipped help pages, guarded by
+`if discovery_path.exists():`. Deleting the module would have passed
+every import-based receipt, and the next help regen would have quietly
+dropped the 8 pages (no error — the exists-guard made absence look like
+"nothing to do"). **Rule: before deleting a module, grep for its PATH
+and BASENAME across scripts/, not just its import forms** —
+`grep -rn 'attune/discovery\.py\|discovery\.py' scripts/` found the
+consumer instantly. Fix pattern: move the data INTO its only consumer
+(the tip catalog became a literal table in the generator, deleting
+~100 lines of regex parsing — net simpler), regenerate, and verify the
+receipt is "diff shows only the provenance line changed." The
+exists-guard style (`if path.exists(): parse(path)`) is the tell to
+search for: it is a deletion trap by construction, because it
+guarantees the pipeline degrades silently instead of failing loudly
+when the source vanishes.
+
+- **`scripts/generate_all.py` is an all-or-nothing regen: it emits
+thousands of NEW untracked pages and re-stamps every manifest entry,
+so scope-limited work must use the per-type generator plus surgical
+manifest edits — and cleanup needs `git clean`, not `git checkout`**:
+2026-08-26, migrating the 8 discovery tips (PR #2331). Needing only
+`source_manifest.json` refreshed, I ran `generate_all.py`: it churned
+42 tracked files (+59k lines, mostly `cross_links.json` and drifted
+comparison pages) AND created 2,701 NEW untracked pages under
+`plugin/help/generated/` (lesson-derived errors/warnings that had never
+been committed). Two traps: (1) `git checkout -- plugin/help/generated/`
+reverts only TRACKED modifications — the 2,701 untracked files survived
+silently and surfaced later as a 2,701-line `git status`; the recovery
+is `git clean -f plugin/help/generated/` AFTER verifying every
+untracked entry is inside that dir (`git status --short | grep -v '^??
+plugin/help/generated/'` must be empty). (2) `_build_source_manifest`
+stamps `generated_at: now` on EVERY entry, so any full manifest rebuild
+is a whole-file diff regardless of what changed — for a scoped change,
+edit the affected entries directly (set `source`, recompute the
+sha256 `hash` of the new source file, stamp `generated_at` for those
+entries only), which produced an 8-entry diff instead. The drift also
+means `generate_all --check` is NOT CI-enforced (main would be red
+otherwise) — do not assume the generated tree is in sync with sources
+before starting.
+
+- **A module you deleted in a worktree still IMPORTS successfully there —
+the editable finder resurrects `attune.*` submodules from the MAIN
+checkout, so an import-based "stays removed" guard is
+environment-dependent; pin file absence instead**: 2026-08-27,
+hardening the 16.0.0 removal guard (PR #2333, from a cross-review
+finding). With `PYTHONPATH=<worktree>/src`, `import attune` correctly
+loads the worktree package and `attune.__path__` lists ONLY the
+worktree dir — yet `importlib.import_module("attune.state_manager")`
+succeeded and returned `/Users/.../attune-ai/src/attune/
+state_manager.py` (MAIN's copy, where the file still exists). Chain:
+PathFinder misses the submodule in `attune.__path__` (file deleted) →
+the setuptools `__editable__` meta-path finder, later in
+`sys.meta_path`, serves it from its MAPPING to main's src. So
+`pytest.raises(ModuleNotFoundError)` guards for removed modules PASS
+in CI (real install, no main checkout) but FAIL in every worktree —
+or worse, a test that a module imports can pass against code the
+branch deleted. **Fix pattern:** assert on the package's own
+directory, which is environment-proof:
+`not (Path(attune.__file__).parent / "state_manager.py").exists()`.
+Extends the worktree-MAPPING lesson family with the DELETION surface
+(prior entries covered stale-code execution and write-side paths):
+the MAPPING doesn't just run stale code, it un-deletes modules — any
+worktree test run after a module removal exercises a tree that no
+longer matches the branch for those import paths.
+
+- **Piping a gate script through `tail -N` converts its failure into a
+"clean" receipt — the pipe replaces the exit code AND the truncation
+hides the findings block, so the `&&` chain continues and you REPORT
+the gate as passed**: 2026-08-27, PR #2333. Local pre-push receipt was
+`audit_doc_imports.py | tail -4 && check_markers && pytest`. The audit
+had found 2 unresolved imports (docs citing the just-deleted
+`WorkflowConfig` alias) and exited 1 — but a pipeline's status is the
+LAST command's (`tail` → 0), so `&&` proceeded, and `tail -4` showed
+only the trailing annotated-skip lines, which read exactly like the
+previous clean run. "Audit clean" was then reported as a verified
+receipt; CI's doc-import-audit job failed on the same content minutes
+later. Two rules: (1) **never pipe a pass/fail script inside an `&&`
+chain** — run it bare and read `$?` directly, or use
+`set -o pipefail`; capture full output to a file
+(`script > /tmp/x.out 2>&1; echo exit=$?`) and grep the file, rather
+than truncating the live stream; (2) **a truncated tail that "looks
+like last time's clean output" is not a receipt** — clean and failing
+runs of this audit share their last lines (the skip list), so the
+only distinguishing evidence (the findings block + exit code) was
+exactly what the pipeline discarded. Same family as "reach_snapshot
+exits 0 on rate-limit" (exit codes that don't mean pass) — inverted:
+here the exit code MEANT fail and the shell plumbing erased it.
+
+- **"Pre-flight the pinned tools" means the FULL `pre-commit run
+--files <touched>`, not black alone — ruff's unused-import check and
+the content ratchets (empathy allowlist, brand drift) fire only at
+commit time and skip the commit silently when they auto-fix or
+fail**: 2026-08-27, three retry cycles in one release arc. Each time,
+`pre-commit run black --files ...` passed pre-flight, `git add` +
+`git commit` ran — and HEAD did not move: tranche 2 hit ruff F401 (an
+import whose only users were deleted in the same diff) and then the
+empathy-allowlist ratchet (deleted files must leave the allowlist in
+the same commit); package C hit the ratchet again for files whose
+last legacy mention the diff removed. The tell is always the same:
+`git log --oneline -1` unchanged + `git status` still dirty after a
+"successful-looking" commit (the known skip-with-exit-0 class). The
+fix is one habit change: pre-flight with
+`uv run --with pre-commit pre-commit run --files <every touched
+file>` — the WHOLE suite — so ruff and the ratchets report BEFORE the
+commit attempt, and deletions prompt their allowlist/baseline edits
+in the same pass. Black-only pre-flight is a false receipt: it proves
+formatting, which was never the hook that skips commits in this repo.
+
+- **A spec `**Status:**` line must LEAD with a `STATUS_VOCABULARY`
+token — a descriptive opener ("destructive half shipped...") reds the
+ENTIRE CI matrix, because the status-line gate sweeps `docs/specs/`
+inside every test lane**: 2026-08-27, the 16.0.0 release PR. Updating
+`release-16-manifest/requirements.md` I wrote
+`**Status:** destructive half SHIPPED as 16.0.0 (...)` — natural
+prose, but `tests/unit/gates/test_status_line_gate.py` parses the
+FIRST token against
+`attune.ops.spec_lifecycle.STATUS_VOCABULARY` (`active approved
+complete completed done draft living parked paused shipped
+superseded`) and one failing parametrized case turned up as 19 red
+checks (all OS/Python lanes + coverage + clock-tz — every lane runs
+the same sweep). The fix is the documented shape:
+`**Status:** <token> (<date>) — <free annotation>` — the prose goes
+AFTER the em-dash (`active (2026-08-27) — destructive half shipped
+as 16.0.0 ...`). Two riders: (1) a "docs-only" release-prep diff is
+NOT gate-exempt — spec files are swept by unit lanes, so run at least
+`pytest tests/unit/gates/test_status_line_gate.py` (or the full
+tree) before pushing any status edit; (2) when the WHOLE matrix reds
+identically on a docs-ish diff, suspect a corpus-sweeping gate before
+suspecting the code — one shared cause, findable from any single
+lane's log tail. (3) Probe locally before committing any status
+edit — `from attune.gates.lifecycle import status_line_gate;
+status_line_gate(Path("docs/specs/<slug>"))` names the exact failure
+("leading status token 'authored' not in vocabulary", 2026-09-03,
+host-surface-parity tasks.md) — the token is a machine field for the
+lifecycle detector and the annotation is where prose nuance goes;
+`parked` additionally requires a `Resume-Trigger:` clause in the same
+file. (Merged from a second, same-subject outbox lesson at the
+2026-09-04 sweep.)
+
+- **backend/ has TWO import contexts and only one is tested by default — the deployed launch is `cd backend && uvicorn main:app` (railway.toml/nixpacks.toml), so repo-root-style `from backend.services...` imports inside backend/ code fail AT BOOT in production while every repo-root test passes**: found 2026-08-27 fixing the bearer-verification hole (PR #2341). Three modules (api/auth.py, services/auth_service.py, services/database/__init__.py) used `from backend....` imports that resolve under pytest (repo root on sys.path, backend a namespace package) but not under the deployed cwd=backend launch — and main.py additionally referenced `wizards.router` when wizards.py defines a standalone `app`, so the deployed backend could not import AT ALL and no test noticed. **Receipt that catches the whole class in one line: `cd backend && JWT_SECRET_KEY=<32chars> python -c "import main"` — run it whenever touching backend/ imports or main.py.** Fix pattern: relative imports (`from .database import ...`) resolve under BOTH package identities (`services.X` deployed, `backend.services.X` in tests); repo-root-style absolute imports are wrong by construction inside backend/. Mixed import styles across sibling modules are the tell that nobody has booted the app recently.
+
+- **Module-level `sys.modules.setdefault(name, MagicMock())` in ONE test file poisons every later import of that module name in the same xdist worker — a mocked auth service then verifies forged tokens successfully, turning real security tests vacuous test-order-dependently**: found 2026-08-27 wiring bearer verification (PR #2341). tests/unit/api/test_analysis_behavioral.py stubbed `services` / `services.empathy_service` at module level to load backend/api/analysis.py cheaply; once backend/api/auth.py also began importing `from services.auth_service ...`, any same-worker test importing the real routers AFTER the behavioral file would have received MagicMocks — `get_auth_service().verify_token(forged)` returns a MagicMock instead of raising, so the forged-bearer 401 tests would pass vacuously or the import would fail, depending on collection order. **Rule: never leave MagicMock entries in sys.modules at module scope. Save the affected keys, install stubs, load, then restore in a `finally`** (the loaded module object keeps its references; later imports get the real modules). To load a module with relative imports without executing its package __init__, stub a `types.ModuleType` parent with the real `__path__` and `importlib.import_module("pkg.mod")` — spec_from_file_location without a package context breaks on the first relative import. Same family as the "mock-stubbed transport swap makes emptiness tests vacuous" lesson: the poison is invisible while tests pass, so probe by running the stubbing file FIRST then the real-import file in one serial process.
+
+- **Adding a `Depends`/import that reaches the `backend/` FastAPI app,
+or editing pyproject deps, surfaces TWO CI-only failures that a local
+run cannot show — because the local venv already has the deps and the
+lockfile is already synced.** Both hit in one session (PR #2342,
+2026-08-27, the 17-endpoint bearer-verification fix); both passed
+locally and went red on every CI pytest lane.
+
+  **(1) pydantic `EmailStr` needs `email_validator` at IMPORT time, and
+the CI test env installs only `attune-ai[dev]` — never
+`backend/requirements.txt`.** `backend/api/{auth,users,subscriptions}.py`
+define models with `email: EmailStr`. In this pydantic version, EmailStr's
+schema is built at CLASS-DEFINITION (import) time, not validation time, and
+that build does `import email_validator`. So the moment a test imports one
+of those modules — or triggers `backend/api/__init__.py`, which eager-imports
+all routers — collection dies with `ModuleNotFoundError: email_validator`.
+It passes locally only because the dev's venv happens to have it (it IS a
+declared backend dep). The tell in the CI log is an `ERROR collecting`
+traceback rooted at `class LoginRequest(BaseModel)` →
+`complete_model_class` → `import_email_validator`. Fix: add the backend's
+import-time deps (email-validator; bcrypt/fastapi/jwt were already present)
+to the `[dev]` extra so the CI test env can import the modules under test.
+Generalizes: any test that imports a `backend/api` module inherits the
+backend's full import-time dep set, and `backend/requirements.txt` is NOT
+installed by CI — mirror the needed pins into `[dev]`.
+
+Corollary — `backend/api/__init__.py` eager-imports every router
+(`from . import analysis, auth, subscriptions, users, wizards`), so
+importing ANY one submodule (even via `from api.dependencies import x`
+inside a router) drags in the heaviest one. A previously-green test that
+spec-loaded only the light module (`analysis.py`, no EmailStr) broke the
+moment that module gained a `from api.dependencies import ...` line,
+because it now triggers the package `__init__` → `auth` → EmailStr.
+
+  **(2) Any `pyproject.toml` dependency edit must be paired with
+`uv lock` in the SAME PR, or the `check-docs-freshness` pre-commit hook
+fails.** That hook's entry is `uv run python scripts/check_docs_freshness.py`.
+The SCRIPT exits 0 (it only warns "N help templates may be stale"), but
+`uv run` first re-syncs `uv.lock` against the changed `pyproject.toml`,
+modifying the tracked lockfile mid-hook — and pre-commit fails ANY hook
+that modifies a file ("files were modified by this hook"). The misleading
+part: the failing hook is named "Check Help Template Freshness", pointing
+you at docs when the real cause is a stale lockfile from a dep add. Fix:
+`uv lock` and commit the result (adds the new dep + its transitive deps
+only). Diagnostic: run the hook's entry locally and `git status` — if the
+only modified file is `uv.lock`, it's a dep/lock sync, not a docs problem.
+
+Both are instances of the standing "green locally, red in CI" class: the
+divergence is the CI env (deps installed, lockfile freshness), invisible
+to a local run whose env already satisfies both.
+
+- **`worktree_path_guard.py` blocks Write/Edit to any worktree other
+  than the session's own — so a session cannot spin up a SECOND worktree
+  to do a separate PR, and cannot self-reap the worktree it is running
+  in. Plan the "separate PR + reap" flow around this.** 2026-08-27, after
+  merging PR #2342 from the `laughing-joliot` worktree and being asked to
+  (a) open a separate small PR fixing an unrelated flaky test and (b) reap
+  this worktree. The instinct — `git worktree add` a fresh worktree off
+  origin/main for the flake fix — was refused at Edit time by a PreToolUse
+  guard: `[worktree-path-guard] BLOCKED ... Session worktree: <laughing-joliot>
+  Target worktree: <new>  These don't match`. The guard pins ALL writes to
+  the session's own worktree (allowlisted external roots like
+  `~/attune-*` sibling repos bypass it; other worktrees do not). Consequences
+  that chain: (1) a separate PR authored in-session must REPURPOSE the current
+  worktree — `git checkout -b <fix-branch> origin/main` in place (new-branch
+  creation is allowed by the dirty-switch guard; the tree was clean after the
+  merge) — not a new worktree; (2) once the current worktree hosts the new
+  branch it is IN USE, so the "reap on merge" of the just-merged branch cannot
+  happen this session (you cannot `git worktree remove` your own cwd — the
+  shell loses PWD and every later tool call fails); the reap defers until the
+  NEW branch merges, done from the main checkout via `git -C <main> worktree
+  remove <path> --force`. Corollary already-known but reconfirmed: `gh pr merge
+  --squash --delete-branch` prints `fatal: 'main' is already used by worktree
+  at <main>` — that is the LOCAL post-merge checkout-switch step failing, NOT
+  the merge; verify `gh pr view <n> --json state,mergedAt,mergeCommit` (it was
+  MERGED) and the remote-branch deletion still succeeded. Rule of thumb: a
+  session is single-worktree for writes. If a task needs a second concurrent
+  branch edited, either repurpose the current worktree (and accept its reap
+  defers) or hand the second branch to a fresh session/chip.
+
+- **When a PR body says the code is "deployed nowhere", that is a should-this-exist finding, not a preamble to hardening it — three PRs in two days hardened an app that every one of them had already diagnosed as dead**: 2026-08-27. `backend/` (a FastAPI app) drew #2341 and #2342 (bearer-token verification on 17 routes, HIGH-severity, one superseding the other) and #2344 (a real boot bug: `main.py` called `include_router(wizards.router)` against a module exposing only `app`, so the app raised `AttributeError` at import). #2344's own summary opened: "The `backend/` FastAPI app is **dormant — deployed nowhere**, so this is hardening, not a live incident." The disproof of the work's value was in the first sentence of the work. Asked directly, the chair confirmed there was no deploy target and authorized deleting the whole tree; all three PRs were closed or superseded, and #2344's boot bug — genuinely correct, and never once reached by a user — died with the directory.
+
+  **Why nobody was careless:** each session was handed a scanner finding or a bug report, and "fix the reported defect" is the locally correct move every time. The should-this-exist question is not reachable from inside a fix; it is only reachable from the deployment question, which no fix prompts you to ask. **The trigger to hard-code: the moment you WRITE or READ the words "dormant", "deployed nowhere", "not wired up", or "no live consumer" in a PR body, an issue, or your own draft, stop and ask whether the thing should exist before spending another line on it.** Writing that sentence IS the finding.
+
+  **The five-probe check, all cheap, that settles it for a Python repo:** (1) does it ship — `grep` the path in `MANIFEST.in` (`prune`) and `.gitattributes` (`export-ignore`); (2) does anything import it — `grep -rn 'from <pkg>\|import <pkg>' src/ tests/`, reading past same-word false positives (every "backend" hit here was an `attune.memory` backend); (3) does CI deploy it — `grep -rln` the path across `.github/workflows/`; (4) is it a compose/service target; (5) for a web service, does it have a production origin configured — this app's CORS allowlist still carried a commented-out `# Add production domains here`. All five said dead. Any ONE of them run at the top of #2341 would have redirected three PRs' worth of effort.
+
+  **Rider on scope, learned the same session:** the retirement's real surface was 4 Railway config sets, not the 2 the task named — a root pair that built the *website*, and a third app's set under `deployments/`. `grep -ril railway` before scoping, not after. And a `.github/workflows/` file nested under a subdirectory (`website/.github/workflows/deploy.yml`) is INERT — GitHub reads only the repo-root path — yet `DEPLOYMENT.md` advertised it as the live deploy mechanism, so it read as load-bearing to every human and agent that opened it.
+
+- **A `pyproject.toml` dependency edit in ONE worktree mutates the SHARED main venv the moment any `uv run` fires — and the breakage surfaces in a DIFFERENT worktree as a phantom defect in that branch's diff**: 2026-08-27, retiring `backend/` on one branch while doing a roundtable follow-up on another. Removing `email-validator` and `bcrypt` from `[dev]` in worktree A, then running the contract's own pre-flight (`uv run --with pre-commit pre-commit run black --files …`) in that worktree, re-resolved and re-synced `~/attune-ai/.venv` — the venv every worktree borrows via `PYTHONPATH=<worktree>/src <main-venv>/bin/python` (the existing worktree lessons prescribe exactly this invocation). Worktree B's full suite then reported `24909 passed … 2 errors`, both `ImportError` in `backend/` test modules that import pydantic `EmailStr`. Nothing in worktree B's diff touched them.
+
+  **The tell that separates contamination from a real failure, and it is decisive: the errored files are ones the OTHER branch deletes, and the missing module is the dep that OTHER branch removes.** Two greps settle it in seconds — `grep -oE "No module named '[a-z_]+'"` on the pytest log, then `<main-venv>/bin/python -c "import <that module>"` to confirm the venv, not the tree, is what changed. Do not start debugging the diff; the diff is innocent.
+
+  **Fix, and it is the same command either way:** `uv pip install --python ~/attune-ai/.venv/bin/python <dep>`. Note this RESTORES the venv to what `main`'s own `pyproject.toml` still declares, so it is a repair rather than a workaround — the dep legitimately belongs there until the removing branch merges. **Do it even when your own work is unblocked**, because any peer session running tests off `main` in the interim sees the same two errors and has no context to recognize them.
+
+Generalizes past `uv`: any shared-interpreter setup where N worktrees borrow one venv makes a dependency edit a GLOBAL side effect fired by a LOCAL command, with a lag between the edit and the `uv run` that applies it. The window opens at the edit and closes at merge. Corollary for sequencing: when a branch removes a dependency, expect every other in-flight worktree to go red on code that still needs it, and say so in that PR rather than letting a sibling session discover it as a mystery. Pairs with the existing worktree family (editable-install MAPPING, worktree venv missing extras, `PYTHONPATH=$(pwd)/src`) — same root (worktrees share one interpreter), new direction: this one flows OUT of your worktree into everyone else's.
+
+- **Deleting source files breaks every shrink-only ratchet that NAMES them — and the same session must resist "tidying" the deny-lists, which are supposed to name absent paths**: 2026-08-27, removing `backend/` (43 files). Two opposite obligations, one commit, and getting either backwards is a silent correctness loss.
+
+  **Sweep these (they name files, so a deletion makes them lie):** `tests/unit/gates/test_broad_except_ratchet.py`'s `_BASELINE` carried four `backend/**` entries; its `test_broad_except_baseline_is_not_stale` failed with "baseline 3 but now 0 — lower it", which is the ratchet working correctly on a legitimate deletion. Also `.secrets.baseline` (detect-secrets keys files by path), `pyproject.toml`'s `[tool.coverage] omit` and `[tool.ruff.per-file-ignores]`, and any dev dependency whose in-comment justification points at the deleted tree — here `email-validator` (zero remaining `EmailStr` users) and a dev-only `bcrypt` pin, each mirrored in BOTH `[dev]` extra and dev group because a mirror guard holds them equal. **`grep -rn '<deleted-path>' tests/ scripts/ .github/ *.toml` before pushing**; the full-tree run finds the ratchet, but only after you have already paid a CI cycle.
+
+  **Do NOT sweep these:** `MANIFEST.in` `prune` lines and `.gitattributes` `export-ignore` lines are DEFENSIVE deny-lists whose entire job is to name paths that may not exist. The convention is checkable in ten seconds and settled the question: 9 of 13 directories and 5 of 6 deployment config files already listed were ALREADY ABSENT. Removing `prune backend` because `backend/` is gone would break the file's own convention and silently re-arm the packaging risk if the path ever returns. **The test for which kind you are looking at: does the entry ASSERT something about the code (a count, a threshold, a finding) or FORBID something about it (never ship, never export)? Assertions go stale when the file dies; prohibitions do not.**
+
+  Rider: a dependency removed here is also removed from the shared venv the moment any `uv run` fires — see the shared-venv contamination lesson; the two fire together on exactly this kind of deletion PR.
+
+- **An unquoted `?` in a `gh api` URL makes zsh glob-expand it, the command never runs, and a `||` fallback then reports the CONFIDENT OPPOSITE of the truth — any probe whose failure is indistinguishable from a negative result needs a positive control**: 2026-08-27, verifying a squash merge actually removed files. I ran `gh api repos/O/R/contents/backend/main.py?ref=main | grep -q 'Not Found' && echo GONE || echo "STILL PRESENT"` and got three confident `STILL PRESENT ✗` lines. The merge was fine. zsh treats `?` as a single-character glob, printed `no matches found: …?ref=main`, and **never invoked `gh` at all** — so `grep` matched nothing, the `||` branch fired, and the script asserted the exact opposite of reality about a just-merged destructive change. Had I stopped there I would have reported a broken merge to the chair and started "recovering" a merge that needed nothing.
+
+  **Two independent defects, and the second is the general one.** (1) Quote any URL containing `?`, `*`, `[`, or `=` in zsh — this is the same family as the existing `=word` lesson, different metacharacter, and it hits `gh api ...?ref=`/`?per_page=` constantly. (2) **A negative-result probe must be able to tell "the thing is absent" from "my check did not run."** Here both produced identical output. The cheap fix that catches the whole class: **run the same probe against something you KNOW is present** — `pyproject.toml` came back `present ✓ (probe works)`, which is what converted a guess into a receipt. Without that control, "gone from main ✓" would have been just as unfounded as the false alarm it replaced, since a broken probe reports whichever branch the author happened to wire to failure.
+
+  This is collaboration principle 16 in miniature: name the property your check actually establishes. `grep -q 'Not Found'` establishes "the string 'Not Found' did not appear in whatever reached the pipe" — which is satisfied by an empty stream from a command that never executed. Prefer exit codes over output-string matching for existence checks (`gh api "<url>" --silent >/dev/null 2>&1; echo $?`), because a command that fails to launch and a command that returns a negative are distinguishable there and are not distinguishable in a grep.
+
+- **A session must never reap the worktree it LIVES IN — and if told to, disclose that it ends the session BEFORE acting, not after**: two sessions did exactly this in two days (2026-08-26 `stoic-yonath-05dd72`, told "clean up the worktree"; 2026-08-28 `laughing-joliot-df8b41`, told "watch and merge #2343, then reap the worktree"). Both had finished and merged their work first, both removed their own worktree, and both became ZOMBIES — the `claude` process stays alive holding a cwd that no longer exists, so no further command can run. Each noted "this killed my own Bash" AFTERWARD. The chair's instruction was correct in both cases: the collaboration contract says to reap a worktree when its PR merges, and NOT reaping is what produced a 44-worktree, 16.8 GB pile. **The defect is not the instruction, it is that the contract says WHEN to reap and never says WHO** — and an agent inside the target directory is the one party that cannot safely do it.
+
+  **The rule:** reaping belongs to a session living ELSEWHERE (or a periodic sweep). When asked to self-reap, answer with the one line that hands the choice back — *"reaping this worktree ends my session; do it now, or leave it for a cleanup pass?"* — then obey. Cost of a zombie is genuinely small (the work was already merged; two idle processes plus their MCP servers), and exactly one thing about it bites: **you cannot ask that session a follow-up.** Disclose so the chair can decide whether they still want one.
+
+  **Detection trap, and it is subtle: `lsof -a -p <pid> -d cwd` STILL PRINTS the old path after the directory is unlinked**, because a process keeps its cwd inode. So a process-based liveness probe — the natural way to answer "is a session working in this worktree?" — reports a zombie as LIVE. It is only distinguishable by cross-checking `[ -d "$path" ]`, and a zombie is also absent from `git worktree list` while its process still advertises the path. Both facts matter in opposite directions: never delete a directory a process claims (it may be live), and never treat a process's claim as proof a session is working (it may be dead).
+
+  **Rider on `--force`, which self-reaps require:** `git worktree remove` refuses on ANY untracked or ignored content, so a worktree carrying `.venv/`, `*.egg-info/`, or `.claude/settings.local.json` needs `--force` even with a pristine tracked tree. That is expected and not a red flag — but `--force` ALSO suppresses the guard against genuinely uncommitted work, which is the only thing standing between a sweep and real data loss. **So check `git -C <wt> status --porcelain --untracked-files=all` yourself and decide, BEFORE reaching for `--force`; never let the flag make the judgment.** A sweep over many worktrees should run WITHOUT `--force` precisely so git remains a second gate, and skip-and-report anything git refuses.
+
+- **A changelog assembled AT release time is assembled from entries nobody wrote — 10 of the last 14 `src/`-touching PRs merged with no CHANGELOG entry (71%), and the omission is invisible until someone cuts a release**: measured 2026-08-28 while cutting 16.1.0. Four commits had touched shipped code since `v16.0.0`; exactly ONE (#2337) had logged an entry. #2336, #2338 and #2346 shipped silently, so the release's own `[Unreleased]` section described a quarter of what it was shipping. Nothing catches this: `release.yml` only EXTRACTS notes at tag time, so it faithfully publishes whatever is there, and a thin section reads as "a small release" rather than "a broken record." **The failure is silent in both directions — the PR author sees CI green, and the release author sees a changelog that looks intentional.** #2346's missing entry was the costly one: it fixed a Lua error message that had named six of nine valid kinds since V2-P4, so users rejected for a typo got an incomplete list of alternatives — a genuinely user-visible fix that would have shipped undescribed.
+
+  **The naive gate is wrong, and calibrating it first is what shows why.** "Touches `src/` -> require a CHANGELOG edit" fires on 10/14, but at least two are legitimate non-entries: #2314 (removing an upward import) and #2303 (a monotonic-clock de-flake) change nothing a user can observe, and demanding prose for them trains people to bypass the gate. Meanwhile the type prefix is not sufficient either — #2321 and #2319 are `refactor:`-titled but carry a user-visible config rename and a deprecation. **Proposed discriminator: `feat:`/`fix:` title + touches `src/` or `attune_redis/` -> entry required, with a `no-changelog` label as the documented hatch.** On the same 40 PRs that flags 5, 4 genuine and 1 arguable — ~80% precision against the naive rule's ~71% with a worse false-positive mix. Pin BOTH eliminated false positives as fixtures; the discriminator is the fragile part and the first thing a later cleanup drops.
+
+  General shape worth carrying past this repo: **any artifact COMPILED at release time from contributions made earlier is only as complete as the weakest contribution moment, and the compile step cannot tell absence from intent.** The fix is never at the compile step (the release script is working correctly); it is a gate at the moment the contribution lands, when the author still knows whether the change was user-visible.
+
+- **Two mid-release "failures" that were not failures — `gh pr merge` in a multi-worktree checkout, and a Bash timeout silently clamped to 600s. Both print alarming output while the underlying operation is fine, and both invite a destructive retry**: 2026-08-28, cutting attune-ai 16.1.0.
+
+  **(1) `gh pr merge --squash --delete-branch` from a worktree prints `failed to run git: fatal: 'main' is already used by worktree at '/Users/…/attune-ai'` — and the REMOTE MERGE ALREADY SUCCEEDED.** After merging, `gh` tries to update the LOCAL checkout to the base branch; in a multi-worktree setup `main` is held by another worktree, so that step always fails. The merge is untouched by it. **Never retry on this message — a retry 404s ("not open") at best, and at worst you go hunting for a problem that does not exist mid-release.** The postcondition is the only thing that matters: `gh pr view <n> --json state,mergedAt,mergeCommit` returned `MERGED` with a full 40-char SHA. This is the worktree-flavoured sibling of the known "`--admin` can error from the local post-merge step" lesson; the trigger here is not `--admin` but simply having more than one worktree, which is this repo's normal state.
+
+  **(2) The Bash tool's `timeout` is capped at 600000 ms — larger values are CLAMPED, not honored.** A CI wait launched with `timeout: 1500000` died at exactly 10 minutes with `Exit code 143` (SIGTERM) and `Command timed out after 10m 0s`, which reads exactly like the watched job failing. Nothing had failed; main's Tests matrix was still running normally and went green minutes later. **Any wait that can exceed 10 minutes — a full CI matrix, a Windows lane, a publish run — must be `run_in_background: true`, not a long foreground timeout.** The tell that it was the wrapper and not the work: 143 is SIGTERM from the harness, and re-reading the underlying state (`gh run list`) immediately showed the job still `in_progress` with zero failures.
+
+  **The shared lesson, and the reason these belong together: during a release you are running many wrapped operations, and a wrapper's failure is indistinguishable from the wrapped operation's failure IF you judge by exit code and stderr alone.** Both cases resolve in one command by asking the SYSTEM OF RECORD what state it is in — the PR's `state`/`mergedAt` for the merge, `gh run list` for the CI wait — rather than inferring from what the local tool printed. Same discipline as needing a positive control on a negative-result probe: name what your evidence actually establishes, and when the evidence is "my wrapper exited non-zero", that establishes nothing about the remote operation.
+
+- **`pgrep -f <pattern>` matches the SHELL RUNNING YOUR SCRIPT, because the agent harness executes each command as `zsh -c '<the entire script text>'` — so any process search whose pattern appears anywhere in the script self-matches, and the classic `[p]attern` bracket trick does NOT fix it**: 2026-08-28, answering "is Redis still running". `pgrep -af 'redis-server'` reported two PIDs: the real server, plus a second one that had no readable command line, held no port, and **changed on every single invocation** (29231 -> 30341 -> 30612). I surfaced it to the chair as a possible zombie process. It was my own shell every time.
+
+  **Why the bracket trick failed, which is the non-obvious half.** `pgrep -f '[r]edis-server'` defeats self-matching only for `pgrep`'s OWN argv — its command line holds `[r]edis-server`, which the regex does not match. But the harness wraps the WHOLE command in `zsh -c "…"`, and my script mentioned `redis-server` verbatim on several other lines (echoes, a `ps | grep`, a comment). The outer shell's argv therefore contained the plain literal, and `-f` matched THAT. Bracketing one occurrence cannot help when the pattern also appears elsewhere in the same script.
+
+  **The tell, and it is decisive on the first look: a PID that CHANGES on every invocation is being CREATED by the probe.** A real long-running process keeps its PID. Two more confirmations available in the same breath — the phantom held no listening socket (`lsof -nP -iTCP -sTCP:LISTEN`), and `ps -p $$` showed the current shell's PID sitting in the same numeric range as the phantoms.
+
+  **The authoritative cross-check is `ps`, not `pgrep`:**
+  `ps -axo pid=,etime=,command= | grep -i '<name>' | grep -v grep` — it matches on the real argv and the `grep -v grep` removes the searcher. When `pgrep -f` and this disagree, `ps` is right. Better still for "is the service up", skip process search entirely and ask the SERVICE: a port probe (`redis-cli ping` -> `NOAUTH` proves alive AND password-protected) or `lsof` on the port answers the actual question, where a process match only answers "something's argv contains this string".
+
+  Same family as the positive-control lesson from the same session, one turn later: **name the property your check establishes.** `pgrep -f X` establishes "some process's command line contains X" — and the process running your search is, by construction, one of them. Reporting a phantom to the chair as a possible zombie cost a round of investigation and briefly implied a system problem that did not exist.
+
+- **A round-table thread's promotion state lives in `status` / `promoted_ids` / `destination` — NOT a `promoted` field — and a local report in `~/.attune/reports/roundtable/` is NOT evidence of promotion, because D2 writes the full transcript there for EVERY thread**: 2026-08-28, answering "promote threads pending promotion". Both halves mislead in opposite directions, so getting either wrong produces a confident wrong inventory.
+
+  **The meta keys.** `Board.promote(thread, destination, item_ids=[...])` records `status='promoted'`, `promoted_ids='[5,6]'`, `destination='<tracked path>'`, and `promoted_at`. There is no `promoted` or `promoted_to` key; reading one returns empty for every thread, which reads as "nothing has ever been promoted" — a uniform answer that should itself be the alarm ([[uniform-probe-result-means-broken-probe]]). Enumerate with `HGETALL <thread-key>:meta`, never a single `get`.
+
+  **The local report is a red herring.** Per D2 the FULL transcript always goes machine-local to `~/.attune/reports/roundtable/<slug>.md` as the moderator's development data — for every thread, promoted or not. So presence there proves the deliberation HAPPENED, not that anything was promoted. Promotion means content reached a TRACKED destination: the owning spec's `decisions.md`, or a curated stub under `docs/reports/roundtable/`. The cross-check that actually answers the question is `grep -rl "<thread-slug>" docs/ .claude/` excluding the stub dir itself — a thread with a local report and zero tracked references is the genuinely pending one. That grep found exactly one pending thread out of seven where the meta probe had claimed all seven were pending.
+
+  **Two more shape facts worth knowing before an inventory.** (1) `review-*` threads (cross-review records) are typically single-message and carry nothing promotable — filter them out or the count balloons (30 of 37 threads here). (2) `destination` is documented as "the tracked artifact path the content goes to", so pass the STUB path, not the local transcript — though several existing threads have a `~/.attune/...` destination recorded, so the field is not a reliable indicator of trackedness on its own either.
+
+  **And the honest limit on all of it:** promotion state recorded on the board can disagree with reality in both directions, because the board only learns what a moderator tells it. A thread whose content was hand-copied into a spec without calling `promote()` looks pending forever. Treat the board as a claim and the tracked tree as the fact.
+
+- **Four false alarms in one session, all the same shape: I reported a conclusion drawn from a VIEW I had constructed, and the view was where the information was lost. The consolidating tell is that a probe returning a UNIFORM or EMPTY result across every item is far more likely broken than the world is uniform**: 2026-08-27/28. The individual quirks are already logged separately ([[probes-need-positive-controls]], [[pgrep-f-matches-your-own-shell]], [[wrapper-failure-is-not-operation-failure]]); this entry is the pattern they share, which is worth more than any of them because it fires BEFORE you know which tool betrayed you.
+
+  The four, in order, each reported to the chair as fact:
+
+  1. **Unquoted `?` in a `gh api` URL.** zsh glob-expanded it, `gh` never ran, `grep -q 'Not Found'` matched nothing, and the `||` branch printed "STILL PRESENT" for three files that had just been deleted — a *just-merged destructive change* declared broken.
+  2. **`pgrep -f 'redis-server'`** matched the harness's own `zsh -c '<script>'` whose argv contained the pattern. Reported a phantom PID to the chair as a possible zombie process.
+  3. **`grep -iE 'changed files|labels:|OK:'` over a CI log** dropped the bare file-path line between two matches, so a working gate looked like it had seen an empty diff. Escalated as "the gate may be blind and it is now REQUIRED".
+  4. **Reading `meta.get("promoted")`** when the real keys are `status` / `promoted_ids` / `destination`. Every thread came back "unpromoted"; the correct answer survived only because a second, independent cross-check (against tracked artifacts) disagreed.
+
+  **The tell, stated so it fires early: uniformity is the alarm.** In (3) the interesting content was *between* two lines I did match; in (4) *all seven* items reported identically. Real systems are rarely that tidy. When every item in a set answers the same way — all absent, all empty, all unpromoted — the first hypothesis must be that the QUESTION is malformed, not that the answer is remarkable.
+
+  **The discipline, which costs one command:** before reporting a surprising negative, re-read the source UNFILTERED — the full log step, the raw JSON, `hgetall` instead of `get(key)`. Every one of these four collapsed instantly on a raw read. Corollary for the write-up: a filter is fine for SKIMMING and disqualifying for CONCLUDING. And note what saved case (4) — not vigilance, but a second probe of a different shape that disagreed with the first. **Two probes that disagree are a gift; two that agree may share a defect.**
+
+  Cost accounting, because it argues for the discipline: each false alarm consumed a round-trip, and three of them told the chair something alarming and untrue about his own system — a just-merged deletion, a stray process, and a newly-required CI gate. The credibility cost of a confident wrong alarm is higher than the latency cost of one unfiltered read.
+
+- **A recorded baseline number is meaningless without its INSTRUMENT — two same-purpose benchmark scripts existed, I ran one and compared it to a number produced by the other, and derived a regression that did not exist. The cheap tell was sitting in both outputs: mismatched DENOMINATORS**: 2026-08-28, re-running the recall benchmark to answer "is the memory implementation acceptable". `scripts/memory_recall_eval.py` (18 positive / 5 negative) and `scripts/eval_personal_memory_recall.py` (26 positive / 6 negative) are 630 differing lines with different corpora and different query sets. `decisions.md` recorded run 1 from the SECOND; I ran the FIRST, compared score distributions against run 1's, and produced a confident table showing "separation regressed — worst negative went from 45% to 92% of the positive median". That table compared two different instruments and meant nothing.
+
+  **The tell, and it is free: the denominators disagreed.** My run said `Positive queries: 18 / Negative queries: 5`; the baseline entry said `26 positive / 6 negative` in its own first paragraph. Both numbers were on my screen. I read the SCORE DISTRIBUTIONS and never read the SHAPE, because the distributions were what my hypothesis was about. **Before comparing any metric to a recorded baseline, compare the population sizes first — if n differs, stop; you are holding a different instrument.**
+
+  **The deeper rule: a baseline is a (number, instrument, corpus) triple, and prose records only the number reliably.** The decisions entry DID cite its script by name in the run command — the provenance was there and I skipped it, because a differently-named script that obviously does the same job read as the same job. Same-purpose duplicates are the trap: nobody mis-compares a benchmark against a linter. **Re-run the SAME script whose numbers you are comparing against, and if two scripts claim the same purpose, resolve which one owns the baseline BEFORE running either.**
+
+  **What made it worth catching rather than embarrassing: the corrected comparison was SHARPER, not softer.** Same script vs its own run-1 baseline showed hit@1 96%->92% and false-positive rate **0/6 -> 2/6**, breaking the exact D3 criterion the ship verdict rested on ("zero false-positive over-confidence on no-match queries"), with a single attractor document (`status-vocabulary`, both FPs at an identical 5.0). The invalid comparison had hidden a real finding behind a fabricated one. **A methodology error does not imply the underlying worry is wrong — re-derive it correctly instead of retracting it wholesale.**
+
+  Rider on reading a spec's verdict: run 1's sentence was "ranking is accurate at k=3 AND zero false-positive over-confidence". Clause one still holds; clause two does not. **A multi-clause verdict rots one clause at a time — check each independently rather than treating the sentence as one fact.**
+
+- **Asserting an ABSENCE ("there is no instrument / no guard / no consumer") needs a probe exactly as much as asserting a presence — and absence-claims feel like observations rather than claims, so they get written into tracked specs unchecked**: 2026-08-28. Reporting on a recall regression I wrote, and merged into `docs/specs/memory-recall-eval/decisions.md`, that the high-traffic hook paths "carry 5,068 events between them with no abstention instrument at all". A round table quoted it back approvingly, it survived two review rounds and three of my own correction passes, and it reached `main`. Then I actually looked: `plugin/hooks/lesson_recall.py` filters `hits = [h for h in index.retrieve(prompt, k=3) if h.score >= floor]` with `floor = 8.0` (env-overridable). **The path has an abstention mechanism, and a stricter one than the component I was contrasting it against** — `PersonalMemory` has none. Measured n=12/12 against that real floor: 11/12 on-topic prompts surfaced, 10/12 off-topic prompts correctly abstained. The floor does real work; it is merely mis-set (two off-topic prompts hit exactly 9.0, and one genuine hit at 5.0 was suppressed).
+
+  **Why this class survives review when a positive claim would not.** "X returns the wrong answer" invites "show me"; "there is no X" invites agreement, because the reader cannot picture the missing thing and has no obvious probe to demand. Three independent reviewers plus a round table read my sentence and none asked for its basis — and the sentence was load-bearing, since it powered the reframing that the wrong surface was being measured. **The reframing was still directionally right (the paths are UNMEASURED — no benchmark exists), but the claim as written was false: unmeasured is not uninstrumented, and I collapsed the two.**
+
+  **The probe is almost always one grep.** For "no guard/floor/threshold": grep the consuming code for the comparison, not the docs for a description. For "no consumer": grep imports. For "no gate": read the workflow file. The cost of the probe is seconds; the cost of the claim is that it becomes the premise other people reason from — here it nearly justified building an instrument that already existed.
+
+  Pairs with the probe-discipline family from the same session ([[uniform-probe-result-means-broken-probe]], [[probes-need-positive-controls]]): those are about probes that RAN and misled. This one is about the probe that was never written, because the claim did not feel like the kind of thing that needs one.
+
+- **A benchmark baseline captured while a pipeline stage was SILENTLY DEAD encodes that deadness as the target — so "restoring the old number" means restoring the bug, and the apparent regression is the retrieval cost of a correct fix**: 2026-08-28, chasing a recall regression in `attune.memory.PersonalMemory` (hit@1 96%->92%, negatives above threshold 0-of-6 -> 2-of-6). The obvious readings were all wrong: not the `attune-rag` dependency (its scoring modules are byte-identical across the window), not corpus drift (the benchmark carries its fixtures inline, unmodified). A bisect over seven `personal.py` commits landed on `7c6836c8d` (#2118), whose entire relevant diff is one line: `polish_fn(text, template_type=kind)` -> `polish_fn(text, "", "", template_type=kind)`. `polish_template` requires two positionals; omitting them raised `TypeError` on EVERY call, so the polish pass had been silently dead. **The pristine baseline was therefore measured against UNPOLISHED documents.** Restoring polish enriched every captured file, and keyword retrieval is measurably less precise on richer text — shared vocabulary across documents manufactures attractors, which is why two unrelated queries landed on the same document at an identical score.
+
+  **The trap is that the metric moves in the direction that looks like damage.** A number got worse right after a change, and every instinct — including the spec entry I had already drafted — reads that as a regression to be reverted or gated. The correct reading was the opposite: the system got MORE correct and the benchmark got HARDER, because the benchmark had been unknowingly measuring a degraded input. **Before treating a metric change as a regression, ask what the baseline run was actually exercising — a number is only a target if the run that produced it was healthy.**
+
+  **The cheap decisive method, worth copying.** A full 2x2 (old code x new dep, new code x old dep) was proposed; it collapses to ONE cell. Hold the DEPENDENCY constant at today's version and swap in the OLD version of your own file: if the result goes clean, the dependency is exonerated outright — no second cell needed, because a cause that cannot produce the effect while held fixed is not the cause. That single run plus a bisect over the intervening commits (each cell is `git show <sha>:<path> > <scratch-tree>/<path>` plus one keyless benchmark run, ~40s each) located the exact commit in under ten minutes, after two rounds of careful reasoning had failed to.
+
+  Rider: the fix commit's own title said it — "restore personal polish". The changelog of the window contained the answer in plain words, and I read the diffs before reading the titles.
+
+- **A planning record decays in place, and every decay mode still
+  reads as valid — verify what the record ASSERTS about the world
+  before answering it, because a stale question, a stale wait, and
+  a stale task are indistinguishable from live ones by inspection**:
+  2026-08-28, one status session surfaced all three modes at once,
+  which is why they belong in one entry rather than three.
+  **(1) A recorded QUESTION's option set expires.**
+  `release-16-manifest`'s open question asked whether passenger 4
+  ships "whole in 16.0.0 or contracts-first with the CLI following
+  in a 16.x minor." Both options were dead by the time it was read:
+  16.0.0 had shipped without passenger 4 (so option A was moot on
+  the calendar), and D2's later cold-re-read amendment — recorded in
+  a DIFFERENT file, `decisions.md` — requires the author-facing
+  surface in the first constructive increment, which forbids option
+  B, since `enable` IS the author surface. Answering the menu as
+  written would have picked a ruled-out option while looking
+  perfectly responsive to the spec. **An open question is a snapshot
+  of the choice set at authoring time; later rulings and shipped
+  releases foreclose options without anyone editing the question.**
+  Re-derive the choice set from the decisions that have landed
+  SINCE, then answer.
+  **(2) A recorded WAIT's precondition was never wired.** A
+  "waiting on measurement" task deferred a budget ratification until
+  `~/.attune/telemetry/context_fit.jsonl` held a few weeks of runs.
+  The writer exists (`src/attune/context/allocator.py:30`) but the
+  file does not exist AT ALL — so the item was not merely unmet, its
+  clock had never started, and it would have waited forever reading
+  as patient. **For any "waiting on data" item, probe that the data
+  is being COLLECTED, not just that the threshold is unmet** —
+  `wc -l <the actual path>`, and treat "no such file" as a bug in
+  the wait, not evidence of the wait.
+  **(3) A recorded TASK's completion never propagated back.** Five
+  of seven `TASKS.md` items were already done or pointed at a moved
+  file — including two carried as "do not start, gated post-freeze"
+  whose specs read `complete`, and one "implement ToolEnhanced,
+  PromptCached" whose classes were sitting in
+  `orchestration/_strategies/advanced_strategies.py:25` and `:141`.
+  The selection effect is the useful part and it was clean: staleness
+  concentrated in DONE work, because whoever finishes a task updates
+  the spec that scopes it and never the index that points at it.
+  **So a task index is least trustworthy exactly where it claims
+  work remains.**
+  The shared diagnostic across all three: the record is a claim about
+  the world (this option is available / this data is accruing / this
+  work is undone), and each is falsifiable by one cheap probe — a
+  grep for the module, a `wc -l` on the path, a read of the spec's
+  own status line. None of the three announced its staleness.
+  Pairs with the existing core lesson "spec-named work-scope drifts
+  from code reality — grep the actual instances before executing the
+  named scope" (same family, one level up: that one is spec-text vs.
+  code, these are planning-record vs. the specs and releases the
+  record points at), and with contract principle 16 "claims carry
+  their basis" — a stale record is an unmarked inference that has
+  outlived its verification.
+
+- **`select_form_surface` returns a surface CLASS, not a host
+  identity — so D21's "render `form_to_widget_html(form)` on the
+  widget surface" is underdetermined whenever the session's widget
+  host is not attune's own, and following it literally ships HTML
+  into a host whose documented contract forbids it**: 2026-08-28,
+  building a three-dimension pushback form in a Claude Code session
+  whose widget surface is the `visualize` MCP. `select_form_surface`
+  returned the bare string `"widget"`. But TWO widget hosts were
+  live in that session and their shells are mutually exclusive:
+  - **attune's renderer** (`form_to_widget_html`) emits
+    `<form id="attune-elicit-form-…">` with an inline `<style>`, an
+    inline `<script>`, and a `sendPrompt` post-back carrying a JSON
+    payload (the `WIDGET_RESPONSE_MARKER` protocol its own
+    `attune.elicitation` API exports) — 17,088 bytes for a 3-field
+    form.
+  - **the `visualize` host** documents `<form class="elicit">` with
+    `.elicit-header` / `.elicit-body` / `.elicit-footer`,
+    `data-name` / `data-value` attributes, a shell that auto-wires
+    selection and submit, and — stated explicitly — **"zero onclick
+    handlers, zero `<script>`"**.
+  A renderer that ships a `<script>` into a host that documents zero
+  `<script>` is a contract conflict at the spec level, not a style
+  quibble; and the failure would be INVISIBLE from inside the
+  session, because an agent cannot see its own widget render. The
+  resolution that keeps D21's intent without gambling: **the
+  `FormSchema` is the portable validated artifact — build it, run
+  `select_form_surface`, then render to the shell THAT HOST
+  documents.** D21's real requirement is "don't hand-write a
+  question turn", not "always call one specific renderer"; the
+  renderer named in the rule is attune's because attune's host was
+  the assumed surface when it was written.
+  **Honesty note on this entry's basis:** the contract conflict is
+  verified (both shells read directly — `select_form_surface`
+  invoked, `form_to_widget_html` output inspected head and tail,
+  the visualize shell read from its own `read_me`). What is NOT
+  verified is that attune's HTML actually breaks in the visualize
+  host — I avoided the gamble rather than testing it, so "would
+  fail" is inference. **The cheap experiment nobody has run: render
+  `form_to_widget_html` output into the visualize surface once and
+  look.** If it degrades gracefully, D21 needs no change; if it
+  renders blank or inert, D21 needs a host-dispatch clause and
+  `select_form_surface` arguably needs to return the host, not the
+  class. Until someone runs it, treat the shell-matching workaround
+  as the safe default and say which host you rendered for.
+  Pairs with the standing D21 lesson that naming a tool got the rule
+  executed as that tool — same shape one level down: naming a
+  RENDERER gets the rule executed as that renderer, even where its
+  target host is absent.
+
+- **Multi-PR work from ONE session runs as sequential branch-switches
+in the session's own worktree — the worktree-path-guard blocks
+cross-worktree Edit/Write, and `git worktree add` with a relative
+path nests the new worktree INSIDE the session worktree**:
+2026-08-29, executing a 4-item map as parallel PRs. Two traps in
+sequence: (1) `git worktree add .claude/worktrees/<name>` resolves
+against the CWD, so from a session worktree it created
+`<session-worktree>/.claude/worktrees/<name>` — nested, not
+sibling; `git worktree move <abs-path>` relocates it cleanly.
+(2) Even with the worktrees in the right place, the
+`worktree_path_guard.py` PreToolUse hook BLOCKS Edit/Write from a
+session into any worktree other than the session's own (by
+design — it exists for the wrong-tree-write class; allowlisted
+external roots and ATTUNE_WORKTREE_GUARD_ALLOW are the sanctioned
+bypasses, but per-call env vars can't reach the hook's process).
+The working pattern: remove the extra worktrees, and do each PR
+sequentially in the session worktree — branch off origin/main,
+edit, commit, push, PR, switch back — which the dirty-switch guard
+permits because the tree is clean between PRs. The
+one-worktree-per-branch policy targets CONCURRENT juggling;
+sequential switch-and-return from a clean tree is the compatible
+shape for one session shipping several small PRs. Rider: the
+classifier may block a compound `worktree remove && switch` chain
+while allowing each step individually — run cleanup steps one at a
+time.
+
+- **A user-reported merge ("X merged, do the follow-up") can be wrong
+— the click didn't fire, the queue didn't run — so verify
+`gh pr view <n> --json state,mergeCommit` BEFORE executing any
+step conditioned on the merge**: 2026-08-29, positioning round.
+The chair reported "#2357 merged" and later "#2356/#2358 merged,
+all clean" and "#2359/#2361 merged" — of those five reports, FOUR
+were premature: `gh pr view` showed the PRs OPEN with
+`mergeState: CLEAN`, auto-merge unarmed, and no merge commits;
+remote main's tip was still the last real merge. The near-miss: an
+execution note recording "#2356–#2361 executed and merged" was one
+commit away from landing as a false receipt in decisions.md — the
+exact unreceipted-claim class the note existed to close out. Worse,
+an earlier step had already ACTED on the first false report: the
+stacked item-3 branch was rebased onto main and force-pushed on the
+strength of "2357 merged" alone (harmless only because the two
+commits touched disjoint regions). The probe is one line and
+settles it: `gh pr view <n> --json state,mergeCommit` (or
+`git ls-remote origin main` + log). Rule: a merge claim from ANY
+source — user, peer session, CI comment — is a report about a
+remote state transition; before rebasing onto it, recording it, or
+opening a held follow-up PR, run the probe. Pairs with the core
+"claims carry their basis" lesson (this is its merge-state
+instance) and the "two sessions, one when-Y-merges trigger" lesson
+(same trigger, different failure: there the merge was real and
+doubly acted on; here it was reported and unreal).
+
+- **Verifying website content from a session — React SSR splits
+interpolated text with HTML comments, so a literal grep of the
+served HTML false-negatives on the exact string you shipped; and
+the Next dev server dirties `website/tsconfig.json` on startup**:
+2026-08-29, confirming the coverage-stat deploy. The page renders
+"94%+ coverage", but the served HTML carries
+`94<!-- -->%+ coverage` — React's server rendering inserts a
+comment between each interpolated segment (`{value}%+` becomes two
+text nodes) — so `curl | grep -c "94%+"` returned 0 on a page that
+WAS serving the new build, one step after a coarser probe had
+matched. Acting on the 0 would have produced a false "deploy
+missing" conclusion minutes after a true "deploy confirmed" one.
+Rule: when grepping served HTML for an interpolated string, make
+the pattern comment-tolerant — `94(<!-- -->)?%\+` — or grep for a
+fragment that lives entirely inside ONE static text node (e.g. the
+label text "test coverage, CI-gated"), and treat a grep miss on
+SSR output as "pattern wrong" before "content missing". Rider from
+the same session: `next dev` flips `website/tsconfig.json`'s
+`jsx` to `"preserve"` on startup — a Next artifact that shows up as
+a modified tracked file after every preview run; `git checkout --
+website/tsconfig.json` before committing, never commit the flip
+(it landed staged once and had to be reverted post-commit).
+
+- **agy headless live-fire runs (1.1.22): the bundled telemetry
+hook can block ALL tool calls, writes are auto-denied headless,
+and the verbose transcript lives in the brain dir — plus the
+scoped-sandbox pattern that makes `--dangerously-skip-permissions`
+safe**: 2026-08-29, running the DEC-18 Antigravity spec-rung
+probe. Three traps and one pattern, extending the existing
+Antigravity-integration lesson: (1) the Antigravity-IDE-bundled
+`googlecloudtools.datacloud_telemetry` PreToolUse hook
+(`~/.gemini/config/plugins/.../hooks.json`, matcher `*`) emits
+`{"continue":true}`, which agy 1.1.22's protojson parser rejects
+as an unknown field — EVERY tool call fails with a cryptic
+"failed to unmarshal result from hook" error before executing;
+fix is `"enabled": false` in that hooks.json (a user-run edit —
+the harness classifier blocks agent writes to `~/.gemini`, which
+is correct: hand the one-liner to the user). (2) Headless
+`agy -p` cannot prompt, so any write permission is AUTO-DENIED
+with a "jetski: no output produced" message naming the missing
+rule — either add a `permissions.allow` rule in settings.json or
+use `--dangerously-skip-permissions`. (3) The safe construction
+for skip-permissions: scope `--add-dir` to a THROWAWAY sandbox
+directory (not the repo) so full autonomy's blast radius is the
+sandbox — the probe granted agy autonomy over only
+`.attune-probe/`, never the worktree. (4) Transcripts:
+`~/.gemini/antigravity-cli/brain/<run-uuid>/.system_generated/
+logs/transcript.jsonl` and `transcript_full.jsonl` (the verbose
+one); run dirs sort by mtime, one per invocation — don't forget
+the `.system_generated/logs/` path segment (a bare
+`brain/<uuid>/transcript.jsonl` read fails and looks like the
+file was rotated away). And the standing discipline held: the
+seat's completion report was NOT the receipt — the central
+re-run of the three artifacts (exact stdout + exit 0, ladder box
+checked, ruling line present) was.
+
+- **A GIF screen capture structurally clips any form taller than the
+viewport — live embeds are the medium for the website; GIFs only for
+script-stripped surfaces (GitHub/PyPI README, blogs)**: 2026-08-29,
+building the attune-forms demo captures (PR #2370). The retro-form GIF
+"cut the form short" (Patrick's words): gif_creator records viewport
+frames, so in top-anchored frames the Submit button sat below the fold —
+no capture setting fixes this, it is the format. The website got live
+iframes of the production-rendered fixtures instead, and the same pass
+revealed the OTHER card had been quietly clipping ~170px behind an
+internal scrollbox. Rules: (1) on any surface that executes scripts,
+embed the real thing (fixtures rendered by the production pipeline via
+scripts/render_demo_forms.py) and keep the GIF only where scripts are
+stripped; (2) size embed iframes to the MEASURED content height at the
+actual column width (query `contentDocument.querySelector('main')
+.offsetHeight` at the rendered width — 498px column gave 1047/1308 where
+the design-width guess said 880) — an internal scrollbox reads as "cut
+short" to users; (3) GIF weight: pre-commit caps files at 1200KB and
+gifsicle is absent on this machine — the working recipe is ffmpeg
+`fps=6,scale=900:-1:flags=lanczos` + palettegen/paletteuse
+(max_colors=128, bayer dither), which took 1.9-2.2MB captures to
+~0.5-0.7MB with legible UI text.
+
+- **The website's global security headers block even SAME-ORIGIN iframes —
+a scoped Next headers() rule later in the array overrides same-named
+keys for one path**: 2026-08-29, embedding the live forms demo on
+/how-it-works (PR #2370). The catch-all rule in website/next.config.ts
+sends `X-Frame-Options: DENY` and CSP `frame-ancestors 'none'` on
+`/(.*)`, so an iframe of the site's OWN static fixture rendered blank
+(contentDocument null; the tell was `curl -sI <url> | grep -i frame`).
+Fix: append a second rule for `/forms-demo/:path*` sending
+`X-Frame-Options: SAMEORIGIN` + `frame-ancestors 'self'` — in Next,
+when multiple headers() entries match a path, later entries override
+earlier same-named keys, so the scoped relaxation needs no change to
+the global rule. Keep the override path-scoped to the fixtures; do not
+widen the global policy. Diagnostic order when an iframe is blank:
+curl the headers BEFORE debugging the page - the dev server picks up
+next.config.ts changes without a manual restart, so re-curl right
+after editing.
+
+- **`npm run build` in website/ regenerates the ENTIRE mkdocs
+framework-docs snapshot (~280 tracked files churn) — restore it out of
+any PR that didn't mean to ship it, and expect docs/ assets to be
+copied in**: 2026-08-29, forms-demo PR #2370. The website build script
+is `npm run build:docs && next build`, and build:docs re-renders
+website/public/framework-docs/ from docs/ with the LOCAL mkdocs —
+version drift flips every asset hash (bundle.<hash>.js, main.<hash>.css)
+and touches every index.html, plus it copies new docs/assets files into
+the snapshot (the demo GIF appeared under framework-docs/assets/images/
+uninvited). A local verification build therefore dirties ~280 tracked
+files that have nothing to do with the change being verified. Recovery:
+`git restore website/public/framework-docs/` + `rm` the new-hash asset
+files; then stage the intended set from `git status --short`, never
+from memory. Pairs with the existing "stage from git status after a
+codemod" lesson — same rule, new trigger (a build step, not a codemod).
+
+- **Dependabot PRs failing `pre-commit run --all-files` may be
+inheriting a base-tree failure fixed on current main — probe the
+hooks locally on main before debugging the bumps, then `@dependabot
+rebase`; expect some PRs to close themselves as "no longer
+updatable"**: 2026-09-03, five dependabot PRs (08-31 bases) all
+failed the `pre-commit` check. The failing hooks (docs-freshness,
+doc-link check) had nothing to do with the dependency diffs —
+`--all-files` runs the whole tree, so the PRs inherited a docs drift
+their 08-31 base carried. Local probe: run the exact failing hook ids
+on current main (`pre-commit run <hook-id> --all-files`) — both
+passed, proving rebase would fix CI without touching the bumps.
+After `@dependabot rebase` on all five, dependabot CLOSED every one
+("no longer updatable" — the intervening ~69 commits had made the
+range edits moot), which is a legitimate terminal state, not an
+error: verify with `gh pr view --json state` rather than assuming
+the rebase succeeded. Net: a six-PR queue cleared with one real
+merge and zero debugging of phantom dependency breakage.
+
+- **pytest's rootdir `pythonpath` config silently defeats the
+`PYTHONPATH=<other-tree>/src` override — a cross-tree mutation
+receipt can come back green without ever importing the tree you
+pointed at; neutralize with `-o pythonpath=`**: hit 2026-09-03
+reviewing `fix/release-parser-dict-contract`. To prove the branch's
+20 contract tests bite, I ran them with
+`PYTHONPATH=<unfixed-worktree>/src` expecting red — got 20/20 GREEN
+in 0.07s. A direct `python -c "import ...; print(m.__file__)"` probe
+confirmed the env var works for plain python; under PYTEST, the
+rootdir (resolved from the test file's location, not the cwd)
+supplies ini `pythonpath`, which pytest PREPENDS to sys.path ahead of
+the env var — so both runs imported the branch's own fixed module and
+the "against unfixed code" run was fiction. The honest red run
+(16/20 failed) needed `-o pythonpath=` alongside the env override.
+Extends the editable-MAPPING lesson family with a pytest-specific
+vector; tells: a suspiciously fast run, and identical results across
+supposedly different code. **Rule: any time a test run's import
+target is steered by env PYTHONPATH, pass `-o pythonpath=` (and `-o
+addopts=`) or the rootdir config may quietly win — and verify with a
+`__file__` probe under PYTEST, not plain `python -c`, because the two
+resolve differently.**
+
+- **A free-text form answer that matches NO offered option is a signal
+the options misframed the question — read it literally and act on the
+extreme it states; do not snap it to the nearest structured choice**:
+2026-09-03, the open-decisions form. The spend-ledger question offered
+"Ratify as proposed ($10 cap)" / "Ratify with a new cap" / "Review" /
+"Leave open"; the chair typed "I want to ratify but don't have money
+for api spending". I snapped that to the nearest option shape —
+"ratify with a tighter cap" — picked $5 on his behalf, and wrote the
+ruling text that way. He had to interrupt: "you don't understand. I
+don't have any more money that I can afford to spend." The correct
+reading was the literal one: NO money means cap **zero** — and the
+ledger's own D4 had a designed posture for exactly that (cap=0 =
+refuse every billable launch) which the option list simply hadn't
+offered. Two rules: (1) when a hardship or constraint statement
+arrives as an "Other" answer, its floor/ceiling is the LITERAL
+extreme stated (none, never, all), not a moderated version that fits
+the form's framing; (2) before writing a ruling from a paraphrase,
+check whether the system already has a designed posture for the
+literal reading — offering it back costs one line, and silently
+moderating the user's constraint costs a correction round plus a
+wrongly-recorded ruling (the $5 rider text had to be rewritten).
+Pairs with the go-referent gate (resolve the referent before acting):
+an unmatched free-text answer is an unresolved referent wearing a
+form's clothes.
+
+- **A `head`-truncated version-site grep is a release-prep trap — attune-rag pins `attune_rag.__version__` to the installed dist, and the pyproject-only bump went red on all 12 lanes**: 2026-09-03, cutting attune-rag 1.2.0. The state read ran `grep -rn '1\.1\.0' … -l | head` and the ten lines it showed were all docs/spec history, so "pyproject is the only version site" was asserted — but `src/attune_rag/__init__.py:__version__` was the eleventh line, and `tests/unit/test_package_metadata.py::test_in_source_version_matches_installed_distribution` fails the whole matrix when the two diverge. Cost: one extra CI cycle plus a fix-up commit on the prep PR. Rules: (1) never pipe the version-site grep through `head`/`tail` — the point of the grep is the FULL set, and the truncated view answered "what do the first ten sites look like", not "what are all the sites"; (2) filter by PATH (`grep -v '/docs/\|CHANGELOG\|uv.lock'`) rather than by count, so the survivors are exactly the sites that must move; (3) for non-attune-ai packages (no `bump_version.py`), expect at least two code sites — `pyproject.toml` and `<pkg>/__init__.py` — and treat a one-site result as suspicious. Pairs with the existing "Version bumps touch 7+ files" lesson (attune-ai) and the release-execute step-4 postcondition (`grep -rn "<old>"` finds only CHANGELOG history — a postcondition the truncated grep cannot establish).
+
+- **Retargeting a tier default to a new model generation is NOT a string replace — grep the raw-SDK call sites for request shapes the new model rejects, and ship the canonical mirror (attune-rag) BEFORE the mirrors (attune-ai, attune-author)**: 2026-09-03, moving the premium tier `claude-fable-5` → `claude-fable-5-1`. The id swap touched ~15 sites; the actual 5.1 breakage was elsewhere: the curator (attune-ai) and `FaithfulnessJudge` (attune-rag) both sent forced `tool_choice: {"type": "tool"}`, which Fable 5.1 answers with `400 tool_choice: type "tool" and "any" are not supported for this model` — every default-tier briefing/judge call would have failed on first live contact, and nothing in the id grep pointed at it. Found only by reading the migration guide's breaking-change list (claude-api skill → `shared/model-migration.md`, the "from Fable 5" section) and then grepping the tree for each shape: `tool_choice` (forced → `auto` + `strict: true` + `additionalProperties: false`), explicit `thinking` config, `temperature`/`top_p`/`top_k`, assistant-turn replay with thinking blocks (5.1 binds them to the producing model + conversation prefix), and per-model cache-read pricing (5.1 reads at $0.25/MTok, 0.025x — the 0.1x derivation in `calculate_actual_cost` silently over-priced it). **Checklist for the next retarget:** (1) load the migration guide for the TARGET and list its breaking changes; (2) grep the tree for each request shape, not just the model id; (3) diff the pricing row field-by-field (input/output/cache-write/cache-read/max output/context); (4) keep the predecessor id served (known override + priced by id) so pins and old telemetry keep resolving. **Ship order is forced by the drift guards:** `attune.model_tiers` is a byte-mirror of `attune_rag.model_tiers`, and attune-ai's CI compares against the attune-rag INSTALLED FROM PYPI — so the attune-ai PR is red by design until attune-rag ships. Working sequence that closed the loop in one session: open the attune-ai PR (red drift lane, stated in the body) → open the attune-rag PR with the identical constants (verify with a `diff` of the `_DEFAULTS…_FABLE_FALLBACKS` block, and run attune-ai's drift test with `PYTHONPATH=<rag-branch>/src` for the pre-release receipt) → merge + release attune-rag → push any commit to the attune-ai PR so a FRESH run pip-installs the new version (a `gh run rerun` may reuse a cached resolver) → merge. attune-author carries a third mirror and needs its own PR after.
+
+- **A sibling-repo "owed" follow-up inherited from a docstring is an inference — `gh repo view <owner>/<repo> --json isArchived` is the one-line probe, and it must run BEFORE the item is written as owed, not after a worktree, a commit, and a 403**: 2026-09-04, Fable 5.1 retarget. attune-rag's `model_tiers.py` docstring says "attune-author carries a byte-for-byte mirror … a drift test in attune-author asserts …". That sentence was carried into three places as a debt (the attune-ai PR body, the release-state memory, the starter) and then executed: worktree created, 12 edits applied, tests run against shadowed sources, commit signed — and the push returned `403` because attune-author was ARCHIVED on 2026-07-27 (attune-author-consolidation spec, status complete; `attune.authoring` in attune-ai rides `attune.model_tiers`, which the same session had already retargeted). Two mechanisms, both cheap: (1) **before recording a cross-repo follow-up, verify the target repo is live** — `gh repo view … --json isArchived,pushedAt` (a `pushedAt` months old is the soft tell); (2) **a docstring naming a sibling is a pointer written on the day it was written** — the consolidation spec that archived the repo lives in THIS tree under `docs/specs/attune-author-consolidation/`, so a `ls docs/specs | grep <sibling>` would have surfaced it. The stale pointer itself is a small follow-up: attune-rag's `model_tiers.py` docstring still names the attune-author mirror. Pairs with the "claims carry their basis" core lesson — the owed item was phrased as fact from the first mention.
