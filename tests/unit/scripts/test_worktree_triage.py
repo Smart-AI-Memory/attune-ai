@@ -148,3 +148,52 @@ class TestRenderScript:
         assert 'worktree remove "/w/go"' in text and "/w/keep" not in text
         assert 'branch -D "g"' in text and 'branch -D "stale"' in text and "unsure" not in text
         assert "worktree prune" in text
+
+
+class TestWorktreeRowsAndMain:
+    def test_worktree_rows_classify_a_real_worktree(self, mod, repo, tmp_path):
+        r, squash = repo
+        wt = tmp_path / "wt-feat"
+        _git(r, "worktree", "add", "-q", str(wt), "feat/two")
+        rows = mod.worktree_rows(r, None, {"feat/two": [(7, squash)]}, set())
+        by = {row.branch: row for row in rows}
+        assert by["feat/two"].verdict == "REMOVE (squash-verified #7)"
+        # dirty the worktree: it must flip to HOLD and list the NAME only
+        (wt / "scratch.txt").write_text("secret-looking content\n")
+        rows = mod.worktree_rows(r, None, {"feat/two": [(7, squash)]}, set())
+        row = {x.branch: x for x in rows}["feat/two"]
+        assert row.verdict == "HOLD (dirty 1)" and row.dirty == ["scratch.txt"]
+        # self-path and open-PR exclusions
+        rows = mod.worktree_rows(r, wt, {}, set())
+        assert {x.branch: x for x in rows}["feat/two"].verdict.startswith("KEEP (this session)")
+        rows = mod.worktree_rows(r, None, {}, {"feat/two"})
+        assert {x.branch: x for x in rows}["feat/two"].verdict.startswith("KEEP (open PR)")
+
+    def test_main_script_subcommand_writes_only_remove_lines(
+        self, mod, repo, tmp_path, monkeypatch, capsys
+    ):
+        r, squash = repo
+        monkeypatch.setattr(mod, "merged_prs", lambda gh: {"feat/two": [(7, squash)]})
+        monkeypatch.setattr(mod, "open_pr_branches", lambda gh: set())
+        out = tmp_path / "sweep.sh"
+        assert mod.main(["x", "script", "--repo", str(r), "-o", str(out)]) == 0
+        text = out.read_text()
+        assert 'branch -D "feat/two"' in text and "REMOVE (squash-verified #7)" in text
+        assert mod.main(["x", "branches", "--repo", str(r)]) == 0
+        assert "feat/two" in capsys.readouterr().out
+
+    def test_gh_readers_parse_json(self, mod, monkeypatch):
+        class R:
+            def __init__(self, stdout):
+                self.stdout = stdout
+
+        def fake_run(cmd, **kw):
+            if "merged" in cmd:
+                return R(
+                    '[{"number": 5, "headRefName": "b", "mergeCommit": {"oid": "abc"}}, {"number": 6, "headRefName": "c", "mergeCommit": null}]'
+                )
+            return R('[{"headRefName": "open-one"}]')
+
+        monkeypatch.setattr(mod.subprocess, "run", fake_run)
+        assert mod.merged_prs("o/r") == {"b": [(5, "abc")]}
+        assert mod.open_pr_branches("o/r") == {"open-one"}

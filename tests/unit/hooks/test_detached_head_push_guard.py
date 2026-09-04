@@ -11,6 +11,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 import subprocess
 import sys
@@ -135,3 +136,97 @@ class TestFailOpen:
     def test_unparseable_command_allows(self, mod, repo):
         _git(repo, "checkout", "-q", "--detach")
         assert mod.main(_ctx('git push "unbalanced')) == 0
+
+
+class TestStdinAndEntrypoint:
+    def test_read_stdin_context_shapes(self, mod, monkeypatch):
+        import io
+
+        for raw, expect in (
+            ("", {}),
+            ("   ", {}),
+            ("not json", {}),
+            ("[1,2]", {}),
+            ('{"a": 1}', {"a": 1}),
+        ):
+            monkeypatch.setattr(sys, "stdin", io.StringIO(raw))
+            assert mod._read_stdin_context() == expect
+
+    def test_script_round_trip_blocks_on_detached_head(self, repo):
+        """The real entrypoint: stdin JSON -> exit 2 + recovery text on stderr."""
+        _git(repo, "checkout", "-q", "--detach")
+        payload = json.dumps(
+            {"tool_name": "Bash", "tool_input": {"command": "git push origin main"}}
+        )
+        r = subprocess.run(
+            [sys.executable, str(SCRIPT_PATH)],
+            input=payload,
+            capture_output=True,
+            text=True,
+            cwd=repo,
+            timeout=30,
+        )
+        assert r.returncode == 2
+        assert "HEAD is detached" in r.stderr
+
+    def test_script_round_trip_allows_on_branch(self, repo):
+        payload = json.dumps(
+            {"tool_name": "Bash", "tool_input": {"command": "git push origin main"}}
+        )
+        r = subprocess.run(
+            [sys.executable, str(SCRIPT_PATH)],
+            input=payload,
+            capture_output=True,
+            text=True,
+            cwd=repo,
+            timeout=30,
+        )
+        assert r.returncode == 0
+
+    def test_script_round_trip_empty_stdin_allows(self, repo):
+        r = subprocess.run(
+            [sys.executable, str(SCRIPT_PATH)],
+            input="",
+            capture_output=True,
+            text=True,
+            cwd=repo,
+            timeout=30,
+        )
+        assert r.returncode == 0
+
+
+class TestFailOpenBranches:
+    """Every path where the guard cannot know must ALLOW, and never raise."""
+
+    def test_metrics_log_unwritable_is_swallowed(self, mod, tmp_path, monkeypatch):
+        blocker = tmp_path / "not-a-dir"
+        blocker.write_text("file, not a directory")
+        monkeypatch.setattr(mod, "METRICS_LOG", blocker / "metrics.jsonl")
+        mod._log_metric("fired", "x")  # OSError inside -> swallowed
+
+    def test_detached_head_unreadable_git(self, mod, monkeypatch):
+        def boom(*a, **k):
+            raise OSError("no git")
+
+        monkeypatch.setattr(mod.subprocess, "run", boom)
+        assert mod.detached_head() is None
+
+    def test_block_message_survives_unreadable_git(self, mod, monkeypatch):
+        def boom(*a, **k):
+            raise OSError("no git")
+
+        monkeypatch.setattr(mod.subprocess, "run", boom)
+        assert "HEAD is detached at ?" in mod.block_message()
+
+    def test_main_allows_when_tokenizer_unavailable(self, mod, monkeypatch, repo):
+        _git(repo, "checkout", "-q", "--detach")
+        monkeypatch.setattr(mod, "_load_git_invocations", lambda: None)
+        assert mod.main(_ctx("git push origin main")) == 0
+
+    def test_main_allows_on_unknown_state(self, mod, monkeypatch, repo):
+        monkeypatch.setattr(mod, "detached_head", lambda cwd=None: None)
+        assert mod.main(_ctx("git push origin main")) == 0
+
+    def test_main_ignores_commands_without_push_word(self, mod, repo):
+        _git(repo, "checkout", "-q", "--detach")
+        assert mod.main(_ctx("git status")) == 0

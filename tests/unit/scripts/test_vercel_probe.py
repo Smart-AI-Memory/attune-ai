@@ -144,3 +144,58 @@ class TestDomainsReport:
         assert any(
             "/v9/projects/p1/domains" in c for c in calls
         )  # attachment endpoint, not /v4/domains
+
+
+class TestMain:
+    def test_main_prints_env_and_domains_and_exit_code(self, mod, monkeypatch, tmp_path, capsys):
+        monkeypatch.setattr(
+            mod, "pull_env", lambda env, cwd: {"RESEND_API_KEY": "re_" + "x" * 33, "PGHOST": ""}
+        )
+        monkeypatch.setattr(mod, "_token", lambda: "tok")
+        monkeypatch.setattr(mod, "_link", lambda cwd: ("org", "prj"))
+        monkeypatch.setattr(
+            mod, "env_types", lambda t, o, p: {"RESEND_API_KEY": "encrypted", "PGHOST": "sensitive"}
+        )
+        monkeypatch.setattr(
+            mod,
+            "domains_report",
+            lambda t, o: [
+                "domain attachment (project -> domains):",
+                "  website (prj) x.com [primary]",
+            ],
+        )
+        rc = mod.main(["x", "--cwd", str(tmp_path), "--expect", "RESEND_API_KEY", "--domains"])
+        out = capsys.readouterr().out
+        assert (
+            rc == 0 and "prefix=re_" in out and "not pullable" in out and "x.com [primary]" in out
+        )
+        assert "x" * 20 not in out
+
+    def test_main_without_link_reports_and_fails_domains(self, mod, monkeypatch, tmp_path, capsys):
+        monkeypatch.setattr(mod, "pull_env", lambda env, cwd: {})
+        monkeypatch.setattr(mod, "_token", lambda: "")
+        monkeypatch.setattr(mod, "_link", lambda cwd: ("", ""))
+        rc = mod.main(["x", "--cwd", str(tmp_path), "--domains"])
+        assert rc == 1 and "no token" in capsys.readouterr().err
+
+    def test_env_types_degrades_to_empty_on_api_error(self, mod, monkeypatch):
+        import urllib.error
+
+        def boom(path, token):
+            raise urllib.error.URLError("down")
+
+        monkeypatch.setattr(mod, "_get", boom)
+        assert mod.env_types("tok", "org", "prj") == {}
+        assert mod.env_types("", "org", "prj") == {}
+
+    def test_link_and_token_readers(self, mod, tmp_path, monkeypatch):
+        (tmp_path / ".vercel").mkdir()
+        (tmp_path / ".vercel" / "project.json").write_text(
+            '{"orgId": "team_1", "projectId": "prj_1"}'
+        )
+        sub = tmp_path / "website" / "app"
+        sub.mkdir(parents=True)
+        assert mod._link(sub) == ("team_1", "prj_1")
+        assert mod._link(Path("/")) == ("", "")
+        monkeypatch.setenv("VERCEL_TOKEN", "env-token")
+        assert mod._token() == "env-token"
