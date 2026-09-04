@@ -2,9 +2,10 @@
  * `GET /api/cron/usage-digest` — daily usage digest email.
  *
  * Invoked by Vercel Cron (see `crons` in vercel.json), which sends
- * `Authorization: Bearer $CRON_SECRET`. Also callable by hand with the
- * same bearer token, or with `x-admin-secret: $ADMIN_SECRET`, so the
- * digest can be previewed or re-sent without waiting for the schedule.
+ * `Authorization: Bearer $CRON_SECRET`. Also callable by hand with
+ * `x-admin-secret: $ADMIN_SECRET` (each header is checked against its
+ * own secret), so the digest can be previewed or re-sent without
+ * waiting for the schedule.
  *
  * Behaviour:
  *   - No secret configured  → 500. Fails closed; never runs unauthenticated.
@@ -40,14 +41,19 @@ function secretsMatch(a: string, b: string): boolean {
  * nothing is authorized, so a misconfigured deploy cannot leak counts.
  */
 export function isAuthorized(req: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET || process.env.ADMIN_SECRET;
-  if (!secret) return false;
+  // Each header is compared against ITS OWN secret. Picking one secret
+  // (`CRON_SECRET || ADMIN_SECRET`) and checking both headers against it
+  // meant that once CRON_SECRET existed, the admin header was compared
+  // against the cron secret and the manual path could never authorize.
+  const cron = process.env.CRON_SECRET;
+  const admin = process.env.ADMIN_SECRET;
+  if (!cron && !admin) return false;
 
   const auth = req.headers.get('authorization');
-  if (auth?.startsWith('Bearer ') && secretsMatch(auth.slice(7), secret)) return true;
+  if (cron && auth?.startsWith('Bearer ') && secretsMatch(auth.slice(7), cron)) return true;
 
   const header = req.headers.get('x-admin-secret');
-  if (header && secretsMatch(header, secret)) return true;
+  if (admin && header && secretsMatch(header, admin)) return true;
 
   return false;
 }
