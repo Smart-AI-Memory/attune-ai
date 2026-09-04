@@ -159,6 +159,24 @@ RECALL_MAP: dict[str, list[dict[str, str]]] = {
                 "explicit word list. (`$(...)` output still splits.)"
             ),
         },
+        # zsh no-word-split, ARGUMENT-LIST shapes (retro 2026-09-04 item
+        # 6): the `for` rule above did not fire on `set -- $pair` (the
+        # whole "branch 2373" string became $1, both patch-ids went
+        # empty, and a squash-merge check printed IDENTICAL for ten
+        # branches) nor on `pre-commit run black --files $F` (one
+        # mangled path linted). Same trap, different syntax.
+        {
+            "rule_id": "zsh-no-word-split-args",
+            "match_regex": r"(?:\bset\s+--|--files|--paths|--include)\s+\$\{?[A-Za-z_]\w*\}?(?:\s|$)",
+            "text": (
+                "zsh does NOT word-split unquoted `$var` — `set -- $pair` "
+                "makes the WHOLE string $1 and `--files $F` passes ONE "
+                "mangled path. A downstream compare of two empty results "
+                "then reads IDENTICAL. Use `${=var}`, an array "
+                '(`"${F[@]}"`), `read -r a b <<<"$pair"`, or move the '
+                "loop to Python."
+            ),
+        },
         {
             "rule_id": "zsh-status-readonly",
             "match_substring": "status=",
