@@ -112,7 +112,8 @@ class TestMain:
         out = capsys.readouterr().out
         assert value not in out and "len=64" in out and "sha=" in out
         assert store.read_text() == f"K={value}\n"
-        assert stat.S_IMODE(os.stat(store).st_mode) == 0o600
+        if os.name != "nt":  # Windows has no POSIX mode bits (reports 0o666)
+            assert stat.S_IMODE(os.stat(store).st_mode) == 0o600
 
     def test_store_replaces_existing_line(self, mod, tmp_path):
         p = tmp_path / "x.env"
