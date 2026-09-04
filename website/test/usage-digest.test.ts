@@ -152,6 +152,20 @@ describe('GET /api/cron/usage-digest', () => {
     expect(isAuthorized(req(undefined, { 'x-admin-secret': 'admin-secret' }))).toBe(true);
   });
 
+  it('checks each header against its own secret when BOTH are configured', () => {
+    // The production shape: CRON_SECRET for Vercel, ADMIN_SECRET for a human.
+    // A single `CRON_SECRET || ADMIN_SECRET` pick compared the admin header
+    // against the cron secret and locked the manual path out (found live
+    // 2026-09-04 with a real ADMIN_SECRET returning 401).
+    vi.stubEnv('CRON_SECRET', 'cron-secret');
+    vi.stubEnv('ADMIN_SECRET', 'admin-secret');
+    expect(isAuthorized(req(undefined, { 'x-admin-secret': 'admin-secret' }))).toBe(true);
+    expect(isAuthorized(req(undefined, { authorization: 'Bearer cron-secret' }))).toBe(true);
+    // Cross-use is not accepted: the admin value is not a bearer, and vice versa.
+    expect(isAuthorized(req(undefined, { 'x-admin-secret': 'cron-secret' }))).toBe(false);
+    expect(isAuthorized(req(undefined, { authorization: 'Bearer admin-secret' }))).toBe(false);
+  });
+
   it('sends the digest when there was activity', async () => {
     mockedCollect.mockResolvedValue(digest());
     const res = await GET(req(undefined, AUTH));
