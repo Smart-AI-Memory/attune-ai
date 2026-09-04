@@ -27,9 +27,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   returns 400 on forced tool use (`type "tool" and "any" are not supported
   for this model`), which would have broken every default-tier curator
   briefing. Fable models now steer with `tool_choice: auto` (the prompt
-  already names `emit_curation`) and keep the schema guarantee through
-  strict tool use (`strict: true` plus `additionalProperties: false` on
-  every schema object); non-fable pins keep the forced call unchanged.
+  names `emit_curation` and a mid-conversation `system` message marks the
+  call as required for the turn) and keep the arguments schema-valid
+  through strict tool use (`strict: true` plus `additionalProperties:
+  false` on every schema object); `auto` cannot force the call, so a
+  prose-only reply degrades to the offline briefing rather than posing as
+  one (codex cross-review lane on #2400). Non-fable pins keep the forced
+  call unchanged.
 
 ## [16.2.1] - 2026-09-03
 

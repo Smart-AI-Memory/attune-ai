@@ -1,10 +1,11 @@
 """JSON schema for the curator's tool-use output.
 
 The orchestrator has the model call a single ``emit_curation`` tool
-whose ``input`` is guaranteed to match :data:`_CURATION_SCHEMA` (per
-the CLAUDE.md lesson "Forced Anthropic tool-use is the cleanest path to
-guaranteed-schema JSON"; on Fable 5.1, which rejects forced
-``tool_choice``, the guarantee comes from strict tool use instead). The
+whose ``input`` matches :data:`_CURATION_SCHEMA` whenever the tool is
+called (per the CLAUDE.md lesson "Forced Anthropic tool-use is the
+cleanest path to guaranteed-schema JSON"; on Fable 5.1, which rejects
+forced ``tool_choice``, strict tool use keeps the arguments schema-valid
+but cannot force the call — see ``core.py``). The
 schema is the ``docs/specs/bulletin-curator/design.md`` "Output schema"
 plus ``additionalProperties: false`` on every object — strict tool use
 requires it.
