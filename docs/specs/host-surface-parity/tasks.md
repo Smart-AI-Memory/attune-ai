@@ -27,9 +27,14 @@ are additionally gated on release-16-manifest Phases A and B.
       workspace round_complete roster check pinned byte-for-byte.
     </file>
   </files-to-create>
+  <files-to-modify>
+    <file path="tests/unit/scripts/test_project_collaboration_contract.py">
+      Pin a hand edit inside a valid projected block as stale.
+    </file>
+  </files-to-modify>
   <validation>
     <check>Both suites green on main with no production change.</check>
-    <check>The projector's existing tests still refuse a hand edit inside the marked block.</check>
+    <check>The projector suite refuses a hand edit inside the marked block.</check>
   </validation>
 </task>
 ```
@@ -316,9 +321,10 @@ The chair ruled R9/R10 the one mechanical enforcer to adopt from
 that audit, declining all other new gates. Sequencing per D5:
 after Task 4's R4 receipt, before Task 2. D6 probe 2 verified that
 installed attune-forms already exports `HostCapabilities`,
-`InteractionProfile` and a `conformance` module
-(`ConformanceReceipt/Report/Status/Finding`) — this task wires
-against them, it does not reinvent them. The deferred round-2
+`InteractionProfile`, and the `attune_forms.conformance` types
+`ConformanceReceipt`, `ConformanceReport`, `ConformanceStatus`, and
+`ConformanceFinding` — this task wires against them, it does not
+reinvent them. The deferred round-2
 questions (attestation schema for host-UI resolutions; the single
 no-privileged-host receipt producible in CI) become concrete here
 and reopen with a fresh chair go per D5 — do not design past them

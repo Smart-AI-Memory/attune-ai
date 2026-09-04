@@ -249,9 +249,10 @@ Probes run against the real tree and the installed attune-forms
    exports `ProjectionRenderers` with fields
    `rich / portable / headless / retained` — literally the
    three-twin record per surface — plus `HostCapabilities`,
-   `InteractionProfile`, and a `conformance` module
-   (`ConformanceReceipt/Report/Status/Finding`) matching the R9
-   convergence vocabulary (verified by import + field inspection).
+   `InteractionProfile`, and the `attune_forms.conformance` types
+   `ConformanceReceipt`, `ConformanceReport`, `ConformanceStatus`, and
+   `ConformanceFinding` matching the R9 convergence vocabulary
+   (verified by import + field inspection).
    The registry locus is wiring, not new construction.
 3. **Host hooks and templates DO live in this tree** (plugin/
    hooks, `.claude/` hooks, and R5's future task templates), so
