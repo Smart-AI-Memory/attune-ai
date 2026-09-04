@@ -255,6 +255,13 @@ def test_release_without_a_client_returns_false():
     assert _coordinator(None, "agent-a").release_lock("anything") is False
 
 
+def test_refresh_without_a_client_returns_false():
+    """Same degrade contract on the refresh half: no client, no extension."""
+    from attune.memory.cross_session.locks import refresh_if_owner
+
+    assert refresh_if_owner(None, "any:lock", "agent-a", 30) is False
+
+
 # --------------------------------------------------------------------------
 # Sweep — the same class on the service singleton lock
 # --------------------------------------------------------------------------
