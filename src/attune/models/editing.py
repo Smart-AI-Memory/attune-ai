@@ -2,7 +2,7 @@
 
 Writing tasks draft on the CAPABLE tier (Sonnet); editing/polish
 passes run on a stronger editor model. This is deliberately NOT a
-new tier: ``attune.model_tiers`` is a byte-mirrored contract owned
+new tier: ``attune.model_tiers`` re-exports the contract owned
 by attune-rag, while the editing pass is an attune-ai-local concern
 — so it gets its own resolver (ruled 2026-07-29, recorded in
 docs/specs/fable-premium-tier/decisions.md).

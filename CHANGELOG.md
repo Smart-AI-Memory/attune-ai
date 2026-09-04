@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`attune.model_tiers` re-exports `attune_rag.model_tiers`** (lazily, via
+  call-time wrappers + PEP 562 `__getattr__`, so `import attune.config`
+  still loads without attune-rag's package init) instead of carrying a
+  byte-for-byte mirror; the drift guard
+  (`tests/unit/test_model_tiers_drift.py`) and its dedicated CI install
+  step are removed. The mirror's premise — "attune-ai does not depend on
+  attune-rag, the plugin installs standalone" — has been false since
+  attune-rag became a core dependency on 2026-04-30. The `attune-rag`
+  floor rises `0.1.5` → `1.2.0` (the first release whose premium default
+  is `claude-fable-5-1`) and `uv.lock` moves to 1.2.0. Import path and
+  exported names are unchanged.
+
 - **Premium tier moves to Claude Fable 5.1** (`claude-fable-5-1`): the tier
   default in `attune.model_tiers`, the registry premium entry, the cost
   baseline, the spec runner default, and every projected doc that named

@@ -144,16 +144,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e .[dev]
 
-    - name: Install attune-rag for the model-tiers drift test
-      if: needs.changes.outputs.website_only != 'true'
-      # attune-ai does NOT depend on attune-rag (deliberately absent from
-      # pyproject) — the plugin installs standalone. This step exists only
-      # so tests/unit/test_model_tiers_drift.py runs instead of skipping:
-      # attune.model_tiers mirrors the canonical attune_rag.model_tiers
-      # contract, and drift between the copies must fail CI, not ship.
-      # >=0.8 is the first attune-rag release that carries model_tiers.
-      run: pip install "attune-rag>=0.8"
-
     - name: Run tests
       if: needs.changes.outputs.website_only != 'true'
       # --timeout=60 + --timeout-method=thread: names a hanging test (with a

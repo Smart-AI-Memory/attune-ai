@@ -1,8 +1,9 @@
 """Unit tests for attune.model_tiers (task 1, docs/specs/fable-premium-tier).
 
-Mirrors attune-author's test_model_tiers.py, as the module mirrors the
-canonical attune_rag.model_tiers. Drift between the copies is caught by
-tests/unit/test_model_tiers_drift.py (task 2).
+``attune.model_tiers`` re-exports the canonical ``attune_rag.model_tiers``
+(the mirror + drift guard were retired 2026-09-04), so these tests
+exercise the contract through the path attune-ai's call sites use; log
+records come from the canonical module's logger.
 """
 
 from __future__ import annotations
@@ -57,7 +58,7 @@ class TestResolveModel:
 
     def test_unknown_override_warns_but_is_honored(self, monkeypatch, caplog):
         monkeypatch.setenv(_ENV["premium"], "claude-tpyo-9")
-        with caplog.at_level(logging.WARNING, logger="attune.model_tiers"):
+        with caplog.at_level(logging.WARNING, logger="attune_rag.model_tiers"):
             assert resolve_model("premium") == "claude-tpyo-9"
         warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
         assert len(warnings) == 1
@@ -67,7 +68,7 @@ class TestResolveModel:
 
     def test_known_override_does_not_warn(self, monkeypatch, caplog):
         monkeypatch.setenv(_ENV["premium"], "claude-sonnet-5")
-        with caplog.at_level(logging.WARNING, logger="attune.model_tiers"):
+        with caplog.at_level(logging.WARNING, logger="attune_rag.model_tiers"):
             assert resolve_model("premium") == "claude-sonnet-5"
         assert not [r for r in caplog.records if r.levelno == logging.WARNING]
 
@@ -82,7 +83,7 @@ class TestResolveModel:
         """Fable 5 is still served: pinning it must not trip the typo warning."""
         assert {"claude-fable-5-1", "claude-fable-5"} <= _KNOWN_MODELS
         monkeypatch.setenv(_ENV["premium"], "claude-fable-5")
-        with caplog.at_level(logging.WARNING, logger="attune.model_tiers"):
+        with caplog.at_level(logging.WARNING, logger="attune_rag.model_tiers"):
             assert resolve_model("premium") == "claude-fable-5"
         assert not [r for r in caplog.records if r.levelno == logging.WARNING]
 
