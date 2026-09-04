@@ -62,6 +62,18 @@ make this change safe, and a tier that ops can see is what lets a
 power user be demanding about where a role runs. *(Superseded by the
 ruling above — the table was unanimous for (b).)*
 
+**Current-tree correction (2026-09-04).** Commit ccb4fe7bc later
+retired the attune-ai mirror and `tests/unit/test_model_tiers_drift.py`;
+`attune.model_tiers` now lazily re-exports canonical
+`attune_rag.model_tiers`. D2's outcome is unchanged. The count was verified
+2026-09-04 by
+`rg -n '^class (ModelTier|Tier)\b' src/attune/models/registry.py src/attune/config/agent_config.py src/attune/workflows/compat.py src/attune/workflows/progressive/core.py`,
+which returned exactly those four definitions; direct inspection found only
+`cheap`, `capable`, and `premium` members. Task 12 therefore adds its own
+focused assertion that the four remaining in-tree enum call-paths stay exactly
+three-member and records a separate diff manifest proving it does not edit
+attune-rag.
+
 ## D3 — No third capability contract (RULED 2026-09-02, chair — confirmed)
 
 release-16-manifest D1 ruled exactly two capability contracts:
@@ -89,11 +101,14 @@ tripwire material, not a ruling.
 
 Collaboration-contract principle 1 ("the receipt beats the promise")
 carries the *aspirational* label because no gate can check intent.
-For surfaces the check is mechanical: a RICH renderer or host hook
-either has its PORTABLE and HEADLESS twins receipted or it does not.
-R2 proposes `tests/unit/gates/test_surface_parity.py` as the
-enforcer for this case, and Task 1 lands it green before any new
-renderer exists so it gates rather than chases.
+For surfaces the check is mechanical after D10's execution correction:
+each enhanced RICH/host-native renderer or enhanced subject-route target has its own
+PORTABLE/HEADLESS parity obligation, while detected informational hook
+delivery owes content-schema/destination/delivery evidence without
+fabricated twins.
+External AF-1 first adds the missing registry and workspace HEADLESS target;
+Task 1B then lands `tests/unit/gates/test_surface_parity.py` green before
+Task 2's tier-0 renderer, so the gate still gates rather than chases.
 
 **Ruling (2026-09-02, promoted from round 1):** adopted with three
 amendments, one composed from each seat:
@@ -102,9 +117,12 @@ amendments, one composed from each seat:
   itself drift-guarded — the gate fails on any expired entry. A
   spike may exist untwinned; a shipped surface may not (Claude;
   Codex's "explicit, expiring parity exception" is the same rule).
-- the receipt clause reads **"schema-identical validated payload"**
-  with nonce/revision fields normalized — byte identity is false by
-  construction for stateful surfaces (Claude H2 dissent).
+- the receipt clause reads **"schema-identical validated payload"** with only
+  declared presentation volatility normalized — the historical shorthand
+  "nonce/revision fields normalized" means renderer-only DOM nonces/paths or
+  presentation revisions, never authoritative `action_nonce`, workspace
+  `revision`, event sequence, contract hash, or collector bindings. Byte
+  identity is false by construction for stateful surfaces (Claude H2 dissent).
 - parity assertions include **interaction lifecycle** (abort,
   timeout, validation-feedback semantics), not output identity
   alone (Antigravity).
@@ -134,7 +152,8 @@ synthesis against the seat messages. Per-item record:
 - **R2 — AMEND, adopted** per D4's amended ruling; locus open (D6).
 - **R3 — AMEND, adopted** (the seat's bare ADOPT was overruled by
   the Codex/Antigravity convergence): generated, sentinel-bracketed
-  blocks (`ATTUNE:MEMORY:START/END`) with provenance headers naming
+  blocks (`<!-- ATTUNE:MEMORY:START -->` ...
+  `<!-- ATTUNE:MEMORY:END -->`) with provenance headers naming
   the regenerate command; **bounded top-K digest** (~25 entries,
   hit-frequency prioritized) — never the unbounded index;
   **per-host independent line budgets**; stale-entry cleanup and
@@ -156,7 +175,8 @@ synthesis against the seat messages. Per-item record:
   budget-clock settlement is separately asserted.
 - **R6 — ADOPT** with D2's routing-label mechanics; requirement
   text and Task 8 amended in this change.
-- **R7 — AMEND, adopted.** Typed role slots validated for
+- **R7 — AMEND, adopted.** Typed role slots carry a unique stable
+  `slot_id` distinct from the colon-bearing extension role and are validated for
   invariants (exactly one moderator-with-receipts, one plan-only
   reviewer, one code-native proposer); slots carry execution mode,
   trust boundary, required capabilities, and receipt obligations,
@@ -173,6 +193,10 @@ synthesis against the seat messages. Per-item record:
   keep asks-per-session as a secondary guard; `friction_gate` acts
   only above a minimum-outcomes floor; report zero-outcome rate and
   fallback frequency; never record answer contents; no new store.
+  The closed session-outcome vocabulary is `accepted`, `cancelled`,
+  `aborted`, `timed_out`, and `blocked`; an observed abandonment is
+  `aborted`. A session that ends with no observable terminal event is counted
+  separately in `zero_terminal_outcome_sessions` instead of being dropped.
 - **R9 — ADOPT (new, the round's strongest signal).** The merged
   capability-descriptor/conformance layer all three seats
   independently proposed: a machine-readable **capability
@@ -195,13 +219,15 @@ synthesis against the seat messages. Per-item record:
   separate question. The advisory-only line holds: fact-check
   probes are advisory-labeled and hosted-model countersigned; a
   local model may raise its hand, never wave things through.
-- **Round 2 — deferred.** Both member questions (msg 4: attestation
-  schema for host-UI resolutions; msg 6: the single
-  no-privileged-host receipt, producible in CI with no host) feed
-  R9's design rather than blocking any ruling above; they reopen
-  with a fresh chair go when R9 design work makes them concrete.
+- **Round 2 — deferred at this ruling.** Both member questions (msg 4:
+  attestation schema for host-UI resolutions; msg 6: the single
+  no-privileged-host receipt, producible in CI with no host) fed R9's
+  later task design. D8/D9 subsequently made them concrete and granted
+  Task 10's execution go; D10 preserved that go while correcting its
+  dependency order.
 
-**Sequencing (moderator read, adopted):** 16.3 — R4 receipt first,
+**Historical sequencing (moderator read, adopted; superseded by D10's
+execution correction):** 16.3 — R4 receipt first,
 R9 foundation, R1 as amended, D2 label, Task 7 reranker alone.
 16.4 — R3, R5, R7, R8, Phase B workflow extensions.
 
@@ -220,6 +246,11 @@ a "no renderer escapes the registry" sweep inside attune-forms —
 is accepted as part of the ruling and lands in the attune-forms
 repo alongside Task 1's gate here.
 
+**Execution correction (D10):** the `ProjectionRenderers` name above
+described the intended iterable registry, but 0.12.2's object with that
+name is only one injectable callable bundle. D10 preserves the hybrid
+locus while adding the missing registry as external AF-1.
+
 The one real disagreement inside the round's shared direction:
 Codex would replace filesystem enumeration with a **declared
 surface registry** ("scanning is too easy to evade accidentally and
@@ -229,38 +260,86 @@ the enumerating gate. The synthesis notes the positions compose
 assertions). Not ruled at promotion; the chair rules the locus
 before Task 1 lands the gate.
 
-### Calibration probe (2026-09-03, lead — evidence for the ruling, per the probe-before-gate lesson)
+### Calibration probe (2026-09-03, lead; corrected by the 2026-09-04 execution probe)
 
 Probes run against the real tree and the installed attune-forms
-0.12.2; every claim below is verified by the named probe.
+0.12.2. The enum-literal search was corrected and re-run on 2026-09-04;
+every current claim below is verified by its named probe.
 
-1. **A filesystem enumerator in attune-ai is blind by construction,
-   not merely evadable.** `grep -r 'Surface\.RICH|Surface\.PORTABLE|
-   Surface\.HEADLESS' src/ plugin/` → **zero hits**; `grep -r
-   'ui://' src/` → zero. Every renderer lives in the separate
-   `attune-forms` distribution; attune-ai only *imports* it (10
-   modules, verified). R2's proposed
+1. **An enum-literal filesystem enumerator in attune-ai is blind by
+   construction, not merely evadable.**
+   `rg -n 'ProjectionSurface\.(RICH|PORTABLE|HEADLESS)' src plugin` →
+   **zero hits**; `rg -n 'ui://' src` → zero. The earlier logged BRE
+   `grep` expression lacked `-E` and is not evidence. This corrected probe
+   proves only that no local file registers
+   itself with those enum literals; it does not prove that local rich
+   adapters are absent. `attune-ai` imports the separate renderer
+   package and owns stateful adapters under `src/attune/elicitation/`,
+   which D10's local producer sweep must cover. R2's proposed
    `tests/unit/gates/test_surface_parity.py` "enumerating every
    RICH-tier renderer in the tree" would find nothing and pass
    **vacuously green** — the vacuous-gate class, satisfied by the
    very blindness it should catch. This is stronger than Codex's
    stated brittleness argument.
-2. **The registry half-exists.** Installed attune-forms already
-   exports `ProjectionRenderers` with fields
-   `rich / portable / headless / retained` — literally the
-   three-twin record per surface — plus `HostCapabilities`,
-   `InteractionProfile`, and the `attune_forms.conformance` types
-   `ConformanceReceipt`, `ConformanceReport`, `ConformanceStatus`, and
-   `ConformanceFinding` matching the R9 convergence vocabulary
-   (verified by import + field inspection).
-   The registry locus is wiring, not new construction.
-3. **Host hooks and templates DO live in this tree** (plugin/
-   hooks, `.claude/` hooks, and R5's future task templates), so
-   enumeration has a real domain there — and a registry-only gate
-   would miss an *unregistered* hook, which is the evasion Codex
-   worried about, pointed the other way.
+2. **Correction: a renderer bundle exists; a registry does not.**
+   Installed attune-forms 0.12.2 exports the frozen
+   `ProjectionRenderers` dataclass with
+   `rich / portable / headless / retained` callables for one workspace
+   renderer bundle. It exports zero instances, cannot enumerate
+   renderer families, and excludes the standalone form renderers.
+   The public enum is `ProjectionSurface`, not `Surface`. The
+   conformance harness checks workspace action-ID parity, not
+   schema-identical validated payloads or the D4 lifecycle. The
+   registry locus therefore requires new construction and a release.
+3. **Correction: host artifacts live here, but the proposed domain
+   was incomplete and cannot start green.** The real inventory is 15
+   unique paths registered by `plugin/hooks/hooks.json`, nine by
+   `.claude/settings.json`, plus
+   `plugin/commands/handoff.md`; `.claude/hooks/` does not exist.
+   None of the 24 unique path-resolved registered Python hook
+   entrypoints declares
+   portable/headless twins or parity receipts, and no proposed header
+   marker exists. Enumeration has a real domain, but literal D6 would
+   require closing that shipped baseline debt before Task 1 lands.
 
-**Lead recommendation: hybrid, subject-local.** (a) Renderer parity
+**2026-09-04 correction receipts.** The package probe ran
+`importlib.metadata.version`, enumerated `ProjectionSurface`, inspected
+the `ProjectionRenderers` signature, searched both `attune_forms` and
+`attune_forms.conformance` module dictionaries for exported instances,
+and resolved the four standalone form functions; it returned `0.12.2`,
+`(rich, portable, headless)`, four callable fields, two empty instance
+lists, and all four functions present. The corrected host probe resolved
+every `command` from `plugin/hooks/hooks.json` and
+`.claude/settings.json` to a repository-relative path without executing
+it. It returned 16 and ten registration rows, 15 and nine unique paths,
+and 24 combined unique Python entrypoint paths. The earlier 22 was a
+basename count that collapsed the distinct `format_on_save.py` and
+`security_guard.py` files under `plugin/hooks/` and
+`src/attune/hooks/scripts/`. `test -d .claude/hooks` was
+false; `plugin/commands/` contained only `handoff.md`, whose command
+implementation adds `plugin/hooks/_handoff_cli.py` as the 25th unique
+hook-plus-command execution path. The conformance scope
+claim was verified by reading `_check_parity` and
+`ConformanceReceipt` in the installed 0.12.2 module: they carry action
+IDs plus DOM/keyboard/viewport/retention/latency results, not validated
+payload or abort/timeout/feedback envelopes.
+
+The path-aware positive hook-envelope probe inspected all 24 resolved
+Python hook entrypoint paths and returned exactly three producers:
+`plugin/hooks/jit_recall.py`, `plugin/hooks/lesson_recall.py`, and
+`plugin/hooks/session_stash.py`, all on the paired
+`hookSpecificOutput.additionalContext` plus `hookEventName` signature
+and none on `systemMessage`. A separate 2026-09-04 `rg` probe of the
+command-resolved 25th path, `plugin/hooks/_handoff_cli.py`, found no
+projection call or positive envelope key. Task 1B nevertheless includes every
+manifest-resolved command implementation in the same semantic scan; the
+current negative is evidence, not an exemption. The Task 1B scanner broadens construction
+syntax and fails closed on unresolved candidate mappings; the observed
+three-path baseline is not permission to retain a mapping-literal-only
+scanner.
+
+**Historical lead recommendation (factual premise corrected above):
+hybrid, subject-local.** (a) Renderer parity
 is asserted against attune-forms' declared `ProjectionRenderers`
 registry — attune-ai's gate imports it and fails on any registered
 surface lacking a twin or receipt (same cross-package drift-guard
@@ -273,7 +352,9 @@ mechanisms to maintain, and the registry side still trusts
 attune-forms to register every renderer — a sweep test *inside
 attune-forms* asserting "no renderer module escapes the registry"
 is the missing third leg, and it belongs to the attune-forms repo,
-which this spec does not control. NOT RULED — chair's call.
+which this spec does not control. D6's opening ruling paragraph
+explicitly adopted both the hybrid and the third leg; D10 records the
+prerequisite the calibration mistook for existing wiring.
 
 ## D7 — Coverage floor: 90% (RULED 2026-09-03, chair)
 
@@ -297,6 +378,22 @@ in-session on the subscription surface or as plain code+tests;
 no API-billed launch of any kind
 (`ATTUNE_SESSION_SPEND_CAP_USD=0` enforces this machine-wide).
 
+**Evidence correction (2026-09-04).** A chair-authorized external Claude
+cross-review attempt reached a credit-balance response before generation. It
+incurred no token generation or charge, but it proves the Attune spend cap does
+not block an independently launched provider CLI; “enforces this machine-wide”
+was too broad. The D8 implementation tasks remain zero-billed, and external
+review launches require their own explicit chair authorization plus a
+subscription-auth receipt. The failed attempt remains in the append-only R5
+ledger as an enforcement gap, not a zero-spend receipt.
+
+**D10 sequencing correction (2026-09-04):** these gos remain the
+chair's authorization, not a waiver of task dependencies. Task 12 is
+still immediately eligible. Tasks 2, 4, and 10 retain their gos but
+execute on the corrected critical path `AF-1 release → 1B → 4 → 10 →
+AF-2 release → 2`; Task 1B waits for AF-1's published package artifact.
+D10 changes their earliest start; it does not revoke their gos.
+
 ## D9 — Tier provenance adopted as R10 (RULED 2026-09-03, chair)
 
 Promoted from D5's "noted, not adopted" list by a fresh motivation
@@ -312,22 +409,253 @@ new gates**.
 
 The ruling: tier-provenance/Other-rate telemetry (Claude's round-1
 proposal, previously folded into "R1/R9 task design" as a note)
-becomes requirement **R10** — every validated answer carries the
-surface tier that actually rendered it, derived from the response
-envelope and never from the render request, with tier-0
-fall-through and Other-rate surfaced through existing telemetry.
-It is the falsifier for H1's "tier 0 is not a rival" claim.
+becomes requirement **R10**. The executable contract is exhaustive without
+fabricating evidence: only a server-observed completion or authenticated
+adapter callback carries the surface tier; model-mediated policy paths carry
+`unverified_transport`, and the unauthenticated legacy compatibility collector
+carries `unverified_compatibility`, both with no invented tier and separate raw
+counts. Tier-0 fall-through and Other-rate use only verified rows. A keyless non-mocked
+host-bound completion plus the bare HEADLESS control is required before Task 11
+can call this a live falsifier for H1's "tier 0 is not a rival" claim.
 
 Authoring the R9 and R10 task entries (tasks.md Tasks 10 and 11)
 is covered by D8's go. Execution: Task 10 (R9) holds D8's 16.3
 execution go; Task 11 (R10) executes only behind its own chair go.
 Both report against D7's 90% floor and D8's zero-spend constraint.
 
+## D10 — Task 1 execution reconciliation (RULED 2026-09-04 — context-routed, mechanically discovered subjects)
+
+The chair's direct go on the original Task 1 authorized its
+pre-implementation probe, which stopped when both factual premises that
+made a green gate appear to be wiring proved false. Splitting that task
+materially changed its scope: this D10 ruling reconciles the spec but
+does not grant an execution go to AF-1, Task 1B, or either package
+release. Each awaits its own chair go. This is an evidence correction, not a repeal of
+D6's subject-local hybrid intent. The renderer leg still belongs in
+`attune-forms`; the in-tree artifact leg still belongs in
+`attune-ai`. They now execute in two phases:
+
+1. **AF-1 (formerly parsed Task 1A), attune-forms prerequisite.** Add a public, non-empty
+   iterable registry of stable renderer records covering standalone
+   form and generic workspace projection families, plus a subject-local
+   sweep proving every production renderer is named exactly once.
+   (`attune-forms` owns `workspace_to_widget_html` and
+   `workspace_to_markdown`; AF-1 adds its missing production
+   `workspace_to_headless`; `attune-ai` owns their stateful host
+   adapters.) Release the registry as 0.13.0; no `attune-ai` gate may
+   claim completeness against an unpublished checkout.
+   AF-1 depends only on Task 0's completed characterization; it is
+   independent of Task 1B and any `attune-ai` routing-policy
+   implementation and is independently releasable. Publishing remains
+   an explicit release action. Because the attune-ai runner has no repo-
+   aware path grammar, AF-1 executes from the spec's portable handoff in
+   a separate clean attune-forms worktree; no pseudo-path enters a local
+   quality gate.
+2. **Task 1B, attune-ai gate.** Raise the dependency floor from
+   `attune-forms>=0.12.2,<1.0` to
+   `attune-forms>=0.13.0,<1.0`; require unique target/receipt IDs plus
+   exact foreign-key coverage from receipts to every enhanced target's
+   derived obligation key; mechanically discover every
+   in-tree surface producer; enforce D4's 14–30-day experiment expiry,
+   schema-preserving normalization, and the subject-kind lifecycle
+   matrix; then project the surfaces enforcer into the collaboration
+   contract.
+
+Task 1B's wait is not a dependency-resolution accident. Its parser-visible
+objective begins with a human/agent STOP precondition: before any mutation it
+must record that the installed artifact is released 0.13.0, exposes AF-1's
+non-empty registry and production HEADLESS target, and is not an editable
+checkout. False or unverifiable evidence leaves the task BLOCKED without a
+diff.
+
+**Executable-handoff correction (verified 2026-09-04).** The production
+attune-ai spec reader treats every parsed file path as local and the
+runner starts tasks in document order; `<dependencies>` are evidence,
+not a scheduler. AF-1 and AF-2 therefore live in the portable
+`attune-forms-handoff.md` and execute in separate clean worktrees. The
+thirteen local task blocks are ordered in their actual authorization and
+dependency sequence. This uses the existing runner honestly; it does not
+add a cross-repository path grammar or a second scheduler.
+
+**AF-2 definition.** After Task 10, a separately authorized clean
+attune-forms worktree adds the profile-driven
+`host_question_admissibility` / `form_to_host_question` pair and its registry
+target, then releases 0.14.0 under a separate release go. Task 2 consumes only
+that verified released artifact. AF-2 does not replace the specialized
+AskUserQuestion renderer inventoried by AF-1.
+
+**Ruling (confirmed by the chair after pushback).** Adopt the chair's
+direction: "Instead of an opt-out
+vocabulary use it to change to the optimum surface based on whether
+the context is cold or not," with the proposed pushback now binding. A file
+does not self-classify as a helper. Commands and templates are
+inventoried as informational surface subjects by construction; Python
+adapters, registered hooks, and manifest-resolved command implementations
+become subjects when the gate detects a
+call to a registered projection target or one of the closed host-envelope
+signatures defined in design R2. Imports and Claude hook-control JSON
+alone are excluded; the positive hook signatures are `systemMessage`,
+`hookSpecificOutput.additionalContext` paired with an event name,
+event-qualified `PreToolUse` deny plus non-empty
+`permissionDecisionReason`, `Stop`/`SubagentStop` block plus non-empty
+`reason`, declared blocking exit-2 stderr, and non-empty stdout only for events
+whose host contract injects it. Bare reason/control keys remain excluded. The
+scanner unions every registration event for a resolved path before
+classification and traverses statically resolvable repo-local helpers with root
+provenance. Host-exposed roots own subjects/routes; reachable helpers are
+implementation nodes unless independently host-exposed, and a helper mutation
+fails as `root-anchor -> helper-anchor` rather than inventing an unreachable
+helper route.
+A mutation that adds a projection call or recognized signature to an
+unregistered producer anchor must fail with that `file:qualname` named.
+
+Each detected subject declares ordered `cold` and `warm` surface
+preferences and receipted fallback candidates. "Optimum" is deterministic,
+not model judgment: authoritative accessibility constraints filter
+first, then trusted host capabilities, then schema/lifecycle fitness;
+the total receipt predicate chooses cold or warm, and the first
+remaining declared token wins. MCP-native capabilities come only from
+negotiation; non-MCP host-native profiles come only from a trusted
+in-process adapter. Tool/model inputs cannot assert either, and
+unknown/stale/foreign evidence is cold. Warm forms try RICH, current negotiated
+MCP-native elicitation, trusted host-native, PORTABLE, then HEADLESS; a
+compatibility-only target is never route-selectable. Capability cells are typed
+`session_negotiated` or `host_static`; doctor cache may fill only unknown static
+cells, never replace missing current negotiation for MCP native/apps.
+
+Projection and transport are separate: the negotiated MCP-native token uses
+the registered HEADLESS elicitation-schema projection once and asks the host to
+display it natively; bare HEADLESS consumes that projection without a host.
+Candidate filtering is metadata-only, so this is not a repeated HEADLESS
+render. If the one selected renderer fails or unexpectedly reports
+unsupported, the request records terminal `render_failed`; it does not invoke
+the next candidate.
+
+The existing fixed-shape `elicitation_render_form` MCP contract remains a
+deprecated compatibility endpoint over the specialized AskUserQuestion target
+and never enters unrestricted context routing. Together with the existing
+fixed-shape `form_to_ask_payload` adapter it is the closed two-anchor
+compatibility allowlist over that target; neither is a policy route. Task 1B adds a separate unified
+route endpoint with a closed `selected_route`/`payload_kind` response. Its
+MCP-native arm invokes authenticated `session.elicit_form` and returns the
+server-observed completion, never a caller-presentable native request; policy
+cannot select the compatibility-only target. The AF-2 host-question arm follows
+the same authority shape: Task 2 requires a server-registered immutable
+`HostQuestionAdapter.present_and_collect` object whose profile matches the
+route-active target, and returns its same-call trusted completion rather than a
+batch for model relay. Without that object host-native is inadmissible and
+PORTABLE remains next. Task 1B owns only route-neutral
+receipt-bound collection scaffolding and trusted transport provenance. AF-2
+host questions instead keep immutable bindings/profile state in the same-call
+adapter/collector and bind the completion to a non-serializable server-owned
+PresentationChallenge; the resulting interaction receipt is created only
+after the trusted completion. Task 11 alone maps trusted
+transport evidence to `rendered_tier`. This preserves old callers while making
+new route shapes, task ownership and collection authority explicit.
+
+`warm` requires an opaque server-issued receipt that resolves in the
+current server session, is the chain's active receipt, matches the
+subject/schema and every applicable current workspace binding field
+(including `event_sequence`), is non-terminal, and has age exactly in
+`[0, 3600 seconds)`. The design's ordered predicate-to-reason table is
+the authority for overlapping failures. Active age uses `observed_at`;
+tombstones retain their exact terminal reason from `tombstoned_at`; and at
+7200 seconds either record is logically absent regardless of delayed GC. Every enhanced renderer or
+subject target creates its own obligation key and owes PORTABLE/HEADLESS
+equivalence. An interactive subject owes payload and closed D4
+lifecycle receipts; an informational command/template owes content-
+schema/render/destination/delivery evidence, while a hook delivery owes
+content-schema/destination/delivery evidence; either may remain
+portable-only.
+
+Selection removes the deterministic latency sources under Attune's control: it consumes one
+already-trusted immutable capability snapshot, performs at most one
+receipt-store lookup (authoritative session/workspace reads remain separate
+local state reads in the same decision), makes no network probe or trial render, and
+invokes at most one projection renderer—exactly one for a selected route and zero
+for `no_supported_surface`. A feedback-capable host may re-present that frozen
+projection on the same selected route; it never re-enters selection or invokes
+another renderer. Route receipts record candidate dispositions, selection time,
+renderer-attempt count, and the separate presentation-attempt count; CI gates the
+call-count properties. H6's end-to-end improvement remains a measured
+hypothesis: the evidence ledger compares observed latency without making that
+comparison a flaky pass/fail threshold. Declined:
+literal D6 applied independently to all 24 path-resolved registered
+Python hook entrypoints,
+`plugin/commands/handoff.md`, and every future R5 template, including
+non-rendering lifecycle integrations.
+
+**Counter-case:** context routing introduces runtime policy into what was
+supposed to be a CI-only gate, and "optimal" is theater unless the
+cold/warm predicate and chosen route are observable. The design
+therefore treats unknown context as cold, requires a validated receipt
+for warm, and defines Task 11's actual-rendered-tier provenance as the
+future live falsifier. Task 11 has no execution go yet, so it is not current
+evidence and cannot falsify H1 until separately authorized. The static producer sweep can catch direct renderer
+calls and recognized envelopes but cannot prove that every indirect
+wrapper was modeled; the attune-forms no-escape sweep and mutation
+receipts narrow that residual rather than pretending to eliminate it.
+
+## D11 — External cross-review reconciliation (RECORDED 2026-09-04 — contract closure, no execution go)
+
+With the chair's explicit disclosure and Board-posting approval, Antigravity
+reviewed the final unified design and Claude Fable 5.1 reviewed four exact,
+contiguous slices whose hashes recombined to the frozen design hash. Raw replies
+were posted and read back from the local Board; two earlier Claude two-slice
+attempts timed out and remain recorded as absent rather than inferred. The R5
+ledger is the authority for provider threads, snapshot hashes, raw finding
+counts, and lead dispositions.
+
+The accepted findings close underspecified boundaries without changing D10's
+architecture or granting any task/release go:
+
+- AF-1 makes optional-return typing and its direct allowlist mutations closed;
+  AF-2 owns explicit normalization, multi-select encoding, header limit,
+  bounded attempts/deadline, and profile-facet digest behavior.
+- Task 1B makes unified success/error responses, compatibility endpoints,
+  event/sink/destination-qualified hook evidence, module anchors, deferred
+  adapter authentication, receipt submission idempotency, challenge outcomes,
+  normalization binding, and experiment history/exceptions mechanical.
+- R3 derives one cross-target capacity, semantically compares target-relative
+  links, atomically timestamps all emitted first projections, and gives
+  digest-check/repair plus stale-state semantics.
+- R5 declares normalized twin equality, hourly-cap outcome, trusted host
+  acknowledgment, server-restart scope, cross-process SQLite CAS, and a machine
+  platform receipt matrix.
+- R6–R8 close reranker failure/quality criteria, trusted roster home/operator
+  and activation/snapshot rules, and work-unit ask/outcome attribution.
+- The post-reconciliation semantic reread gives AF-1 compatibility-only targets
+  executable projection/validator evidence distinct from route-active
+  profile/adapter evidence; makes deferred submission IDs authenticated pending
+  records obtainable in the success arm; closes `challenge_consumed`;
+  transports canonical validation feedback on a fresh challenge while reusing
+  one projection; and fixes the four-field public decision-summary whitelist.
+- A local non-network characterization of installed Claude Code 2.1.260
+  corrected an inaccurate ordered-list assumption: AskUserQuestion returns
+  emitted-text-keyed answer strings, canonically joins multi-select labels with
+  `", "` plus JSON quoting/escaping when needed, and returns freeform separately.
+  AF-2 now binds that exact raw codec to server-retained response atoms instead
+  of guessing labels or tokens.
+
+Rejected claims were already contradicted by the complete artifacts: canonical
+fixtures already execute projection twins; AF-2 cannot activate before AF-1;
+compatibility parity need not prove presentation; profile singularity is per
+target; lookup/invocation bounds distinguish receipt from local state reads;
+MCP-native is transport/lifecycle evidence rather than a duplicate projection
+key; form-to-host-profile binding is intentionally forward/generic; and R9/R10
+are defined in requirements/tasks even though design does not duplicate their
+headings.
+
+These are specification corrections only. AF-1, Task 1B, AF-2, Task 11, every
+package publication, push, and release retain their prior authorization state.
+
 ## Open
 
 - None. Every proposed decision in this spec is ruled.
 
-Resolved 2026-09-02/03: the table was convened (round 1 complete,
+Resolved 2026-09-02/03/04: the table was convened (round 1 complete,
 promoted in D5); D2 ruled (routing label); Task 7 ships alone on
 Phase A (D5); D6 ruled (hybrid, subject-local); D7 coverage floor
-90%; D8 16.3 gos granted; D9 tier provenance adopted as R10.
+90%; D8 16.3 gos granted; D9 tier provenance adopted as R10; D10
+context-routed, mechanically discovered surface subjects adopted; D11 records
+the two-provider cross-review contract closure without changing execution gos.
