@@ -167,7 +167,7 @@ RECALL_MAP: dict[str, list[dict[str, str]]] = {
         # mangled path linted). Same trap, different syntax.
         {
             "rule_id": "zsh-no-word-split-args",
-            "match_regex": r"(?:\bset\s+--|--files|--paths|--include)\s+\$\{?[A-Za-z_]\w*\}?(?:\s|$)",
+            "match_regex": r"(?:\bset\s+--|--files|--paths|--include)\s+\$\{?[A-Za-z_]\w*\}?(?:[\s;|&)]|$)",
             "text": (
                 "zsh does NOT word-split unquoted `$var` — `set -- $pair` "
                 "makes the WHOLE string $1 and `--files $F` passes ONE "
