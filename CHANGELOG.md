@@ -44,6 +44,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Owner-checked lock release and refresh (class H6)**: `release_lock`
+  compared the lock owner and deleted the key in two Redis round trips,
+  `_release_service_lock` deleted with no ownership check at all, and
+  `_refresh_service_lock` re-armed the TTL unconditionally — so a lock
+  that expired mid-flight could be deleted or kept alive out from under
+  its new owner, leaving two writers on one resource. All three now
+  compare and mutate inside one server-side Redis script
+  (`cross_session/locks.py`); the release-side sibling of the atomic
+  acquisition fix in #2130. A new gate
+  (`tests/unit/gates/test_lock_ownership_gate.py`) fails CI on any lock
+  key mutated without a server-side owner check (#2408).
+
 - **Curator no longer forces `tool_choice` on fable models**: Fable 5.1
   returns 400 on forced tool use (`type "tool" and "any" are not supported
   for this model`), which would have broken every default-tier curator

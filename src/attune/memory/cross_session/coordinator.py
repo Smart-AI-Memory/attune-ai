@@ -33,6 +33,7 @@ from .conflicts import (
     resolve_first_write,
     resolve_last_write,
 )
+from .locks import release_if_owner
 from .models import (
     CHANNEL_SESSIONS,
     HEARTBEAT_INTERVAL_SECONDS,
@@ -382,44 +383,55 @@ class CrossSessionCoordinator:
         return bool(acquired)
 
     def release_lock(self, resource_key: str) -> bool:
-        """Release a distributed lock.
+        """Release a distributed lock, if this session still holds it.
 
         Args:
             resource_key: Key of the resource to unlock
 
         Returns:
-            True if lock released, False if not owner
+            True if this session's lock was released. False if it was
+            not the owner — which includes the case where the lock had
+            already lapsed and been taken by someone else, since a lock
+            this session no longer holds is not this session's to delete.
 
         """
-        client = self._memory._client
-        if client is None:
-            return False
-
         lock_key = f"empathy:lock:{resource_key}"
-        current_owner = client.get(lock_key)
+        # Compare and delete in ONE server-side operation. GET then DELETE is
+        # check-then-act across two round trips: the lock carries a TTL, so it
+        # can expire and be re-acquired between them, and the unconditional
+        # delete then removes the NEW owner's lock (library-review H6).
+        released = release_if_owner(self._memory._client, lock_key, self._agent_id)
 
-        if current_owner:
-            if isinstance(current_owner, bytes):
-                current_owner = current_owner.decode()
-            if current_owner == self._agent_id:
-                client.delete(lock_key)
-                logger.debug(
-                    "lock_released",
-                    resource_key=resource_key,
-                    agent_id=self._agent_id,
-                )
-                return True
+        if released:
+            logger.debug(
+                "lock_released",
+                resource_key=resource_key,
+                agent_id=self._agent_id,
+            )
 
-        return False
+        return released
 
     def check_lock(self, resource_key: str) -> str | None:
         """Check who holds a lock on a resource.
+
+        The read itself is a single atomic command, but the ANSWER is a
+        snapshot that may be stale the instant it returns: locks carry a
+        TTL, so the holder can lapse and the lock change hands between
+        this call and whatever the caller does with the result.
+
+        This value is therefore for reporting and diagnostics, never for
+        guarding an action. ``if check_lock(r) == my_id: <act>`` is the
+        same check-then-act defect that made an unconditional release
+        delete another agent's lock (library-review H6) — an action that
+        must depend on ownership belongs inside one server-side step,
+        alongside the check (see :mod:`.locks`).
 
         Args:
             resource_key: Key of the resource
 
         Returns:
-            Agent ID of lock holder, or None if unlocked
+            Agent ID of lock holder at the moment of the read, or None if
+            unlocked
 
         """
         client = self._memory._client

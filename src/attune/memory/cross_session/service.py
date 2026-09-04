@@ -23,6 +23,7 @@ import structlog
 from attune.memory.short_term import AccessTier, RedisShortTermMemory
 
 from .coordinator import CrossSessionCoordinator
+from .locks import refresh_if_owner, release_if_owner
 from .models import (
     KEY_SERVICE_HEARTBEAT,
     KEY_SERVICE_LOCK,
@@ -158,20 +159,40 @@ class BackgroundService:
         return bool(acquired)
 
     def _release_service_lock(self) -> None:
-        """Release the service lock."""
-        client = self._memory._client
-        if client:
-            client.delete(KEY_SERVICE_LOCK)
+        """Release the service lock, but only if this process still holds it.
 
-    def _refresh_service_lock(self) -> None:
-        """Refresh the service lock TTL."""
+        An unconditional delete removes whatever lock is there — including
+        the one a DIFFERENT live service took after this one's lock lapsed,
+        which would let a third start alongside it (library-review H6).
+        """
+        release_if_owner(self._memory._client, KEY_SERVICE_LOCK, os.getpid())
+
+    def _refresh_service_lock(self) -> bool:
+        """Refresh the service lock TTL, but only if this process holds it.
+
+        Re-arming unconditionally keeps a lock alive from the outside after
+        its holder has lost it, so the TTL stops tracking the live owner's
+        liveness — the one thing a TTL on a singleton lock is for.
+
+        Returns:
+            False when this process no longer holds the lock — the heartbeat
+            is then NOT written, so a lock-less service never advertises
+            itself as the live one (codex cross-review lane on #2408). True
+            when the lock was extended, or when there is no client to check
+            against (the memory layer degrades, it never stops the loop).
+
+        """
         client = self._memory._client
-        if client:
-            client.expire(KEY_SERVICE_LOCK, SERVICE_LOCK_TTL_SECONDS)
-            client.set(
-                KEY_SERVICE_HEARTBEAT,
-                datetime.now().isoformat(),
-            )
+        if not client:
+            return True
+        if not refresh_if_owner(client, KEY_SERVICE_LOCK, os.getpid(), SERVICE_LOCK_TTL_SECONDS):
+            logger.warning("service_lock_lost", pid=os.getpid())
+            return False
+        client.set(
+            KEY_SERVICE_HEARTBEAT,
+            datetime.now().isoformat(),
+        )
+        return True
 
     def _service_loop(self) -> None:
         """Main service loop."""
@@ -180,8 +201,11 @@ class BackgroundService:
 
         while not self._stop_event.wait(10):  # Check every 10s
             try:
-                # Refresh service lock
-                self._refresh_service_lock()
+                # Refresh service lock; a process that has lost the singleton
+                # lock must stop acting as the service — another one holds it.
+                if not self._refresh_service_lock():
+                    logger.warning("service_loop_exit_lock_lost")
+                    break
 
                 # Periodic cleanup
                 if time.time() - last_cleanup > cleanup_interval:

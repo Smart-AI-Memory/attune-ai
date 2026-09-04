@@ -33,6 +33,13 @@ class _FakeClient:
         self.calls.append(("set", key, kwargs))
         return True
 
+    def eval(self, script, numkeys, *args):
+        # Owner-checked release/refresh are ONE server-side script — a bare
+        # EXPIRE or DELETE would re-arm or remove a lock this process may no
+        # longer hold (library-review H6).
+        self.calls.append(("eval", args[0], args[1:]))
+        return 1
+
 
 class _FakeMemory:
     def __init__(self, client, use_mock=False):
@@ -105,14 +112,30 @@ def test_refresh_lock_extends_ttl_and_writes_heartbeat():
     s = BackgroundService(_FakeMemory(client))
     s._refresh_service_lock()
     names = [c[0] for c in client.calls]
-    assert "expire" in names and "set" in names
-    assert any(c == ("expire", KEY_SERVICE_LOCK, c[2]) for c in client.calls if c[0] == "expire")
+    assert "eval" in names and "set" in names
+    # The TTL is re-armed only if this process still owns the key, inside
+    # one script — a bare EXPIRE keeps ANOTHER service's lock alive.
+    assert "expire" not in names
+    assert any(c[0] == "eval" and c[1] == KEY_SERVICE_LOCK for c in client.calls)
     assert any(c[0] == "set" and c[1] == KEY_SERVICE_HEARTBEAT for c in client.calls)
 
 
 def test_refresh_lock_without_client_is_noop():
     s = _service(client=None)
-    s._refresh_service_lock()  # no exception
+    assert s._refresh_service_lock() is True  # nothing to check against; keep going
+
+
+def test_refresh_lock_lost_skips_heartbeat_and_reports_false():
+    """A process that no longer owns the lock must not advertise itself."""
+    client = _FakeClient()
+    client.eval = lambda script, numkeys, *args: (
+        client.calls.append(("eval", args[0], args[1:])),
+        0,
+    )[1]
+    s = BackgroundService(_FakeMemory(client))
+    assert s._refresh_service_lock() is False
+    names = [c[0] for c in client.calls]
+    assert names == ["eval"]  # no heartbeat SET after a failed owner check
 
 
 # ===========================================================================
@@ -161,12 +184,27 @@ def test_service_loop_runs_one_iteration_with_cleanup(monkeypatch):
 
     refreshed = []
     cleaned = []
-    monkeypatch.setattr(s, "_refresh_service_lock", lambda: refreshed.append(True))
+    monkeypatch.setattr(s, "_refresh_service_lock", lambda: (refreshed.append(True), True)[1])
     monkeypatch.setattr(s, "_cleanup_stale_sessions", lambda: cleaned.append(True))
 
     s._service_loop()
     assert refreshed == [True]
     assert cleaned == [True]  # interval elapsed -> cleanup fired
+
+
+def test_service_loop_stops_when_lock_is_lost(monkeypatch):
+    """Losing the singleton lock ends the loop — another service owns it."""
+    s = _service()
+    s._stop_event = _FakeEvent([False, False, False])  # would run 3 iterations
+
+    refreshed = []
+    cleaned = []
+    monkeypatch.setattr(s, "_refresh_service_lock", lambda: (refreshed.append(True), False)[1])
+    monkeypatch.setattr(s, "_cleanup_stale_sessions", lambda: cleaned.append(True))
+
+    s._service_loop()
+    assert refreshed == [True]  # exited on the first lost refresh
+    assert cleaned == []  # never acted as the service without the lock
 
 
 def test_service_loop_logs_exception_and_continues(monkeypatch):

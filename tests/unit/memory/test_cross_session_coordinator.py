@@ -425,21 +425,27 @@ class TestCrossSessionCoordinatorLocking:
         assert coord.acquire_lock("resource_x") is False
 
     def test_release_lock_when_owner(self):
-        """release_lock returns True and deletes key when we own the lock."""
+        """release_lock returns True when the server-side compare matched."""
         memory = _mock_memory()
+        # The script deletes and reports how many keys it removed.
+        memory._base._client.eval.return_value = 1
 
         coord = CrossSessionCoordinator(memory=memory, auto_announce=False)
-        memory._base._client.get.return_value = coord.agent_id.encode()
 
         assert coord.release_lock("resource_x") is True
-        memory._base._client.delete.assert_called()
+        # Compare and delete rode on the one script. A separate read is the
+        # H6 window this fix closed: the lock can expire between a GET and
+        # a DELETE, and the delete then removes the NEW owner's lock.
+        memory._base._client.get.assert_not_called()
+        memory._base._client.delete.assert_not_called()
 
     def test_release_lock_when_not_owner(self):
-        """release_lock returns False when another agent holds the lock."""
+        """release_lock returns False when the server-side compare failed."""
         memory = _mock_memory()
-        memory._base._client.get.return_value = b"some_other_agent"
+        memory._base._client.eval.return_value = 0
 
         coord = CrossSessionCoordinator(memory=memory, auto_announce=False)
+
         assert coord.release_lock("resource_x") is False
         memory._base._client.delete.assert_not_called()
 
