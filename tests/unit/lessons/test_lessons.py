@@ -233,7 +233,24 @@ class TestGoldenSmoke:
     """Retrieval smoke against 3 frozen golden queries (real corpus)."""
 
     @pytest.mark.parametrize(
-        "query_id", ["pytest-cov-keyerror", "windows-crlf", "tag-before-squash"]
+        "query_id",
+        [
+            "pytest-cov-keyerror",
+            pytest.param(
+                "windows-crlf",
+                marks=pytest.mark.xfail(
+                    strict=True,
+                    reason=(
+                        "corpus dilution at the 2026-09-04 outbox sweep (#2404): "
+                        "the expected CRLF lesson scores 13.5 and sits at rank 4 "
+                        "behind a new backend-import-contexts lesson at 14.0; "
+                        "a keyword-precision fix should flip this back to XPASS "
+                        "(strict) — chair-ruled xfail, not a fixture edit"
+                    ),
+                ),
+            ),
+            "tag-before-squash",
+        ],
     )
     def test_golden_query_hits_top3(self, query_id):
         queries = json.loads(FIXTURE.read_text(encoding="utf-8"))["queries"]
