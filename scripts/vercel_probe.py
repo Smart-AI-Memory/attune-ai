@@ -115,24 +115,66 @@ def pull_env(env: str, cwd: Path) -> dict[str, str]:
         return out
 
 
-def env_report(env: str, cwd: Path, expect: list[str]) -> tuple[list[str], int]:
+#: Vercel env-var types whose values ``vercel env pull`` CAN return. A
+#: ``sensitive`` variable (integrations such as Neon set these) pulls back
+#: blank by design, and ``VERCEL_*`` system variables are injected at
+#: build time and never listed by the API — neither is "empty".
+PULLABLE_TYPES = {"encrypted", "plain"}
+
+
+def env_types(token: str, org: str, project_id: str) -> dict[str, str]:
+    """Map variable name -> Vercel type from the project env listing."""
+    if not (token and org and project_id):
+        return {}
+    try:
+        envs = _get(f"/v9/projects/{project_id}/env?teamId={org}", token).get("envs", [])
+    except (urllib.error.URLError, OSError, ValueError):
+        return {}
+    return {e.get("key", ""): e.get("type", "") for e in envs}
+
+
+def env_report(
+    env: str, cwd: Path, expect: list[str], types: dict[str, str] | None = None
+) -> tuple[list[str], int]:
+    """Describe every pulled variable; flag blanks only where a value was possible.
+
+    ``types`` (name -> Vercel type) comes from :func:`env_types`. Without
+    it every blank is flagged, which over-reports on projects with
+    integration-managed variables.
+    """
     values = pull_env(env, cwd)
+    types = types or {}
     lines = [f"env [{env}]: {len(values)} variables"]
     rc = 0
+
+    def pullable(name: str) -> bool:
+        if not types:
+            return True
+        return types.get(name, "system") in PULLABLE_TYPES
+
     for name in sorted(values):
         s = shape(values[name])
         flag = ""
         if s["len"] == 0:
-            flag = "  <-- EMPTY"
+            if not types or pullable(name):
+                flag = "  <-- EMPTY"
+            elif name in types:
+                flag = f"  ({types[name]}: not pullable)"
+            else:
+                flag = "  (system)"
         elif s["quoted"] or s["whitespace"]:
             flag = "  <-- quoted/whitespace"
         lines.append(
             f"  {name:<36} len={s['len']:<4} prefix={s['prefix']:<4} sha={s['sha12']}{flag}"
         )
     for name in expect:
-        if not shape(values.get(name, ""))["len"]:
-            lines.append(f"  MISSING OR EMPTY: {name}")
-            rc = 1
+        if shape(values.get(name, ""))["len"]:
+            continue
+        if types and not pullable(name) and name in types:
+            lines.append(f"  UNVERIFIABLE ({types[name]}): {name}")
+            continue
+        lines.append(f"  MISSING OR EMPTY: {name}")
+        rc = 1
     return lines, rc
 
 
@@ -145,7 +187,10 @@ def domains_report(token: str, org: str) -> list[str]:
             d["name"] + (f"(->{d['redirect']})" if d.get("redirect") else " [primary]")
             for d in doms
         )
-        lines.append(f"  {p['name']:<20} {rendered or '-'}")
+        # The API's ``name`` is the display name (it can differ from the
+        # CLI slug — attune-ai's "website" project is named after its
+        # domain), so the id is printed alongside for unambiguous matching.
+        lines.append(f"  {p['name']:<20} ({p['id'][:12]}) {rendered or '-'}")
     return lines
 
 
@@ -158,12 +203,12 @@ def main(argv: list[str]) -> int:
     args = ap.parse_args(argv[1:])
 
     cwd = Path(args.cwd).resolve()
-    lines, rc = env_report(args.env, cwd, args.expect)
+    token = _token()
+    org, project_id = _link(cwd)
+    lines, rc = env_report(args.env, cwd, args.expect, env_types(token, org, project_id))
     print("\n".join(lines))
 
     if args.domains:
-        token = _token()
-        org, _ = _link(cwd)
         if not token or not org:
             print("domains: no token or no .vercel/project.json link in cwd", file=sys.stderr)
             return max(rc, 1)

@@ -68,6 +68,22 @@ class TestEnvReport:
         _, rc = mod.env_report("production", tmp_path, ["RESEND_API_KEY"])
         assert rc == 1
 
+    def test_sensitive_blank_is_not_flagged_and_expect_is_unverifiable(
+        self, mod, monkeypatch, tmp_path
+    ):
+        # Neon-managed vars are `sensitive`: `env pull` leaves them blank by
+        # design, and VERCEL_* system vars are never in the API listing.
+        self._fake_pull(monkeypatch, mod, {"PGHOST": "", "VERCEL_URL": "", "ADMIN_SECRET": ""})
+        types = {"PGHOST": "sensitive", "ADMIN_SECRET": "encrypted"}
+        lines, rc = mod.env_report("production", tmp_path, ["PGHOST", "ADMIN_SECRET"], types)
+        joined = "\n".join(lines)
+        assert "PGHOST" in joined and "sensitive: not pullable" in joined
+        assert "VERCEL_URL" in joined and "(system)" in joined
+        assert "ADMIN_SECRET" in joined and "EMPTY" in joined
+        assert "UNVERIFIABLE (sensitive): PGHOST" in joined
+        assert "MISSING OR EMPTY: ADMIN_SECRET" in joined
+        assert rc == 1
+
 
 class TestPullEnvParsing:
     def test_parses_the_file_vercel_writes(self, mod, monkeypatch, tmp_path):
@@ -122,7 +138,7 @@ class TestDomainsReport:
         monkeypatch.setattr(mod, "_get", fake_get)
         lines = mod.domains_report("tok", "org")
         joined = "\n".join(lines)
-        assert "website" in joined and "smartaimemory.com [primary]" in joined
+        assert "website" in joined and "(p1)" in joined and "smartaimemory.com [primary]" in joined
         assert "www.smartaimemory.com(->smartaimemory.com)" in joined
         assert "shsc-ryan" in joined
         assert any(
