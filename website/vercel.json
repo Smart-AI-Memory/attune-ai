@@ -3,7 +3,7 @@
   "trailingSlash": true,
   "crons": [
     {
-      "path": "/api/cron/usage-digest",
+      "path": "/api/cron/usage-digest/",
       "schedule": "0 12 * * *"
     }
   ],
