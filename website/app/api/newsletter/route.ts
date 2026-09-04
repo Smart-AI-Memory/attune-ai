@@ -67,8 +67,8 @@ export async function POST(request: NextRequest) {
 
     // Send confirmation email via Resend
     const emailSent = await sendNewsletterConfirmation(email);
-    if (!emailSent && process.env.RESEND_API_KEY) {
-      console.warn('Failed to send newsletter confirmation email');
+    if (!emailSent) {
+      console.error('newsletter confirmation email NOT sent', { resendKeyPresent: Boolean(process.env.RESEND_API_KEY) });
     }
 
     // Log summary
@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         message: 'Successfully subscribed! Check your email for confirmation.',
+        emailSent,
       },
       { status: 200 }
     );

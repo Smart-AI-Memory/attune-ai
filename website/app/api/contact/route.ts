@@ -65,8 +65,11 @@ export async function POST(request: NextRequest) {
       message,
     });
 
-    if (!emailSent && process.env.RESEND_API_KEY) {
-      console.warn('Failed to send contact form email, but returning success to user');
+    if (!emailSent) {
+      // The visitor still gets a 200 (their submission is stored); the
+      // maintainer must be able to see the miss — at error level, and
+      // in the body so a production probe can read it.
+      console.error('contact form email NOT sent', { contactId, resendKeyPresent: Boolean(process.env.RESEND_API_KEY) });
     }
 
     // Log summary
@@ -80,6 +83,7 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         message: 'Thank you! We will get back to you within 24-48 hours.',
+        emailSent,
       },
       { status: 200 }
     );
