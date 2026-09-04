@@ -83,6 +83,9 @@ ALLOWLIST = frozenset(
         # user- or LLM-supplied component. Same shape and same path as
         # worktree_path_guard below.
         "src/attune/hooks/scripts/dirty_switch_guard.py",
+        # detached_head_push_guard: identical shape — appends only to the
+        # constant enforcement-metrics log, no interpolated component.
+        "src/attune/hooks/scripts/detached_head_push_guard.py",
         "src/attune/hooks/scripts/worktree_path_guard.py",
         "src/attune/help/feedback.py",
         "src/attune/help/generator.py",

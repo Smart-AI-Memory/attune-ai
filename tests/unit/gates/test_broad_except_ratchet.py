@@ -140,6 +140,9 @@ _BASELINE: dict[str, int] = {
     # so a bug in the guard can never block real work — a guard that
     # crashes must fail OPEN (exit 0), matching every sibling hook here.
     "src/attune/hooks/scripts/dirty_switch_guard.py": 1,
+    # detached_head_push_guard: same fail-open __main__ block as its
+    # sibling above — a guard that crashes must exit 0, never block.
+    "src/attune/hooks/scripts/detached_head_push_guard.py": 1,
     "src/attune/hooks/scripts/evaluate_session.py": 3,
     # format_on_save added 1 for library-review L3 (PR #2117): the
     # PostToolUse exit-0-always contract must survive wrong-typed

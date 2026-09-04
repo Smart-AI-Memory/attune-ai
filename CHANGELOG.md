@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Detached-HEAD push guard** (`src/attune/hooks/scripts/
+  detached_head_push_guard.py`, registered as a PreToolUse hook): refuses
+  `git push` while HEAD is detached, where the push moves the BRANCH ref
+  (unchanged) and reports "Everything up-to-date" with the remote a
+  commit behind — a foreign session's `checkout --detach` produced
+  exactly that on 2026-09-04. Explicit `HEAD:<ref>` and tag pushes
+  stay allowed; fail-open on unreadable git state;
+  `ATTUNE_ALLOW_DETACHED_PUSH=1` escape hatch.
+- **`scripts/worktree_triage.py`**: read-only worktree/branch triage
+  (cherry, plus whole-branch patch-id vs the PR merge commit to verify
+  squash merges) that emits a removal script for the chair to run. The
+  classifier behind the 2026-09-04 sweep (42 → 15 worktrees, 239 → 58
+  branches, nothing lost).
+- **`scripts/vercel_probe.py`**: read-only Vercel probe — env-var
+  NAMES with value length/prefix/digest (never values), `--expect` to
+  fail on blank secrets, `--domains` for per-project domain ATTACHMENT
+  via the API (the CLI's `domains inspect` reports ownership, which is
+  how a domain silently attached to a sibling project went unseen).
+
 ### Changed
 
 - **`attune-verify` cap widened `<0.6` → `<1.0`; `uv.lock` `0.2.2` → `0.5.0`.**
