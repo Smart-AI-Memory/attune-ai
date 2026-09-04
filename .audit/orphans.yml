@@ -13,6 +13,8 @@ orphan_subtrees:
   - docs/reports/
   # reason: process drafts and proposals — repo-only working documents
   - docs/process/
+  # reason: research packets (design-space surveys, adversarially reviewed) — repo-only inputs to specs, not site content
+  - docs/research/
   # reason: repo-only technical notes (redis alignment, migration, security fix log)
   - docs/redis/
   # reason: repo-only technical notes (plugin migration guide)

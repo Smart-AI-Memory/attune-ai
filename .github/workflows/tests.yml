@@ -320,6 +320,13 @@ jobs:
       if: needs.changes.outputs.website_only != 'true'
       run: python scripts/check_badge_freshness.py
 
+    # Catch README nav rot: an in-page link whose heading was renamed still
+    # renders but goes nowhere (#privacy--telemetry did exactly that). Pure
+    # stdlib, offline, sub-second.
+    - name: Check README in-page anchors
+      if: needs.changes.outputs.website_only != 'true'
+      run: python scripts/check_readme_anchors.py
+
     # Capability-count projector (roundtable q-capability-count-projector-001):
     # the three derived counts (skills, registered MCP tools, core-schema MCP
     # tools) must match every allowlisted claim site. Needs an importable
