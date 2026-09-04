@@ -73,6 +73,12 @@
             "command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/dirty_switch_guard.py\"",
             "timeout": 15,
             "statusMessage": "Dirty-tree switch check..."
+          },
+          {
+            "type": "command",
+            "command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/detached_head_push_guard.py\"",
+            "timeout": 10,
+            "statusMessage": "Detached-HEAD push check..."
           }
         ]
       }
