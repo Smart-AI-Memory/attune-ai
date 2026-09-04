@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`attune-verify` cap widened `<0.6` → `<1.0`; `uv.lock` `0.2.2` → `0.5.0`.**
+  attune-ai has ridden 0.2 → 0.5 with zero breaks in the `/verify` skill's
+  taught contract (`verify` / `VerifyContext(project_root)` /
+  `ok` + `checked` + `findings`), so the per-minor cap-widening ritual is
+  retired in favour of re-validating that contract at each lock-bump
+  (validated against 0.5.0 here: all four finding kinds, `severity`,
+  `detail`, `evidence`, `location`). First step of the attune-verify 1.0
+  gate.
+
 - **`attune.model_tiers` re-exports `attune_rag.model_tiers`** (lazily, via
   call-time wrappers + PEP 562 `__getattr__`, so `import attune.config`
   still loads without attune-rag's package init) instead of carrying a

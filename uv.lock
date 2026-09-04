@@ -535,7 +535,7 @@ requires-dist = [
     { name = "attune-help", marker = "extra == 'dev'", specifier = ">=0.10.0" },
     { name = "attune-rag", specifier = ">=1.2.0,<2.0" },
     { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=1.2.0,<2.0" },
-    { name = "attune-verify", specifier = ">=0.1.0,<0.6" },
+    { name = "attune-verify", specifier = ">=0.1.0,<1.0" },
     { name = "bandit", marker = "extra == 'all'", specifier = ">=1.7,<2.0" },
     { name = "bandit", marker = "extra == 'dev'", specifier = ">=1.7,<2.0" },
     { name = "bcrypt", marker = "extra == 'all'", specifier = ">=4.0.0,<6.0.0" },
@@ -749,11 +749,11 @@ wheels = [
 
 [[package]]
 name = "attune-verify"
-version = "0.2.2"
+version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/05/69/96c1e219dd215443a317949ea9d3bee3ed608975bb36cb8b50660d9d595b/attune_verify-0.2.2.tar.gz", hash = "sha256:f1dee7d03de2854f417d251133456aec6972f6c420619ac9011f1841352e59c1", size = 22713, upload-time = "2026-07-18T00:33:09.742Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7d/d7/fe9689a45a72d0109fd6733cc276b91a06ca4673043b1a7afc94010402df/attune_verify-0.5.0.tar.gz", hash = "sha256:b569d068b233e6ebabc710ab2c56c513db071c54153c0b57be04e74a7f753121", size = 35371, upload-time = "2026-08-11T20:31:39.995Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c7/27/484921eb1da4e4572c726dac9414ddc8c8ce5f1403c5cf04c76a99ee61d3/attune_verify-0.2.2-py3-none-any.whl", hash = "sha256:7e23786a37fa7011587d6f0c1592e5f675b49e35d346538122510f603d8d5fde", size = 17903, upload-time = "2026-07-18T00:33:08.447Z" },
+    { url = "https://files.pythonhosted.org/packages/4b/a7/7f37a6b450a47a573028eb66f713ef8d4e4a5094bc2df25ae9472416496a/attune_verify-0.5.0-py3-none-any.whl", hash = "sha256:bdf6a7ae2b4bacafcf47441a98277383c03e848b0a128cbcc1c5ddd9625421f6", size = 26067, upload-time = "2026-08-11T20:31:38.816Z" },
 ]
 
 [[package]]
