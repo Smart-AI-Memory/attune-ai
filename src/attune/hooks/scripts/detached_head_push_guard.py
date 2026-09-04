@@ -168,10 +168,37 @@ def main(ctx: dict[str, Any]) -> int:
     return 2
 
 
-if __name__ == "__main__":
+def _read_stdin_context() -> dict[str, Any]:
+    """Parse the hook context from stdin; empty dict when unavailable."""
     try:
         raw = sys.stdin.read()
-        payload = json.loads(raw) if raw.strip() else {}
     except (OSError, ValueError):
-        payload = {}
-    raise SystemExit(main(payload))
+        return {}
+    if not raw.strip():
+        return {}
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+if __name__ == "__main__":
+    from _bootstrap import ensure_utf8_stdio
+
+    ensure_utf8_stdio()
+    from _sdk_gate import exit_if_sdk_subprocess
+
+    exit_if_sdk_subprocess()
+    ctx = _read_stdin_context()
+    if not ctx:
+        sys.exit(0)
+    try:
+        sys.exit(main(ctx))
+    except Exception as exc:  # noqa: BLE001
+        # INTENTIONAL: a hook bug must never block real work.
+        print(
+            f"[{ENFORCEMENT_NAME}] hook error (allowing): {type(exc).__name__}: {exc}",
+            file=sys.stderr,
+        )
+        sys.exit(0)
