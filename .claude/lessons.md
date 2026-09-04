@@ -4169,10 +4169,12 @@ files.
   - **`Path.home()` reads `USERPROFILE`, not `HOME`** —
     `monkeypatch.setenv("HOME", ...)` silently no-ops on
     Windows; set BOTH env vars via a helper.
-  - **CRLF: the runner strips `\n` but leaves `\r`** —
-    `raw.decode(...).rstrip("\n")` leaves the CR, so exact
-    list-membership (`"text" in run.lines`, actual
-    `['text\r']`) fails while substring checks tolerate it.
+  - **CRLF: the runner strips `\n` but leaves a trailing
+    carriage return (`\r`) on every captured line** —
+    `raw.decode(...).rstrip("\n")` leaves the CR, so a test that
+    passes on macOS/Linux fails on Windows: exact list-membership
+    (`"text" in run.lines`, actual `['text\r']`) fails while
+    substring checks tolerate it.
     Fix: `[l.rstrip() for l in run.lines]` before the
     membership check. (PR #531; `run_meta_stdout.parse_line`
     already does `.rstrip("\r\n")`.)
