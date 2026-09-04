@@ -48,9 +48,8 @@ changes (forced `tool_choice` is a 400; cache reads are $0.25/MTok).
   `clear_at` / `display: "updates"` not adopted.
 - Risks or open questions:
   - `attune.model_tiers` is a byte-mirror of `attune_rag.model_tiers`;
-    CI installs attune-rag from PyPI (1.1.0 = `claude-fable-5`). The
-    drift guard stays red until attune-rag ships the mirror
-    (`~/attune-rag` branch `feat/fable-5-1-premium-tier`).
+    CI installs attune-rag from PyPI. RESOLVED: attune-rag 1.2.0 shipped
+    the mirror 2026-09-03 (Smart-AI-Memory/attune-rag#220, #221).
   - attune-author carries its own mirror of the attune-rag contract
     with its own drift test — needs the same retarget when attune-rag
     ships (out of scope here).
@@ -70,5 +69,8 @@ changes (forced `tool_choice` is a 400; cache reads are $0.25/MTok).
 
 ## Next action
 
-Ship attune-rag `feat/fable-5-1-premium-tier` (release ≥1.2.0 to PyPI),
-then re-run this PR's CI so the drift lane goes green, then merge.
+attune-rag 1.2.0 is on PyPI (2026-09-03, tag `v1.2.0` at
+`25d2cf00bbe4a71daa7e8894402153ed6465d238`, publish run 33829729074
+completed after the chair's gate click). This push re-runs CI with
+the released mirror; when the drift lane is green, merge. Then retarget
+attune-author's mirror the same way.
