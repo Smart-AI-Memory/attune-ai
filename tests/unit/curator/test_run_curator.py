@@ -182,6 +182,11 @@ def test_fable_steers_with_auto_and_strict_tool(isolate, monkeypatch):
     assert call["tool_choice"] == {"type": "auto"}
     assert call["tools"][0]["name"] == "emit_curation"
     assert call["tools"][0]["strict"] is True
+    # auto cannot force the call, so the turn carries the documented
+    # steering lever: a system message after the user turn naming the
+    # tool as required (must be last, after the user message).
+    assert [m["role"] for m in call["messages"]] == ["user", "system"]
+    assert "emit_curation" in call["messages"][-1]["content"]
     # strict tool use requires additionalProperties: false on every object
     schema = call["tools"][0]["input_schema"]
     assert schema["additionalProperties"] is False
@@ -200,6 +205,18 @@ def test_non_fable_keeps_forced_tool_use(isolate, monkeypatch):
     assert call["tool_choice"] == {"type": "tool", "name": "emit_curation"}
     assert "strict" not in call["tools"][0]
     assert "betas" not in call
+    # forced call: no steering message needed
+    assert [m["role"] for m in call["messages"]] == ["user"]
+
+
+def test_fable_prose_reply_degrades_to_offline(isolate, monkeypatch):
+    """auto cannot force the tool: a prose-only reply is NOT a briefing."""
+    monkeypatch.delenv("ATTUNE_MODEL_PREMIUM", raising=False)
+    prose = _Response([_Block("text", text="Here is my briefing in prose.")], _Usage(10, 5))
+    result = asyncio.run(core.run_curator(project_root=isolate, client=_FakeClient(prose)))
+    assert result.items == []
+    assert result.summary.startswith("The curator is offline")
+    assert "prose" not in result.summary
 
 
 def test_fabricated_source_item_dropped(isolate, caplog):

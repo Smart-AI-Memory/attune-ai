@@ -2,7 +2,7 @@
 
 Reads every source, checks the TTL cache, invokes a single premium-tier
 call that must answer through one ``emit_curation`` tool call for a
-guaranteed-schema briefing, validates the cited sources, and caches the
+schema-checked briefing, validates the cited sources, and caches the
 result.
 
 The synthesis is one LLM call (no subagents, no agent loop, no file
@@ -13,8 +13,12 @@ no ``tool_choice`` field and its ``tools`` is a name-allowlist, so it
 can't force a single guaranteed-schema call — see
 ``docs/specs/bulletin-curator/decisions.md``.) Fable 5.1 rejects forced
 ``tool_choice`` (400), so fable models steer with ``auto`` — the prompt
-already names the tool — and keep the schema guarantee through strict
-tool use; every other model keeps the forced call.
+names the tool and a mid-conversation ``system`` message marks the call
+as required this turn — and keep the *arguments* schema-valid through
+strict tool use. ``auto`` cannot force the call: a text-only reply falls
+through to the JSON fallback in ``_extract_curation_payload`` or, failing
+that, the offline briefing (``run_curator`` never raises). Every other
+model keeps the forced call.
 """
 
 from __future__ import annotations
@@ -56,6 +60,15 @@ if TYPE_CHECKING:
 # Fable models (``claude-fable-*``) reject forced tool_choice on 5.1 —
 # same prefix test as attune.model_tiers.fable_extras.
 _FABLE_PREFIX = "claude-fable"
+
+#: The documented 5.1 lever for "the application requires this call":
+#: a ``role: system`` message after the user turn, naming the tool as
+#: required for the turn. Steering only — ``auto`` still cannot force
+#: the call, so the text fallback / offline degrade paths stay live.
+_FABLE_TOOL_NUDGE = (
+    "This turn must be answered by calling the emit_curation tool exactly "
+    "once. Open your response with that tool call; do not reply in prose."
+)
 
 logger = logging.getLogger(__name__)
 
@@ -144,9 +157,11 @@ def _extract_curation_payload(response: Any) -> dict[str, Any]:
     """Pull the structured payload from the synthesis response.
 
     Walks ``response.content``: a ``tool_use`` block's ``input`` is the
-    guaranteed-schema happy path. Forced ``tool_choice`` (non-fable) or
-    the prompt's tool instruction (fable, ``auto``) makes the text
-    fallback rare, but it's handled for robustness.
+    schema-valid happy path (strict tool use on fable, forced
+    ``tool_choice`` elsewhere). The forced call (non-fable) or the prompt
+    plus system nudge (fable, ``auto``) makes the text fallback rare; it
+    is handled, and an unparseable text reply raises so ``run_curator``
+    degrades to the offline briefing instead of returning a fake one.
     """
     text_fallback: str | None = None
     for block in getattr(response, "content", []) or []:
@@ -268,9 +283,11 @@ async def _query_opus(
     # the schema-valid-arguments guarantee via strict tool use. Every
     # other model keeps the forced call. Prefix check matches
     # attune.model_tiers.fable_extras.
+    messages: list[dict[str, Any]] = [{"role": "user", "content": prompt}]
     if model.startswith(_FABLE_PREFIX):
         tool["strict"] = True
         tool_choice: dict[str, Any] = {"type": "auto"}
+        messages.append({"role": "system", "content": _FABLE_TOOL_NUDGE})
     else:
         tool_choice = {"type": "tool", "name": "emit_curation"}
     # Build kwargs as a plain dict and splat — the raw-dict tool param
@@ -282,7 +299,7 @@ async def _query_opus(
         "system": _CURATOR_SYSTEM_PROMPT,
         "tools": [tool],
         "tool_choice": tool_choice,
-        "messages": [{"role": "user", "content": prompt}],
+        "messages": messages,
     }
     # Premium default is fable — the helper routes fable models via the
     # beta namespace (+ server-side opus fallback) and surfaces a
