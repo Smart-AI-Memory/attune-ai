@@ -66,7 +66,11 @@ def _names_a_lock(node: ast.AST) -> bool:
     """True if this key expression names a lock, by its own text.
 
     Deliberately syntactic: a variable or constant called ``lock`` is the
-    signal, and nothing about intent is inferred.
+    signal, and nothing about intent is inferred. Known gap (codex
+    cross-review lane on #2408): an alias that drops the word —
+    ``key = KEY_SERVICE_LOCK; client.delete(key)`` — or a subscripted /
+    computed key is not traced. The gate is a ratchet on the shape H6 was
+    found in, not a proof that no unchecked mutation exists.
     """
     if isinstance(node, ast.Name):
         return "lock" in node.id.lower()
