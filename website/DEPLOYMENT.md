@@ -14,10 +14,12 @@ This guide covers deploying the Smart AI Memory website to various platforms.
 Create a `.env.local` file with the following variables:
 
 ```bash
-# Required for SendGrid email integration
-SENDGRID_API_KEY=your_sendgrid_api_key
-SENDGRID_FROM_EMAIL=patrick.roebuck@pm.me
-CONTACT_EMAIL=patrick.roebuck@pm.me
+# Required for email (Resend is the only transport: license/book mail,
+# contact form, newsletter confirmation, usage digest). The from-domain
+# must be verified in Resend or sends are refused.
+RESEND_API_KEY=re_your_resend_api_key
+FROM_EMAIL=Attune AI <noreply@smartaimemory.com>
+CONTACT_EMAIL=patrick.roebuck@smartaimemory.com
 
 # Required for Plausible Analytics
 NEXT_PUBLIC_PLAUSIBLE_DOMAIN=smartaimemory.com
@@ -25,7 +27,7 @@ NEXT_PUBLIC_PLAUSIBLE_DOMAIN=smartaimemory.com
 # Optional: Self-hosted Plausible
 # NEXT_PUBLIC_PLAUSIBLE_API_HOST=https://plausible.io
 
-# Optional: Mailchimp (alternative to SendGrid for newsletter)
+# Optional: Mailchimp (newsletter LIST management; confirmation mail still goes via Resend)
 # MAILCHIMP_API_KEY=your_mailchimp_api_key
 # MAILCHIMP_LIST_ID=your_list_id
 # MAILCHIMP_SERVER_PREFIX=us1
@@ -207,7 +209,8 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - RESEND_API_KEY=${RESEND_API_KEY}
+      - FROM_EMAIL=${FROM_EMAIL}
       - NEXT_PUBLIC_PLAUSIBLE_DOMAIN=${NEXT_PUBLIC_PLAUSIBLE_DOMAIN}
     restart: unless-stopped
 ```
@@ -221,7 +224,7 @@ docker-compose up -d
 ## Post-Deployment Checklist
 
 - [ ] Environment variables configured
-- [ ] SendGrid API key added and verified
+- [ ] Resend API key added and the from-domain verified in Resend
 - [ ] Plausible Analytics tracking working
 - [ ] Contact form tested
 - [ ] Newsletter signup tested
@@ -265,8 +268,8 @@ pm2 logs
 
 ### Email Not Sending
 
-1. Verify SendGrid API key
-2. Check SendGrid sender verification
+1. Verify RESEND_API_KEY is set (the transport fails closed and logs `RESEND_API_KEY is not set`)
+2. Check the from-domain is verified in Resend (unverified senders are refused at the API)
 3. Review logs for error messages
 
 ### Analytics Not Tracking
