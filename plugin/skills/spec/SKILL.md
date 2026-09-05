@@ -123,7 +123,7 @@ next step needs. Rules, in precedence order:
    `conversation` means present the returned Markdown, not the widget;
    `default` (or unset) means the widget where the host renders it. A one-time override does
    not rewrite the stored preference. Keyboard mode (`attune config set
-   keyboard_mode`) is a separate, project-scoped opt-out for FORMS and is
+   keyboard_mode true`) is a separate, project-scoped opt-out for FORMS and is
    not the session preference.
 3. **A conversational answer is transcribed, never acted on directly.**
    When the workspace is open and the user says "looks good", "approve",

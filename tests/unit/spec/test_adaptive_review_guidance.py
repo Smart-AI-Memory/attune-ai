@@ -38,10 +38,13 @@ _SPEC_RULES = {
     "no-redundant-question": "Never re-ask a settled choice.",
     "authority-unchanged": "Presentation never changes authority.",
     "session-store": "`interaction_preference`",
+    "read-cadence": "once per session (and again only when the user changes it)",
 }
 _ELICIT_RULES = {
     "override-scope": "Honor it for this interaction only; it does not rewrite anything stored.",
     "session-store": "`interaction_preference`",
+    "read-cadence": "once per session (again only when the user changes it)",
+    "instance-lifetime": "It lives for the MCP server instance",
     "precedence": "explicit override for this interaction → explicit session preference → the router's default",
     "keyboard-not-preference": "Keyboard mode is NOT this preference",
     "text-lane-keeps-fields": "The text lane keeps every field.",

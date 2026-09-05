@@ -336,8 +336,10 @@ presentation only — never validation, never action authority:
 - **Session-wide preference** — "just talk to me" / "stop with the
   forms". Store it with the attune-ai MCP context tools: `context_set`
   key `interaction_preference`, value `conversation`; read it back with
-  `context_get` before rendering. It lives for the MCP server process
-  and survives phase changes until the user changes it. `conversation`
+  `context_get` once per session (again only when the user changes it),
+  not before every render. It lives for the MCP server instance — one
+  per stdio server process in the shipped plugin — and survives phase
+  changes until the user changes it. `conversation`
   means: render the form on the text lane and transcribe the answer.
   Keyboard mode is NOT this preference — it is a project-scoped,
   file-persisted opt-out that still asks, via a flatter control.
