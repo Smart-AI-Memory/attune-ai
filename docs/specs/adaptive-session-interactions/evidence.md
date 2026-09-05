@@ -114,3 +114,96 @@ lifetime), `tasks.md` (status flipped to active; spec-state comment now
 Not established by T2: that any host honors the guidance live. That is
 T3's receipt (named host round trip through the review choice on both
 lanes), and it has no go yet.
+
+## T3 execution record (2026-09-05, pending chair acceptance)
+
+Scope executed under the D7 go: the `spec` review choice connected to the
+host and canonical-state boundaries on the NAMED host, both lanes, with
+the ASI-3/ASI-4 probes run against the live server. No source change.
+
+### Host and runtime (recorded, not inferred)
+
+| Item | Value | How known |
+| --- | --- | --- |
+| Host | Claude desktop app, Code tab, session worktree `resume-attune-forms-planning-a3179d` | this session |
+| attune-ai MCP server | the plugin server this session started: `.venv/bin/python -m attune.mcp.server` from the worktree venv | `ps` parent chain to this session's `uv run` |
+| attune-ai source the server imports | this worktree's `src/` (tree `be15968fa`; no `src/` change since) | `attune.__file__` under that interpreter |
+| Python / attune-forms | 3.11.14 / 0.12.3 (installed distribution) | `importlib.metadata` under that interpreter |
+| Rendering path | `command_workspace_open` HTML passed to the host's `show_widget`; the widget posts the bound payload back through the conversation; `command_workspace_collect_action` consumes it | tool log |
+| Named human observer | Patrick (submitted the widget lane himself) | this session |
+
+### Widget lane — actual-host round trip (workspace `spec-c7e5fc780bdc40ed9e75807206996839`)
+
+| Step | Receipt |
+| --- | --- |
+| `route=new` opened (rev 0, instance `cc0e29bc…`) | `workspace_rendered` telemetry row 19:59:55Z |
+| `create_spec` confirmed and accepted (rev 0 → 1) | `workspace_accepted` 20:00:28Z; result delegates `spec.create`; no spec files were created — the delegate is the agent's to act on and T3 declined to (ASI-5: no consequential work solely to test an approval) |
+| `artifacts_created` published pointing at the REAL plan (`docs/specs/adaptive-session-interactions/tasks.md`, tasks 1–5) | rev 2, `gate_running` |
+| `lifecycle_gate` published with the REAL receipts of `attune gates check tasks --spec adaptive-session-interactions` run 2026-09-05 (symbol-reality `3d7ca78131fc` PASS, falsifiability `c51170db1332` PASS) | rev 3, **review** stage, actions `redo_plan` / `approve_plan`; `workspace_rendered` 20:00:53Z instance `73ac1b79…` |
+| Widget shown to the user | tool return 20:01:30Z — a tool-return time, **not paint** |
+| User clicked **Approve plan** (named human: Patrick) | payload arrived at the agent 20:02:22Z; `command_workspace_collect_action` accepted it; `workspace_accepted` 20:02:22.536Z rev 3 instance `73ac1b79…` action `approve_plan`; successor rev 4 = **approval** stage rendered (instance `682d2543…`) |
+
+Dwell between the render event and acceptance was 89 s and includes the
+agent's own turn and the human's reading; it is not a paint or a
+usability number. Paint timing on this host: **unmeasured** (no host
+observation boundary). Usability: **attested** by the named human who
+completed the control, per ASI-3.
+
+### Probes against the live server (ASI-4), all after the accepted click
+
+| Probe | Result |
+| --- | --- |
+| Replay the consumed review payload (rev 3 nonce) | rejected: title mismatch, action not allowed by the rendered view, revision / nonce / contract-hash mismatch |
+| Stale revision (rev 2) with the live nonce and hash | rejected: revision does not match |
+| Unknown action `ship_it` on the live binding | rejected: not allowed by the rendered view |
+| `execution_progress` published while the approval choice is pending | rejected: "Spec progress requires execution stage" — an unrelated progress event cannot displace the pending choice |
+| Canonical answer preserved | the successor view is the approval stage; the review choice cannot be re-answered (replay above) |
+| `instance_id` is correlation only | it appears in telemetry rows and nowhere in the acceptance decision (the stale/replay probes carried the correct instance and were still rejected) |
+
+### Unavailable surface (ASI-3)
+
+`elicitation_ask` (native MCP elicitation) on this host returned
+`{"success": false, "action": "decline"}` with **no dialog rendered** —
+the auto-declined host path the requirement names, distinguishable from
+an observed user rejection (the user saw nothing). The fallback (widget
+lane above; Markdown lane below) completed the interaction; nothing was
+discarded.
+
+### Scoped preference facility on the named host (ASI-2)
+
+`context_get interaction_preference` → not found (the default, no inferred
+opt-out); `context_set … conversation` → `context_get` returned
+`conversation`; reset to `default` afterwards. The facility T2 named
+round-trips on the live server for this session.
+
+### Draft recovery (ASI-2)
+
+The workspace widget HTML contains no client draft mechanism
+(`localStorage` / `sessionStorage` / `indexedDB` / `beforeunload` /
+autosave: zero occurrences); re-render always comes from canonical state.
+**Unsubmitted client input is NOT recoverable on this host** — recorded
+as a disclosed limit, not promised.
+
+### Markdown lane — actual-host round trip (workspace `spec-dcc3e8ef7acc403fbafba3b545b2d0bb`)
+
+Driven to the review stage by the same chain (real plan, real gate
+receipts; rev 3, instance `d9850419…`). The returned Markdown was
+presented verbatim and the user was asked to answer in words.
+The user answered **"approve"** in words (20:11:28Z, agent side). The agent
+transcribed it into the bound payload from the returned skeleton
+(`workspace_id`, `revision` 3, `action_nonce` `SmXPPpmV…`, `contract_hash`
+`5d8deddc…`, `title`, `view`, `action: approve_plan`, `confirmed: false`,
+`instance_id` `d9850419…`) and submitted it through
+`command_workspace_collect_action`: **accepted**, revision 3 → 4, successor
+= approval stage (instance `3ec4323f…`). Same collector, same binding
+grammar, same acceptance semantics as the widget lane — the spoken word
+authorized nothing by itself; only the transcribed, bound, validated
+payload advanced the revision (ASI-4). No `start_execution` was submitted
+on either workspace.
+
+### Not established by T3
+
+Paint timing on any host; usefulness of the automatic default (T4); any
+host other than the one named above; native-dialog rendering on this host
+(observed: auto-decline). Telemetry rows written by these probes live in
+the local `form_events.jsonl`; they are receipts, not measurements.
