@@ -16,7 +16,7 @@ import re
 import shutil
 import subprocess
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -1276,6 +1276,123 @@ _SUGGESTION_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Heading of the trailing next-steps section, matched against a full
+# ``## ...`` heading line (same convention as _CATEGORY_PATTERNS).
+_SUGGESTIONS_HEADING_RE = re.compile(
+    r"##\s*(?:Suggestions?|Recommendations?|Next\s*Steps?)\b",
+    re.IGNORECASE,
+)
+
+# An h2 heading — ``##`` but not ``###``. Group 1 is the heading text.
+_H2_RE = re.compile(r"^##(?!#)[^\S\n]*(.*)$", re.MULTILINE)
+_SUBHEADER_RE = re.compile(r"^#{3,}\s*(.+?)\s*$")
+_FENCE_RE = re.compile(r"^\s*(?:```|~~~)")
+_BULLET_RE = re.compile(r"^[-*+]\s+(.+)")
+_NUMBERED_RE = re.compile(r"^\d+[.)]\s+(.+)")
+_TABLE_SEP_RE = re.compile(r"^\|[\s\-:|]+\|?\s*$")
+# Any line that opens a list or table row — used to tell "the model
+# wrote nothing here" apart from "the model wrote structure we failed
+# to parse". The second case is OUR defect and must not report green.
+_LIST_MARKUP_RE = re.compile(r"^\s*(?:[-*+]\s+|\d+[.)]\s+|\|)", re.MULTILINE)
+
+
+def _split_h2_sections(text: str) -> list[tuple[str, str]]:
+    """Split markdown into ``(heading_line, body)`` pairs at each h2.
+
+    ``###`` and deeper headings stay INSIDE their parent section's
+    body — they are grouping labels (``### HIGH``), not new sections.
+    Text before the first h2 is not returned.
+    """
+    matches = list(_H2_RE.finditer(text))
+    sections: list[tuple[str, str]] = []
+    for index, match in enumerate(matches):
+        end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+        sections.append((match.group(0).strip(), text[match.end() : end]))
+    return sections
+
+
+def _label(sub_heading: str, item: str) -> str:
+    """Prefix an item with its ``###`` grouping label, when it has one.
+
+    ``### HIGH`` + ``- foo.py:1 leaks`` becomes ``HIGH — foo.py:1
+    leaks`` so the severity survives the flattening. Skipped when the
+    item already leads with the label.
+    """
+    if not sub_heading or item.lower().startswith(sub_heading.lower()):
+        return item
+    return f"{sub_heading} — {item}"
+
+
+def _extract_items(body: str) -> list[str]:
+    """Pull list-shaped items out of one section body.
+
+    Accepts every shape the task prompts actually elicit: ``-``/``*``/
+    ``+`` bullets, ``1.``/``1)`` numbered entries, and markdown table
+    rows — each optionally grouped under ``###`` sub-headings. Fenced
+    code blocks are skipped so samples never become findings.
+    """
+    items: list[str] = []
+    sub_heading = ""
+    in_fence = False
+    table_row = 0
+
+    for raw_line in body.splitlines():
+        if _FENCE_RE.match(raw_line):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+
+        line = raw_line.strip()
+        if not line:
+            table_row = 0
+            continue
+
+        sub_match = _SUBHEADER_RE.match(line)
+        if sub_match:
+            sub_heading = sub_match.group(1)
+            table_row = 0
+            continue
+
+        if line.startswith("|"):
+            if _TABLE_SEP_RE.match(line):
+                continue
+            table_row += 1
+            if table_row == 1:
+                continue  # column headers, not a finding
+            cells = [cell.strip() for cell in line.strip("|").split("|")]
+            joined = " — ".join(cell for cell in cells if cell)
+            if joined:
+                items.append(_label(sub_heading, joined))
+            continue
+
+        table_row = 0
+        match = _BULLET_RE.match(line) or _NUMBERED_RE.match(line)
+        if match:
+            item = match.group(1).strip()
+            if item:
+                items.append(_label(sub_heading, item))
+
+    return items
+
+
+def required_sections_from_prompt(task_prompt: str) -> tuple[str, ...]:
+    """Read the ``## Section`` names a task prompt template declares.
+
+    The prompt IS the contract, so the required-section list is derived
+    from it rather than restated next to it — a workflow cannot drift
+    from a contract it never hand-copied.
+
+    Args:
+        task_prompt: A workflow's task prompt template. ``{}`` format
+            placeholders are ignored; only headings are read.
+
+    Returns:
+        The declared section names, in order, de-duplicated.
+    """
+    names = (name.strip() for name in _H2_RE.findall(task_prompt))
+    return tuple(dict.fromkeys(name for name in names if name))
+
 
 class AgentSDKResultAdapter:
     """Converts Agent SDK ResultMessage text into a WorkflowResult.
@@ -1296,6 +1413,7 @@ class AgentSDKResultAdapter:
         metadata: dict[str, Any] | None = None,
         agent_run_result: AgentRunResult | None = None,
         report_title: str | None = None,
+        required_sections: Sequence[str] = (),
     ) -> WorkflowResult:
         """Build a WorkflowResult from raw agent text output.
 
@@ -1311,6 +1429,12 @@ class AgentSDKResultAdapter:
             report_title: Human title for the rendered WorkflowReport
                 (e.g. ``"Code review"``). Used when findings parse and
                 ``final_output`` becomes a serialized report.
+            required_sections: Section names the workflow's task prompt
+                declared (see :func:`required_sections_from_prompt`).
+                A run that omits one, or whose section carried list
+                markup that parsed to nothing, is reported as a
+                FAILURE — a report missing the sections its own prompt
+                mandates is not a successful run.
 
         Returns:
             A WorkflowResult populated with parsed findings,
@@ -1388,8 +1512,12 @@ class AgentSDKResultAdapter:
         # WorkflowReport (the voice/CLI renderers own formatting +
         # the show_cost gate — design D2/D3); otherwise the raw SDK
         # markdown passes through unchanged.
+        # ``any(...)``, not ``if findings`` — a matched-but-empty
+        # category ({"bugs": []}) is truthy, and rewriting on it
+        # replaced the agent's full markdown with a sectionless stub,
+        # losing every finding the model actually reported.
         final_output: str | dict[str, Any] = text
-        if findings:
+        if any(findings.values()):
             final_output = cls._to_workflow_report(
                 title=report_title or "Workflow report",
                 summary=summary,
@@ -1425,6 +1553,13 @@ class AgentSDKResultAdapter:
                     + (f": {detail}" if detail else "")
                 )
 
+        contract_error = cls._check_section_contract(text, required_sections)
+        if contract_error:
+            result_metadata["section_contract_error"] = contract_error
+            if success:
+                success = False
+                error = contract_error
+
         return WorkflowResult(
             success=success,
             error=error,
@@ -1438,6 +1573,65 @@ class AgentSDKResultAdapter:
             metadata=result_metadata,
             summary=summary,
             suggestions=suggestions,
+        )
+
+    @classmethod
+    def _check_section_contract(
+        cls,
+        result_text: str,
+        required_sections: Sequence[str],
+    ) -> str | None:
+        """Verify the agent honored the sections its prompt declared.
+
+        Two distinct failures, both of which used to exit 0:
+
+        * **Omitted** — the agent never emitted the heading. The model
+          under-delivered against its own contract.
+        * **Unparsed** — the heading is there and carries list markup,
+          but nothing parsed out of it. That is OUR defect, and it is
+          the one that silently shipped summary-only bug reports.
+
+        An empty section with no list markup ("No bugs found.") is a
+        legitimate clean result and passes.
+
+        Args:
+            result_text: The agent's full markdown response.
+            required_sections: Declared section names; empty disables
+                the check for callers that have not opted in.
+
+        Returns:
+            A message naming the offending sections, or None when the
+            report honors its contract.
+        """
+        if not required_sections:
+            return None
+
+        bodies = {
+            heading.lstrip("#").strip().lower(): body
+            for heading, body in _split_h2_sections(result_text)
+        }
+
+        omitted = [name for name in required_sections if name.lower() not in bodies]
+        unparsed = [
+            name
+            for name in required_sections
+            if name.lower() in bodies
+            and _LIST_MARKUP_RE.search(bodies[name.lower()])
+            and not _extract_items(bodies[name.lower()])
+        ]
+
+        problems = []
+        if omitted:
+            problems.append(f"never emitted: {', '.join(omitted)}")
+        if unparsed:
+            problems.append(f"emitted but unparsable: {', '.join(unparsed)}")
+        if not problems:
+            return None
+
+        return (
+            "Report violates its own section contract ("
+            + "; ".join(problems)
+            + f"). Declared sections: {', '.join(required_sections)}."
         )
 
     @classmethod
@@ -1539,7 +1733,13 @@ class AgentSDKResultAdapter:
 
         Looks for markdown section headers matching known categories
         (security, quality, performance, architecture) and collects
-        the bullet points underneath each one.
+        the list items underneath each one — bullets, numbered
+        entries, or table rows, including those grouped under a
+        ``###`` sub-heading such as ``### HIGH``.
+
+        A matched header always seeds its key, so a category that
+        parsed to nothing is distinguishable from one the agent never
+        emitted.
 
         Args:
             result_text: The full agent response text.
@@ -1551,34 +1751,11 @@ class AgentSDKResultAdapter:
         if not result_text.strip():
             return findings
 
-        lines = result_text.splitlines()
-        current_category: str | None = None
-
-        for line in lines:
-            stripped = line.strip()
-
-            # Check if this line is a category header
-            matched_category = False
+        for heading, body in _split_h2_sections(result_text):
             for category, pattern in _CATEGORY_PATTERNS.items():
-                if pattern.search(stripped):
-                    current_category = category
-                    findings.setdefault(category, [])
-                    matched_category = True
+                if pattern.search(heading):
+                    findings.setdefault(category, []).extend(_extract_items(body))
                     break
-
-            if matched_category:
-                continue
-
-            # Any other h2/h3 header ends the current category
-            if stripped.startswith("##"):
-                current_category = None
-                continue
-
-            # Collect bullet points under the current category
-            if current_category and re.match(r"^[-*]\s+", stripped):
-                item = re.sub(r"^[-*]\s+", "", stripped)
-                if item:
-                    findings[current_category].append(item)
 
         return findings
 
@@ -1587,9 +1764,11 @@ class AgentSDKResultAdapter:
         """Extract actionable suggestions as NextAction items.
 
         Scans for a ``## Suggestions`` or ``## Recommendations``
-        section and converts each bullet into a NextAction. Falls
+        section and converts each item into a NextAction — bullets,
+        numbered entries ("ordered by priority" is what the prompts
+        ask for), or rows grouped under ``### Priority 1``. Falls
         back to scanning the entire text for suggestion-phrased
-        bullets if no dedicated section exists.
+        bullets only when no dedicated section exists.
 
         Args:
             result_text: The full agent response text.
@@ -1603,30 +1782,19 @@ class AgentSDKResultAdapter:
         suggestions: list[NextAction] = []
 
         # Try dedicated section first
-        section_match = re.search(
-            r"##\s*(?:Suggestions?|Recommendations?|Next\s*Steps?)\s*\n(.*?)(?=\n##|\Z)",
-            result_text,
-            re.DOTALL | re.IGNORECASE,
-        )
-
-        if section_match:
-            section_text = section_match.group(1)
-            for line in section_text.splitlines():
-                stripped = line.strip()
-                bullet_match = re.match(r"^[-*]\s+(.+)", stripped)
-                if bullet_match:
-                    desc = bullet_match.group(1).strip()
-                    if desc:
-                        suggestions.append(
-                            NextAction(
-                                workflow_name="agent-followup",
-                                description=desc,
-                                reasoning="Extracted from agent SDK output",
-                                priority="medium",
-                                confidence=0.7,
-                            )
-                        )
-            return suggestions
+        for heading, body in _split_h2_sections(result_text):
+            if not _SUGGESTIONS_HEADING_RE.search(heading):
+                continue
+            return [
+                NextAction(
+                    workflow_name="agent-followup",
+                    description=desc,
+                    reasoning="Extracted from agent SDK output",
+                    priority="medium",
+                    confidence=0.7,
+                )
+                for desc in _extract_items(body)
+            ]
 
         # Fallback: scan entire text for suggestion-phrased bullets
         keywords = ("consider", "suggest", "recommend", "should", "could", "try")

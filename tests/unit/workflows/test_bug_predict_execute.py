@@ -64,7 +64,15 @@ def result_message() -> claude_agent_sdk.ResultMessage:
         session_id="sess-bug-7",
         total_cost_usd=0.61,
         usage={"input_tokens": 2100, "output_tokens": 1200},
-        result="## Summary\nBug prediction complete.",
+        result=(
+            "## Summary\n"
+            "Risk score: 42/100. Bug prediction complete.\n\n"
+            "## Bugs\n\n"
+            "### HIGH\n"
+            "- Broad exception at src/foo.py:18 swallows errors\n\n"
+            "## Suggestions\n"
+            "1. Narrow the except clause in src/foo.py\n"
+        ),
         structured_output=None,
     )
 
@@ -121,7 +129,15 @@ class TestExecuteSuccess:
         assert isinstance(result, WorkflowResult)
         assert result.success is True
         assert result.provider == "anthropic"
-        assert "Risk" in result.final_output or "Summary" in result.final_output
+        # final_output is a serialized WorkflowReport once findings
+        # parse. Assert the SECTIONS survived, not just the summary —
+        # a summary-only report is the defect this workflow shipped.
+        assert isinstance(result.final_output, dict)
+        assert "Risk" in result.final_output["summary"]
+        assert [s["title"] for s in result.final_output["sections"]] == [
+            "Bugs",
+            "Next steps",
+        ]
 
     @patch("attune.workflows.bug_predict.claude_agent_sdk.query")
     def test_metadata_populated(self, mock_query, workflow, assistant_message, result_message):

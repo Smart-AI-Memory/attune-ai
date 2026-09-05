@@ -19,9 +19,50 @@ from attune.workflows.base import ModelTier
 from attune.workflows.code_review import CodeReviewWorkflow
 from attune.workflows.data_classes import WorkflowResult
 
+_SAMPLE_CODE_REVIEW_OUTPUT = (
+    "## Summary\n"
+    "Code health score: 90/100.\n\n"
+    "## Security\n- No eval/exec usage found\n\n"
+    "## Quality\n- Good test coverage\n\n"
+    "## Performance\n- No N+1 patterns detected\n\n"
+    "## Architecture\n- Clean module boundaries\n\n"
+    "## Suggestions\n1. Consider adding input validation\n"
+)
+
 # ============================================================================
 # Test: Workflow Initialization
 # ============================================================================
+
+
+def _sdk_stream(text: str):
+    """Return a ``query``-shaped callable yielding one real ResultMessage.
+
+    The hollow ``MagicMock(text=...)`` these tests used to pass yielded
+    NO messages, so the adapter fell back to its "No results returned."
+    default and ``result.success`` was true no matter what the agent
+    said. Emitting a real ResultMessage makes the success assertions
+    mean something.
+    """
+    import claude_agent_sdk
+
+    def factory(*args, **kwargs):
+        async def gen():
+            yield claude_agent_sdk.ResultMessage(
+                subtype="success",
+                duration_ms=1000,
+                duration_api_ms=900,
+                is_error=False,
+                num_turns=2,
+                session_id="sess-test",
+                total_cost_usd=0.01,
+                usage={"input_tokens": 10, "output_tokens": 10},
+                result=text,
+                structured_output=None,
+            )
+
+        return gen()
+
+    return factory
 
 
 @pytest.mark.unit
@@ -62,7 +103,7 @@ class TestWorkflowExecution:
     async def test_execute_returns_workflow_result(self):
         """Test execute returns a WorkflowResult on success."""
         mock_sdk = MagicMock()
-        mock_sdk.query = MagicMock(return_value=MagicMock(text="## Summary\nScore: 90/100"))
+        mock_sdk.query = _sdk_stream(_SAMPLE_CODE_REVIEW_OUTPUT)
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
@@ -135,7 +176,7 @@ class TestWorkflowExecution:
     async def test_execute_passes_depth_to_sdk(self):
         """Test execute passes depth-based max_turns to SDK."""
         mock_sdk = MagicMock()
-        mock_sdk.query = MagicMock(return_value=MagicMock(text="## Summary\nOK"))
+        mock_sdk.query = _sdk_stream(_SAMPLE_CODE_REVIEW_OUTPUT)
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
@@ -150,7 +191,7 @@ class TestWorkflowExecution:
     async def test_execute_result_has_four_stages(self):
         """Test successful result has 4 stages (one per subagent)."""
         mock_sdk = MagicMock()
-        mock_sdk.query = MagicMock(return_value=MagicMock(text="## Summary\nOK"))
+        mock_sdk.query = _sdk_stream(_SAMPLE_CODE_REVIEW_OUTPUT)
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
@@ -164,7 +205,7 @@ class TestWorkflowExecution:
     async def test_execute_result_has_metadata(self):
         """Test successful result includes path and depth metadata."""
         mock_sdk = MagicMock()
-        mock_sdk.query = MagicMock(return_value=MagicMock(text="## Summary\nOK"))
+        mock_sdk.query = _sdk_stream(_SAMPLE_CODE_REVIEW_OUTPUT)
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 

@@ -36,6 +36,37 @@ SAMPLE_DEEP_REVIEW_OUTPUT = (
 )
 
 
+def _sdk_stream(text: str):
+    """Return a ``query``-shaped callable yielding one real ResultMessage.
+
+    The hollow ``MagicMock(text=...)`` these tests used to pass yielded
+    NO messages, so the adapter fell back to its "No results returned."
+    default and ``result.success`` was true no matter what the agent
+    said. Emitting a real ResultMessage makes the success assertions
+    mean something.
+    """
+    import claude_agent_sdk
+
+    def factory(*args, **kwargs):
+        async def gen():
+            yield claude_agent_sdk.ResultMessage(
+                subtype="success",
+                duration_ms=1000,
+                duration_api_ms=900,
+                is_error=False,
+                num_turns=2,
+                session_id="sess-test",
+                total_cost_usd=0.01,
+                usage={"input_tokens": 10, "output_tokens": 10},
+                result=text,
+                structured_output=None,
+            )
+
+        return gen()
+
+    return factory
+
+
 @pytest.mark.unit
 class TestDeepReviewAttributes:
     """Test workflow class attributes."""
@@ -78,7 +109,7 @@ class TestDeepReviewExecution:
     async def test_returns_success_on_valid_response(self) -> None:
         """Given mocked SDK returning review text, execute succeeds."""
         mock_sdk = MagicMock()
-        mock_sdk.query = MagicMock(return_value=MagicMock(text=SAMPLE_DEEP_REVIEW_OUTPUT))
+        mock_sdk.query = _sdk_stream(SAMPLE_DEEP_REVIEW_OUTPUT)
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
@@ -104,7 +135,7 @@ class TestDeepReviewExecution:
     async def test_metadata_includes_workflow_name(self) -> None:
         """Given successful execution, metadata contains workflow name."""
         mock_sdk = MagicMock()
-        mock_sdk.query = MagicMock(return_value=MagicMock(text=SAMPLE_DEEP_REVIEW_OUTPUT))
+        mock_sdk.query = _sdk_stream(SAMPLE_DEEP_REVIEW_OUTPUT)
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
@@ -185,7 +216,7 @@ class TestDeepReviewDepth:
     async def test_depth_sets_correct_max_turns(self, depth: str, expected_turns: int) -> None:
         """Given a depth value, correct max_turns is passed to SDK."""
         mock_sdk = MagicMock()
-        mock_sdk.query = MagicMock(return_value=MagicMock(text="## Summary\nOK"))
+        mock_sdk.query = _sdk_stream(SAMPLE_DEEP_REVIEW_OUTPUT)
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
@@ -208,7 +239,7 @@ class TestDeepReviewDepth:
     async def test_unknown_depth_defaults_to_thirty(self) -> None:
         """Given unknown depth, max_turns defaults to 30."""
         mock_sdk = MagicMock()
-        mock_sdk.query = MagicMock(return_value=MagicMock(text="## Summary\nOK"))
+        mock_sdk.query = _sdk_stream(SAMPLE_DEEP_REVIEW_OUTPUT)
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
@@ -236,7 +267,7 @@ class TestDeepReviewFocus:
     async def test_focus_security_only_creates_one_agent(self) -> None:
         """Given focus=['security'], only security-reviewer is created."""
         mock_sdk = MagicMock()
-        mock_sdk.query = MagicMock(return_value=MagicMock(text="## Summary\nOK"))
+        mock_sdk.query = _sdk_stream(SAMPLE_DEEP_REVIEW_OUTPUT)
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
@@ -259,7 +290,7 @@ class TestDeepReviewFocus:
     async def test_focus_multiple_passes(self) -> None:
         """Given focus=['security', 'test-gaps'], two agents created."""
         mock_sdk = MagicMock()
-        mock_sdk.query = MagicMock(return_value=MagicMock(text="## Summary\nOK"))
+        mock_sdk.query = _sdk_stream(SAMPLE_DEEP_REVIEW_OUTPUT)
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 

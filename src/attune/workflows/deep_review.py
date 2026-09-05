@@ -39,6 +39,7 @@ from .agent_sdk_adapter import (
     get_max_budget_usd,
     get_subagent_model,
     iter_agent_messages,
+    required_sections_from_prompt,
     resolve_cwd_for_path,
     sdk_isolation_kwargs,
 )
@@ -157,6 +158,11 @@ Top 5-10 actionable next steps ordered by impact. Each suggestion \
 should reference the specific finding it addresses.\
 """
 
+# Derived from the prompt above, never restated — the prompt IS
+# the output contract, and a run that omits one of these sections
+# is a failure, not a quiet exit-0 (see _check_section_contract).
+_REQUIRED_SECTIONS = required_sections_from_prompt(_TASK_PROMPT_TEMPLATE)
+
 
 class DeepReviewAgentSDKWorkflow(BaseWorkflow):
     """Multi-pass deep code review using Claude Agent SDK subagents.
@@ -232,6 +238,7 @@ class DeepReviewAgentSDKWorkflow(BaseWorkflow):
 
             return AgentSDKResultAdapter.from_agent_output(
                 report_title="Deep review",
+                required_sections=_REQUIRED_SECTIONS,
                 result_text=run_result.result_text,
                 subagent_names=active_agents,
                 started_at=started_at,

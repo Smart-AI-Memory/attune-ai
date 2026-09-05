@@ -62,7 +62,15 @@ def result_message() -> claude_agent_sdk.ResultMessage:
         session_id="sess-research-7",
         total_cost_usd=0.58,
         usage={"input_tokens": 2200, "output_tokens": 1100},
-        result="## Summary\nResearch synthesis complete.",
+        result=(
+            "## Summary\n"
+            "Research synthesis complete.\n\n"
+            "## Research\n\n"
+            "### Theme: caching\n"
+            "- Prompt caching cuts repeat-token cost [source: docs/a.md]\n\n"
+            "## Suggestions\n"
+            "1. Adopt prompt caching for the synthesis stage\n"
+        ),
         structured_output=None,
     )
 
@@ -119,7 +127,14 @@ class TestExecuteSuccess:
         assert isinstance(result, WorkflowResult)
         assert result.success is True
         assert result.provider == "anthropic"
-        assert "Sources" in result.final_output or "Summary" in result.final_output
+        # final_output is a serialized WorkflowReport once findings
+        # parse. Assert the SECTIONS survived, not just the summary.
+        assert isinstance(result.final_output, dict)
+        assert "synthesis" in result.final_output["summary"]
+        assert [s["title"] for s in result.final_output["sections"]] == [
+            "Research",
+            "Next steps",
+        ]
 
     @patch("attune.workflows.research_synthesis.claude_agent_sdk.query")
     def test_metadata_populated(self, mock_query, workflow, assistant_message, result_message):

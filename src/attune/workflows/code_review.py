@@ -40,6 +40,7 @@ from .agent_sdk_adapter import (
     get_task_budget,
     get_thinking_config,
     iter_agent_messages,
+    required_sections_from_prompt,
     resolve_cwd_for_path,
     sdk_isolation_kwargs,
 )
@@ -163,6 +164,11 @@ Findings from the architecture reviewer.
 Actionable next steps ordered by priority.\
 """
 
+# Derived from the prompt above, never restated — the prompt IS
+# the output contract, and a run that omits one of these sections
+# is a failure, not a quiet exit-0 (see _check_section_contract).
+_REQUIRED_SECTIONS = required_sections_from_prompt(_TASK_PROMPT_TEMPLATE)
+
 # Kept for backward compatibility — consumed by tests and step executor
 CODE_REVIEW_STEPS = {
     "architect_review": WorkflowStepConfig(
@@ -260,6 +266,7 @@ class CodeReviewWorkflow(BaseWorkflow):
 
             return AgentSDKResultAdapter.from_agent_output(
                 report_title="Code review",
+                required_sections=_REQUIRED_SECTIONS,
                 result_text=run_result.result_text,
                 subagent_names=_SUBAGENT_NAMES,
                 started_at=started_at,

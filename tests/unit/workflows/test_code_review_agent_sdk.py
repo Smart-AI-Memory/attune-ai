@@ -15,6 +15,47 @@ import pytest
 
 from attune.workflows.data_classes import WorkflowResult
 
+_SAMPLE_CODE_REVIEW_OUTPUT = (
+    "## Summary\n"
+    "Code health score: 90/100.\n\n"
+    "## Security\n- No eval/exec usage found\n\n"
+    "## Quality\n- Good test coverage\n\n"
+    "## Performance\n- No N+1 patterns detected\n\n"
+    "## Architecture\n- Clean module boundaries\n\n"
+    "## Suggestions\n1. Consider adding input validation\n"
+)
+
+
+def _sdk_stream(text: str):
+    """Return a ``query``-shaped callable yielding one real ResultMessage.
+
+    The hollow ``MagicMock(text=...)`` these tests used to pass yielded
+    NO messages, so the adapter fell back to its "No results returned."
+    default and ``result.success`` was true no matter what the agent
+    said. Emitting a real ResultMessage makes the success assertions
+    mean something.
+    """
+    import claude_agent_sdk
+
+    def factory(*args, **kwargs):
+        async def gen():
+            yield claude_agent_sdk.ResultMessage(
+                subtype="success",
+                duration_ms=1000,
+                duration_api_ms=900,
+                is_error=False,
+                num_turns=2,
+                session_id="sess-test",
+                total_cost_usd=0.01,
+                usage={"input_tokens": 10, "output_tokens": 10},
+                result=text,
+                structured_output=None,
+            )
+
+        return gen()
+
+    return factory
+
 
 @pytest.mark.unit
 class TestCodeReviewWorkflowAttributes:
@@ -74,11 +115,8 @@ class TestCodeReviewWorkflowExecution:
             "- Run security audit quarterly\n"
         )
 
-        fake_result = MagicMock()
-        fake_result.text = sample_text
-
         mock_sdk = MagicMock()
-        mock_sdk.query = MagicMock(return_value=fake_result)
+        mock_sdk.query = _sdk_stream(sample_text)
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
@@ -153,7 +191,7 @@ class TestCodeReviewWorkflowDepth:
     async def test_depth_sets_correct_max_turns(self, depth: str, expected_turns: int) -> None:
         """Given a depth value, the correct max_turns is passed to SDK."""
         mock_sdk = MagicMock()
-        mock_sdk.query = MagicMock(return_value=MagicMock(text="## Summary\nOK"))
+        mock_sdk.query = _sdk_stream(_SAMPLE_CODE_REVIEW_OUTPUT)
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
@@ -175,7 +213,7 @@ class TestCodeReviewWorkflowDepth:
     async def test_unknown_depth_defaults_to_twenty(self) -> None:
         """Given an unknown depth value, max_turns defaults to 20."""
         mock_sdk = MagicMock()
-        mock_sdk.query = MagicMock(return_value=MagicMock(text="## Summary\nOK"))
+        mock_sdk.query = _sdk_stream(_SAMPLE_CODE_REVIEW_OUTPUT)
         mock_sdk.ClaudeAgentOptions = MagicMock()
         mock_sdk.AgentDefinition = MagicMock()
 
