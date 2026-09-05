@@ -207,3 +207,14 @@ Paint timing on any host; usefulness of the automatic default (T4); any
 host other than the one named above; native-dialog rendering on this host
 (observed: auto-decline). Telemetry rows written by these probes live in
 the local `form_events.jsonl`; they are receipts, not measurements.
+
+## T4 preregistration (2026-09-05, decisions D10)
+
+[`t4-protocol.md`](t4-protocol.md) frozen before any occurrence was
+collected. SHA-256 of the file at freeze: `9ecc2b95148aa469a2ee9d2daad6f03587f8a0c67e2a6ed8578fac7f709dc2c9`.
+Record opened at [`t4-record.md`](t4-record.md) with the eight slots and
+their preregistered conditions (A B B A B A A B) and T3's two synthetic
+receipts listed as exclusions. The spec skill's review-choice section
+carries the collection instruction (master + tracked mirror + both help
+projections regenerated). No occurrence has been collected. Chair go for
+T5 is separate and waits on the record.
