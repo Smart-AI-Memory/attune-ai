@@ -26,8 +26,10 @@ for every project in the team.
 
 Credentials: the Vercel CLI's own token
 (``~/Library/Application Support/com.vercel.cli/auth.json`` or
-``$VERCEL_TOKEN``) and the ``.vercel/project.json`` link of the cwd.
-The token is sent in a header and never written anywhere.
+``$VERCEL_TOKEN``; expiry checked, refreshed via ``vercel whoami``) and the
+``.vercel/project.json`` link of ``--cwd`` ITSELF — parents are never
+searched (see ``vercel_common.py``). The token is sent in a header and
+never written anywhere.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
@@ -38,7 +40,6 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import os
 import re
 import subprocess
 import sys
@@ -47,27 +48,9 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+from vercel_common import VercelSetupError, resolve
+
 API = "https://api.vercel.com"
-
-
-def _token() -> str:
-    tok = os.environ.get("VERCEL_TOKEN")
-    if tok:
-        return tok
-    auth = Path.home() / "Library" / "Application Support" / "com.vercel.cli" / "auth.json"
-    if auth.exists():
-        return json.loads(auth.read_text()).get("token", "")
-    return ""
-
-
-def _link(cwd: Path) -> tuple[str, str]:
-    """Return (orgId, projectId) from the cwd's ``.vercel/project.json``."""
-    for d in (cwd, *cwd.parents):
-        p = d / ".vercel" / "project.json"
-        if p.exists():
-            j = json.loads(p.read_text())
-            return j.get("orgId", ""), j.get("projectId", "")
-    return "", ""
 
 
 def _get(path: str, token: str) -> dict:
@@ -203,15 +186,17 @@ def main(argv: list[str]) -> int:
     args = ap.parse_args(argv[1:])
 
     cwd = Path(args.cwd).resolve()
-    token = _token()
-    org, project_id = _link(cwd)
+    try:
+        lk = resolve(cwd)
+    except VercelSetupError as exc:
+        print(f"vercel_probe: {exc}", file=sys.stderr)
+        return 2
+    token, org, project_id = lk.token, lk.org, lk.project_id
+    print(f"project [{lk.label}] team {org}")
     lines, rc = env_report(args.env, cwd, args.expect, env_types(token, org, project_id))
     print("\n".join(lines))
 
     if args.domains:
-        if not token or not org:
-            print("domains: no token or no .vercel/project.json link in cwd", file=sys.stderr)
-            return max(rc, 1)
         try:
             print("\n".join(domains_report(token, org)))
         except urllib.error.URLError as exc:

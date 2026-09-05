@@ -3,7 +3,10 @@
 Pins: each subcommand maps to exactly one API call with the right
 method/path/body; dry-run performs nothing; an empty value is refused;
 generate+store writes a 0600 file and prints only length/digest; API
-errors surface as exit 1 with the message.
+errors surface as exit 1 with the message; an UNLINKED cwd exits 2 (no
+parent walk — the 2026-09-05 worktree hazard); ``redeploy`` refuses an
+empty or malformed URL and surfaces a failed deployments lookup instead
+of running ``vercel redeploy https://``.
 """
 
 from __future__ import annotations
@@ -11,12 +14,16 @@ from __future__ import annotations
 import importlib.util
 import os
 import stat
+import sys
 from pathlib import Path
 
 import pytest
 
 REPO = Path(__file__).resolve().parents[3]
-SCRIPT = REPO / "scripts" / "vercel_admin.py"
+SCRIPTS = REPO / "scripts"
+SCRIPT = SCRIPTS / "vercel_admin.py"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
 
 
 @pytest.fixture(scope="module")
@@ -28,11 +35,16 @@ def mod():
     return m
 
 
+def _fake_resolve(mod, token="tok", org="org_1", pid="prj_1", name="website"):
+    from vercel_common import Link
+
+    return lambda cwd, project_id=None: Link(token, org, project_id or pid, name)
+
+
 @pytest.fixture()
 def linked(mod, monkeypatch, tmp_path):
     """A linked cwd, a token, and a recorder in place of the network."""
-    monkeypatch.setattr(mod, "_token", lambda: "tok")
-    monkeypatch.setattr(mod, "_link", lambda cwd: ("org_1", "prj_1"))
+    monkeypatch.setattr(mod, "resolve", _fake_resolve(mod))
     calls = []
 
     def fake_request(method, path, token, body=None):
@@ -73,7 +85,7 @@ class TestMain:
         calls, tmp = linked
         rc = mod.main(["x", "--cwd", str(tmp), "--dry-run", "domain-detach", "x.com"])
         assert rc == 0 and calls == []
-        assert "DRY-RUN domain-detach x.com" in capsys.readouterr().out
+        assert "DRY-RUN [website/prj_1] domain-detach x.com" in capsys.readouterr().out
 
     def test_domain_detach_is_one_delete(self, mod, linked):
         calls, tmp = linked
@@ -122,17 +134,95 @@ class TestMain:
         assert p.read_text() == "A=1\nK=new\n"
 
     def test_api_error_exits_one_with_message(self, mod, monkeypatch, tmp_path, capsys):
-        monkeypatch.setattr(mod, "_token", lambda: "tok")
-        monkeypatch.setattr(mod, "_link", lambda cwd: ("o", "p"))
+        monkeypatch.setattr(mod, "resolve", _fake_resolve(mod))
         monkeypatch.setattr(
             mod,
             "_request",
             lambda *a, **k: {"error": {"message": "domain is in use"}, "status": 409},
         )
         assert mod.main(["x", "--cwd", str(tmp_path), "domain-attach", "x.com"]) == 1
-        assert "domain is in use" in capsys.readouterr().err
+        err = capsys.readouterr().err
+        assert "domain is in use" in err and "[website/prj_1]" in err
 
-    def test_no_link_exits_two(self, mod, monkeypatch, tmp_path):
-        monkeypatch.setattr(mod, "_token", lambda: "")
-        monkeypatch.setattr(mod, "_link", lambda cwd: ("", ""))
-        assert mod.main(["x", "--cwd", str(tmp_path), "domain-detach", "x.com"]) == 2
+    def test_every_output_line_names_the_project(self, mod, linked, capsys):
+        calls, tmp = linked
+        assert mod.main(["x", "--cwd", str(tmp), "domain-detach", "x.com"]) == 0
+        out = capsys.readouterr().out
+        assert out.startswith("[website/prj_1] domain-detach") and "[website/prj_1] ok" in out
+        assert "tok" not in out.replace("[website/prj_1]", "")
+
+
+class TestLinkResolution:
+    """No parent walk: the real resolver runs against a tmp tree."""
+
+    def test_unlinked_cwd_exits_two_with_a_clear_message(self, mod, monkeypatch, tmp_path, capsys):
+        monkeypatch.setenv("VERCEL_TOKEN", "env-token")
+        calls = []
+        monkeypatch.setattr(mod, "_request", lambda *a, **k: calls.append(a) or {})
+        rc = mod.main(["x", "--cwd", str(tmp_path), "--dry-run", "redeploy"])
+        err = capsys.readouterr().err
+        assert rc == 2 and calls == []
+        assert "not linked" in err and "parents are not searched" in err
+        assert "env-token" not in err
+
+    def test_parent_link_is_not_inherited(self, mod, monkeypatch, tmp_path, capsys):
+        (tmp_path / ".vercel").mkdir()
+        (tmp_path / ".vercel" / "project.json").write_text(
+            '{"projectId": "prj_STALE", "orgId": "team_1", "projectName": "attune-ai"}'
+        )
+        worktree = tmp_path / ".claude" / "worktrees" / "slug"
+        worktree.mkdir(parents=True)
+        monkeypatch.setenv("VERCEL_TOKEN", "env-token")
+        monkeypatch.setattr(mod, "_request", lambda *a, **k: pytest.fail("network touched"))
+        rc = mod.main(["x", "--cwd", str(worktree), "--dry-run", "domain-detach", "x.com"])
+        assert rc == 2 and "prj_STALE" not in capsys.readouterr().err
+
+    def test_linked_cwd_labels_output(self, mod, monkeypatch, tmp_path, capsys):
+        (tmp_path / ".vercel").mkdir()
+        (tmp_path / ".vercel" / "project.json").write_text(
+            '{"projectId": "prj_W", "orgId": "team_1", "projectName": "website"}'
+        )
+        monkeypatch.setenv("VERCEL_TOKEN", "env-token")
+        rc = mod.main(["x", "--cwd", str(tmp_path), "--dry-run", "domain-detach", "x.com"])
+        out = capsys.readouterr().out
+        assert rc == 0 and "DRY-RUN [website/prj_W] domain-detach x.com" in out
+        assert "teamId=team_1" in out and "env-token" not in out
+
+
+class TestRedeploy:
+    def _lookup(self, mod, monkeypatch, response):
+        monkeypatch.setattr(mod, "resolve", _fake_resolve(mod))
+        monkeypatch.setattr(mod, "_request", lambda *a, **k: response)
+        monkeypatch.setattr(mod.subprocess, "run", lambda *a, **k: pytest.fail("redeploy ran"))
+
+    def test_empty_lookup_url_is_refused(self, mod, monkeypatch, tmp_path, capsys):
+        self._lookup(mod, monkeypatch, {"deployments": [{}]})
+        rc = mod.main(["x", "--cwd", str(tmp_path), "redeploy"])
+        err = capsys.readouterr().err
+        assert rc == 1 and "refusing redeploy" in err and "'https://'" not in err.split("[")[0]
+
+    def test_forbidden_lookup_is_surfaced_not_swallowed(self, mod, monkeypatch, tmp_path, capsys):
+        self._lookup(mod, monkeypatch, {"error": {"message": "Not authorized"}, "status": 403})
+        rc = mod.main(["x", "--cwd", str(tmp_path), "redeploy"])
+        err = capsys.readouterr().err
+        assert rc == 1 and "deployments lookup FAILED: Not authorized" in err
+        assert "[website/prj_1]" in err
+
+    @pytest.mark.parametrize(
+        "bad", ["https://", "http://x.vercel.app", "x.vercel.app", "https://x y"]
+    )
+    def test_malformed_explicit_url_is_refused(self, mod, monkeypatch, tmp_path, bad, capsys):
+        self._lookup(mod, monkeypatch, {})
+        rc = mod.main(["x", "--cwd", str(tmp_path), "--dry-run", "redeploy", "--url", bad])
+        assert rc == 1 and "refusing redeploy" in capsys.readouterr().err
+
+    def test_good_lookup_url_dry_run_labels_and_performs_nothing(
+        self, mod, monkeypatch, tmp_path, capsys
+    ):
+        self._lookup(mod, monkeypatch, {"deployments": [{"url": "site-abc-team.vercel.app"}]})
+        rc = mod.main(["x", "--cwd", str(tmp_path), "--dry-run", "redeploy"])
+        assert rc == 0
+        assert (
+            "DRY-RUN [website/prj_1] redeploy https://site-abc-team.vercel.app"
+            in capsys.readouterr().out
+        )
