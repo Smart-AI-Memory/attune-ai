@@ -1151,9 +1151,9 @@ class TestCmdDoctorInstallDiagnostics:
         pkgutil.resolve_name and is unaffected, so the miss is invisible
         on newer interpreters.
         """
-        import importlib.metadata as importlib_metadata
         import shutil as shutil_module
         import subprocess as subprocess_module
+        from importlib import metadata
 
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
         args = types.SimpleNamespace()
@@ -1178,7 +1178,7 @@ class TestCmdDoctorInstallDiagnostics:
             run_mock.return_value = run_result
 
         monkeypatch.setattr(
-            importlib_metadata,
+            metadata,
             "version",
             pkg_version if pkg_version is not None else MagicMock(return_value="0.0.0"),
         )
