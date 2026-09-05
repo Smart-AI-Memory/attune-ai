@@ -178,5 +178,45 @@ raised; `collect_response` carries `template_id`). Scope note recorded
 in both PRs: item 3 names `elicitation_render_widget`, but the seam is
 shared by all four handlers and `collect_response` needs it or the agent
 would still hold the form dict to validate answers. No skill or guidance
-text changed — R5.1 stays HELD (item 2). Next: R5.4 after the chair's
-word on #80 and the mirror.
+text changed — R5.1 stays HELD (item 2).
+**Same evening:** #80 MERGED (`d5b0d1b`) and the mirror #2437 MERGED
+(`7434fb5c5` head, squash on main) on the chair's "merge 80 and 2437".
+R5.4 EXECUTED on the chair's "go 5.4" — attune-forms #81
+(`attune_forms.preview`: every stored template cast with its
+`example_slots` through the PRODUCTION `form_to_widget_html` into one
+standalone page, light/dark host tokens, a `sendPrompt` stub showing the
+posted payload, telemetry suppressed for preview casts; live-fire receipt
+in the PR thread). Scope: `template_store` entries; the intake registry
+becomes addressable when R5.1's fold lands. Phase 5 remaining: R5.1
+(HELD), then a forms release carrying #79/#80/#81 and the attune-ai floor
+bump that turns the `_template_props` parity test live.
+
+## D8 — R5.1's fold direction: the JSON store is the addressable home; the Python intakes export INTO it (chair via pushback card, 2026-09-05)
+
+Response `resp-20260905-184703-ed077322` (widget lane, instance
+`c0795ad9…`). The lead's pushback, carried unratified from the 09-05
+afternoon retro and made load-bearing by the evening's R5.2/R5.4 work:
+D7 item 4 named `attune_forms.intake_template.TEMPLATES` (the Python
+registry attune-ai populates with its nineteen intakes) as the one
+template home with `template_store`'s JSON entries folded INTO it — but
+the standalone attune-forms server cannot import attune-ai's intake
+modules, so a Python-registry home is unaddressable from one of the two
+servers item 3 requires to stay schema-identical. Everything that
+shipped today addresses the JSON store: R5.2's `template` + `slots`
+resolves names through `template_store` (attune-forms #80, attune-ai
+#2437), and R5.4 previews `template_store` entries (attune-forms #81).
+
+**Ruled:** the fold runs the OTHER way. The Python intakes remain the
+AUTHORING source; R5.1's first task EXPORTS them into the JSON
+`template_store` (one entry per intake, with `example_slots` so the
+R5.3 cast-every-template gate covers each), and the store is the single
+home R5.2 addresses and R5.4 previews. The `/spec` name collision
+(spec_intake's "session contract" vs the store's `session-contract`) is
+resolved inside that export, per D7 item 4's original placement.
+Counter-case retained: the export is one more projection to keep in
+sync, and 09-05 showed what un-reprojected twins cost (#2431 red on two
+help generators); mitigation = the export is projector-owned with a
+drift-guard test, the same discipline as the skills mirror. D7 item 4
+is amended to this; items 1–3 stand. **R5.1 stays HELD** on the
+adaptive-session-interactions T4 trigger (D7 item 2) — only the
+direction is ruled here, not a go.
