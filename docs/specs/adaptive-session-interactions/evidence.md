@@ -80,3 +80,12 @@ No feature implementation, host trial, renderer optimization, or production
 behavior test is claimed by these document checks. Review coverage remains
 one compiler-clean roundtable seat; the later preservation review checked
 packaging only and does not increase product-design consensus.
+
+## T1 inventory (2026-09-05, pending chair acceptance)
+
+The T1 reconcile-and-characterize inventory, run read-only from the
+execution checkout with headless probes and a serial suite receipt, is
+[`t1-inventory.md`](t1-inventory.md). It selects the `spec` review-stage
+choice as the ASI-5 consumer and records existing capability versus
+demonstrated gap per requirement. It is evidence for the chair, not
+acceptance.
