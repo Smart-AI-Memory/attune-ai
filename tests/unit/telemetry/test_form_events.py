@@ -10,6 +10,7 @@ per the issue's guidance and the "non-mocked round-trip" lesson.
 
 from __future__ import annotations
 
+import inspect
 import json
 import os
 import sys
@@ -247,9 +248,19 @@ _STAGE_EVENTS = pytest.mark.skipif(
 @_STAGE_EVENTS
 class TestStageEventsThroughAlias:
     def test_stage_loggers_and_latency_round_trip(self, _isolated_home: Path) -> None:
+        # The open dependency range covers both legacy and instance-aware forms.
+        # Exercise each installed logger's real join contract through the alias.
+        instance = (
+            {"instance_id": "a" * 32}
+            if all(
+                "instance_id" in inspect.signature(logger).parameters
+                for logger in (form_events_module.log_form_rendered, log_submission)
+            )
+            else {}
+        )
         form_events_module.log_form_build("f1", source="dict", question_count=2)
-        form_events_module.log_form_rendered("f1", duration_ms=3.0, html_bytes=1024)
-        form_events_module.log_submission(form_id="f1")
+        form_events_module.log_form_rendered("f1", duration_ms=3.0, html_bytes=1024, **instance)
+        form_events_module.log_submission(form_id="f1", **instance)
 
         events = [
             json.loads(line)
