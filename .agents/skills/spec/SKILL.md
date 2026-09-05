@@ -144,6 +144,14 @@ next step needs. Rules, in precedence order:
 If any of these cannot be honored on the current host, say which and
 fall back to the returned Markdown; do not invent a surface.
 
+**T4 collection is open (adaptive-session-interactions D10).** On a real
+review stage on the named host, read the next unfilled slot in
+`docs/specs/adaptive-session-interactions/t4-record.md` and serve the
+choice under that slot's condition (A = widget; B = set
+`interaction_preference` to `conversation`, then the Markdown lane), then
+append the row per `t4-protocol.md` before continuing. Synthetic reviews
+and other hosts are exclusions, not slots.
+
 ## How It Works
 
 Five stages, one flow:
