@@ -1,0 +1,42 @@
+{
+  "success": true,
+  "render_has_instance_id": true,
+  "canonical_acceptances": 1,
+  "exact_instance_join": true,
+  "from_revision": 0,
+  "to_revision": 1,
+  "events": [
+    {
+      "v": "1.0",
+      "ts": "2026-09-05T04:18:49.125295Z",
+      "event": "workspace_rendered",
+      "workspace_id": "roundtable-d593744823a24fb9baa64ebbd8c2ab0b",
+      "revision": 0,
+      "instance_id": "c0aa96912c824633abddb372ba1dfa69",
+      "adapter_id": "roundtable",
+      "action": "",
+      "duration_ms": 0.11195801198482513
+    },
+    {
+      "v": "1.0",
+      "ts": "2026-09-05T04:18:49.133647Z",
+      "event": "workspace_accepted",
+      "workspace_id": "roundtable-d593744823a24fb9baa64ebbd8c2ab0b",
+      "revision": 0,
+      "instance_id": "c0aa96912c824633abddb372ba1dfa69",
+      "adapter_id": "roundtable",
+      "action": "start_roundtable"
+    }
+  ],
+  "receipt_directory": "/private/var/folders/5t/bzsz5qd17pd7h_wwwd5qjbnw0000gn/T/attune-aligned-runtime-f5b_uzxj",
+  "scope": "Fresh pinned stdio process, not the current Codex connection. Synthetic workspace state transition only; no provider calls.",
+  "merge_commit": "c2138be2d6be10dfd252495dfae05cc861776375",
+  "wheel_sha256": "dfdc711000ba9b3ef761a0b3c752319c1d79e6bc75e6180f3bf545140446b6a6",
+  "forms_version": "0.12.3",
+  "source_verification": "728 AI Python files match merge source, wheel and installed isolated runtime",
+  "active_connection_probe": {
+    "success": true,
+    "workspace_id": "roundtable-e74ebd7c7ffa48dfbad894f45a002c4d",
+    "htmlHasInstanceId": false
+  }
+}
