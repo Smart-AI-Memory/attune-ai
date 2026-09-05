@@ -1,6 +1,6 @@
 # attune-forms Plugin & Beta — Requirements
 
-**Status:** active (2026-08-14) — Phase 4 (chair go, D5); P1–P3 executed (D2–D4); D1 announcement gate satisfied 2026-08-13. The
+**Status:** active (2026-09-05) — Phase 5 execution authorized R5.3 → R5.2 → R5.4 with R5.1 HELD on the adaptive-session-interactions T4 trigger (D7); Phase 4 submission = the chair's pending Console act (D7 defines the gate as SUBMITTED); P1–P3 executed (D2–D4); D1 announcement gate satisfied 2026-08-13. The
 sequencing and announcement gate are already chair-ratified
 (decisions.md D1, ruled in-discussion the same day); this document
 phases that ruling into gated, executable scope. No phase executes
@@ -126,7 +126,7 @@ before submission.
 communication-grammar article is published (its own thread, not this
 spec) — the D1 gate, checked at this phase's chair go.
 
-## Phase 5 — Template-bound forms (chair-placed 2026-08-24; executes after Phase 4's submission clears)
+## Phase 5 — Template-bound forms (chair-placed 2026-08-24; gate defined and execution ordered 2026-09-05, D7)
 
 Forms authored in advance that look and work exactly like
 live-composed dynamic forms — closing the two costs measured live
@@ -156,8 +156,10 @@ exercising the production renderer (the ratified preview
 discipline), so a template edit is seen as users will see it.
 
 **Measurement dependency:** the form-events stage instrumentation
-(form_id + build/rendered/submitted stamps, chipped 2026-08-24)
-lands first, so R5.2's latency win is measured, not asserted.
+(form_id + build/rendered/submitted stamps) SHIPPED as attune-forms 0.8.0
+on 2026-08-24; the installed 0.12.3 emits `form_build.source =
+template:<name>`, so R5.2's win is measured, not asserted. Live meter at
+D7: 117 `dict` builds, 0 template casts.
 
 ## Out of scope
 
