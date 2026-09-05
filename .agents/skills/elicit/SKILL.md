@@ -344,15 +344,17 @@ Precedence: explicit override for this interaction → explicit session
 preference → the router's default. A missing preference is not an
 opt-out and not consent.
 
-**The text lane keeps every field.** For a multi-field form on a text
-lane, use the attune-forms markdown surface rather than prose:
-`form_to_markdown(form)` renders every field into one skeleton,
-`markdown_to_answers` parses the typed reply deterministically (a stray
-line is a named problem, never a guess), and `problems_to_markdown`
-re-asks only the failing fields. A field a lane cannot represent is
-disclosed and asked, never dropped. (No MCP tool exposes this surface yet
-and the router's range is `widget` / `ask` only — on hosts with
-`AskUserQuestion`, steps 2–4 below are the text lane.)
+**The text lane keeps every field.** From a Claude Code session the
+text lane IS steps 2–4 below (`elicitation_render_form` →
+`AskUserQuestion` → `elicitation_collect_response`); a field a lane
+cannot represent is disclosed and asked, never dropped. For hosts with
+no `AskUserQuestion` and for library consumers, attune-forms ships a
+markdown surface — `form_to_markdown(form)` renders every field into one
+skeleton, `markdown_to_answers` parses the typed reply deterministically
+(a stray line is a named problem, never a guess), and
+`problems_to_markdown` re-asks only the failing fields. It is a Python
+library surface: no MCP tool exposes it yet and the router's range is
+`widget` / `ask` only, so do not try to call it as a tool.
 
 **Latency is not a reason to downgrade a form.** The extra tool call is
 a real cost but it is not the axis; if a form is worth asking, it is

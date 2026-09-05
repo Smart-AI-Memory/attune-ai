@@ -115,10 +115,11 @@ next step needs. Rules, in precedence order:
    a session-wide preference, which outranks the default. The session-wide
    preference lives in the MCP session context: when the user says "just
    talk to me" (or equivalent), call `context_set` with key
-   `interaction_preference` and value `conversation`; before opening or
-   re-rendering a workspace, `context_get` that key. `conversation` means
-   present the returned Markdown, not the widget; `default` (or unset)
-   means the widget where the host renders it. A one-time override does
+   `interaction_preference` and value `conversation`; read it back with
+   `context_get` once per session (and again only when the user changes
+   it) rather than before every render — one read, remembered.
+   `conversation` means present the returned Markdown, not the widget;
+   `default` (or unset) means the widget where the host renders it. A one-time override does
    not rewrite the stored preference. Keyboard mode (`attune config set
    keyboard_mode`) is a separate, project-scoped opt-out for FORMS and is
    not the session preference.

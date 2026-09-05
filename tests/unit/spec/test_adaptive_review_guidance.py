@@ -29,45 +29,54 @@ _ELICIT_MIRROR = _ROOT / ".agents" / "skills" / "elicit" / "SKILL.md"
 
 # One sentence per behavioral case, quoted from the masters. The guidance
 # is prose, so the pin is the sentence — rewording it deliberately means
-# updating the pin in the same PR.
+# updating the pin in the same PR. Matching collapses whitespace so a
+# markdown reflow (line wrap, indentation) is not a false alarm.
 _SPEC_RULES = {
     "phase-independent": "Select by need, not by phase.",
-    "override-vs-session": "A one-time override does\n   not rewrite the stored preference.",
+    "override-vs-session": "A one-time override does not rewrite the stored preference.",
     "transcribe-not-act": "A conversational answer is transcribed, never acted on directly.",
     "no-redundant-question": "Never re-ask a settled choice.",
     "authority-unchanged": "Presentation never changes authority.",
     "session-store": "`interaction_preference`",
 }
 _ELICIT_RULES = {
-    "override-scope": "Honor it for this\n  interaction only; it does not rewrite anything stored.",
+    "override-scope": "Honor it for this interaction only; it does not rewrite anything stored.",
     "session-store": "`interaction_preference`",
-    "precedence": "explicit override for this interaction → explicit session\npreference → the router's default",
+    "precedence": "explicit override for this interaction → explicit session preference → the router's default",
     "keyboard-not-preference": "Keyboard mode is NOT this preference",
     "text-lane-keeps-fields": "The text lane keeps every field.",
     "markdown-surface": "`form_to_markdown(form)`",
 }
 
 
+def _flat(text: str) -> str:
+    return " ".join(text.split())
+
+
+def _missing(path: Path, rules: dict[str, str]) -> list[str]:
+    text = _flat(path.read_text(encoding="utf-8"))
+    return [name for name, sentence in rules.items() if _flat(sentence) not in text]
+
+
 @pytest.mark.parametrize("rule", sorted(_SPEC_RULES))
 def test_spec_skill_master_carries_the_review_choice_rules(rule: str) -> None:
-    assert _SPEC_RULES[rule] in _SPEC_SKILL.read_text(encoding="utf-8"), rule
+    assert not _missing(_SPEC_SKILL, {rule: _SPEC_RULES[rule]}), rule
 
 
 @pytest.mark.parametrize("rule", sorted(_ELICIT_RULES))
 def test_elicit_skill_master_carries_the_scoped_preference_rules(rule: str) -> None:
-    assert _ELICIT_RULES[rule] in _ELICIT_SKILL.read_text(encoding="utf-8"), rule
+    assert not _missing(_ELICIT_SKILL, {rule: _ELICIT_RULES[rule]}), rule
 
 
 @pytest.mark.parametrize(
-    ("master", "mirror", "rules"),
-    [(_SPEC_SKILL, _SPEC_MIRROR, _SPEC_RULES), (_ELICIT_SKILL, _ELICIT_MIRROR, _ELICIT_RULES)],
+    ("mirror", "rules"),
+    [(_SPEC_MIRROR, _SPEC_RULES), (_ELICIT_MIRROR, _ELICIT_RULES)],
     ids=["spec", "elicit"],
 )
-def test_tracked_mirror_carries_the_same_rules(master: Path, mirror: Path, rules: dict) -> None:
+def test_tracked_mirror_carries_the_same_rules(mirror: Path, rules: dict[str, str]) -> None:
     # The mirror is what Codex reads; a master edited without reprojection
     # leaves the other provider on the old guidance.
-    text = mirror.read_text(encoding="utf-8")
-    missing = [name for name, sentence in rules.items() if sentence not in text]
+    missing = _missing(mirror, rules)
     assert (
         not missing
     ), f"{mirror.relative_to(_ROOT)} lacks {missing}; run sync_agents_skills --write"
@@ -170,10 +179,12 @@ async def test_settled_choice_cannot_be_asked_again(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
-async def test_session_preference_store_round_trips_and_is_process_scoped() -> None:
+async def test_session_preference_store_round_trips_and_is_instance_scoped() -> None:
     # The facility T2 named for the session-wide preference: the MCP server's
     # session context. Round trip through the public tools; a fresh server
-    # instance starts empty (the "dies with the session" lifetime).
+    # INSTANCE starts empty — the scope is the instance (one per stdio server
+    # process in the shipped plugin), which is what "dies with the session"
+    # means here; process scoping is not what this asserts.
     server = AttuneMCPServer()
     unset = await server.call_tool("context_get", {"key": "interaction_preference"})
     assert unset["found"] is False

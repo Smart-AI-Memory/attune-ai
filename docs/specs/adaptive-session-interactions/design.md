@@ -60,8 +60,12 @@ implicitly authorize another roundtable round or provider spend.
    in the attune-ai MCP server's session context (`context_set` /
    `context_get`, key `interaction_preference`, values `conversation` |
    `default`). Owner: `src/attune/mcp/server.py` `_context`. Lifetime: the
-   MCP server process — it dies with the host session and is never written
-   to disk, which is the correct lifetime for "just talk to me". The
+   `AttuneMCPServer` instance — one per stdio server process in the shipped
+   plugin, so in practice the host session — never written to disk, which
+   is the correct lifetime for "just talk to me". A host that constructs
+   more than one server instance gets more than one preference scope; that
+   is instance scoping, not process scoping, and T3 records which the named
+   host actually has. The
    **one-interaction override** has no store: it is the user's words for
    that interaction, honored once. Keyboard mode stays what it is — a
    project-scoped, file-persisted opt-out for forms. No new code: both
