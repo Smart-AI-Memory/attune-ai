@@ -17,8 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   echoes back through `elicitation_collect_response` /
   `command_workspace_collect_action`. Rejected, replayed, and
   adapter-failed actions never count as accepted, so the telemetry
-  read-back can state elapsed acceptance time honestly. Requires an
-  attune-forms wheel that ships workspace stage telemetry; older wheels
+  read-back can state elapsed acceptance time honestly. Requires
+  attune-forms >= 0.12.3 (the dependency floor moves with it); older wheels
   keep rendering and collecting and log one explicit
   "Workspace timing unavailable" warning instead of failing.
 - **Detached-HEAD push guard** (`src/attune/hooks/scripts/
