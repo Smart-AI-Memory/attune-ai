@@ -52,3 +52,14 @@ vhs scripts/demo/fix-receipts.tape
    `<!-- demo-gif-slot: ... -->` comment with the image reference.
 3. The gif is a binary — keep it small (target < 2 MB; drop
    `Set Theme`/size if needed) or host it via the repo's raw URL.
+
+## Social preview card
+
+`social-preview.html` is the source for the GitHub social preview
+(the 1280x640 card shown when the repo link is shared);
+`social-preview.png` is its 1x render, the shipping asset. The
+html's header comment carries the regenerate recipe (Playwright
+screenshot, optional `@fontsource/inter`). GitHub has no API for
+this setting: a maintainer uploads the PNG at Settings -> General
+-> Social preview. Salvaged 2026-09-04 from the
+`archive/wip-pre-pull-2026-09-02` tag (retro item 5).

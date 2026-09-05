@@ -7,6 +7,8 @@ sentinel postback payload, and the sendPrompt wiring.
 
 from __future__ import annotations
 
+import re
+
 from attune.elicitation import (
     WIDGET_RESPONSE_MARKER,
     form_from_dict,
@@ -52,7 +54,11 @@ class TestStructure:
         assert 'id="ae-submit-beat2"' in html
         assert 'id="ae-error-beat2"' in html
         assert "getElementById('attune-elicit-form-beat2')" in html
-        assert html == form_to_widget_html(form, instance_id="beat-2!")
+        other = form_to_widget_html(form, instance_id="beat-2!")
+        # Newer forms wheels add a per-display telemetry token even with fixed DOM ids.
+        assert re.sub(r'instance_id: "[a-f0-9]{32}"', 'instance_id: "TOKEN"', html) == re.sub(
+            r'instance_id: "[a-f0-9]{32}"', 'instance_id: "TOKEN"', other
+        )
         # The scoped CSS must follow the suffixed id.
         assert "#attune-elicit-form-beat2 {" in html
         assert "#attune-elicit-form " not in html
