@@ -120,7 +120,7 @@ async def test_collect_response_returns_validated_answers_and_hint(tmp_path):
     # attune-forms 0.7.x (no FormSchema.form_id yet), the content hash
     # on >= 0.8.0. Asserting the kwarg shape keeps this green on both.
     log_submission.assert_called_once()
-    assert set(log_submission.call_args.kwargs) == {"form_id"}
+    assert set(log_submission.call_args.kwargs) == {"form_id", "instance_id"}
     assert result["success"] is True
     assert result["responses"] == {"target": "src", "depth": "quick"}
     # forms 0.7.0 appends an 8-hex uniqueness suffix to the response id.
@@ -189,7 +189,7 @@ def test_keyboard_hint_falls_back_to_zero_arg_log_submission():
 
     assert result == "Press K"
     assert log_submission.call_count == 2
-    assert log_submission.call_args_list[0].kwargs == {"form_id": "abc123"}
+    assert log_submission.call_args_list[0].kwargs == {"form_id": "abc123", "instance_id": ""}
     assert log_submission.call_args_list[1] == unittest.mock.call()
 
 
@@ -204,7 +204,7 @@ def test_keyboard_hint_passes_empty_form_id_without_form():
         result = server_module.AttuneMCPServer._maybe_keyboard_hint()
 
     assert result is None
-    log_submission.assert_called_once_with(form_id="")
+    log_submission.assert_called_once_with(form_id="", instance_id="")
 
 
 def test_elicitation_session_is_empty_outside_request():
@@ -335,3 +335,82 @@ async def test_ask_accept_returns_validated_response(tmp_path):
     assert result["responses"] == {"target": "src", "depth": "quick"}
     # forms 0.7.0 appends an 8-hex uniqueness suffix to the response id.
     assert re.fullmatch(r"resp-\d{8}-\d{6}-[0-9a-f]{8}", result["response_id"])
+
+
+@pytest.mark.asyncio
+async def test_instance_token_survives_ai_collector_to_real_log(tmp_path, monkeypatch):
+    from attune_forms import form_from_dict, form_to_widget_html
+    from attune_forms.form_events import stage_latency
+
+    monkeypatch.setenv("ATTUNE_FORMS_HOME", str(tmp_path))
+    monkeypatch.setenv("ATTUNE_FORMS_TELEMETRY", "1")
+    monkeypatch.delenv("DO_NOT_TRACK", raising=False)
+    server = _make_server(tmp_path)
+    html = form_to_widget_html(form_from_dict(FORM))
+    token = re.search(r'instance_id: "([a-f0-9]{32})"', html).group(1)
+    result = await server._handle_elicitation_collect_response(
+        {
+            "form": FORM,
+            "answers": {"target": "src", "depth": "quick"},
+            "instance_id": token,
+        }
+    )
+    assert result["success"] is True
+    assert stage_latency(home=tmp_path)["joined"] == 1
+
+
+@pytest.mark.asyncio
+async def test_instance_token_crosses_public_ai_stdio(tmp_path):
+    """Exercise the public tool schema and dispatcher in a real child process."""
+    import asyncio
+    import json
+    import os
+    import sys
+    from pathlib import Path
+
+    import attune_forms
+    from attune_forms.form_events import stage_latency
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.stdio import get_default_environment, stdio_client
+
+    source = Path(server_module.__file__).resolve().parents[2]
+    forms_source = Path(attune_forms.__file__).resolve().parents[1]
+    params = StdioServerParameters(
+        command=sys.executable,
+        args=["-m", "attune.mcp.server"],
+        cwd=str(tmp_path),
+        env={
+            **get_default_environment(),
+            "PYTHONPATH": os.pathsep.join((str(source), str(forms_source))),
+            "ATTUNE_FORMS_HOME": str(tmp_path),
+            "ATTUNE_HOME": str(tmp_path),
+            "ATTUNE_FORMS_TELEMETRY": "1",
+            "ANTHROPIC_API_KEY": "",
+        },
+    )
+
+    def payload(result):
+        return json.loads(next(block.text for block in result.content if block.type == "text"))
+
+    async def run():
+        async with stdio_client(params) as (read, write):
+            async with ClientSession(read, write) as session:
+                await session.initialize()
+                rendered = payload(
+                    await session.call_tool("elicitation_render_widget", {"form": FORM})
+                )
+                token = re.search(r'instance_id: "([a-f0-9]{32})"', rendered["html"]).group(1)
+                accepted = payload(
+                    await session.call_tool(
+                        "elicitation_collect_response",
+                        {
+                            "form": FORM,
+                            "answers": {"target": "src", "depth": "quick"},
+                            "instance_id": token,
+                        },
+                    )
+                )
+                assert accepted["success"] is True
+
+    await asyncio.wait_for(run(), timeout=30)
+    assert stage_latency(home=tmp_path)["joined"] == 1

@@ -495,3 +495,96 @@ async def test_generic_mcp_tools_run_fix_through_the_shared_host(
     assert collected["view"] == "receipt"
     assert collected["result"]["approved"] is True
     assert collected["result"]["approved_command_argv"][-1] == "--run"
+
+
+@pytest.mark.asyncio
+async def test_acceptance_telemetry_only_after_canonical_transition(tmp_path, monkeypatch):
+    """Rejected and replayed actions cannot inflate accepted transitions."""
+    import json
+    import re
+
+    from attune_forms.form_events import workspace_latency
+
+    monkeypatch.setenv("ATTUNE_FORMS_HOME", str(tmp_path))
+    monkeypatch.setenv("ATTUNE_FORMS_TELEMETRY", "1")
+    monkeypatch.delenv("DO_NOT_TRACK", raising=False)
+    host = CommandWorkspaceHost()
+    adapter = _Adapter()
+    host.register(adapter)
+    preview = await host.open("example", {})
+    token = re.search(r'"instance_id":"([a-f0-9]{32})"', preview.html).group(1)
+    payload = {
+        "__elicitation_response__": True,
+        "title": preview.record.view.title,
+        "view": preview.record.view.id.value,
+        "action": "approve",
+        "confirmed": True,
+        "instance_id": token,
+        **preview.record.binding.to_payload(),
+    }
+    with pytest.raises(CommandWorkspaceError):
+        await host.collect({**payload, "confirmed": False})
+    assert workspace_latency(tmp_path)["accepted"] == 0
+    result = await host.collect(payload)
+    assert result.record.terminal is True
+    with pytest.raises(CommandWorkspaceError):
+        await host.collect(payload)
+    stats = workspace_latency(tmp_path)
+    assert stats["accepted"] == stats["joined"] == 1
+    events = [
+        json.loads(line)
+        for line in (tmp_path / "telemetry/form_events.jsonl").read_text().splitlines()
+    ]
+    accepted = [event for event in events if event["event"] == "workspace_accepted"]
+    assert accepted[0]["revision"] == preview.record.revision
+    assert accepted[0]["action"] == "approve"
+    assert "action_nonce" not in accepted[0]
+
+
+@pytest.mark.asyncio
+async def test_adapter_failure_does_not_emit_acceptance(tmp_path, monkeypatch):
+    import re
+
+    from attune_forms.form_events import workspace_latency
+
+    monkeypatch.setenv("ATTUNE_FORMS_HOME", str(tmp_path))
+    monkeypatch.setenv("ATTUNE_FORMS_TELEMETRY", "1")
+    host = CommandWorkspaceHost()
+    adapter = _Adapter()
+    host.register(adapter)
+    preview = await host.open("example", {})
+    token = re.search(r'"instance_id":"([a-f0-9]{32})"', preview.html).group(1)
+    payload = {
+        "__elicitation_response__": True,
+        "title": preview.record.view.title,
+        "view": preview.record.view.id.value,
+        "action": "approve",
+        "confirmed": True,
+        "instance_id": token,
+        **preview.record.binding.to_payload(),
+    }
+    # A terminal successor carrying actions fails before it can be stored.
+    adapter.receipt_actions = True
+    with pytest.raises(CommandWorkspaceError, match="terminal"):
+        await host.collect(payload)
+    assert workspace_latency(tmp_path)["accepted"] == 0
+
+
+@pytest.mark.asyncio
+async def test_older_forms_wheel_remains_usable_and_reports_missing_timing(monkeypatch, caplog):
+    """Import and render when the optional new telemetry API is absent."""
+    import runpy
+    import sys
+    from types import ModuleType
+
+    import attune.elicitation.command_workspace as workspace_module
+
+    monkeypatch.setitem(
+        sys.modules, "attune_forms.form_events", ModuleType("attune_forms.form_events")
+    )
+    legacy = runpy.run_path(workspace_module.__file__)
+    host = legacy["CommandWorkspaceHost"]()
+    host.register(_Adapter())
+    rendered = await host.open("example", {})
+    assert "Example workspace" in rendered.html
+    assert "Workspace timing unavailable" in caplog.text
