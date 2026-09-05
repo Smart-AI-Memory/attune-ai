@@ -165,3 +165,21 @@ chair adopted the alternative (pushback card, the lead's option picked):
 Counter-case retained: if T4 ever shows users abandoning the widget lane
 for time reasons, latency re-enters as a usefulness input — measured
 there, on the named host, not assumed from a browser harness.
+
+## D9 — T3 accepted; T4 go granted conditionally (2026-09-05, chair)
+
+Chair's words, verbatim: "merge 78 accpte t3 and go on t4 when it makes
+sense / pushback?" Recorded by the lead the same evening.
+
+- **T3 (host-readiness-and-pending-interaction) is ACCEPTED** as executed
+  in this PR's evidence record: both lanes of the spec review choice
+  completed and accepted canonically on the named host; authority probes
+  rejected live; unavailable-surface, preference-facility, and
+  draft-recovery findings recorded with their limits.
+- **T4 (bounded comparative trial) has a CONDITIONAL go** — "when it
+  makes sense." The lead reads that as: the go is granted, its exercise
+  waits on the trial's shape being settled (see the pushback the lead
+  raised in the same exchange, recorded in the next entry when ruled).
+  Nothing in T4 executes until the protocol is frozen per ASI-6 and any
+  user participation or paid operation has its own authorization.
+- A go on T4 is not a go on T5.

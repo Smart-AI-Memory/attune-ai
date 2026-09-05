@@ -1,8 +1,9 @@
 # Adaptive session interactions — Tasks
 
 **Status:** active (2026-09-05) — resumed by the chair the same day
-(decisions D6): T1 accepted, T2 in progress under its own go; T3–T5 not
-started, no go beyond T2, no auto-run authority.
+(decisions D6–D9): T1, T2, T3 accepted; T4 holds a conditional go
+(D9, "when it makes sense") and has not started; T5 not started; no
+auto-run authority.
 
 Resume-Trigger (historical, fired 2026-09-05): Patrick explicitly resumed
 this feature for execution after coordination with Claude's active
@@ -90,4 +91,4 @@ empty list. No runtime or API invocation is needed to load this plan.
 </task>
 ```
 
-<!-- spec-state: {"schema_version": 1, "completed": ["1", "2"], "current": "3", "auto_run": false, "last_updated": "2026-09-05T19:59:40.945906+00:00"} -->
+<!-- spec-state: {"schema_version": 1, "completed": ["1", "2", "3"], "current": null, "auto_run": false, "last_updated": "2026-09-05T20:55:45.647429+00:00"} -->
