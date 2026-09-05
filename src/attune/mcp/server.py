@@ -81,6 +81,41 @@ def _get_default_user_id() -> str:
         return "mcp-session"
 
 
+def _form_from_args(args: dict[str, Any]) -> tuple[Any, dict[str, Any] | None]:
+    """Resolve the form from ``form`` OR ``template`` + ``slots`` (R5.2).
+
+    The one seam every form-taking elicitation tool shares, so the fused
+    template path (load -> cast -> validate, server-side, in ONE call — the
+    form never transits the agent's context) behaves identically across
+    render_form / render_widget / collect_response / ask. Mirrors
+    ``attune_forms.mcp_server._parse_form`` verbatim (D3: both servers stay
+    schema- and behavior-identical so convergence is a pure swap).
+
+    Returns:
+        ``(form, None)`` or ``(None, problems_envelope)`` — every problem
+        listed, never raises.
+    """
+    from attune.elicitation import FormValidationError, form_from_dict, form_from_template
+
+    form_def, template = args.get("form"), args.get("template")
+    if (form_def is None) == (template is None):
+        return None, {
+            "success": False,
+            "problems": [
+                "pass exactly one of 'form' (a declarative form dict) or "
+                "'template' (a stored template name, with 'slots')"
+            ],
+        }
+    if template is None and args.get("slots") is not None:
+        return None, {"success": False, "problems": ["'slots' requires 'template'"]}
+    try:
+        if template is not None:
+            return form_from_template(template, args.get("slots")), None
+        return form_from_dict(form_def), None
+    except FormValidationError as e:
+        return None, {"success": False, "problems": e.problems}
+
+
 class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandlersMixin):
     """MCP server for Attune AI workflows.
 
@@ -762,23 +797,19 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
         rather than raising, so the agent can re-fix the definition.
 
         Args:
-            args: Must contain ``form`` (the declarative form dict).
+            args: ``form`` (the declarative form dict) OR ``template`` +
+                ``slots`` (a stored template, cast server-side — R5.2).
 
         Returns:
             ``{"success": True, "title", "description", "batches"}`` or
             ``{"success": False, "problems": [...]}``.
 
         """
-        from attune.elicitation import (
-            FormValidationError,
-            form_from_dict,
-            form_to_askuserquestion,
-        )
+        from attune.elicitation import form_to_askuserquestion
 
-        try:
-            form = form_from_dict(args.get("form", {}))
-        except FormValidationError as e:
-            return {"success": False, "problems": e.problems}
+        form, problems = _form_from_args(args)
+        if problems:
+            return problems
 
         recommended = self._record_surface_choice(form, chosen="ask")
         result = {
@@ -832,24 +863,20 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
         form definition returns ``{"success": False, "problems": [...]}``.
 
         Args:
-            args: ``form`` (the declarative form dict) and optional
-                ``message`` (prompt shown above the form).
+            args: ``form`` (the declarative form dict) OR ``template`` +
+                ``slots`` (a stored template, cast server-side — R5.2), and
+                optional ``message`` (prompt shown above the form).
 
         Returns:
             ``{"success": True, "html", "title", "field_ids"}`` or
             ``{"success": False, "problems": [...]}``.
 
         """
-        from attune.elicitation import (
-            FormValidationError,
-            form_from_dict,
-            form_to_widget_html,
-        )
+        from attune.elicitation import form_to_widget_html
 
-        try:
-            form = form_from_dict(args.get("form", {}))
-        except FormValidationError as e:
-            return {"success": False, "problems": e.problems}
+        form, problems = _form_from_args(args)
+        if problems:
+            return problems
 
         self._record_surface_choice(form, chosen="widget")
         return {
@@ -902,7 +929,9 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
         fields to re-ask — never silently accepts malformed input.
 
         Args:
-            args: Must contain ``form`` (the form dict) and ``answers``
+            args: ``form`` (the form dict) OR ``template`` + ``slots`` (the
+                same template the form was rendered from — R5.2; responses
+                then carry it as ``template_id``), and ``answers``
                 (``{field_id: value}``).
 
         Returns:
@@ -910,15 +939,15 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
             ``{"success": False, "problems": [...]}``.
 
         """
-        from attune.elicitation import (
-            FormValidationError,
-            collect_form_response,
-            form_from_dict,
-        )
+        from attune.elicitation import FormValidationError, collect_form_response
 
+        form, problems = _form_from_args(args)
+        if problems:
+            return problems
         try:
-            form = form_from_dict(args.get("form", {}))
-            response = collect_form_response(form, args.get("answers", {}))
+            response = collect_form_response(
+                form, args.get("answers", {}), template_id=args.get("template") or ""
+            )
         except FormValidationError as e:
             return {"success": False, "problems": e.problems}
 
@@ -927,6 +956,8 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
             "responses": response.responses,
             "response_id": response.response_id,
         }
+        if args.get("template"):
+            result["template_id"] = response.template_id
         hint = self._maybe_keyboard_hint(form, instance_id=args.get("instance_id", ""))
         if hint:
             result["hint"] = hint
@@ -1135,8 +1166,9 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
         back to ``elicitation_render_form`` (AskUserQuestion).
 
         Args:
-            args: ``form`` (the declarative form dict) and optional
-                ``message`` (prompt shown above the form).
+            args: ``form`` (the declarative form dict) OR ``template`` +
+                ``slots`` (a stored template, cast server-side — R5.2), and
+                optional ``message`` (prompt shown above the form).
 
         Returns:
             ``{"success": True, "action": "accept", "responses", ...}`` or
@@ -1146,14 +1178,12 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
         from attune.elicitation import (
             FormValidationError,
             collect_form_response,
-            form_from_dict,
             form_to_elicitation_schema,
         )
 
-        try:
-            form = form_from_dict(args.get("form", {}))
-        except FormValidationError as e:
-            return {"success": False, "problems": e.problems}
+        form, problems = _form_from_args(args)
+        if problems:
+            return problems
 
         schema = form_to_elicitation_schema(form)
         message = args.get("message") or form.title or "Please complete this form."
@@ -1183,16 +1213,21 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
             return {"success": False, "action": action or "cancel", "responses": {}}
 
         try:
-            response = collect_form_response(form, getattr(result, "content", None) or {})
+            response = collect_form_response(
+                form, getattr(result, "content", None) or {}, template_id=args.get("template") or ""
+            )
         except FormValidationError as e:
             return {"success": False, "action": "accept", "problems": e.problems}
 
-        return {
+        accepted = {
             "success": True,
             "action": "accept",
             "responses": response.responses,
             "response_id": response.response_id,
         }
+        if args.get("template"):
+            accepted["template_id"] = response.template_id
+        return accepted
 
     async def _handle_help_lookup(self, args: dict[str, Any]) -> dict[str, Any]:
         """Look up contextual help with type-driven progression.

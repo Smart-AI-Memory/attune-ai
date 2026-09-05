@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Fused template path on every form-taking elicitation tool (attune-forms
+  spec R5.2)**: `elicitation_render_form`, `elicitation_render_widget`,
+  `elicitation_collect_response` and `elicitation_ask` accept
+  `template: <name>` + `slots: {...}` in place of `form`. The server loads
+  the stored template, casts the slots, validates and renders in ONE call,
+  so neither the form schema nor the HTML transits the agent's context.
+  Exactly one of `form` / `template` is accepted (both, neither, or `slots`
+  without `template` come back as listed problems, never a raise); a
+  template-cast collection carries the name as `template_id`. Schema and
+  behavior mirror attune-forms' standalone server (D3), with a parity test
+  that goes live at the next forms floor bump.
 - **Workspace acceptance and render timing receipts**: command
   workspaces (Roundtable, Spec, Release Prep, Bug Predict and the rest
   of the cohort) now record a `rendered` event per display and an

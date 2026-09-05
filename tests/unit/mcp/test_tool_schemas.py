@@ -15,6 +15,8 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
+import pytest
+
 from attune.mcp.tool_schemas import (
     _path_tool,
     get_elicitation_tools,
@@ -428,6 +430,42 @@ class TestGetElicitationTools:
         ]
         assert form["additionalProperties"] is False
         assert form["properties"]["fields"]["items"]["additionalProperties"] is False
+
+    def test_form_tools_accept_the_fused_template_path(self) -> None:
+        # R5.2: every form-taking tool advertises template + slots beside
+        # form, and no longer REQUIRES form (the handler enforces exactly
+        # one of the two and lists problems — no oneOf, which not every
+        # MCP host renders).
+        tools = get_elicitation_tools()
+        for name in (
+            "elicitation_render_form",
+            "elicitation_render_widget",
+            "elicitation_collect_response",
+            "elicitation_ask",
+        ):
+            schema = tools[name]["input_schema"]
+            props = schema["properties"]
+            assert props["template"]["type"] == "string", name
+            assert props["slots"] == {
+                "type": "object",
+                "description": props["slots"]["description"],
+                "additionalProperties": {"type": "string"},
+            }, name
+            assert "form" not in schema.get("required", []), name
+        assert tools["elicitation_collect_response"]["input_schema"]["required"] == ["answers"]
+
+    def test_template_props_mirror_forms_when_the_floor_carries_them(self) -> None:
+        # D3 parity for the R5.2 arguments: hand-declared here until the
+        # attune-forms floor ships _template_props; from that floor on the
+        # two must be byte-identical (the swap is then pure).
+        import attune_forms.mcp_server as forms_server
+
+        from attune.mcp.tool_schemas import _template_props
+
+        lib = getattr(forms_server, "_template_props", None)
+        if lib is None:
+            pytest.skip("attune-forms floor predates R5.2 — parity goes live at the bump")
+        assert _template_props() == lib()
 
     def test_v2_field_schema_has_numeric_bounds(self) -> None:
         tools = get_elicitation_tools()
