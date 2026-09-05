@@ -656,8 +656,8 @@ def _final_output_arg(call: ast.Call) -> ast.expr | None:
     return call.args[2] if len(call.args) >= 3 else None
 
 
-def _producer_contract(files: list[Path]) -> tuple[set[str], bool, bool]:
-    """(dict_keys, adapter, resolvable) for one workflow module's files.
+def _producer_contract(files: list[Path]) -> tuple[set[str], set[str], bool, bool]:
+    """(dict_keys, meta_keys, adapter, resolvable) for one workflow module.
 
     ``dict_keys`` are the string keys of every plain-dict
     ``final_output`` a ``WorkflowResult(...)`` site can carry (dict
@@ -665,10 +665,17 @@ def _producer_contract(files: list[Path]) -> tuple[set[str], bool, bool]:
     constant-key subscript assignment anywhere in the module).
     ``adapter`` marks a ``from_agent_output`` producer, whose
     final_output is a serialized report (or raw text) — servable picks
-    there are ONLY findings-like and score-like names. A module with
-    neither form is unresolvable and must not be judged.
+    there are findings-like and score-like names, plus ``meta_keys``:
+    the literal keys of a ``metadata={...}`` dict declared at a
+    ``from_agent_output`` call, which ``_workflow_response`` serves as
+    the pick fallback (C10 sweep-fix, 2026-08-24 — the #2250 idiom
+    that made test-gen's counts truthful; without this vocabulary the
+    scanner would flag the rerouted picks, or worse, a migration to
+    the idiom would silently drop sites off the scan). A module with
+    no resolvable form must not be judged.
     """
     dict_keys: set[str] = set()
+    meta_keys: set[str] = set()
     adapter = False
     resolvable = False
     for f in files:
@@ -683,6 +690,9 @@ def _producer_contract(files: list[Path]) -> tuple[set[str], bool, bool]:
             if tail == "from_agent_output":
                 adapter = True
                 resolvable = True
+                for kw in n.keywords:
+                    if kw.arg == "metadata" and isinstance(kw.value, ast.Dict):
+                        meta_keys.update(_dict_literal_keys(kw.value))
             if tail != "WorkflowResult":
                 continue
             fo = _final_output_arg(n)
@@ -692,7 +702,7 @@ def _producer_contract(files: list[Path]) -> tuple[set[str], bool, bool]:
             elif isinstance(fo, ast.Name) and fo.id in name_keys:
                 dict_keys.update(name_keys[fo.id])
                 resolvable = True
-    return dict_keys, adapter, resolvable
+    return dict_keys, meta_keys, adapter, resolvable
 
 
 def _workflow_module_files(workflows_root: Path, module: str) -> list[Path]:
@@ -729,7 +739,9 @@ def scan_result_key_contract(
     field picks, the pick's source key must be servable: present in
     the producer's plain-dict ``final_output`` keys (legacy path), or
     — on an adapter-built producer — a findings-like or score-like
-    name, the only picks ``_report_fields`` resolves from the report.
+    name resolved from the report, or a key the producer declares in
+    its ``from_agent_output(metadata={...})`` literal, which
+    ``_workflow_response`` serves as the pick fallback (C10 sweep-fix).
     Any other pick can only ever return its static default: the
     consumer reads what no producer emits, and the response renders
     healthy (class C10, the #2213 shape).
@@ -772,11 +784,12 @@ def _handler_workflow_modules(node: ast.AST) -> list[str]:
     ]
 
 
-def _servable(pick: str, src: str, dict_keys: set[str], adapter: bool) -> bool:
+def _servable(pick: str, src: str, dict_keys: set[str], meta_keys: set[str], adapter: bool) -> bool:
     if src in dict_keys:
         return True
     return adapter and (
-        pick in _SERVABLE_FINDINGS_KEYS
+        src in meta_keys
+        or pick in _SERVABLE_FINDINGS_KEYS
         or src in _SERVABLE_FINDINGS_KEYS
         or _is_score_name(pick)
         or _is_score_name(src)
@@ -799,13 +812,15 @@ def _judge_handler(
     if not modules or not calls:
         return []
     dict_keys: set[str] = set()
+    meta_keys: set[str] = set()
     adapter = False
     resolvable = False
     for m in modules:
-        keys, has_adapter, is_resolvable = _producer_contract(
+        keys, mkeys, has_adapter, is_resolvable = _producer_contract(
             _workflow_module_files(workflows_root, m)
         )
         dict_keys |= keys
+        meta_keys |= mkeys
         adapter = adapter or has_adapter
         resolvable = resolvable or is_resolvable
     if not resolvable:
@@ -816,7 +831,7 @@ def _judge_handler(
             if kw.arg is None or kw.arg in ("raw_output", "include_provider"):
                 continue
             src = _pick_source_key(kw.value)
-            if src is None or _servable(kw.arg, src, dict_keys, adapter):
+            if src is None or _servable(kw.arg, src, dict_keys, meta_keys, adapter):
                 continue
             hits.append(
                 Hit(
@@ -825,7 +840,7 @@ def _judge_handler(
                     kw.value.lineno,
                     f"{node.name}:{kw.arg}<-{src} "
                     f"(modules={sorted(modules)}, emits={sorted(dict_keys)}, "
-                    f"adapter={adapter})",
+                    f"meta={sorted(meta_keys)}, adapter={adapter})",
                 )
             )
     return hits

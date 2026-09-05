@@ -24,12 +24,15 @@ Two calibrated rules from ``attune.classes.rules``:
   #2259 instance fire at ``c7c94f33e^``; zero hits, zero false
   positives on the fixed tree (8 reads, 4 registered groups).
 
-R8 ships with a baseline: mechanization comes BEFORE sweep-fix in the
-class pipeline, and calibration found 9 live sites (the #2213 residual
-— that fix made ``result.metadata`` truthful for probes, but the MCP
-pick surface still cannot see metadata — plus four more handlers with
-the same shape). The baseline is shrink-only: fix a site, remove its
-entry. New phantom picks are blocked outright.
+R8 shipped with a 9-entry baseline (mechanization comes BEFORE
+sweep-fix in the class pipeline); the 2026-08-24 sweep-fix emptied it.
+The #2213 residual closed by serving declared
+``from_agent_output(metadata={...})`` keys through
+``_workflow_response`` — R8 counts those keys servable on adapter
+producers, so the scanner and the runtime moved in the same PR (the
+2026-08-21 allowlist-ratchet lesson: a new safe idiom the scanner
+cannot see is a recall regression). The baseline stays shrink-only
+and empty: new phantom picks are blocked outright.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
@@ -49,26 +52,17 @@ from attune.classes.rules import (
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
-#: Known phantom picks found at calibration (2026-08-24), keyed
-#: ``<handler>:<response_key><-<source_key>``. Every entry is a REAL
-#: C10 instance awaiting sweep-fix — the pick's value is always its
-#: static default on live runs because the producer is adapter-built
-#: and the key is neither findings-like nor score-like. Shrink-only:
-#: when a site is fixed (key emitted, pick rerouted, or pick dropped),
-#: delete its entry in the same PR.
-_KNOWN_PHANTOM_PICKS = frozenset(
-    {
-        "_run_doc_gen:document<-document",
-        "_run_doc_gen:sections<-sections",
-        "_run_research_synthesis:key_insights<-key_insights",
-        "_run_research_synthesis:confidence<-confidence",
-        "_run_code_review:feedback<-feedback",
-        "_run_test_generation:tests_generated<-tests_generated",
-        "_run_test_generation:output_path<-output_path",
-        "_run_release_notes:approved<-approved",
-        "_run_release_notes:recommendation<-recommendation",
-    }
-)
+#: Known phantom picks, keyed ``<handler>:<response_key><-<source_key>``.
+#: EMPTY since the 2026-08-24 sweep-fix (class C10 Sweep-fix → Close):
+#: the 9 calibration-era sites were fixed — test-gen's picks now serve
+#: the truthful ``from_agent_output(metadata={...})`` keys (#2250 idiom,
+#: served by ``_workflow_response`` and understood by R8),
+#: research-synthesis' key_insights rerouted to the report findings,
+#: and the never-emitted picks (code-review feedback, release-notes
+#: approved/recommendation, doc-gen document/sections) were dropped.
+#: Shrink-only ratchet: new phantom picks are blocked outright — do
+#: NOT re-seed this set.
+_KNOWN_PHANTOM_PICKS: frozenset[str] = frozenset()
 
 
 def _identity(hit: Hit) -> str:
@@ -209,6 +203,52 @@ def test_rule_ignores_control_kwargs(tmp_path: Path) -> None:
         _HANDLER_TEMPLATE.format(picks="raw_output=True, include_provider=True"),
     )
     assert _r8_scan(repo) == []
+
+
+def test_rule_clears_declared_metadata_key_picks(tmp_path: Path) -> None:
+    """A pick of a key the adapter call declares in its metadata literal.
+
+    The #2250 idiom: an adapter-built workflow puts truthful values in
+    ``from_agent_output(metadata={...})`` and ``_workflow_response``
+    serves them as the pick fallback. The scanner must know this
+    vocabulary — otherwise the sweep-fix's rerouted picks would be
+    false positives, and (worse) a later migration TO the idiom would
+    silently drop sites off the scan (2026-08-21 allowlist-ratchet
+    lesson).
+    """
+    repo = _r8_repo(
+        tmp_path,
+        (
+            "class W:\n"
+            "    def run(self):\n"
+            "        return AgentSDKResultAdapter.from_agent_output(\n"
+            "            result_text='x',\n"
+            "            metadata={'tests_generated': 3, 'output_path': 'tests/'},\n"
+            "        )\n"
+        ),
+        _HANDLER_TEMPLATE.format(
+            picks="tests_generated=('tests_generated', 0), output_path='output_path'"
+        ),
+    )
+    assert _r8_scan(repo) == []
+
+
+def test_rule_still_flags_picks_outside_the_declared_metadata(tmp_path: Path) -> None:
+    """Declaring SOME metadata keys must not launder every other pick."""
+    repo = _r8_repo(
+        tmp_path,
+        (
+            "class W:\n"
+            "    def run(self):\n"
+            "        return AgentSDKResultAdapter.from_agent_output(\n"
+            "            result_text='x',\n"
+            "            metadata={'output_path': 'tests/'},\n"
+            "        )\n"
+        ),
+        _HANDLER_TEMPLATE.format(picks="document='document'"),
+    )
+    hits = _r8_scan(repo)
+    assert [h.detail.split(" ")[0] for h in hits] == ["handler:document<-document"]
 
 
 def test_rule_sees_a_module_level_workflow_import(tmp_path: Path) -> None:

@@ -47,6 +47,20 @@ def _pick_source(source: Any) -> tuple[Any, Any]:
     return source if isinstance(source, tuple) else (source, None)
 
 
+def _result_meta(result: Any) -> dict[str, Any]:
+    """``result.metadata`` when it is a dict, else empty.
+
+    Adapter-built workflows declare truthful response values here
+    (e.g. test-gen's disk-counted ``tests_generated``/``output_path``,
+    #2250) because the pick surface cannot see them anywhere else —
+    ``final_output`` is a serialized report or raw prose. Picks fall
+    back to these declared keys before their static default (class
+    C10 sweep-fix; R8 treats declared metadata keys as servable).
+    """
+    metadata = getattr(result, "metadata", None)
+    return metadata if isinstance(metadata, dict) else {}
+
+
 def _report_fields(result: Any, fo: Any, raw_output: bool, field_picks: dict) -> dict[str, Any]:
     """Response fields for a serialized-WorkflowReport final_output.
 
@@ -56,7 +70,8 @@ def _report_fields(result: Any, fo: Any, raw_output: bool, field_picks: dict) ->
     fallback). Findings-like picks (``findings``/``predictions``/
     ``checks``) resolve to the report findings; score-like picks
     (``score``, ``*_score`` — either side of the mapping) to the report
-    score; everything else to its default.
+    score; everything else to the result's declared metadata key, then
+    its default (see :func:`_result_meta`).
     """
     from attune.config import resolve_show_cost
     from attune.voice.report_renderer import render_safe
@@ -83,6 +98,7 @@ def _report_fields(result: Any, fo: Any, raw_output: bool, field_picks: dict) ->
     }
     if raw_output:
         fields["output"] = fields["summary_markdown"]
+    meta = _result_meta(result)
     for key, source in field_picks.items():
         src_key, default = _pick_source(source)
         if key in _FINDINGS_KEYS or src_key in _FINDINGS_KEYS:
@@ -90,19 +106,21 @@ def _report_fields(result: Any, fo: Any, raw_output: bool, field_picks: dict) ->
         elif _is_score_key(key) or _is_score_key(src_key):
             fields[key] = report.score
         else:
-            fields[key] = default
+            fields[key] = meta.get(src_key, default)
     return fields
 
 
-def _legacy_fields(fo: Any, raw_output: bool, field_picks: dict) -> dict[str, Any]:
+def _legacy_fields(result: Any, fo: Any, raw_output: bool, field_picks: dict) -> dict[str, Any]:
     """Response fields for a legacy flat-dict final_output — each pick
-    is ``final_output.get(source)``, exactly the field-picking the
-    handlers did before the report path existed."""
+    is ``final_output.get(source)`` (falling back to the result's
+    declared metadata key), exactly the field-picking the handlers did
+    before the report path existed."""
     fo_dict = fo if isinstance(fo, dict) else {}
+    meta = _result_meta(result)
     fields: dict[str, Any] = {}
     for key, source in field_picks.items():
         src_key, default = _pick_source(source)
-        fields[key] = fo_dict.get(src_key, default)
+        fields[key] = fo_dict.get(src_key, meta.get(src_key, default))
     if raw_output:
         fields["output"] = fo
     return fields
@@ -160,7 +178,11 @@ def _workflow_response(
             ``final_output`` passthrough; on the report path it carries
             the summary markdown instead of the raw report dict.
         **field_picks: ``response_key=source`` mappings where ``source``
-            is a final_output key or a ``(key, default)`` tuple.
+            is a final_output key or a ``(key, default)`` tuple. On both
+            paths a pick not served by the report/final_output falls
+            back to the result's declared metadata key before its
+            default (class C10 sweep-fix — R8 requires the source key
+            to be servable by one of these).
 
     Returns:
         JSON-safe response dict with ``success`` and ``cost`` always set.
@@ -173,7 +195,7 @@ def _workflow_response(
     if WorkflowReport.is_report_dict(fo):
         response.update(_report_fields(result, fo, raw_output, field_picks))
     else:
-        response.update(_legacy_fields(fo, raw_output, field_picks))
+        response.update(_legacy_fields(result, fo, raw_output, field_picks))
         # Family-B: a prose-only run (no parseable findings) leaves
         # final_output as the raw markdown string. Give it a styled panel
         # too, so prose workflows (deep-review, test-audit, refactor-plan,
@@ -257,7 +279,12 @@ class WorkflowHandlersMixin:
                 they are no longer accepted.)
 
         Returns:
-            Dict with success and generated document content.
+            Dict with success and the generated content: the rendered
+            ``summary_markdown`` + structured ``report`` on the report
+            path, or the raw generated markdown as ``output`` on prose
+            runs. (The old ``document``/``sections`` picks were phantom
+            reads — no producer ever emitted those keys, so they were
+            always ``None``; class C10 sweep-fix, 2026-08-24.)
 
         """
         from attune.workflows.document_gen import DocumentGenerationWorkflow
@@ -269,7 +296,7 @@ class WorkflowHandlersMixin:
         workflow = DocumentGenerationWorkflow()
         result = await workflow.execute(path=self._validated_path(args, key="source_path"))
 
-        return _workflow_response(result, document="document", sections="sections")
+        return _workflow_response(result, raw_output=True)
 
     # ------------------------------------------------------------------
     # Doc Orchestrator
@@ -540,10 +567,13 @@ class WorkflowHandlersMixin:
         from attune.workflows.output import WorkflowReport
 
         if WorkflowReport.is_report_dict(final):
+            # key_insights <- the report's findings (the synthesis
+            # bullets). The old key_insights/confidence picks were
+            # phantom reads — the adapter-built producer never emits
+            # those final_output keys (class C10 sweep-fix).
             response = _workflow_response(
                 result,
-                key_insights="key_insights",
-                confidence="confidence",
+                key_insights=("findings", []),
             )
             # "answer" is this tool's primary consumer field — the
             # rendered summary IS the synthesized answer.

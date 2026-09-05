@@ -492,7 +492,10 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
         workflow = CodeReviewWorkflow()
         result = await workflow.execute(path=validated_path)
 
-        return _workflow_response(result, feedback="feedback", score="quality_score")
+        # The review text rides summary_markdown/report; the old
+        # feedback="feedback" pick was a phantom read — no producer
+        # emits that key (class C10 sweep-fix, 2026-08-24).
+        return _workflow_response(result, score="quality_score")
 
     async def _run_test_generation(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run test generation workflow."""
@@ -534,20 +537,16 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
         workflow = ReleasePreparationWorkflow()
         result = await workflow.execute(path=validated_path)
 
-        response = _workflow_response(
-            result,
-            approved="approved",
-            health_score="health_score",
-            recommendation="recommendation",
-        )
-        if not isinstance(result.final_output, dict):
-            # Short-circuited workflows degrade ``final_output`` to a
-            # plain string (e.g. an error message) — surface it.
-            response["recommendation"] = str(result.final_output)
-        elif not response["recommendation"]:
-            # Report payloads carry no "recommendation" key — fall back
-            # to the result summary so the field stays populated.
+        # The old approved="approved" / recommendation="recommendation"
+        # picks were phantom reads — the adapter-built producer never
+        # emits those keys (class C10 sweep-fix). The go/no-go line IS
+        # the result summary; short-circuited workflows degrade
+        # ``final_output`` to a plain string (e.g. an error message).
+        response = _workflow_response(result, health_score="health_score")
+        if isinstance(result.final_output, dict):
             response["recommendation"] = result.summary
+        else:
+            response["recommendation"] = str(result.final_output)
         return response
 
     async def _get_auth_status(self) -> dict[str, Any]:
