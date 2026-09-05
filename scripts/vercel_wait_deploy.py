@@ -20,8 +20,10 @@ Usage::
         [--cwd website] [--timeout 900] [--interval 20]
         [--probe https://smartaimemory.com/api/cron/usage-digest/ --expect 401]
 
-Credentials: the Vercel CLI's stored token (or ``$VERCEL_TOKEN``) and the
-cwd's ``.vercel/project.json`` link. The token goes in a header only.
+Credentials: the Vercel CLI's stored token (or ``$VERCEL_TOKEN``; expiry
+checked, refreshed via ``vercel whoami``) and the ``.vercel/project.json``
+link of ``--cwd`` ITSELF — parents are never searched (see
+``vercel_common.py``). The token goes in a header only.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
@@ -31,35 +33,17 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sys
 import time
 import urllib.error
 import urllib.request
 from pathlib import Path
 
+from vercel_common import VercelSetupError, resolve
+
 API = "https://api.vercel.com"
 TERMINAL_OK = {"READY"}
 TERMINAL_BAD = {"ERROR", "CANCELED"}
-
-
-def _token() -> str:
-    tok = os.environ.get("VERCEL_TOKEN")
-    if tok:
-        return tok
-    auth = Path.home() / "Library" / "Application Support" / "com.vercel.cli" / "auth.json"
-    if auth.exists():
-        return json.loads(auth.read_text()).get("token", "")
-    return ""
-
-
-def _link(cwd: Path) -> tuple[str, str]:
-    for d in (cwd, *cwd.parents):
-        p = d / ".vercel" / "project.json"
-        if p.exists():
-            j = json.loads(p.read_text())
-            return j.get("orgId", ""), j.get("projectId", "")
-    return "", ""
 
 
 def _get(path: str, token: str) -> dict:
@@ -143,11 +127,13 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--expect", type=int, default=None, help="status the probe must return")
     args = ap.parse_args(argv[1:])
 
-    token = _token()
-    org, project_id = _link(Path(args.cwd).resolve())
-    if not (token and org and project_id):
-        print("no Vercel token or no .vercel/project.json link in --cwd", file=sys.stderr)
+    try:
+        lk = resolve(Path(args.cwd).resolve())
+    except VercelSetupError as exc:
+        print(f"vercel_wait_deploy: {exc}", file=sys.stderr)
         return 2
+    token, org, project_id = lk.token, lk.org, lk.project_id
+    print(f"project [{lk.label}] commit {args.commit}")
 
     try:
         rc, dep = wait(token, org, project_id, args.commit, args.timeout, args.interval)

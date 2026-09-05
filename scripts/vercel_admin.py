@@ -25,8 +25,11 @@ Subcommands (one mutation each)::
 outside the repo — the generate-once/write-both recipe. Values are never
 echoed; the receipt is ``len=`` and ``sha256[:12]``.
 
-Credentials: ``$VERCEL_TOKEN`` or the Vercel CLI's stored token; the
-project/team ids come from ``.vercel/project.json`` under ``--cwd``.
+Credentials: ``$VERCEL_TOKEN`` or the Vercel CLI's stored token (expiry
+checked, refreshed via ``vercel whoami``); the project/team ids come from
+``.vercel/project.json`` in ``--cwd`` ITSELF — parents are never searched,
+because a worktree's parent walk once resolved to a deleted project (see
+``vercel_common.py``). Every output line names ``projectName/projectId``.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
@@ -38,6 +41,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import secrets
 import subprocess
 import sys
@@ -45,26 +49,11 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+from vercel_common import VercelSetupError, resolve
+
 API = "https://api.vercel.com"
-
-
-def _token() -> str:
-    tok = os.environ.get("VERCEL_TOKEN")
-    if tok:
-        return tok
-    auth = Path.home() / "Library" / "Application Support" / "com.vercel.cli" / "auth.json"
-    if auth.exists():
-        return json.loads(auth.read_text()).get("token", "")
-    return ""
-
-
-def _link(cwd: Path) -> tuple[str, str]:
-    for d in (cwd, *cwd.parents):
-        p = d / ".vercel" / "project.json"
-        if p.exists():
-            j = json.loads(p.read_text())
-            return j.get("orgId", ""), j.get("projectId", "")
-    return "", ""
+#: A deployment URL the CLI can redeploy: https scheme, a dotted host, nothing else.
+DEPLOY_URL = re.compile(r"^https://[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$")
 
 
 def _request(method: str, path: str, token: str, body: dict | None = None) -> dict:
@@ -210,12 +199,13 @@ def main(argv: list[str]) -> int:
 
     args = ap.parse_args(argv[1:])
     cwd = Path(args.cwd).resolve()
-    token = _token()
-    org, linked_pid = _link(cwd)
-    pid = args.project_id or linked_pid
-    if not (token and org and pid):
-        print("no Vercel token or no .vercel/project.json link in --cwd", file=sys.stderr)
+    try:
+        lk = resolve(cwd, args.project_id)
+    except VercelSetupError as exc:
+        print(f"vercel_admin: {exc}", file=sys.stderr)
         return 2
+    token, org, pid = lk.token, lk.org, lk.project_id
+    label = f"[{lk.label}]"
 
     if args.cmd == "redeploy":
         # The CLI's redeploy is the one mutation here; it reuses the source build.
@@ -226,8 +216,17 @@ def main(argv: list[str]) -> int:
                 f"/v6/deployments?projectId={pid}&teamId={org}&target=production&limit=1",
                 token,
             )
-            url = "https://" + (deps.get("deployments") or [{}])[0].get("url", "")
-        print(f"redeploy {url}")
+            if deps.get("error"):
+                print(f"{label} deployments lookup FAILED: {_err_msg(deps)}", file=sys.stderr)
+                return 1
+            host = (deps.get("deployments") or [{}])[0].get("url") or ""
+            url = f"https://{host}" if host else ""
+        if not DEPLOY_URL.match(url or ""):
+            print(
+                f"{label} refusing redeploy: no/malformed deployment URL {url!r}", file=sys.stderr
+            )
+            return 1
+        print(f"{'DRY-RUN ' if args.dry_run else ''}{label} redeploy {url}")
         if args.dry_run:
             return 0
         r = subprocess.run(
@@ -260,23 +259,26 @@ def main(argv: list[str]) -> int:
             org, pid, args.domain, None if args.clear else args.to
         )
 
-    print(f"{'DRY-RUN ' if args.dry_run else ''}{desc}")
+    print(f"{'DRY-RUN ' if args.dry_run else ''}{label} {desc}")
     print(f"  {method} {path}")
     if args.dry_run:
         return 0
 
     result = _request(method, path, token, body)
     if result.get("error"):
-        msg = (
-            result["error"].get("message") if isinstance(result["error"], dict) else result["error"]
-        )
-        print(f"  FAILED ({result.get('status')}): {msg}", file=sys.stderr)
+        print(f"  {label} FAILED ({result.get('status')}): {_err_msg(result)}", file=sys.stderr)
         return 1
-    print("  ok")
+    print(f"  {label} ok")
     if args.cmd == "env-set" and args.store:
         store_locally(Path(args.store).expanduser(), args.name, value)
         print(f"  stored {args.name} in {args.store} (0600)")
     return 0
+
+
+def _err_msg(result: dict) -> str:
+    """The API's error message from a :func:`_request` result (never the token)."""
+    err = result.get("error")
+    return str(err.get("message") if isinstance(err, dict) else err)
 
 
 if __name__ == "__main__":

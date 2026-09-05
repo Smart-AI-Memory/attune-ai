@@ -9,12 +9,22 @@ reported as 308, because Vercel Cron treats it as final.
 from __future__ import annotations
 
 import importlib.util
+import sys
 from pathlib import Path
 
 import pytest
 
 REPO = Path(__file__).resolve().parents[3]
-SCRIPT = REPO / "scripts" / "vercel_wait_deploy.py"
+SCRIPTS = REPO / "scripts"
+SCRIPT = SCRIPTS / "vercel_wait_deploy.py"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
+
+
+def _fake_resolve(token="t", org="o", pid="p", name="website"):
+    from vercel_common import Link
+
+    return lambda cwd, project_id=None: Link(token, org, project_id or pid, name)
 
 
 @pytest.fixture(scope="module")
@@ -109,8 +119,7 @@ class TestProbe:
 
 class TestMain:
     def test_main_ready_then_probe_mismatch_fails(self, mod, monkeypatch, tmp_path):
-        monkeypatch.setattr(mod, "_token", lambda: "t")
-        monkeypatch.setattr(mod, "_link", lambda cwd: ("o", "p"))
+        monkeypatch.setattr(mod, "resolve", _fake_resolve())
         monkeypatch.setattr(mod, "wait", lambda *a, **k: (0, _dep("abc", "READY")))
         monkeypatch.setattr(mod, "http_status", lambda url: 308)
         assert (
@@ -148,14 +157,15 @@ class TestMain:
         )
 
     def test_main_without_link_exits_two(self, mod, monkeypatch, tmp_path, capsys):
-        monkeypatch.setattr(mod, "_token", lambda: "")
-        monkeypatch.setattr(mod, "_link", lambda cwd: ("", ""))
+        """The real resolver runs: an unlinked cwd fails before any API call."""
+        monkeypatch.setenv("VERCEL_TOKEN", "env-token")
+        monkeypatch.setattr(mod, "wait", lambda *a, **k: pytest.fail("API touched"))
         assert mod.main(["x", "--commit", "abc", "--cwd", str(tmp_path)]) == 2
-        assert "no Vercel token" in capsys.readouterr().err
+        err = capsys.readouterr().err
+        assert "not linked" in err and "env-token" not in err
 
     def test_main_build_error_prints_message(self, mod, monkeypatch, tmp_path, capsys):
-        monkeypatch.setattr(mod, "_token", lambda: "t")
-        monkeypatch.setattr(mod, "_link", lambda cwd: ("o", "p"))
+        monkeypatch.setattr(mod, "resolve", _fake_resolve())
         monkeypatch.setattr(
             mod, "wait", lambda *a, **k: (1, _dep("abc", "ERROR", err="CRON_SECRET has whitespace"))
         )

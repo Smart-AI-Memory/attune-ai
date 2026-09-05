@@ -11,12 +11,22 @@ project-domains endpoint (attachment), not the account domain record.
 from __future__ import annotations
 
 import importlib.util
+import sys
 from pathlib import Path
 
 import pytest
 
 REPO = Path(__file__).resolve().parents[3]
-SCRIPT = REPO / "scripts" / "vercel_probe.py"
+SCRIPTS = REPO / "scripts"
+SCRIPT = SCRIPTS / "vercel_probe.py"
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
+
+
+def _fake_resolve(token="tok", org="org", pid="prj", name="website"):
+    from vercel_common import Link
+
+    return lambda cwd, project_id=None: Link(token, org, project_id or pid, name)
 
 
 @pytest.fixture(scope="module")
@@ -151,8 +161,7 @@ class TestMain:
         monkeypatch.setattr(
             mod, "pull_env", lambda env, cwd: {"RESEND_API_KEY": "re_" + "x" * 33, "PGHOST": ""}
         )
-        monkeypatch.setattr(mod, "_token", lambda: "tok")
-        monkeypatch.setattr(mod, "_link", lambda cwd: ("org", "prj"))
+        monkeypatch.setattr(mod, "resolve", _fake_resolve())
         monkeypatch.setattr(
             mod, "env_types", lambda t, o, p: {"RESEND_API_KEY": "encrypted", "PGHOST": "sensitive"}
         )
@@ -170,13 +179,15 @@ class TestMain:
             rc == 0 and "prefix=re_" in out and "not pullable" in out and "x.com [primary]" in out
         )
         assert "x" * 20 not in out
+        assert out.startswith("project [website/prj] team org") and "tok" not in out
 
-    def test_main_without_link_reports_and_fails_domains(self, mod, monkeypatch, tmp_path, capsys):
-        monkeypatch.setattr(mod, "pull_env", lambda env, cwd: {})
-        monkeypatch.setattr(mod, "_token", lambda: "")
-        monkeypatch.setattr(mod, "_link", lambda cwd: ("", ""))
+    def test_main_unlinked_cwd_exits_two_without_pulling(self, mod, monkeypatch, tmp_path, capsys):
+        """The real resolver runs: no ``.vercel/project.json`` in cwd, no parent walk."""
+        monkeypatch.setenv("VERCEL_TOKEN", "env-token")
+        monkeypatch.setattr(mod, "pull_env", lambda env, cwd: pytest.fail("env pull ran"))
         rc = mod.main(["x", "--cwd", str(tmp_path), "--domains"])
-        assert rc == 1 and "no token" in capsys.readouterr().err
+        err = capsys.readouterr().err
+        assert rc == 2 and "not linked" in err and "env-token" not in err
 
     def test_env_types_degrades_to_empty_on_api_error(self, mod, monkeypatch):
         import urllib.error
@@ -188,14 +199,15 @@ class TestMain:
         assert mod.env_types("tok", "org", "prj") == {}
         assert mod.env_types("", "org", "prj") == {}
 
-    def test_link_and_token_readers(self, mod, tmp_path, monkeypatch):
+    def test_link_is_cwd_only(self, mod, tmp_path, monkeypatch):
         (tmp_path / ".vercel").mkdir()
         (tmp_path / ".vercel" / "project.json").write_text(
-            '{"orgId": "team_1", "projectId": "prj_1"}'
+            '{"orgId": "team_1", "projectId": "prj_1", "projectName": "website"}'
         )
+        monkeypatch.setenv("VERCEL_TOKEN", "env-token")
+        lk = mod.resolve(tmp_path)
+        assert (lk.org, lk.project_id, lk.label) == ("team_1", "prj_1", "website/prj_1")
         sub = tmp_path / "website" / "app"
         sub.mkdir(parents=True)
-        assert mod._link(sub) == ("team_1", "prj_1")
-        assert mod._link(Path("/")) == ("", "")
-        monkeypatch.setenv("VERCEL_TOKEN", "env-token")
-        assert mod._token() == "env-token"
+        with pytest.raises(mod.VercelSetupError):  # a parent's link is NOT inherited
+            mod.resolve(sub)
