@@ -135,7 +135,7 @@ def link(cwd: Path, project_id: str | None = None) -> tuple[str, str, str]:
     path = cwd / ".vercel" / "project.json"
     if not path.exists():
         raise VercelSetupError(
-            f"{cwd} is not linked (no {path.relative_to(cwd)}); parents are not searched. "
+            f"{cwd} is not linked (no .vercel/project.json); parents are not searched. "
             f"Pass --cwd <linked dir> or run `vercel link --cwd {cwd}`"
         )
     try:
