@@ -9,6 +9,8 @@ Licensed under Apache 2.0
 from __future__ import annotations
 
 import logging
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -409,7 +411,20 @@ def cmd_doctor(args: Namespace) -> int:
         except ImportError:
             _warn(f"{pkg_name} not installed", "optional")
 
-    # 5. Redis connectivity
+    # 5. Related attune packages (installed versions)
+    from importlib.metadata import PackageNotFoundError
+    from importlib.metadata import version as _pkg_version
+
+    for pkg in ("attune-rag", "attune-verify", "attune-forms"):
+        try:
+            _ok(f"{pkg} {_pkg_version(pkg)}")
+        except PackageNotFoundError:
+            _warn(f"{pkg} not installed", "optional")
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: a diagnostic must never crash on broken metadata
+            _warn(f"{pkg} version unknown", "optional")
+
+    # 6. Redis connectivity
     #
     # Probe THE CONFIGURED endpoint, via the canonical resolver. A bare
     # ``redis.Redis(...)`` defaults to localhost:6379 no matter what
@@ -431,7 +446,7 @@ def cmd_doctor(args: Namespace) -> int:
         # INTENTIONAL: Redis is optional
         _warn("Redis server not reachable", "optional")
 
-    # 6. Workflows
+    # 7. Workflows
     try:
         from attune.workflows import discover_workflows
 
@@ -441,7 +456,7 @@ def cmd_doctor(args: Namespace) -> int:
         # INTENTIONAL: Workflow discovery is non-critical
         _fail(f"Workflow discovery failed: {e}")
 
-    # 7. Wizards
+    # 8. Wizards
     try:
         from attune.wizards import list_wizards
 
@@ -451,7 +466,7 @@ def cmd_doctor(args: Namespace) -> int:
         # INTENTIONAL: Wizard discovery is non-critical
         _warn(f"Wizard discovery: {e}")
 
-    # 8. MCP server
+    # 9. MCP server
     try:
         from attune.mcp.server import AttuneMCPServer
 
@@ -461,6 +476,29 @@ def cmd_doctor(args: Namespace) -> int:
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: MCP is optional
         _warn(f"MCP server: {e}")
+
+    # 10. Claude Code plugin (the CLI works without it)
+    claude_path = shutil.which("claude")
+    if claude_path is None:
+        _warn("claude CLI not found", "optional")
+    else:
+        try:
+            proc = subprocess.run(
+                [claude_path, "plugin", "list"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
+            )
+            if proc.returncode != 0:
+                _warn("claude plugin list failed", "optional")
+            elif "attune-ai@attune-ai" in proc.stdout:
+                _ok("Claude Code plugin attune-ai@attune-ai installed")
+            else:
+                _warn("Claude Code plugin attune-ai not installed", "optional")
+        except (subprocess.TimeoutExpired, OSError):
+            # INTENTIONAL: a diagnostic must never crash on a broken CLI
+            _warn("claude plugin list unavailable", "optional")
 
     # Summary
     total = passed + optional + failed

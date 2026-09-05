@@ -136,6 +136,14 @@ while preserving portable fallbacks and explicit chair authority.
   supplies a searchable, project-confined file and folder picker through
   `attune-forms 0.11.0`, while preserving manual text entry and the native
   MCP string-input fallback.
+- **`attune doctor` is now a full install diagnostic**: one run also
+  reports the installed versions of attune-rag, attune-verify, and
+  attune-forms (degrading to "not installed" — never raising) and the
+  Claude Code plugin state (`claude` CLI on PATH plus
+  `attune-ai@attune-ai` in `claude plugin list`, checked with a short
+  timeout and fail-open on every broken-environment path). Onboarding
+  surveys shrink from a 3-command paste block to "run `attune doctor`,
+  reply with the output".
 
 - **Fix previews now negotiate portable MCP Apps rendering**: clients that
   advertise the standard Attune UI MIME profile receive the shared
