@@ -140,3 +140,20 @@ def test_real_ledger_has_no_new_unclassified_review_rows(mod):
     )
     gone = [k for k in KNOWN_UNCLASSIFIED if not any(u.startswith(k) for u in unclassified)]
     assert not gone, f"KNOWN_UNCLASSIFIED entries no longer in the ledger — shrink the set: {gone}"
+
+
+def test_absent_lane_rows_are_kept_in_the_ledger_but_skipped_by_the_tally(mod):
+    # ``review.ledger_row`` writes an ABSENT lane (seat never read the brief)
+    # as ``0 (absent)``. It is a real run the ledger keeps, but it judged
+    # nothing: it must count neither as clean nor as unreadable.
+    text = "\n".join(
+        [
+            _row("codex", "0 (absent)", "ABSENT — CLI exited 1 before reading the brief"),
+            _row("antigravity", "2 (findings)", "2 real — fixed"),
+        ]
+    )
+    rows = mod.parse_rows(text)
+    assert [r.seat for r in rows] == ["antigravity"]
+    seats = mod.tally(rows)
+    assert "codex" not in seats
+    assert not [u for t in seats.values() for u in t.unclassified]

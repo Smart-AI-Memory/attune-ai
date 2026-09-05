@@ -81,11 +81,36 @@ behavior test is claimed by these document checks. Review coverage remains
 one compiler-clean roundtable seat; the later preservation review checked
 packaging only and does not increase product-design consensus.
 
-## T1 inventory (2026-09-05, pending chair acceptance)
+## T1 inventory (2026-09-05, accepted — decisions D6)
 
 The T1 reconcile-and-characterize inventory, run read-only from the
 execution checkout with headless probes and a serial suite receipt, is
 [`t1-inventory.md`](t1-inventory.md). It selects the `spec` review-stage
 choice as the ASI-5 consumer and records existing capability versus
-demonstrated gap per requirement. It is evidence for the chair, not
-acceptance.
+demonstrated gap per requirement. The chair accepted T1 the same day (D6).
+
+## T2 execution record (2026-09-05, pending chair acceptance)
+
+Scope executed under the D6 go: guidance only, no source change. Files:
+`plugin/skills/spec/SKILL.md` (new "The review choice — adaptive default"
+section), `plugin/skills/elicit/SKILL.md` (new "Scoped preferences"
+section naming the session store and the markdown text lane), both
+`.agents/skills/` mirrors reprojected with `scripts/sync_agents_skills.py
+--write`, `design.md` (open choices 1–2 resolved; preference facility
+proposed: MCP session context, key `interaction_preference`, process
+lifetime), `tasks.md` (status flipped to active; spec-state comment now
+`completed: ["1"], current: "2"` via `attune.spec.save_state`), and
+`tests/unit/spec/test_adaptive_review_guidance.py`.
+
+| Claim | Probe actually run | Result |
+| --- | --- | --- |
+| The four behavioral cases are pinned | new test file: guidance sentences in both masters and both mirrors; review stage = two non-consequential alternatives; Markdown skeleton carries the binding; a settled choice cannot be re-submitted; `context_set`/`context_get` round trip is process-scoped | 18 passed |
+| Mirrors are in sync | `tests/unit/plugins/test_sync_agents_skills.py` | passed (serial) |
+| Skill tool references resolve | `tests/unit/plugins/test_plugin_reference_validation.py` | passed |
+| Consumer behavior unchanged | `tests/unit/spec/test_workspace.py` | 16 passed |
+| Ratchets and doc gates accept the tree | `tests/unit/gates`, `test_generated_doc_import_drift.py`, `test_status_line_gate.py` | passed (see the PR for the exact tail) |
+| Pinned hooks | pre-commit over every changed file | all applicable hooks passed |
+
+Not established by T2: that any host honors the guidance live. That is
+T3's receipt (named host round trip through the review choice on both
+lanes), and it has no go yet.

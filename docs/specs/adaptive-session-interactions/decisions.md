@@ -100,3 +100,23 @@ Counter-case retained: naming a text-fallback surface in a requirement
 binds the pilot to a library seam that has no MCP tool today; if T2 finds
 the seam unreachable from the named host, the amendment is a pointer to
 library behavior, not a promise of host behavior.
+
+## D6 — T1 accepted; T2 go granted (2026-09-05, chair)
+
+Chair's words, verbatim: "accept T1 and grant the T2 go." Recorded by the
+lead in the resume session immediately after D5.
+
+- **T1 (reconcile-and-characterize) is ACCEPTED.** Its output is
+  [`t1-inventory.md`](t1-inventory.md) (PR #2429). The `spec` adapter's
+  review-stage choice (`redo_plan` / `approve_plan`) is the ASI-5 consumer;
+  the named host is the Claude desktop app (Code tab) with the attune-ai
+  plugin MCP server.
+- **T2 (need-selection-and-preference) has its go.** Scope per the ladder:
+  tighten guidance at the selected consumer for ASI-1, ASI-2, ASI-5; add
+  code only for a demonstrated remaining gap. T1 demonstrated no code gap
+  for the pilot — the gaps are guidance (the spec skill's pre-workspace
+  review path beside the canonical collector; no named home for a
+  session-wide conversational preference). T2 therefore edits skill
+  masters and reprojects mirrors, proposes the preference facility in the
+  design, and pins the guidance with drift-guard tests.
+- A go on T2 is not a go on T3. T3 waits on T2's acceptance and its own go.

@@ -22,7 +22,8 @@ spec commit only; ASI-7's freeze clause continued to prohibit implementation
 and interference with Claude's work. This status correction adds no feature
 scope or execution authorization. Later the same day the chair lifted the
 freeze for this feature entirely (decisions D5); per-task gos are the only
-remaining gate, and none has been granted beyond T1.
+remaining gate. Which gos exist is recorded in [decisions](decisions.md),
+never inferred from this header.
 
 ## Interaction mapping
 

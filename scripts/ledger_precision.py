@@ -46,6 +46,7 @@ REVIEW_SEATS = ("codex", "antigravity")
 
 _ROW = re.compile(r"^\| \d{4}-\d{2}-\d{2} \|")
 _FINDINGS = re.compile(r"^(\d+) \((findings|clean)")
+_ABSENT = re.compile(r"^0 \(absent\)")
 _REJECTION = re.compile(r"^(?:dismissed|noise|rejected)\b")
 _ALL_REAL = re.compile(r"^(?:all |both )?real\b")
 _N_REAL = re.compile(r"^(\d+|one|two|three|four|five) real\b")
@@ -115,6 +116,13 @@ def parse_rows(text: str) -> list[Row]:
         if len(cells) < 6:
             continue
         date, seat, _target, _files, findings_cell, disposition = cells[:6]
+        # An ABSENT lane (the seat never read the brief — CLI error,
+        # missing binary, cap hit) is a real run the ledger must keep,
+        # but it carries no precision data: nothing was judged real or
+        # rejected. ``review.ledger_row`` emits it as ``0 (absent)``;
+        # skip it here rather than count it clean or flag it unreadable.
+        if _ABSENT.match(findings_cell):
+            continue
         m = _FINDINGS.match(findings_cell)
         findings = int(m.group(1)) if m else None
         real, rejected = classify(findings, disposition)

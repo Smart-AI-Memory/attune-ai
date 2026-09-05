@@ -323,6 +323,41 @@ by hand. Precedence, highest first:
    folded into the text — that form wanted a card.
 5. **Otherwise** → widget.
 
+### Scoped preferences (adaptive-session-interactions, ASI-2)
+
+Two preference scopes sit ABOVE the router's precedence, and both change
+presentation only — never validation, never action authority:
+
+- **One-interaction override** — the user's words for this ask ("just
+  tell me in text", "show me the widget this once"). Honor it for this
+  interaction only; it does not rewrite anything stored.
+- **Session-wide preference** — "just talk to me" / "stop with the
+  forms". Store it with the attune-ai MCP context tools: `context_set`
+  key `interaction_preference`, value `conversation`; read it back with
+  `context_get` once per session (again only when the user changes it),
+  not before every render. It lives for the MCP server instance — one
+  per stdio server process in the shipped plugin — and survives phase
+  changes until the user changes it. `conversation`
+  means: render the form on the text lane and transcribe the answer.
+  Keyboard mode is NOT this preference — it is a project-scoped,
+  file-persisted opt-out that still asks, via a flatter control.
+
+Precedence: explicit override for this interaction → explicit session
+preference → the router's default. A missing preference is not an
+opt-out and not consent.
+
+**The text lane keeps every field.** From a Claude Code session the
+text lane IS steps 2–4 below (`elicitation_render_form` →
+`AskUserQuestion` → `elicitation_collect_response`); a field a lane
+cannot represent is disclosed and asked, never dropped. For hosts with
+no `AskUserQuestion` and for library consumers, attune-forms ships a
+markdown surface — `form_to_markdown(form)` renders every field into one
+skeleton, `markdown_to_answers` parses the typed reply deterministically
+(a stray line is a named problem, never a guess), and
+`problems_to_markdown` re-asks only the failing fields. It is a Python
+library surface: no MCP tool exposes it yet and the router's range is
+`widget` / `ask` only, so do not try to call it as a tool.
+
 **Latency is not a reason to downgrade a form.** The extra tool call is
 a real cost but it is not the axis; if a form is worth asking, it is
 worth asking legibly. `needs_widget` still exists as the low-level
