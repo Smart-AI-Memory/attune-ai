@@ -3,7 +3,8 @@
 **Status:** active (2026-09-05) — resumed by the chair the same day
 (decisions D6–D10): T1, T2, T3 accepted; T4 in progress as a
 preregistered live collection (D10 — protocol frozen, record open, count
-not yet reached); T5 not started; no auto-run authority.
+not yet reached); T5 holds a standing conditional go that opens on the
+record's trigger (D11) and has not started; no auto-run authority.
 
 Resume-Trigger (historical, fired 2026-09-05): Patrick explicitly resumed
 this feature for execution after coordination with Claude's active

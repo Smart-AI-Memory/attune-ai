@@ -205,3 +205,23 @@ to test an approval). The chair adopted the alternative:
   (D8). No provider call is involved; no paid operation.
 - **T5 opens when the record reaches the count** or the falsification
   rule trips, whichever first. A go on T4 is not a go on T5.
+
+## D11 — T5 holds a standing conditional go that opens on the T4 record (2026-09-05, chair via pushback card)
+
+The chair leaned toward a T5 go tonight; the lead pushed back (the T4
+record is empty, and ASI-6 forbids promoting a default without
+behavioral receipts of usefulness). The chair adopted the alternative:
+
+- **T5's go is granted now and fires on the preregistered condition**,
+  not on a date: the moment [`t4-record.md`](t4-record.md) holds eight
+  completed occurrences, or the T4 protocol's falsification rule trips.
+- **The session that fills the triggering row runs T5 in that session**:
+  it reads the record, applies the preregistered promotion criteria,
+  writes the T5 evidence (findings and the strongest counter-case), and
+  presents the promotion decision to the chair. No further "go on T5" is
+  needed; no session may run T5 before the trigger.
+- **Promotion itself stays a chair ruling** (ASI-6, ASI-7). T5 recommends;
+  the chair promotes or declines; the decision is a decisions entry.
+- The frozen T4 protocol is not amended by this entry; its operating
+  instruction already stops collection on the trigger. This entry supplies
+  the authority for what happens next.

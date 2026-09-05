@@ -6,6 +6,11 @@ named host, served under [`t4-protocol.md`](t4-protocol.md) (frozen
 next assigned slot. Rows carry counts, labels, and telemetry identifiers
 only — never answers, nonces, or contract hashes.
 
+**Trigger (decisions D11):** when row 8 is filled, or the falsification
+rule trips, the session that did it runs T5 immediately under the
+standing conditional go — no new go is needed — and presents the
+promotion decision to the chair. Before that, T5 may not run.
+
 Columns: Completed = choice accepted canonically; Corr = collector
 rejections before acceptance; Clar = clarification turns about the choice
 between render and acceptance; Override = user asked for the other lane;
