@@ -1,6 +1,6 @@
 # attune-forms Plugin & Beta — Requirements
 
-**Status:** active (2026-09-05) — Phase 5 execution authorized R5.3 → R5.2 → R5.4 with R5.1 HELD on the adaptive-session-interactions T4 trigger (D7); Phase 4 submission = the chair's pending Console act (D7 defines the gate as SUBMITTED); P1–P3 executed (D2–D4); D1 announcement gate satisfied 2026-08-13. The
+**Status:** active (2026-09-05) — Phase 5 executing: R5.3 MERGED (attune-forms #79), R5.2 in review (attune-forms #80 + the attune-ai mirror), R5.4 next, R5.1 HELD on the adaptive-session-interactions T4 trigger (D7); Phase 4 submission = the chair's pending Console act (D7 defines the gate as SUBMITTED); P1–P3 executed (D2–D4); D1 announcement gate satisfied 2026-08-13. The
 sequencing and announcement gate are already chair-ratified
 (decisions.md D1, ruled in-discussion the same day); this document
 phases that ruling into gated, executable scope. No phase executes

@@ -165,3 +165,18 @@ named under Phase 5 shipped in attune-forms 0.8.0 (2026-08-24; installed
 5 exists to close. Counter-case retained: the gate rests on an external
 queue that has already swallowed two attune-ai submissions; if the
 Console act stalls, the chair may convert item 1 to a written waiver.
+
+**Execution record (2026-09-05, lead):** R5.3 EXECUTED — attune-forms
+#79 (`example_slots` on stored templates, `template_example_slots()`,
+cast-every-template gate) MERGED on the chair's "merge 79 on green"
+(squash `81d229e`, head `da8c26f` unmoved, 7/7 green). R5.2 EXECUTED —
+attune-forms #80 (the standalone server) and the attune-ai mirror on
+branch `claude/dynamic-ui-forms-2e776f`, schema-identical per item 3:
+every form-taking tool takes `template` + `slots` through ONE shared
+parse seam (exactly one of `form` / `template`, problems listed, never
+raised; `collect_response` carries `template_id`). Scope note recorded
+in both PRs: item 3 names `elicitation_render_widget`, but the seam is
+shared by all four handlers and `collect_response` needs it or the agent
+would still hold the form dict to validate answers. No skill or guidance
+text changed — R5.1 stays HELD (item 2). Next: R5.4 after the chair's
+word on #80 and the mirror.

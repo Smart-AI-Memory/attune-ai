@@ -350,6 +350,37 @@ def get_utility_tools() -> dict[str, dict[str, Any]]:
     }
 
 
+def _template_props() -> dict[str, Any]:
+    """The fused template-path arguments every form-taking tool accepts (R5.2).
+
+    Advertised beside ``form``; the handler enforces "exactly one of
+    ``form`` / ``template``" and lists every problem, so the schema does
+    not need a ``oneOf`` (which not every MCP host renders). Hand-declared
+    to match ``attune_forms.mcp_server._template_props`` verbatim until the
+    forms floor carries it (then a pure swap — the parity test in
+    ``tests/unit/mcp/test_tool_schemas.py`` goes live at that floor bump).
+    """
+    return {
+        "template": {
+            "type": "string",
+            "description": (
+                "Name of a stored form template (e.g. 'session-contract'). "
+                "The server loads, casts the slots, validates and renders it "
+                "in this one call — pass this INSTEAD of 'form'. An unknown "
+                "name returns problems listing the available templates."
+            ),
+        },
+        "slots": {
+            "type": "object",
+            "description": (
+                "Slot values for 'template' — one string per declared "
+                "{slot_name} placeholder; missing or extra names are problems."
+            ),
+            "additionalProperties": {"type": "string"},
+        },
+    }
+
+
 def get_elicitation_tools() -> dict[str, dict[str, Any]]:
     """Tool definitions for the declarative-form ↔ AskUserQuestion bridge.
 
@@ -381,6 +412,7 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
     # _form_schema() embeds _field_schema() as its fields' items, so the
     # field contract rides along — no separate field-schema local needed.
     rich_form_schema = _form_schema()
+    template_props = _template_props()
     workspace_response_schema = _workspace_response_schema()
     # Fix actions are always authority-bound. The generic forms collector
     # also supports unbound informational actions, so strengthen its shared
@@ -447,12 +479,13 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
                 "{success: false, problems} so you re-fix the definition. "
                 "Map each payload to AskUserQuestion per the driving skill: "
                 "type multi_select -> multiSelect true; recommendation-first; "
-                "free text via the built-in 'Other' option."
+                "free text via the built-in 'Other' option. Pass either "
+                "'form' or 'template' + 'slots' (a stored template, cast "
+                "server-side)."
             ),
             "input_schema": {
                 "type": "object",
-                "properties": {"form": form_schema},
-                "required": ["form"],
+                "properties": {"form": form_schema, **template_props},
             },
         },
         "elicitation_collect_response": {
@@ -461,7 +494,9 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
                 "return a normalized {field_id: value} response. Enforces "
                 "required fields and option membership (R4 — never silently "
                 "accept malformed input); returns {success: false, problems} "
-                "listing exactly which fields to re-ask."
+                "listing exactly which fields to re-ask. Name the form the "
+                "same way it was rendered: 'form', or 'template' + 'slots' "
+                "(responses then carry the template as template_id)."
             ),
             "input_schema": {
                 "type": "object",
@@ -474,13 +509,14 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
                     # at the validation step (the underlying
                     # collect_form_response already validates every control).
                     "form": rich_form_schema,
+                    **template_props,
                     "instance_id": {"type": "string", "pattern": "^(?:[a-f0-9]{32})?$"},
                     "answers": {
                         "type": "object",
                         "description": "{field_id: value} the user selected/typed",
                     },
                 },
-                "required": ["form", "answers"],
+                "required": ["answers"],
             },
         },
         "command_workspace_open": {
@@ -619,18 +655,18 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
                 "{success, action, responses} or {success: false, problems}. "
                 "If the client can't elicit, returns {success: false, "
                 "action: 'unsupported'} — fall back to elicitation_render_form "
-                "(AskUserQuestion)."
+                "(AskUserQuestion). Pass either 'form' or 'template' + 'slots'."
             ),
             "input_schema": {
                 "type": "object",
                 "properties": {
                     "form": rich_form_schema,
+                    **template_props,
                     "message": {
                         "type": "string",
                         "description": "Optional prompt shown above the form",
                     },
                 },
-                "required": ["form"],
             },
         },
         "chart_render_widget": {
@@ -692,18 +728,21 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
                 "('__elicitation_response__'); parse that block and validate "
                 "it with elicitation_collect_response (R4). Returns {success: "
                 "false, problems} on a malformed form. Use when native MCP "
-                "elicitation is unavailable but the client can render widgets."
+                "elicitation is unavailable but the client can render widgets. "
+                "Prefer 'template' + 'slots' over composing 'form': the server "
+                "loads, casts, validates and renders in this one call, and the "
+                "form never transits your context."
             ),
             "input_schema": {
                 "type": "object",
                 "properties": {
                     "form": rich_form_schema,
+                    **template_props,
                     "message": {
                         "type": "string",
                         "description": "Optional prompt shown above the form",
                     },
                 },
-                "required": ["form"],
             },
         },
     }
