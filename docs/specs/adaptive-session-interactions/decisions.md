@@ -120,3 +120,23 @@ lead in the resume session immediately after D5.
   masters and reprojects mirrors, proposes the preference facility in the
   design, and pins the guidance with drift-guard tests.
 - A go on T2 is not a go on T3. T3 waits on T2's acceptance and its own go.
+
+## D7 — T2 accepted; T3 go granted (2026-09-05, chair)
+
+Chair's words, verbatim: "accept T2 and grant the T3 go." Recorded by the
+lead immediately after the chair armed #2431 (T2) for merge.
+
+- **T2 (need-selection-and-preference) is ACCEPTED** as executed in #2431:
+  guidance at the pilot consumer, the scoped-preference facility named
+  (MCP session context, key `interaction_preference`, instance lifetime),
+  drift guards, two D11 lanes rowed in the R5 ledger.
+- **T3 (host-readiness-and-pending-interaction) has its go.** Scope per the
+  ladder: connect the selected interaction (the `spec` review choice) to
+  the existing capability and canonical-state boundaries for ASI-3 and
+  ASI-4 — actual-host and fallback round trips on the named host before
+  any usefulness measurement; probes for stale/repeated actions,
+  unavailable surfaces, canonical answer preservation, and progress
+  without approval; draft recovery verified before it is promised;
+  human-observed usability and unmeasured paint timing labelled
+  separately. Receipt types: behavioral + actual host round trip.
+- A go on T3 is not a go on T4. T4 waits on T3's acceptance and its own go.
