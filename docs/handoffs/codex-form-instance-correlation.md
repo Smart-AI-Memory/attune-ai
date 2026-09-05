@@ -56,6 +56,25 @@ the paired PRs record the publishing state.
   The completed measurements describe the isolated browser + real stdio path,
   not native Codex or Claude latency. Human completion speed remains unmeasured.
 
+## CI fix by the Claude lead session (2026-09-04 late, chair: "fix 2421")
+
+- `wiring-audit` failed: `docs/probes/latency/README.md` builds but is
+  nav-unreachable. Fixed by allowlisting `docs/probes/` in
+  `.audit/orphans.yml` with a reason (repo-only evidence, not site content);
+  `scripts/audit_docs_wiring.py --format json` returns no findings locally.
+- `changelog-entry` failed: shipped `src/` paths without a CHANGELOG line.
+  Added an `[Unreleased]` "Added" entry describing the user-visible receipt
+  behaviour and the older-wheel fallback.
+- NOT fixed here, and not fixable in this repo: the new tests import
+  `attune_forms.form_events.workspace_latency` / `stage_latency` unguarded,
+  which public attune-forms 0.12.2 does not provide. attune-forms #76 merged
+  2026-09-05T02:23Z but is UNRELEASED (main still `0.12.2`, its
+  `[Unreleased]` section empty). The test lanes stay red until a forms
+  release ships and this PR bumps the floor + `uv.lock`.
+- Written from a detached scratch worktree and pushed by refspec; the Codex
+  worktree at `~/.codex/worktrees/c655/attune-ai` was not touched — pull
+  before committing again there.
+
 ## Next action
 
 Review the paired cross-repository change for shipping. Before release,
