@@ -5,7 +5,6 @@ Licensed under the Apache License, Version 2.0
 """
 
 import logging
-import time
 from datetime import datetime, timezone
 from unittest.mock import Mock, patch
 
@@ -400,17 +399,38 @@ class TestCoordinationSignalsWithMemory:
         assert mock_memory._client.delete.called
 
     def test_wait_for_signal_timeout(self, coordinator, mock_memory):
-        """Test wait_for_signal with timeout."""
+        """Test wait_for_signal with timeout.
+
+        The clock is faked so the timeout logic is exercised deterministically:
+        ``time.sleep`` advances a virtual clock instead of blocking, which
+        removes the wall-clock dependence that flaked on slow Windows runners
+        (CI run 33967508474 measured 1.08s against a ``< 1.0`` bound).
+        """
         mock_memory._client.scan_iter.return_value = []
 
-        # Wait should timeout quickly
-        start = time.time()
-        result = coordinator.wait_for_signal(signal_type="test", timeout=0.5, poll_interval=0.1)
-        duration = time.time() - start
+        clock = {"now": 100.0}
+        sleeps: list[float] = []
 
+        def fake_sleep(seconds: float) -> None:
+            sleeps.append(seconds)
+            clock["now"] += seconds
+
+        with patch("attune.telemetry.agent_coordination.time") as fake_time:
+            fake_time.time.side_effect = lambda: clock["now"]
+            fake_time.sleep.side_effect = fake_sleep
+            # 0.125 is binary-exact, so four sleeps sum to exactly the timeout
+            # (0.1 accumulates to 0.49999..., which would cost a spurious poll).
+            result = coordinator.wait_for_signal(
+                signal_type="test", timeout=0.5, poll_interval=0.125
+            )
+
+        duration = clock["now"] - 100.0
         assert result is None
+        # Waited the full timeout in poll_interval steps ...
         assert duration >= 0.5
-        assert duration < 1.0  # Should not take much longer than timeout
+        assert sleeps == [0.125] * 4
+        # ... and returned as soon as the timeout was reached, not a poll later.
+        assert duration < 0.5 + 0.125
 
     def test_wait_for_signal_receives_signal(self, coordinator, mock_memory):
         """Test wait_for_signal receives signal."""
