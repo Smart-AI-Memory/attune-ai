@@ -1,0 +1,50 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Attune latency comparison</title>
+<style>body{font:16px system-ui;margin:24px;color:#172b4d}button{padding:10px 16px;margin-right:8px}iframe{display:block;width:100%;height:1150px;border:1px solid #ccc;margin-top:16px}pre{white-space:pre-wrap;background:#eef3f8;padding:16px}small{display:block;margin:8px 0}</style>
+<h1>Attune latency comparison</h1><p>Seven synthetic candidates. Decline every candidate in both conditions.</p>
+<button id="baseline">Start baseline</button><button id="batched">Start batched</button>
+<small id="instruction">Baseline: use the single-candidate Decline action. Batched: choose decline for all fields, then confirm Apply rulings.</small>
+<p id="status" role="status">Ready</p><iframe id="surface" title="Roundtable workspace"></iframe><pre id="metrics">No run yet.</pre>
+<script>
+const frame=document.getElementById('surface'), status=document.getElementById('status'), metrics=document.getElementById('metrics');
+let run=null, current=null, pending=null, busy=false;
+const now=()=>performance.timeOrigin+performance.now();
+async function post(path,data){const response=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const result=await response.json();if(!response.ok||result.error)throw new Error(result.error||'Request failed');return result;}
+function save(){metrics.textContent=JSON.stringify(run,null,2);return post('/receipt',run);}
+function display(render,requestAt){
+ current=render;const page=run.pages.length;
+ run.pages.push({page,request_at:requestAt,visible_at:null,submit_at:null,accepted_at:null,revision:render.revision});
+ const bridge=`<script>
+ const page=${page}, runId=${JSON.stringify(run.id)}, parentOrigin=${JSON.stringify(location.origin)};
+ function sendPrompt(text){const match=text.match(/\x60\x60\x60json\\s*([\\s\\S]*?)\\s*\x60\x60\x60/);if(!match)throw new Error('Missing envelope');parent.postMessage({kind:'submit',page,runId,payload:JSON.parse(match[1])},parentOrigin);}
+ new PerformanceObserver(list=>{for(const entry of list.getEntries()){if(entry.name==='first-contentful-paint')parent.postMessage({kind:'visible',page,runId,at:performance.timeOrigin+entry.startTime,visibility:document.visibilityState},parentOrigin);}}).observe({type:'paint',buffered:true});
+ <\/script>`;
+ frame.srcdoc='<!doctype html><html><head><meta charset="utf-8">'+bridge+'</head><body style="margin:16px">'+render.html+'</body></html>';
+ status.textContent=render.terminal?'Completed — waiting for receipt paint':`Running ${run.condition}, page ${page+1}`;
+}
+async function start(condition){
+ if(busy||run&&!current?.terminal)return;busy=true;
+ document.querySelectorAll('body>button').forEach(b=>b.disabled=true);
+ run={id:crypto.randomUUID(),condition,actor:'CUA automation',host:'isolated browser + real MCP stdio',start_at:now(),pages:[],errors:[],terminal_markdown:null};
+ try{const render=await post('/start',{condition});display(render,run.start_at);}catch(error){run.errors.push(error.message);status.textContent='Failed: '+error.message;await save();}finally{busy=false;}
+}
+for(const condition of ['baseline','batched'])document.getElementById(condition).onclick=()=>start(condition);
+window.addEventListener('message',async event=>{
+ if(event.source!==frame.contentWindow||event.origin!==location.origin||!run||event.data.runId!==run.id)return;
+ const message=event.data, page=run.pages[message.page];if(!page)return;
+ if(message.kind==='visible'){
+  if(page.visible_at===null){page.visible_at=message.at;page.visibility=message.visibility;page.request_to_visible_ms=message.at-page.request_at;await save();}
+  if(current.terminal){status.textContent='Completed';document.querySelectorAll('body>button').forEach(b=>b.disabled=false);}
+  return;
+ }
+ if(message.kind!=='submit'||busy||pending||message.page!==run.pages.length-1)return;
+ pending=page;page.submit_at=now();busy=true;
+ try{
+  const render=await post('/submit',message.payload);page.accepted_at=now();
+  page.submit_to_accepted_ms=page.accepted_at-page.submit_at;
+  page.visible_to_submit_ms=page.visible_at===null?null:page.submit_at-page.visible_at;
+  page.action=message.payload.action;
+  if(render.terminal){run.terminal_markdown=render.markdown;run.total_to_accepted_ms=page.accepted_at-run.start_at;run.accepted_submissions=run.pages.filter(p=>p.accepted_at!==null).length;}
+  await save();display(render,page.submit_at);
+ }catch(error){run.errors.push(error.message);status.textContent='Failed: '+error.message;await save();}finally{pending=null;busy=false;}
+});
+</script></html>
