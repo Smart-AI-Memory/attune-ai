@@ -323,6 +323,37 @@ by hand. Precedence, highest first:
    folded into the text — that form wanted a card.
 5. **Otherwise** → widget.
 
+### Scoped preferences (adaptive-session-interactions, ASI-2)
+
+Two preference scopes sit ABOVE the router's precedence, and both change
+presentation only — never validation, never action authority:
+
+- **One-interaction override** — the user's words for this ask ("just
+  tell me in text", "show me the widget this once"). Honor it for this
+  interaction only; it does not rewrite anything stored.
+- **Session-wide preference** — "just talk to me" / "stop with the
+  forms". Store it with the attune-ai MCP context tools: `context_set`
+  key `interaction_preference`, value `conversation`; read it back with
+  `context_get` before rendering. It lives for the MCP server process
+  and survives phase changes until the user changes it. `conversation`
+  means: render the form on the text lane and transcribe the answer.
+  Keyboard mode is NOT this preference — it is a project-scoped,
+  file-persisted opt-out that still asks, via a flatter control.
+
+Precedence: explicit override for this interaction → explicit session
+preference → the router's default. A missing preference is not an
+opt-out and not consent.
+
+**The text lane keeps every field.** For a multi-field form on a text
+lane, use the attune-forms markdown surface rather than prose:
+`form_to_markdown(form)` renders every field into one skeleton,
+`markdown_to_answers` parses the typed reply deterministically (a stray
+line is a named problem, never a guess), and `problems_to_markdown`
+re-asks only the failing fields. A field a lane cannot represent is
+disclosed and asked, never dropped. (No MCP tool exposes this surface yet
+and the router's range is `widget` / `ask` only — on hosts with
+`AskUserQuestion`, steps 2–4 below are the text lane.)
+
 **Latency is not a reason to downgrade a form.** The extra tool call is
 a real cost but it is not the axis; if a form is worth asking, it is
 worth asking legibly. `needs_widget` still exists as the low-level

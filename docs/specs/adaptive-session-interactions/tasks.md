@@ -1,10 +1,12 @@
 # Adaptive session interactions — Tasks
 
-**Status:** parked (2026-09-05) — five proposed tasks preserved for later
-execution; 0 started, 0 completed, no execution go, no auto-run authority.
+**Status:** active (2026-09-05) — resumed by the chair the same day
+(decisions D6): T1 accepted, T2 in progress under its own go; T3–T5 not
+started, no go beyond T2, no auto-run authority.
 
-Resume-Trigger: Patrick explicitly resumes this feature for execution after
-coordination with Claude's active repository work and review of the task scope.
+Resume-Trigger (historical, fired 2026-09-05): Patrick explicitly resumed
+this feature for execution after coordination with Claude's active
+repository work and review of the task scope.
 
 [Requirements](requirements.md) are approved. The [design](design.md) and
 this implementation ladder are proposals. Saving or committing them is not
@@ -87,3 +89,5 @@ empty list. No runtime or API invocation is needed to load this plan.
   <validation><check>Verify selected source/projection consistency, actual-host receipts, outstanding risks, and explicit scope. Keep unruled requirements and host paths excluded from completion claims.</check></validation>
 </task>
 ```
+
+<!-- spec-state: {"schema_version": 1, "completed": ["1"], "current": "2", "auto_run": false, "last_updated": "2026-09-05T19:37:12.963870+00:00"} -->

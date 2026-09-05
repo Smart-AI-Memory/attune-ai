@@ -50,10 +50,23 @@ implicitly authorize another roundtable round or provider spend.
 
 ## Remaining execution choices
 
-1. Select the exact existing consumer and host using T1 evidence; a Spec
-   review choice is preferred only if it satisfies ASI-5's conditions.
-2. Identify existing storage for one-interaction and session preferences;
-   keyboard mode is not assumed to provide those semantics.
+1. ~~Select the exact existing consumer and host using T1 evidence.~~
+   RESOLVED by T1 (accepted, D6): the `spec` adapter's review-stage choice
+   on the Claude desktop app (Code tab) with the attune-ai plugin MCP
+   server. See [t1-inventory](t1-inventory.md).
+2. ~~Identify existing storage for one-interaction and session preferences.~~
+   RESOLVED by T2 (proposal, per ASI-2's "propose its minimal owner and
+   lifetime before implementation"): the **session-wide** preference lives
+   in the attune-ai MCP server's session context (`context_set` /
+   `context_get`, key `interaction_preference`, values `conversation` |
+   `default`). Owner: `src/attune/mcp/server.py` `_context`. Lifetime: the
+   MCP server process — it dies with the host session and is never written
+   to disk, which is the correct lifetime for "just talk to me". The
+   **one-interaction override** has no store: it is the user's words for
+   that interaction, honored once. Keyboard mode stays what it is — a
+   project-scoped, file-persisted opt-out for forms. No new code: both
+   tools exist and are exposed by the plugin today; T2 adds the guidance
+   that uses them and pins it with drift guards.
 3. Establish a valid baseline and preregister the comparison before trials.
    Record missing visibility timing without converting it into a result.
 4. Review the concrete file scope and task before any implementation go.
