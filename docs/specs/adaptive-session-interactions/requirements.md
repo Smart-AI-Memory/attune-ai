@@ -18,9 +18,11 @@ preserve the approved text. ASI-5's phrase “not a ratified sequencing
 decision” describes its pre-approval provenance; subsequent approval of
 board item 16 ratified that requirement. The exact consumer remains
 conditional on T1. Patrick later authorized repository preservation and a
-spec commit only; ASI-7's freeze clause continues to prohibit implementation
+spec commit only; ASI-7's freeze clause continued to prohibit implementation
 and interference with Claude's work. This status correction adds no feature
-scope or execution authorization.
+scope or execution authorization. Later the same day the chair lifted the
+freeze for this feature entirely (decisions D5); per-task gos are the only
+remaining gate, and none has been granted beyond T1.
 
 ## Interaction mapping
 
@@ -58,7 +60,8 @@ Allow a one-interaction override and a session-wide preference such as “just t
 - Preference precedence is an explicit override for this interaction, then an explicit session preference, then the supported default. Missing preference means no inferred opt-out or consent. Capability constrains presentation without discarding meaning.
 - T1 names the actual state facility for both scopes; keyboard mode is not assumed equivalent to a session-wide conversational preference. If no existing facility fits, propose its minimal owner and lifetime before implementation.
 - Canonical answers already received are preserved. Unsubmitted client input is promised only when the host exposes a verified recovery mechanism; otherwise disclose that limit and ask only for required missing data.
-(table: contested — moderator refinement; one compiler-clean seat, no full-roster consensus; chair: approved)
+- *(Amendment, chair-ruled 2026-09-05 — decisions D5.)* The text fallback for a multi-field **form** is the existing attune-forms markdown surface: `form_to_markdown` renders every field into one skeleton, `markdown_to_answers` parses the typed reply deterministically (never guesses; every stray line is a named problem), and `problems_to_markdown` re-asks only the failing fields. The text fallback for a **workspace** choice is the Markdown returned by `command_workspace_open`, whose bound payload skeleton the agent completes from the user's words and submits through the canonical collector. Known limit, recorded not fixed: no MCP tool exposes the form markdown surface and the surface router's range is `widget` / `ask` only — moot on hosts with `AskUserQuestion`, live on text-only hosts.
+(table: contested — moderator refinement; one compiler-clean seat, no full-roster consensus; chair: approved; amended 2026-09-05)
 
 **ASI-3 — Scope readiness evidence to host, runtime, and interaction**
 Use the existing host capability/conformance design to distinguish advertised support, a verified round trip, and usefulness as an automatic default. Receipt provenance names the host, relevant runtime/package versions, interaction, actual surface, and result. Unknown support uses a supported equivalent presentation; a runtime change makes affected evidence due for rechecking, not automatically failed.
@@ -113,6 +116,7 @@ Reconcile the draft against current code and in-flight work before implementatio
 - A skill change edits its master and reprojects the mirror. A sibling-package behavior change updates dependency floors and owned mirrors through their existing mechanisms.
 - Roundtable refinements carry requirement IDs, evidence citations, dissent, and per-item chair dispositions. Unruled or declined proposals are not implemented.
 - Repo promotion and implementation remain paused while the no-repo-change instruction remains active.
+- *(Amendment, chair-ruled 2026-09-05 — decisions D5.)* The no-repo-change instruction is lifted entirely for this feature. Per-task gos are the only remaining gate; a go on one task is still not a go on the next.
 - If current code invalidates a load-bearing premise, revise the local proposal and return the changed requirement to the chair before implementation. Do not automatically spend another roundtable round for ordinary reconciliation.
 - Source-level surface agreement is not evidence of host visibility or user benefit. The inspected selector computes _route(form, widget_capable, keyboard_mode) before logging chosen; passing chosen does not bias its recommendation, so no repair of that alleged confound is justified.
 (table: contested — moderator refinement; one compiler-clean seat, no full-roster consensus; chair: approved)
@@ -132,5 +136,6 @@ Only Antigravity's critique (#6) passed the compiler. This is not full-roster co
 - Antigravity recommends prohibiting new server-side routing altogether. Moderator: start with guidance, but retain a narrowly evidenced binding check if guidance cannot honor explicit preference; an absolute prohibition would prejudge T1. Strongest counter-case: such a check can become the duplicate selector this spec is intended to avoid.
 - Antigravity would allow submission/validation/acceptance to establish readiness while visibility remains wholly unobserved. Moderator: that proves the accepted path but not an unseen rich control. Permit human attestation of usability, keep exact paint timing optional, and keep host/surface attribution explicit.
 - Antigravity recommends sequential collection for every multi-field text fallback. Moderator: retain existing batching for independent unknowns; sequence only dependent questions or host-imposed limits. Blanket sequencing would recreate the extra-turn problem.
+- Antigravity's proposed **ASI-8 (sequential text fallback)** — board message 10 — is **DECLINED** (chair, 2026-09-05, decisions D5). Reason: the need it names is real, but the mechanism already exists and is stronger than the proposal — the attune-forms markdown surface batches all fields into one skeleton and re-asks only failures (now named in ASI-2's amendment). Its premise that the text-fallback parser is undefined was false at review time (attune-forms 0.5.0 shipped it); neither the seat nor the moderator cited it.
 - Antigravity asserts fine-grained rendering measurement requires paid services or client modification. The supplied evidence does not establish that. Existing stage telemetry is present, though its timing excludes paint and includes dwell. The spec retains descriptive measurements and makes no visibility-timing claim.
 - Claude's and Codex's raw replies are retained separately as compiler-rejected material. They are not promoted, counted as votes, or represented as agreement. A substantive Claude claim about chosen biasing the router was independently checked and rejected against the implementation.
