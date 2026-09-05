@@ -11,8 +11,10 @@ from __future__ import annotations
 import asyncio
 import copy
 import hmac
+import logging
 import re
 import secrets
+import time
 import uuid
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -26,6 +28,14 @@ from attune_forms import (
     workspace_to_markdown,
     workspace_to_widget_html,
 )
+
+try:
+    from attune_forms.form_events import log_workspace_stage
+except ImportError:
+    log_workspace_stage = None  # Older public forms wheels still render and collect.
+    logging.getLogger(__name__).warning(
+        "Workspace timing unavailable: installed attune-forms lacks workspace stage telemetry"
+    )
 
 _ADAPTER_ID_RE = re.compile(r"^[a-z][a-z0-9_-]{0,63}$")
 _HASH_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -346,6 +356,15 @@ class CommandWorkspaceHost:
                 event_sequence=current.event_sequence,
             )
             self._records[workspace_id] = successor
+            if log_workspace_stage is not None:
+                log_workspace_stage(
+                    "accepted",
+                    workspace_id=current.workspace_id,
+                    revision=current.revision,
+                    instance_id=payload.get("instance_id", ""),
+                    adapter_id=current.adapter_id,
+                    action=response.action,
+                )
             render = self._render(successor)
             return CommandWorkspaceActionResult(
                 response.action,
@@ -459,8 +478,27 @@ class CommandWorkspaceHost:
     @staticmethod
     def _render(record: CommandWorkspaceRecord) -> CommandWorkspaceRender:
         binding = record.binding if record.action_nonce else None
+        instance_id = uuid.uuid4().hex
+        start = time.perf_counter()
+        if log_workspace_stage is None:
+            html = workspace_to_widget_html(record.view, binding=binding)
+        else:
+            html = workspace_to_widget_html(
+                record.view,
+                binding=binding,
+                telemetry_instance_id=instance_id,
+            )
+        if binding is not None and log_workspace_stage is not None:
+            log_workspace_stage(
+                "rendered",
+                workspace_id=record.workspace_id,
+                revision=record.revision,
+                instance_id=instance_id,
+                adapter_id=record.adapter_id,
+                duration_ms=(time.perf_counter() - start) * 1000,
+            )
         return CommandWorkspaceRender(
             record=record,
-            html=workspace_to_widget_html(record.view, binding=binding),
+            html=html,
             markdown=workspace_to_markdown(record.view, binding=binding),
         )

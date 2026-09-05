@@ -474,6 +474,7 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
                     # at the validation step (the underlying
                     # collect_form_response already validates every control).
                     "form": rich_form_schema,
+                    "instance_id": {"type": "string", "pattern": "^(?:[a-f0-9]{32})?$"},
                     "answers": {
                         "type": "object",
                         "description": "{field_id: value} the user selected/typed",

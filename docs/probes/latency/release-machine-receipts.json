@@ -1,0 +1,881 @@
+{
+  "package": "attune-forms",
+  "version": "0.12.3",
+  "forms_merge_sha": "961e39c756fc069a3cbe8a8fe3e330ea8ee389e6",
+  "forms_release_pr": "https://github.com/Smart-AI-Memory/attune-forms/pull/77",
+  "ai_prerequisite_pr": "https://github.com/Smart-AI-Memory/attune-ai/pull/2422",
+  "ai_integration_pr": "https://github.com/Smart-AI-Memory/attune-ai/pull/2421",
+  "verification": {
+    "forms_tests_passed": 994,
+    "packaged_python_data_files_equal_source": 19,
+    "old_wheel_changed_area_tests_passed": 45,
+    "candidate_wheel_changed_area_tests_passed": 45,
+    "candidate_wheel_consumers_passed": 1988,
+    "candidate_wheel_consumers_skipped": 36,
+    "forms_merge_ci": "success",
+    "full_downstream_unit_run": {
+      "passed": 21789,
+      "failed": 1,
+      "skipped": 119,
+      "xfailed": 4,
+      "seconds": 694.04,
+      "failure": "The fixed-DOM widget assertion was loaded before its correction; runtime source unchanged.",
+      "corrected_failed_case_rerun": {
+        "passed": 1,
+        "skipped": 1,
+        "deselected": 21911
+      }
+    },
+    "ai_prerequisite_ci": "all settled green, including Windows and coverage",
+    "ai_prerequisite_merge_tree_equals_tested_head": true,
+    "ci_wheel_python_data_files_equal_release_source": 19,
+    "public_artifact_hashes_equal_ci": true,
+    "public_wheel_real_stdio_and_acceptance_tests_passed": 4
+  },
+  "publication": "verified wheel and sdist on PyPI; downloaded bytes equal CI artifacts",
+  "measurement_scope": "Existing browser receipts remain unchanged. No native-host elapsed-time claim.",
+  "ai_prerequisite_merge_sha": "f51a2dd6491b5517346a07aec9978eef559fb7dd",
+  "tag": "v0.12.3",
+  "publish_run": "https://github.com/Smart-AI-Memory/attune-forms/actions/runs/33941150280",
+  "ci_artifacts": [
+    {
+      "file": "attune_forms-0.12.3-py3-none-any.whl",
+      "sha256": "8156d8d2854f6d8d62ae3a093f495b8dbde703c1b5c01d105d13496d258d1e7a"
+    },
+    {
+      "file": "attune_forms-0.12.3.tar.gz",
+      "sha256": "13c8345cf6ebe627323c8ba4cea3b9f1959e36fbca99b3de5999752e5576e610"
+    }
+  ],
+  "public_artifacts": [
+    {
+      "file": "attune_forms-0.12.3-py3-none-any.whl",
+      "sha256": "8156d8d2854f6d8d62ae3a093f495b8dbde703c1b5c01d105d13496d258d1e7a"
+    },
+    {
+      "file": "attune_forms-0.12.3.tar.gz",
+      "sha256": "13c8345cf6ebe627323c8ba4cea3b9f1959e36fbca99b3de5999752e5576e610"
+    }
+  ],
+  "candidate_artifacts": [
+    {
+      "file": "attune_forms-0.12.3-py3-none-any.whl",
+      "sha256": "8535b52350e23879c5eec7452b39bf0bbabc1764e7a93dee56679c6b95066c7a"
+    },
+    {
+      "file": "attune_forms-0.12.3.tar.gz",
+      "sha256": "fa6466fb45d0412beb621474433b4d3b5921fbd045fdd39c82208504bf9a60c2"
+    }
+  ],
+  "machine_update": {
+    "observed_at": "2026-09-05T03:26:41.360373+00:00",
+    "initial_fresh_stdio_run": {
+      "observed_at": "2026-09-05T03:24:39.246553+00:00",
+      "probes": [
+        {
+          "surface": "codex-forms",
+          "command": "uvx",
+          "args": [
+            "--from",
+            "attune-forms[mcp]==0.12.3",
+            "attune-forms-mcp"
+          ],
+          "home": "/private/tmp/forms-machine-smoke-sldu7kkg/codex-forms",
+          "receipt_scope": "fresh real MCP stdio; synthetic responses; no UI visibility measurement",
+          "server": {
+            "name": "attune-forms",
+            "title": null,
+            "version": "1.29.1",
+            "websiteUrl": null,
+            "icons": null
+          },
+          "collector_instance_parameter": true,
+          "distinct_instance_tokens": [
+            "ccc10ffdabdd44f7a07623a391ebf7db",
+            "09aaff1ceec947f597fe05fe113a887b"
+          ],
+          "response_ids": [
+            "resp-20260904-232433-479d475a",
+            "resp-20260904-232433-6408eea4"
+          ],
+          "joined": 2,
+          "status": "passed"
+        },
+        {
+          "surface": "claude-forms",
+          "command": "uvx",
+          "args": [
+            "--from",
+            "attune-forms[mcp]",
+            "attune-forms-mcp"
+          ],
+          "home": "/private/tmp/forms-machine-smoke-sldu7kkg/claude-forms",
+          "receipt_scope": "fresh real MCP stdio; synthetic responses; no UI visibility measurement",
+          "server": {
+            "name": "attune-forms",
+            "title": null,
+            "version": "1.29.1",
+            "websiteUrl": null,
+            "icons": null
+          },
+          "collector_instance_parameter": true,
+          "distinct_instance_tokens": [
+            "a70ce683d9f848a49be35b3525a5a751",
+            "584c3e2e0dab43a382defd0fb1f17ca9"
+          ],
+          "response_ids": [
+            "resp-20260904-232433-4d673065",
+            "resp-20260904-232433-00d90f1c"
+          ],
+          "joined": 2,
+          "status": "passed"
+        },
+        {
+          "surface": "plugin-ai",
+          "command": "uvx",
+          "args": [
+            "--from",
+            "attune-ai",
+            "python",
+            "-m",
+            "attune.mcp.server"
+          ],
+          "home": "/private/tmp/forms-machine-smoke-sldu7kkg/plugin-ai",
+          "receipt_scope": "fresh real MCP stdio; synthetic responses; no UI visibility measurement",
+          "server": {
+            "name": "attune-ai",
+            "title": null,
+            "version": "1.29.1",
+            "websiteUrl": null,
+            "icons": null
+          },
+          "collector_instance_parameter": false,
+          "distinct_instance_tokens": [
+            "6623bba1c4d54b5aa33cad3d6dfbd62c",
+            "e5a8d4f5fa3f4d56baa02b578af86f5f"
+          ],
+          "response_ids": [
+            "resp-20260904-232437-9fca0351",
+            "resp-20260904-232437-e0364bbf"
+          ],
+          "joined": 0,
+          "status": "passed"
+        },
+        {
+          "surface": "legacy-plugin-ai-redis",
+          "command": "uvx",
+          "args": [
+            "--from",
+            "attune-ai[redis]",
+            "python",
+            "-m",
+            "attune.mcp.server"
+          ],
+          "home": "/private/tmp/forms-machine-smoke-sldu7kkg/legacy-plugin-ai-redis",
+          "receipt_scope": "fresh real MCP stdio; synthetic responses; no UI visibility measurement",
+          "server": {
+            "name": "attune-ai",
+            "title": null,
+            "version": "1.29.1",
+            "websiteUrl": null,
+            "icons": null
+          },
+          "collector_instance_parameter": false,
+          "distinct_instance_tokens": [
+            "5ac9b5bf2cbf4deda3482f2bd5db2998",
+            "48cc1c469b8d4ae1936f547238e38aac"
+          ],
+          "response_ids": [
+            "resp-20260904-232438-0d047f7e",
+            "resp-20260904-232438-a2d21677"
+          ],
+          "joined": 0,
+          "status": "passed"
+        },
+        {
+          "surface": "global-ai-preview",
+          "command": "/Users/patrickroebuck/.pyenv/versions/3.10.11/bin/python",
+          "args": [
+            "-m",
+            "attune.mcp.server"
+          ],
+          "home": "/private/tmp/forms-machine-smoke-sldu7kkg/global-ai-preview",
+          "receipt_scope": "fresh real MCP stdio; synthetic responses; no UI visibility measurement",
+          "server": {
+            "name": "attune-ai",
+            "title": null,
+            "version": "1.24.0",
+            "websiteUrl": null,
+            "icons": null
+          },
+          "collector_instance_parameter": false,
+          "distinct_instance_tokens": [
+            "f362b8a5587c40b39f1891c8bb65450a",
+            "b3d8da3cdebb41d9b90fe0d367428493"
+          ],
+          "response_ids": [
+            "resp-20260904-232439-f09a273b",
+            "resp-20260904-232439-bb26d7a0"
+          ],
+          "joined": 0,
+          "status": "passed"
+        },
+        {
+          "surface": "main-ai-venv",
+          "status": "failed",
+          "error": "ExceptionGroup('unhandled errors in a TaskGroup', [ExceptionGroup('unhandled errors in a TaskGroup', [McpError('Connection closed')])])"
+        }
+      ]
+    },
+    "main_venv_correct_working_directory_rerun": {
+      "observed_at": "2026-09-05T03:25:31.376251+00:00",
+      "probes": [
+        {
+          "surface": "main-ai-venv",
+          "command": "/Users/patrickroebuck/attune-ai/.venv/bin/python",
+          "args": [
+            "-m",
+            "attune.mcp.server"
+          ],
+          "home": "/private/tmp/forms-machine-smoke-h_t40piu/main-ai-venv",
+          "receipt_scope": "fresh real MCP stdio; synthetic responses; no UI visibility measurement",
+          "server": {
+            "name": "attune-ai",
+            "title": null,
+            "version": "1.28.1",
+            "websiteUrl": null,
+            "icons": null
+          },
+          "collector_instance_parameter": false,
+          "distinct_instance_tokens": [
+            "bd5a925ccf5d44ee9d54c4f4ad0b41af",
+            "9ffce4fc7f574954bddbfea75f5d0316"
+          ],
+          "response_ids": [
+            "resp-20260904-232531-0fd614e3",
+            "resp-20260904-232531-7173ab2e"
+          ],
+          "joined": 0,
+          "status": "passed"
+        }
+      ]
+    },
+    "installed_environments": [
+      {
+        "python": "/Users/patrickroebuck/.pyenv/versions/3.10.11/bin/python",
+        "forms": "0.12.3",
+        "module": "/Users/patrickroebuck/.pyenv/versions/3.10.11/lib/python3.10/site-packages/attune_forms/__init__.py"
+      },
+      {
+        "python": "/Users/patrickroebuck/attune-ai/.venv/bin/python",
+        "forms": "0.12.3",
+        "module": "/Users/patrickroebuck/attune-ai/.venv/lib/python3.10/site-packages/attune_forms/__init__.py"
+      },
+      {
+        "python": "/Users/patrickroebuck/IndianRailroadTicketing/.venv/bin/python",
+        "forms": "0.12.3",
+        "module": "/Users/patrickroebuck/IndianRailroadTicketing/.venv/lib/python3.10/site-packages/attune_forms/__init__.py"
+      },
+      {
+        "python": "/Users/patrickroebuck/metalens/.venv/bin/python",
+        "forms": "0.12.3",
+        "module": "/Users/patrickroebuck/metalens/.venv/lib/python3.11/site-packages/attune_forms/__init__.py"
+      }
+    ],
+    "plugins": {
+      "claude_forms": "0.12.3",
+      "claude_ai": "16.2.1",
+      "codex_ai": "16.2.1",
+      "codex_standalone_forms_pin": "attune-forms[mcp]==0.12.3"
+    },
+    "activation": "Existing long-lived hosts were not restarted. Fresh launch probes passed. Restart or reload each existing Claude/Codex session to activate.",
+    "excluded_development_state": [
+      "Main AI checkout has untracked work and an old Forms lock; uv run may resync to 0.12.2 until the integration is merged and the checkout updated.",
+      "Forms repository uses an editable development install against its own old branch; source and editable state preserved.",
+      "Other agents worktree environments, historical uv cache archives and original browser measurement site preserved."
+    ],
+    "native_host_latency": "not measured",
+    "telemetry_events": [
+      {
+        "surface": "codex-forms",
+        "events": [
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:33.299549Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:33.300511Z",
+            "event": "form_surface",
+            "surface": "ask",
+            "reason": "trivial_form",
+            "form_id": "61b035bf1ce9",
+            "question_count": 1,
+            "chosen": "widget",
+            "agreed": false,
+            "inferred_fields": 0,
+            "fully_inferred": false
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:33.300740Z",
+            "event": "form_rendered",
+            "form_id": "61b035bf1ce9",
+            "duration_ms": 0.092,
+            "html_bytes": 15822,
+            "instance_id": "ccc10ffdabdd44f7a07623a391ebf7db"
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:33.307643Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:33.307879Z",
+            "event": "form_surface",
+            "surface": "ask",
+            "reason": "trivial_form",
+            "form_id": "61b035bf1ce9",
+            "question_count": 1,
+            "chosen": "widget",
+            "agreed": false,
+            "inferred_fields": 0,
+            "fully_inferred": false
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:33.308030Z",
+            "event": "form_rendered",
+            "form_id": "61b035bf1ce9",
+            "duration_ms": 0.067,
+            "html_bytes": 15822,
+            "instance_id": "09aaff1ceec947f597fe05fe113a887b"
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:33.314443Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:33.314570Z",
+            "event": "form_submitted",
+            "instance_id": "09aaff1ceec947f597fe05fe113a887b",
+            "form_id": "61b035bf1ce9"
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:33.320713Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:33.320813Z",
+            "event": "form_submitted",
+            "instance_id": "ccc10ffdabdd44f7a07623a391ebf7db",
+            "form_id": "61b035bf1ce9"
+          }
+        ],
+        "source_sha256": "f3bf927bac9da12af60307f2410d9241e28329df3a32ba6fa747477cd9868caa"
+      },
+      {
+        "surface": "claude-forms",
+        "events": [
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:33.888201Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:33.888928Z",
+            "event": "form_surface",
+            "surface": "ask",
+            "reason": "trivial_form",
+            "form_id": "61b035bf1ce9",
+            "question_count": 1,
+            "chosen": "widget",
+            "agreed": false,
+            "inferred_fields": 0,
+            "fully_inferred": false
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:33.889233Z",
+            "event": "form_rendered",
+            "form_id": "61b035bf1ce9",
+            "duration_ms": 0.089,
+            "html_bytes": 15822,
+            "instance_id": "a70ce683d9f848a49be35b3525a5a751"
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:33.895552Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:33.895798Z",
+            "event": "form_surface",
+            "surface": "ask",
+            "reason": "trivial_form",
+            "form_id": "61b035bf1ce9",
+            "question_count": 1,
+            "chosen": "widget",
+            "agreed": false,
+            "inferred_fields": 0,
+            "fully_inferred": false
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:33.895950Z",
+            "event": "form_rendered",
+            "form_id": "61b035bf1ce9",
+            "duration_ms": 0.063,
+            "html_bytes": 15822,
+            "instance_id": "584c3e2e0dab43a382defd0fb1f17ca9"
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:33.902511Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:33.902626Z",
+            "event": "form_submitted",
+            "instance_id": "584c3e2e0dab43a382defd0fb1f17ca9",
+            "form_id": "61b035bf1ce9"
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:33.908802Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:33.908928Z",
+            "event": "form_submitted",
+            "instance_id": "a70ce683d9f848a49be35b3525a5a751",
+            "form_id": "61b035bf1ce9"
+          }
+        ],
+        "source_sha256": "b5bb261eab10d7d4b9f329e4de4e714dffba4ff33c31937140a665ab882d20cb"
+      },
+      {
+        "surface": "plugin-ai",
+        "events": [
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:37.187284Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:37.187638Z",
+            "event": "form_surface",
+            "surface": "ask",
+            "reason": "trivial_form",
+            "form_id": "61b035bf1ce9",
+            "question_count": 1,
+            "chosen": "widget",
+            "agreed": false,
+            "inferred_fields": 0,
+            "fully_inferred": false
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:37.187799Z",
+            "event": "form_rendered",
+            "form_id": "61b035bf1ce9",
+            "duration_ms": 0.076,
+            "html_bytes": 15822,
+            "instance_id": "6623bba1c4d54b5aa33cad3d6dfbd62c"
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:37.464816Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:37.465102Z",
+            "event": "form_surface",
+            "surface": "ask",
+            "reason": "trivial_form",
+            "form_id": "61b035bf1ce9",
+            "question_count": 1,
+            "chosen": "widget",
+            "agreed": false,
+            "inferred_fields": 0,
+            "fully_inferred": false
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:37.465300Z",
+            "event": "form_rendered",
+            "form_id": "61b035bf1ce9",
+            "duration_ms": 0.086,
+            "html_bytes": 15822,
+            "instance_id": "e5a8d4f5fa3f4d56baa02b578af86f5f"
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:37.471406Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:37.471554Z",
+            "event": "form_submitted",
+            "form_id": "61b035bf1ce9"
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:37.477988Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:37.478142Z",
+            "event": "form_submitted",
+            "form_id": "61b035bf1ce9"
+          }
+        ],
+        "source_sha256": "651876554d78af330fd974a11db689ea0e09cc25ed29ef0b1df0138491650658"
+      },
+      {
+        "surface": "legacy-plugin-ai-redis",
+        "events": [
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:38.226919Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:38.227638Z",
+            "event": "form_surface",
+            "surface": "ask",
+            "reason": "trivial_form",
+            "form_id": "61b035bf1ce9",
+            "question_count": 1,
+            "chosen": "widget",
+            "agreed": false,
+            "inferred_fields": 0,
+            "fully_inferred": false
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:38.227916Z",
+            "event": "form_rendered",
+            "form_id": "61b035bf1ce9",
+            "duration_ms": 0.085,
+            "html_bytes": 15822,
+            "instance_id": "5ac9b5bf2cbf4deda3482f2bd5db2998"
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:38.265641Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:38.265983Z",
+            "event": "form_surface",
+            "surface": "ask",
+            "reason": "trivial_form",
+            "form_id": "61b035bf1ce9",
+            "question_count": 1,
+            "chosen": "widget",
+            "agreed": false,
+            "inferred_fields": 0,
+            "fully_inferred": false
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:38.266156Z",
+            "event": "form_rendered",
+            "form_id": "61b035bf1ce9",
+            "duration_ms": 0.066,
+            "html_bytes": 15822,
+            "instance_id": "48cc1c469b8d4ae1936f547238e38aac"
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:38.272552Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:38.272789Z",
+            "event": "form_submitted",
+            "form_id": "61b035bf1ce9"
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:38.279566Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:38.279789Z",
+            "event": "form_submitted",
+            "form_id": "61b035bf1ce9"
+          }
+        ],
+        "source_sha256": "127e0a39ea1b59db3435fd37c1cd0d2b9460f84eaa5e7bb0f166312501745b1a"
+      },
+      {
+        "surface": "global-ai-preview",
+        "events": [
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:39.095719Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:39.096184Z",
+            "event": "form_surface",
+            "surface": "ask",
+            "reason": "trivial_form",
+            "form_id": "61b035bf1ce9",
+            "question_count": 1,
+            "chosen": "widget",
+            "agreed": false,
+            "inferred_fields": 0,
+            "fully_inferred": false
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:39.096354Z",
+            "event": "form_rendered",
+            "form_id": "61b035bf1ce9",
+            "duration_ms": 0.071,
+            "html_bytes": 15822,
+            "instance_id": "f362b8a5587c40b39f1891c8bb65450a"
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:39.131694Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:39.131920Z",
+            "event": "form_surface",
+            "surface": "ask",
+            "reason": "trivial_form",
+            "form_id": "61b035bf1ce9",
+            "question_count": 1,
+            "chosen": "widget",
+            "agreed": false,
+            "inferred_fields": 0,
+            "fully_inferred": false
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:39.132062Z",
+            "event": "form_rendered",
+            "form_id": "61b035bf1ce9",
+            "duration_ms": 0.056,
+            "html_bytes": 15822,
+            "instance_id": "b3d8da3cdebb41d9b90fe0d367428493"
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:39.141796Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:39.141930Z",
+            "event": "form_submitted",
+            "form_id": "61b035bf1ce9"
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:39.151711Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:24:39.151826Z",
+            "event": "form_submitted",
+            "form_id": "61b035bf1ce9"
+          }
+        ],
+        "source_sha256": "49db2e8679fbe1b20ea8e77e00f2467af4de114484a7f62a735cd987707b3e11"
+      },
+      {
+        "surface": "main-ai-venv",
+        "events": [
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:25:31.010880Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:25:31.011458Z",
+            "event": "form_surface",
+            "surface": "ask",
+            "reason": "trivial_form",
+            "form_id": "61b035bf1ce9",
+            "question_count": 1,
+            "chosen": "widget",
+            "agreed": false,
+            "inferred_fields": 0,
+            "fully_inferred": false
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:25:31.011629Z",
+            "event": "form_rendered",
+            "form_id": "61b035bf1ce9",
+            "duration_ms": 0.074,
+            "html_bytes": 15822,
+            "instance_id": "bd5a925ccf5d44ee9d54c4f4ad0b41af"
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:25:31.136052Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:25:31.136353Z",
+            "event": "form_surface",
+            "surface": "ask",
+            "reason": "trivial_form",
+            "form_id": "61b035bf1ce9",
+            "question_count": 1,
+            "chosen": "widget",
+            "agreed": false,
+            "inferred_fields": 0,
+            "fully_inferred": false
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:25:31.136545Z",
+            "event": "form_rendered",
+            "form_id": "61b035bf1ce9",
+            "duration_ms": 0.081,
+            "html_bytes": 15822,
+            "instance_id": "9ffce4fc7f574954bddbfea75f5d0316"
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:25:31.186624Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:25:31.186855Z",
+            "event": "form_submitted",
+            "form_id": "61b035bf1ce9"
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:25:31.254527Z",
+            "event": "form_build",
+            "form_id": "61b035bf1ce9",
+            "source": "dict",
+            "question_count": 1
+          },
+          {
+            "v": "1.0",
+            "ts": "2026-09-05T03:25:31.254752Z",
+            "event": "form_submitted",
+            "form_id": "61b035bf1ce9"
+          }
+        ],
+        "source_sha256": "4648ca4cb92631448509532d3008c49b26af8fdf96a3ab2f824bc32c9b4d848d"
+      }
+    ],
+    "initial_main_venv_failure_stderr": {
+      "source": "/private/tmp/forms-machine-smoke-sldu7kkg/main-ai-venv/server-stderr.log",
+      "text": "/Users/patrickroebuck/attune-ai/.venv/bin/python: Error while finding module specification for 'attune.mcp.server' (ImportError: cannot import name '__version__' from 'attune' (unknown location))\n"
+    }
+  },
+  "ai_integration_review": {
+    "head": "3a341741c7b1903461100373abbac78339276d0f",
+    "owner": "Existing Claude Fable 5.1 session",
+    "floor_and_lock": "0.12.3",
+    "artifact_hashes_equal_public": true,
+    "ci_at_review": "all completed applicable jobs green, remaining required jobs running",
+    "review": "gpt-5.6-sol read-only review; no blocker; central commit API diff and public hashes independently checked"
+  }
+}

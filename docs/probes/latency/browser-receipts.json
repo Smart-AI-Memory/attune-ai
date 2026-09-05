@@ -1,0 +1,401 @@
+{
+  "order": [
+    "baseline",
+    "batched",
+    "batched",
+    "baseline"
+  ],
+  "runs": [
+    {
+      "id": "edec017a-2520-4a8e-8dd6-88f308272d82",
+      "condition": "baseline",
+      "actor": "CUA automation",
+      "host": "isolated browser + real MCP stdio",
+      "start_at": 1788574354168.7,
+      "pages": [
+        {
+          "page": 0,
+          "request_at": 1788574354168.7,
+          "visible_at": 1788574354451.1,
+          "submit_at": 1788574387347.5,
+          "accepted_at": 1788574387358.5,
+          "revision": 4,
+          "visibility": "visible",
+          "request_to_visible_ms": 282.400146484375,
+          "submit_to_accepted_ms": 11,
+          "visible_to_submit_ms": 32896.39990234375,
+          "action": "decline"
+        },
+        {
+          "page": 1,
+          "request_at": 1788574387347.5,
+          "visible_at": 1788574387403.9,
+          "submit_at": 1788574405963.9,
+          "accepted_at": 1788574405984.4,
+          "revision": 5,
+          "visibility": "visible",
+          "request_to_visible_ms": 56.39990234375,
+          "submit_to_accepted_ms": 20.5,
+          "visible_to_submit_ms": 18560,
+          "action": "decline"
+        },
+        {
+          "page": 2,
+          "request_at": 1788574405963.9,
+          "visible_at": 1788574406021.8,
+          "submit_at": 1788574409047,
+          "accepted_at": 1788574409056.2,
+          "revision": 6,
+          "visibility": "visible",
+          "request_to_visible_ms": 57.900146484375,
+          "submit_to_accepted_ms": 9.199951171875,
+          "visible_to_submit_ms": 3025.199951171875,
+          "action": "decline"
+        },
+        {
+          "page": 3,
+          "request_at": 1788574409047,
+          "visible_at": 1788574409089.7,
+          "submit_at": 1788574412130.6,
+          "accepted_at": 1788574412142.4,
+          "revision": 7,
+          "visibility": "visible",
+          "request_to_visible_ms": 42.699951171875,
+          "submit_to_accepted_ms": 11.7998046875,
+          "visible_to_submit_ms": 3040.900146484375,
+          "action": "decline"
+        },
+        {
+          "page": 4,
+          "request_at": 1788574412130.6,
+          "visible_at": 1788574412187.7,
+          "submit_at": 1788574415215.2,
+          "accepted_at": 1788574415225.6,
+          "revision": 8,
+          "visibility": "visible",
+          "request_to_visible_ms": 57.099853515625,
+          "submit_to_accepted_ms": 10.400146484375,
+          "visible_to_submit_ms": 3027.5,
+          "action": "decline"
+        },
+        {
+          "page": 5,
+          "request_at": 1788574415215.2,
+          "visible_at": 1788574415271.2,
+          "submit_at": 1788574418597.6,
+          "accepted_at": 1788574418606.2,
+          "revision": 9,
+          "visibility": "visible",
+          "request_to_visible_ms": 56,
+          "submit_to_accepted_ms": 8.599853515625,
+          "visible_to_submit_ms": 3326.400146484375,
+          "action": "decline"
+        },
+        {
+          "page": 6,
+          "request_at": 1788574418597.6,
+          "visible_at": 1788574418639.5,
+          "submit_at": 1788574419064.4,
+          "accepted_at": 1788574419073.4,
+          "revision": 10,
+          "visibility": "visible",
+          "request_to_visible_ms": 41.89990234375,
+          "submit_to_accepted_ms": 9,
+          "visible_to_submit_ms": 424.89990234375,
+          "action": "decline"
+        },
+        {
+          "page": 7,
+          "request_at": 1788574419064.4,
+          "visible_at": 1788574419107.2,
+          "submit_at": null,
+          "accepted_at": null,
+          "revision": 11,
+          "visibility": "visible",
+          "request_to_visible_ms": 42.800048828125
+        }
+      ],
+      "errors": [],
+      "terminal_markdown": "## Roundtable receipt\n\nTerminal record of the moderated deliberation.\n\n### Outcome\n\n- **Thread:** latency-test\n- **Rounds:** 1\n- **Promoted message ids:** none\n- **Halt reason:** completed\n\n**Synthesis**\n\nSeven synthetic candidates; decline all in both conditions.",
+      "total_to_accepted_ms": 64904.699951171875,
+      "accepted_submissions": 7
+    },
+    {
+      "id": "003f0087-ca06-4ab7-878a-0521af5f85fd",
+      "condition": "batched",
+      "actor": "CUA automation",
+      "host": "isolated browser + real MCP stdio",
+      "start_at": 1788574428017.6,
+      "pages": [
+        {
+          "page": 0,
+          "request_at": 1788574428017.6,
+          "visible_at": 1788574428089,
+          "submit_at": 1788574441349.5,
+          "accepted_at": 1788574441363,
+          "revision": 4,
+          "visibility": "visible",
+          "request_to_visible_ms": 71.39990234375,
+          "submit_to_accepted_ms": 13.5,
+          "visible_to_submit_ms": 13260.5,
+          "action": "apply_rulings"
+        },
+        {
+          "page": 1,
+          "request_at": 1788574441349.5,
+          "visible_at": 1788574441408,
+          "submit_at": 1788574442215.8,
+          "accepted_at": 1788574442235.5,
+          "revision": 5,
+          "visibility": "visible",
+          "request_to_visible_ms": 58.5,
+          "submit_to_accepted_ms": 19.699951171875,
+          "visible_to_submit_ms": 807.800048828125,
+          "action": "apply_rulings"
+        },
+        {
+          "page": 2,
+          "request_at": 1788574442215.8,
+          "visible_at": 1788574442272.6,
+          "submit_at": 1788574443115.9,
+          "accepted_at": 1788574443130.3,
+          "revision": 6,
+          "visibility": "visible",
+          "request_to_visible_ms": 56.800048828125,
+          "submit_to_accepted_ms": 14.400146484375,
+          "visible_to_submit_ms": 843.2998046875,
+          "action": "apply_rulings"
+        },
+        {
+          "page": 3,
+          "request_at": 1788574443115.9,
+          "visible_at": 1788574443191.4,
+          "submit_at": null,
+          "accepted_at": null,
+          "revision": 7,
+          "visibility": "visible",
+          "request_to_visible_ms": 75.5
+        }
+      ],
+      "errors": [],
+      "terminal_markdown": "## Roundtable receipt\n\nTerminal record of the moderated deliberation.\n\n### Outcome\n\n- **Thread:** latency-test\n- **Rounds:** 1\n- **Promoted message ids:** none\n- **Halt reason:** completed\n\n**Synthesis**\n\nSeven synthetic candidates; decline all in both conditions.",
+      "total_to_accepted_ms": 15112.699951171875,
+      "accepted_submissions": 3
+    },
+    {
+      "id": "a38d6600-2b24-41e8-9a13-bc9a5d64d8d9",
+      "condition": "batched",
+      "actor": "CUA automation",
+      "host": "isolated browser + real MCP stdio",
+      "start_at": 1788574458056.1,
+      "pages": [
+        {
+          "page": 0,
+          "request_at": 1788574458056.1,
+          "visible_at": 1788574458139.8,
+          "submit_at": 1788574459183.6,
+          "accepted_at": 1788574459196.1,
+          "revision": 4,
+          "visibility": "visible",
+          "request_to_visible_ms": 83.699951171875,
+          "submit_to_accepted_ms": 12.5,
+          "visible_to_submit_ms": 1043.800048828125,
+          "action": "apply_rulings"
+        },
+        {
+          "page": 1,
+          "request_at": 1788574459183.6,
+          "visible_at": 1788574459241.3,
+          "submit_at": 1788574460017.3,
+          "accepted_at": 1788574460029.7,
+          "revision": 5,
+          "visibility": "visible",
+          "request_to_visible_ms": 57.699951171875,
+          "submit_to_accepted_ms": 12.39990234375,
+          "visible_to_submit_ms": 776,
+          "action": "apply_rulings"
+        },
+        {
+          "page": 2,
+          "request_at": 1788574460017.3,
+          "visible_at": 1788574460075,
+          "submit_at": 1788574460917.2,
+          "accepted_at": 1788574460927.3,
+          "revision": 6,
+          "visibility": "visible",
+          "request_to_visible_ms": 57.699951171875,
+          "submit_to_accepted_ms": 10.10009765625,
+          "visible_to_submit_ms": 842.199951171875,
+          "action": "apply_rulings"
+        },
+        {
+          "page": 3,
+          "request_at": 1788574460917.2,
+          "visible_at": 1788574460977.1,
+          "submit_at": null,
+          "accepted_at": null,
+          "revision": 7,
+          "visibility": "visible",
+          "request_to_visible_ms": 59.900146484375
+        }
+      ],
+      "errors": [],
+      "terminal_markdown": "## Roundtable receipt\n\nTerminal record of the moderated deliberation.\n\n### Outcome\n\n- **Thread:** latency-test\n- **Rounds:** 1\n- **Promoted message ids:** none\n- **Halt reason:** completed\n\n**Synthesis**\n\nSeven synthetic candidates; decline all in both conditions.",
+      "total_to_accepted_ms": 2871.199951171875,
+      "accepted_submissions": 3
+    },
+    {
+      "id": "e0268c5f-7fbc-4a1a-8acf-461536855284",
+      "condition": "baseline",
+      "actor": "CUA automation",
+      "host": "isolated browser + real MCP stdio",
+      "start_at": 1788574468920,
+      "pages": [
+        {
+          "page": 0,
+          "request_at": 1788574468920,
+          "visible_at": 1788574469010.1,
+          "submit_at": 1788574469817.9,
+          "accepted_at": 1788574469828.7,
+          "revision": 4,
+          "visibility": "visible",
+          "request_to_visible_ms": 90.10009765625,
+          "submit_to_accepted_ms": 10.800048828125,
+          "visible_to_submit_ms": 807.7998046875,
+          "action": "decline"
+        },
+        {
+          "page": 1,
+          "request_at": 1788574469817.9,
+          "visible_at": 1788574469874.5,
+          "submit_at": 1788574469967.5,
+          "accepted_at": 1788574469976.4,
+          "revision": 5,
+          "visibility": "visible",
+          "request_to_visible_ms": 56.60009765625,
+          "submit_to_accepted_ms": 8.89990234375,
+          "visible_to_submit_ms": 93,
+          "action": "decline"
+        },
+        {
+          "page": 2,
+          "request_at": 1788574469967.5,
+          "visible_at": 1788574470009.5,
+          "submit_at": 1788574473051,
+          "accepted_at": 1788574473060.4,
+          "revision": 6,
+          "visibility": "visible",
+          "request_to_visible_ms": 42,
+          "submit_to_accepted_ms": 9.39990234375,
+          "visible_to_submit_ms": 3041.5,
+          "action": "decline"
+        },
+        {
+          "page": 3,
+          "request_at": 1788574473051,
+          "visible_at": 1788574473109.7,
+          "submit_at": 1788574476135.7,
+          "accepted_at": 1788574476145.2,
+          "revision": 7,
+          "visibility": "visible",
+          "request_to_visible_ms": 58.699951171875,
+          "submit_to_accepted_ms": 9.5,
+          "visible_to_submit_ms": 3026,
+          "action": "decline"
+        },
+        {
+          "page": 4,
+          "request_at": 1788574476135.7,
+          "visible_at": 1788574476194.4,
+          "submit_at": 1788574479218,
+          "accepted_at": 1788574479230.3,
+          "revision": 8,
+          "visibility": "visible",
+          "request_to_visible_ms": 58.699951171875,
+          "submit_to_accepted_ms": 12.300048828125,
+          "visible_to_submit_ms": 3023.60009765625,
+          "action": "decline"
+        },
+        {
+          "page": 5,
+          "request_at": 1788574479218,
+          "visible_at": 1788574479275.5,
+          "submit_at": 1788574482602,
+          "accepted_at": 1788574482613.3,
+          "revision": 9,
+          "visibility": "visible",
+          "request_to_visible_ms": 57.5,
+          "submit_to_accepted_ms": 11.300048828125,
+          "visible_to_submit_ms": 3326.5,
+          "action": "decline"
+        },
+        {
+          "page": 6,
+          "request_at": 1788574482602,
+          "visible_at": 1788574482658.4,
+          "submit_at": 1788574483068.4,
+          "accepted_at": 1788574483076.3,
+          "revision": 10,
+          "visibility": "visible",
+          "request_to_visible_ms": 56.39990234375,
+          "submit_to_accepted_ms": 7.900146484375,
+          "visible_to_submit_ms": 410,
+          "action": "decline"
+        },
+        {
+          "page": 7,
+          "request_at": 1788574483068.4,
+          "visible_at": 1788574483109.5,
+          "submit_at": null,
+          "accepted_at": null,
+          "revision": 11,
+          "visibility": "visible",
+          "request_to_visible_ms": 41.10009765625
+        }
+      ],
+      "errors": [],
+      "terminal_markdown": "## Roundtable receipt\n\nTerminal record of the moderated deliberation.\n\n### Outcome\n\n- **Thread:** latency-test\n- **Rounds:** 1\n- **Promoted message ids:** none\n- **Halt reason:** completed\n\n**Synthesis**\n\nSeven synthetic candidates; decline all in both conditions.",
+      "total_to_accepted_ms": 14156.300048828125,
+      "accepted_submissions": 7
+    }
+  ],
+  "summary": [
+    {
+      "condition": "baseline",
+      "submissions": 7,
+      "initial_visible_ms": 282.4,
+      "accept_ack_median_ms": 10.4,
+      "accept_ack_sum_ms": 80.5,
+      "next_visible_median_ms": 56,
+      "automation_total_ms": 64904.7
+    },
+    {
+      "condition": "batched",
+      "submissions": 3,
+      "initial_visible_ms": 71.4,
+      "accept_ack_median_ms": 14.4,
+      "accept_ack_sum_ms": 47.6,
+      "next_visible_median_ms": 58.5,
+      "automation_total_ms": 15112.7
+    },
+    {
+      "condition": "batched",
+      "submissions": 3,
+      "initial_visible_ms": 83.7,
+      "accept_ack_median_ms": 12.4,
+      "accept_ack_sum_ms": 35.0,
+      "next_visible_median_ms": 57.7,
+      "automation_total_ms": 2871.2
+    },
+    {
+      "condition": "baseline",
+      "submissions": 7,
+      "initial_visible_ms": 90.1,
+      "accept_ack_median_ms": 9.5,
+      "accept_ack_sum_ms": 70.1,
+      "next_visible_median_ms": 56.6,
+      "automation_total_ms": 14156.3
+    }
+  ],
+  "terminal_receipts_equal": true
+}

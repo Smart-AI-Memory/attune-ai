@@ -927,7 +927,7 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
             "responses": response.responses,
             "response_id": response.response_id,
         }
-        hint = self._maybe_keyboard_hint(form)
+        hint = self._maybe_keyboard_hint(form, instance_id=args.get("instance_id", ""))
         if hint:
             result["hint"] = hint
         return result
@@ -1073,7 +1073,7 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
         }
 
     @staticmethod
-    def _maybe_keyboard_hint(form: Any = None) -> str | None:
+    def _maybe_keyboard_hint(form: Any = None, *, instance_id: str = "") -> str | None:
         """Record the submission and return D17's one-time keyboard hint.
 
         A validated submission is the only honest place to count "forms
@@ -1090,13 +1090,14 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
                 its ``form_id`` (attune-forms >= 0.8.0) joins this
                 submission to its ``form_rendered`` event for the
                 stage-latency read-back.
+            instance_id: Per-display token echoed from the widget response envelope.
         """
         try:
             from attune.elicitation import keyboard_mode_enabled
             from attune.telemetry.form_events import log_submission, maybe_keyboard_hint
 
             try:
-                log_submission(form_id=getattr(form, "form_id", "") or "")
+                log_submission(form_id=getattr(form, "form_id", "") or "", instance_id=instance_id)
             except TypeError:
                 # attune-forms < 0.8.0: zero-arg signature, no form_id
                 # on FormSchema — the submission still counts.
