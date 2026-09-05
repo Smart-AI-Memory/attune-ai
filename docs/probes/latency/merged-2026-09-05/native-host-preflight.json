@@ -1,0 +1,55 @@
+{
+  "date": "2026-09-05",
+  "scope": "native Codex chat host; no browser substitution",
+  "ai_probe": {
+    "workspace_id": "roundtable-173962a2ec8f498ea11c52099d1850c0",
+    "revision": 0,
+    "success": true,
+    "keys": [
+      "success",
+      "workspace_id",
+      "adapter_id",
+      "adapter_version",
+      "revision",
+      "view",
+      "contract_hash",
+      "action_nonce",
+      "terminal",
+      "event_sequence",
+      "html",
+      "markdown",
+      "mcp_app"
+    ],
+    "htmlHasInstanceId": false,
+    "contentTypes": [
+      "text"
+    ]
+  },
+  "forms_probe": {
+    "isError": false,
+    "success": true,
+    "keys": [
+      "success",
+      "html",
+      "title",
+      "field_ids",
+      "mcp_app"
+    ],
+    "htmlHasInstanceId": true,
+    "contentTypes": [
+      "text"
+    ]
+  },
+  "native_ui_probe": {
+    "api": "cua.getApp('Codex')",
+    "result": "Computer Use is not allowed to use the app 'com.openai.codex' for safety reasons."
+  },
+  "runtime_verification": {
+    "forms_configuration": "uvx --from attune-forms[mcp]==0.12.3 attune-forms-mcp",
+    "ai_configuration": "uvx --from attune-ai python -m attune.mcp.server",
+    "active_exact_versions": "not verified; no process-local build/version diagnostic in the discovered tool surface",
+    "integration": "active AI workspace HTML lacks instance_id; merged-source renderer supplies telemetry_instance_id when Forms stage telemetry is present"
+  },
+  "abbaruns": 0,
+  "native_timings": null
+}

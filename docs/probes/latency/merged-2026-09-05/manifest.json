@@ -1,0 +1,16 @@
+{
+  "head": "e0d88bc50ab22b5d49dccc28a4fb34ee8242c660",
+  "integration_merge": "c2138be2d6be10dfd252495dfae05cc861776375",
+  "forms_version": "0.12.3",
+  "runtime": "/Users/patrickroebuck/attune-ai/.venv/bin/python",
+  "pythonpath": "/Users/patrickroebuck/.codex/worktrees/30be/attune-ai/src",
+  "host": "fresh observable in-app browser + fresh public MCP stdio process",
+  "source_diff_from_merge": "empty for src/, pyproject.toml, uv.lock and both browser_host files",
+  "joins": "20 canonical events each match exactly one render by workspace/revision/instance; each browser submission uniquely paired by revision within submit/ack interval; one workspace per run",
+  "clock_limit": "Browser performance.timeOrigin+now and server UTC use same-machine epoch, not a shared monotonic clock. No clock offset calibration. All canonical timestamps fell inside corresponding browser submit/ack intervals. Sub-millisecond differences are not supported.",
+  "files": {
+    "browser-receipts.jsonl": "6535ddf7ef80ab629a0d98e497a209a71140285b82a990f6dca452047a0ed6b5",
+    "workspace-events.jsonl": "d3a046ecac8ad5b87054eb6b8b424561578ea949e60d5ba9f89b9cdf05aa037d",
+    "joined-receipts.json": "4b8d081b1f0bb9d723de529b0f026057fdda5f82cf3688ae2c62d016cf7ee31f"
+  }
+}
