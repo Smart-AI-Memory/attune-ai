@@ -140,3 +140,28 @@ lead immediately after the chair armed #2431 (T2) for merge.
   human-observed usability and unmeasured paint timing labelled
   separately. Receipt types: behavioral + actual host round trip.
 - A go on T3 is not a go on T4. T4 waits on T3's acceptance and its own go.
+
+## D8 — The default is selected by need and preference, never by latency (2026-09-05, chair via pushback card)
+
+Prompted by the merged-build latency receipts (attune-ai #2433, Codex):
+their line "no renderer optimization justified" read to the chair as if
+no selection criterion would pick a default. The lead pushed back on the
+one narrow reading in which latency would be that criterion, and the
+chair adopted the alternative (pushback card, the lead's option picked):
+
+- **The default presentation is selected by immediate need (ASI-1) and
+  overridden by scoped preference (ASI-2).** Latency is descriptive
+  evidence only; it never enters the selection rule. Basis: on the
+  named receipts both lanes first-paint under 100 ms warm and accept
+  under 10 ms; the single 523 ms value is a fresh-process cold start.
+  A selector keyed on those numbers would choose on noise.
+- **Whether the automatic default is useful is T4's question**, decided
+  by completion, corrections, overrides and failures under a
+  preregistered protocol (ASI-6), with latency reported alongside.
+- **Codex's conclusion stands as written and is narrower than it
+  reads:** nothing about the renderer needs optimizing. It says nothing
+  against a selected, user-overridable default, which is this spec.
+
+Counter-case retained: if T4 ever shows users abandoning the widget lane
+for time reasons, latency re-enters as a usefulness input — measured
+there, on the named host, not assumed from a browser harness.
