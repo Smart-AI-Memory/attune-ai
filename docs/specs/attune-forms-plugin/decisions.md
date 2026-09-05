@@ -120,3 +120,48 @@ convention, fused render call, authoring gate, authoring preview),
 with the form-events stage instrumentation (chipped the same day) as
 the measurement dependency. Standalone-spec alternative declined —
 one roadmap artifact for the plugin.
+
+## D7 — Phase 5 unblocked: gate defined, execution ordered, server and home settled (chair via four-field form, 2026-09-05)
+
+Prompted by a 69-agent independent read (three readers, 65 verified
+claims each refutation-tested, one synthesis) run while the
+adaptive-session-interactions T4 trial collects from live use. Its
+recommendation was "Phase 5 after a one-paragraph D7, not a bare go";
+the chair ruled all four items it named (response
+`resp-20260905-173921-88eaed1e`).
+
+1. **The D6 gate is SATISFIED by submission, not listing.** "Phase 4's
+   submission clears" means the attune-forms Console submission has been
+   MADE (the chair's own act, R4.1) — the same submission-vs-approval split
+   D5 item 4 applies to the announcement. The chair chose to submit rather
+   than waive. Until the Console act happens, Phase 5 execution below is
+   authorized but the gate is recorded as pending the act; the 08-12
+   submission pack is refreshed to 0.12.3 for it.
+2. **Execution order: R5.3 → R5.2 → R5.4; R5.1 HELD** until the
+   adaptive-session-interactions T4 record reaches its trigger (that
+   spec's D11). Reason: R5.1 rewrites the Socratic rule and rebinds
+   `plugin/skills/spec/SKILL.md`, which is the T2 guidance defining T4's
+   Condition A under a frozen protocol; R5.2–R5.4 do not touch the
+   workspace path. R5.3 goes first because it has no dependency on items
+   3–4 and lands the cast-every-template gate every later template needs
+   (codex lane finding 2). Note for R5.3: attune-forms' loader pops only
+   `slots` and its definition parser rejects a top-level `example_slots`
+   key, so R5.3 begins as an attune-forms change.
+3. **R5.2's template+slots path lands in BOTH servers, schema-identical**
+   (the D3 mirror rule): attune-forms' standalone server and attune-ai's
+   `elicitation_render_widget` gain the same `template` + `slots`
+   arguments and result shape; convergence stays a pure swap.
+4. **R5.1 binds to `attune_forms.intake_template.TEMPLATES`** (the
+   registry attune-ai already populates with its nineteen Python
+   intakes), with `template_store`'s JSON entries FOLDED INTO it — one
+   home, addressable by R5.2. The `/spec` name collision (spec_intake's
+   "session contract" vs the store's `session-contract`) is resolved as
+   part of that fold, not before.
+
+Premise corrections applied the same day: the measurement dependency
+named under Phase 5 shipped in attune-forms 0.8.0 (2026-08-24; installed
+0.12.3 emits `form_build.source = template:<name>`); the live meter reads
+117 dict builds against 0 template casts, which is the adoption gap Phase
+5 exists to close. Counter-case retained: the gate rests on an external
+queue that has already swallowed two attune-ai submissions; if the
+Console act stalls, the chair may convert item 1 to a written waiver.
