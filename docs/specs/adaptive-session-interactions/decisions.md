@@ -80,3 +80,23 @@ and validation checks remain the original ladder. This is preservation of
 instructions, not an expansion of implementation scope. Canonical phase files
 use recognized status tokens; the highest phase is parked with a concrete
 resume trigger. See [evidence](evidence.md) for validation receipts.
+
+## D5 — Rulings on Antigravity's critique after T1 (2026-09-05, chair via triage form)
+
+T1 (`t1-inventory.md`, PR #2429) re-read Antigravity's board message 6
+against the code. Four of its eight critiques were already in the approved
+text and were confirmed by probe (ASI-1 guidance-first, ASI-4 collector
+clause, ASI-5 schema-bound consumer, ASI-7 read-only characterization).
+The chair ruled the remaining items (response `resp-20260905-153010-c5dbd526`):
+
+| Item | Ruling | Effect |
+| --- | --- | --- |
+| Amend ASI-2 to name the existing markdown surface as the form text fallback | **adopt** | ASI-2 gains the amendment bullet; the router's `widget`/`ask`-only range and the missing MCP tool are recorded as a known limit, not fixed |
+| Record Antigravity's proposed ASI-8 (sequential text intake) as declined with reason | **adopt** | dissent register carries the decline and the reason (the surface exists and batches) |
+| Record that the repository freeze was lifted for this spec package by the 2026-09-05 planning form | **modify → ruled** | The chair modified the proposed docs-only scope to the wider reading (response `resp-20260905-153232-f6db1cd2`, single-select): **the no-repo-change instruction is lifted entirely for this feature; per-task gos are the only remaining gate.** Implementation is still not authorized — T2 waits on the chair's acceptance of T1 and its own go — but no freeze stands between a go and execution. ASI-7's freeze bullet carries a matching amendment note. |
+| Answer Antigravity's follow-up (board message 8): freeze the CommandWorkspaceHost action path as the T4 trial boundary | **adopt** | the **`spec` adapter's review-stage choice** (`redo_plan` / `approve_plan`) is the named T4 consumer boundary, as T1 selected; roundtable rulings and the consequential `create_spec` / `start_execution` choices are excluded from the first trial |
+
+Counter-case retained: naming a text-fallback surface in a requirement
+binds the pilot to a library seam that has no MCP tool today; if T2 finds
+the seam unreachable from the named host, the amendment is a pointer to
+library behavior, not a promise of host behavior.
