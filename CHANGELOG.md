@@ -61,6 +61,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   loudly; `auto` is unchanged. Redis's role is stated in the chair's words
   wherever it is offered: enhanced memory features using Redis's
   open-source options.
+- **Surface parity registry and receipt gates (Task 1B, increment 2).**
+  The producer inventory now has subject records, typed obligations,
+  replayable package-renderer receipts, and explicit outstanding local
+  runtime receipts. Mutation gates reject missing twins, stale receipts,
+  broken transport references and invalid experiment declarations. Pending
+  obligations cannot satisfy route evidence requirements; inventory success
+  does not claim complete production parity. The ledger incorporates the
+  held Codex native-card observation with its attribution limits.
 
 - **Surface-producer inventory (host-surface-parity Task 1B, increment 1
   of the task).** `attune.elicitation.surface_inventory` mechanically

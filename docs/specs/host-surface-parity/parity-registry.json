@@ -1,0 +1,2159 @@
+{
+  "capability_snapshot_schema": {
+    "status": "pending-increment-3"
+  },
+  "compatibility_endpoints": [
+    "ask-payload",
+    "legacy-render-form"
+  ],
+  "constraint_schema": {
+    "source": "design.md#r2--context-routed-surface-parity-gate",
+    "status": "pending-increment-3"
+  },
+  "context_receipt_schema": {
+    "status": "pending-increment-3"
+  },
+  "evidence_status": "incomplete",
+  "experiment_exceptions": [],
+  "experiment_history": [],
+  "experiments": [],
+  "host_envelope_signatures": {
+    "hooks": {
+      "additional_context": {
+        "destination": "model_context",
+        "events": null,
+        "subject_kind": "informational_delivery"
+      },
+      "context_stdout": {
+        "destination": "model_context",
+        "events": [
+          "SessionStart",
+          "UserPromptSubmit"
+        ],
+        "subject_kind": "informational_delivery"
+      },
+      "exit2_stderr": {
+        "destination": "model_context",
+        "events": [
+          "PostToolUse",
+          "PreToolUse",
+          "Stop",
+          "SubagentStop"
+        ],
+        "subject_kind": "informational_delivery"
+      },
+      "pretooluse_deny": {
+        "destination": "model_context",
+        "events": [
+          "PreToolUse"
+        ],
+        "subject_kind": "informational_delivery"
+      },
+      "stop_block": {
+        "destination": "model_context",
+        "events": [
+          "Stop",
+          "SubagentStop"
+        ],
+        "subject_kind": "informational_delivery"
+      },
+      "system_message": {
+        "destination": "user_notice",
+        "events": null,
+        "subject_kind": "informational_delivery"
+      }
+    },
+    "package": {
+      "askuserquestion_batches": {
+        "marker": "batches",
+        "subject_kind": "interactive_form"
+      },
+      "html_response": {
+        "marker": "html|panel_html",
+        "subject_kind": "interactive_form"
+      },
+      "mcp_app_resource": {
+        "marker": "ui://",
+        "subject_kind": "interactive_workspace"
+      },
+      "native_elicit_form": {
+        "marker": "session.elicit_form",
+        "subject_kind": "interactive_form"
+      },
+      "workspace_render": {
+        "marker": "CommandWorkspaceRender(html, markdown)",
+        "subject_kind": "interactive_workspace"
+      }
+    }
+  },
+  "host_profiles": [],
+  "pending_obligations": [
+    {
+      "key": "compatibility:subject:ask-payload:production_response",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "compatibility:subject:legacy-render-form:production_response",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:artifact-plugin/commands/handoff.md:artifact:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:artifact-plugin/commands/handoff.md:artifact:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:artifact-plugin/commands/handoff.md:artifact:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:artifact-plugin/commands/handoff.md:artifact:render",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:chart-widget:artifact:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:chart-widget:artifact:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:chart-widget:artifact:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:chart-widget:artifact:render",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-detached_head_push_guard-module:d4320e573576d8b2:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-detached_head_push_guard-module:d4320e573576d8b2:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-detached_head_push_guard-module:d4320e573576d8b2:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-dirty_switch_guard-module:d4320e573576d8b2:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-dirty_switch_guard-module:d4320e573576d8b2:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-dirty_switch_guard-module:d4320e573576d8b2:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-help_freshness_nudge-module:b73d9cfc43e85698:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-help_freshness_nudge-module:b73d9cfc43e85698:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-help_freshness_nudge-module:b73d9cfc43e85698:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-lessons_reminder-module:c9d9059176482286:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-lessons_reminder-module:c9d9059176482286:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-lessons_reminder-module:c9d9059176482286:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-security_guard-module:c0b0046d68345b0b:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-security_guard-module:c0b0046d68345b0b:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-security_guard-module:c0b0046d68345b0b:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-security_guard-module:d4320e573576d8b2:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-security_guard-module:d4320e573576d8b2:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-security_guard-module:d4320e573576d8b2:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-starter_prompt_nudge-module:b73d9cfc43e85698:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-starter_prompt_nudge-module:b73d9cfc43e85698:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-starter_prompt_nudge-module:b73d9cfc43e85698:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-starter_reconciler-module:b73d9cfc43e85698:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-starter_reconciler-module:b73d9cfc43e85698:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-starter_reconciler-module:b73d9cfc43e85698:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-worktree_path_guard-module:d4320e573576d8b2:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-worktree_path_guard-module:d4320e573576d8b2:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:core-worktree_path_guard-module:d4320e573576d8b2:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:mcp-resources:artifact:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:mcp-resources:artifact:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:mcp-resources:artifact:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:mcp-resources:artifact:render",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:mcp-tool-metadata:artifact:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:mcp-tool-metadata:artifact:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:mcp-tool-metadata:artifact:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:mcp-tool-metadata:artifact:render",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-friction_gate-module:c0b0046d68345b0b:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-friction_gate-module:c0b0046d68345b0b:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-friction_gate-module:c0b0046d68345b0b:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-jit_recall-module:f91df0a1b35af181:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-jit_recall-module:f91df0a1b35af181:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-jit_recall-module:f91df0a1b35af181:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-lesson_recall-module:b95ae1ceebd34c19:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-lesson_recall-module:b95ae1ceebd34c19:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-lesson_recall-module:b95ae1ceebd34c19:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-macos_timeout_guard-module:c0b0046d68345b0b:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-macos_timeout_guard-module:c0b0046d68345b0b:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-macos_timeout_guard-module:c0b0046d68345b0b:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-memory_backend_notice-module:b73d9cfc43e85698:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-memory_backend_notice-module:b73d9cfc43e85698:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-memory_backend_notice-module:b73d9cfc43e85698:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-security_guard-module:c0b0046d68345b0b:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-security_guard-module:c0b0046d68345b0b:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-security_guard-module:c0b0046d68345b0b:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-security_guard-module:d4320e573576d8b2:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-security_guard-module:d4320e573576d8b2:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-security_guard-module:d4320e573576d8b2:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-session_recall-module:b73d9cfc43e85698:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-session_recall-module:b73d9cfc43e85698:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-session_recall-module:b73d9cfc43e85698:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-session_stash-module:e1be983676e9c25c:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-session_stash-module:e1be983676e9c25c:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-session_stash-module:e1be983676e9c25c:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-spec_orient-module:b73d9cfc43e85698:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-spec_orient-module:b73d9cfc43e85698:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-spec_orient-module:b73d9cfc43e85698:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-usage_consent_notice-module:b73d9cfc43e85698:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-usage_consent_notice-module:b73d9cfc43e85698:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:plugin-usage_consent_notice-module:b73d9cfc43e85698:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:src-worktree_add_guard-module:c0b0046d68345b0b:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:src-worktree_add_guard-module:c0b0046d68345b0b:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:src-worktree_add_guard-module:c0b0046d68345b0b:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:workflow-report:artifact:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:workflow-report:artifact:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:workflow-report:artifact:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:workflow-report:artifact:render",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:command_workspace-render:abort",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:command_workspace-render:accept",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:command_workspace-render:timeout",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:command_workspace-render:validation_feedback_delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:command_workspace-to-dict:abort",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:command_workspace-to-dict:accept",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:command_workspace-to-dict:timeout",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:command_workspace-to-dict:validation_feedback_delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:deferred-form-transport:abort",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:deferred-form-transport:timeout",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:deferred-form-transport:validation_feedback_delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:native-elicitation:abort",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:native-elicitation:timeout",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:native-elicitation:validation_feedback_delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:recall_digest-render-digest-html:accept",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:server-handle-command-workspace-collect-action:abort",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:server-handle-command-workspace-collect-action:accept",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:server-handle-command-workspace-collect-action:timeout",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:server-handle-command-workspace-collect-action:validation_feedback_delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:server-handle-command-workspace-open:abort",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:server-handle-command-workspace-open:accept",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:server-handle-command-workspace-open:timeout",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:server-handle-command-workspace-open:validation_feedback_delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:server-handle-command-workspace-publish:abort",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:server-handle-command-workspace-publish:accept",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:server-handle-command-workspace-publish:timeout",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:server-handle-command-workspace-publish:validation_feedback_delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:server-handle-elicitation-ask:accept",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:server-handle-elicitation-render-widget:accept",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:server-handle-fix-workspace-preview:abort",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:server-handle-fix-workspace-preview:accept",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:server-handle-fix-workspace-preview:timeout",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:server-handle-fix-workspace-preview:validation_feedback_delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:command_workspace-render:HEADLESS:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:command_workspace-render:PORTABLE:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:command_workspace-render:RICH:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:command_workspace-to-dict:HEADLESS:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:command_workspace-to-dict:PORTABLE:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:command_workspace-to-dict:RICH:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:recall_digest-render-digest-html:HEADLESS:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:recall_digest-render-digest-html:PORTABLE:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:recall_digest-render-digest-html:RICH:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:recall_digest-render-digest-html:mcp-native:native-elicitation:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:server-handle-command-workspace-collect-action:HEADLESS:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:server-handle-command-workspace-collect-action:PORTABLE:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:server-handle-command-workspace-collect-action:RICH:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:server-handle-command-workspace-open:HEADLESS:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:server-handle-command-workspace-open:PORTABLE:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:server-handle-command-workspace-open:RICH:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:server-handle-command-workspace-publish:HEADLESS:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:server-handle-command-workspace-publish:PORTABLE:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:server-handle-command-workspace-publish:RICH:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:server-handle-elicitation-ask:mcp-native:native-elicitation:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:server-handle-elicitation-render-widget:HEADLESS:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:server-handle-elicitation-render-widget:PORTABLE:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:server-handle-elicitation-render-widget:RICH:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:server-handle-elicitation-render-widget:mcp-native:native-elicitation:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:server-handle-fix-workspace-preview:HEADLESS:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:server-handle-fix-workspace-preview:PORTABLE:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "route:server-handle-fix-workspace-preview:RICH:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "subject:chart-widget:surface:RICH",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "subject:command_workspace-render:surface:RICH",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "subject:command_workspace-to-dict:surface:RICH",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "subject:recall_digest-render-digest-html:surface:RICH",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "subject:server-handle-command-workspace-collect-action:surface:RICH",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "subject:server-handle-command-workspace-open:surface:RICH",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "subject:server-handle-command-workspace-publish:surface:RICH",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "subject:server-handle-elicitation-render-widget:surface:RICH",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "subject:server-handle-fix-workspace-preview:surface:RICH",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "subject:workflow-report:surface:RICH",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    }
+  ],
+  "producer_baseline": {
+    "digest": "663b90971adc7776b55da61854b95f5bf6e4ee10ac3c5a8f79a59b30c8e70b35",
+    "path": "docs/specs/host-surface-parity/producer_baseline.json",
+    "schema_version": "attune.surface-inventory.producer-baseline/1"
+  },
+  "receipts": [
+    {
+      "evidence_mode": "projection",
+      "fixture": "attune.elicitation.surface_evidence.replay_renderer_evidence",
+      "fixture_digest": "7c990010b418e48306e9b298f5669e411ed5a60bfcab2296bddef664e90c0a47",
+      "id": "renderer.standalone-form.surface.RICH",
+      "implementation_digest": "0c07b142a37bba2aff046ede20d5ec5409ff57f37f36f92ee19945a76153d1cd",
+      "key": "renderer:standalone-form:surface:RICH",
+      "kind": "parity",
+      "normalization_digest": "c6d83aa2bca637fc8fbcb1fb7fec9c6ab378d7d1a9d72dc2cd1e5e13eea11584",
+      "obligation_key": "renderer:standalone-form:surface:RICH",
+      "record_digest": "2768d9eb8bbfb3d84443690b433e068db0df6767ebbc79591f7cd6500a15394b",
+      "result_digest": "f6dbb9d07b14eb46fc89a5349c334ca444fb52c17e17b42a4fdf3585091d4b71"
+    },
+    {
+      "evidence_mode": "compatibility_projection",
+      "fixture": "attune.elicitation.surface_evidence.replay_renderer_evidence",
+      "fixture_digest": "7c990010b418e48306e9b298f5669e411ed5a60bfcab2296bddef664e90c0a47",
+      "id": "renderer.standalone-form.host-native.form.askuserquestion",
+      "implementation_digest": "d5250a83ed19c63898f629f8946113f0df6cb40d481bcbcecfd5453533fb4980",
+      "key": "renderer:standalone-form:host-native:form.askuserquestion",
+      "kind": "parity",
+      "normalization_digest": "c6d83aa2bca637fc8fbcb1fb7fec9c6ab378d7d1a9d72dc2cd1e5e13eea11584",
+      "obligation_key": "renderer:standalone-form:host-native:form.askuserquestion",
+      "record_digest": "226198aaad94756948fb660db77442c84e824ef06890b2574ce26d9ab9a7aecc",
+      "result_digest": "73fb7c139271f2506f2584020e2766352bacd60018d8441791a91e5ea8edcf8f"
+    },
+    {
+      "evidence_mode": "projection",
+      "fixture": "attune.elicitation.surface_evidence.replay_renderer_evidence",
+      "fixture_digest": "7c990010b418e48306e9b298f5669e411ed5a60bfcab2296bddef664e90c0a47",
+      "id": "renderer.generic-workspace.surface.RICH",
+      "implementation_digest": "47535673b71479f9976eb0b3f7cb7403525713a3b3502423b2aac613b61dc989",
+      "key": "renderer:generic-workspace:surface:RICH",
+      "kind": "parity",
+      "normalization_digest": "c6d83aa2bca637fc8fbcb1fb7fec9c6ab378d7d1a9d72dc2cd1e5e13eea11584",
+      "obligation_key": "renderer:generic-workspace:surface:RICH",
+      "record_digest": "2620ae12e9e32cc4c1f7ef7ccdd696bf93f77e54b98da5364360fc906ad6d434",
+      "result_digest": "dc26c26e7ef125cd62b72fb5deef41d367dd763b510ca6f800707972cbc3d476"
+    }
+  ],
+  "renderers": [
+    {
+      "family": "form",
+      "fixture": "attune_forms.canonical_fixtures.canonical_form",
+      "id": "standalone-form",
+      "input_type": "FormSchema",
+      "targets": [
+        {
+          "compatibility_contract_id": "",
+          "compatibility_shape_digest": "",
+          "evidence_mode": "projection",
+          "id": "form.rich",
+          "module": "attune_forms.widget",
+          "name": "form_to_widget_html",
+          "profile_id": "",
+          "status": "core",
+          "surface": "RICH"
+        },
+        {
+          "compatibility_contract_id": "",
+          "compatibility_shape_digest": "",
+          "evidence_mode": "projection",
+          "id": "form.portable",
+          "module": "attune_forms.markdown_surface",
+          "name": "form_to_markdown",
+          "profile_id": "",
+          "status": "core",
+          "surface": "PORTABLE"
+        },
+        {
+          "compatibility_contract_id": "",
+          "compatibility_shape_digest": "",
+          "evidence_mode": "projection",
+          "id": "form.headless",
+          "module": "attune_forms.elicitation_schema",
+          "name": "form_to_elicitation_schema",
+          "profile_id": "",
+          "status": "core",
+          "surface": "HEADLESS"
+        },
+        {
+          "compatibility_contract_id": "claude-code.askuserquestion/v1",
+          "compatibility_shape_digest": "a1ad02822880a84cbff0bf580cd9ff20e9d6da99939e50725770e3dcb3b5f5b9",
+          "evidence_mode": "compatibility_projection",
+          "id": "form.askuserquestion",
+          "module": "attune_forms.bridge",
+          "name": "form_to_askuserquestion",
+          "profile_id": "",
+          "status": "compatibility_only",
+          "surface": "host-native"
+        }
+      ]
+    },
+    {
+      "family": "workspace",
+      "fixture": "attune_forms.canonical_fixtures.canonical_workspace_view",
+      "id": "generic-workspace",
+      "input_type": "WorkspaceView",
+      "targets": [
+        {
+          "compatibility_contract_id": "",
+          "compatibility_shape_digest": "",
+          "evidence_mode": "projection",
+          "id": "workspace.rich",
+          "module": "attune_forms.workspace",
+          "name": "workspace_to_widget_html",
+          "profile_id": "",
+          "status": "core",
+          "surface": "RICH"
+        },
+        {
+          "compatibility_contract_id": "",
+          "compatibility_shape_digest": "",
+          "evidence_mode": "projection",
+          "id": "workspace.portable",
+          "module": "attune_forms.workspace",
+          "name": "workspace_to_markdown",
+          "profile_id": "",
+          "status": "core",
+          "surface": "PORTABLE"
+        },
+        {
+          "compatibility_contract_id": "",
+          "compatibility_shape_digest": "",
+          "evidence_mode": "projection",
+          "id": "workspace.headless",
+          "module": "attune_forms.headless",
+          "name": "workspace_to_headless",
+          "profile_id": "",
+          "status": "core",
+          "surface": "HEADLESS"
+        }
+      ]
+    }
+  ],
+  "schema_version": "attune.surface-parity/1",
+  "scope": "Parity is asserted only over subjects the registry names; local runtime evidence remains open.",
+  "subjects": [
+    {
+      "delivery_routes": [
+        {
+          "destination": "host",
+          "event": "command",
+          "id": "artifact",
+          "matcher": "",
+          "signature": "markdown",
+          "sink": "artifact:plugin/commands/handoff.md"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "artifact-plugin/commands/handoff.md",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "artifact:plugin/commands/handoff.md"
+      ],
+      "root_anchor": "artifact:plugin/commands/handoff.md",
+      "subject_kind": "informational_artifact"
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "PreToolUse",
+          "id": "c0b0046d68345b0b",
+          "matcher": "Bash",
+          "signature": "exit2_stderr",
+          "sink": "print(file=sys.stderr)"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "plugin-friction_gate-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "plugin/hooks/friction_gate.py:main"
+      ],
+      "root_anchor": "plugin/hooks/friction_gate.py:<module>",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "PreToolUse",
+          "id": "f91df0a1b35af181",
+          "matcher": "AskUserQuestion|Bash|Edit",
+          "signature": "additional_context",
+          "sink": "sys.stdout.write"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "plugin-jit_recall-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "plugin/hooks/jit_recall.py:main"
+      ],
+      "root_anchor": "plugin/hooks/jit_recall.py:<module>",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "UserPromptSubmit",
+          "id": "b95ae1ceebd34c19",
+          "matcher": "",
+          "signature": "additional_context",
+          "sink": "sys.stdout.write"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "plugin-lesson_recall-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "plugin/hooks/lesson_recall.py:main"
+      ],
+      "root_anchor": "plugin/hooks/lesson_recall.py:<module>",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "PreToolUse",
+          "id": "c0b0046d68345b0b",
+          "matcher": "Bash",
+          "signature": "exit2_stderr",
+          "sink": "print(file=sys.stderr)"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "plugin-macos_timeout_guard-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "plugin/hooks/macos_timeout_guard.py:main"
+      ],
+      "root_anchor": "plugin/hooks/macos_timeout_guard.py:<module>",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "PreToolUse",
+          "id": "c0b0046d68345b0b",
+          "matcher": "Bash",
+          "signature": "exit2_stderr",
+          "sink": "print(file=sys.stderr)"
+        },
+        {
+          "destination": "model_context",
+          "event": "PreToolUse",
+          "id": "d4320e573576d8b2",
+          "matcher": "Edit|Write",
+          "signature": "exit2_stderr",
+          "sink": "print(file=sys.stderr)"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "plugin-security_guard-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "plugin/hooks/security_guard.py:<module>"
+      ],
+      "root_anchor": "plugin/hooks/security_guard.py:<module>",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "SessionStart",
+          "id": "b73d9cfc43e85698",
+          "matcher": "",
+          "signature": "context_stdout",
+          "sink": "print"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "plugin-session_recall-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "plugin/hooks/session_recall.py:main"
+      ],
+      "root_anchor": "plugin/hooks/session_recall.py:<module>",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "Stop",
+          "id": "e1be983676e9c25c",
+          "matcher": "",
+          "signature": "additional_context",
+          "sink": "sys.stdout.write"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "plugin-session_stash-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "plugin/hooks/session_stash.py:_emit_additional_context"
+      ],
+      "root_anchor": "plugin/hooks/session_stash.py:<module>",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "SessionStart",
+          "id": "b73d9cfc43e85698",
+          "matcher": "",
+          "signature": "context_stdout",
+          "sink": "print"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "plugin-spec_orient-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "plugin/hooks/spec_orient.py:main"
+      ],
+      "root_anchor": "plugin/hooks/spec_orient.py:<module>",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "SessionStart",
+          "id": "b73d9cfc43e85698",
+          "matcher": "",
+          "signature": "context_stdout",
+          "sink": "print"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "plugin-usage_consent_notice-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "plugin/hooks/usage_consent_notice.py:main"
+      ],
+      "root_anchor": "plugin/hooks/usage_consent_notice.py:<module>",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "compatibility_contract": {
+        "contract_id": "claude-code.askuserquestion/v1",
+        "evidence_mode": "compatibility_projection",
+        "provenance": "legacy fixed-shape projection; no route, presentation, lifecycle or tier claim",
+        "response_shape": "questions+metadata.source",
+        "status": "compatibility_only",
+        "target_id": "form.askuserquestion"
+      },
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "ask-payload",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/elicitation/ask_payload.py:form_to_ask_payload"
+      ],
+      "root_anchor": "src/attune/elicitation/ask_payload.py:form_to_ask_payload",
+      "subject_kind": "compatibility_endpoint"
+    },
+    {
+      "cold_routes": [
+        "PORTABLE",
+        "HEADLESS"
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "command_workspace-render",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/elicitation/command_workspace.py:CommandWorkspaceHost._render"
+      ],
+      "root_anchor": "src/attune/elicitation/command_workspace.py:CommandWorkspaceHost._render",
+      "subject_kind": "interactive_workspace",
+      "targets": [
+        {
+          "id": "rich",
+          "implementation_status": "pending_receipt",
+          "surface": "RICH"
+        },
+        {
+          "id": "portable",
+          "implementation_status": "pending_receipt",
+          "surface": "PORTABLE"
+        },
+        {
+          "id": "headless",
+          "implementation_status": "pending_receipt",
+          "surface": "HEADLESS"
+        }
+      ],
+      "warm_routes": [
+        "RICH",
+        "PORTABLE",
+        "HEADLESS"
+      ]
+    },
+    {
+      "cold_routes": [
+        "PORTABLE",
+        "HEADLESS"
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "command_workspace-to-dict",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/elicitation/command_workspace.py:CommandWorkspaceRender.to_dict"
+      ],
+      "root_anchor": "src/attune/elicitation/command_workspace.py:CommandWorkspaceRender.to_dict",
+      "subject_kind": "interactive_workspace",
+      "targets": [
+        {
+          "id": "rich",
+          "implementation_status": "pending_receipt",
+          "surface": "RICH"
+        },
+        {
+          "id": "portable",
+          "implementation_status": "pending_receipt",
+          "surface": "PORTABLE"
+        },
+        {
+          "id": "headless",
+          "implementation_status": "pending_receipt",
+          "surface": "HEADLESS"
+        }
+      ],
+      "warm_routes": [
+        "RICH",
+        "PORTABLE",
+        "HEADLESS"
+      ]
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "PreToolUse",
+          "id": "d4320e573576d8b2",
+          "matcher": "Edit|Write",
+          "signature": "exit2_stderr",
+          "sink": "print(file=sys.stderr)"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "core-detached_head_push_guard-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/hooks/scripts/detached_head_push_guard.py:main"
+      ],
+      "root_anchor": "src/attune/hooks/scripts/detached_head_push_guard.py:<module>",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "PreToolUse",
+          "id": "d4320e573576d8b2",
+          "matcher": "Edit|Write",
+          "signature": "exit2_stderr",
+          "sink": "print(file=sys.stderr)"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "core-dirty_switch_guard-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/hooks/scripts/dirty_switch_guard.py:main"
+      ],
+      "root_anchor": "src/attune/hooks/scripts/dirty_switch_guard.py:<module>",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "SessionStart",
+          "id": "b73d9cfc43e85698",
+          "matcher": "",
+          "signature": "context_stdout",
+          "sink": "print"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "core-help_freshness_nudge-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/hooks/scripts/help_freshness_nudge.py:main"
+      ],
+      "root_anchor": "src/attune/hooks/scripts/help_freshness_nudge.py:<module>",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "Stop",
+          "id": "c9d9059176482286",
+          "matcher": "",
+          "signature": "exit2_stderr",
+          "sink": "print(file=sys.stderr)"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "core-lessons_reminder-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/hooks/scripts/lessons_reminder.py:main"
+      ],
+      "root_anchor": "src/attune/hooks/scripts/lessons_reminder.py:<module>",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "PreToolUse",
+          "id": "c0b0046d68345b0b",
+          "matcher": "Bash",
+          "signature": "exit2_stderr",
+          "sink": "print(file=sys.stderr)"
+        },
+        {
+          "destination": "model_context",
+          "event": "PreToolUse",
+          "id": "d4320e573576d8b2",
+          "matcher": "Edit|Write",
+          "signature": "exit2_stderr",
+          "sink": "print(file=sys.stderr)"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "core-security_guard-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/hooks/scripts/security_guard.py:<module>"
+      ],
+      "root_anchor": "src/attune/hooks/scripts/security_guard.py:<module>",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "SessionStart",
+          "id": "b73d9cfc43e85698",
+          "matcher": "",
+          "signature": "context_stdout",
+          "sink": "print"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "core-starter_prompt_nudge-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/hooks/scripts/starter_prompt_nudge.py:_emit_notice"
+      ],
+      "root_anchor": "src/attune/hooks/scripts/starter_prompt_nudge.py:<module>",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "SessionStart",
+          "id": "b73d9cfc43e85698",
+          "matcher": "",
+          "signature": "context_stdout",
+          "sink": "print"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "core-starter_reconciler-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/hooks/scripts/starter_reconciler.py:_reconcile_and_emit",
+        "src/attune/hooks/scripts/starter_reconciler.py:main"
+      ],
+      "root_anchor": "src/attune/hooks/scripts/starter_reconciler.py:<module>",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "PreToolUse",
+          "id": "d4320e573576d8b2",
+          "matcher": "Edit|Write",
+          "signature": "exit2_stderr",
+          "sink": "print(file=sys.stderr)"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "core-worktree_path_guard-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/hooks/scripts/worktree_path_guard.py:main"
+      ],
+      "root_anchor": "src/attune/hooks/scripts/worktree_path_guard.py:<module>",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "cold_routes": [
+        "PORTABLE",
+        "HEADLESS"
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "server-handle-command-workspace-collect-action",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/mcp/server.py:AttuneMCPServer._handle_command_workspace_collect_action"
+      ],
+      "root_anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_command_workspace_collect_action",
+      "subject_kind": "interactive_workspace",
+      "targets": [
+        {
+          "id": "rich",
+          "implementation_status": "pending_receipt",
+          "surface": "RICH"
+        },
+        {
+          "id": "portable",
+          "implementation_status": "pending_receipt",
+          "surface": "PORTABLE"
+        },
+        {
+          "id": "headless",
+          "implementation_status": "pending_receipt",
+          "surface": "HEADLESS"
+        }
+      ],
+      "warm_routes": [
+        "RICH",
+        "PORTABLE",
+        "HEADLESS"
+      ]
+    },
+    {
+      "cold_routes": [
+        "PORTABLE",
+        "HEADLESS"
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "server-handle-command-workspace-open",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/mcp/server.py:AttuneMCPServer._handle_command_workspace_open"
+      ],
+      "root_anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_command_workspace_open",
+      "subject_kind": "interactive_workspace",
+      "targets": [
+        {
+          "id": "rich",
+          "implementation_status": "pending_receipt",
+          "surface": "RICH"
+        },
+        {
+          "id": "portable",
+          "implementation_status": "pending_receipt",
+          "surface": "PORTABLE"
+        },
+        {
+          "id": "headless",
+          "implementation_status": "pending_receipt",
+          "surface": "HEADLESS"
+        }
+      ],
+      "warm_routes": [
+        "RICH",
+        "PORTABLE",
+        "HEADLESS"
+      ]
+    },
+    {
+      "cold_routes": [
+        "PORTABLE",
+        "HEADLESS"
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "server-handle-command-workspace-publish",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/mcp/server.py:AttuneMCPServer._handle_command_workspace_publish"
+      ],
+      "root_anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_command_workspace_publish",
+      "subject_kind": "interactive_workspace",
+      "targets": [
+        {
+          "id": "rich",
+          "implementation_status": "pending_receipt",
+          "surface": "RICH"
+        },
+        {
+          "id": "portable",
+          "implementation_status": "pending_receipt",
+          "surface": "PORTABLE"
+        },
+        {
+          "id": "headless",
+          "implementation_status": "pending_receipt",
+          "surface": "HEADLESS"
+        }
+      ],
+      "warm_routes": [
+        "RICH",
+        "PORTABLE",
+        "HEADLESS"
+      ]
+    },
+    {
+      "cold_routes": [
+        "mcp-native:native-elicitation"
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "server-handle-elicitation-ask",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/mcp/server.py:AttuneMCPServer._handle_elicitation_ask"
+      ],
+      "root_anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_elicitation_ask",
+      "route_transport_refs": {
+        "mcp-native:native-elicitation": {
+          "id": "native-elicitation",
+          "kind": "subject"
+        }
+      },
+      "subject_kind": "interactive_form",
+      "targets": [
+        {
+          "id": "headless",
+          "implementation_status": "existing",
+          "surface": "HEADLESS"
+        }
+      ],
+      "warm_routes": [
+        "mcp-native:native-elicitation"
+      ]
+    },
+    {
+      "compatibility_contract": {
+        "contract_id": "claude-code.askuserquestion/v1",
+        "evidence_mode": "compatibility_projection",
+        "provenance": "legacy fixed-shape projection; no route, presentation, lifecycle or tier claim",
+        "response_shape": "success+title+description+batches+optional_surface_note",
+        "status": "compatibility_only",
+        "target_id": "form.askuserquestion"
+      },
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "legacy-render-form",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/mcp/server.py:AttuneMCPServer._handle_elicitation_render_form"
+      ],
+      "root_anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_elicitation_render_form",
+      "subject_kind": "compatibility_endpoint"
+    },
+    {
+      "cold_routes": [
+        "mcp-native:native-elicitation",
+        "PORTABLE",
+        "HEADLESS"
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "server-handle-elicitation-render-widget",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/mcp/server.py:AttuneMCPServer._handle_elicitation_render_widget"
+      ],
+      "root_anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_elicitation_render_widget",
+      "route_transport_refs": {
+        "HEADLESS": {
+          "id": "deferred-form-transport",
+          "kind": "subject"
+        },
+        "PORTABLE": {
+          "id": "deferred-form-transport",
+          "kind": "subject"
+        },
+        "RICH": {
+          "id": "deferred-form-transport",
+          "kind": "subject"
+        },
+        "mcp-native:native-elicitation": {
+          "id": "native-elicitation",
+          "kind": "subject"
+        }
+      },
+      "subject_kind": "interactive_form",
+      "targets": [
+        {
+          "id": "rich",
+          "implementation_status": "pending_receipt",
+          "surface": "RICH"
+        },
+        {
+          "id": "portable",
+          "implementation_status": "pending_receipt",
+          "surface": "PORTABLE"
+        },
+        {
+          "id": "headless",
+          "implementation_status": "pending_receipt",
+          "surface": "HEADLESS"
+        }
+      ],
+      "warm_routes": [
+        "RICH",
+        "mcp-native:native-elicitation",
+        "PORTABLE",
+        "HEADLESS"
+      ]
+    },
+    {
+      "cold_routes": [
+        "PORTABLE",
+        "HEADLESS"
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "server-handle-fix-workspace-preview",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/mcp/server.py:AttuneMCPServer._handle_fix_workspace_preview"
+      ],
+      "root_anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_fix_workspace_preview",
+      "subject_kind": "interactive_workspace",
+      "targets": [
+        {
+          "id": "rich",
+          "implementation_status": "pending_receipt",
+          "surface": "RICH"
+        },
+        {
+          "id": "portable",
+          "implementation_status": "pending_receipt",
+          "surface": "PORTABLE"
+        },
+        {
+          "id": "headless",
+          "implementation_status": "pending_receipt",
+          "surface": "HEADLESS"
+        }
+      ],
+      "warm_routes": [
+        "RICH",
+        "PORTABLE",
+        "HEADLESS"
+      ]
+    },
+    {
+      "classification_basis": "Registers host-readable resource content; does not own an interaction transition.",
+      "delivery_routes": [
+        {
+          "destination": "host",
+          "event": "mcp-response",
+          "id": "artifact",
+          "matcher": "",
+          "signature": "host-content",
+          "sink": "src/attune/mcp/server.py:AttuneMCPServer._register_resources"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "mcp-resources",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/mcp/server.py:AttuneMCPServer._register_resources"
+      ],
+      "root_anchor": "src/attune/mcp/server.py:AttuneMCPServer._register_resources",
+      "subject_kind": "informational_artifact"
+    },
+    {
+      "classification_basis": "Advertises MCP Apps metadata; does not own a form or workspace lifecycle.",
+      "delivery_routes": [
+        {
+          "destination": "host",
+          "event": "mcp-response",
+          "id": "artifact",
+          "matcher": "",
+          "signature": "host-content",
+          "sink": "src/attune/mcp/server.py:_handle_list_tools"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "mcp-tool-metadata",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/mcp/server.py:_handle_list_tools"
+      ],
+      "root_anchor": "src/attune/mcp/server.py:_handle_list_tools",
+      "subject_kind": "informational_artifact"
+    },
+    {
+      "classification_basis": "Workflow result panel; returns report content, not a form collector.",
+      "delivery_routes": [
+        {
+          "destination": "host",
+          "event": "mcp-response",
+          "id": "artifact",
+          "matcher": "",
+          "signature": "host-content",
+          "sink": "src/attune/mcp/workflow_handlers.py:_workflow_response"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "workflow-report",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/mcp/workflow_handlers.py:_workflow_response"
+      ],
+      "root_anchor": "src/attune/mcp/workflow_handlers.py:_workflow_response",
+      "subject_kind": "informational_artifact",
+      "targets": [
+        {
+          "id": "rich",
+          "implementation_status": "existing",
+          "surface": "RICH"
+        },
+        {
+          "id": "portable",
+          "implementation_status": "pending",
+          "surface": "PORTABLE"
+        },
+        {
+          "id": "headless",
+          "implementation_status": "pending",
+          "surface": "HEADLESS"
+        }
+      ]
+    },
+    {
+      "cold_routes": [
+        "mcp-native:native-elicitation",
+        "PORTABLE",
+        "HEADLESS"
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "recall_digest-render-digest-html",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/memory/recall_digest.py:render_digest_html"
+      ],
+      "root_anchor": "src/attune/memory/recall_digest.py:render_digest_html",
+      "route_transport_refs": {
+        "HEADLESS": {
+          "id": "deferred-form-transport",
+          "kind": "subject"
+        },
+        "PORTABLE": {
+          "id": "deferred-form-transport",
+          "kind": "subject"
+        },
+        "RICH": {
+          "id": "deferred-form-transport",
+          "kind": "subject"
+        },
+        "mcp-native:native-elicitation": {
+          "id": "native-elicitation",
+          "kind": "subject"
+        }
+      },
+      "subject_kind": "interactive_form",
+      "targets": [
+        {
+          "id": "rich",
+          "implementation_status": "pending_receipt",
+          "surface": "RICH"
+        },
+        {
+          "id": "portable",
+          "implementation_status": "pending_receipt",
+          "surface": "PORTABLE"
+        },
+        {
+          "id": "headless",
+          "implementation_status": "pending_receipt",
+          "surface": "HEADLESS"
+        }
+      ],
+      "warm_routes": [
+        "RICH",
+        "mcp-native:native-elicitation",
+        "PORTABLE",
+        "HEADLESS"
+      ]
+    },
+    {
+      "classification_basis": "Chart content projection; chart updates are tool calls, not FormResponse acceptance.",
+      "delivery_routes": [
+        {
+          "destination": "host",
+          "event": "mcp-response",
+          "id": "artifact",
+          "matcher": "",
+          "signature": "host-content",
+          "sink": "src/attune/widgets/chart_widget_tool.py:render_chart_widget"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "chart-widget",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/widgets/chart_widget_tool.py:render_chart_widget"
+      ],
+      "root_anchor": "src/attune/widgets/chart_widget_tool.py:render_chart_widget",
+      "subject_kind": "informational_artifact",
+      "targets": [
+        {
+          "id": "rich",
+          "implementation_status": "existing",
+          "surface": "RICH"
+        },
+        {
+          "id": "portable",
+          "implementation_status": "pending",
+          "surface": "PORTABLE"
+        },
+        {
+          "id": "headless",
+          "implementation_status": "pending",
+          "surface": "HEADLESS"
+        }
+      ]
+    },
+    {
+      "discovered": false,
+      "evidence_status": "pending-local-receipts",
+      "form_subject_ids": [
+        "server-handle-elicitation-ask",
+        "server-handle-elicitation-render-widget",
+        "recall_digest-render-digest-html"
+      ],
+      "id": "native-elicitation",
+      "implementation_anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_elicitation_ask",
+      "normalization_paths": [],
+      "root_anchor": "transport:native-elicitation",
+      "subject_kind": "interaction_transport",
+      "transport_id": "native-elicitation"
+    },
+    {
+      "discovered": false,
+      "evidence_status": "pending-local-receipts",
+      "form_subject_ids": [
+        "server-handle-elicitation-render-widget",
+        "recall_digest-render-digest-html"
+      ],
+      "id": "deferred-form-transport",
+      "implementation_anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_elicitation_collect_response",
+      "normalization_paths": [],
+      "root_anchor": "transport:deferred-form-transport",
+      "subject_kind": "interaction_transport",
+      "transport_id": "deferred-form-transport"
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "SessionStart",
+          "id": "b73d9cfc43e85698",
+          "matcher": "",
+          "signature": "context_stdout",
+          "sink": "print"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "plugin-memory_backend_notice-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "plugin/hooks/memory_backend_notice.py:main"
+      ],
+      "root_anchor": "plugin/hooks/memory_backend_notice.py:<module>",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "PreToolUse",
+          "id": "c0b0046d68345b0b",
+          "matcher": "Bash",
+          "signature": "exit2_stderr",
+          "sink": "print(file=sys.stderr)"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "src-worktree_add_guard-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/hooks/scripts/worktree_add_guard.py:main"
+      ],
+      "root_anchor": "src/attune/hooks/scripts/worktree_add_guard.py:<module>",
+      "subject_kind": "informational_delivery"
+    }
+  ]
+}
