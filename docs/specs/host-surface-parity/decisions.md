@@ -322,9 +322,52 @@ is covered by D8's go. Execution: Task 10 (R9) holds D8's 16.3
 execution go; Task 11 (R10) executes only behind its own chair go.
 Both report against D7's 90% floor and D8's zero-spend constraint.
 
+## D10 — Per-host attune-forms work: all three moves, in the recommended order (RULED 2026-09-06, chair, decision form + chat amendment)
+
+**Context.** The chair asked (2026-09-06) that Codex and other LLMs be
+able to use attune-forms. The lead's first pushback card mis-framed
+that goal as "build per-host adapters" (a position the chair never
+stated — the construct's `user_position` slot was filled by
+inference, the fabricated-disagreement failure D11d(4) names) and
+cited this spec's failure mode 2 backwards: failure mode 2 is a
+privileged Claude path beside a neglected Codex path, so building the
+Codex path is its remedy. Card withdrawn and corrected: **per-host
+work in this spec means host-profile records (R1/R9), thin per-host
+wrappers (siblings of the existing Claude plugin), and a per-host
+receipt — never renderer forks.** What survived the correction: the
+receipt comes first (Task 4 names the Cowork host only; nothing
+receipts Codex's native rendering), and "other LLMs" is bound to the
+roster carried as data (R7/R9).
+
+**Ruling.** Decision form `resp-20260905-211725-a9fb1618` returned
+option 3 ("Hold until R9 descriptors land"); the chair amended in
+chat to "all 3, in the recommended order". All three moves are
+authorized, nothing is held, sequence:
+
+1. **Codex native-host round-trip receipt** — authored below as
+   **Task 4b** beside Task 4. Falsifier: a `form_submitted` event
+   without the widget's `instance_id` means the answer was typed,
+   not rendered (`~/.attune/telemetry/form_events.jsonl` joins
+   `form_rendered` → `form_submitted` on `instance_id`).
+2. **Codex / Antigravity wrapper in the attune-forms repo** — install
+   lines for non-Claude hosts (the README documents only the Claude
+   plugin), an AGENTS-readable guidance twin of
+   `plugin/skills/forms/SKILL.md` with a drift guard, and the Codex
+   launcher pin lifted off `==0.12.3`.
+3. **Task 10 (R9)** under its existing D8 go.
+
+Zero spend throughout (D8). **Dependency, not ruled here:** Tasks 4,
+4b and 10 declare `depends-on 1`, and Task 1 (the parity gate) is not
+on main — it sits unpushed in Codex's worktree
+(`codex/host-surface-parity-task1` @ `4df9d848f`, ~3.5k lines,
+Codex absent until ~2026-09-09). Whether Claude lands it in Codex's
+absence is the chair's call (Open, below).
+
 ## Open
 
-- None. Every proposed decision in this spec is ruled.
+- **Task 1 landing while Codex is absent** (raised in D10): Claude
+  drives Codex's unpushed `codex/host-surface-parity-task1` to a PR, or
+  Tasks 4/4b/10 wait for Codex's return. Chair's call.
 
 Resolved 2026-09-02/03: the table was convened (round 1 complete,
 promoted in D5); D2 ruled (routing label); Task 7 ships alone on
