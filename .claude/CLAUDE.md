@@ -40,7 +40,13 @@ as pickable work.
    and "exited 0" are claims; evidence of the user-visible behavior
    is the receipt. Delegated lanes declare their receipt type at
    launch and the lead re-runs receipts centrally.
-   *Enforcer: **aspirational** (ruled discipline —
+   *Surfaces enforcer: `tests/unit/gates/test_surface_parity.py`
+   checks producer coverage, registry integrity, executed package receipts,
+   and explicit outstanding runtime obligations. Inventory success is not
+   complete parity: pending obligations and experiments cannot satisfy route
+   evidence requirements. Parity assertions cover only registry-named subjects;
+   production routing and lifecycle receipts remain open until implemented.
+   Other receipt discipline remains **aspirational** (ruled discipline —
    `.claude/rules/attune/decision-routine.md` delegation receipts
    + this contract's Verification receipts section; no mechanical
    gate).*

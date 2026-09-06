@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Surface parity review corrections bind all delivery identities to declared
+  content, preserve producer provenance, validate receipt metadata and malformed
+  projections, and select renderer controls from their owning record. Follow-up
+  checks reject mixed interactive/delivery footprints, narrowed obligation maps,
+  shipped experiment roots and route-active controls; workspace receipts consume
+  actual HEADLESS and PORTABLE reply contracts.
+
 - Test inference isolation: pytest now blocks real provider HTTP calls and
   Claude/Agent SDK inference launches before dispatch, scrubs child credentials,
   and gives subprocesses a separate Claude profile. Fake transports and
@@ -61,6 +68,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   loudly; `auto` is unchanged. Redis's role is stated in the chair's words
   wherever it is offered: enhanced memory features using Redis's
   open-source options.
+- **Surface parity registry and receipt gates (Task 1B, increment 2).**
+  The producer inventory now has subject records, typed obligations,
+  replayable package-renderer receipts, and explicit outstanding local
+  runtime receipts. Mutation gates reject missing twins, stale receipts,
+  broken transport references and invalid experiment declarations. Pending
+  obligations cannot satisfy route evidence requirements; inventory success
+  does not claim complete production parity. The ledger incorporates the
+  held Codex native-card observation with its attribution limits.
 
 - **Surface-producer inventory (host-surface-parity Task 1B, increment 1
   of the task).** `attune.elicitation.surface_inventory` mechanically

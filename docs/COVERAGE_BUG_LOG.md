@@ -2034,3 +2034,13 @@ measured duration receipt. Behavioral probes now use a module-local steady
 clock while retaining real Git/filesystem calls and their subprocess
 timeouts. A separate deterministic test exhausts the budget before the
 dirty worktree and requires no finding. Production limits are unchanged.
+
+
+### 2026-09-06 — #2444 cross-review corrections
+
+- **mocked**: first-record renderer controls hid order dependence; reversed-registry replay now asserts identical receipts.
+- **mocked**: matching absent provenance passed; missing/blank/type mutations now fail closed.
+- **mocked**: non-hook delivery identities survived content changes; every declared route now has a content digest identity.
+- **dead**: artifact collisions erased helper provenance; provenance is unioned.
+- **crash**: truncated collections and malformed projections produced unkeyed errors; reported boundaries now name their owner.
+- **mocked**: workspace reference injection and suffix-based footprint exemption accepted unsupported shapes; mutation tests reject both.

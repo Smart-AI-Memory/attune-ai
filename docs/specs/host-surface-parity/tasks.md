@@ -145,6 +145,15 @@ verified.
 
 ## Task 1B — Context-routed surface parity gate (R2)
 
+**Increment-2 scope ruling (chair, 2026-09-06):** keep this increment
+focused on the registry and gates, with every missing runtime receipt
+explicitly recorded for increment 3. A passing inventory check must not
+imply complete parity; routes without required evidence remain inadmissible
+when routing is implemented. This supersedes any inference that the full
+Task 1B validation list must already pass at increment 2. The complete
+task remains open. See [receipts.md](receipts.md#task-1b-validation-coverage)
+for the numbered check-to-test map and remaining work.
+
 *(Execution log: chair go "go 1B" 2026-09-06. STOP precondition
 receipt taken against the PyPI-installed attune-forms 0.14.0 — not
 editable, 7 registry targets, production `workspace_to_headless`, every

@@ -693,3 +693,20 @@ class TestAutoMergeChairReadGate:
             "`auto-merge-when-green` after the read IS the chair's "
             "authorized merge mechanism (D10)."
         )
+
+
+def test_contributing_smoke_prepares_tokenizer_before_guarded_pytest():
+    job = ALL_WORKFLOWS["contributing-smoke.yml"]["jobs"]["clean-venv-smoke"]
+    steps = job["steps"]
+    warm = next(step for step in steps if step.get("name") == "Warm tiktoken encoding")
+    execute = next(
+        step for step in steps if step.get("name", "").startswith("Execute the documented")
+    )
+    cache = next(step for step in steps if step.get("name") == "Cache tiktoken encodings")
+    assert steps.index(cache) < steps.index(warm) < steps.index(execute)
+    assert job["env"]["TIKTOKEN_CACHE_DIR"] == cache["with"]["path"]
+    assert "python -m pip install tiktoken" in warm["run"]
+    assert "tiktoken.get_encoding('cl100k_base')" in warm["run"]
+    assert "||" not in warm["run"] and not warm.get("continue-on-error")
+    assert execute["env"]["ANTHROPIC_API_KEY"] == ""
+    assert execute["run"] == 'bash "$RUNNER_TEMP/contributing-setup.sh"'

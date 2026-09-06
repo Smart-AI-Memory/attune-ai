@@ -64,6 +64,7 @@ dependencies = [
     "python-dotenv>=1.0.0,<2.0.0",
     "structlog>=24.0.0,<27.0.0",
     "attune-forms>=0.14.0,<1.0",
+    "jsonschema>=4.26.0,<5.0.0",  # Direct use by surface-evidence HEADLESS contract validation
     "defusedxml>=0.7.0,<1.0.0",
     "rich>=13.0.0,<16.0.0",  # Beautiful CLI output
     "typer>=0.9.0,<1.0.0",  # Better CLI commands
