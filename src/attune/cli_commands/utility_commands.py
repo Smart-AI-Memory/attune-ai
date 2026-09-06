@@ -102,6 +102,37 @@ def _install_config_files() -> int:
     return configs_copied
 
 
+def _memory_backend_setup_prompt() -> None:
+    """Ask once, on a terminal, which memory backend to use (redis-config-truth D5).
+
+    Non-interactive runs only print the pointer; a recorded preference is
+    never re-asked; EOF or an unwritable config never fails setup.
+    """
+    from attune.memory import preference as pref
+
+    if pref.preference_recorded():
+        return
+    print("\n  Memory backend:")
+    print("  The local file tier works with nothing to set up. Redis is optional.")
+    print(f"  {pref.REDIS_ROLE}")
+    if not (sys.stdin.isatty() and sys.stdout.isatty()):
+        print("  Choose later with: attune memory use auto|file|redis")
+        return
+    try:
+        answer = input("  Use which backend? [auto/file/redis] (auto): ").strip().lower() or "auto"
+    except EOFError:
+        return
+    if answer not in pref.VALUES:
+        print(f"  Not one of {', '.join(pref.VALUES)}; leaving it at auto (change any time).")
+        return
+    try:
+        path = pref.set_backend_preference(answer)
+    except OSError as e:
+        print(f"  Could not record the choice ({e}); use: attune memory use {answer}")
+        return
+    print(f"  ✅ Memory backend preference: {answer} (recorded in {path})")
+
+
 def cmd_setup(args: Namespace) -> int:
     """Install Attune slash commands for Claude Code."""
     source_dir = _find_source_dir()
@@ -147,6 +178,7 @@ def cmd_setup(args: Namespace) -> int:
         print("   Make sure you're running from the attune-ai directory.")
         return 1
 
+    _memory_backend_setup_prompt()
     total = copied + agents_copied + configs_copied
     print(
         f"\n✅ Installed {total} file(s)"

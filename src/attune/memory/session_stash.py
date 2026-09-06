@@ -141,7 +141,10 @@ def resolve_backend(
         from attune.memory.backend import SearchableMemoryBackend as _Searchable
 
         fallback: SearchableMemoryBackend | None = None
+        preference = _backend_preference()
         for ep in entry_points(group=_BACKEND_GROUP):
+            if preference == "file" and ep.name != "file":
+                continue  # the user chose the local tier: never probe an upgrade (D5)
             try:
                 instance = ep.load()()
             except Exception as exc:  # noqa: BLE001
@@ -176,6 +179,16 @@ def resolve_backend(
         # INTENTIONAL: resolution is best-effort; never propagate.
         logger.debug("backend resolution failed: %s", exc)
     return None
+
+
+def _backend_preference() -> str:
+    """The user's recorded backend preference; ``auto`` when unavailable."""
+    try:
+        from attune.memory.preference import get_backend_preference
+
+        return get_backend_preference()
+    except ImportError:
+        return "auto"
 
 
 def backend_status() -> dict:
@@ -226,6 +239,7 @@ def backend_status() -> dict:
         "transport": "none",
         "reachability": "unknown",
         "reason": None,
+        "preference": _backend_preference(),
     }
     resolved = resolve_backend(None)
     if resolved is not None:
@@ -260,6 +274,8 @@ def backend_status() -> dict:
         from importlib.metadata import entry_points
 
         for ep in entry_points(group=_BACKEND_GROUP):
+            if status["preference"] == "file" and ep.name != "file":
+                continue  # chosen local tier: an unprobed upgrade is not "dark" (D5)
             try:
                 instance = ep.load()()
             except Exception:  # noqa: BLE001
