@@ -934,10 +934,46 @@
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "lifecycle:subject:surface-runtime-route-form:accept",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "Native runtime implemented; production evidence and host activation remain pending. Synthetic transport tests do not activate this route."
+    },
+    {
+      "key": "route:surface-runtime-route-form:HEADLESS:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "Native runtime implemented; production evidence and host activation remain pending. Synthetic transport tests do not activate this route."
+    },
+    {
+      "key": "route:surface-runtime-route-form:PORTABLE:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "Native runtime implemented; production evidence and host activation remain pending. Synthetic transport tests do not activate this route."
+    },
+    {
+      "key": "route:surface-runtime-route-form:RICH:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "Native runtime implemented; production evidence and host activation remain pending. Synthetic transport tests do not activate this route."
+    },
+    {
+      "key": "route:surface-runtime-route-form:mcp-native:native-elicitation:production_projection",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "Native runtime implemented; production evidence and host activation remain pending. Synthetic transport tests do not activate this route."
+    },
+    {
+      "key": "subject:surface-runtime-route-form:surface:RICH",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "Native runtime implemented; production evidence and host activation remain pending. Synthetic transport tests do not activate this route."
     }
   ],
   "producer_baseline": {
-    "digest": "663b90971adc7776b55da61854b95f5bf6e4ee10ac3c5a8f79a59b30c8e70b35",
+    "digest": "43389f3572aea141d9091ecdf6a84765708ccdd63511bfbddaa082ead51bec8b",
     "path": "docs/specs/host-surface-parity/producer_baseline.json",
     "schema_version": "attune.surface-inventory.producer-baseline/1"
   },
@@ -2007,7 +2043,8 @@
       "form_subject_ids": [
         "server-handle-elicitation-ask",
         "server-handle-elicitation-render-widget",
-        "recall_digest-render-digest-html"
+        "recall_digest-render-digest-html",
+        "surface-runtime-route-form"
       ],
       "id": "native-elicitation",
       "implementation_anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_elicitation_ask",
@@ -2021,7 +2058,8 @@
       "evidence_status": "pending-local-receipts",
       "form_subject_ids": [
         "server-handle-elicitation-render-widget",
-        "recall_digest-render-digest-html"
+        "recall_digest-render-digest-html",
+        "surface-runtime-route-form"
       ],
       "id": "deferred-form-transport",
       "implementation_anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_elicitation_collect_response",
@@ -2071,6 +2109,63 @@
       ],
       "root_anchor": "src/attune/hooks/scripts/worktree_add_guard.py:<module>",
       "subject_kind": "informational_delivery"
+    },
+    {
+      "cold_routes": [
+        "mcp-native:native-elicitation",
+        "PORTABLE",
+        "HEADLESS"
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "surface-runtime-route-form",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/elicitation/surface_runtime.py:SurfaceFormRuntime.route_form"
+      ],
+      "root_anchor": "src/attune/elicitation/surface_runtime.py:SurfaceFormRuntime.route_form",
+      "route_transport_refs": {
+        "HEADLESS": {
+          "id": "deferred-form-transport",
+          "kind": "subject"
+        },
+        "PORTABLE": {
+          "id": "deferred-form-transport",
+          "kind": "subject"
+        },
+        "RICH": {
+          "id": "deferred-form-transport",
+          "kind": "subject"
+        },
+        "mcp-native:native-elicitation": {
+          "id": "native-elicitation",
+          "kind": "subject"
+        }
+      },
+      "subject_kind": "interactive_form",
+      "targets": [
+        {
+          "id": "rich",
+          "implementation_status": "pending_receipt",
+          "surface": "RICH"
+        },
+        {
+          "id": "portable",
+          "implementation_status": "pending_receipt",
+          "surface": "PORTABLE"
+        },
+        {
+          "id": "headless",
+          "implementation_status": "pending_receipt",
+          "surface": "HEADLESS"
+        }
+      ],
+      "warm_routes": [
+        "RICH",
+        "mcp-native:native-elicitation",
+        "PORTABLE",
+        "HEADLESS"
+      ]
     }
   ]
 }

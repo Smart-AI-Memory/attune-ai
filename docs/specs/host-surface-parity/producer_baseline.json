@@ -260,6 +260,14 @@
       "subject_kind": "interactive_form"
     },
     {
+      "anchor": "src/attune/elicitation/surface_runtime.py:SurfaceFormRuntime.route_form",
+      "destination": "session",
+      "event": "",
+      "signature": "native_elicit_form",
+      "sink": "session.elicit_form",
+      "subject_kind": "interactive_form"
+    },
+    {
       "anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_command_workspace_collect_action",
       "destination": "host",
       "event": "",
@@ -664,6 +672,11 @@
       "anchor": "src/attune/elicitation/command_workspace.py:CommandWorkspaceHost._render",
       "syntax": "direct",
       "target": "attune_forms.workspace.workspace_to_widget_html"
+    },
+    {
+      "anchor": "src/attune/elicitation/surface_runtime.py:SurfaceFormRuntime.route_form",
+      "syntax": "reexport",
+      "target": "attune_forms.elicitation_schema.form_to_elicitation_schema"
     },
     {
       "anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_elicitation_ask",

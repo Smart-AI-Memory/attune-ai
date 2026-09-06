@@ -470,6 +470,23 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
         "additionalProperties": False,
     }
     return {
+        "elicitation_route_form": {
+            "description": (
+                "Present a form through the server's verified surface policy and collect "
+                "a validated completion on the same authenticated session. Unavailable "
+                "routes return no_supported_surface without rendering."
+            ),
+            "input_schema": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "form": rich_form_schema,
+                    **template_props,
+                    "message": {"type": "string"},
+                    "receipt_id": {"type": "string"},
+                },
+            },
+        },
         "elicitation_render_form": {
             "description": (
                 "Validate a declarative form and return batched question "

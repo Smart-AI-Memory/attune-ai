@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Initial context-routed form runtime: server-bound receipts, idempotent
+  collection, single-use native completion challenges, and bounded validation
+  retries. The MCP route stays closed until a verified runtime is installed;
+  production activation and Codex display measurements remain outstanding.
+
 ### Fixed
 
 - Cross-review can explicitly use verified Claude Pro/Max subscription auth

@@ -9,7 +9,7 @@ import json
 import logging
 import os
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from attune_forms import (
     MCP_APP_MIME_TYPE,
@@ -46,6 +46,9 @@ from attune.mcp.tool_schemas import (
     get_workflow_tools,
 )
 from attune.mcp.workflow_handlers import WorkflowHandlersMixin, _workflow_response
+
+if TYPE_CHECKING:
+    from attune.elicitation.surface_runtime import SurfaceFormRuntime
 
 logger = logging.getLogger(__name__)
 
@@ -127,6 +130,7 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
         self,
         workspace_root: str | None = None,
         user_id: str | None = None,
+        surface_runtime: "SurfaceFormRuntime | None" = None,
     ):
         """Initialize the MCP server.
 
@@ -143,10 +147,13 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
                 the project root, so the sandbox tracks the project
                 even when the server's cwd differs (it is a no-op in
                 environments that don't export the variable).
+            surface_runtime: Trusted, evidence-verified runtime installed by the
+                server composition root. None leaves context routing disabled.
             user_id: Identity for memory operations. Defaults
                 to the OS login name or "mcp-session".
 
         """
+        self._surface_runtime = surface_runtime
         self._workspace_root = (
             workspace_root
             or os.environ.get("ATTUNE_MCP_WORKSPACE_ROOT")
@@ -389,6 +396,7 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
             "context_get": self._handle_context_get,
             "context_set": self._handle_context_set,
             "list_capabilities": lambda _args: self._handle_list_capabilities(),
+            "elicitation_route_form": self._handle_elicitation_route_form,
             "elicitation_render_form": self._handle_elicitation_render_form,
             "elicitation_collect_response": self._handle_elicitation_collect_response,
             "command_workspace_open": self._handle_command_workspace_open,
@@ -787,6 +795,44 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
             "key": key,
             "value": value,
         }
+
+    async def _handle_elicitation_route_form(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Route a form through server-installed evidence and authenticated transport.
+
+        Unconfigured runtime remains closed. A request cannot provide capability,
+        evidence, session, profile or binding authority. Compatibility tools keep
+        their existing response contracts.
+        """
+        if set(args) - {"form", "template", "slots", "message", "receipt_id"}:
+            return {"success": False, "problems": ["Unknown route-form argument"]}
+        form, problems = _form_from_args(args)
+        if problems:
+            return problems
+        if self._surface_runtime is None:
+            return {
+                "success": False,
+                "error": "no_supported_surface",
+                "selected_route": None,
+                "payload_kind": None,
+                "payload": None,
+                "receipt_id": None,
+                "submission_id": None,
+                "completion": None,
+                "decision_summary": {
+                    "context_reason": "missing_receipt",
+                    "selection_elapsed_ms": 0.0,
+                    "renderer_attempt_count": 0,
+                    "presentation_attempt_count": 0,
+                },
+            }
+        session, request_id = self._elicitation_session()
+        return await self._surface_runtime.route_form(
+            form,
+            session,
+            request_id,
+            receipt_id=args.get("receipt_id"),
+            message=args.get("message") or "",
+        )
 
     async def _handle_elicitation_render_form(self, args: dict[str, Any]) -> dict[str, Any]:
         """Validate a declarative form and return batched question payloads.

@@ -77,10 +77,14 @@ def test_scan_has_no_unresolved_problems(live) -> None:
 
 
 def test_baseline_reproduces_the_design_renderer_anchor_fixture(reviewed) -> None:
-    """Design R2 names six anchors / seven sites; the scan must find exactly those."""
+    """Preserve the six baseline anchors plus the increment-3 native runtime."""
     sites = {(a.anchor, a.target.rsplit(".", 1)[1]) for a in reviewed.renderer_call_anchors}
     assert sites == {
         ("src/attune/memory/recall_digest.py:render_digest_html", "form_to_widget_html"),
+        (
+            "src/attune/elicitation/surface_runtime.py:SurfaceFormRuntime.route_form",
+            "form_to_elicitation_schema",
+        ),
         (
             "src/attune/elicitation/command_workspace.py:CommandWorkspaceHost._render",
             "workspace_to_widget_html",
@@ -103,7 +107,7 @@ def test_baseline_reproduces_the_design_renderer_anchor_fixture(reviewed) -> Non
             "form_to_elicitation_schema",
         ),
     }
-    assert len({a.anchor for a in reviewed.renderer_call_anchors}) == 6
+    assert len({a.anchor for a in reviewed.renderer_call_anchors}) == 7
 
 
 def test_baseline_keeps_the_d6_hook_envelope_findings(reviewed) -> None:

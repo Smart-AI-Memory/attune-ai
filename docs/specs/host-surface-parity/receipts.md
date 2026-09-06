@@ -237,3 +237,41 @@ Triage validation: 656 gates/quality tests passed at 99.55% combined coverage;
 241 skipped, 3 xfailed. Eighteen targeted defect probes fail against the
 original `1efa08406` source and pass in the corrected gate run. Pinned hooks
 pass. Commands, logs and environment limits are in the latest handoff section.
+
+
+## Increment-3 Codex interaction — implementation in progress (2026-09-06)
+
+D14 authorizes the bounded milestone. `surface_policy` now implements context
+classification, atomic receipt transitions, deferred common validation and
+single-use native completion challenges. `surface_runtime` executes one
+native projection with bounded same-route validation retries. The public
+`elicitation_route_form` handler accepts no capability, evidence, session or
+profile authority from request arguments.
+
+The normal composition root does not yet install a runtime. Consequently the
+public handler returns `no_supported_surface` by default. The new producer is
+registered with six pending obligations, bringing the inventory to 161 pending
+keys; no synthetic transport result was promoted to production route evidence.
+Remaining work: verified evidence/bootstrap and installation-key provisioning,
+transport-teardown integration, deferred presentation adapters, and actual
+Codex cold/warm display and submission measurements. Task 1B and the bounded
+milestone remain incomplete.
+
+Behavioral receipts so far: 72 policy/runtime tests passed, 95.04% combined
+coverage, including a real child-process MCP stdio exchange with the public
+handler and common validator. The client negotiated form capability and
+returned fixture-owned answers. This proves protocol crossing and validation,
+not native paint or a live human's answer. The subprocess installs the committed
+inference guard and uses empty provider keys.
+
+Two same-provider read-only review passes reproduced six defects, all corrected
+with negative regressions: terminal-chain reopening; expiry during validation;
+anonymous-form receipt reuse; malformed native response mutating authority;
+unhashable native action; and post-close disposition loss. These are advisory
+reviews, not a different-model review or a clean UI acceptance receipt.
+
+Final local validation for this implementation slice: 26,017 passed, 242 skipped,
+3 xfailed in 70.63 seconds across the whole configured tree; isolated Redis and
+empty provider keys. Pinned pre-commit hooks passed after formatting and the
+capability projector updated the stable registered count to 65. Focused policy
+and runtime coverage is 95.04%; 72 tests passed, including public stdio.
