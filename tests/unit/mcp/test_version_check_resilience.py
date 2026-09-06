@@ -30,6 +30,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import pytest
 
 from attune.mcp import version_check
+from tests._inference_guard import loopback_http_fixture
 
 # All tests here drive a real localhost socket; isolate them from the
 # parallel xdist lane (see module docstring).
@@ -89,7 +90,8 @@ def stub_server():
     thread.start()
     host, port = server.server_address
     try:
-        yield f"http://{host}:{port}"
+        with loopback_http_fixture(server.socket):
+            yield f"http://{host}:{port}"
     finally:
         server.shutdown()
         server.server_close()

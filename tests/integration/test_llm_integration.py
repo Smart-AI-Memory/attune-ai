@@ -14,6 +14,7 @@ Licensed under the Apache License, Version 2.0
 
 import os
 
+import httpx
 import pytest
 from dotenv import load_dotenv
 
@@ -309,11 +310,34 @@ class TestLLMErrorHandling:
     @pytest.mark.asyncio
     @pytest.mark.skipif(anthropic is None, reason="anthropic package not installed")
     async def test_invalid_api_key(self):
-        """Test handling of invalid API key"""
-        expected_exceptions = (ValueError, RuntimeError, anthropic.AuthenticationError)
-        with pytest.raises(expected_exceptions):
-            provider = AnthropicProvider(api_key="invalid-key-12345")
-            await provider.generate(messages=[{"role": "user", "content": "Hello"}], max_tokens=50)
+        """Exercise the real SDK/provider error path with an intercepted 401."""
+        requests = []
+
+        def unauthorized(request):
+            requests.append(request)
+            return httpx.Response(
+                401,
+                json={
+                    "type": "error",
+                    "error": {"type": "authentication_error", "message": "Invalid API key"},
+                },
+            )
+
+        async with httpx.AsyncClient(transport=httpx.MockTransport(unauthorized)) as http:
+            async with anthropic.AsyncAnthropic(
+                api_key="invalid-key-12345", http_client=http, max_retries=0
+            ) as client:
+                provider = AnthropicProvider(api_key="invalid-key-12345")
+                await provider.client.close()
+                provider.client = client
+                with pytest.raises(anthropic.AuthenticationError) as caught:
+                    await provider.generate(
+                        messages=[{"role": "user", "content": "Hello"}], max_tokens=50
+                    )
+        assert caught.value.status_code == 401
+        assert len(requests) == 1
+        assert requests[0].url.path == "/v1/messages"
+        assert requests[0].headers["x-api-key"] == "invalid-key-12345"
 
     @pytest.mark.llm
     @pytest.mark.asyncio

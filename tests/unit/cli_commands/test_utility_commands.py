@@ -997,6 +997,13 @@ class TestCmdFeatures:
 # ---------------------------------------------------------------------------
 
 
+@pytest.fixture
+def doctor_file_backend(monkeypatch):
+    """Doctor's unrelated memory diagnostic uses the fixture-local file tier."""
+    monkeypatch.setenv("ATTUNE_MEMORY_BACKEND", "file")
+
+
+@pytest.mark.usefixtures("doctor_file_backend")
 class TestCmdDoctor:
     """Tests for cmd_doctor."""
 
@@ -1126,6 +1133,7 @@ class TestCmdDoctor:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.usefixtures("doctor_file_backend")
 class TestCmdDoctorInstallDiagnostics:
     """Tests for the related-package and Claude plugin doctor checks."""
 

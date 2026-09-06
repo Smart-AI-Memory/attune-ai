@@ -285,6 +285,7 @@ nav:
   - Contributing:
       - contributing.md
       - Developer Guide: DEVELOPER_GUIDE.md
+      - Test Inference Isolation: testing/inference-isolation.md
 
   # Book section (separate from main docs)
   - Book:

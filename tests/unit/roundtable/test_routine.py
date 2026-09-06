@@ -8,7 +8,9 @@ non-mocked receipt; tests skip when Redis is unreachable.
 
 from __future__ import annotations
 
+import subprocess
 import uuid
+from unittest.mock import Mock
 
 import pytest
 
@@ -193,14 +195,14 @@ class TestPlumbing:
         monkeypatch.setenv("ANTHROPIC_BASE_URL", "http://parent-proxy")
         monkeypatch.setenv("CLAUDECODE", "1")
         monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", "cli")
-        probe = (
-            "sh",
-            "-c",
-            'echo "leaked=${ANTHROPIC_BASE_URL+u}${CLAUDECODE+c}'
-            '${CLAUDE_CODE_ENTRYPOINT+e} key=${ANTHROPIC_API_KEY:-none}"',
-        )
-        code, out = default_invoke_seat(probe, "unused")
-        assert code == 0 and "leaked= key=sk-real" in out
+        launch = Mock(return_value=subprocess.CompletedProcess([], 0, "position", ""))
+        monkeypatch.setattr(subprocess, "run", launch)
+        code, out = default_invoke_seat(("claude", "-p", "{brief}"), "fixture")
+        assert code == 0 and out == "position"
+        env = launch.call_args.kwargs["env"]
+        assert env["ANTHROPIC_API_KEY"] == "sk-real"
+        assert not {"ANTHROPIC_BASE_URL", "CLAUDECODE", "CLAUDE_CODE_ENTRYPOINT"} & env.keys()
+        launch.assert_called_once()
 
     def test_seat_reply_keeps_head_and_drops_stderr_on_success(self) -> None:
         """Live-run regression: tail-truncation cut a position off
@@ -218,10 +220,12 @@ class TestPlumbing:
         """An EMPTY key must be removed, not passed through — empty
         401s the claude CLI instead of letting stored auth kick in."""
         monkeypatch.setenv("ANTHROPIC_API_KEY", "")
-        code, out = default_invoke_seat(
-            ("sh", "-c", 'echo "set=${ANTHROPIC_API_KEY+yes}"'), "unused"
-        )
-        assert code == 0 and "set=yes" not in out
+        launch = Mock(return_value=subprocess.CompletedProcess([], 0, "position", ""))
+        monkeypatch.setattr(subprocess, "run", launch)
+        code, out = default_invoke_seat(("claude", "-p", "{brief}"), "fixture")
+        assert code == 0 and out == "position"
+        assert "ANTHROPIC_API_KEY" not in launch.call_args.kwargs["env"]
+        launch.assert_called_once()
 
     def test_synthesis_failure_is_visible_on_the_thread(self) -> None:
         """Live-run regression: a failed synthesis must not read as a

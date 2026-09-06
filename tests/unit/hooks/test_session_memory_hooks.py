@@ -15,11 +15,16 @@ import importlib.util
 import io
 import json
 import os
+import socket
 import sys
+import threading
 import urllib.request
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 import pytest
+
+from tests._inference_guard import loopback_http_fixture
 
 _HOOKS_DIR = Path(__file__).resolve().parents[3] / "plugin" / "hooks"
 
@@ -37,7 +42,10 @@ def _load_module(name: str):
 
 
 @pytest.fixture
-def stash_mod():
+def stash_mod(monkeypatch):
+    # Hook logic is independent of discovering the user's live AMS service.
+    monkeypatch.setattr("attune.memory.session_stash.resolve_backend", lambda backend=None: backend)
+    monkeypatch.setattr("attune.memory.session_stash.backend_status", lambda: {})
     return _load_module("session_stash")
 
 
@@ -375,37 +383,59 @@ def test_stash_findings_maps_extras_to_tags(stash_mod, monkeypatch):
 # ==========================================================================
 
 
-def _ollama_available() -> bool:
-    """True when Ollama answers and the configured extraction model is pulled."""
-    base = os.environ.get("ATTUNE_MEMORY_OLLAMA_URL", "http://localhost:11434").rstrip("/")
-    model = os.environ.get("ATTUNE_MEMORY_OLLAMA_MODEL", "llama3.1:8b")
-    try:
-        with urllib.request.urlopen(f"{base}/api/tags", timeout=2) as resp:
-            tags = json.loads(resp.read().decode("utf-8"))
-    except Exception:  # noqa: BLE001 — any failure means "no Ollama" -> skip
-        return False
-    names = {m.get("name", "") for m in tags.get("models", [])}
-    family = model.split(":")[0]
-    return any(n == model or n.startswith(family) for n in names)
+def test_extract_via_ollama_http_round_trip(stash_mod, monkeypatch):
+    """Real HTTP serialization and parsing against a fixture-owned server."""
+    requests = []
 
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self):  # noqa: N802
+            requests.append(
+                (self.path, json.loads(self.rfile.read(int(self.headers["Content-Length"]))))
+            )
+            body = json.dumps(
+                {
+                    "response": json.dumps(
+                        {
+                            "findings": [
+                                {
+                                    "type": "bug",
+                                    "content": "Idempotency key omitted on retries",
+                                    "confidence": 0.9,
+                                }
+                            ]
+                        }
+                    )
+                }
+            ).encode()
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(body)
 
-@pytest.mark.skipif(not _ollama_available(), reason="Ollama + extraction model not available")
-def test_extract_via_ollama_real_round_trip(stash_mod):
-    """NON-MOCKED: a real Ollama call returns parseable typed findings.
+        def log_message(self, *args):
+            pass
 
-    The mocked test above proves parsing of a *canned* response; this proves
-    the real ``/api/generate`` request shape + real model output parse
-    end-to-end — the boundary a mock cannot exercise. Model output is
-    non-deterministic, so assert STRUCTURE, not content.
-    """
+    server = HTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    monkeypatch.setenv("ATTUNE_MEMORY_OLLAMA_URL", f"http://127.0.0.1:{server.server_port}")
     transcript = (
         "user: We kept getting double charges on Stripe webhooks.\n"
         "assistant: Root cause was the idempotency key being omitted on retries; "
         "adding it fixed the double charge. We also decided to standardize on "
         "Redis AMS for cross-session memory.\n"
     )
-    findings = stash_mod._extract_via_ollama(transcript)
-    assert findings is not None, "real Ollama returned no parseable findings for a clear transcript"
+    try:
+        with loopback_http_fixture(server.socket):
+            findings = stash_mod._extract_via_ollama(transcript)
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+    assert len(requests) == 1
+    assert requests[0][0] == "/api/generate"
+    assert transcript in requests[0][1]["prompt"]
+    assert requests[0][1]["stream"] is False
+    assert findings is not None, "fixture HTTP response was not parsed"
     assert isinstance(findings, list) and findings
     for f in findings:
         assert isinstance(f, dict)
@@ -421,9 +451,14 @@ def test_extract_via_ollama_real_unreachable_returns_none(stash_mod, monkeypatch
     heuristic. Complements the mocked-exception test with urllib's actual
     error path against a port where nothing listens.
     """
-    monkeypatch.setenv("ATTUNE_MEMORY_OLLAMA_URL", "http://127.0.0.1:1")
     monkeypatch.setenv("ATTUNE_MEMORY_STASH_TIMEOUT", "2")
-    assert stash_mod._extract_via_ollama("a session where we fixed a real bug") is None
+    with socket.socket() as refused:
+        refused.bind(("127.0.0.1", 0))
+        monkeypatch.setenv(
+            "ATTUNE_MEMORY_OLLAMA_URL", f"http://127.0.0.1:{refused.getsockname()[1]}"
+        )
+        with loopback_http_fixture(refused):
+            assert stash_mod._extract_via_ollama("a session where we fixed a real bug") is None
 
 
 # ==========================================================================

@@ -34,6 +34,8 @@ jobs:
   integration:
     name: integration (no-auth)
     runs-on: ubuntu-latest
+    env:
+      TIKTOKEN_CACHE_DIR: ${{ runner.temp }}/tiktoken-cache
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -51,6 +53,17 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .[dev]
+
+      # Download tokenizer data during setup; pytest stays inference-blocked.
+      - name: Cache tiktoken encodings
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ runner.temp }}/tiktoken-cache
+          key: tiktoken-cl100k_base-${{ runner.os }}
+
+      - name: Warm tiktoken encoding
+        shell: bash
+        run: python -c "import tiktoken; tiktoken.get_encoding('cl100k_base')"
 
       - name: Run no-auth integration suite (keyless)
         # Empty ANTHROPIC_API_KEY → exercises the integration wiring

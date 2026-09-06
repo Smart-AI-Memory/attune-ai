@@ -28,6 +28,12 @@ from pathlib import Path
 import pydantic.root_model  # noqa: F401  (import for side effect: sys.modules warm-up)
 import pytest
 
+from tests._inference_guard import install as _install_inference_guard
+from tests._inference_guard import uninstall as _uninstall_inference_guard
+
+# Before workflow imports and collection, in the controller and every worker.
+_install_inference_guard()
+
 #: ``ATTUNE_*`` vars owned by the autouse fixtures further down, which
 #: set them per-test (tmp ``ATTUNE_HOME``, telemetry off). ``_scrub_attune_env``
 #: must not touch these — see its docstring for the failure it caused.
@@ -999,3 +1005,8 @@ def fake_module(monkeypatch):
         return module
 
     return register
+
+
+def pytest_unconfigure(config):
+    """Restore process-local isolation after all test workers finish."""
+    _uninstall_inference_guard()

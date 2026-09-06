@@ -85,6 +85,32 @@ PIP_CACHE_EXCEPTIONS = {
 SHA_PATTERN = re.compile(r"[0-9a-f]{40}")
 
 
+@pytest.mark.parametrize(
+    "filename,job_id",
+    [
+        ("tests.yml", "test"),
+        ("tests.yml", "clock-tz"),
+        ("tests.yml", "coverage"),
+        ("integration-tests.yml", "integration"),
+    ],
+)
+def test_tokenizer_data_is_prepared_before_isolated_pytest(filename, job_id):
+    job = ALL_WORKFLOWS[filename]["jobs"][job_id]
+    cache_dir = "${{ runner.temp }}/tiktoken-cache"
+    assert job["env"]["TIKTOKEN_CACHE_DIR"] == cache_dir
+    steps = job["steps"]
+    caches = [step for step in steps if step.get("name") == "Cache tiktoken encodings"]
+    warmups = [step for step in steps if step.get("name") == "Warm tiktoken encoding"]
+    assert len(caches) == len(warmups) == 1
+    cache, warm = caches[0], warmups[0]
+    assert cache["with"]["path"] == cache_dir
+    assert "tiktoken.get_encoding('cl100k_base')" in warm["run"]
+    assert "||" not in warm["run"] and not warm.get("continue-on-error", False)
+    pytest_steps = [i for i, step in enumerate(steps) if "pytest " in step.get("run", "")]
+    assert pytest_steps
+    assert steps.index(cache) < steps.index(warm) < min(pytest_steps)
+
+
 # ===========================================================================
 # 1. Schema Validation
 # ===========================================================================

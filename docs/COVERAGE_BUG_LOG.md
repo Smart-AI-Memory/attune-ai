@@ -1955,3 +1955,16 @@ kind single-sourcing) drew no findings at all.
 
 No substitute was captured at tag time, per US-4. The AFTER snapshot is
 queued for 24-72h post-tag.
+
+## 2026-09-06 — inference-isolation CI repair (#2445)
+
+- **Crash:** `tests/_inference_guard.py` decoded the Windows Popen
+  audit event's absent executable as a filesystem path, aborting pytest.
+  The guard now checks the command even when the override is absent and
+  handles quoted Windows executable paths; simulated Windows audit events
+  retain inference and Python-bootstrap rejection checks.
+- **Mocked:** local warm tokenizer caches and the default integration
+  exclusion hid CI-only network attempts. CI now prepares static tokenizer
+  data before pytest; the no-auth integration lane uses fixture-owned AMS
+  HTTP readback, explicit file-backend MCP dispatch, and an intercepted SDK
+  401. The inference guard remains active through these tests.

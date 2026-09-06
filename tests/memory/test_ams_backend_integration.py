@@ -20,7 +20,10 @@ Prerequisites (skipped cleanly when absent):
       (default ``http://localhost:8000``)
 
 Run locally with AMS up:
-    pytest tests/memory/test_ams_backend_integration.py -v
+    This live-service module is integration/network scoped. Ordinary tests
+    must not discover and use an ambient server just because it is running.
+    A separately isolated live-service runner is required; the default pytest
+    inference guard rejects unregistered HTTP endpoints even when selected.
 """
 
 from __future__ import annotations
@@ -47,10 +50,14 @@ def _ams_running() -> bool:
         return False
 
 
-pytestmark = pytest.mark.skipif(
-    not _ams_running(),
-    reason=f"No Agent Memory Server reachable at {_AMS_BASE_URL}",
-)
+pytestmark = [pytest.mark.integration, pytest.mark.network]
+
+
+@pytest.fixture(autouse=True)
+def require_ams():
+    # Probe only after test selection, never during ordinary collection.
+    if not _ams_running():
+        pytest.skip(f"No Agent Memory Server reachable at {_AMS_BASE_URL}")
 
 
 @pytest.fixture

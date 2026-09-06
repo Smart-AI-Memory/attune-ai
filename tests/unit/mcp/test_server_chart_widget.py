@@ -23,6 +23,7 @@ def stub_kernel(tmp_path, monkeypatch):
         encoding="utf-8",
     )
     monkeypatch.setattr(chart_widget_tool, "_KERNEL_PATH", stub)
+    monkeypatch.setattr(chart_widget_tool, "_resolve_backend", lambda: None)
 
 
 def _make_server(tmp_path):
