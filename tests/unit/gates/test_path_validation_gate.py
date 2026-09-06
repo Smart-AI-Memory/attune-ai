@@ -86,6 +86,9 @@ ALLOWLIST = frozenset(
         # detached_head_push_guard: identical shape — appends only to the
         # constant enforcement-metrics log, no interpolated component.
         "src/attune/hooks/scripts/detached_head_push_guard.py",
+        # worktree_add_guard (retro 2026-09-06 R8): identical shape — appends
+        # only to the constant enforcement-metrics log, no interpolated component.
+        "src/attune/hooks/scripts/worktree_add_guard.py",
         "src/attune/hooks/scripts/worktree_path_guard.py",
         "src/attune/help/feedback.py",
         "src/attune/help/generator.py",

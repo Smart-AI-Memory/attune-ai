@@ -711,6 +711,80 @@ and the lead reported success unverified until the chair said "I don't
 see it". Three `form_rendered` telemetry rows from this session never
 reached a screen: a live R10 tier-provenance data point.
 
+## D13 — The parity registry binds to the producer baseline by DIGEST PIN (RULED 2026-09-06, chair: "rule D13 pin")
+
+**Status and provenance.** First written by the lead as "RULED, chair"
+straight from the retro's `do now` on R3, without the assumption review
+or the counter-case it owed (D11d). The chair flagged it: "re 2447 D13
+needs discussion." Three shapes were put side by side; the chair's lean,
+verbatim: *"a digest pin that preserves the forcing function with a
+one-line diff instead of a 650-line copy. This sounds like a better
+option."* A crossed form answer picked bare reference; asked which stood,
+the chair answered, verbatim: *"1 y, 2y if Codex concurs , 3 y"* — (1)
+the digest pin stands as the default; (2) bare reference only if Codex
+concurs it loses nothing; (3) PROPOSED until Codex answers, then the
+chair rules. Codex was heard (read-only, against #2444 head `f959377dd`,
+2026-09-06 ~07:40Z, relayed by the chair); its closing line, verbatim:
+*"Recommendation: digest pin — preserve the complete reviewed-baseline
+binding with one stored canonical digest, retain the existing semantic
+checks, and pass verified baseline content to experiment validation; I
+do not concur that a bare reference loses nothing."* Under the chair's
+conditional, (2) was closed and (1) was the shape. The chair ruled, in
+their words, 2026-09-06: *"rule D13 pin"*.
+
+**The three shapes.**
+
+1. *Embedded copy* (#2444 as opened): `parity-registry.json` carries a
+   full copy of `producer_baseline.json`; `validate_inventory` rejects an
+   unequal copy before validating producers. Codex: the copy is a
+   snapshot, not extra parity semantics; its one real advantage is local
+   readability of the snapshot inside the registry. Cost: a ~650-line
+   twin of a reviewed fixture (principle 3) and a 650-line diff per regen.
+2. *Bare reference*: path + schema version, fixture loaded at test time.
+   What it loses (Codex, confirmed by the lead's re-run): the mandatory
+   registry acknowledgment of baseline changes that the semantic
+   validators do not consume — e.g. a renderer call's recorded `syntax`
+   (`direct | reexport | qualified`) is stored in the baseline and read by
+   nothing in `surface_registry.py`; copy equality or a content digest
+   still surfaces that change, a bare reference does not.
+3. *Digest pin*: `producer_baseline: {path, schema_version, digest}`
+   with `digest = canonical_digest(fixture)` (the SHA-256 over canonical
+   JSON #2444 already ships at `surface_registry.py:59-62`). Same
+   complete-baseline binding as the copy, one stored line, same regen
+   forcing function.
+
+**Correction to the lead's counter-case (Codex, verified).** The lead
+claimed that by reference "only a root add/remove forces a registry
+edit" and that a hook growing a `pretooluse_deny` producer beside its
+`exit2_stderr` one would pass unreviewed. Both wrong: `validate_producers`
+requires each subject's exact `producer_anchors` list (helper provenance
+included) and exactly one subject per root, and `_validate_hook_routes`
+compares the full set of `(event, matcher, signature, sink, destination)`
+tuples against declared delivery routes — so both changes already fail
+without any copy or pin. "Unreviewed" was also too strong: the
+scan-vs-fixture gate still forces a fixture diff. The real gap is the
+one in shape 2 above. Neither copy nor pin proves a human re-derived the
+obligations rather than refreshing a value.
+
+**Migration scope (Codex, verified — not a one-line code change).**
+`validate_experiments` reads `registry["producer_baseline"]["shipped_roots"]`
+directly; with a pin it must receive the validated, resolved baseline (or
+its shipped roots), and the synthetic tests that supply the embedded
+shape (`test_surface_parity.py` ~729, ~922, ~1372) migrate with it.
+`InventoryReport.registry_digest` hashes the whole registry and stays
+transitive through the pin: validate the resolved fixture against the pin
+before issuing a report. `surface_evidence.py` has no producer-baseline
+dependency. The mismatch diagnostic — today only "reviewed baseline
+drift" — names expected and actual digests plus the regenerate /
+re-derive / review command. The JSON diff on regen is one line; the code
+migration is small and bounded to the above.
+
+**Application (on the ruling).** Codex applies the pin in #2444's
+rebase onto main (which already regenerates the fixture for the #2446
+hook subject and the retro PR's `worktree_add_guard` producer); the lead
+lifts the hold on #2444 and quotes the ruling there. The bare-reference
+instruction the lead posted on #2444 earlier that day is withdrawn.
+
 ## Open
 
 - None. Every proposed decision in this spec is ruled.

@@ -72,6 +72,10 @@
       "root_anchor": "src/attune/hooks/scripts/starter_reconciler.py:<module>"
     },
     {
+      "helper_anchor": "src/attune/hooks/scripts/worktree_add_guard.py:main",
+      "root_anchor": "src/attune/hooks/scripts/worktree_add_guard.py:<module>"
+    },
+    {
       "helper_anchor": "src/attune/hooks/scripts/worktree_path_guard.py:main",
       "root_anchor": "src/attune/hooks/scripts/worktree_path_guard.py:<module>"
     }
@@ -219,6 +223,14 @@
       "event": "SessionStart",
       "signature": "context_stdout",
       "sink": "print",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "anchor": "src/attune/hooks/scripts/worktree_add_guard.py:main",
+      "destination": "model_context",
+      "event": "PreToolUse",
+      "signature": "exit2_stderr",
+      "sink": "print(file=sys.stderr)",
       "subject_kind": "informational_delivery"
     },
     {
@@ -565,6 +577,16 @@
       "ordinal": 0,
       "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/security_guard.py\"",
       "resolved_repo_path": "src/attune/hooks/scripts/security_guard.py"
+    },
+    {
+      "error": null,
+      "event": "PreToolUse",
+      "json_pointer": "/hooks/PreToolUse/0/hooks/1/command",
+      "manifest_path": ".claude/settings.json",
+      "matcher": "Bash",
+      "ordinal": 1,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/worktree_add_guard.py\"",
+      "resolved_repo_path": "src/attune/hooks/scripts/worktree_add_guard.py"
     },
     {
       "error": null,

@@ -30,6 +30,9 @@ FOCUSED_TESTS = (
     "tests/unit/scripts/test_collaboration_preflight.py",
     "tests/unit/scripts/test_project_collaboration_contract.py",
     "tests/unit/plugins/test_sync_agents_skills.py",
+    # Retro 2026-09-06 (R9): the complexity ratchet lives OUTSIDE tests/unit/gates,
+    # so a push that only ran the gates still went red in CI. ~3 s.
+    "tests/unit/quality",
 )
 MAIN_UPDATE_GUIDANCE = (
     "Inspect the existing main checkout first. Pull only when that checkout "
