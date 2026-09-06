@@ -711,7 +711,7 @@ and the lead reported success unverified until the chair said "I don't
 see it". Three `form_rendered` telemetry rows from this session never
 reached a screen: a live R10 tier-provenance data point.
 
-## D13 — The parity registry binds to the producer baseline by DIGEST PIN, not by embedded copy and not by bare reference (PROPOSED 2026-09-06; chair's lean recorded; promoted to RULED by the chair's merge word on #2447)
+## D13 — The parity registry's binding to the producer baseline: digest pin by default, bare reference only if Codex concurs (PROPOSED 2026-09-06; chair's conditional recorded; the chair rules after Codex answers on #2444)
 
 **Status and provenance.** First written by the lead as "RULED, chair"
 straight from the retro's `do now` on R3, without the assumption review
@@ -719,8 +719,15 @@ or the counter-case it owed (D11d). The chair flagged it: "re 2447 D13
 needs discussion." The discussion put three shapes side by side; the
 chair's lean, verbatim: *"a digest pin that preserves the forcing
 function with a one-line diff instead of a 650-line copy. This sounds
-like a better option."* This entry records that lean. It becomes a
-ruling when the chair's merge word lands on #2447, not before.
+like a better option."* A form answer that crossed with that message
+picked bare reference and "rewrite as RULED"; asked which stood, the
+chair answered, verbatim: *"1 y, 2y if Codex concurs , 3 y"* — decoded
+with the three numbered options as put: (1) the digest pin stands as
+the default shape; (2) bare reference is acceptable ONLY if Codex
+concurs that it loses nothing its obligations or gates rely on; (3)
+D13 stays PROPOSED until Codex answers the hearing request on #2444,
+and the chair rules then, from the shapes below. This entry may merge
+as PROPOSED; a merge word on #2447 does not promote it.
 
 **The three shapes, and why the middle one.**
 
@@ -760,10 +767,14 @@ ruling when the chair's merge word lands on #2447, not before.
   regenerates the fixture for the #2446 hook subject and the retro PR's
   `worktree_add_guard` producer). #2447 changes no registry code.
 
-**Application (on the ruling).** Codex replaces the embedded copy with
-the digest pin in #2444's rebase; the lead lifts the hold posted on
-#2444 and quotes this entry there. The bare-reference instruction the
-lead posted on #2444 earlier that day is withdrawn.
+**Application (on the ruling).** Codex applies the ruled shape in
+#2444's rebase — the digest pin unless the chair rules bare reference on
+Codex's concurrence; the lead lifts the hold posted on #2444 and quotes
+the ruling there. The bare-reference instruction the lead posted on
+#2444 earlier that day is withdrawn; the hearing request posted after
+it (three read-only questions: what the copy catches that a pin would
+not, whether a bare reference loses anything, whether any code binds to
+the copy's content) is the input the ruling waits on.
 
 ## Open
 
