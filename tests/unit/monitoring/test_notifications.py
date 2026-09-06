@@ -376,9 +376,11 @@ class TestPinnedDelivery:
             raise OSError("stop before real network I/O")
 
         monkeypatch.setattr(socket_mod, "create_connection", fake_create_connection)
-        opener = urlreq.build_opener(_PinnedHTTPHandler("8.8.8.8"))
-        with pytest.raises(urllib.error.URLError):
-            opener.open("http://webhook.example/hook", timeout=1)
+        handler = _PinnedHTTPHandler("8.8.8.8")
+        # Exercise the real connection factory at the intercepted socket seam.
+        monkeypatch.setattr(handler, "do_open", lambda factory, req: factory(req.host).connect())
+        with pytest.raises(OSError, match="stop before real network"):
+            handler.http_open(urlreq.Request("http://webhook.example/hook"))
 
         assert connected == [("8.8.8.8", 80)]
 
@@ -409,9 +411,12 @@ class TestPinnedDelivery:
         monkeypatch.setattr(socket_mod, "create_connection", fake_create_connection)
         monkeypatch.setattr(ssl.SSLContext, "wrap_socket", fake_wrap_socket)
 
-        opener = urlreq.build_opener(_PinnedHTTPSHandler("8.8.8.8"))
-        with pytest.raises(urllib.error.URLError):
-            opener.open("https://webhook.example/hook", timeout=1)
+        handler = _PinnedHTTPSHandler("8.8.8.8")
+        monkeypatch.setattr(
+            handler, "do_open", lambda factory, req, **kwargs: factory(req.host, **kwargs).connect()
+        )
+        with pytest.raises(OSError, match="stop before real TLS"):
+            handler.https_open(urlreq.Request("https://webhook.example/hook"))
 
         assert connected == [("8.8.8.8", 443)]
         # SNI/cert verification target is the hostname, NOT the pinned IP.

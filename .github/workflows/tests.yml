@@ -109,6 +109,8 @@ jobs:
     # runner-hang it might have helped is an xdist finalize-deadlock, not
     # memory pressure, so the headroom would not fix it.
     runs-on: ${{ matrix.os }}
+    env:
+      TIKTOKEN_CACHE_DIR: ${{ github.workspace }}/../tiktoken-cache
     # ci-runner-hang spec: tightened from 75 so a wedged pytest step fails
     # in bounded time (and is rerun-recoverable) instead of stalling for
     # over an hour. A flat int (not a per-OS ${{ }} expression) keeps the
@@ -144,23 +146,18 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e .[dev]
 
-    # Retro 2026-09-06 (R2): tiktoken fetches cl100k_base over HTTPS on first
-    # use. Warm it once, OUTSIDE pytest, into a cached dir so the suite never
-    # touches the network for it — the test-time inference guard blocks that
-    # download, and 40 tests went red for the same one file.
+    # Download tokenizer data during setup; pytest stays inference-blocked.
     - name: Cache tiktoken encodings
       if: needs.changes.outputs.website_only != 'true'
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
-        path: ${{ runner.temp }}/tiktoken-cache
+        path: ${{ github.workspace }}/../tiktoken-cache
         key: tiktoken-cl100k_base-${{ runner.os }}
 
     - name: Warm tiktoken encoding
       if: needs.changes.outputs.website_only != 'true'
       shell: bash
-      run: python -c "import tiktoken; tiktoken.get_encoding('cl100k_base')" || echo "::warning::tiktoken warm-up failed; encoding tests will try the network"
-      env:
-        TIKTOKEN_CACHE_DIR: ${{ runner.temp }}/tiktoken-cache
+      run: python -c "import tiktoken; tiktoken.get_encoding('cl100k_base')"
 
     - name: Run tests
       if: needs.changes.outputs.website_only != 'true'
@@ -193,7 +190,6 @@ jobs:
       run: |
         pytest -n auto --timeout=60 --timeout-method=thread -m "not network and not integration"
       env:
-        TIKTOKEN_CACHE_DIR: ${{ runner.temp }}/tiktoken-cache  # warmed above; keeps the suite offline for cl100k_base
         ANTHROPIC_API_KEY: ""  # keyless by design — live-key CI burned $1200+ on 2026-06-10 (mismarked tests make real API calls when keyed); the real secret is for integration-auth.yml + deliberate dispatches ONLY
 
     - name: Run security and workflow tests
@@ -254,6 +250,8 @@ jobs:
     # separately, deliberately out of scope for this PR).
     needs: changes
     runs-on: ubuntu-latest
+    env:
+      TIKTOKEN_CACHE_DIR: ${{ github.workspace }}/../tiktoken-cache
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -282,23 +280,18 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e .[dev]
 
-    # Retro 2026-09-06 (R2): tiktoken fetches cl100k_base over HTTPS on first
-    # use. Warm it once, OUTSIDE pytest, into a cached dir so the suite never
-    # touches the network for it — the test-time inference guard blocks that
-    # download, and 40 tests went red for the same one file.
+    # Download tokenizer data during setup; pytest stays inference-blocked.
     - name: Cache tiktoken encodings
       if: needs.changes.outputs.website_only != 'true'
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
-        path: ${{ runner.temp }}/tiktoken-cache
+        path: ${{ github.workspace }}/../tiktoken-cache
         key: tiktoken-cl100k_base-${{ runner.os }}
 
     - name: Warm tiktoken encoding
       if: needs.changes.outputs.website_only != 'true'
       shell: bash
-      run: python -c "import tiktoken; tiktoken.get_encoding('cl100k_base')" || echo "::warning::tiktoken warm-up failed; encoding tests will try the network"
-      env:
-        TIKTOKEN_CACHE_DIR: ${{ runner.temp }}/tiktoken-cache
+      run: python -c "import tiktoken; tiktoken.get_encoding('cl100k_base')"
 
     - name: Run unit suite under ${{ matrix.tz }}
       if: needs.changes.outputs.website_only != 'true'
@@ -308,7 +301,6 @@ jobs:
         pytest -n auto --timeout=60 --timeout-method=thread -m "not network and not integration"
       env:
         TZ: ${{ matrix.tz }}
-        TIKTOKEN_CACHE_DIR: ${{ runner.temp }}/tiktoken-cache  # warmed above; keeps the suite offline for cl100k_base
         ANTHROPIC_API_KEY: ""  # keyless by design — see the `test` job note
 
   coverage:
@@ -320,6 +312,8 @@ jobs:
     # and `-n auto` restored, this job runs in parallel like the
     # matrix tests.
     runs-on: ubuntu-latest
+    env:
+      TIKTOKEN_CACHE_DIR: ${{ github.workspace }}/../tiktoken-cache
     # ci-gating-lane-isolation Layer A: the job timeout is now the FINAL
     # backstop (both auto-retry attempts hung), not the first line of
     # defence — the 14m step-level `timeout` below kills a single wedged
@@ -351,23 +345,18 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e .[dev]
 
-    # Retro 2026-09-06 (R2): tiktoken fetches cl100k_base over HTTPS on first
-    # use. Warm it once, OUTSIDE pytest, into a cached dir so the suite never
-    # touches the network for it — the test-time inference guard blocks that
-    # download, and 40 tests went red for the same one file.
+    # Download tokenizer data during setup; pytest stays inference-blocked.
     - name: Cache tiktoken encodings
       if: needs.changes.outputs.website_only != 'true'
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
-        path: ${{ runner.temp }}/tiktoken-cache
+        path: ${{ github.workspace }}/../tiktoken-cache
         key: tiktoken-cl100k_base-${{ runner.os }}
 
     - name: Warm tiktoken encoding
       if: needs.changes.outputs.website_only != 'true'
       shell: bash
-      run: python -c "import tiktoken; tiktoken.get_encoding('cl100k_base')" || echo "::warning::tiktoken warm-up failed; encoding tests will try the network"
-      env:
-        TIKTOKEN_CACHE_DIR: ${{ runner.temp }}/tiktoken-cache
+      run: python -c "import tiktoken; tiktoken.get_encoding('cl100k_base')"
 
     # Catch README badge rot: fails if the tests-count floor over-claims or
     # drifts far below the real collected count, or if coverage regressed to a
@@ -419,7 +408,6 @@ jobs:
         # uploads hang-dumps/) remain as the backstop.
         pytest -n auto --cov=src/attune --cov-report=xml --cov-fail-under=94 --timeout=60 --timeout-method=thread -m "not network and not integration"
       env:
-        TIKTOKEN_CACHE_DIR: ${{ runner.temp }}/tiktoken-cache  # warmed above; keeps the suite offline for cl100k_base
         ANTHROPIC_API_KEY: ""  # keyless by design — live-key CI burned $1200+ on 2026-06-10 (mismarked tests make real API calls when keyed); the real secret is for integration-auth.yml + deliberate dispatches ONLY
 
     - name: Track per-file test results

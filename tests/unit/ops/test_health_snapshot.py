@@ -482,9 +482,13 @@ class TestCollectSnapshot:
     def test_shape_and_schema_version(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        # Every individual signal is unmocked here and will fail for
-        # trivial reasons (no src/, no network, no gh) — the point of
-        # this test is that collect_snapshot NEVER raises regardless.
+        # Exercise local collectors and their failures; external boundaries
+        # fail deterministically without relying on absent network/gh auth.
+        def unavailable(*args, **kwargs):
+            raise OSError("fixture service unavailable")
+
+        monkeypatch.setattr("requests.get", unavailable)
+        monkeypatch.setattr(subprocess, "run", unavailable)
         snapshot = hs.collect_snapshot(tmp_path, timeout=1)
         assert snapshot["schema_version"] == 1
         assert "collected_at" in snapshot

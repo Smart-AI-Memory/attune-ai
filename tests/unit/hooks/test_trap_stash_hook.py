@@ -1,4 +1,4 @@
-"""Tests for the trap_stash PostToolUse hook (non-mocked stdin round trips).
+"""Tests for trap_stash stdin round trips with real file persistence.
 
 HOME is redirected to a tmp dir so the subprocess's backend resolution
 (FileStashBackend under ~/.attune/session_stash) and the dedupe
@@ -29,13 +29,18 @@ def _run_hook(payload: object, home: Path, extra_env: dict[str, str] | None = No
     env["HOME"] = str(home)
     env["USERPROFILE"] = str(home)  # Windows Path.home()
     env.pop("ATTUNE_TRAP_STASH", None)
-    # Force the file fallback: an unreachable AMS keeps the subprocess's
-    # backend resolution out of any live Redis/AMS instance.
-    env["AMS_BASE_URL"] = "http://127.0.0.1:9"
+    # Inject a real file backend; a presumed-dead AMS port is not isolation.
     env.pop("REDIS_URL", None)
     env.update(extra_env or {})
+    runner = (
+        "import runpy\n"
+        "from unittest.mock import patch\n"
+        "from attune.memory.file_stash import FileStashBackend\n"
+        "with patch('attune.memory.session_stash.resolve_backend', return_value=FileStashBackend()):\n"
+        f"    runpy.run_path({str(HOOK)!r}, run_name='__main__')\n"
+    )
     return subprocess.run(
-        [sys.executable, str(HOOK)],
+        [sys.executable, "-c", runner],
         input=payload if isinstance(payload, str) else json.dumps(payload),
         capture_output=True,
         text=True,

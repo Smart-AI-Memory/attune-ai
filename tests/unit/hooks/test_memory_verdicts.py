@@ -18,12 +18,15 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import socket
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 import pytest
+
+from tests._inference_guard import loopback_http_fixture
 
 _HOOKS_DIR = Path(__file__).resolve().parents[3] / "plugin" / "hooks"
 
@@ -79,10 +82,15 @@ class TestReceipt1KeylessRoundTrip:
     """MI-6a: real write → real scorer (Ollama absent) → real reader."""
 
     def test_unscored_end_to_end(self, isolated_home, verdicts_mod, telemetry_mod, monkeypatch):
-        # Dead loopback port: connection refused == Ollama unavailable.
-        monkeypatch.setenv("ATTUNE_MEMORY_OLLAMA_URL", "http://127.0.0.1:9")
+        # Own a bound, non-listening socket: deterministic refusal, no model.
         _write_surfacing(telemetry_mod)
-        written = verdicts_mod.score_session("s1", "some transcript tail text")
+        with socket.socket() as refused:
+            refused.bind(("127.0.0.1", 0))
+            monkeypatch.setenv(
+                "ATTUNE_MEMORY_OLLAMA_URL", f"http://127.0.0.1:{refused.getsockname()[1]}"
+            )
+            with loopback_http_fixture(refused):
+                written = verdicts_mod.score_session("s1", "some transcript tail text")
         assert written == 2
 
         records = [e for e in _read_events(isolated_home) if e["event"] == "memory_signal"]
@@ -133,8 +141,13 @@ def fake_ollama(monkeypatch):
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     monkeypatch.setenv("ATTUNE_MEMORY_OLLAMA_URL", f"http://127.0.0.1:{server.server_port}")
-    yield _FakeOllama
-    server.shutdown()
+    try:
+        with loopback_http_fixture(server.socket):
+            yield _FakeOllama
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
 
 
 class TestReceipt2HermeticScoredLabels:

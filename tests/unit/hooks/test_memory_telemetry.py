@@ -289,6 +289,8 @@ def test_lesson_recall_no_match_logs_nothing(tmp_path, monkeypatch, capsys):
 
 
 def test_session_stash_logs_counts_and_extractor(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr("attune.memory.session_stash.resolve_backend", lambda backend=None: backend)
+    monkeypatch.setattr("attune.memory.session_stash.backend_status", lambda: {})
     monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / ".attune"))
     monkeypatch.setenv("ATTUNE_AI_SENTINEL_DIR", str(tmp_path / "sentinels"))
     _load_module("_state")

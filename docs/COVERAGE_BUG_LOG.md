@@ -1955,3 +1955,82 @@ kind single-sourcing) drew no findings at all.
 
 No substitute was captured at tag time, per US-4. The AFTER snapshot is
 queued for 24-72h post-tag.
+
+## 2026-09-06 — inference-isolation CI repair (#2445)
+
+- **Crash:** `tests/_inference_guard.py` decoded the Windows Popen
+  audit event's absent executable as a filesystem path, aborting pytest.
+  The guard now checks the command even when the override is absent and
+  handles quoted Windows executable paths; simulated Windows audit events
+  retain inference and Python-bootstrap rejection checks.
+- **Mocked:** local warm tokenizer caches and the default integration
+  exclusion hid CI-only network attempts. CI now prepares static tokenizer
+  data before pytest; the no-auth integration lane uses fixture-owned AMS
+  HTTP readback, explicit file-backend MCP dispatch, and an intercepted SDK
+  401. The inference guard remains active through these tests.
+
+### 2026-09-06 — #2445 cache path rejected before CI jobs start (crash)
+
+The CI repair used `runner.temp` in job-level `env`, a context GitHub does
+not allow there. Runs 34021720623 and 34021720221 failed workflow validation
+before test jobs existed; local YAML parsing could not catch expression
+context validity. Use `github.workspace` with a sibling cache directory and
+reject runner-context expressions in job environments with a schema test.
+The same shared path still covers setup and every pytest step on all OSes.
+
+### 2026-09-06 — #2445 unlocked SDK transport upgrade (mocked)
+
+CI installs Anthropic 1.4.0/httpx2 2.12.0; the lockfile validation environment
+used Anthropic 0.125.0/httpx 0.28.1. The invalid-key fixture passed the older
+HTTP client to the new SDK and failed before the mocked 401. More seriously,
+the test guard only wrapped httpx: httpx2 could bypass the HTTP endpoint rule
+for a local proxy (external Python sockets were still denied). No live probe
+was used. Guard both installed transport generations, intercept both core
+pools in regression tests, and match SDK fixtures to the SDK's HTTP backend.
+Validation now includes a disposable environment resolved like CI and the
+locked legacy environment; no production authentication is changed.
+
+### 2026-09-06 — #2445 Windows command-line decoding (crash / mocked)
+
+Windows Popen audits a serialized command string even when its caller passes
+argv. Non-POSIX shlex does not decode the CRT quoting used by list2cmdline:
+14 Windows tests crashed on quoted multiline Python programs. The same
+parser also missed a quoted inference executable inside a serialized cmd
+wrapper. Regression tests fail against the old guard for both cases without
+launching a process. The guard now decodes backslash/quote parity before
+applying the existing inference checks, including nested wrappers.
+
+One nested pytest controller/worker probe additionally exhausted its 15s
+startup timeout on Windows 3.12. That probe alone gets 60s; its assertions
+that inference is blocked before process creation are unchanged. No live
+provider calls, broad skips, or interactive-auth changes are involved.
+
+### 2026-09-06 — #2445 cold-child fixture boundaries (crash)
+
+After the quoting repair, Windows 3.11/3.12/3.14 passed. Windows 3.10 and
+3.13 exposed a race in the cold pytest probe: the checkout and fixture live
+on different drives, so pytest's ancestor traversal visits shared temporary
+siblings; another worker removes a guard folder before pytest's Windows
+same-file comparison stats it. Explicit fixture-local `--confcutdir` bounds
+collection while `-p tests.conftest` still loads the real guard. A collector
+assertion reproduces the over-broad traversal deterministically (2 failures
+without the boundary; all 3 controller/worker cases pass with it).
+
+Two Windows 3.10 probes also replaced their process environment without
+SystemRoot, preventing Python hash-randomization startup before the guard
+could run. The test fixtures retain only that required Windows runtime
+variable alongside their declared fake credentials. The credential-scrubbing
+and blocked-inference assertions remain unchanged.
+
+### 2026-09-06 — spec drift probe depends on runner scheduling (mocked)
+
+#2444 run 34025993709 reported one Windows 3.12 failure: the real-Git dirty
+spec test returned no findings. The scanner intentionally stops after a
+2.5s overall budget; the test previously required both worktrees to be
+visited within that wall-clock budget. A loaded runner can exhaust it
+without violating scanner behavior. The exact cutoff was not logged in
+that failed run, so timing is the diagnosed failure mechanism, not a
+measured duration receipt. Behavioral probes now use a module-local steady
+clock while retaining real Git/filesystem calls and their subprocess
+timeouts. A separate deterministic test exhausts the budget before the
+dirty worktree and requires no finding. Production limits are unchanged.

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Test inference isolation: pytest now blocks real provider HTTP calls and
+  Claude/Agent SDK inference launches before dispatch, scrubs child credentials,
+  and gives subprocesses a separate Claude profile. Fake transports and
+  non-inference CLI diagnostics remain usable; the local Ollama unit receipt
+  now uses a fixture-owned HTTP server. Interactive authentication is unchanged.
+  Windows audit events retain command checks when no executable override
+  is supplied. CI prepares tokenizer data before pytest, and no-auth
+  integration tests retain HTTP and MCP receipts through local fixtures.
+  Windows command decoding preserves quoted Python programs and still blocks
+  quoted inference wrappers.
+
 ### Added
 
 - **Worktree-add guard hook** (`src/attune/hooks/scripts/

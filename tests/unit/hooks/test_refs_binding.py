@@ -32,7 +32,10 @@ def _load_module(name: str):
 
 
 @pytest.fixture
-def stash_mod():
+def stash_mod(monkeypatch):
+    # Hook logic is independent of discovering the user's live AMS service.
+    monkeypatch.setattr("attune.memory.session_stash.resolve_backend", lambda backend=None: backend)
+    monkeypatch.setattr("attune.memory.session_stash.backend_status", lambda: {})
     return _load_module("session_stash")
 
 

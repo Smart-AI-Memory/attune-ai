@@ -34,3 +34,10 @@ def _no_memory_telemetry_pollution(monkeypatch):
     # Setting the module's opt-out env var makes log_memory_event no-op
     # for the duration of every test in this directory.
     monkeypatch.setenv("ATTUNE_MEMORY_TELEMETRY", "0")
+
+
+@pytest.fixture(autouse=True)
+def _isolate_admin_credentials(tmp_path, monkeypatch):
+    # Dashboard smoke tests must not read the user's saved billing credential.
+    # Credential-resolution tests can override this with their own fixture file.
+    monkeypatch.setattr("attune.ops.anthropic_cost.ADMIN_KEY_PATH", tmp_path / "admin.env")

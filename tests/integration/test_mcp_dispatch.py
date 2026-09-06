@@ -179,11 +179,14 @@ class _InMemorySearchableBackend:
 
 
 @pytest.fixture
-def session_server(server):
+def session_server(server, monkeypatch):
     """Real server with the attune_redis plugin tools actually registered
     (the base fixture suppresses plugin auto-registration)."""
     from attune_redis.mcp_tools import register_tools
 
+    # The real status/degradation path uses the fixture-local file tier;
+    # lifecycle tests below inject their searchable backend explicitly.
+    monkeypatch.setenv("ATTUNE_MEMORY_BACKEND", "file")
     register_tools(server)
     return server
 

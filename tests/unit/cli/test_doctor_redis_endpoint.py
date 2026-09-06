@@ -60,6 +60,9 @@ def _run_doctor(monkeypatch: pytest.MonkeyPatch, url: str, capsys) -> str:
     for name in _REDIS_ENV:
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("REDIS_URL", url)
+    # Keep the independent memory-backend diagnostic off ambient AMS;
+    # the Redis endpoint above still performs the real RESP round trip.
+    monkeypatch.setenv("ATTUNE_MEMORY_BACKEND", "file")
     cmd_doctor(Namespace())
     return capsys.readouterr().out
 

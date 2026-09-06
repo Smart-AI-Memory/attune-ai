@@ -61,8 +61,9 @@ class _LineReader:
 def test_session_memory_capture_keeps_stdout_json_only(tmp_path):
     env = dict(os.environ)
     env["ATTUNE_REDIS_REQUIRED"] = "false"
+    env["ATTUNE_MEMORY_BACKEND"] = "file"
     # Keep the stash inside the test sandbox: HOME redirects the file
-    # fallback, and the dead AMS/Redis endpoints force that fallback even
+    # fallback, and the explicit file preference avoids probing AMS/Redis
     # on machines where a real local Redis is running (otherwise the
     # canary lands in the developer's live store — observed 2026-07-27).
     env["HOME"] = str(tmp_path)
@@ -116,6 +117,8 @@ def test_session_memory_capture_keeps_stdout_json_only(tmp_path):
         proc.stdin.flush()
         response = reader.wait_for_id(2, 60)
         assert response is not None, "no tools/call response"
+        assert "error" not in response, response
+        assert not response["result"].get("isError", False), response
 
         non_json = [line for line in reader.lines if line and not _parses(line)]
         assert non_json == [], (
