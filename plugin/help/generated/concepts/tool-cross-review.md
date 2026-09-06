@@ -9,7 +9,7 @@ source: plugin/skills/cross-review/SKILL.md
 
 ## What
 
-One-shot second-opinion review of a real diff by a DIFFERENT model (Codex or Antigravity) — advisory only, board-recorded
+One-shot second-opinion review of a real diff by a DIFFERENT model (Claude, Codex or Antigravity) — advisory only, board-recorded
 
 ## Why
 

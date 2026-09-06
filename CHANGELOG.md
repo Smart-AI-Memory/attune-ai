@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Cross-review can explicitly use verified Claude Pro/Max subscription auth
+  without enabling API spending. Complete-review mode rejects omitted files
+  and supports a bounded larger brief on stdin. The clean-venv smoke job
+  prepares static tokenizer data before guarded tests.
+
 - Surface parity review corrections bind all delivery identities to declared
   content, preserve producer provenance, validate receipt metadata and malformed
   projections, and select renderer controls from their owning record. Follow-up
