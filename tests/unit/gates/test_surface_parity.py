@@ -1288,7 +1288,7 @@ def test_all_declared_live_routes_remain_inadmissible_without_runtime_receipts(
         ("unowned", "owner/reason"),
         ("false_complete", "cannot claim complete parity"),
         ("delete_subject", "exactly one subject"),
-        ("duplicate_subject", "exactly one subject"),
+        ("duplicate_subject", "duplicate subject id"),
         ("delete_portable", "chart-widget.*missing PORTABLE"),
         ("semantic_normalization", "semantic bindings"),
         ("wrong_event", "event-qualified"),
@@ -1863,7 +1863,7 @@ def test_malformed_reply_contract_has_surface_key(surface, output) -> None:
     from attune.elicitation import surface_evidence as se
 
     with pytest.raises(sr.SurfaceRegistryError, match=f"(?i){surface}"):
-        se._projected_answers(output, surface, {"answer": "value"})
+        se._validate_projected_answers(output, surface, {"answer": "value"})
 
 
 @pytest.mark.parametrize("output", [{}, [1], [[{}]], [[{"question_id": "x", "options": 1}]]])
@@ -1874,3 +1874,175 @@ def test_malformed_specialized_questions_have_target_key(output) -> None:
     target = next(t for t in record.targets if t.status == "compatibility_only")
     with pytest.raises(sr.SurfaceRegistryError, match=target.target_id):
         se._form_collection(output, target, record)
+
+
+@pytest.mark.parametrize("kind", ["interactive_form", "interactive_workspace"])
+def test_interactive_envelope_cannot_hide_in_hook_delivery(stored_registry, reviewed, kind) -> None:
+    baseline = copy.deepcopy(reviewed.to_dict())
+    subject = next(
+        s for s in stored_registry["subjects"] if s["subject_kind"] == "informational_delivery"
+    )
+    baseline["package_host_envelope_anchors"].append(
+        {
+            "anchor": subject["producer_anchors"][0],
+            "subject_kind": kind,
+            "signature": "native_elicit_form" if kind == "interactive_form" else "mcp_app_resource",
+        }
+    )
+    with pytest.raises(sr.SurfaceRegistryError, match="interactive envelope cannot hide"):
+        sr.validate_producers(stored_registry["subjects"], baseline)
+
+
+@pytest.mark.parametrize("mutation", ["narrow", "foreign_key"])
+def test_receipts_reject_caller_obligation_drift(small_registry, mutation) -> None:
+    evidence = _synthetic_evidence(small_registry)
+    obligations = sr.required_obligations(small_registry)
+    key = "lifecycle:subject:workspace:accept"
+    if mutation == "narrow":
+        del obligations[key]
+        small_registry["receipts"] = [r for r in small_registry["receipts"] if r["key"] != key]
+    else:
+        obligations[key] = {"kind": "parity", "obligation_key": key}
+    with pytest.raises(sr.SurfaceRegistryError, match="caller obligations differ"):
+        sr.validate_receipts(
+            small_registry,
+            obligations,
+            evidence,
+            today=date(2026, 9, 6),
+            baseline=_SYNTHETIC_BASELINE,
+        )
+
+
+@pytest.mark.parametrize(
+    "shipped", ["experiments/surface-parity/trial.py", "experiments/surface-parity/trial.py/"]
+)
+def test_exact_shipped_experiment_root_is_rejected(small_registry, shipped) -> None:
+    _experiment(small_registry)
+    baseline = {**_SYNTHETIC_BASELINE, "shipped_roots": [shipped]}
+    small_registry["producer_baseline"] = _baseline_pin(baseline)
+    with pytest.raises(sr.SurfaceRegistryError, match="shipped experiment root"):
+        sr.validate_experiments(
+            small_registry,
+            sr.required_obligations(small_registry),
+            date(2026, 9, 6),
+            baseline=baseline,
+        )
+
+
+@pytest.mark.parametrize("field", ["subjects", "pending_obligations", "receipts"])
+@pytest.mark.parametrize("row", [None, "bad", 1, []])
+def test_malformed_inventory_row_has_collection_key(
+    stored_registry, reviewed, installed_evidence, field, row
+) -> None:
+    registry = copy.deepcopy(stored_registry)
+    registry[field].append(row)
+    with pytest.raises(sr.SurfaceRegistryError, match="subject|pending_obligations|receipt"):
+        sr.validate_inventory(
+            registry, reviewed.to_dict(), installed_evidence, today=date(2026, 9, 6)
+        )
+
+
+def test_missing_producer_anchor_has_subject_key(stored_registry, reviewed) -> None:
+    subjects = copy.deepcopy(stored_registry["subjects"])
+    del subjects[0]["root_anchor"]
+    with pytest.raises(sr.SurfaceRegistryError, match=subjects[0]["id"] + ": missing root_anchor"):
+        sr.validate_producers(subjects, reviewed.to_dict())
+
+
+@pytest.mark.parametrize("route", ["RICH", "PORTABLE", "HEADLESS"])
+def test_renderer_waiver_still_blocks_subject_routes(small_registry, route) -> None:
+    keys = frozenset(sr.required_obligations(small_registry))
+    key = "renderer:renderer:surface:RICH"
+    report = sr.InventoryReport(
+        keys, keys - {key}, frozenset(), frozenset({key}), sr.canonical_digest(small_registry)
+    )
+    assert sr.route_evidence_missing(small_registry, report, "workspace", route) == {key}
+
+
+@pytest.mark.parametrize("surface", ["rich", "portable", "headless"])
+def test_any_route_active_surface_is_refused_before_projection(monkeypatch, surface) -> None:
+    from attune.elicitation import surface_evidence as se
+
+    form, workspace = se.rr.RENDERER_REGISTRY
+    targets = tuple(
+        (
+            dataclasses.replace(
+                t, status="route_active", evidence_mode="route_roundtrip", profile_id="profile"
+            )
+            if t.surface == surface
+            else t
+        )
+        for t in form.targets
+    )
+    monkeypatch.setattr(
+        se.rr, "RENDERER_REGISTRY", (dataclasses.replace(form, targets=targets), workspace)
+    )
+    monkeypatch.setattr(
+        se, "_project", lambda *args: pytest.fail("route-active projection executed")
+    )
+    with pytest.raises(sr.SurfaceRegistryError, match="route_roundtrip requires"):
+        se.replay_renderer_evidence()
+
+
+@pytest.mark.parametrize(
+    "surface,mutation",
+    [
+        ("headless", "revision"),
+        ("portable", "revision"),
+        ("headless", "fields"),
+        ("portable", "fields"),
+        ("headless", "malformed"),
+        ("portable", "malformed"),
+    ],
+)
+def test_workspace_receipt_consumes_emitted_contract(monkeypatch, surface, mutation) -> None:
+    from attune_forms import WorkspaceValidationError
+
+    from attune.elicitation import surface_evidence as se
+
+    original = se.rr.RendererTarget.resolve
+
+    def altered(target):
+        render = original(target)
+        if target.target_id != f"workspace.{surface}":
+            return render
+
+        def emit(*args, **kwargs):
+            output = render(*args, **kwargs)
+            if mutation == "malformed":
+                return {"broken": True} if surface == "headless" else "```json\n{\n```"
+            if surface == "portable":
+                return (
+                    output.replace('"revision": 3', '"revision": 99')
+                    if mutation == "revision"
+                    else output.replace('"ruling": null', '"invented": null')
+                )
+            output = copy.deepcopy(output)
+            if mutation == "revision":
+                output["binding"]["revision"] = 99
+            else:
+                output["response_contract"]["actions"]["apply"]["responses"] = ["invented"]
+            return output
+
+        return emit
+
+    monkeypatch.setattr(se.rr.RendererTarget, "resolve", altered)
+    with pytest.raises((sr.SurfaceRegistryError, WorkspaceValidationError)):
+        se.replay_renderer_evidence()
+
+
+def test_workspace_receipt_uses_owning_fixture(monkeypatch) -> None:
+    from attune.elicitation import surface_evidence as se
+
+    original = se.cf.canonical_workspace_view
+
+    def renamed():
+        return dataclasses.replace(original(), title="Owning record fixture")
+
+    monkeypatch.setattr(se.cf, "triage_workspace_fixture", renamed, raising=False)
+    form, workspace = se.rr.RENDERER_REGISTRY
+    workspace = dataclasses.replace(
+        workspace, fixture="attune_forms.canonical_fixtures.triage_workspace_fixture"
+    )
+    outputs = {t.target_id: se._project(workspace, t) for t in workspace.targets}
+    assert se._workspace_collection(workspace, outputs)["action"] == "apply"

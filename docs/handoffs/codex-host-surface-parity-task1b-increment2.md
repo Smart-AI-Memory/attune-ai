@@ -1,5 +1,26 @@
 # Agent work handoff
 
+## Active triage contract — 2026-09-06
+
+```xml
+<task project="attune-ai" mode="defined-fix-scope">
+  <goal>Triage the 12 Claude findings on PR 2444 against the current code.</goal>
+  <base>1efa084062569de83e5e2a1d5b66458a96249dc8</base>
+  <worktree>6f7b/attune-ai; branch codex/pr2444-review-triage</worktree>
+  <constraints>Preserve PR 2449 and its dirty ledger; no API spend, auto-merge, or increment 3.</constraints>
+  <steps>Verify Git and CI; reproduce defects; correct code and dispositions; replay receipts; run gates/quality and whole configured tree; publish the correction to PR 2444.</steps>
+  <done>All 12 dispositions have code/probe evidence, confirmed defects are corrected, and checks pass with remaining review/CI limits explicit.</done>
+  <receipt>Behavioral projection/collector mutations, deterministic installed-package replay, suite and coverage logs.</receipt>
+</task>
+```
+
+Initial live verification: remote main `e884f599d`; PR 2444 open at the base
+above with smoke passing and matrix/coverage still running; PR 2449 open at
+`885811eab1791a26ce34821a24e9e71dc5ec448c` with green CI. Both had null
+auto-merge requests. PR 2449's local change was four ledger lines in one file.
+Its worktree and the dirty main checkout were not changed. The original
+2444 worktree was clean; this session uses a separate branch in its own checkout.
+
 ## Goal
 
 Deliver host-surface-parity Task 1B increment 2 in its own PR, with Claude
@@ -195,3 +216,37 @@ recorded here; preserve that worktree and reconcile them deliberately later.
 Next: push CI patch, verify the new CONTRIBUTING job, then a bounded triage of
 the second review. Do not launch another reviewer until concrete findings are
 verified and corrected. The runtime-form milestone remains after this PR merges.
+
+
+## Current triage validation — supersedes earlier next-action text
+
+All 12 findings from the `bf530993b` re-review are dispositioned in the owning
+parity ledger. Eight code/evidence corrections, removal of duplicate declaration
+metadata, a retained conservative hashing tradeoff, a review-identity rejection,
+and a historical-receipt clarification are recorded individually.
+
+- Gates and quality: **656 passed**, combined statement/branch coverage **99.55%**.
+  Changed executable lines: **40/41 covered (97.56%)**; uncovered line is the
+  workspace response-mismatch guard. Log `/private/tmp/2444-triage-gates.log`,
+  coverage `/private/tmp/2444-triage-coverage.json`.
+- Whole configured tree: **25,903 passed, 241 skipped, 3 xfailed (88.83s)**.
+  Log `/private/tmp/2444-triage-whole.log`. Used the committed inference barrier,
+  empty API credentials, a disposable loopback Redis and per-worker databases
+  via the existing `parity_isolated_redis` test-support fixture. No inference
+  workflow or reviewer was launched.
+- Before/after receipt: **18 selected probes fail against original `1efa08406`
+  source**, and all pass in the corrected gates run. The original source was
+  selected using pytest's explicit `pythonpath` override in the clean 9c6c
+  checkout, without changing it. Log `/private/tmp/2444-triage-original-probes.log`.
+- Pinned hooks passed, including both ledger gates:
+  `/private/tmp/2444-triage-hooks-final.log`. Initial standalone tool environment
+  lacked pytest; rerunning with the verified existing test environment passed.
+- Three package declarations regenerated from actual installed attune-forms
+  replay after formatting; 155 runtime obligations remain pending.
+- PR 2449 rechecked: same `885811eab` head and the same single dirty ledger file
+  with four added lines; no writes to that worktree. Shared CI patch untouched.
+
+Next: publish this signed correction to PR 2444, read back its head and CI,
+and leave it open for the chair. Fresh CI and any later review must bind to
+that new head; the earlier review does not certify these corrections clean.
+No merge, auto-merge, API-spend or increment-3 work is authorized here.

@@ -149,6 +149,13 @@ def producer_roots(baseline: dict[str, Any]) -> dict[str, list[str]]:
 
 def validate_producers(subjects: list[dict[str, Any]], baseline: dict[str, Any]) -> None:
     """Require one record per detected root, with every reaching helper preserved."""
+    _index(subjects, "subject")
+    for subject in subjects:
+        _require(
+            isinstance(subject.get("root_anchor"), str) and bool(subject["root_anchor"]),
+            subject["id"],
+            "missing root_anchor",
+        )
     expected = producer_roots(baseline)
     actual = Counter(s["root_anchor"] for s in subjects if s.get("discovered", True))
     for anchor in sorted(set(expected) | set(actual)):
@@ -208,6 +215,12 @@ def _validate_detected_footprint(subject: dict, baseline: dict) -> None:
         kind != "informational_delivery" or not renderer_calls.intersection(anchors),
         anchor,
         "registered renderer cannot hide behind delivery classification",
+    )
+    _require(
+        "informational_delivery" not in detected
+        or not detected.intersection({"interactive_form", "interactive_workspace"}),
+        anchor,
+        "interactive envelope cannot hide behind hook delivery classification",
     )
     if kind in {"compatibility_endpoint", "informational_delivery"} or anchor.startswith(
         "artifact:"
@@ -479,7 +492,11 @@ def validate_experiments(
     active = _index(registry["experiments"], "experiment")
     history = _index(registry["experiment_history"], "experiment history")
     exceptions = _index(registry["experiment_exceptions"], "experiment exception")
-    receipts = {r.get("obligation_key") for r in registry["receipts"] if r.get("kind") == "parity"}
+    receipts = {
+        r.get("obligation_key")
+        for r in _index(registry["receipts"], "receipt").values()
+        if r.get("kind") == "parity"
+    }
     intervals: dict[str, list[tuple[date, date, str]]] = {}
     for eid, entry in history.items():
         _require(
@@ -520,7 +537,7 @@ def validate_experiments(
             "root must be package-excluded experiments/surface-parity",
         )
         _require(
-            not any(str(root).startswith(p.rstrip("/") + "/") for p in baseline["shipped_roots"]),
+            not any(root.is_relative_to(PurePosixPath(p)) for p in baseline["shipped_roots"]),
             eid,
             "shipped experiment root",
         )
@@ -572,6 +589,11 @@ def validate_receipts(
     baseline: dict[str, Any],
 ) -> None:
     """Require exactly one executed, digest-bound receipt for each unwaived obligation."""
+    _require(
+        obligations == required_obligations(registry),
+        "obligations",
+        "caller obligations differ from registry",
+    )
     waived = validate_experiments(registry, obligations, today, baseline=baseline)
     required = {k: v for k, v in obligations.items() if k not in waived}
     seen = _validate_receipt_rows(registry["receipts"], required, evidence)
@@ -688,6 +710,7 @@ def validate_inventory(
     verified = _validate_receipt_rows(registry["receipts"], required, evidence)
     pending: set[str] = set()
     for row in registry["pending_obligations"]:
+        _require(isinstance(row, dict), "pending_obligations", "record must be an object")
         key = row.get("key", "")
         _require(
             key in required and not key.startswith("renderer:"),
@@ -736,7 +759,7 @@ def _validate_renderer_receipt_owners(registry: dict) -> None:
             suffix = "surface:RICH" if surface == "RICH" else f"host-native:{target['id']}"
             key = f"renderer:{record['id']}:{suffix}"
             owners[key] = renderer_record_digest(record, target["id"])
-    for receipt in registry["receipts"]:
+    for receipt in _index(registry["receipts"], "receipt").values():
         key = receipt.get("key", "")
         if key in owners:
             _require(
@@ -751,6 +774,8 @@ def route_evidence_missing(
 
     Pure evidence precondition for increment 3, not the capability/routing
     policy. Pending rows and experiment waivers are deliberately not proof.
+    Until subject-to-renderer bindings exist, every package renderer obligation
+    is conservatively required for every route, matching the inventory gate.
     The caller must supply the report returned by validate_inventory from trusted
     executed evidence. This value object is not an authentication token and must
     never be deserialized from an untrusted request as route authorization.
@@ -785,6 +810,7 @@ def route_evidence_missing(
         if ref.get("subject_id") == subject_id or key.startswith(f"subject:{subject_id}:")
     }
     keys.add(local_projection)
+    keys.update(key for key in required if key.startswith("renderer:"))
     transport = subject.get("route_transport_refs", {}).get(route)
     if transport:
         field = "subject_id" if transport["kind"] == "subject" else "host_profile_id"

@@ -100,15 +100,12 @@ def _form_collection(
     for surface in ("portable", "headless"):
         twin = record.target(surface)
         projected = _project(record, twin)
-        control_answers = _projected_answers(projected, surface, answers)
-        control = collect_form_response(form, control_answers, template_id=form.form_id)
-        if observed != {"template_id": control.template_id, "responses": control.responses}:
-            raise SurfaceRegistryError(f"{target.target_id}: unequal validated FormResponse")
+        _validate_projected_answers(projected, surface, answers)
     return observed
 
 
-def _projected_answers(output: Any, surface: str, answers: dict) -> dict:
-    """Consume the emitted reply contract; never silently substitute input field IDs."""
+def _validate_projected_answers(output: Any, surface: str, answers: dict) -> None:
+    """Check reply IDs/schema compatibility, not independent response equivalence."""
     try:
         if surface == "portable":
             if not isinstance(output, str):
@@ -131,23 +128,57 @@ def _projected_answers(output: Any, surface: str, answers: dict) -> dict:
         raise SurfaceRegistryError(f"{surface}: reply fields must be an object")
     if set(fields) != set(answers):
         raise SurfaceRegistryError(f"{surface}: projected reply field IDs differ")
-    return {field: answers[field] for field in fields}
 
 
-def _workspace_collection() -> dict[str, Any]:
-    view, binding = cf.canonical_workspace_view(), cf.canonical_binding()
-    payload = cf.canonical_workspace_response(view, "apply", binding, {"ruling": "apply"})
-    response = collect_workspace_action(view, payload, binding)
-    return {
-        "view": response.view.value,
-        "action": response.action,
-        "confirmed": response.confirmed,
-        "workspace_id": response.workspace_id,
-        "revision": response.revision,
-        "action_nonce": response.action_nonce,
-        "contract_hash": response.contract_hash,
-        "responses": response.responses_payload(),
-    }
+def _workspace_collection(record: rr.RendererRecord, outputs: dict[str, Any]) -> dict[str, Any]:
+    """Collect the actual HEADLESS and PORTABLE contracts against the owning fixture."""
+    module, name = record.fixture.rsplit(".", 1)
+    view, binding = getattr(importlib.import_module(module), name)(), cf.canonical_binding()
+    answers = {"ruling": "apply"}
+    try:
+        headless = outputs[record.target("headless").target_id]
+        contract = headless["response_contract"]
+        action = contract["actions"]["apply"]
+        if set(action["responses"]) != set(answers):
+            raise SurfaceRegistryError("workspace.headless: projected reply field IDs differ")
+        payload = {
+            contract["marker"]: True,
+            "title": contract["title"],
+            "view": contract["view"],
+            "action": "apply",
+            "confirmed": action["confirmed"],
+            "responses": answers,
+            **{field: headless["binding"][field] for field in contract["binding_fields"]},
+        }
+        portable = outputs[record.target("portable").target_id]
+        replies = [json.loads(b) for b in re.findall(r"```json\s*(.*?)\s*```", portable, re.DOTALL)]
+        controls = [p for p in replies if isinstance(p, dict) and p.get("action") == "apply"]
+        if len(controls) != 1 or set(controls[0].get("responses", {})) != set(answers):
+            raise SurfaceRegistryError(
+                "workspace.portable: missing or changed apply reply contract"
+            )
+        # The fixture explicitly approves Apply; only user-editable slots are filled.
+        control = {**controls[0], "confirmed": True, "responses": answers}
+    except (KeyError, TypeError, json.JSONDecodeError) as exc:
+        raise SurfaceRegistryError("workspace: invalid projected reply contract") from exc
+    observed = []
+    for reply in (payload, control):
+        response = collect_workspace_action(view, reply, binding)
+        observed.append(
+            {
+                "view": response.view.value,
+                "action": response.action,
+                "confirmed": response.confirmed,
+                "workspace_id": response.workspace_id,
+                "revision": response.revision,
+                "action_nonce": response.action_nonce,
+                "contract_hash": response.contract_hash,
+                "responses": response.responses_payload(),
+            }
+        )
+    if observed[0] != observed[1]:
+        raise SurfaceRegistryError("workspace: unequal validated workspace response")
+    return observed[0]
 
 
 def replay_renderer_evidence() -> tuple[list[dict[str, Any]], dict[str, dict[str, str]]]:
@@ -157,6 +188,20 @@ def replay_renderer_evidence() -> tuple[list[dict[str, Any]], dict[str, dict[str
     evidence = {}
     descriptions = {record["id"]: record for record in installed_renderers()}
     for record in rr.RENDERER_REGISTRY:
+        for target in record.targets:
+            if target.status == "route_active":
+                suffix = (
+                    "surface:RICH"
+                    if target.surface == "rich"
+                    else (
+                        f"host-native:{target.target_id}"
+                        if target.surface == "host_native"
+                        else target.target_id
+                    )
+                )
+                raise SurfaceRegistryError(
+                    f"renderer:{record.record_id}:{suffix}: route_roundtrip requires installed adapter/profile evidence"
+                )
         outputs = {target.target_id: _project(record, target) for target in record.targets}
         for target in record.targets:
             if target.surface not in {"rich", "host_native"}:
@@ -165,15 +210,11 @@ def replay_renderer_evidence() -> tuple[list[dict[str, Any]], dict[str, dict[str
                 "surface:RICH" if target.surface == "rich" else f"host-native:{target.target_id}"
             )
             key = f"renderer:{record.record_id}:{suffix}"
-            if target.status == "route_active":
-                raise SurfaceRegistryError(
-                    f"{key}: route_roundtrip requires installed adapter/profile evidence"
-                )
             bound = [target, record.target("portable"), record.target("headless")]
             collection = (
                 _form_collection(outputs[target.target_id], target, record)
                 if record.family == "form"
-                else _workspace_collection()
+                else _workspace_collection(record, outputs)
             )
             observation = {
                 "evidence_mode": target.evidence_mode,

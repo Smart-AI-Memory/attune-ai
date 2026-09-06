@@ -55,13 +55,14 @@ Changing a declared receipt mode also invalidates the row.
 
 Only the package's declared widget telemetry token is normalized in projection
 text. The controls consume the emitted PORTABLE reply-contract field IDs and validate
-answers against the emitted HEADLESS schema before collecting. They establish
+the collected answers against the emitted HEADLESS schema. They establish
 reply-contract compatibility for this fixture, not complete Markdown/HTML
-semantic equivalence or native display. Collection comparison includes validated
-responses and template identity;
-collector-generated `timestamp` and `response_id` are the two omitted telemetry
-paths. Workspace action nonce, revision, workspace/view/action IDs, contract
-hash, confirmation and responses remain in the comparison. Local subject
+semantic equivalence or native display. The form observation includes validated responses and template identity;
+there is no independent cross-surface FormResponse comparison.
+Collector-generated `timestamp` and `response_id` are the two omitted telemetry
+paths. Workspace HEADLESS and PORTABLE replies are independently collected; action
+nonce, revision, workspace/view/action IDs, contract hash, confirmation and
+responses remain in their comparison. Local subject
 normalization paths are empty until production evidence can justify them.
 
 The attune-forms closure helper supplies package implementation digests.
@@ -173,7 +174,10 @@ package projections is not established by the reply-contract fixture.
 ## Claude review of 7c21c2863 — chair accepted 2026-09-06
 
 The [published review](https://github.com/Smart-AI-Memory/attune-ai/pull/2444#issuecomment-5559744953)
-covered all 15 files with no omissions. Approval of that review authorizes
+covered all 15 files at `7c21c2863` with no omissions (Board run ending
+`20260906-1109`). The earlier 7-file and 4-file Max-session reviews are
+separate runs, not partitions of that review. The later `bf530993b` review
+covered 16 files after the bug-log addition. Approval of the published review authorizes
 corrections; it does not establish runtime parity or approve a merge.
 
 | Finding | Disposition and evidence |
@@ -196,3 +200,40 @@ F4 and F11 remain open experiment-activation work; F3 remains a documented
 trusted-caller limitation for the future runtime boundary. The 155 pending
 runtime obligations remain inadmissible. A registry digest and passing inventory
 are not host paint, transport lifecycle, or production route evidence.
+
+
+## Claude re-review of bf530993b — dispositions (2026-09-06)
+
+Triage is against `1efa084062569de83e5e2a1d5b66458a96249dc8`, whose only
+change after the reviewed head is the shared CONTRIBUTING CI fix. Review
+source: `~/.attune/reviews/pr2444-bf530993b-result.json`, Board run ending
+`20260906-1424`, 16 sent / 0 omitted. No new reviewer or paid API run was
+launched. These dispositions are code/probe findings, not a clean-review receipt.
+
+| Finding | Disposition and evidence |
+| --- | --- |
+| R1 | Confirmed overclaim; removed the redundant second form collection and unreachable inequality branch. `_validate_projected_answers` explicitly validates emitted PORTABLE IDs and HEADLESS schema compatibility. Existing mutations reject missing/changed IDs and invalid schemas; RICH output is digest-bound, not independently decoded into an answer. Full visual/semantic parity remains unproved. |
+| R2 | Fixed: mixed hook-delivery and interactive package envelopes fail closed even without a registered renderer call. Both form and workspace envelope mutations exercise the guard. Supporting a mixed boundary requires a reviewed representation, not a precedence exemption. |
+| R3 | Partly confirmed and fixed: the old package helper internally used HEADLESS, so the claim that it used no HEADLESS contract was too broad. It did bypass the record fixture and the emitted target output. Replay now uses the record fixture, builds a reply from the actual HEADLESS output, independently fills the PORTABLE reply, collects both, and compares their validated action/binding/response fields. Revision, field-ID and malformed-contract mutations fail; a renamed owning fixture succeeds. No RICH host paint claim. |
+| R4 | Fixed conservatively: every route requires all package-renderer obligations, matching the staged inventory's existing package-evidence requirement. A waived renderer blocks RICH, PORTABLE and HEADLESS routes. Subject-to-renderer target bindings remain runtime design work; this stricter precondition does not invent or activate them. |
+| R5 | Fixed: `validate_receipts` requires caller obligations to equal freshly derived registry obligations before validation. Narrowed maps and changed foreign keys fail; public call sites were searched and retain the current signature. |
+| R6 | Fixed: path-aware containment rejects an exact shipped root as well as descendants. Tests include an exact file root and a trailing-slash spelling; existing parent-containment and unsafe-root tests remain. |
+| R7 | Fixed at the reported row boundaries: subject, pending and receipt non-object rows raise keyed errors; a missing producer root names the subject. The receipt case was an adjacent instance of the same defect. Exhaustive nested schema validation is still not claimed. |
+| R8 | Fixed: all installed targets are checked for route-active status before any projection runs. RICH, PORTABLE and HEADLESS mutations assert refusal before execution; the existing host-native regression remains. |
+| R9 | Retained deliberately: whole-module source hashing invalidates receipts on cosmetic edits. This is exact-runner provenance, not semantic change detection. Selective source/AST hashing could miss behavior-affecting dependencies; conservative regeneration is preferable for this small fixture. No claim that comments preserve receipt identity. |
+| R10 | Fixed by removing unused duplicate metadata: compatibility endpoints derive from subjects, signature classification lives in `surface_inventory`, and future capability/constraint/context schemas belong to the design and pending runtime work. The machine registry no longer carries these five unvalidated top-level fields. This does not implement increment 3. |
+| R11 | Rejected as a review-identity conflation; clarified the paragraph. `git diff e884f599d 7c21c2863 --name-only` yields 15 files and the original complete manifest lists 15 with zero omitted. The 7/4-file rows describe earlier reviews. `git diff e884f599d bf530993b --name-only` yields 16 after the bug log was added; its separate row already says 16. |
+| R12 | Historical receipts retained and labeled: the 141-test/25,638-test row describes its earlier review follow-up, not the branch tip. Current validation belongs to the latest handoff section and this triage receipt; historical counts are not rewritten as new executions. |
+
+Runtime schemas remain pending; removed placeholder metadata must not be
+interpreted as schema implementation. The scanner owns `ENVELOPE_SIGNATURES`
+and `PACKAGE_SIGNATURES`; compatibility subjects own their fixed contracts.
+The full runner source remains part of `fixture_digest`; regenerate only by
+executing `replay_renderer_evidence` after the final formatting pass.
+
+
+Triage validation: 656 gates/quality tests passed at 99.55% combined coverage;
+40/41 changed executable lines covered. Whole configured tree: 25,903 passed,
+241 skipped, 3 xfailed. Eighteen targeted defect probes fail against the
+original `1efa08406` source and pass in the corrected gate run. Pinned hooks
+pass. Commands, logs and environment limits are in the latest handoff section.

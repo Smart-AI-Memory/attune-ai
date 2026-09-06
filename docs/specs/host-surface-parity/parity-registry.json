@@ -1,91 +1,8 @@
 {
-  "capability_snapshot_schema": {
-    "status": "pending-increment-3"
-  },
-  "compatibility_endpoints": [
-    "ask-payload",
-    "legacy-render-form"
-  ],
-  "constraint_schema": {
-    "source": "design.md#r2--context-routed-surface-parity-gate",
-    "status": "pending-increment-3"
-  },
-  "context_receipt_schema": {
-    "status": "pending-increment-3"
-  },
   "evidence_status": "incomplete",
   "experiment_exceptions": [],
   "experiment_history": [],
   "experiments": [],
-  "host_envelope_signatures": {
-    "hooks": {
-      "additional_context": {
-        "destination": "model_context",
-        "events": null,
-        "subject_kind": "informational_delivery"
-      },
-      "context_stdout": {
-        "destination": "model_context",
-        "events": [
-          "SessionStart",
-          "UserPromptSubmit"
-        ],
-        "subject_kind": "informational_delivery"
-      },
-      "exit2_stderr": {
-        "destination": "model_context",
-        "events": [
-          "PostToolUse",
-          "PreToolUse",
-          "Stop",
-          "SubagentStop"
-        ],
-        "subject_kind": "informational_delivery"
-      },
-      "pretooluse_deny": {
-        "destination": "model_context",
-        "events": [
-          "PreToolUse"
-        ],
-        "subject_kind": "informational_delivery"
-      },
-      "stop_block": {
-        "destination": "model_context",
-        "events": [
-          "Stop",
-          "SubagentStop"
-        ],
-        "subject_kind": "informational_delivery"
-      },
-      "system_message": {
-        "destination": "user_notice",
-        "events": null,
-        "subject_kind": "informational_delivery"
-      }
-    },
-    "package": {
-      "askuserquestion_batches": {
-        "marker": "batches",
-        "subject_kind": "interactive_form"
-      },
-      "html_response": {
-        "marker": "html|panel_html",
-        "subject_kind": "interactive_form"
-      },
-      "mcp_app_resource": {
-        "marker": "ui://",
-        "subject_kind": "interactive_workspace"
-      },
-      "native_elicit_form": {
-        "marker": "session.elicit_form",
-        "subject_kind": "interactive_form"
-      },
-      "workspace_render": {
-        "marker": "CommandWorkspaceRender(html, markdown)",
-        "subject_kind": "interactive_workspace"
-      }
-    }
-  },
   "host_profiles": [],
   "pending_obligations": [
     {
@@ -1026,42 +943,42 @@
   },
   "receipts": [
     {
-      "id": "renderer.standalone-form.surface.RICH",
-      "key": "renderer:standalone-form:surface:RICH",
-      "kind": "parity",
-      "obligation_key": "renderer:standalone-form:surface:RICH",
       "evidence_mode": "projection",
       "fixture": "attune.elicitation.surface_evidence.replay_renderer_evidence",
+      "fixture_digest": "ac49d1dad272fff80209b57f0c44323e0245138abf579b038a3c3a93d5475220",
+      "id": "renderer.standalone-form.surface.RICH",
       "implementation_digest": "0c07b142a37bba2aff046ede20d5ec5409ff57f37f36f92ee19945a76153d1cd",
-      "fixture_digest": "ce18d5429250db0947d9970e034f679da3743cd16dada053818fe668fb907110",
-      "record_digest": "2768d9eb8bbfb3d84443690b433e068db0df6767ebbc79591f7cd6500a15394b",
+      "key": "renderer:standalone-form:surface:RICH",
+      "kind": "parity",
       "normalization_digest": "c6d83aa2bca637fc8fbcb1fb7fec9c6ab378d7d1a9d72dc2cd1e5e13eea11584",
+      "obligation_key": "renderer:standalone-form:surface:RICH",
+      "record_digest": "2768d9eb8bbfb3d84443690b433e068db0df6767ebbc79591f7cd6500a15394b",
       "result_digest": "f6dbb9d07b14eb46fc89a5349c334ca444fb52c17e17b42a4fdf3585091d4b71"
     },
     {
-      "id": "renderer.standalone-form.host-native.form.askuserquestion",
-      "key": "renderer:standalone-form:host-native:form.askuserquestion",
-      "kind": "parity",
-      "obligation_key": "renderer:standalone-form:host-native:form.askuserquestion",
       "evidence_mode": "compatibility_projection",
       "fixture": "attune.elicitation.surface_evidence.replay_renderer_evidence",
+      "fixture_digest": "ac49d1dad272fff80209b57f0c44323e0245138abf579b038a3c3a93d5475220",
+      "id": "renderer.standalone-form.host-native.form.askuserquestion",
       "implementation_digest": "d5250a83ed19c63898f629f8946113f0df6cb40d481bcbcecfd5453533fb4980",
-      "fixture_digest": "ce18d5429250db0947d9970e034f679da3743cd16dada053818fe668fb907110",
-      "record_digest": "226198aaad94756948fb660db77442c84e824ef06890b2574ce26d9ab9a7aecc",
+      "key": "renderer:standalone-form:host-native:form.askuserquestion",
+      "kind": "parity",
       "normalization_digest": "c6d83aa2bca637fc8fbcb1fb7fec9c6ab378d7d1a9d72dc2cd1e5e13eea11584",
+      "obligation_key": "renderer:standalone-form:host-native:form.askuserquestion",
+      "record_digest": "226198aaad94756948fb660db77442c84e824ef06890b2574ce26d9ab9a7aecc",
       "result_digest": "73fb7c139271f2506f2584020e2766352bacd60018d8441791a91e5ea8edcf8f"
     },
     {
-      "id": "renderer.generic-workspace.surface.RICH",
-      "key": "renderer:generic-workspace:surface:RICH",
-      "kind": "parity",
-      "obligation_key": "renderer:generic-workspace:surface:RICH",
       "evidence_mode": "projection",
       "fixture": "attune.elicitation.surface_evidence.replay_renderer_evidence",
+      "fixture_digest": "ac49d1dad272fff80209b57f0c44323e0245138abf579b038a3c3a93d5475220",
+      "id": "renderer.generic-workspace.surface.RICH",
       "implementation_digest": "47535673b71479f9976eb0b3f7cb7403525713a3b3502423b2aac613b61dc989",
-      "fixture_digest": "ce18d5429250db0947d9970e034f679da3743cd16dada053818fe668fb907110",
-      "record_digest": "2620ae12e9e32cc4c1f7ef7ccdd696bf93f77e54b98da5364360fc906ad6d434",
+      "key": "renderer:generic-workspace:surface:RICH",
+      "kind": "parity",
       "normalization_digest": "c6d83aa2bca637fc8fbcb1fb7fec9c6ab378d7d1a9d72dc2cd1e5e13eea11584",
+      "obligation_key": "renderer:generic-workspace:surface:RICH",
+      "record_digest": "2620ae12e9e32cc4c1f7ef7ccdd696bf93f77e54b98da5364360fc906ad6d434",
       "result_digest": "dc26c26e7ef125cd62b72fb5deef41d367dd763b510ca6f800707972cbc3d476"
     }
   ],
