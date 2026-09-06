@@ -711,70 +711,79 @@ and the lead reported success unverified until the chair said "I don't
 see it". Three `form_rendered` telemetry rows from this session never
 reached a screen: a live R10 tier-provenance data point.
 
-## D13 — The parity registry's binding to the producer baseline: digest pin by default, bare reference only if Codex concurs (PROPOSED 2026-09-06; chair's conditional recorded; the chair rules after Codex answers on #2444)
+## D13 — The parity registry binds to the producer baseline by DIGEST PIN (PROPOSED 2026-09-06 with the chair's conditional satisfied by Codex's hearing; awaiting the chair's ruling word)
 
 **Status and provenance.** First written by the lead as "RULED, chair"
 straight from the retro's `do now` on R3, without the assumption review
 or the counter-case it owed (D11d). The chair flagged it: "re 2447 D13
-needs discussion." The discussion put three shapes side by side; the
-chair's lean, verbatim: *"a digest pin that preserves the forcing
-function with a one-line diff instead of a 650-line copy. This sounds
-like a better option."* A form answer that crossed with that message
-picked bare reference and "rewrite as RULED"; asked which stood, the
-chair answered, verbatim: *"1 y, 2y if Codex concurs , 3 y"* — decoded
-with the three numbered options as put: (1) the digest pin stands as
-the default shape; (2) bare reference is acceptable ONLY if Codex
-concurs that it loses nothing its obligations or gates rely on; (3)
-D13 stays PROPOSED until Codex answers the hearing request on #2444,
-and the chair rules then, from the shapes below. This entry may merge
-as PROPOSED; a merge word on #2447 does not promote it.
+needs discussion." Three shapes were put side by side; the chair's lean,
+verbatim: *"a digest pin that preserves the forcing function with a
+one-line diff instead of a 650-line copy. This sounds like a better
+option."* A crossed form answer picked bare reference; asked which stood,
+the chair answered, verbatim: *"1 y, 2y if Codex concurs , 3 y"* — (1)
+the digest pin stands as the default; (2) bare reference only if Codex
+concurs it loses nothing; (3) PROPOSED until Codex answers, then the
+chair rules. Codex was heard (read-only, against #2444 head `f959377dd`,
+2026-09-06 ~07:40Z, relayed by the chair); its closing line, verbatim:
+*"Recommendation: digest pin — preserve the complete reviewed-baseline
+binding with one stored canonical digest, retain the existing semantic
+checks, and pass verified baseline content to experiment validation; I
+do not concur that a bare reference loses nothing."* Under the chair's
+conditional, (2) is closed and (1) is the shape. The chair's ruling word
+promotes this entry; nothing else does.
 
-**The three shapes, and why the middle one.**
+**The three shapes.**
 
 1. *Embedded copy* (#2444 as opened): `parity-registry.json` carries a
-   full copy of `producer_baseline.json` and the gate asserts equality.
-   Forcing function: ANY fixture change breaks the gate and someone
-   re-derives the obligations. Cost: a ~650-line twin of a reviewed
-   fixture (principle 3 tension) and a 650-line diff on every regen.
-2. *Bare reference* (D13 as first written): the registry names the
-   fixture path and schema version; the gate loads the fixture at test
-   time. Cost the counter-case exposed: Codex's 152 obligations are
-   DERIVED from the baseline, and by reference only a root add/remove
-   forces a registry edit — an existing subject's producer set can change
-   (a hook growing a `pretooluse_deny` producer beside its
-   `exit2_stderr` one) and pass with no re-derivation.
-3. *Digest pin* (the lean): the registry records the fixture's path,
-   schema version, and a content digest. Any fixture change breaks the
-   gate, so re-derivation stays forced exactly as with the copy; the diff
-   on regen is one line; it is the idiom #2444 already uses for every
-   other pin (`fixture_digest`, `registry_digest`).
+   full copy of `producer_baseline.json`; `validate_inventory` rejects an
+   unequal copy before validating producers. Codex: the copy is a
+   snapshot, not extra parity semantics; its one real advantage is local
+   readability of the snapshot inside the registry. Cost: a ~650-line
+   twin of a reviewed fixture (principle 3) and a 650-line diff per regen.
+2. *Bare reference*: path + schema version, fixture loaded at test time.
+   What it loses (Codex, confirmed by the lead's re-run): the mandatory
+   registry acknowledgment of baseline changes that the semantic
+   validators do not consume — e.g. a renderer call's recorded `syntax`
+   (`direct | reexport | qualified`) is stored in the baseline and read by
+   nothing in `surface_registry.py`; copy equality or a content digest
+   still surfaces that change, a bare reference does not.
+3. *Digest pin*: `producer_baseline: {path, schema_version, digest}`
+   with `digest = canonical_digest(fixture)` (the SHA-256 over canonical
+   JSON #2444 already ships at `surface_registry.py:59-62`). Same
+   complete-baseline binding as the copy, one stored line, same regen
+   forcing function.
 
-**What the lead is assuming (for the chair's read to check).**
+**Correction to the lead's counter-case (Codex, verified).** The lead
+claimed that by reference "only a root add/remove forces a registry
+edit" and that a hook growing a `pretooluse_deny` producer beside its
+`exit2_stderr` one would pass unreviewed. Both wrong: `validate_producers`
+requires each subject's exact `producer_anchors` list (helper provenance
+included) and exactly one subject per root, and `_validate_hook_routes`
+compares the full set of `(event, matcher, signature, sink, destination)`
+tuples against declared delivery routes — so both changes already fail
+without any copy or pin. "Unreviewed" was also too strong: the
+scan-vs-fixture gate still forces a fixture diff. The real gap is the
+one in shape 2 above. Neither copy nor pin proves a human re-derived the
+obligations rather than refreshing a value.
 
-- A1. "Digest" is the content digest of the reviewed fixture file
-  (canonical JSON, same `canonical_digest` helper #2444 ships), distinct
-  from `registry_digest`.
-- A2. The pin lives in `parity-registry.json` under `producer_baseline`
-  as `{path, schema_version, digest}`, replacing the copy; the check
-  lives beside the existing subject-vs-root validation in the gate.
-- A3. The failure names both digests and the regen command, so the
-  message is "registry derived from a baseline that no longer exists —
-  regenerate, re-derive, review", never a bare mismatch.
-- A4. "One-line diff" describes the pin. Obligations derived from a NEW
-  subject still need their own registry entries; that is the forcing
-  function, not a cost to remove.
-- A5. Codex applies this on #2444's rebase onto main (which already
-  regenerates the fixture for the #2446 hook subject and the retro PR's
-  `worktree_add_guard` producer). #2447 changes no registry code.
+**Migration scope (Codex, verified — not a one-line code change).**
+`validate_experiments` reads `registry["producer_baseline"]["shipped_roots"]`
+directly; with a pin it must receive the validated, resolved baseline (or
+its shipped roots), and the synthetic tests that supply the embedded
+shape (`test_surface_parity.py` ~729, ~922, ~1372) migrate with it.
+`InventoryReport.registry_digest` hashes the whole registry and stays
+transitive through the pin: validate the resolved fixture against the pin
+before issuing a report. `surface_evidence.py` has no producer-baseline
+dependency. The mismatch diagnostic — today only "reviewed baseline
+drift" — names expected and actual digests plus the regenerate /
+re-derive / review command. The JSON diff on regen is one line; the code
+migration is small and bounded to the above.
 
-**Application (on the ruling).** Codex applies the ruled shape in
-#2444's rebase — the digest pin unless the chair rules bare reference on
-Codex's concurrence; the lead lifts the hold posted on #2444 and quotes
-the ruling there. The bare-reference instruction the lead posted on
-#2444 earlier that day is withdrawn; the hearing request posted after
-it (three read-only questions: what the copy catches that a pin would
-not, whether a bare reference loses anything, whether any code binds to
-the copy's content) is the input the ruling waits on.
+**Application (on the ruling).** Codex applies the pin in #2444's
+rebase onto main (which already regenerates the fixture for the #2446
+hook subject and the retro PR's `worktree_add_guard` producer); the lead
+lifts the hold on #2444 and quotes the ruling there. The bare-reference
+instruction the lead posted on #2444 earlier that day is withdrawn.
 
 ## Open
 
