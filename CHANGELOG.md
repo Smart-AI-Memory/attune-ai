@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Worktree-add guard hook** (`src/attune/hooks/scripts/
+  worktree_add_guard.py`, retro 2026-09-06 R8). A PreToolUse Bash hook
+  that refuses `git worktree add` from a session already running inside
+  `.claude/worktrees/` — a sibling worktree created there is unwritable
+  (the worktree path guard refuses every Edit/Write into it), so the
+  refusal names the fix at creation time: switch branches in place.
+  `git worktree list/remove/prune` and creation from the main checkout
+  stay allowed; `ATTUNE_ALLOW_NESTED_WORKTREE=1` is the escape hatch.
+  Registered in the repo's `.claude/settings.json` alongside the
+  sibling guards; fires to the enforcement-metrics log like them.
+- **`scripts/ci_failures.py`** — per-job CI failure extraction that
+  anchors on pytest's own `FAILED`/`ERROR`/summary/`INTERNALERROR`
+  lines (retro R4), so a test NAME containing "failed" can never be
+  reported as a failure. `python scripts/ci_failures.py <run-id>` or
+  `--log job.log`; exit 1 when any job is red.
+
 - **`attune memory status` and a doctor "Memory backend" line**
   (redis-config-truth D5, 2026-09-06). Redis stays optional and
   zero-config; the state stops being silent. `attune memory status`
