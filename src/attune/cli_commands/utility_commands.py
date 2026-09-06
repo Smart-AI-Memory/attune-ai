@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from argparse import Namespace
+from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,37 @@ def _install_config_files() -> int:
     return configs_copied
 
 
+def _memory_backend_setup_prompt() -> None:
+    """Ask once, on a terminal, which memory backend to use (redis-config-truth D5).
+
+    Non-interactive runs only print the pointer; a recorded preference is
+    never re-asked; EOF or an unwritable config never fails setup.
+    """
+    from attune.memory import preference as pref
+
+    if pref.preference_recorded():
+        return
+    print("\n  Memory backend:")
+    print("  The local file tier works with nothing to set up. Redis is optional.")
+    print(f"  {pref.REDIS_ROLE}")
+    if not (sys.stdin.isatty() and sys.stdout.isatty()):
+        print("  Choose later with: attune memory use auto|file|redis")
+        return
+    try:
+        answer = input("  Use which backend? [auto/file/redis] (auto): ").strip().lower() or "auto"
+    except EOFError:
+        return
+    if answer not in pref.VALUES:
+        print(f"  Not one of {', '.join(pref.VALUES)}; leaving it at auto (change any time).")
+        return
+    try:
+        path = pref.set_backend_preference(answer)
+    except OSError as e:
+        print(f"  Could not record the choice ({e}); use: attune memory use {answer}")
+        return
+    print(f"  ✅ Memory backend preference: {answer} (recorded in {path})")
+
+
 def cmd_setup(args: Namespace) -> int:
     """Install Attune slash commands for Claude Code."""
     source_dir = _find_source_dir()
@@ -146,6 +178,7 @@ def cmd_setup(args: Namespace) -> int:
         print("   Make sure you're running from the attune-ai directory.")
         return 1
 
+    _memory_backend_setup_prompt()
     total = copied + agents_copied + configs_copied
     print(
         f"\n✅ Installed {total} file(s)"
@@ -340,6 +373,34 @@ def cmd_features(args: Namespace) -> int:
     return 0
 
 
+def _report_memory_backend(ok: Callable[..., None], warn: Callable[..., None]) -> None:
+    """One doctor line naming the memory backend recall resolves to; never a FAIL.
+
+    Memory is optional (redis-config-truth D5): the zero-config file tier is
+    OK, a live upgrade is OK, a registered-but-dark upgrade is a warning
+    that names it, and an unusable path is a warning with its reason.
+    """
+    try:
+        from attune.memory.session_stash import backend_status
+    except ImportError as e:
+        warn("Memory backend status unavailable", str(e))
+        return
+    status = backend_status()
+    backend = status.get("backend") or "none"
+    dark = status.get("unreachable_upgrade")
+    if dark:
+        warn(
+            f"Memory backend: {backend} (file tier)",
+            f"registered upgrade '{dark}' unreachable — findings stored there are dark",
+        )
+    elif status.get("fallback"):
+        ok(f"Memory backend: {backend} (file tier)", "Redis Agent Memory Server optional")
+    elif status.get("ok"):
+        ok(f"Memory backend: {backend}", status.get("transport") or "direct")
+    else:
+        warn("Memory backend: none usable", status.get("reason") or "unknown")
+
+
 def cmd_doctor(args: Namespace) -> int:
     """Run comprehensive environment health check.
 
@@ -445,6 +506,10 @@ def cmd_doctor(args: Namespace) -> int:
     except Exception:  # noqa: BLE001
         # INTENTIONAL: Redis is optional
         _warn("Redis server not reachable", "optional")
+
+    # 6b. Memory backend — zero-config file tier; the Redis AMS upgrade is optional
+    # (redis-config-truth D5: make the state visible, never silent).
+    _report_memory_backend(_ok, _warn)
 
     # 7. Workflows
     try:

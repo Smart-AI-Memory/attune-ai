@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import logging
 from argparse import Namespace
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -223,6 +224,140 @@ def cmd_memory_topics(args: Namespace) -> int:
         logger.error("Failed to list memory topics: %s", e)
         print(f"Error listing topics: {e}")
         return 1
+
+
+def _ams_base_url() -> str:
+    """The Agent Memory Server URL the bundled plugin would use (AMS_BASE_URL)."""
+    try:
+        from attune_redis.config import RedisPluginConfig
+
+        return RedisPluginConfig.from_env().ams_base_url
+    except ImportError:
+        return "http://localhost:8000"
+
+
+def cmd_memory_status(args: Namespace) -> int:
+    """Say which memory backend recall resolves to, and why (redis-config-truth D5).
+
+    Redis is optional: the zero-config install runs on the local file tier and
+    upgrades to the Redis Agent Memory Server automatically when one is
+    reachable. This command makes that state visible instead of silent.
+
+    Args:
+        args: Parsed arguments; ``--json`` prints the raw status mapping.
+
+    Returns:
+        0 when a usable write/recall path exists, 1 otherwise.
+    """
+    import json
+
+    from attune.memory.session_stash import backend_status
+
+    status = backend_status()
+    if getattr(args, "json", False):
+        print(json.dumps(status, sort_keys=True))
+        return 0 if status.get("ok") else 1
+    print(
+        f"Preference: {status.get('preference', 'auto')}  (change with: attune memory use auto|file|redis)"
+    )
+    backend = status.get("backend") or "none"
+    transport = status.get("transport") or "none"
+    reach = status.get("reachability") or "unknown"
+    dark = status.get("unreachable_upgrade")
+    url = _ams_base_url()
+    if not status.get("ok"):
+        print(f"Memory backend: {backend} ({transport}, {reach}) — NOT USABLE")
+        print(f"  reason: {status.get('reason') or 'unknown'}")
+        return 1
+    if dark:
+        print(f"Memory backend: {backend} (file tier, {reach}) — DEGRADED")
+        print(
+            f"  Registered upgrade '{dark}' is unreachable at {url}: findings stored there are"
+            " dark until it is back (e.g. restart the Agent Memory Server)."
+        )
+        print("  New findings go to the local file tier meanwhile.")
+        return 0
+    if status.get("fallback"):
+        print(f"Memory backend: {backend} (file tier, {reach}) — zero-config default")
+        print("  Redis is optional. Findings are stored locally and searched from files.")
+        print(
+            f"  To upgrade: run a Redis Agent Memory Server and point AMS_BASE_URL at it"
+            f" (currently {url}); attune switches automatically when it is reachable."
+        )
+        return 0
+    print(f"Memory backend: {backend} ({transport}, {reach})")
+    print(f"  Redis Agent Memory Server live at {url}; findings are searchable across sessions.")
+    return 0
+
+
+def cmd_memory_use(args: Namespace) -> int:
+    """Record the memory backend preference: auto, file, or redis (D5).
+
+    Args:
+        args: ``backend`` is one of :data:`attune.memory.preference.VALUES`.
+
+    Returns:
+        0 on success, 1 on an invalid value or an unwritable config.
+    """
+    from attune.memory.preference import REDIS_ROLE, set_backend_preference
+
+    try:
+        path = set_backend_preference(args.backend)
+    except ValueError as e:
+        print(f"Error: {e}")
+        return 1
+    except OSError as e:
+        logger.error("Failed to write memory preference: %s", e)
+        print(f"Error writing {e.filename or 'config'}: {e}")
+        return 1
+    effects = {
+        "auto": "a reachable Redis Agent Memory Server wins, otherwise the local file tier.",
+        "file": "the local file tier only; the Redis upgrade is never probed or warned about.",
+        "redis": "prefer the Redis Agent Memory Server; degrade to files when unreachable, loudly.",
+    }
+    print(f"Memory backend preference: {args.backend} — {effects[args.backend]}")
+    if args.backend == "redis":
+        print(f"  {REDIS_ROLE}")
+    print(f"  Recorded in {path}")
+    return cmd_memory_status(Namespace(json=False))
+
+
+FIRST_RUN_NOTICE = """\
+Memory: running on the local file tier (zero-config; nothing to set up).
+  Redis is optional. {role}
+  Choose once — attune memory use auto|file|redis — or run: attune setup
+  (silence this notice: ATTUNE_MEMORY_NOTICE=0)"""
+
+
+def first_run_memory_notice(command: str | None, stream: Any = None) -> bool:
+    """Print the one-time terminal notice when a human has not yet chosen (D5).
+
+    Fires only on an interactive terminal, only until the user records a
+    preference, only once, and never for the ``memory``/``setup`` commands
+    that are themselves the way to choose. It informs and points at the
+    choosing commands; it never blocks a command with a prompt.
+
+    Returns:
+        True when the notice was printed.
+    """
+    import sys
+
+    from attune.memory import preference as pref
+
+    out = stream if stream is not None else sys.stdout
+    try:
+        if command in {"memory", "setup"} or not pref.notice_enabled():
+            return False
+        if not getattr(out, "isatty", lambda: False)():
+            return False
+        if pref.preference_recorded() or pref.notice_shown():
+            return False
+        print(FIRST_RUN_NOTICE.format(role=pref.REDIS_ROLE), file=out)
+        pref.mark_notice_shown()
+        return True
+    except OSError as e:  # unwritable home: inform once per process, never fail the command
+        logger.debug("first-run memory notice not recorded: %s", e)
+        return True
 
 
 def cmd_memory_forget_topic(args: Namespace) -> int:

@@ -24,6 +24,10 @@
       "root_anchor": "plugin/hooks/macos_timeout_guard.py:<module>"
     },
     {
+      "helper_anchor": "plugin/hooks/memory_backend_notice.py:main",
+      "root_anchor": "plugin/hooks/memory_backend_notice.py:<module>"
+    },
+    {
       "helper_anchor": "plugin/hooks/session_recall.py:main",
       "root_anchor": "plugin/hooks/session_recall.py:<module>"
     },
@@ -103,6 +107,14 @@
       "event": "PreToolUse",
       "signature": "exit2_stderr",
       "sink": "print(file=sys.stderr)",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "anchor": "plugin/hooks/memory_backend_notice.py:main",
+      "destination": "model_context",
+      "event": "SessionStart",
+      "signature": "context_stdout",
+      "sink": "print",
       "subject_kind": "informational_delivery"
     },
     {
@@ -361,13 +373,23 @@
       "manifest_path": "plugin/hooks/hooks.json",
       "matcher": "",
       "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/memory_backend_notice.py",
+      "resolved_repo_path": "plugin/hooks/memory_backend_notice.py"
+    },
+    {
+      "error": null,
+      "event": "SessionStart",
+      "json_pointer": "/hooks/SessionStart/3/hooks/0/command",
+      "manifest_path": "plugin/hooks/hooks.json",
+      "matcher": "",
+      "ordinal": 0,
       "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/spec_orient.py",
       "resolved_repo_path": "plugin/hooks/spec_orient.py"
     },
     {
       "error": null,
       "event": "SessionStart",
-      "json_pointer": "/hooks/SessionStart/3/hooks/0/command",
+      "json_pointer": "/hooks/SessionStart/4/hooks/0/command",
       "manifest_path": "plugin/hooks/hooks.json",
       "matcher": "",
       "ordinal": 0,

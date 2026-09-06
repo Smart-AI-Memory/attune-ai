@@ -569,6 +569,7 @@ def test_backend_status_no_backends():
         "transport": "none",
         "reachability": "unknown",
         "reason": "no_backend",
+        "preference": "auto",
     }
 
 

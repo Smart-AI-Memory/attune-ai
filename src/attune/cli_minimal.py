@@ -77,8 +77,11 @@ from attune.cli_commands.memory_commands import (
     cmd_memory_capture,
     cmd_memory_forget_topic,
     cmd_memory_recall,
+    cmd_memory_status,
     cmd_memory_topics,
+    cmd_memory_use,
     cmd_remember,
+    first_run_memory_notice,
 )
 from attune.cli_commands.pattern_review import (
     cmd_patterns_promote,
@@ -651,6 +654,14 @@ def _add_misc_subparsers(subparsers: argparse._SubParsersAction) -> None:
     recall_p.add_argument("--json", action="store_true", help="Output as JSON")
 
     memory_sub.add_parser("topics", help="List all personal memory topics")
+    status_p = memory_sub.add_parser(
+        "status", help="Which memory backend is live (file tier or Redis AMS) and why"
+    )
+    status_p.add_argument("--json", action="store_true", help="Output the raw status mapping")
+    use_p = memory_sub.add_parser(
+        "use", help="Choose the memory backend: auto (default), file, or redis"
+    )
+    use_p.add_argument("backend", choices=["auto", "file", "redis"], help="Backend preference")
 
     forget_topic_p = memory_sub.add_parser("forget-topic", help="Delete a topic from memory")
     forget_topic_p.add_argument("topic", help="Topic slug to delete")
@@ -810,6 +821,8 @@ _SUBCOMMAND_DISPATCH: dict[str, dict[str, object]] = {
         "capture": cmd_memory_capture,
         "recall": cmd_memory_recall,
         "topics": cmd_memory_topics,
+        "status": cmd_memory_status,
+        "use": cmd_memory_use,
         "forget-topic": cmd_memory_forget_topic,
     },
 }
@@ -910,6 +923,7 @@ def main(argv: list[str] | None = None) -> int:
     """Main entry point."""
     parser = create_parser()
     args = parser.parse_args(argv)
+    first_run_memory_notice(getattr(args, "command", None))
 
     # Configure logging (one-line records unless --verbose; see
     # _OneLineLogFormatter).
