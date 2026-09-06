@@ -4751,6 +4751,28 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#cast-a-stored-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cast a stored template
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#preview-every-stored-template" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Preview every stored template
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4925,6 +4947,36 @@ degrades to a pure status display with no answer:</p>
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="p">}],</span>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="p">})</span>
 </code></pre></div>
+<h3 id="cast-a-stored-template">Cast a stored template<a class="headerlink" href="#cast-a-stored-template" title="Permanent link">&para;</a></h3>
+<p>From Python, name the template and supply one string per declared slot;
+the result is a validated <code>FormSchema</code> like any other:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.elicitation</span><span class="w"> </span><span class="kn">import</span> <span class="n">form_from_template</span><span class="p">,</span> <span class="n">list_templates</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">list_templates</span><span class="p">()</span>                     <span class="c1"># ['session-contract', ...]</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="n">form</span> <span class="o">=</span> <span class="n">form_from_template</span><span class="p">(</span><span class="s2">"session-contract"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"project"</span><span class="p">:</span> <span class="s2">"attune-ai"</span><span class="p">})</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">form</span><span class="o">.</span><span class="n">title</span>                           <span class="c1"># 'Session contract — attune-ai'</span>
+</code></pre></div>
+<p>Over MCP, pass <code>template</code> + <code>slots</code> INSTEAD of <code>form</code> to any form-taking
+tool — the cast, validation, and render all happen server-side:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span><span class="nt">"template"</span><span class="p">:</span><span class="w"> </span><span class="s2">"session-contract"</span><span class="p">,</span><span class="w"> </span><span class="nt">"slots"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="nt">"project"</span><span class="p">:</span><span class="w"> </span><span class="s2">"attune-ai"</span><span class="p">},</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w"> </span><span class="nt">"message"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Fill before non-trivial work."</span><span class="p">}</span>
+</code></pre></div>
+<p><code>elicitation_render_widget</code> returns the same <code>{success, html, title,
+field_ids}</code> it returns for a <code>form</code>; <code>elicitation_collect_response</code>
+takes the same <code>template</code> + <code>slots</code> beside <code>answers</code> and echoes
+<code>template_id</code>. Passing both <code>form</code> and <code>template</code>, neither, or <code>slots</code>
+without <code>template</code> comes back as a listed problem, never a raise. An
+unknown name lists the available templates.</p>
+<h3 id="preview-every-stored-template">Preview every stored template<a class="headerlink" href="#preview-every-stored-template" title="Permanent link">&para;</a></h3>
+<p>The authoring preview renders every stored template — cast with its
+<code>example_slots</code> — through the production widget renderer into one
+standalone page, light and dark, with the payload the widget posts
+shown on submit:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>python<span class="w"> </span>-m<span class="w"> </span>attune_forms.preview<span class="w"> </span>--open<span class="w">          </span><span class="c1"># every template</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>python<span class="w"> </span>-m<span class="w"> </span>attune_forms.preview<span class="w"> </span>session-contract<span class="w"> </span>--out<span class="w"> </span>preview.html
+</code></pre></div>
+<p>Edit a template, reload, and see exactly what users will see. Preview
+casts do not count toward the form telemetry.</p>
 <h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
 <h3 id="public-api-attuneelicitation">Public API — <code>attune.elicitation</code><a class="headerlink" href="#public-api-attuneelicitation" title="Permanent link">&para;</a></h3>
 <p>The implementation lives in the standalone <code>attune-forms</code> package;
@@ -4991,6 +5043,14 @@ supported import path inside attune-ai.</p>
 <td>Validate answers (R4) and return a <code>FormResponse</code>; raises <code>FormValidationError</code>.</td>
 </tr>
 <tr>
+<td><code>form_from_template(name, slots=None)</code></td>
+<td>Load a stored template, fill its <code>{slot}</code> placeholders, validate the cast result; raises <code>FormValidationError</code> naming every slot or definition problem.</td>
+</tr>
+<tr>
+<td><code>list_templates()</code></td>
+<td>Sorted names of the stored templates the fused MCP path and the preview can address.</td>
+</tr>
+<tr>
 <td><code>WIDGET_RESPONSE_MARKER</code></td>
 <td>The sentinel key the widget posts back under.</td>
 </tr>
@@ -5049,8 +5109,13 @@ three construct types <code>decision</code>, <code>pushback</code>, <code>progre
 <h3 id="mcp-tools">MCP tools<a class="headerlink" href="#mcp-tools" title="Permanent link">&para;</a></h3>
 <p><code>elicitation_render_form</code>, <code>elicitation_render_widget</code>,
 <code>elicitation_collect_response</code>, and <code>elicitation_ask</code> — the same model,
-exposed for agents that drive forms through the MCP server.</p>
-<!-- attune-generated: source_hash=adc929d111b4cf4bf48479bf6b325ab34d6f63740017d7fc0df1383da12ed22e feature=elicitation-forms kind=how-to generated_at=2026-08-29 -->
+exposed for agents that drive forms through the MCP server. Each takes
+EITHER <code>form</code> (a declarative dict) OR <code>template</code> + <code>slots</code> (a stored
+template, cast server-side); <code>form</code> is no longer schema-required, and the
+handler enforces exactly one of the two. attune-ai's tool schemas and the
+standalone <code>attune-forms</code> server advertise the same arguments — a parity
+test pins them byte-identical.</p>
+<!-- attune-generated: source_hash=9162a67905eb555cfdd3b260da2b35f34972ceed46c693d35319d40e7370db18 feature=elicitation-forms kind=how-to generated_at=2026-09-06 -->
 
 
 
