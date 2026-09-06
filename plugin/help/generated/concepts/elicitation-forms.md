@@ -238,3 +238,32 @@ intro-sentence-plus-list shape — each item pickable by mouse or the
 `1` / `2` / `3` vocabulary — instead of a dropdown or checkboxes. This is
 presentation only: the answer and its validation are unchanged. It is a
 render option on the select types, **not** a separate construct.
+
+### Template-bound forms — sculpt once, cast per fork
+
+A recurring ask (the session contract, a release gate, a review choice)
+should not be re-composed as a fresh dict every time. A **stored
+template** is exactly the dict `form_from_dict` accepts plus a top-level
+`slots` list naming its `{placeholder}` substitution points and an
+`example_slots` mapping with one representative value per slot. Casting
+a template fills the slots and validates the *result* through the same
+seam as a hand-built dict — every problem listed, never a partial form.
+
+Two properties make templates load-bearing rather than a convenience:
+
+- **The fused server path.** Every form-taking MCP tool accepts
+  `template` + `slots` in place of `form`. The server loads, casts,
+  validates, and renders in one call, so neither the form definition
+  nor its HTML transits the agent's context. Answers collected from a
+  template-cast form carry the template name as `template_id`, which
+  makes responses joinable across sessions.
+- **The cast-every-template gate.** Because every stored template
+  carries `example_slots`, a drift test casts each one and validates the
+  form the substitution actually produces. Validating an uncast template
+  proves nothing about what the placeholders become; the gate checks the
+  thing users see.
+
+`form_from_dict` stamps every build with a `source` (`dict` by default,
+`template:<name>` for a cast), so template adoption is measured from the
+form telemetry rather than asserted. Preview casts (the authoring preview, `python -m attune_forms.preview`)
+suppress that telemetry so authoring never inflates the meter.

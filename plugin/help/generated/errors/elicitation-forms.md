@@ -29,6 +29,16 @@ the server restarts on the new version — the tool schema is loaded at
 startup. Verify the live `elicitation_render_widget` schema actually
 carries a new enum value before asserting the construct works end-to-end.
 
+### A template cast fails on a slot, not on the form
+
+`form_from_template` validates the declaration and the values in both
+directions before it substitutes anything: a missing value, an extra
+name, a declared-but-unused slot, or an undeclared `{placeholder}` in a
+field each surface as their own problem line. Read the slot problems
+first — the form-level validation only runs on a successfully cast
+definition. An unknown template name lists every available template, so
+a typo is a one-look fix.
+
 ### A `progress` form whose blocked items disagree with its options
 
 The bridge enforces `set(blocked labels) == set(options)`; a mismatch

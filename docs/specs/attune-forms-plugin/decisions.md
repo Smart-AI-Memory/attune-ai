@@ -220,3 +220,19 @@ drift-guard test, the same discipline as the skills mirror. D7 item 4
 is amended to this; items 1–3 stand. **R5.1 stays HELD** on the
 adaptive-session-interactions T4 trigger (D7 item 2) — only the
 direction is ruled here, not a go.
+
+**Meter premise re-read (2026-09-06, lead, while authoring the feature
+page):** D7's "117 dict builds against 0 template casts" was read from
+`~/.attune/telemetry/form_events.jsonl` (the path
+`attune_forms.form_events._events_path()` resolves; there is no
+`~/.attune/form_events.jsonl`). Re-counting `form_build` by `source`
+across all 706 records: 126 `dict` (102 of them before D7 was written —
+117 was an approximation), 8 `workspace-action`, 4 `elicit-form`, and 4
+`template:*`. The four template casts are R5.3 test-suite leakage, not
+use: `no-examples` is not a shipped template (`list_templates()` on
+0.13.0 returns only `session-contract`) and all four land at 21:21–21:23Z
+on 09-05 inside that afternoon's test runs. **Real template adoption is
+still zero** — the gap Phase 5 exists to close — and the figure to quote
+until R5.1 binds a skill is "126 dict builds / 0 real casts", read from
+the telemetry path above. Feature page documenting the shipped line:
+attune-ai #2440.

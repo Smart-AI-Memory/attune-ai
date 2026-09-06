@@ -240,6 +240,35 @@ intro-sentence-plus-list shape — each item pickable by mouse or the
 presentation only: the answer and its validation are unchanged. It is a
 render option on the select types, **not** a separate construct.
 
+### Template-bound forms — sculpt once, cast per fork
+
+A recurring ask (the session contract, a release gate, a review choice)
+should not be re-composed as a fresh dict every time. A **stored
+template** is exactly the dict `form_from_dict` accepts plus a top-level
+`slots` list naming its `{placeholder}` substitution points and an
+`example_slots` mapping with one representative value per slot. Casting
+a template fills the slots and validates the *result* through the same
+seam as a hand-built dict — every problem listed, never a partial form.
+
+Two properties make templates load-bearing rather than a convenience:
+
+- **The fused server path.** Every form-taking MCP tool accepts
+  `template` + `slots` in place of `form`. The server loads, casts,
+  validates, and renders in one call, so neither the form definition
+  nor its HTML transits the agent's context. Answers collected from a
+  template-cast form carry the template name as `template_id`, which
+  makes responses joinable across sessions.
+- **The cast-every-template gate.** Because every stored template
+  carries `example_slots`, a drift test casts each one and validates the
+  form the substitution actually produces. Validating an uncast template
+  proves nothing about what the placeholders become; the gate checks the
+  thing users see.
+
+`form_from_dict` stamps every build with a `source` (`dict` by default,
+`template:<name>` for a cast), so template adoption is measured from the
+form telemetry rather than asserted. Preview casts (the authoring preview, `python -m attune_forms.preview`)
+suppress that telemetry so authoring never inflates the meter.
+
 ## Quickstart
 
 Build a form from plain data, render it to the widget surface, and
@@ -347,6 +376,49 @@ form = form_from_dict({
 })
 ```
 
+### Cast a stored template
+
+From Python, name the template and supply one string per declared slot;
+the result is a validated `FormSchema` like any other:
+
+```python
+from attune.elicitation import form_from_template, list_templates
+
+list_templates()                     # ['session-contract', ...]
+form = form_from_template("session-contract", {"project": "attune-ai"})
+form.title                           # 'Session contract — attune-ai'
+```
+
+Over MCP, pass `template` + `slots` INSTEAD of `form` to any form-taking
+tool — the cast, validation, and render all happen server-side:
+
+```json
+{"template": "session-contract", "slots": {"project": "attune-ai"},
+ "message": "Fill before non-trivial work."}
+```
+
+`elicitation_render_widget` returns the same `{success, html, title,
+field_ids}` it returns for a `form`; `elicitation_collect_response`
+takes the same `template` + `slots` beside `answers` and echoes
+`template_id`. Passing both `form` and `template`, neither, or `slots`
+without `template` comes back as a listed problem, never a raise. An
+unknown name lists the available templates.
+
+### Preview every stored template
+
+The authoring preview renders every stored template — cast with its
+`example_slots` — through the production widget renderer into one
+standalone page, light and dark, with the payload the widget posts
+shown on submit:
+
+```bash
+python -m attune_forms.preview --open          # every template
+python -m attune_forms.preview session-contract --out preview.html
+```
+
+Edit a template, reload, and see exactly what users will see. Preview
+casts do not count toward the form telemetry.
+
 ## Reference
 
 ### Public API — `attune.elicitation`
@@ -370,6 +442,8 @@ supported import path inside attune-ai.
 | `inferred_field_count(form)` | How many fields carry an inferred value. |
 | `needs_widget(form)` | Low-level controls check — True if `AskUserQuestion` would lose fidelity. Does not own the surface decision. |
 | `collect_form_response(form, raw_answers, template_id="")` | Validate answers (R4) and return a `FormResponse`; raises `FormValidationError`. |
+| `form_from_template(name, slots=None)` | Load a stored template, fill its `{slot}` placeholders, validate the cast result; raises `FormValidationError` naming every slot or definition problem. |
+| `list_templates()` | Sorted names of the stored templates the fused MCP path and the preview can address. |
 | `WIDGET_RESPONSE_MARKER` | The sentinel key the widget posts back under. |
 | `FormValidationError` | Raised for a malformed definition or answer; lists every problem. |
 
@@ -394,7 +468,12 @@ three construct types `decision`, `pushback`, `progress` — ten in all.
 
 `elicitation_render_form`, `elicitation_render_widget`,
 `elicitation_collect_response`, and `elicitation_ask` — the same model,
-exposed for agents that drive forms through the MCP server.
+exposed for agents that drive forms through the MCP server. Each takes
+EITHER `form` (a declarative dict) OR `template` + `slots` (a stored
+template, cast server-side); `form` is no longer schema-required, and the
+handler enforces exactly one of the two. attune-ai's tool schemas and the
+standalone `attune-forms` server advertise the same arguments — a parity
+test pins them byte-identical.
 
 ## Comparison
 
@@ -421,6 +500,16 @@ the server restarts on the new version — the tool schema is loaded at
 startup. Verify the live `elicitation_render_widget` schema actually
 carries a new enum value before asserting the construct works end-to-end.
 
+### A template cast fails on a slot, not on the form
+
+`form_from_template` validates the declaration and the values in both
+directions before it substitutes anything: a missing value, an extra
+name, a declared-but-unused slot, or an undeclared `{placeholder}` in a
+field each surface as their own problem line. Read the slot problems
+first — the form-level validation only runs on a successfully cast
+definition. An unknown template name lists every available template, so
+a typo is a one-look fix.
+
 ### A `progress` form whose blocked items disagree with its options
 
 The bridge enforces `set(blocked labels) == set(options)`; a mismatch
@@ -437,6 +526,12 @@ blocker or omit a real one.
 > This section is **not** projected verbatim as the FAQ; it contributes
 > the feature's author-curated seed questions.
 
+- **Q:** When should a form be a stored template instead of a dict?
+  **A:** When the same ask recurs across sessions. A template is the
+  dict plus `slots` and `example_slots`; cast it by name through
+  `form_from_template` or by passing `template` + `slots` to any
+  form-taking MCP tool, and the definition never transits the agent's
+  context. One-off asks stay dicts.
 - **Q:** What are elicitation forms?
   **A:** Structured, interactive turns the agent uses instead of
   freeform prose: a multi-part question becomes one clickable form, a
