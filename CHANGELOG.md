@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **attune-forms floor raised to >=0.13.0** (lock regenerated): the
+  installed library now carries the fused `template` + `slots` path on
+  every form-taking tool, `example_slots` on stored templates, and the
+  `attune-forms-preview` authoring page, so the D3 schema-parity test on
+  `_template_props` goes live instead of skipping.
 - **Fused template path on every form-taking elicitation tool (attune-forms
   spec R5.2)**: `elicitation_render_form`, `elicitation_render_widget`,
   `elicitation_collect_response` and `elicitation_ask` accept
