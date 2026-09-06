@@ -311,11 +311,12 @@ class TestLLMErrorHandling:
     @pytest.mark.skipif(anthropic is None, reason="anthropic package not installed")
     async def test_invalid_api_key(self):
         """Exercise the real SDK/provider error path with an intercepted 401."""
+        sdk_http = getattr(anthropic._base_client, "httpx2", httpx)
         requests = []
 
         def unauthorized(request):
             requests.append(request)
-            return httpx.Response(
+            return sdk_http.Response(
                 401,
                 json={
                     "type": "error",
@@ -323,7 +324,7 @@ class TestLLMErrorHandling:
                 },
             )
 
-        async with httpx.AsyncClient(transport=httpx.MockTransport(unauthorized)) as http:
+        async with sdk_http.AsyncClient(transport=sdk_http.MockTransport(unauthorized)) as http:
             async with anthropic.AsyncAnthropic(
                 api_key="invalid-key-12345", http_client=http, max_retries=0
             ) as client:

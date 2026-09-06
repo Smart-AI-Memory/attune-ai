@@ -9,6 +9,7 @@ from __future__ import annotations
 import atexit
 import functools
 import http.client
+import importlib.util
 import ipaddress
 import os
 import shlex
@@ -274,23 +275,30 @@ def install() -> None:
         return original_urlopen(self, method, url, *args, **kwargs)
 
     patch(urllib3.HTTPConnectionPool, "urlopen", guarded_urlopen)
-    # MockTransport stays untouched. Both real httpx transports are blocked at
-    # dispatch, before even a loopback model or API proxy can receive a request.
+
+    def patch_httpx_transports(httpx: Any) -> None:
+        """Guard each HTTPX generation while leaving MockTransport untouched."""
+        original_sync = httpx.HTTPTransport.handle_request
+        original_async = httpx.AsyncHTTPTransport.handle_async_request
+
+        def guarded_sync(self: Any, request: Any) -> Any:
+            check_http_url(str(request.url))
+            return original_sync(self, request)
+
+        async def guarded_async(self: Any, request: Any) -> Any:
+            check_http_url(str(request.url))
+            return await original_async(self, request)
+
+        patch(httpx.HTTPTransport, "handle_request", guarded_sync)
+        patch(httpx.AsyncHTTPTransport, "handle_async_request", guarded_async)
+
     import httpx
 
-    original_sync = httpx.HTTPTransport.handle_request
-    original_async = httpx.AsyncHTTPTransport.handle_async_request
+    patch_httpx_transports(httpx)
+    if importlib.util.find_spec("httpx2") is not None:
+        import httpx2
 
-    def guarded_sync(self: Any, request: Any) -> Any:
-        check_http_url(str(request.url))
-        return original_sync(self, request)
-
-    async def guarded_async(self: Any, request: Any) -> Any:
-        check_http_url(str(request.url))
-        return await original_async(self, request)
-
-    patch(httpx.HTTPTransport, "handle_request", guarded_sync)
-    patch(httpx.AsyncHTTPTransport, "handle_async_request", guarded_async)
+        patch_httpx_transports(httpx2)
     atexit.register(uninstall)
 
 

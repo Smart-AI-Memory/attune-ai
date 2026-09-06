@@ -22,7 +22,7 @@ remains unattributed. These changes do not reconstruct that billing history.
 
 ## Enforced boundaries
 
-- Real `httpx`, `http.client`, and `urllib3` HTTP requests require a
+- Real `httpx`, installed `httpx2`, `http.client`, and `urllib3` HTTP requests require a
   fixture-owned endpoint. This also blocks arbitrary local proxies that could
   perform remote inference behind an ordinary-looking URL. External Python socket
   connections, datagrams, and DNS lookups are rejected before network access.
@@ -47,7 +47,8 @@ fixture directory.
 
 ## Writing tests
 
-Patch the workflow/SDK boundary or inject `httpx.MockTransport`/ASGI transports.
+Patch the workflow/SDK boundary or inject the matching HTTP library's
+`MockTransport`/ASGI transport (`httpx` or `httpx2`).
 These continue exercising real application and client behavior without network
 inference. Environment-construction tests assert the environment passed to an
 intercepted launch; the isolation regressions separately prove real child
@@ -79,7 +80,11 @@ selection. Its AMS readback tests use a fixture-owned HTTP service, including
 a real 404 for an acknowledged but unpersisted write. MCP stdout tests select
 the fixture-local file backend explicitly; dispatch, sanitization and JSON-RPC
 frames still run through production code. The invalid-key test exercises the
-real SDK's 401 handling through `httpx.MockTransport`. These tests never need
+real SDK's 401 handling through its matching `MockTransport`. Anthropic 0.125
+uses `httpx`; Anthropic 1.4 uses `httpx2`. The guard protects both installed
+transport generations, and the regression suite intercepts their underlying
+`httpcore`/`httpcore2` pools so a broken guard still cannot reach a provider.
+These tests never need
 an ambient AMS service or a provider response.
 
 The dedicated coverage configuration includes the test-support implementation,

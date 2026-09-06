@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import http.client
+import importlib.util
 import json
 import os
 import subprocess
@@ -15,20 +16,30 @@ import pytest
 
 from tests import _inference_guard as guard
 
+HTTP_CLIENTS = [httpx]
+HTTP_CORES = [httpcore]
+if importlib.util.find_spec("httpx2") is not None:
+    import httpcore2
+    import httpx2
+
+    HTTP_CLIENTS.append(httpx2)
+    HTTP_CORES.append(httpcore2)
+
 
 @pytest.fixture(autouse=True)
 def intercept_network(monkeypatch):
     """A broken guard must fail these probes without contacting a provider."""
-    monkeypatch.setattr(
-        httpcore.ConnectionPool,
-        "handle_request",
-        Mock(side_effect=AssertionError("Unintercepted inference transport")),
-    )
-    monkeypatch.setattr(
-        httpcore.AsyncConnectionPool,
-        "handle_async_request",
-        AsyncMock(side_effect=AssertionError("Unintercepted inference transport")),
-    )
+    for core in HTTP_CORES:
+        monkeypatch.setattr(
+            core.ConnectionPool,
+            "handle_request",
+            Mock(side_effect=AssertionError("Unintercepted inference transport")),
+        )
+        monkeypatch.setattr(
+            core.AsyncConnectionPool,
+            "handle_async_request",
+            AsyncMock(side_effect=AssertionError("Unintercepted inference transport")),
+        )
     monkeypatch.setattr(
         http.client.HTTPConnection,
         "send",
@@ -103,16 +114,18 @@ def test_local_test_services_remain_available(address) -> None:
         "https://api.invalid/v1beta/models/example:generateContent",
     ],
 )
-def test_real_http_inference_endpoint_is_rejected(url) -> None:
+@pytest.mark.parametrize("http_client", HTTP_CLIENTS, ids=lambda module: module.__name__)
+def test_real_http_inference_endpoint_is_rejected(url, http_client) -> None:
     with pytest.raises(guard.InferenceBlocked, match="Inference HTTP"):
-        with httpx.Client() as client:
+        with http_client.Client() as client:
             client.post(url, json={})
 
 
 @pytest.mark.asyncio
-async def test_async_http_inference_endpoint_is_rejected() -> None:
+@pytest.mark.parametrize("http_client", HTTP_CLIENTS, ids=lambda module: module.__name__)
+async def test_async_http_inference_endpoint_is_rejected(http_client) -> None:
     with pytest.raises(guard.InferenceBlocked, match="Inference HTTP"):
-        async with httpx.AsyncClient() as client:
+        async with http_client.AsyncClient() as client:
             await client.post("http://127.0.0.1:11434/api/chat", json={})
 
 
@@ -144,11 +157,13 @@ async def test_async_anthropic_client_is_blocked_before_inference() -> None:
 def test_mock_http_transport_still_exercises_real_client() -> None:
     import anthropic
 
+    sdk_http = getattr(anthropic._base_client, "httpx2", httpx)
+
     requests = []
 
     def respond(request):
         requests.append(request)
-        return httpx.Response(
+        return sdk_http.Response(
             200,
             json={
                 "id": "msg_fixture",
@@ -161,7 +176,7 @@ def test_mock_http_transport_still_exercises_real_client() -> None:
             },
         )
 
-    with httpx.Client(transport=httpx.MockTransport(respond)) as transport:
+    with sdk_http.Client(transport=sdk_http.MockTransport(respond)) as transport:
         client = anthropic.Anthropic(api_key="fixture", http_client=transport)
         response = client.messages.create(
             model="fixture", max_tokens=1, messages=[{"role": "user", "content": "fixture"}]
@@ -325,23 +340,25 @@ def test_http_fixtures_require_an_owned_bound_loopback_socket(monkeypatch) -> No
         guard.check_http_url("http://127.0.0.1:8999/api/generate")
 
 
-def test_non_inference_http_reaches_intercepted_transport() -> None:
+@pytest.mark.parametrize("http_client", HTTP_CLIENTS, ids=lambda module: module.__name__)
+def test_non_inference_http_reaches_intercepted_transport(http_client) -> None:
     sock = Mock()
     sock.getsockname.return_value = ("127.0.0.1", 9999)
     with guard.loopback_http_fixture(sock):
         with pytest.raises(AssertionError, match="Unintercepted inference transport"):
-            httpx.get("http://127.0.0.1:9999/health")
+            http_client.get("http://127.0.0.1:9999/health")
         with pytest.raises(AssertionError, match="Unintercepted HTTP write"):
             http.client.HTTPConnection("127.0.0.1", 9999).request("GET", "/health")
 
 
 @pytest.mark.asyncio
-async def test_non_inference_async_http_reaches_intercepted_transport() -> None:
+@pytest.mark.parametrize("http_client", HTTP_CLIENTS, ids=lambda module: module.__name__)
+async def test_non_inference_async_http_reaches_intercepted_transport(http_client) -> None:
     sock = Mock()
     sock.getsockname.return_value = ("127.0.0.1", 9999)
     with guard.loopback_http_fixture(sock):
         with pytest.raises(AssertionError, match="Unintercepted inference transport"):
-            async with httpx.AsyncClient() as client:
+            async with http_client.AsyncClient() as client:
                 await client.get("http://127.0.0.1:9999/health")
 
 

@@ -151,6 +151,34 @@ the repair, not an inference-boundary failure.
 - The inference guard is unchanged from its 99.21% coverage receipt above.
   Fresh GitHub workflow acceptance and Windows results remain required.
 
+## Unlocked SDK transport compatibility
+
+CI's fresh dependency resolution installed Anthropic 1.4.0 with httpx2 2.12.0;
+the lockfile environment used Anthropic 0.125.0 with httpx 0.28.1. Integration
+job 101456121361 and Linux job 101456163089 failed because SDK mock clients
+used the old HTTP type, and the real-SDK guard probes reached the lower socket
+barrier instead of the expected HTTP barrier. The endpoint guard now wraps
+both installed HTTPX generations. Regressions intercept both httpcore pools,
+including arbitrary loopback proxy paths; no live provider probe was used.
+Mocked SDK responses use the HTTP module the SDK itself imports.
+
+A disposable Python 3.12 environment was resolved with `uv pip install -e
+'.[dev]'` to match CI's installation strategy before publishing again.
+
+- Fresh SDK guard + workflow checks: 434 passed, 1 existing skip; **98.85%**
+  guard statement/branch coverage. `/private/tmp/2445-httpx2-focused.log` and
+  `/private/tmp/2445-httpx2-coverage.json`.
+- Fresh SDK no-auth integration: 234 passed, 41 existing skips in 8.05s.
+  `/private/tmp/2445-httpx2-integration.log`.
+- Fresh SDK whole tree: **25,726 passed, 242 existing skips, 3 xfailed** in
+  91.43s. `/private/tmp/2445-httpx2-whole.log`.
+- Locked legacy SDK guard + workflow checks: 424 passed, 1 existing skip;
+  **98.09%** guard statement/branch coverage, including the optional-library
+  absence path. `/private/tmp/2445-legacy-httpx-focused.log`.
+- Static tokenizer data was prepared before pytest; the committed barrier,
+  isolated credentials and disposable Redis were active. Normal interactive
+  auth is unchanged. Windows still requires its own remote receipt.
+
 ## Next action
 
 Publish the signed repair and verify the fresh CI matrix, including Windows.

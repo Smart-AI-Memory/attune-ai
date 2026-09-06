@@ -1977,3 +1977,15 @@ before test jobs existed; local YAML parsing could not catch expression
 context validity. Use `github.workspace` with a sibling cache directory and
 reject runner-context expressions in job environments with a schema test.
 The same shared path still covers setup and every pytest step on all OSes.
+
+### 2026-09-06 — #2445 unlocked SDK transport upgrade (mocked)
+
+CI installs Anthropic 1.4.0/httpx2 2.12.0; the lockfile validation environment
+used Anthropic 0.125.0/httpx 0.28.1. The invalid-key fixture passed the older
+HTTP client to the new SDK and failed before the mocked 401. More seriously,
+the test guard only wrapped httpx: httpx2 could bypass the HTTP endpoint rule
+for a local proxy (external Python sockets were still denied). No live probe
+was used. Guard both installed transport generations, intercept both core
+pools in regression tests, and match SDK fixtures to the SDK's HTTP backend.
+Validation now includes a disposable environment resolved like CI and the
+locked legacy environment; no production authentication is changed.
