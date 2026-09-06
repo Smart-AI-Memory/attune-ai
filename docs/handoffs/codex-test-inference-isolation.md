@@ -179,6 +179,40 @@ A disposable Python 3.12 environment was resolved with `uv pip install -e
   isolated credentials and disposable Redis were active. Normal interactive
   auth is unchanged. Windows still requires its own remote receipt.
 
+## Windows matrix repair (2026-09-06)
+
+Run 34022420737 at `4ceb65c015b334e0f23420928717c2b1eefbf0b9` passed
+Linux, macOS, no-auth integration and the Windows hook lanes, but failed
+all five Windows full-tree lanes. Downloaded Windows 3.12 job 101457398511
+reported 15 failures; Windows 3.14 job 101457398486 reported 14 failures.
+Fourteen were `ValueError: No closing quotation` from non-POSIX shlex
+parsing Windows Popen's serialized audit command. One additional Windows
+3.12 failure was a cold nested pytest/xdist process exceeding 15 seconds.
+
+The guard now decodes Windows CRT backslash/quote rules before its existing
+command checks. The new regressions fail against the prior guard for the
+multiline Python program and a quoted cmd wrapper that evaded the old check
+(2 failed, 5 passed in the targeted pre-fix run). No executable or provider
+is launched by those probes. Additional tests preserve CLI diagnostics,
+reject quoted inference/bootstrap bypasses, and round-trip 781 argument
+combinations through Python's actual list2cmdline serializer. Only the cold
+pytest controller/worker probe receives a 60-second startup allowance; its
+block-before-process-creation assertions remain unchanged.
+
+Local repair receipts (isolated credentials, committed guard, disposable
+loopback Redis, prepared static tokenizer cache):
+
+- Guard + affected subprocess suites + gates + quality + CI checks:
+  **1,048 passed, 1 existing skip in 72.92s**, **99.03%** guard
+  statement/branch coverage. All **33/33** executable lines changed in
+  this repair are covered. `/private/tmp/2445-windows-focused.log`;
+  `/private/tmp/2445-windows-focused-coverage.json`.
+- Separate no-auth integration selection: **234 passed, 41 existing skips**
+  in 8.36s. `/private/tmp/2445-windows-integration.log`.
+- Whole configured tree: **25,736 passed, 242 existing skips, 3 xfailed**
+  in 81.57s. `/private/tmp/2445-windows-whole.log`.
+- Pinned pre-commit checks: passed; `/private/tmp/2445-windows-hooks.log`.
+
 ## Next action
 
 Publish the signed repair and verify the fresh CI matrix, including Windows.

@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import http.client
 import importlib.util
+import itertools
 import json
 import os
 import subprocess
 import sys
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock
 
 import httpcore
@@ -234,7 +236,9 @@ async def test_agent_sdk_cannot_start_a_cli_with_saved_auth(tmp_path, monkeypatc
     assert json.loads(saved_auth.read_text())["claudeAiOauth"]["accessToken"] == "fixture"
 
 
-def _python(script: str, *, env: dict | None = None) -> subprocess.CompletedProcess:
+def _python(
+    script: str, *, env: dict | None = None, timeout: int = 15
+) -> subprocess.CompletedProcess:
     env = dict(os.environ if env is None else env)
     # These cold-interpreter probes declare their own pytest configuration.
     env.pop("PYTEST_ADDOPTS", None)
@@ -244,7 +248,7 @@ def _python(script: str, *, env: dict | None = None) -> subprocess.CompletedProc
         env=env,
         capture_output=True,
         text=True,
-        timeout=15,
+        timeout=timeout,
         check=False,
     )
 
@@ -431,7 +435,9 @@ def test_real_pytest_installs_guard_before_collection_and_in_workers(tmp_path, w
     args = ["-p", "tests.conftest", str(fixture), "-n", workers, "-q", "-o", "addopts="]
     result = _python(
         "from tests import _inference_guard as g; g.uninstall(); "
-        f"import pytest; raise SystemExit(pytest.main({args!r}))"
+        f"import pytest; raise SystemExit(pytest.main({args!r}))",
+        # A cold controller plus two workers can exceed 15s on busy Windows CI.
+        timeout=60,
     )
     assert result.returncode != 0
     assert "InferenceBlocked" in result.stdout, result.stdout + result.stderr
@@ -496,9 +502,8 @@ def test_windows_popen_audit_still_blocks_inference_without_executable(command):
         guard._audit("subprocess.Popen", (None, command, None, {}))
 
 
-def test_windows_quoted_executable_is_checked_with_non_posix_splitting(monkeypatch):
-    split = guard.shlex.split
-    monkeypatch.setattr(guard.shlex, "split", lambda command, **kwargs: split(command, posix=False))
+def test_windows_quoted_executable_is_checked(monkeypatch):
+    monkeypatch.setattr(guard, "os", SimpleNamespace(name="nt", fsdecode=os.fsdecode))
     with pytest.raises(guard.InferenceBlocked, match="Live inference"):
         guard._audit(
             "subprocess.Popen", (None, r'"C:\Program Files\Claude\claude.exe" -p fixture', None, {})
@@ -507,6 +512,54 @@ def test_windows_quoted_executable_is_checked_with_non_posix_splitting(monkeypat
         guard._audit(
             "subprocess.Popen", (None, r'"C:\Program Files\Python\python.exe" -I -c pass', None, {})
         )
+
+
+@pytest.mark.parametrize(
+    "script",
+    [
+        '\nimport json\nprint(json.dumps({"loaded": "attune" in []}))\n',
+        "print('apostrophe'); print(\"double quote\")",
+        'print("trailing slash: \\\\")',
+    ],
+)
+def test_windows_audit_accepts_serialized_python_programs(script, monkeypatch):
+    # Windows Popen audits list2cmdline output even when callers supply argv.
+    command = subprocess.list2cmdline([r"C:\Program Files\Python\python.exe", "-c", script])
+    monkeypatch.setattr(guard, "os", SimpleNamespace(name="nt", fsdecode=os.fsdecode))
+    guard._audit("subprocess.Popen", (None, command, None, {}))
+
+
+@pytest.mark.parametrize(
+    "argv",
+    [
+        [r"C:\Program Files\Claude\claude.exe", "-p", 'a "quoted" prompt'],
+        [r"C:\Program Files\Python\python.exe", "-IS", "-c", 'print("fixture")'],
+        ["cmd.exe", "/c", r'"C:\Program Files\Claude\claude.exe" -p fixture'],
+        ["renamed-cli", "--print", "--output-format", "stream-json"],
+    ],
+)
+def test_windows_serialized_commands_cannot_hide_inference(argv, monkeypatch):
+    command = subprocess.list2cmdline(argv)
+    monkeypatch.setattr(guard, "os", SimpleNamespace(name="nt", fsdecode=os.fsdecode))
+    with pytest.raises(guard.InferenceBlocked, match="blocked"):
+        guard._audit("subprocess.Popen", (None, command, None, {}))
+
+
+def test_windows_parser_roundtrips_popen_serialization():
+    # Exercise quote/backslash parity, empty args, whitespace and Unicode.
+    for size in range(5):
+        for chars in itertools.product('a \t\\"', repeat=size):
+            argv = [r"C:\Program Files\Python\python.exe", "-c", "".join(chars), "雪\n"]
+            assert guard._split_windows_command(subprocess.list2cmdline(argv)) == argv
+    assert guard._split_windows_command(" \t") == []
+    assert guard._split_windows_command('python a"b"" c d') == ["python", 'ab" c d']
+
+
+@pytest.mark.parametrize("flag", ["--version", "--help"])
+def test_windows_quoted_non_inference_cli_checks_remain_available(flag, monkeypatch):
+    command = subprocess.list2cmdline([r"C:\Program Files\Claude\claude.exe", flag])
+    monkeypatch.setattr(guard, "os", SimpleNamespace(name="nt", fsdecode=os.fsdecode))
+    guard._audit("subprocess.Popen", (None, command, None, {}))
 
 
 def test_cold_child_does_not_inherit_parent_pytest_configuration(monkeypatch):

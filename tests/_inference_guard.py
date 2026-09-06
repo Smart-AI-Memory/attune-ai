@@ -91,12 +91,50 @@ def loopback_http_fixture(sock: Any):
         _http_fixtures.remove(address)
 
 
+def _split_windows_command(command: str) -> list[str]:
+    """Decode the CRT quoting used by Windows Popen's list2cmdline audit.
+
+    shlex is a shell parser: its non-POSIX mode cannot decode escaped quotes
+    in Python -c programs. Backslashes escape only quotes in this format.
+    """
+    parts = []
+    index = 0
+    while index < len(command):
+        if command[index] in " \t":
+            index += 1
+            continue
+        argument = []
+        quoted = False
+        while index < len(command):
+            slashes = 0
+            while index < len(command) and command[index] == "\\":
+                slashes += 1
+                index += 1
+            if index < len(command) and command[index] == '"':
+                argument.extend("\\" * (slashes // 2))
+                if slashes % 2:
+                    argument.append('"')
+                elif quoted and command[index : index + 2] == '""':
+                    argument.append('"')
+                    index += 1
+                else:
+                    quoted = not quoted
+                index += 1
+                continue
+            argument.extend("\\" * slashes)
+            if index == len(command) or (not quoted and command[index] in " \t"):
+                break
+            argument.append(command[index])
+            index += 1
+        parts.append("".join(argument))
+    return parts
+
+
 def check_command(command: Any) -> None:
     """Reject inference executables, including shell/env/node/SDK wrappers."""
     if isinstance(command, str | bytes):
-        parts = shlex.split(os.fsdecode(command), posix=os.name != "nt")
-        # Non-POSIX splitting retains Windows command-line quotes.
-        parts = [p[1:-1] if len(p) > 1 and p[0] == p[-1] and p[0] in "\"'" else p for p in parts]
+        text = os.fsdecode(command)
+        parts = _split_windows_command(text) if os.name == "nt" else shlex.split(text)
     else:
         parts = [os.fsdecode(p) for p in command]
     if "--print" in parts and "stream-json" in parts:

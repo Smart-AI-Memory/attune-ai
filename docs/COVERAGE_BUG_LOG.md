@@ -1989,3 +1989,18 @@ was used. Guard both installed transport generations, intercept both core
 pools in regression tests, and match SDK fixtures to the SDK's HTTP backend.
 Validation now includes a disposable environment resolved like CI and the
 locked legacy environment; no production authentication is changed.
+
+### 2026-09-06 — #2445 Windows command-line decoding (crash / mocked)
+
+Windows Popen audits a serialized command string even when its caller passes
+argv. Non-POSIX shlex does not decode the CRT quoting used by list2cmdline:
+14 Windows tests crashed on quoted multiline Python programs. The same
+parser also missed a quoted inference executable inside a serialized cmd
+wrapper. Regression tests fail against the old guard for both cases without
+launching a process. The guard now decodes backslash/quote parity before
+applying the existing inference checks, including nested wrappers.
+
+One nested pytest controller/worker probe additionally exhausted its 15s
+startup timeout on Windows 3.12. That probe alone gets 60s; its assertions
+that inference is blocked before process creation are unchanged. No live
+provider calls, broad skips, or interactive-auth changes are involved.

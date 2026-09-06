@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Windows audit events retain command checks when no executable override
   is supplied. CI prepares tokenizer data before pytest, and no-auth
   integration tests retain HTTP and MCP receipts through local fixtures.
+  Windows command decoding preserves quoted Python programs and still blocks
+  quoted inference wrappers.
 
 ### Added
 
