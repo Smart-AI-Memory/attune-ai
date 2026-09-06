@@ -61,8 +61,19 @@ still missing; keep the PR draft and do not claim the milestone complete.
 
 ## Next action
 
-Finish current checks/push, configure the verified preview artifact, then
-reload the preview MCP server in Codex and collect the actual host interaction.
+Implementation commit 2e1447b97 is signed and pushed to draft #2450. All local
+checks passed; new-head CI is running with no failures at the last probe.
+The verified preview is installed at
+/Users/patrickroebuck/.attune/runtimes/forms-1109fcaaa3b1 in its own venv,
+using frozen core dependencies. A second normal-stdio probe passed from that
+installed environment (/private/tmp/form-installed-probe.log). Only the
+attune-ai-preview block in ~/.codex/config.toml changed; the main server and
+all other settings were compared and preserved. The former preview block is
+backed up in that runtime directory as previous-preview.toml. Preview provider
+credentials are empty and its state/config paths are isolated.
+
+Reconnect/reload the preview MCP server in Codex, then collect the actual host
+interaction; the current task tool catalog still lists the old server tools.
 No callable elicitation_route_form exists in the currently loaded old server.
 Follow the existing milestone measurement brief; leave unavailable strata open.
 
@@ -80,3 +91,5 @@ After any native code/fixture formatting, refresh executed receipts and their
 single-source package projections with scripts/project_surface_runtime.py --write.
 
 Final whole-suite receipt: 26,056 passed, 242 skipped, 3 xfailed in 73.04s.
+
+Pinned pre-commit hooks passed; good GPG signature independently verified.
