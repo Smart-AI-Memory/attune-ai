@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Surface-producer inventory (host-surface-parity Task 1B, increment 1
+  of the task).** `attune.elicitation.surface_inventory` mechanically
+  discovers every in-tree producer of a host-presented surface — calls
+  into the attune-forms renderer registry (direct, `attune.elicitation`
+  re-export, and qualified-alias syntaxes, plus helper indirection with
+  `root -> helper` provenance), the closed package host-envelope
+  signatures, every manifest-registered hook resolved through a closed
+  shell resolver (exact launcher prefix, one `.py` token, two known
+  variables, no operators or escapes) with event-qualified envelope
+  signatures, and every Markdown command as an `artifact:` subject. The
+  reviewed `docs/specs/host-surface-parity/producer_baseline.json` is
+  the scan of the execution base; `tests/unit/gates/test_surface_parity.py`
+  requires a fresh scan to equal it and carries the mutation receipts.
+  attune-forms floor raised to `>=0.14.0` (the registry the scanner reads).
+  Discovery only — the parity registry, receipts ledger, routing policy and
+  receipt store are later increments.
+
 - **attune-forms floor raised to >=0.13.0** (lock regenerated): the
   installed library now carries the fused `template` + `slots` path on
   every form-taking tool, `example_slots` on stored templates, and the

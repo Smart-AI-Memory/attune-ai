@@ -145,6 +145,21 @@ verified.
 
 ## Task 1B — Context-routed surface parity gate (R2)
 
+*(Execution log: chair go "go 1B" 2026-09-06. STOP precondition
+receipt taken against the PyPI-installed attune-forms 0.14.0 — not
+editable, 7 registry targets, production `workspace_to_headless`, every
+fixture executed. **Increment 1 landed:** producer discovery
+(`attune.elicitation.surface_inventory`), the reviewed
+`producer_baseline.json`, and the discovery half of
+`tests/unit/gates/test_surface_parity.py`; forms floor `>=0.14.0`. The
+baseline found the design's six renderer anchors / seven sites, D6's
+three `additionalContext` hooks, seven exit-2 guards, six SessionStart
+context hooks, and two producers the design never listed
+(`widgets/chart_widget_tool.py:render_chart_widget`,
+`mcp/workflow_handlers.py:_workflow_response`). Remaining increments:
+parity registry + receipts ledger + contract enforcer; surface policy +
+receipt store + unified route handler; cross-repo-compat workflow.)*
+
 ```xml
 <task id="1B" name="context-routed-surface-parity-gate">
   <objective>

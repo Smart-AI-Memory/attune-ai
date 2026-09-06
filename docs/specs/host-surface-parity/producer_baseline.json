@@ -1,0 +1,652 @@
+{
+  "artifacts": [
+    {
+      "anchor": "artifact:plugin/commands/handoff.md",
+      "error": null,
+      "implementation": "plugin/hooks/_handoff_cli.py"
+    }
+  ],
+  "helper_edges": [
+    {
+      "helper_anchor": "plugin/hooks/friction_gate.py:main",
+      "root_anchor": "plugin/hooks/friction_gate.py:<module>"
+    },
+    {
+      "helper_anchor": "plugin/hooks/jit_recall.py:main",
+      "root_anchor": "plugin/hooks/jit_recall.py:<module>"
+    },
+    {
+      "helper_anchor": "plugin/hooks/lesson_recall.py:main",
+      "root_anchor": "plugin/hooks/lesson_recall.py:<module>"
+    },
+    {
+      "helper_anchor": "plugin/hooks/macos_timeout_guard.py:main",
+      "root_anchor": "plugin/hooks/macos_timeout_guard.py:<module>"
+    },
+    {
+      "helper_anchor": "plugin/hooks/session_recall.py:main",
+      "root_anchor": "plugin/hooks/session_recall.py:<module>"
+    },
+    {
+      "helper_anchor": "plugin/hooks/session_stash.py:_emit_additional_context",
+      "root_anchor": "plugin/hooks/session_stash.py:<module>"
+    },
+    {
+      "helper_anchor": "plugin/hooks/spec_orient.py:main",
+      "root_anchor": "plugin/hooks/spec_orient.py:<module>"
+    },
+    {
+      "helper_anchor": "plugin/hooks/usage_consent_notice.py:main",
+      "root_anchor": "plugin/hooks/usage_consent_notice.py:<module>"
+    },
+    {
+      "helper_anchor": "src/attune/hooks/scripts/detached_head_push_guard.py:main",
+      "root_anchor": "src/attune/hooks/scripts/detached_head_push_guard.py:<module>"
+    },
+    {
+      "helper_anchor": "src/attune/hooks/scripts/dirty_switch_guard.py:main",
+      "root_anchor": "src/attune/hooks/scripts/dirty_switch_guard.py:<module>"
+    },
+    {
+      "helper_anchor": "src/attune/hooks/scripts/help_freshness_nudge.py:main",
+      "root_anchor": "src/attune/hooks/scripts/help_freshness_nudge.py:<module>"
+    },
+    {
+      "helper_anchor": "src/attune/hooks/scripts/lessons_reminder.py:main",
+      "root_anchor": "src/attune/hooks/scripts/lessons_reminder.py:<module>"
+    },
+    {
+      "helper_anchor": "src/attune/hooks/scripts/starter_prompt_nudge.py:_emit_notice",
+      "root_anchor": "src/attune/hooks/scripts/starter_prompt_nudge.py:<module>"
+    },
+    {
+      "helper_anchor": "src/attune/hooks/scripts/starter_reconciler.py:_reconcile_and_emit",
+      "root_anchor": "src/attune/hooks/scripts/starter_reconciler.py:<module>"
+    },
+    {
+      "helper_anchor": "src/attune/hooks/scripts/starter_reconciler.py:main",
+      "root_anchor": "src/attune/hooks/scripts/starter_reconciler.py:<module>"
+    },
+    {
+      "helper_anchor": "src/attune/hooks/scripts/worktree_path_guard.py:main",
+      "root_anchor": "src/attune/hooks/scripts/worktree_path_guard.py:<module>"
+    }
+  ],
+  "hook_envelope_anchors": [
+    {
+      "anchor": "plugin/hooks/friction_gate.py:main",
+      "destination": "model_context",
+      "event": "PreToolUse",
+      "signature": "exit2_stderr",
+      "sink": "print(file=sys.stderr)",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "anchor": "plugin/hooks/jit_recall.py:main",
+      "destination": "model_context",
+      "event": "PreToolUse",
+      "signature": "additional_context",
+      "sink": "sys.stdout.write",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "anchor": "plugin/hooks/lesson_recall.py:main",
+      "destination": "model_context",
+      "event": "UserPromptSubmit",
+      "signature": "additional_context",
+      "sink": "sys.stdout.write",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "anchor": "plugin/hooks/macos_timeout_guard.py:main",
+      "destination": "model_context",
+      "event": "PreToolUse",
+      "signature": "exit2_stderr",
+      "sink": "print(file=sys.stderr)",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "anchor": "plugin/hooks/security_guard.py:<module>",
+      "destination": "model_context",
+      "event": "PreToolUse",
+      "signature": "exit2_stderr",
+      "sink": "print(file=sys.stderr)",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "anchor": "plugin/hooks/session_recall.py:main",
+      "destination": "model_context",
+      "event": "SessionStart",
+      "signature": "context_stdout",
+      "sink": "print",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "anchor": "plugin/hooks/session_stash.py:_emit_additional_context",
+      "destination": "model_context",
+      "event": "Stop",
+      "signature": "additional_context",
+      "sink": "sys.stdout.write",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "anchor": "plugin/hooks/spec_orient.py:main",
+      "destination": "model_context",
+      "event": "SessionStart",
+      "signature": "context_stdout",
+      "sink": "print",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "anchor": "plugin/hooks/usage_consent_notice.py:main",
+      "destination": "model_context",
+      "event": "SessionStart",
+      "signature": "context_stdout",
+      "sink": "print",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "anchor": "src/attune/hooks/scripts/detached_head_push_guard.py:main",
+      "destination": "model_context",
+      "event": "PreToolUse",
+      "signature": "exit2_stderr",
+      "sink": "print(file=sys.stderr)",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "anchor": "src/attune/hooks/scripts/dirty_switch_guard.py:main",
+      "destination": "model_context",
+      "event": "PreToolUse",
+      "signature": "exit2_stderr",
+      "sink": "print(file=sys.stderr)",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "anchor": "src/attune/hooks/scripts/help_freshness_nudge.py:main",
+      "destination": "model_context",
+      "event": "SessionStart",
+      "signature": "context_stdout",
+      "sink": "print",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "anchor": "src/attune/hooks/scripts/lessons_reminder.py:main",
+      "destination": "model_context",
+      "event": "Stop",
+      "signature": "exit2_stderr",
+      "sink": "print(file=sys.stderr)",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "anchor": "src/attune/hooks/scripts/security_guard.py:<module>",
+      "destination": "model_context",
+      "event": "PreToolUse",
+      "signature": "exit2_stderr",
+      "sink": "print(file=sys.stderr)",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "anchor": "src/attune/hooks/scripts/starter_prompt_nudge.py:_emit_notice",
+      "destination": "model_context",
+      "event": "SessionStart",
+      "signature": "context_stdout",
+      "sink": "print",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "anchor": "src/attune/hooks/scripts/starter_reconciler.py:_reconcile_and_emit",
+      "destination": "model_context",
+      "event": "SessionStart",
+      "signature": "context_stdout",
+      "sink": "print",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "anchor": "src/attune/hooks/scripts/starter_reconciler.py:main",
+      "destination": "model_context",
+      "event": "SessionStart",
+      "signature": "context_stdout",
+      "sink": "print",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "anchor": "src/attune/hooks/scripts/worktree_path_guard.py:main",
+      "destination": "model_context",
+      "event": "PreToolUse",
+      "signature": "exit2_stderr",
+      "sink": "print(file=sys.stderr)",
+      "subject_kind": "informational_delivery"
+    }
+  ],
+  "package_host_envelope_anchors": [
+    {
+      "anchor": "src/attune/elicitation/command_workspace.py:CommandWorkspaceHost._render",
+      "destination": "host",
+      "event": "",
+      "signature": "workspace_render",
+      "sink": "CommandWorkspaceRender",
+      "subject_kind": "interactive_workspace"
+    },
+    {
+      "anchor": "src/attune/elicitation/command_workspace.py:CommandWorkspaceRender.to_dict",
+      "destination": "host",
+      "event": "",
+      "signature": "html_response",
+      "sink": "return",
+      "subject_kind": "interactive_form"
+    },
+    {
+      "anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_command_workspace_collect_action",
+      "destination": "host",
+      "event": "",
+      "signature": "mcp_app_resource",
+      "sink": "mcp_app",
+      "subject_kind": "interactive_workspace"
+    },
+    {
+      "anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_command_workspace_open",
+      "destination": "host",
+      "event": "",
+      "signature": "mcp_app_resource",
+      "sink": "mcp_app",
+      "subject_kind": "interactive_workspace"
+    },
+    {
+      "anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_command_workspace_publish",
+      "destination": "host",
+      "event": "",
+      "signature": "mcp_app_resource",
+      "sink": "mcp_app",
+      "subject_kind": "interactive_workspace"
+    },
+    {
+      "anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_elicitation_ask",
+      "destination": "session",
+      "event": "",
+      "signature": "native_elicit_form",
+      "sink": "session.elicit_form",
+      "subject_kind": "interactive_form"
+    },
+    {
+      "anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_elicitation_render_form",
+      "destination": "host",
+      "event": "",
+      "signature": "askuserquestion_batches",
+      "sink": "return",
+      "subject_kind": "interactive_form"
+    },
+    {
+      "anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_elicitation_render_widget",
+      "destination": "host",
+      "event": "",
+      "signature": "html_response",
+      "sink": "return",
+      "subject_kind": "interactive_form"
+    },
+    {
+      "anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_fix_workspace_preview",
+      "destination": "host",
+      "event": "",
+      "signature": "html_response",
+      "sink": "return",
+      "subject_kind": "interactive_form"
+    },
+    {
+      "anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_fix_workspace_preview",
+      "destination": "host",
+      "event": "",
+      "signature": "mcp_app_resource",
+      "sink": "mcp_app",
+      "subject_kind": "interactive_workspace"
+    },
+    {
+      "anchor": "src/attune/mcp/server.py:AttuneMCPServer._register_resources",
+      "destination": "host",
+      "event": "",
+      "signature": "mcp_app_resource",
+      "sink": "mcp_app",
+      "subject_kind": "interactive_workspace"
+    },
+    {
+      "anchor": "src/attune/mcp/server.py:_handle_list_tools",
+      "destination": "host",
+      "event": "",
+      "signature": "mcp_app_resource",
+      "sink": "mcp_app",
+      "subject_kind": "interactive_workspace"
+    },
+    {
+      "anchor": "src/attune/mcp/workflow_handlers.py:_workflow_response",
+      "destination": "host",
+      "event": "",
+      "signature": "html_response",
+      "sink": "return",
+      "subject_kind": "interactive_form"
+    },
+    {
+      "anchor": "src/attune/widgets/chart_widget_tool.py:render_chart_widget",
+      "destination": "host",
+      "event": "",
+      "signature": "html_response",
+      "sink": "return",
+      "subject_kind": "interactive_form"
+    }
+  ],
+  "problems": [],
+  "registrations": [
+    {
+      "error": null,
+      "event": "SessionStart",
+      "json_pointer": "/hooks/SessionStart/0/hooks/0/command",
+      "manifest_path": "plugin/hooks/hooks.json",
+      "matcher": "",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/welcome.py",
+      "resolved_repo_path": "plugin/hooks/welcome.py"
+    },
+    {
+      "error": null,
+      "event": "SessionStart",
+      "json_pointer": "/hooks/SessionStart/1/hooks/0/command",
+      "manifest_path": "plugin/hooks/hooks.json",
+      "matcher": "",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/usage_consent_notice.py",
+      "resolved_repo_path": "plugin/hooks/usage_consent_notice.py"
+    },
+    {
+      "error": null,
+      "event": "SessionStart",
+      "json_pointer": "/hooks/SessionStart/2/hooks/0/command",
+      "manifest_path": "plugin/hooks/hooks.json",
+      "matcher": "",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/spec_orient.py",
+      "resolved_repo_path": "plugin/hooks/spec_orient.py"
+    },
+    {
+      "error": null,
+      "event": "SessionStart",
+      "json_pointer": "/hooks/SessionStart/3/hooks/0/command",
+      "manifest_path": "plugin/hooks/hooks.json",
+      "matcher": "",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/session_recall.py",
+      "resolved_repo_path": "plugin/hooks/session_recall.py"
+    },
+    {
+      "error": null,
+      "event": "Stop",
+      "json_pointer": "/hooks/Stop/0/hooks/0/command",
+      "manifest_path": "plugin/hooks/hooks.json",
+      "matcher": "",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/compact_warning.py",
+      "resolved_repo_path": "plugin/hooks/compact_warning.py"
+    },
+    {
+      "error": null,
+      "event": "Stop",
+      "json_pointer": "/hooks/Stop/1/hooks/0/command",
+      "manifest_path": "plugin/hooks/hooks.json",
+      "matcher": "",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/session_stash.py",
+      "resolved_repo_path": "plugin/hooks/session_stash.py"
+    },
+    {
+      "error": null,
+      "event": "PreToolUse",
+      "json_pointer": "/hooks/PreToolUse/0/hooks/0/command",
+      "manifest_path": "plugin/hooks/hooks.json",
+      "matcher": "AskUserQuestion|Bash|Edit",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/jit_recall.py",
+      "resolved_repo_path": "plugin/hooks/jit_recall.py"
+    },
+    {
+      "error": null,
+      "event": "PreToolUse",
+      "json_pointer": "/hooks/PreToolUse/1/hooks/0/command",
+      "manifest_path": "plugin/hooks/hooks.json",
+      "matcher": "Bash",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/security_guard.py",
+      "resolved_repo_path": "plugin/hooks/security_guard.py"
+    },
+    {
+      "error": null,
+      "event": "PreToolUse",
+      "json_pointer": "/hooks/PreToolUse/2/hooks/0/command",
+      "manifest_path": "plugin/hooks/hooks.json",
+      "matcher": "Bash",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/friction_gate.py",
+      "resolved_repo_path": "plugin/hooks/friction_gate.py"
+    },
+    {
+      "error": null,
+      "event": "PreToolUse",
+      "json_pointer": "/hooks/PreToolUse/3/hooks/0/command",
+      "manifest_path": "plugin/hooks/hooks.json",
+      "matcher": "Edit|Write",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/security_guard.py",
+      "resolved_repo_path": "plugin/hooks/security_guard.py"
+    },
+    {
+      "error": null,
+      "event": "PreToolUse",
+      "json_pointer": "/hooks/PreToolUse/4/hooks/0/command",
+      "manifest_path": "plugin/hooks/hooks.json",
+      "matcher": "Bash",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/macos_timeout_guard.py",
+      "resolved_repo_path": "plugin/hooks/macos_timeout_guard.py"
+    },
+    {
+      "error": null,
+      "event": "PostToolUse",
+      "json_pointer": "/hooks/PostToolUse/0/hooks/0/command",
+      "manifest_path": "plugin/hooks/hooks.json",
+      "matcher": "Edit|Write",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/format_on_save.py",
+      "resolved_repo_path": "plugin/hooks/format_on_save.py"
+    },
+    {
+      "error": null,
+      "event": "PostToolUse",
+      "json_pointer": "/hooks/PostToolUse/1/hooks/0/command",
+      "manifest_path": "plugin/hooks/hooks.json",
+      "matcher": "Bash",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/help_on_error.py",
+      "resolved_repo_path": "plugin/hooks/help_on_error.py"
+    },
+    {
+      "error": null,
+      "event": "PostToolUse",
+      "json_pointer": "/hooks/PostToolUse/2/hooks/0/command",
+      "manifest_path": "plugin/hooks/hooks.json",
+      "matcher": "Bash",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/help_post_commit.py",
+      "resolved_repo_path": "plugin/hooks/help_post_commit.py"
+    },
+    {
+      "error": null,
+      "event": "PostToolUse",
+      "json_pointer": "/hooks/PostToolUse/3/hooks/0/command",
+      "manifest_path": "plugin/hooks/hooks.json",
+      "matcher": "Bash",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/trap_stash.py",
+      "resolved_repo_path": "plugin/hooks/trap_stash.py"
+    },
+    {
+      "error": null,
+      "event": "UserPromptSubmit",
+      "json_pointer": "/hooks/UserPromptSubmit/0/hooks/0/command",
+      "manifest_path": "plugin/hooks/hooks.json",
+      "matcher": "",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/lesson_recall.py",
+      "resolved_repo_path": "plugin/hooks/lesson_recall.py"
+    },
+    {
+      "error": null,
+      "event": "SessionStart",
+      "json_pointer": "/hooks/SessionStart/0/hooks/0/command",
+      "manifest_path": ".claude/settings.json",
+      "matcher": "",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/help_freshness_nudge.py\"",
+      "resolved_repo_path": "src/attune/hooks/scripts/help_freshness_nudge.py"
+    },
+    {
+      "error": null,
+      "event": "SessionStart",
+      "json_pointer": "/hooks/SessionStart/0/hooks/1/command",
+      "manifest_path": ".claude/settings.json",
+      "matcher": "",
+      "ordinal": 1,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/starter_prompt_nudge.py\"",
+      "resolved_repo_path": "src/attune/hooks/scripts/starter_prompt_nudge.py"
+    },
+    {
+      "error": null,
+      "event": "SessionStart",
+      "json_pointer": "/hooks/SessionStart/0/hooks/2/command",
+      "manifest_path": ".claude/settings.json",
+      "matcher": "",
+      "ordinal": 2,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/starter_reconciler.py\"",
+      "resolved_repo_path": "src/attune/hooks/scripts/starter_reconciler.py"
+    },
+    {
+      "error": null,
+      "event": "Stop",
+      "json_pointer": "/hooks/Stop/0/hooks/0/command",
+      "manifest_path": ".claude/settings.json",
+      "matcher": "",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/lessons_reminder.py\"",
+      "resolved_repo_path": "src/attune/hooks/scripts/lessons_reminder.py"
+    },
+    {
+      "error": null,
+      "event": "PreToolUse",
+      "json_pointer": "/hooks/PreToolUse/0/hooks/0/command",
+      "manifest_path": ".claude/settings.json",
+      "matcher": "Bash",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/security_guard.py\"",
+      "resolved_repo_path": "src/attune/hooks/scripts/security_guard.py"
+    },
+    {
+      "error": null,
+      "event": "PreToolUse",
+      "json_pointer": "/hooks/PreToolUse/1/hooks/0/command",
+      "manifest_path": ".claude/settings.json",
+      "matcher": "Edit|Write",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/security_guard.py\"",
+      "resolved_repo_path": "src/attune/hooks/scripts/security_guard.py"
+    },
+    {
+      "error": null,
+      "event": "PreToolUse",
+      "json_pointer": "/hooks/PreToolUse/1/hooks/1/command",
+      "manifest_path": ".claude/settings.json",
+      "matcher": "Edit|Write",
+      "ordinal": 1,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/worktree_path_guard.py\"",
+      "resolved_repo_path": "src/attune/hooks/scripts/worktree_path_guard.py"
+    },
+    {
+      "error": null,
+      "event": "PreToolUse",
+      "json_pointer": "/hooks/PreToolUse/1/hooks/2/command",
+      "manifest_path": ".claude/settings.json",
+      "matcher": "Edit|Write",
+      "ordinal": 2,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/dirty_switch_guard.py\"",
+      "resolved_repo_path": "src/attune/hooks/scripts/dirty_switch_guard.py"
+    },
+    {
+      "error": null,
+      "event": "PreToolUse",
+      "json_pointer": "/hooks/PreToolUse/1/hooks/3/command",
+      "manifest_path": ".claude/settings.json",
+      "matcher": "Edit|Write",
+      "ordinal": 3,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/detached_head_push_guard.py\"",
+      "resolved_repo_path": "src/attune/hooks/scripts/detached_head_push_guard.py"
+    },
+    {
+      "error": null,
+      "event": "PostToolUse",
+      "json_pointer": "/hooks/PostToolUse/0/hooks/0/command",
+      "manifest_path": ".claude/settings.json",
+      "matcher": "Edit|Write",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/format_on_save.py\"",
+      "resolved_repo_path": "src/attune/hooks/scripts/format_on_save.py"
+    },
+    {
+      "error": null,
+      "event": "PostToolUse",
+      "json_pointer": "/hooks/PostToolUse/1/hooks/0/command",
+      "manifest_path": ".claude/settings.json",
+      "matcher": "Bash|Edit|Write",
+      "ordinal": 0,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/telemetry_hook.py\"",
+      "resolved_repo_path": "src/attune/hooks/scripts/telemetry_hook.py"
+    }
+  ],
+  "renderer_call_anchors": [
+    {
+      "anchor": "src/attune/elicitation/ask_payload.py:form_to_ask_payload",
+      "syntax": "reexport",
+      "target": "attune_forms.bridge.form_to_askuserquestion"
+    },
+    {
+      "anchor": "src/attune/elicitation/command_workspace.py:CommandWorkspaceHost._render",
+      "syntax": "direct",
+      "target": "attune_forms.workspace.workspace_to_markdown"
+    },
+    {
+      "anchor": "src/attune/elicitation/command_workspace.py:CommandWorkspaceHost._render",
+      "syntax": "direct",
+      "target": "attune_forms.workspace.workspace_to_widget_html"
+    },
+    {
+      "anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_elicitation_ask",
+      "syntax": "reexport",
+      "target": "attune_forms.elicitation_schema.form_to_elicitation_schema"
+    },
+    {
+      "anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_elicitation_render_form",
+      "syntax": "reexport",
+      "target": "attune_forms.bridge.form_to_askuserquestion"
+    },
+    {
+      "anchor": "src/attune/mcp/server.py:AttuneMCPServer._handle_elicitation_render_widget",
+      "syntax": "reexport",
+      "target": "attune_forms.widget.form_to_widget_html"
+    },
+    {
+      "anchor": "src/attune/memory/recall_digest.py:render_digest_html",
+      "syntax": "reexport",
+      "target": "attune_forms.widget.form_to_widget_html"
+    }
+  ],
+  "schema_version": "attune.surface-inventory.producer-baseline/1",
+  "shipped_roots": [
+    "attune_redis",
+    "attune_software",
+    "patterns",
+    "src/attune"
+  ]
+}
