@@ -164,3 +164,34 @@ inference guard, empty API credentials and disposable local Redis.
 Remaining: signed commit and push, then another bounded Claude review.
 PR #2449 owns the CONTRIBUTING tokenizer-cache CI fix; it is still separate.
 Do not merge either PR automatically or start increment 3.
+
+
+## CONTRIBUTING smoke correction (new run 34038740990)
+
+The newly pushed parity correction still failed `test_token_estimator` because
+this branch lacked the static cl100k_base cache preparation. Patrick reported
+that exact run; the failure log confirms the inference guard blocked its HTTP
+fetch. The identical two-file workflow/test patch from #2449 is now applied
+here so #2444 can pass independently. This intentionally overlaps #2449;
+whichever merges second must reconcile the shared patch against main.
+The inference guard and documented setup commands are unchanged.
+Claude's in-flight review remains pinned to bf530993b and does not cover this
+subsequent CI-only patch. Fresh local validation and CI are required.
+
+
+## Latest validation and review
+
+With the CONTRIBUTING cache patch: whole configured tree 25,871 passed,
+241 skipped, 3 xfailed (76.96s); workflow/spend regression selection 353 passed,
+1 skipped; pinned hooks passed. Logs: `/private/tmp/2444-with-smoke-whole.log`,
+`/private/tmp/2444-smoke-regression.log`, `/private/tmp/2444-smoke-hooks.log`.
+
+Claude re-review of bf530993b completed with 12 findings (4 medium, 8 low),
+16 files sent and zero omitted. Result: `/private/tmp/2444-claude-review-corrections/result.json`.
+It does not cover the later CI patch. Findings remain to be triaged; no clean
+review or merge approval is claimed. Actual review runs are now in the R5 ledger.
+The two unpublished local rows in #2449's worktree are duplicates of runs now
+recorded here; preserve that worktree and reconcile them deliberately later.
+Next: push CI patch, verify the new CONTRIBUTING job, then a bounded triage of
+the second review. Do not launch another reviewer until concrete findings are
+verified and corrected. The runtime-form milestone remains after this PR merges.
