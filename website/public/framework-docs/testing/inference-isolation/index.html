@@ -12,9 +12,13 @@
         <meta name="author" content="Patrick Roebuck">
       
       
-        <link rel="canonical" href="https://smartaimemory.com/framework-docs/how-to/session-handoff/">
+        <link rel="canonical" href="https://smartaimemory.com/framework-docs/testing/inference-isolation/">
       
       
+        <link rel="prev" href="../../DEVELOPER_GUIDE/">
+      
+      
+        <link rel="next" href="../../book-cover/">
       
       
         
@@ -25,7 +29,7 @@
     
     
       
-        <title>Session Handoff - Attune AI</title>
+        <title>Test Inference Isolation - Attune AI</title>
       
     
     
@@ -81,7 +85,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#session-handoff" class="md-skip">
+        <a href="#inference-isolation-in-tests" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +118,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Session Handoff
+              Test Inference Isolation
             
           </span>
         </div>
@@ -288,7 +292,7 @@
     
     
       <li class="md-tabs__item">
-        <a href="../" class="md-tabs__link">
+        <a href="../../how-to/" class="md-tabs__link">
           
   
   
@@ -364,10 +368,12 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
+      <li class="md-tabs__item md-tabs__item--active">
         <a href="../../contributing/" class="md-tabs__link">
           
   
@@ -1156,7 +1162,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../" class="md-nav__link">
+      <a href="../../how-to/" class="md-nav__link">
         
   
   
@@ -1238,7 +1244,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../which-memory-is-which/" class="md-nav__link">
+      <a href="../../how-to/which-memory-is-which/" class="md-nav__link">
         
   
   
@@ -1266,7 +1272,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../unified-memory-system/" class="md-nav__link">
+      <a href="../../how-to/unified-memory-system/" class="md-nav__link">
         
   
   
@@ -1294,7 +1300,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../lessons-workflow/" class="md-nav__link">
+      <a href="../../how-to/lessons-workflow/" class="md-nav__link">
         
   
   
@@ -1384,7 +1390,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../agent-factory/" class="md-nav__link">
+      <a href="../../how-to/agent-factory/" class="md-nav__link">
         
   
   
@@ -1412,7 +1418,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../smart-router/" class="md-nav__link">
+      <a href="../../how-to/smart-router/" class="md-nav__link">
         
   
   
@@ -1440,7 +1446,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../auto-chaining/" class="md-nav__link">
+      <a href="../../how-to/auto-chaining/" class="md-nav__link">
         
   
   
@@ -1558,7 +1564,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../security-architecture/" class="md-nav__link">
+      <a href="../../how-to/security-architecture/" class="md-nav__link">
         
   
   
@@ -1704,7 +1710,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../practical-patterns/" class="md-nav__link">
+      <a href="../../how-to/practical-patterns/" class="md-nav__link">
         
   
   
@@ -1732,7 +1738,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../resilience-patterns/" class="md-nav__link">
+      <a href="../../how-to/resilience-patterns/" class="md-nav__link">
         
   
   
@@ -1822,7 +1828,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../project-analysis-and-metrics/" class="md-nav__link">
+      <a href="../../how-to/project-analysis-and-metrics/" class="md-nav__link">
         
   
   
@@ -1850,7 +1856,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../learning-and-patterns/" class="md-nav__link">
+      <a href="../../how-to/learning-and-patterns/" class="md-nav__link">
         
   
   
@@ -1878,7 +1884,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../triage-code-quality/" class="md-nav__link">
+      <a href="../../how-to/triage-code-quality/" class="md-nav__link">
         
   
   
@@ -1968,7 +1974,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../telemetry-and-signals/" class="md-nav__link">
+      <a href="../../how-to/telemetry-and-signals/" class="md-nav__link">
         
   
   
@@ -2058,7 +2064,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ops-dashboard/" class="md-nav__link">
+      <a href="../../how-to/ops-dashboard/" class="md-nav__link">
         
   
   
@@ -2148,7 +2154,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../help-system-maintenance/" class="md-nav__link">
+      <a href="../../how-to/help-system-maintenance/" class="md-nav__link">
         
   
   
@@ -2184,7 +2190,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../prerequisites/" class="md-nav__link">
+      <a href="../../how-to/prerequisites/" class="md-nav__link">
         
   
   
@@ -3443,28 +3449,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
-        
-          
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
             
   
   
@@ -3482,7 +3491,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             
@@ -3553,10 +3562,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../testing/inference-isolation/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Test Inference Isolation
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -3572,6 +3608,70 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-empty-keys-were-insufficient" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why empty keys were insufficient
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#enforced-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Enforced boundaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#writing-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Writing tests
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Limits
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -4713,10 +4813,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quickstart" class="md-nav__link">
+  <a href="#why-empty-keys-were-insufficient" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quickstart
+        Why empty keys were insufficient
       
     </span>
   </a>
@@ -4724,113 +4824,35 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#tasks" class="md-nav__link">
+  <a href="#enforced-boundaries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Tasks
+        Enforced boundaries
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Tasks">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#create-a-handoff-packet-for-the-current-branch" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Create a handoff packet for the current branch
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#resume-a-packet-and-read-the-drift-report" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Resume a packet and read the drift report
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#record-verification-claims-without-fabricating-results" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Record verification claims without fabricating results
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#reference" class="md-nav__link">
+  <a href="#writing-tests" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Reference
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Reference">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#python-api-attunehandoff" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Python API (attune.handoff)
+        Writing tests
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#mcp-tools" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#limits" class="md-nav__link">
     <span class="md-ellipsis">
       
-        MCP tools
+        Limits
       
     </span>
   </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#constants" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Constants
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#failure-reasons" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Failure reasons
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -4854,173 +4876,104 @@
   
 
 
-<h1 id="session-handoff">Session Handoff<a class="headerlink" href="#session-handoff" title="Permanent link">&para;</a></h1>
-<h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h2>
-<p>From any MCP client with the attune server connected, on the branch
-you want to hand off:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span><span class="nt">"tool"</span><span class="p">:</span><span class="w"> </span><span class="s2">"handoff_create"</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="nt">"arguments"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="nt">"goal"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Ship the retry-loop fix with a regression test"</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">    </span><span class="nt">"next_action"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Run the failing test, then re-run the full suite"</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="nt">"provider"</span><span class="p">:</span><span class="w"> </span><span class="s2">"claude-code"</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">}</span>
+<h1 id="inference-isolation-in-tests">Inference isolation in tests<a class="headerlink" href="#inference-isolation-in-tests" title="Permanent link">&para;</a></h1>
+<p>Ordinary pytest runs install <code>tests/_inference_guard.py</code> from
+<code>tests/conftest.py</code> before application imports or test collection. This applies
+to the controller and xdist workers. No API key, pytest marker, or saved login
+opts a test into inference. Production imports do not install the guard.</p>
+<h2 id="why-empty-keys-were-insufficient">Why empty keys were insufficient<a class="headerlink" href="#why-empty-keys-were-insufficient" title="Permanent link">&para;</a></h2>
+<p>The suite previously isolated Attune/Redis settings but had no inference
+barrier. <code>SecurityAuditWorkflow._run_agent_audit</code> calls the Agent SDK, whose
+subprocess transport starts Claude with its own environment and authentication.
+A missing or empty API key cannot prove that this child lacks a saved login.
+An application fallback can also catch an ordinary connection exception and
+continue through another provider. Tests must stop at the inference boundary,
+independently of the credentials available there.</p>
+<p>The September 6 daily usage export does not identify an initiating session.
+Matching dates/models do not establish attribution or authorization for paid
+inference. The usage estimate
+remains unattributed. These changes do not reconstruct that billing history.</p>
+<h2 id="enforced-boundaries">Enforced boundaries<a class="headerlink" href="#enforced-boundaries" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Real <code>httpx</code>, installed <code>httpx2</code>, <code>http.client</code>, and <code>urllib3</code> HTTP requests require a
+  fixture-owned endpoint. This also blocks arbitrary local proxies that could
+  perform remote inference behind an ordinary-looking URL. External Python socket
+  connections, datagrams, and DNS lookups are rejected before network access.</li>
+<li>Claude/Agent SDK inference, the repository's other provider CLIs, and network
+  CLI calls are rejected before process creation. Shell/env/node wrappers,
+  executable overrides, and the SDK's streaming command shape are checked.
+  Exact non-inference checks such as <code>--version</code>, <code>--help</code>, <code>auth status</code>, and
+  <code>plugin list</code> remain available.</li>
+<li>Every real <code>Popen</code> child gets scrubbed provider credentials, an isolated
+  <code>CLAUDE_CONFIG_DIR</code>, and a Python startup guard, including when the caller
+  supplies a replacement environment. Python flags that disable that startup
+  guard are rejected. Bootstrap failure exits the child rather than continuing.</li>
+<li><code>InferenceBlocked</code> derives from <code>BaseException</code> so normal application
+  <code>except Exception</code> fallback/degradation handlers cannot turn an attempted
+  inference into a passing test. Mock the boundary the test is meant to use;
+  do not catch this exception in application code.</li>
+</ul>
+<p>All environment changes are local to test processes and restored on teardown.
+No normal interactive authentication file, login, or shell configuration is
+changed. Dashboard tests also redirect their saved admin-key lookup into the
+fixture directory.</p>
+<h2 id="writing-tests">Writing tests<a class="headerlink" href="#writing-tests" title="Permanent link">&para;</a></h2>
+<p>Patch the workflow/SDK boundary or inject the matching HTTP library's
+<code>MockTransport</code>/ASGI transport (<code>httpx</code> or <code>httpx2</code>).
+These continue exercising real application and client behavior without network
+inference. Environment-construction tests assert the environment passed to an
+intercepted launch; the isolation regressions separately prove real child
+credentials are scrubbed.</p>
+<p>For a real local HTTP round trip, bind a fixture-owned socket on loopback port
+zero, then use <code>loopback_http_fixture(server.socket)</code> while it remains open.
+Only that bound endpoint is permitted; other model endpoints remain blocked.
+For a real connection-refusal receipt, keep a bound socket open without calling
+<code>listen</code>. Do not assume a fixed local port is empty. Fixture servers must close
+and join their threads on teardown.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>.venv/bin/python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"import tiktoken; tiktoken.get_encoding('cl100k_base')"</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>.venv/bin/python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests/unit/test_inference_isolation.py<span class="w"> </span>-n<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--cov<span class="o">=</span>tests._inference_guard<span class="w"> </span>--cov-config<span class="o">=</span>tests/inference-coverage.ini
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>.venv/bin/python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span>tests
 </code></pre></div>
-<p>The receiving session — any provider — resumes with no arguments
-(defaults to the current branch):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="p">{</span><span class="w"> </span><span class="nt">"tool"</span><span class="p">:</span><span class="w"> </span><span class="s2">"handoff_resume"</span><span class="p">,</span><span class="w"> </span><span class="nt">"arguments"</span><span class="p">:</span><span class="w"> </span><span class="p">{}</span><span class="w"> </span><span class="p">}</span>
-</code></pre></div>
-<p>Or from Python:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.handoff</span><span class="w"> </span><span class="kn">import</span> <span class="n">handoff_create</span><span class="p">,</span> <span class="n">handoff_resume</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">created</span> <span class="o">=</span> <span class="n">handoff_create</span><span class="p">(</span><span class="s2">"."</span><span class="p">,</span> <span class="n">goal</span><span class="o">=</span><span class="s2">"Ship the retry-loop fix"</span><span class="p">,</span> <span class="n">provider</span><span class="o">=</span><span class="s2">"claude-code"</span><span class="p">)</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">report</span> <span class="o">=</span> <span class="n">handoff_resume</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="p">[</span><span class="s2">"warnings"</span><span class="p">],</span> <span class="n">report</span><span class="p">[</span><span class="s2">"asserted"</span><span class="p">][</span><span class="s2">"goal"</span><span class="p">])</span>
-</code></pre></div>
-<h2 id="tasks">Tasks<a class="headerlink" href="#tasks" title="Permanent link">&para;</a></h2>
-<h3 id="create-a-handoff-packet-for-the-current-branch">Create a handoff packet for the current branch<a class="headerlink" href="#create-a-handoff-packet-for-the-current-branch" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.handoff</span><span class="w"> </span><span class="kn">import</span> <span class="n">handoff_create</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">result</span> <span class="o">=</span> <span class="n">handoff_create</span><span class="p">(</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="s2">"."</span><span class="p">,</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">goal</span><span class="o">=</span><span class="s2">"What should be true when this work is complete"</span><span class="p">,</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">acceptance_criteria</span><span class="o">=</span><span class="s2">"Concrete completion conditions"</span><span class="p">,</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">current_state</span><span class="o">=</span><span class="s2">"Status, decisions, risks"</span><span class="p">,</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="n">next_action</span><span class="o">=</span><span class="s2">"One concrete ordered action"</span><span class="p">,</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">provider</span><span class="o">=</span><span class="s2">"claude-code"</span><span class="p">,</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="p">)</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="k">assert</span> <span class="n">result</span><span class="p">[</span><span class="s2">"ok"</span><span class="p">],</span> <span class="n">result</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">"path"</span><span class="p">])</span>  <span class="c1"># docs/handoffs/&lt;branch-slug&gt;.md</span>
-</code></pre></div>
-<h3 id="resume-a-packet-and-read-the-drift-report">Resume a packet and read the drift report<a class="headerlink" href="#resume-a-packet-and-read-the-drift-report" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.handoff</span><span class="w"> </span><span class="kn">import</span> <span class="n">handoff_resume</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">report</span> <span class="o">=</span> <span class="n">handoff_resume</span><span class="p">(</span><span class="s2">"."</span><span class="p">)</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="k">if</span> <span class="n">report</span><span class="p">[</span><span class="s2">"ok"</span><span class="p">]:</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="k">for</span> <span class="n">warning</span> <span class="ow">in</span> <span class="n">report</span><span class="p">[</span><span class="s2">"warnings"</span><span class="p">]:</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>        <span class="nb">print</span><span class="p">(</span><span class="n">warning</span><span class="p">[</span><span class="s2">"code"</span><span class="p">],</span> <span class="n">warning</span><span class="p">[</span><span class="s2">"detail"</span><span class="p">])</span>
-</code></pre></div>
-<h3 id="record-verification-claims-without-fabricating-results">Record verification claims without fabricating results<a class="headerlink" href="#record-verification-claims-without-fabricating-results" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.handoff</span><span class="w"> </span><span class="kn">import</span> <span class="n">handoff_create</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">handoff_create</span><span class="p">(</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="s2">"."</span><span class="p">,</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">goal</span><span class="o">=</span><span class="s2">"Land the fix"</span><span class="p">,</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="n">verification</span><span class="o">=</span><span class="p">[{</span><span class="s2">"claim"</span><span class="p">:</span> <span class="s2">"unit suite green"</span><span class="p">,</span> <span class="s2">"probe"</span><span class="p">:</span> <span class="s2">"pytest -q tests/unit"</span><span class="p">}],</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="p">)</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="c1"># The stored row's result is "not run" — the receiver re-runs probes.</span>
-</code></pre></div>
-<h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
-<h3 id="python-api-attunehandoff">Python API (<code>attune.handoff</code>)<a class="headerlink" href="#python-api-attunehandoff" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Signature (keyword-only after <code>repo_root</code>)</th>
-<th>Returns</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>handoff_create</code></td>
-<td><code>repo_root=\".\"</code>, <code>goal</code>, <code>acceptance_criteria</code>, <code>scope_assumptions</code>, <code>current_state</code>, <code>next_action</code>, <code>verification</code>, <code>provider</code>, <code>base_ref=\"origin/main\"</code></td>
-<td><code>{ok, path, slug, packet, memory}</code> or <code>{ok: False, reason}</code></td>
-</tr>
-<tr>
-<td><code>handoff_resume</code></td>
-<td><code>repo_root=\".\"</code>, <code>slug=None</code> (defaults to current branch)</td>
-<td><code>{ok, slug, path, verified, warnings, asserted, memory}</code> or <code>{ok: False, reason}</code></td>
-</tr>
-</tbody>
-</table>
-<h3 id="mcp-tools">MCP tools<a class="headerlink" href="#mcp-tools" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Tool</th>
-<th>Required args</th>
-<th>Notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>handoff_create</code></td>
-<td><code>goal</code></td>
-<td>Optional: <code>acceptance_criteria</code>, <code>scope_assumptions</code>, <code>current_state</code>, <code>next_action</code>, <code>verification</code> rows, <code>provider</code></td>
-</tr>
-<tr>
-<td><code>handoff_resume</code></td>
-<td>none</td>
-<td>Optional <code>slug</code>; defaults to the current branch</td>
-</tr>
-</tbody>
-</table>
-<h3 id="constants">Constants<a class="headerlink" href="#constants" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Constant</th>
-<th>Value</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>attune.handoff.packet.PACKET_CAP_BYTES</code></td>
-<td>8192</td>
-<td>Max rendered packet size</td>
-</tr>
-<tr>
-<td><code>attune.handoff.packet.FIELD_CAP_BYTES</code></td>
-<td>2048</td>
-<td>Max per-field size</td>
-</tr>
-<tr>
-<td><code>attune.handoff.verify.STALE_AFTER_DAYS</code></td>
-<td>7</td>
-<td>Age before <code>packet_stale_days</code> fires</td>
-</tr>
-</tbody>
-</table>
-<h3 id="failure-reasons">Failure reasons<a class="headerlink" href="#failure-reasons" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Reason</th>
-<th>Surface</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>field_over_cap</code></td>
-<td>create</td>
-<td>A prose field exceeded 2048 bytes</td>
-</tr>
-<tr>
-<td><code>git_read_failed</code></td>
-<td>both</td>
-<td>Git state could not be read</td>
-</tr>
-<tr>
-<td><code>packet_not_found</code></td>
-<td>resume</td>
-<td>No packet exists for the slug</td>
-</tr>
-<tr>
-<td><code>invalid_slug</code></td>
-<td>resume</td>
-<td>Slug failed path validation</td>
-</tr>
-<tr>
-<td><code>packet_unreadable</code></td>
-<td>resume</td>
-<td>File unreadable or malformed</td>
-</tr>
-</tbody>
-</table>
-<!-- attune-generated: source_hash=963aaf0dd059e464542f852a8b8c1f93be3beb0bbf89675536ba711fe6d47c66 feature=session-handoff kind=how-to generated_at=2026-07-28 -->
+<p>The first command prepares static tokenizer vocabulary data outside pytest;
+it makes no inference request. CI caches this data in <code>TIKTOKEN_CACHE_DIR</code>
+and requires preparation to succeed before the matrix, coverage, timezone
+and no-auth integration suites. The same cache directory is inherited by
+every step in those jobs. A cold test process must not download it through
+the inference guard, and a failed setup does not skip tokenizer assertions.</p>
+<p>The no-auth integration lane runs separately from the default coverage
+selection. Its AMS readback tests use a fixture-owned HTTP service, including
+a real 404 for an acknowledged but unpersisted write. MCP stdout tests select
+the fixture-local file backend explicitly; dispatch, sanitization and JSON-RPC
+frames still run through production code. The invalid-key test exercises the
+real SDK's 401 handling through its matching <code>MockTransport</code>. Anthropic 0.125
+uses <code>httpx</code>; Anthropic 1.4 uses <code>httpx2</code>. The guard protects both installed
+transport generations, and the regression suite intercepts their underlying
+<code>httpcore</code>/<code>httpcore2</code> pools so a broken guard still cannot reach a provider.
+These tests never need
+an ambient AMS service or a provider response.</p>
+<p>The dedicated coverage configuration includes the test-support implementation,
+which the normal production coverage configuration deliberately omits.
+Regression probes use fake credentials, inert CLI fixtures, intercepted network
+transports, and nested pytest runs. They must fail without making a provider
+request even if a guard regresses.</p>
+<h2 id="limits">Limits<a class="headerlink" href="#limits" title="Permanent link">&para;</a></h2>
+<p>This is protection against accidental inference through the suite's Python
+transports and recognized CLI launch paths, not an operating-system sandbox for
+hostile tests. Arbitrary native programs, opaque shell scripts, direct native
+network bindings, or deliberate removal of the guard need an OS-level network
+sandbox before they can be treated as untrusted. Python plugins imported before
+<code>tests/conftest.py</code> are also outside its collection-time installation boundary.
+Do not add a new provider/transport without extending the guarded-boundary
+regressions. There is no live-inference opt-out in this pytest setup; separately
+authorized live-provider work needs a separate runner and spend approval.</p>
+<p>The full-tree receipt uses the repository's existing default marker exclusions.
+The six existing live AMS tests now carry integration/network markers and defer
+availability probing until fixture setup. Their assertions are unchanged;
+collection no longer auto-discovers a running model-backed memory service.
+Its legacy Redis integration module additionally needs an isolated Redis
+instance/database; this inference guard does not make destructive Redis tests
+safe against a user's shared database.</p>
 
 
 
