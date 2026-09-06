@@ -25,6 +25,13 @@ until Task 1B creates `receipts.md`; this file is the R4b block's source.
 Excluded: a `form_build` for the same form_id at 01:28:46Z, written by the
 lead's local precompute in the forms venv (no render, no submit).
 
+## Collect receipt
+
+`elicitation_collect_response` in the Codex session returned
+`resp-20260905-214151-fe89fe82` (relayed by the chair). Its timestamp,
+21:41:51 US-Eastern = 01:41:51Z, is the same second as the
+`form_submitted` row above.
+
 ## Verdict
 
 - **Falsifier passed:** the submit carries the render's `instance_id`, so the
