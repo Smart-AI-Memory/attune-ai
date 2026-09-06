@@ -138,7 +138,7 @@ assertion.)*
 This work executes in a separate clean `attune-forms` worktree, not in
 the attune-ai task runner. The portable implementation contract and
 package-local receipts are in
-[attune-forms-handoff.md](attune-forms-handoff.md#af-1--registry-and-production-headless-projection-0130).
+[attune-forms-handoff.md](attune-forms-handoff.md#af-1-registry-and-production-headless-projection-0130).
 Its 0.13.0 publication remains an explicit release action. Task 1B
 stops before mutation until that released artifact is independently
 verified.
@@ -426,7 +426,7 @@ retains that execution go under D10's dependency correction.)*
 
 After local Task 10, this package work executes in a fresh clean
 `attune-forms` worktree under
-[attune-forms-handoff.md](attune-forms-handoff.md#af-2--host-profile-structured-question-renderer-0140).
+[attune-forms-handoff.md](attune-forms-handoff.md#af-2-host-profile-structured-question-renderer-0140).
 Its 0.14.0 publication is a separate release action. Local Task 2
 consumes only the verified released artifact.
 
