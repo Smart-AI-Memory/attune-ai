@@ -649,6 +649,60 @@ headings.
 These are specification corrections only. AF-1, Task 1B, AF-2, Task 11, every
 package publication, push, and release retain their prior authorization state.
 
+## D12 — Version-drift addendum to D10, and the per-host attune-forms sequence (RULED 2026-09-06, chair, via two forms + chat amendment)
+
+**Landing note.** D10/D11 and Codex's Task 0 were landed by Claude on
+2026-09-06 in Codex's absence, verbatim from Codex's worktree
+(`codex/host-surface-parity-task1` @ `4df9d848f`; both commits apply
+cleanly on main), on the chair's pick "Both, verbatim, plus a
+version-drift addendum". Codex's text above is unchanged; this entry
+records what moved underneath it.
+
+**Version drift (verified 2026-09-06).** D10 reserved attune-forms
+0.13.0 for AF-1 and pinned Task 1B's floor to it. attune-forms 0.13.0
+shipped on 2026-09-05 carrying the attune-forms-plugin spec's Phase 5
+(R5.2–R5.4, template-bound forms) and NOT AF-1: the forms source has no
+`renderer_registry`, no `workspace_to_headless`, no
+`canonical_fixtures`. Consequently: **AF-1 targets 0.14.0**, **AF-2
+targets 0.15.0**, Task 1B's floor and clean-wheel receipt read
+`>=0.14.0`, Task 2's read `>=0.15.0`. The numbers in D10, Task 1B, Task
+2 and `attune-forms-handoff.md` are read with this shift; they are not
+hand-edited. attune-ai's floor is already `>=0.13.0` (#2439).
+
+**Per-host attune-forms sequence (the chair's 2026-09-06 rulings).**
+The chair asked that Codex and other LLMs be able to use attune-forms.
+Per-host work under this spec means host-profile records (R1/R9), thin
+per-host wrappers (siblings of the Claude plugin), and a per-host
+receipt — never renderer forks. Decision form
+`resp-20260905-211725-a9fb1618` ("all 3, in the recommended order"),
+then `resp-20260905-212825-a8616848` and a second form on the host's
+own widget surface ruled the sequence:
+
+1. **Codex native-host round-trip receipt** — Task 4b below (Task 4
+   names the Cowork host only). Falsifier: a `form_submitted` without
+   the widget's `instance_id` was typed, not rendered.
+2. **Codex / Antigravity wrapper in attune-forms** — attune-forms #83
+   (install lines, `.agents/skills/forms/SKILL.md` mirror, drift
+   guards); the Codex launcher pin lifted to `>=0.13.0` in the chair's
+   config.
+3. **AF-1, executed by Claude after the receipt** (chair go 2026-09-06,
+   "Go, after the Codex receipt") in a clean attune-forms worktree per
+   `attune-forms-handoff.md`; its 0.14.0 release stays a separate go.
+   Task 1B, then Task 10, follow under their existing gates.
+
+**Corrections on the record.** A prior draft of this ruling (attune-ai
+#2441, folded here and closed) numbered itself D10 and asserted "Task 1
+is unpushed in Codex's worktree" from the branch name alone. False: no
+parity gate exists anywhere; D10 had split Task 1 into AF-1 + Task 1B
+on 09-04. Two lead-conduct notes for the D9/R10 record: (a) the lead's
+first pushback card fabricated a `user_position` the chair never stated
+(D11d(4)); (b) every card the lead "rendered" through the attune-forms
+MCP tool in the Claude desktop Code tab was invisible — the host does
+not render MCP Apps inline, its widget surface is the `visualize` MCP —
+and the lead reported success unverified until the chair said "I don't
+see it". Three `form_rendered` telemetry rows from this session never
+reached a screen: a live R10 tier-provenance data point.
+
 ## Open
 
 - None. Every proposed decision in this spec is ruled.

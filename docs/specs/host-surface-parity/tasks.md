@@ -286,6 +286,42 @@ verified.
 </task>
 ```
 
+## Task 4b — Codex native-host round-trip receipt (D12)
+
+*(Authored 2026-09-06 under D12. Task 4 names the Cowork host only;
+the 2026-09-05 Codex preflight (`docs/probes/latency/merged-2026-09-05/
+native-host-blocker.md`) could not observe the native paint and its
+one validated result carried no instance id. Falsifier from the
+telemetry schema: `form_rendered` and `form_submitted` both carry
+`instance_id`; the widget's post-back includes it, a typed answer does
+not. Depends on Task 1B like Task 4; the observation itself may be
+taken earlier and held.)*
+
+```xml
+<task id="4b" name="codex-native-roundtrip-receipt">
+  <depends-on>1B</depends-on>
+  <objective>
+    Record whether the Codex native app renders the attune-forms
+    ui:// surface and returns the widget's instance_id through
+    elicitation_collect_response; record the Markdown fallback if
+    it does not. No production change unless the receipt fails.
+  </objective>
+  <files-to-modify>
+    <file path="docs/specs/host-surface-parity/receipts.md">
+      R4b block: forms version loaded by the Codex-launched server,
+      form_rendered/form_submitted pair joined on instance_id from
+      ~/.attune/telemetry/form_events.jsonl, the collect receipt id,
+      and the chair's paint observation (yes/no/unobserved).
+    </file>
+  </files-to-modify>
+  <validation>
+    <check>A form_submitted event from the Codex-launched server carries the instance_id of a preceding form_rendered event — the answer came through the widget, not typed.</check>
+    <check>If no such pair exists, the Markdown fallback is recorded and the Codex host profile (R1) is written as PORTABLE-tier with the rich claim left open.</check>
+    <check>Zero spend: the interaction runs on the chair's Codex subscription surface; no API-billed call.</check>
+  </validation>
+</task>
+```
+
 ## Task 10 — Capability descriptor and conformance foundation (R9)
 
 *(Authored 2026-09-03 under D8's go; D9 records the motivation.
