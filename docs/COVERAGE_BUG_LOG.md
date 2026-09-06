@@ -2050,3 +2050,12 @@ that unregistered endpoint. The other CI jobs prepared this static data,
 but contributing-smoke did not. Its cache is now prepared before the literal
 CONTRIBUTING setup script runs; no guard exception or skipped assertion was
 added. Failed job: 101473769814, test_token_estimator.
+
+### 2026-09-06 — #2444 cross-review corrections
+
+- **mocked**: first-record renderer controls hid order dependence; reversed-registry replay now asserts identical receipts.
+- **mocked**: matching absent provenance passed; missing/blank/type mutations now fail closed.
+- **mocked**: non-hook delivery identities survived content changes; every declared route now has a content digest identity.
+- **dead**: artifact collisions erased helper provenance; provenance is unioned.
+- **crash**: truncated collections and malformed projections produced unkeyed errors; reported boundaries now name their owner.
+- **mocked**: workspace reference injection and suffix-based footprint exemption accepted unsupported shapes; mutation tests reject both.

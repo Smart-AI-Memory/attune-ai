@@ -67,11 +67,13 @@ The #2444 worktree and branch are separate and unchanged by this fix.
 
 ## Review publication
 
-The requested #2444 review artifacts and ledger updates are held locally
-pending explicit publication approval. The initial GitHub comment was rejected
-by automatic approval review; it was not posted. No raw review findings are
-included in this launcher-fix handoff. The exact draft is
-`/private/tmp/2444-claude-cross-review/pr-comment.md`.
+The original #2444 review was published with Patrick's approval and its
+corrections have merged through #2444. Main's cross-review ledger records
+runs `20260906-1103` and `20260906-1109`, including the later dispositions.
+The two local draft rows name those same runs and are deliberately not
+re-applied as duplicate, stale `not-triaged` entries. Their exact original
+bytes remain in stash `3fae57c9218db74cf222dfd8be3cb057bdb7fcb0` and
+`/private/tmp/2449-pre-reconcile-local-ledger.patch`.
 
 ## Scope and assumptions
 
@@ -81,10 +83,28 @@ provided. The zero-valued ledger label names the subscription route and does
 not assert a zero invoice. Normal interactive auth configuration is unchanged.
 The launcher is opt-in, not a change to other roundtable/workflow invokers.
 
+## Main reconciliation — 2026-09-06
+
+Structured one-shot: resolve #2449 against verified main `a9d9401c1`,
+retain both feature histories, preserve the local review drafts, and leave
+the PR conflict-free after validation. No new product behavior is introduced.
+
+Only `CHANGELOG.md` and `docs/COVERAGE_BUG_LOG.md` conflicted; both sets of
+entries are retained. The shared CONTRIBUTING workflow and workflow tests
+already match main. Subscription source, tests and skill projections remain
+unchanged. A signed merge commit preserves the original signed branch commit.
+The dirty main checkout is untouched.
+
+Verification uses the committed inference guard, intercepted launcher tests,
+and disposable Redis for the whole configured tree. Logs:
+`/private/tmp/2449-reconcile-focused.log`, `/private/tmp/2449-reconcile-whole.log`,
+and `/private/tmp/2449-reconcile-hooks.log`. The final handoff is included in
+validation before publication. Historical test counts above describe the
+original pre-merge tree, not this reconciliation.
+
 ## Next action
 
-Finish validation and publish this focused fix, with exact receipts and
-changed-file manifest. Keep #2444's smoke failure visible until the cache
-preparation fix is on its base and verified in CI. Claude review is advisory;
-only the chair merges. No release, auto-merge, or dynamic-forms increment 3
-execution is part of this change.
+Verify the signed merge push and GitHub's fresh mergeability/CI at that head.
+Leave #2449 open for Patrick to merge. The preserved local-review stash is
+historical context, not a patch to blindly reapply over main's final dispositions.
+No reviewer, paid inference, auto-merge, release or increment-3 work is authorized.
