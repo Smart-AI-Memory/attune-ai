@@ -20,6 +20,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "[redis] extra remains as an empty alias" comment is corrected: there
   is no `[redis]` extra; the client libraries are core and the bundled
   plugin degrades to the file tier.
+- **First-run memory-backend choice, persisted and honored**
+  (redis-config-truth D5, 2026-09-06). A SessionStart hook notice (once,
+  anti-nag, asks the assistant to collect the choice), a one-time notice on
+  the first interactive `attune` run, an interactive prompt in `attune
+  setup`, and `attune memory use <auto|file|redis>` record
+  `memory.backend` in `~/.attune/config.json` (`ATTUNE_MEMORY_BACKEND`
+  overrides per process; `ATTUNE_MEMORY_NOTICE=0` silences the notices).
+  The resolver honors it: `file` never probes the Redis upgrade and never
+  reports it dark; `redis` prefers the Agent Memory Server and degrades
+  loudly; `auto` is unchanged. Redis's role is stated in the chair's words
+  wherever it is offered: enhanced memory features using Redis's
+  open-source options.
 
 - **Surface-producer inventory (host-surface-parity Task 1B, increment 1
   of the task).** `attune.elicitation.surface_inventory` mechanically

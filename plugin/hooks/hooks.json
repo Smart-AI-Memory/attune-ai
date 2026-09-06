@@ -23,6 +23,15 @@
         "hooks": [
           {
             "type": "command",
+            "command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/memory_backend_notice.py",
+            "timeout": 3
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
             "command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/spec_orient.py",
             "timeout": 4
           }

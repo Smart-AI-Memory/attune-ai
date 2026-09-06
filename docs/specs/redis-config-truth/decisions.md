@@ -84,57 +84,79 @@ and surfaced; only malformed values raise). The spec-text-highest-
 yield pattern holds: third consecutive spec-text lane with a 100%
 real-finding rate.
 
-## D5 — Redis stays bundled and zero-config; the backend STATE becomes visible (RULED 2026-09-06, chair, via pushback card)
+## D5 — Redis stays bundled and zero-config; a first-run notice lets users choose; the choice is honored (RULED 2026-09-06, chair — pushback card, then assumption review)
 
-**Date:** 2026-09-06 · **Status:** ruled (chair pick on the lead's
-pushback card: "Keep bundled and zero-config; make the state visible and
-fix the friction")
+**Date:** 2026-09-06 · **Status:** ruled. First recorded from a card pick
+the same night; rewritten the same night after the chair's assumption
+review corrected the shape. The chair's own words are the record:
 
-**Question.** The chair asked whether Redis should become an optional
-install, or an option during the initial install, "without damaging
-performance to users", and invited pushback.
+> Redis's primary goal is to "provide enhanced memory features using
+> Redis's open source coding options."
 
-**Facts the ruling rests on (verified 2026-09-06).** The Redis SERVER is
-already optional at runtime: with the Agent Memory Server unreachable
+> I want there to be a first run notice that lets users choose if
+> possible.
+
+**What was asked.** Whether Redis should become an optional install, or
+an option during the initial install, "without damaging performance to
+users"; the chair invited pushback.
+
+**What is true (verified 2026-09-06).** The Redis SERVER was already
+optional at runtime: with the Agent Memory Server unreachable
 `resolve_backend()` returns `FileStashBackend` (`is_fallback=True`) in
 0.15 s; with the plugin absent, in 0.04 s. The two client libraries
-(`redis`, `agent-memory-client`) are core dependencies and the
-`attune_redis` plugin is bundled in the wheel; the `[redis]` extra was an
-empty alias never used. Performance is not at stake in either
-direction: recall digest 4.6 ms on files vs 0.6 ms on Redis; importing
-the client libraries costs ~131 ms once. The AMS URL comes from the
-plugin config (`AMS_BASE_URL`, default `http://localhost:8000`), not
-from the Redis URL variables. `backend_status()` already distinguishes
-live-upgrade / file-fallback / dark-upgrade; the SessionStart recall
-hook warns only in the dark case; `attune doctor` reported raw Redis
-reachability but never the memory backend, and `attune memory` had no
-`status`.
+(`redis`, `agent-memory-client`) are core dependencies and `attune_redis`
+is bundled in the wheel; the `[redis]` extra was an empty alias no one
+ever used. Performance in the sense the chair meant (runtime speed) is
+not at stake: recall digest 4.6 ms on files vs 0.6 ms on Redis; client
+import ~131 ms once. The AMS URL comes from the plugin config
+(`AMS_BASE_URL`, default `http://localhost:8000`). `backend_status()`
+already distinguished live-upgrade / file-fallback / dark-upgrade, but
+`attune doctor` never named the memory backend and `attune memory` had
+no `status`.
 
-**Positions.** (a) Optional install or install-time option (chair's
-opening approach): `pip` cannot prompt, so this is a first-run question
-plus a real extra — two install paths, and the decision lands at the
-moment users know least; the last interactive installer here is where
-the #1418 "installed nothing, printed a checkmark" bug lived. (b) Make
-the extra real: client libraries out of core, plugin degrades; lighter
-base install, but a user with Redis and no extra silently gets the file
-tier. (c) **Keep bundled and zero-config; make the state visible; fix
-the friction** — the lead's alternative, adopted. Counter-case to (c),
-stated to the chair before the pick: bundling drags two client
-libraries and their closure into every install for users who never run
-Redis, and the empty alias was a standing lie in `pyproject.toml`.
+**Ruling.**
+1. Redis stays **bundled and zero-config**. No optional install, no
+   install-time prompt in `pip` (it cannot prompt; the last interactive
+   installer here is where the #1418 "installed nothing, printed a
+   checkmark" bug lived). The strategy memory "leverage the Redis work,
+   don't decouple" stands.
+2. The backend **state is visible**: `attune memory status` (`--json`)
+   and a doctor "Memory backend" line that never contributes a FAIL.
+3. A **first-run notice lets users choose**, on every surface that can
+   carry it: a SessionStart hook notice (the consent-notice pattern —
+   once, anti-nag, "ACTION FOR CLAUDE: ask once"), a one-time notice on
+   the first interactive `attune` run (informs and points at the
+   choosing commands; never blocks a command with a prompt), an
+   interactive prompt in `attune setup`, and `attune memory use
+   <auto|file|redis>` for changing it later.
+4. The choice is a **persisted preference the resolver honors**
+   (`~/.attune/config.json` → `memory.backend`; `ATTUNE_MEMORY_BACKEND`
+   overrides per process): `auto` = a reachable upgrade wins, else the
+   file tier (today's behavior); `file` = the local tier only, the
+   upgrade is never probed or reported dark; `redis` = prefer the Agent
+   Memory Server, degrade to files when unreachable and say so loudly.
+   A choice that changed nothing would be theater.
+5. Redis's role is stated everywhere it is offered in the chair's words
+   (`attune.memory.preference.REDIS_ROLE`).
 
-**What (c) means in code.** `attune memory status` (with `--json`)
-names the resolved backend, transport and reachability and prints the
-guidance for each state (zero-config file tier + how to upgrade;
-degraded with a dark upgrade; not usable with the reason). `attune
-doctor` gains a "Memory backend" line that never contributes a FAIL —
-memory is optional. The empty-alias comment in `pyproject.toml` is
-corrected. The friction findings come from the Redis install/config
+**Positions considered.** (a) optional install / install-time option —
+the chair's opening approach, declined for the reasons in 1; (b) make
+the `[redis]` extra real — left **not ruled**: it is the honest answer
+only if base-install weight becomes the concern, and its one cost is
+the silent fallback for a user with Redis and no extra; (c) keep
+bundled, make the state visible — adopted, then widened by the chair's
+review to include the first-run choice (3) and its persistence (4).
+Counter-case to the adopted position, stated before the pick: bundling
+drags two client libraries and their closure into every install for
+users who never run Redis.
+
+**Process note.** The first D5 was written within minutes of the card
+pick and recorded my framing, not the chair's. The assumption review
+that followed found the shape wrong (item 3). Rulings are recorded in
+the chair's words; a card pick settles one dimension, not the framing
+around it (project memory
+`feedback_assumption_review_before_recording_a_pick`).
+
+**Friction.** The install/config friction list comes from the Redis
 audit the chair started the same night (chip `task_af6763f5`); fixes
-land under this ruling, not under a new install path. The standing
-strategy memory ("leverage the Redis work, don't decouple") is
-unchanged by this ruling.
-
-**Not ruled.** Whether the client libraries should ever move to a real
-extra. If the base-install weight becomes the concern the chair holds,
-(b) is the honest answer and its one cost is the silent fallback.
+land under this ruling.

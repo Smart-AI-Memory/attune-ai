@@ -201,8 +201,12 @@ whole point: less API, and all of it real.
   prompt or tool call needs, budget-capped no matter how large the
   corpus grows.
 
-Memory is local-first — nothing leaves your machine, and without
-Redis everything degrades to the file backend with clear guidance.
+Memory is local-first — nothing leaves your machine. Redis is optional:
+its role here is to provide enhanced memory features using Redis's
+open-source options (semantic recall across sessions through the Agent
+Memory Server). A plain install runs on the local file tier; you choose
+once — a first-run notice asks, or `attune memory use auto|file|redis` —
+and `attune memory status` / `attune doctor` always say which tier is live.
 The economics are measured, not promised (2026-07-05 snapshot;
 ratios improve as the corpus grows):
 
