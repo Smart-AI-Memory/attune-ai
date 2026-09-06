@@ -711,29 +711,59 @@ and the lead reported success unverified until the chair said "I don't
 see it". Three `form_rendered` telemetry rows from this session never
 reached a screen: a live R10 tier-provenance data point.
 
-## D13 — The parity registry reads the reviewed producer baseline at test time; it does not embed a copy (RULED 2026-09-06, chair, retro R3)
+## D13 — The parity registry binds to the producer baseline by DIGEST PIN, not by embedded copy and not by bare reference (PROPOSED 2026-09-06; chair's lean recorded; promoted to RULED by the chair's merge word on #2447)
 
-**Why.** Increment 2 (#2444) embeds `producer_baseline.json` inside
-`parity-registry.json` and its gate asserts the embedded copy equals the
-fixture. The first hook added after that (#2446, one SessionStart hook)
-changes the fixture and breaks #2444's gate on main; every later hook or
-renderer call would do the same, and two PRs now regenerate one fixture.
-Embedding buys nothing the fixture does not already provide: the fixture
-IS the reviewed evidence, and the gate reads it.
+**Status and provenance.** First written by the lead as "RULED, chair"
+straight from the retro's `do now` on R3, without the assumption review
+or the counter-case it owed (D11d). The chair flagged it: "re 2447 D13
+needs discussion." The discussion put three shapes side by side; the
+chair's lean, verbatim: *"a digest pin that preserves the forcing
+function with a one-line diff instead of a 650-line copy. This sounds
+like a better option."* This entry records that lean. It becomes a
+ruling when the chair's merge word lands on #2447, not before.
 
-**Ruling.** `parity-registry.json` drops the `producer_baseline` copy.
-The registry keeps what it owns — subjects, renderers, receipts, pending
-obligations, experiments, schemas — and binds to the baseline by
-reference (the fixture path plus the baseline's `schema_version`); the
-gate loads `producer_baseline.json` at test time and validates subjects
-against it exactly as now. A subject missing for a baseline root still
-fails with the root named; a baseline change still requires a registry
-change when it adds or removes a root, and nothing else.
+**The three shapes, and why the middle one.**
 
-**Application.** Codex applies this in #2444's rebase onto `cd15ca05f`
-(which already requires regenerating for the new hook); the digest
-contract is unchanged because `registry_digest` never covered the
-embedded copy's content beyond equality.
+1. *Embedded copy* (#2444 as opened): `parity-registry.json` carries a
+   full copy of `producer_baseline.json` and the gate asserts equality.
+   Forcing function: ANY fixture change breaks the gate and someone
+   re-derives the obligations. Cost: a ~650-line twin of a reviewed
+   fixture (principle 3 tension) and a 650-line diff on every regen.
+2. *Bare reference* (D13 as first written): the registry names the
+   fixture path and schema version; the gate loads the fixture at test
+   time. Cost the counter-case exposed: Codex's 152 obligations are
+   DERIVED from the baseline, and by reference only a root add/remove
+   forces a registry edit — an existing subject's producer set can change
+   (a hook growing a `pretooluse_deny` producer beside its
+   `exit2_stderr` one) and pass with no re-derivation.
+3. *Digest pin* (the lean): the registry records the fixture's path,
+   schema version, and a content digest. Any fixture change breaks the
+   gate, so re-derivation stays forced exactly as with the copy; the diff
+   on regen is one line; it is the idiom #2444 already uses for every
+   other pin (`fixture_digest`, `registry_digest`).
+
+**What the lead is assuming (for the chair's read to check).**
+
+- A1. "Digest" is the content digest of the reviewed fixture file
+  (canonical JSON, same `canonical_digest` helper #2444 ships), distinct
+  from `registry_digest`.
+- A2. The pin lives in `parity-registry.json` under `producer_baseline`
+  as `{path, schema_version, digest}`, replacing the copy; the check
+  lives beside the existing subject-vs-root validation in the gate.
+- A3. The failure names both digests and the regen command, so the
+  message is "registry derived from a baseline that no longer exists —
+  regenerate, re-derive, review", never a bare mismatch.
+- A4. "One-line diff" describes the pin. Obligations derived from a NEW
+  subject still need their own registry entries; that is the forcing
+  function, not a cost to remove.
+- A5. Codex applies this on #2444's rebase onto main (which already
+  regenerates the fixture for the #2446 hook subject and the retro PR's
+  `worktree_add_guard` producer). #2447 changes no registry code.
+
+**Application (on the ruling).** Codex replaces the embedded copy with
+the digest pin in #2444's rebase; the lead lifts the hold posted on
+#2444 and quotes this entry there. The bare-reference instruction the
+lead posted on #2444 earlier that day is withdrawn.
 
 ## Open
 
