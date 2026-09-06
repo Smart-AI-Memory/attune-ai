@@ -77,10 +77,14 @@ def test_scan_has_no_unresolved_problems(live) -> None:
 
 
 def test_baseline_reproduces_the_design_renderer_anchor_fixture(reviewed) -> None:
-    """Design R2 names six anchors / seven sites; the scan must find exactly those."""
+    """Preserve the six baseline anchors plus the increment-3 native runtime."""
     sites = {(a.anchor, a.target.rsplit(".", 1)[1]) for a in reviewed.renderer_call_anchors}
     assert sites == {
         ("src/attune/memory/recall_digest.py:render_digest_html", "form_to_widget_html"),
+        (
+            "src/attune/elicitation/surface_runtime.py:_present_native",
+            "form_to_elicitation_schema",
+        ),
         (
             "src/attune/elicitation/command_workspace.py:CommandWorkspaceHost._render",
             "workspace_to_widget_html",
@@ -103,7 +107,7 @@ def test_baseline_reproduces_the_design_renderer_anchor_fixture(reviewed) -> Non
             "form_to_elicitation_schema",
         ),
     }
-    assert len({a.anchor for a in reviewed.renderer_call_anchors}) == 6
+    assert len({a.anchor for a in reviewed.renderer_call_anchors}) == 7
 
 
 def test_baseline_keeps_the_d6_hook_envelope_findings(reviewed) -> None:
@@ -1218,10 +1222,15 @@ def stored_registry() -> dict:
 
 
 @pytest.fixture(scope="module")
-def installed_evidence() -> dict:
+def installed_evidence(stored_registry) -> dict:
+    import asyncio
+
     from attune.elicitation.surface_evidence import replay_renderer_evidence
+    from attune.elicitation.surface_native_evidence import replay_native_evidence
 
     _, evidence = replay_renderer_evidence()
+    _, native = asyncio.run(replay_native_evidence(stored_registry))
+    evidence.update(native)
     return evidence
 
 
@@ -1234,7 +1243,7 @@ def test_live_inventory_is_accounted_but_does_not_claim_complete_parity(
     assert report.pending_keys
     assert not report.complete
     assert report.required_keys == report.pending_keys | report.verified_keys
-    assert all(key.startswith("renderer:") for key in report.verified_keys)
+    assert len(report.verified_keys) == 8  # Three package plus five native receipts.
     with pytest.raises(sr.SurfaceRegistryError, match="missing receipt"):
         sr.validate_receipts(
             stored_registry,
@@ -1263,7 +1272,7 @@ def test_live_registry_includes_two_unlisted_design_producers(stored_registry) -
         assert records[anchor]["evidence_status"] == "pending-local-receipts"
 
 
-def test_all_declared_live_routes_remain_inadmissible_without_runtime_receipts(
+def test_only_receipted_native_route_is_admissible(
     stored_registry, reviewed, installed_evidence
 ) -> None:
     report = sr.validate_inventory(
@@ -1273,7 +1282,11 @@ def test_all_declared_live_routes_remain_inadmissible_without_runtime_receipts(
     for subject in stored_registry["subjects"]:
         for route in set(subject.get("cold_routes", [])) | set(subject.get("warm_routes", [])):
             missing = sr.route_evidence_missing(stored_registry, report, subject["id"], route)
-            assert missing, (subject["id"], route)
+            enabled = (
+                subject["id"] == "surface-runtime-route-form"
+                and route == "mcp-native:surface-native-elicitation"
+            )
+            assert bool(missing) is not enabled, (subject["id"], route)
             assert missing <= report.pending_keys
             checked.append((subject["id"], route))
     assert checked
@@ -1303,7 +1316,8 @@ def test_live_inventory_mutations_fail_instead_of_becoming_exemptions(
     elif mutation == "duplicate_pending":
         registry["pending_obligations"].append(registry["pending_obligations"][0])
     elif mutation == "pending_package":
-        receipt = registry["receipts"].pop()
+        receipt = next(r for r in registry["receipts"] if r["key"].startswith("renderer:"))
+        registry["receipts"].remove(receipt)
         registry["pending_obligations"].append(
             {"key": receipt["key"], "owner": "owner", "reason": "cannot waive", "next_increment": 3}
         )
@@ -1399,14 +1413,19 @@ def test_declared_context_orders_match_the_scoped_design(stored_registry) -> Non
                     == ["mcp-native:native-elicitation"]
                 )
             else:
+                native_route = (
+                    "mcp-native:surface-native-elicitation"
+                    if subject["id"] == "surface-runtime-route-form"
+                    else "mcp-native:native-elicitation"
+                )
                 assert subject["cold_routes"] == [
-                    "mcp-native:native-elicitation",
+                    native_route,
                     "PORTABLE",
                     "HEADLESS",
                 ]
                 assert subject["warm_routes"] == [
                     "RICH",
-                    "mcp-native:native-elicitation",
+                    native_route,
                     "PORTABLE",
                     "HEADLESS",
                 ]
@@ -1473,10 +1492,14 @@ def test_unrelated_renderer_target_does_not_change_existing_owning_slice(stored_
 
 
 def test_stored_receipts_equal_current_executed_declarations(stored_registry) -> None:
+    import asyncio
+
     from attune.elicitation.surface_evidence import replay_renderer_evidence
+    from attune.elicitation.surface_native_evidence import replay_native_evidence
 
     declarations, _ = replay_renderer_evidence()
-    assert stored_registry["receipts"] == declarations
+    native, _ = asyncio.run(replay_native_evidence(stored_registry))
+    assert stored_registry["receipts"] == sorted(declarations + native, key=lambda row: row["key"])
 
 
 def test_swapping_receipt_ids_and_digests_cannot_borrow_execution(small_registry) -> None:
@@ -2046,3 +2069,48 @@ def test_workspace_receipt_uses_owning_fixture(monkeypatch) -> None:
     )
     outputs = {t.target_id: se._project(workspace, t) for t in workspace.targets}
     assert se._workspace_collection(workspace, outputs)["action"] == "apply"
+
+
+@pytest.mark.parametrize("mutation", ["missing", "extra", "unknown", "surface", "duplicate"])
+def test_route_projection_bindings_are_exact(small_registry, mutation):
+    form = next(s for s in small_registry["subjects"] if s["id"] == "form")
+    refs = {
+        "RICH": "rich",
+        "PORTABLE": "portable",
+        "HEADLESS": "headless",
+        "mcp-native:native": "headless",
+    }
+    form["route_projection_targets"] = refs
+    if mutation == "missing":
+        refs.pop("RICH")
+    elif mutation == "extra":
+        refs["extra"] = "headless"
+    elif mutation == "unknown":
+        refs["RICH"] = "absent"
+    elif mutation == "surface":
+        refs["mcp-native:native"] = "rich"
+    else:
+        form["targets"].append(form["targets"][0])
+    with pytest.raises(sr.SurfaceRegistryError):
+        sr.required_obligations(small_registry)
+
+
+def test_exact_mapping_does_not_waive_unrelated_rich_obligation(small_registry):
+    form = next(s for s in small_registry["subjects"] if s["id"] == "form")
+    form["route_projection_targets"] = {
+        "RICH": "rich",
+        "PORTABLE": "portable",
+        "HEADLESS": "headless",
+        "mcp-native:native": "headless",
+    }
+    required = frozenset(sr.required_obligations(small_registry))
+    rich = "subject:form:surface:RICH"
+    report = sr.InventoryReport(
+        required,
+        required - {rich},
+        frozenset({rich}),
+        frozenset(),
+        sr.canonical_digest(small_registry),
+    )
+    assert not sr.route_evidence_missing(small_registry, report, "form", "mcp-native:native")
+    assert sr.route_evidence_missing(small_registry, report, "form", "RICH") == {rich}

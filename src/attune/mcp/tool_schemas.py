@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from attune.elicitation.surface_contract import route_output_schema
+
 
 def _path_tool(
     description: str,
@@ -470,6 +472,31 @@ def get_elicitation_tools() -> dict[str, dict[str, Any]]:
         "additionalProperties": False,
     }
     return {
+        "elicitation_route_form": {
+            "output_schema": route_output_schema(),
+            "description": (
+                "Present a form through the server's verified surface policy and collect "
+                "a validated completion on the same authenticated session. Unavailable "
+                "routes return no_supported_surface without rendering."
+            ),
+            "input_schema": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "form": rich_form_schema,
+                    **template_props,
+                    "message": {"type": "string", "maxLength": 16000},
+                    "receipt_id": {"type": "string", "maxLength": 256},
+                },
+                "oneOf": [
+                    {
+                        "required": ["form"],
+                        "not": {"anyOf": [{"required": ["template"]}, {"required": ["slots"]}]},
+                    },
+                    {"required": ["template"], "not": {"required": ["form"]}},
+                ],
+            },
+        },
         "elicitation_render_form": {
             "description": (
                 "Validate a declarative form and return batched question "

@@ -785,6 +785,34 @@ hook subject and the retro PR's `worktree_add_guard` producer); the lead
 lifts the hold on #2444 and quotes the ruling there. The bare-reference
 instruction the lead posted on #2444 earlier that day is withdrawn.
 
+## D14 — Bounded Codex form interaction (chair, 2026-09-06)
+
+The chair instructed: "approve the plan and advance the form interaction",
+referencing the recommendation to correct stale prerequisites and execute
+the existing milestone after lifting the increment-3 hold. This authorizes
+that bounded milestone, not the remaining roadmap wholesale. The prior
+zero-API-spend and manual-merge constraints remain.
+
+Reconciled against origin/main a9e98f6717a90d5e7be096b86346d66deca78e00:
+Task 0 is merged (#2442), Task 1B increment 1 is merged (#2443), and
+increment 2 is merged (#2444). #2445 and #2449 repair prerequisites are
+merged. Task 1B is still incomplete; 155 local runtime obligations were
+explicitly pending at increment 2. The installed non-editable forms 0.14.0
+artifact exposes all seven renderer targets, including production HEADLESS,
+and its canonical evidence replay executed successfully before mutation.
+These facts supersede the obsolete opening task status and 0.13.0
+executable prerequisite text. Historical version references in the design
+remain dated context; D12 owns AF-1 0.14.0 and AF-2 0.15.0.
+
+The accepted outcome is one ordinary Codex form-to-validated-answer flow
+that continues the same task exactly once, using the existing Task 1B
+policy/receipt/collector seams. Preserve missing route evidence as blockers.
+Record actual display and submission evidence, including repeated cold/warm
+timing trials; no tool-return event alone proves paint. The implementation
+brief's five-cold/five-warm protocol remains a proposed measurement procedure,
+not a new general statistical or CI threshold. Full host parity and later
+tasks retain their existing dependency and execution gates.
+
 ## Open
 
 - None. Every proposed decision in this spec is ruled.

@@ -386,23 +386,23 @@ class TestGenerateReasoning:
 class TestEstimateCost:
     """Test cost estimation."""
 
-    def test_estimate_cost_no_matching(self):
+    def test_estimate_cost_no_matching(self, tmp_path):
         """Test cost estimate with no matching patterns."""
-        recommender = TierRecommender()
+        recommender = TierRecommender(patterns_dir=tmp_path)
         estimate = recommender._estimate_cost([], "CHEAP")
         assert estimate["avg_cost"] == 0.030
         assert estimate["avg_attempts"] == 1.5
 
-    def test_estimate_cost_default_capable(self):
+    def test_estimate_cost_default_capable(self, tmp_path):
         """Test default cost for CAPABLE tier."""
-        recommender = TierRecommender()
+        recommender = TierRecommender(patterns_dir=tmp_path)
         estimate = recommender._estimate_cost([], "CAPABLE")
         assert estimate["avg_cost"] == 0.150
         assert estimate["avg_attempts"] == 2.5
 
-    def test_estimate_cost_default_premium(self):
+    def test_estimate_cost_default_premium(self, tmp_path):
         """Test default cost for PREMIUM tier."""
-        recommender = TierRecommender()
+        recommender = TierRecommender(patterns_dir=tmp_path)
         estimate = recommender._estimate_cost([], "PREMIUM")
         assert estimate["avg_cost"] == 0.450
         assert estimate["avg_attempts"] == 1.0

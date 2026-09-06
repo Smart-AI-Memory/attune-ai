@@ -1,27 +1,23 @@
 # Host Surface Parity — Tasks
 
-**Status:** active, execution-reconciled (2026-09-04) — thirteen local
-task blocks are authored: Task 0, Task 1B, and Tasks 2–12. AF-1 and
-AF-2 are explicit external handoffs, not local runner tasks. Task 0 is
-complete and locally committed but not yet pushed or merged. The
-original Task 1 execution probe
-falsified its registry and green-baseline premises and paused before
-production. D10 rules the corrected context-routed Task 1 split. Each task
-executes only behind its own chair go; a go on one task is not a
-go on the next. The original Task 1 go covered the falsifying probe;
-AF-1 has neither an implementation go nor a package-release go, and
-Task 1B has no execution go.
-D8 (2026-09-03) granted the 16.3 execution gos for
-the ungated items: Task 2 (R1 tier 0), Task 4 (R4 receipt), Task
-10 (R9 foundation) and Task 12 (D2 placement-label wiring). Task
-shapes were reconciled under D10, whose sequencing correction expressly
-preserved those four D8 gos while changing their earliest start. Task
-12 remains immediately eligible; Tasks 2, 4, and 10 retain their gos
-but execute on the critical path `AF-1 release → 1B → 4 → 10 → AF-2
-release → 2`, while Task 1B waits for AF-1's separately authorized
-package release; AF-2 likewise has neither an implementation go nor a
-0.14.0 release go. Task 11 (R10, adopted in
-D9) awaits its own execution go.
+**Status:** active, execution-reconciled (2026-09-06; D14).
+Task 0 merged in #2442. Task 1B increment 1 merged in #2443;
+increment 2 merged in #2444. Full Task 1B remains incomplete.
+AF-1 is available in the released, non-editable attune-forms 0.14.0
+artifact; the locked consumer floor is >=0.14.0,<1.0 (D12).
+
+D14 authorizes the bounded increment-3 Codex form interaction from the
+existing milestone brief. It lifts the prior increment-3 hold for that
+milestone only. Each other task retains its own execution conditions;
+there is no release, API-spend, or automatic-merge authorization.
+
+D8's existing gos for Tasks 2, 4, 10 and 12 remain unchanged. Task 12
+is independently eligible after Task 0. The remaining critical path is
+`1B completion → 4 → 10 → AF-2 release → 2`. The bounded Codex
+milestone does not by itself complete 1B or satisfy those downstream
+dependencies. AF-2 targets 0.15.0 under D12 and still requires separate
+implementation and release authorization. Task 11 awaits its own go.
+
 Tasks 3, 6, and 9 depend only on Task 0's relevant characterization and
 are dependency-eligible independently of the attune-forms release chain. The
 document-order runner has no task-ID selector and does not skip earlier blocks;
@@ -165,16 +161,18 @@ baseline found the design's six renderer anchors / seven sites, D6's
 three `additionalContext` hooks, seven exit-2 guards, six SessionStart
 context hooks, and two producers the design never listed
 (`widgets/chart_widget_tool.py:render_chart_widget`,
-`mcp/workflow_handlers.py:_workflow_response`). Remaining increments:
-parity registry + receipts ledger + contract enforcer; surface policy +
-receipt store + unified route handler; cross-repo-compat workflow.)*
+`mcp/workflow_handlers.py:_workflow_response`). Increment 2 merged in #2444: parity registry, receipts ledger and
+contract enforcer. Increment 3 in draft #2450 now includes native policy/store, verified startup,
+installation-key provisioning and stdio completion. Actual host display,
+policy-warm/deferred interactions and remaining producer receipts stay open;
+cross-repo-compat workflow remains increment 4.)*
 
 ```xml
 <task id="1B" name="context-routed-surface-parity-gate">
   <objective>
     STOP PRECONDITION — human/agent-enforced because the current spec
     runner has no cross-repository gate. Before any file mutation,
-    verify a released attune-forms 0.13.0 artifact exposes AF-1's
+    verify a released attune-forms 0.14.0 artifact exposes AF-1's
     non-empty registry, production workspace_to_headless target, and public
     package-shipped canonical fixtures/normalization descriptors; a
     local editable checkout is not evidence. If false or unverifiable,
@@ -216,8 +214,8 @@ receipt store + unified route handler; cross-repo-compat workflow.)*
     </file>
   </files-to-create>
   <files-to-modify>
-    <file path="pyproject.toml">Raise the attune-forms floor from 0.12.2 to 0.13.0; retain the existing exclusive 1.0 upper bound.</file>
-    <file path="uv.lock">Lock released attune-forms 0.13.0.</file>
+    <file path="pyproject.toml">Already landed: attune-forms>=0.14.0,<1.0; retain the verified floor and upper bound.</file>
+    <file path="uv.lock">Already landed: lock released attune-forms 0.14.0.</file>
     <file path=".github/workflows/cross-repo-compat.yml">Add scheduled, dependency-update and manual advisory fresh-resolution jobs with version/digest/fixture/owner artifacts; never replace the locked gate.</file>
     <file path="src/attune/elicitation/__init__.py">Export the surface-policy API.</file>
     <file path="src/attune/elicitation/ask_payload.py">Preserve the fixed AskUserQuestion compatibility adapter; unified policy uses host-native only through a trusted in-process profile and route-active registry target.</file>
@@ -238,7 +236,7 @@ receipt store + unified route handler; cross-repo-compat workflow.)*
     <file path=".agents/AGENTS.md">Projector-owned root mirror.</file>
   </files-to-modify>
   <validation>
-    <check>A pre-implementation clean-wheel receipt proves the installed released artifact is attune-forms 0.13.0, exposes AF-1's non-empty registry, closed projection_output_types vocabulary and production HEADLESS target, imports/executes every registry-referenced canonical fixture without test modules, and is not a local editable override; absence fails the task.</check>
+    <check>A pre-implementation clean-wheel receipt proves the installed released artifact is attune-forms 0.14.0, exposes AF-1's non-empty registry, closed projection_output_types vocabulary and production HEADLESS target, imports/executes every registry-referenced canonical fixture without test modules, and is not a local editable override; absence fails the task.</check>
     <check>The AF-1 scanner strips only None from Optional[T]/T|None and requires one declared projection type; other unions fail closed while prefix-named callables remain covered independently. Adding, removing or editing an allowlisted FQN/rationale—or attempting to hide a renderer there—fails the package gate.</check>
     <check>A later artifact stays green only when its obligation set and per-target implementation/fixture/normalization/owning-record-slice digests are unchanged and its canonical fixtures pass. Route-active host-native evidence uses route_roundtrip and binds the installed profile facet and adapter/collector closure. AF-1's compatibility-only target instead requires compatibility_projection: its fixed contract ID/shape and status/mode are digest-bound; its canonical specialized output alone supplies question IDs/options for a raw answer passed through common collect_form_response; and its normalized FormResponse equals PORTABLE/HEADLESS controls without claiming route, presentation, lifecycle, or tier. The consuming compatibility endpoints separately bind their two exact legacy shapes. Changing status/mode, contract ID/shape, emitted questions/options, or a helper invalidates the exact target; an unrelated symbol does not. Unresolved behavior-affecting dynamic dependencies require explicit package-relative artifact refs or fail closed, and uv.lock pins the gating artifact set. The advisory fresh-resolution workflow runs on schedule, dependency update and manual dispatch and publishes resolved version/digests/fixture result/owner without replacing or failing the locked gate.</check>
     <check>A response constructed from the released workspace_to_headless output reaches attune-ai's stateful command-workspace adapter and ultimately attune-forms collect_workspace_action, matching widget/Markdown normalization; an action-ID-only or empty mapping fails closed. R4 separately receipts the public fix_workspace_collect_action seam.</check>

@@ -60,7 +60,7 @@ each, validated on the way back. One form renders to whatever surface
 your client draws: a native dialog, a rich widget, or a plain menu
 ([the vocabulary](#interactive-forms--the-agent-asks-with-structure)).
 
-Around that core: 21 workflows and <!-- cap:mcp_registered_tool_count -->64 MCP tools<!-- /cap -->
+Around that core: 21 workflows and <!-- cap:mcp_registered_tool_count -->65 MCP tools<!-- /cap -->
 dispatching 2–6 domain-specific subagents behind Socratic quality
 gates, RAG grounding with a citation-per-claim contract, and
 generation fact-checking — one install, one MCP server. We run our
@@ -111,7 +111,7 @@ Setup fight you? [Tell me where](https://github.com/Smart-AI-Memory/attune-ai/di
 | <!-- cap:skill_count -->28 auto-triggering skills<!-- /cap --> | Yes | Yes |
 | Security hooks | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
-| <!-- cap:mcp_registered_tool_count -->64 MCP tools<!-- /cap --> | -- | Yes |
+| <!-- cap:mcp_registered_tool_count -->65 MCP tools<!-- /cap --> | -- | Yes |
 | `attune` CLI + multi-agent workflows | -- | Yes |
 | Ops dashboard (`attune ops`) — run history, cost tiles, telemetry | -- | Yes |
 

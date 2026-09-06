@@ -384,6 +384,36 @@ def _validate_subject(subject: dict[str, Any], subjects: dict, profiles: dict) -
     surfaces = {t["surface"] for t in subject.get("targets", [])}
     routes = set(subject["cold_routes"]) | set(subject["warm_routes"])
     _require(routes & SURFACES <= surfaces, sid, "surface route has no declared target")
+    _projection_targets(subject, routes)
+
+
+def _projection_targets(subject: dict, routes: set[str]) -> dict[str, dict]:
+    """Resolve optional exact route-to-subject projection bindings without waivers."""
+    refs = subject.get("route_projection_targets")
+    if refs is None:
+        return {}
+    sid = subject["id"]
+    _require(
+        isinstance(refs, dict) and set(refs) == routes, sid, "projection bindings must equal routes"
+    )
+    targets = _index(subject.get("targets", []), sid)
+    resolved = {}
+    for route, target_id in refs.items():
+        _require(
+            isinstance(target_id, str) and target_id in targets,
+            sid,
+            f"{route}: unknown projection target",
+        )
+        target = targets[target_id]
+        expected = "HEADLESS" if route.startswith("mcp-native:") else route
+        if route.startswith("host-native:"):
+            expected = "host-native"
+            _require(
+                target_id == route.removeprefix("host-native:"), sid, "wrong host-native target"
+            )
+        _require(target["surface"] == expected, sid, f"{route}: wrong projection surface")
+        resolved[route] = target
+    return resolved
 
 
 def _enhanced(owner: dict[str, Any], prefix: str) -> dict[str, dict[str, Any]]:
@@ -804,11 +834,18 @@ def route_evidence_missing(
         subject_id,
         "inventory report does not match required obligations",
     )
-    keys = {
-        key
-        for key, ref in required.items()
-        if ref.get("subject_id") == subject_id or key.startswith(f"subject:{subject_id}:")
-    }
+    keys = {key for key, ref in required.items() if ref.get("subject_id") == subject_id}
+    projections = _projection_targets(
+        subject, set(subject["cold_routes"]) | set(subject["warm_routes"])
+    )
+    if projections:
+        target = projections[route]
+        if target["surface"] == "RICH":
+            keys.add(f"subject:{subject_id}:surface:RICH")
+        elif target["surface"] == "host-native":
+            keys.add(f"subject:{subject_id}:host-native:{target['id']}")
+    else:
+        keys.update(key for key in required if key.startswith(f"subject:{subject_id}:"))
     keys.add(local_projection)
     keys.update(key for key in required if key.startswith("renderer:"))
     transport = subject.get("route_transport_refs", {}).get(route)
