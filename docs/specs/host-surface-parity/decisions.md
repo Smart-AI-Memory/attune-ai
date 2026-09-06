@@ -711,7 +711,7 @@ and the lead reported success unverified until the chair said "I don't
 see it". Three `form_rendered` telemetry rows from this session never
 reached a screen: a live R10 tier-provenance data point.
 
-## D13 — The parity registry binds to the producer baseline by DIGEST PIN (PROPOSED 2026-09-06 with the chair's conditional satisfied by Codex's hearing; awaiting the chair's ruling word)
+## D13 — The parity registry binds to the producer baseline by DIGEST PIN (RULED 2026-09-06, chair: "rule D13 pin")
 
 **Status and provenance.** First written by the lead as "RULED, chair"
 straight from the retro's `do now` on R3, without the assumption review
@@ -729,8 +729,8 @@ chair rules. Codex was heard (read-only, against #2444 head `f959377dd`,
 binding with one stored canonical digest, retain the existing semantic
 checks, and pass verified baseline content to experiment validation; I
 do not concur that a bare reference loses nothing."* Under the chair's
-conditional, (2) is closed and (1) is the shape. The chair's ruling word
-promotes this entry; nothing else does.
+conditional, (2) was closed and (1) was the shape. The chair ruled, in
+their words, 2026-09-06: *"rule D13 pin"*.
 
 **The three shapes.**
 
