@@ -711,6 +711,30 @@ and the lead reported success unverified until the chair said "I don't
 see it". Three `form_rendered` telemetry rows from this session never
 reached a screen: a live R10 tier-provenance data point.
 
+## D13 — The parity registry reads the reviewed producer baseline at test time; it does not embed a copy (RULED 2026-09-06, chair, retro R3)
+
+**Why.** Increment 2 (#2444) embeds `producer_baseline.json` inside
+`parity-registry.json` and its gate asserts the embedded copy equals the
+fixture. The first hook added after that (#2446, one SessionStart hook)
+changes the fixture and breaks #2444's gate on main; every later hook or
+renderer call would do the same, and two PRs now regenerate one fixture.
+Embedding buys nothing the fixture does not already provide: the fixture
+IS the reviewed evidence, and the gate reads it.
+
+**Ruling.** `parity-registry.json` drops the `producer_baseline` copy.
+The registry keeps what it owns — subjects, renderers, receipts, pending
+obligations, experiments, schemas — and binds to the baseline by
+reference (the fixture path plus the baseline's `schema_version`); the
+gate loads `producer_baseline.json` at test time and validates subjects
+against it exactly as now. A subject missing for a baseline root still
+fails with the root named; a baseline change still requires a registry
+change when it adds or removes a root, and nothing else.
+
+**Application.** Codex applies this in #2444's rebase onto `cd15ca05f`
+(which already requires regenerating for the new hook); the digest
+contract is unchanged because `registry_digest` never covered the
+embedded copy's content beyond equality.
+
 ## Open
 
 - None. Every proposed decision in this spec is ruled.

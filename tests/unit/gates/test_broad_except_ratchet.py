@@ -145,6 +145,9 @@ _BASELINE: dict[str, int] = {
     # detached_head_push_guard: same fail-open __main__ block as its
     # sibling above — a guard that crashes must exit 0, never block.
     "src/attune/hooks/scripts/detached_head_push_guard.py": 1,
+    # worktree_add_guard (retro 2026-09-06 R8): the same fail-open __main__
+    # block — a guard that crashes must exit 0, never block.
+    "src/attune/hooks/scripts/worktree_add_guard.py": 1,
     "src/attune/hooks/scripts/evaluate_session.py": 3,
     # format_on_save added 1 for library-review L3 (PR #2117): the
     # PostToolUse exit-0-always contract must survive wrong-typed

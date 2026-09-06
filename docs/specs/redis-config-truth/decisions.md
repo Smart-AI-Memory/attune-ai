@@ -157,6 +157,8 @@ the chair's words; a card pick settles one dimension, not the framing
 around it (project memory
 `feedback_assumption_review_before_recording_a_pick`).
 
+**Retro ruling (2026-09-06, R5).** The first-terminal-run surface is a NOTICE, not a blocking prompt: it informs and points at `attune memory use` / `attune setup`; the interactive question lives in `attune setup`. The lead's narrowing of "interactive prompt on first terminal run" stands — chair: "keep the notice-only shape".
+
 **Friction.** The install/config friction list comes from the Redis
 audit the chair started the same night (chip `task_af6763f5`); fixes
 land under this ruling.
