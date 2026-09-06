@@ -2004,3 +2004,33 @@ One nested pytest controller/worker probe additionally exhausted its 15s
 startup timeout on Windows 3.12. That probe alone gets 60s; its assertions
 that inference is blocked before process creation are unchanged. No live
 provider calls, broad skips, or interactive-auth changes are involved.
+
+### 2026-09-06 — #2445 cold-child fixture boundaries (crash)
+
+After the quoting repair, Windows 3.11/3.12/3.14 passed. Windows 3.10 and
+3.13 exposed a race in the cold pytest probe: the checkout and fixture live
+on different drives, so pytest's ancestor traversal visits shared temporary
+siblings; another worker removes a guard folder before pytest's Windows
+same-file comparison stats it. Explicit fixture-local `--confcutdir` bounds
+collection while `-p tests.conftest` still loads the real guard. A collector
+assertion reproduces the over-broad traversal deterministically (2 failures
+without the boundary; all 3 controller/worker cases pass with it).
+
+Two Windows 3.10 probes also replaced their process environment without
+SystemRoot, preventing Python hash-randomization startup before the guard
+could run. The test fixtures retain only that required Windows runtime
+variable alongside their declared fake credentials. The credential-scrubbing
+and blocked-inference assertions remain unchanged.
+
+### 2026-09-06 — spec drift probe depends on runner scheduling (mocked)
+
+#2444 run 34025993709 reported one Windows 3.12 failure: the real-Git dirty
+spec test returned no findings. The scanner intentionally stops after a
+2.5s overall budget; the test previously required both worktrees to be
+visited within that wall-clock budget. A loaded runner can exhaust it
+without violating scanner behavior. The exact cutoff was not logged in
+that failed run, so timing is the diagnosed failure mechanism, not a
+measured duration receipt. Behavioral probes now use a module-local steady
+clock while retaining real Git/filesystem calls and their subprocess
+timeouts. A separate deterministic test exhausts the budget before the
+dirty worktree and requires no finding. Production limits are unchanged.

@@ -18,6 +18,9 @@ import pytest
 
 from tests import _inference_guard as guard
 
+# Windows needs SystemRoot to initialize native runtimes with a replaced env.
+PLATFORM_ENV = {name: os.environ[name] for name in ("SYSTEMROOT",) if name in os.environ}
+
 HTTP_CLIENTS = [httpx]
 HTTP_CORES = [httpcore]
 if importlib.util.find_spec("httpx2") is not None:
@@ -239,7 +242,7 @@ async def test_agent_sdk_cannot_start_a_cli_with_saved_auth(tmp_path, monkeypatc
 def _python(
     script: str, *, env: dict | None = None, timeout: int = 15
 ) -> subprocess.CompletedProcess:
-    env = dict(os.environ if env is None else env)
+    env = {**PLATFORM_ENV, **(os.environ if env is None else env)}
     # These cold-interpreter probes declare their own pytest configuration.
     env.pop("PYTEST_ADDOPTS", None)
     env.pop("PYTEST_PLUGINS", None)
@@ -379,7 +382,7 @@ def test_positional_popen_environment_is_scrubbed() -> None:
         True,
         False,
         None,
-        {"ANTHROPIC_AUTH_TOKEN": "fixture"},
+        {**PLATFORM_ENV, "ANTHROPIC_AUTH_TOKEN": "fixture"},
     ) as child:
         stdout, stderr = child.communicate(timeout=15)
     assert child.returncode == 0, stderr
@@ -432,10 +435,32 @@ def test_real_pytest_installs_guard_before_collection_and_in_workers(tmp_path, w
             "    " + line for line in attempt.splitlines(True)
         )
     fixture.write_text(attempt, encoding="utf-8")
-    args = ["-p", "tests.conftest", str(fixture), "-n", workers, "-q", "-o", "addopts="]
+    args = [
+        "-p",
+        "tests.conftest",
+        str(fixture),
+        "-n",
+        workers,
+        "-q",
+        "-o",
+        "addopts=",
+        # Reproduce a collection root above the fixture, as on Windows when
+        # checkout and temporary files are on different drives.
+        "--rootdir",
+        str(tmp_path.parent),
+        # Do not traverse shared temp siblings that other workers remove.
+        # The real repository conftest remains explicitly loaded with -p.
+        "--confcutdir",
+        str(tmp_path),
+    ]
     result = _python(
-        "from tests import _inference_guard as g; g.uninstall(); "
-        f"import pytest; raise SystemExit(pytest.main({args!r}))",
+        "from tests import _inference_guard as g; g.uninstall()\n"
+        "from pathlib import Path\nimport pytest\n"
+        "class FixtureBoundary:\n"
+        "    def pytest_collect_directory(self, path, parent):\n"
+        f"        assert path.is_relative_to(Path({str(tmp_path)!r})), "
+        "f'collection escaped fixture: {path}'\n"
+        f"raise SystemExit(pytest.main({args!r}, plugins=[FixtureBoundary()]))\n",
         # A cold controller plus two workers can exceed 15s on busy Windows CI.
         timeout=60,
     )

@@ -2,9 +2,9 @@
 
 Covers ``deliverables_for_spec`` — the machine-readable
 ``## Deliverables`` contract a spec declares so the staleness
-classifier can check whether its work has shipped. Mock-free /
-filesystem-only per testing-conventions.md (no ``live`` marker, no
-API key).
+classifier can check whether its work has shipped. Filesystem and Git
+boundaries remain real; scan-clock tests separate content behavior from
+elapsed-budget checks (no ``live`` marker or API key).
 
 The hook module is loaded via ``spec_from_file_location`` to match the
 existing plugin-hook test convention (see
@@ -1200,6 +1200,14 @@ def _age(path: Path, days: float) -> None:
 
 
 class TestScanWorktreeSpecDrift:
+    @pytest.fixture(autouse=True)
+    def scan_clock(self, state_mod, monkeypatch):
+        # These tests check real Git/file behavior, not runner scheduling.
+        # Keep subprocess timeouts and the process-wide clock untouched.
+        clock = _types.SimpleNamespace(**vars(_time))
+        clock.monotonic = lambda: 0.0
+        monkeypatch.setattr(state_mod, "time", clock)
+
     def test_flags_week_old_untracked_spec_content(self, state_mod, repo_with_worktree) -> None:
         repo, worktree = repo_with_worktree
         stale = worktree / "specs" / "orphan" / "requirements.md"
@@ -1228,6 +1236,17 @@ class TestScanWorktreeSpecDrift:
         fresh = worktree / "specs" / "new" / "requirements.md"
         fresh.parent.mkdir(parents=True)
         fresh.write_text("**Status**: draft\n", encoding="utf-8")
+        assert state_mod.scan_worktree_spec_drift(repo) == []
+
+    def test_budget_exhaustion_stops_before_the_dirty_worktree(
+        self, state_mod, repo_with_worktree
+    ) -> None:
+        repo, worktree = repo_with_worktree
+        tracked = worktree / "specs" / "seed" / "requirements.md"
+        tracked.write_text("**Status**: approved\n", encoding="utf-8")
+        _age(tracked, days=9)
+        ticks = iter([0.0, 0.0, 3.0])
+        state_mod.time.monotonic = lambda: next(ticks)
         assert state_mod.scan_worktree_spec_drift(repo) == []
 
     def test_old_non_spec_files_do_not_alarm(self, state_mod, repo_with_worktree) -> None:

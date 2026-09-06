@@ -213,6 +213,58 @@ loopback Redis, prepared static tokenizer cache):
   in 81.57s. `/private/tmp/2445-windows-whole.log`.
 - Pinned pre-commit checks: passed; `/private/tmp/2445-windows-hooks.log`.
 
+## Cold-child fixture follow-up (2026-09-06)
+
+Run 34025913808 at `2dd9e4538e64f996d0c38a18b90cd29cb4825eef` verified
+the quoting repair: all 14 former quoting failures are gone. Windows
+3.11/3.12/3.14 passed, alongside Linux/macOS/coverage. Windows 3.10
+(job 101466758262) had three remaining failures; Windows 3.13
+(job 101466758208) had one.
+
+The cold pytest fixture traversed shared temp ancestors, racing with another
+worker's bootstrap cleanup during Windows same-file comparisons. It now
+sets `--confcutdir` to its own fixture directory while explicitly loading
+the real `tests.conftest` with `-p`. The test deliberately places rootdir
+above the fixture and asserts that directory collection stays inside the
+fixture. Removing the boundary gives 2 deterministic failures; adding it
+passes all 3 controller/worker cases (6.20s). Logs:
+`/private/tmp/2445-collection-boundary-before.log` and
+`/private/tmp/2445-collection-boundary-after.log`.
+
+The two other Windows 3.10 failures were Python startup failures in test
+fixtures that supplied minimal environments without SystemRoot. Those
+fixtures now retain that required runtime variable. They still prove
+credential scrubbing and inference rejection; no production barrier or
+assertion was removed.
+
+#2444's concurrent run 34025993709 also exposed a timing-dependent spec
+drift test on Windows 3.12. The behavioral tests required two real Git
+worktrees to be visited within the production 2.5s scan budget. Their clock
+is now steady and local to the module; Git/filesystem calls and subprocess
+timeouts remain real. A separate test requires budget exhaustion to stop
+before the dirty worktree. The permanent test isolation fix lives in this
+PR; production scanner code and limits are unchanged.
+
+Fresh fixture-repair receipts:
+
+- Guard + gates + quality + CI checks: **959 passed, 1 existing skip** in
+  68.91s; guard coverage **99.03%**. The guard implementation itself is
+  unchanged from the quoted-command repair.
+  `/private/tmp/2445-fixtures-focused.log`;
+  `/private/tmp/2445-fixtures-focused-coverage.json`.
+- Spec audit + inference isolation tests: **268 passed** in 18.76s.
+  `/private/tmp/2445-fixtures-spec-focused.log`.
+- Removing the effective scan deadline makes the new budget test fail with
+  an unwanted dirty-worktree finding (1 failed in 0.33s). This mutation runs
+  only in a disposable pytest process; repository production code is not
+  edited. `/private/tmp/2445-scan-budget-mutant.log`.
+
+- Final whole configured tree, including the scanner budget regression:
+  **25,737 passed, 242 existing skips, 3 xfailed** in 83.71s.
+  `/private/tmp/2445-fixtures-final-whole.log`.
+- All pinned pre-commit checks passed.
+  `/private/tmp/2445-fixtures-final-hooks.log`.
+
 ## Next action
 
 Publish the signed repair and verify the fresh CI matrix, including Windows.
