@@ -110,7 +110,7 @@ jobs:
     # memory pressure, so the headroom would not fix it.
     runs-on: ${{ matrix.os }}
     env:
-      TIKTOKEN_CACHE_DIR: ${{ runner.temp }}/tiktoken-cache
+      TIKTOKEN_CACHE_DIR: ${{ github.workspace }}/../tiktoken-cache
     # ci-runner-hang spec: tightened from 75 so a wedged pytest step fails
     # in bounded time (and is rerun-recoverable) instead of stalling for
     # over an hour. A flat int (not a per-OS ${{ }} expression) keeps the
@@ -151,7 +151,7 @@ jobs:
       if: needs.changes.outputs.website_only != 'true'
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
-        path: ${{ runner.temp }}/tiktoken-cache
+        path: ${{ github.workspace }}/../tiktoken-cache
         key: tiktoken-cl100k_base-${{ runner.os }}
 
     - name: Warm tiktoken encoding
@@ -251,7 +251,7 @@ jobs:
     needs: changes
     runs-on: ubuntu-latest
     env:
-      TIKTOKEN_CACHE_DIR: ${{ runner.temp }}/tiktoken-cache
+      TIKTOKEN_CACHE_DIR: ${{ github.workspace }}/../tiktoken-cache
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -285,7 +285,7 @@ jobs:
       if: needs.changes.outputs.website_only != 'true'
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
-        path: ${{ runner.temp }}/tiktoken-cache
+        path: ${{ github.workspace }}/../tiktoken-cache
         key: tiktoken-cl100k_base-${{ runner.os }}
 
     - name: Warm tiktoken encoding
@@ -313,7 +313,7 @@ jobs:
     # matrix tests.
     runs-on: ubuntu-latest
     env:
-      TIKTOKEN_CACHE_DIR: ${{ runner.temp }}/tiktoken-cache
+      TIKTOKEN_CACHE_DIR: ${{ github.workspace }}/../tiktoken-cache
     # ci-gating-lane-isolation Layer A: the job timeout is now the FINAL
     # backstop (both auto-retry attempts hung), not the first line of
     # defence — the 14m step-level `timeout` below kills a single wedged
@@ -350,7 +350,7 @@ jobs:
       if: needs.changes.outputs.website_only != 'true'
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
-        path: ${{ runner.temp }}/tiktoken-cache
+        path: ${{ github.workspace }}/../tiktoken-cache
         key: tiktoken-cl100k_base-${{ runner.os }}
 
     - name: Warm tiktoken encoding

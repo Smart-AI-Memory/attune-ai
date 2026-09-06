@@ -135,6 +135,22 @@ rejects duplicate cache/warm steps.
 - Both suite runs used the committed guard, isolated credentials, the prepared
   static tokenizer cache and disposable Redis. No live inference was attempted.
 
+## CI expression-context correction
+
+GitHub rejected runs 34021720623 and 34021720221 before jobs started: the
+repair referenced `runner.temp` in job-level env, where runner context is
+unavailable. Use `github.workspace` with a sibling cache directory instead.
+The shared path still covers setup and every test step; a schema regression
+rejects runner-context references in job environments. This was a defect in
+the repair, not an inference-boundary failure.
+
+- Workflow checks: 344 passed, 1 existing skip.
+  `/private/tmp/2445-context-fix-tests.log`.
+- Whole configured tree before push: 25,716 passed, 242 existing skips,
+  3 xfailed in 77.73s. `/private/tmp/2445-context-fix-whole.log`.
+- The inference guard is unchanged from its 99.21% coverage receipt above.
+  Fresh GitHub workflow acceptance and Windows results remain required.
+
 ## Next action
 
 Publish the signed repair and verify the fresh CI matrix, including Windows.

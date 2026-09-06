@@ -1968,3 +1968,12 @@ queued for 24-72h post-tag.
   data before pytest; the no-auth integration lane uses fixture-owned AMS
   HTTP readback, explicit file-backend MCP dispatch, and an intercepted SDK
   401. The inference guard remains active through these tests.
+
+### 2026-09-06 — #2445 cache path rejected before CI jobs start (crash)
+
+The CI repair used `runner.temp` in job-level `env`, a context GitHub does
+not allow there. Runs 34021720623 and 34021720221 failed workflow validation
+before test jobs existed; local YAML parsing could not catch expression
+context validity. Use `github.workspace` with a sibling cache directory and
+reject runner-context expressions in job environments with a schema test.
+The same shared path still covers setup and every pytest step on all OSes.

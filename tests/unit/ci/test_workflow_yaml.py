@@ -96,7 +96,7 @@ SHA_PATTERN = re.compile(r"[0-9a-f]{40}")
 )
 def test_tokenizer_data_is_prepared_before_isolated_pytest(filename, job_id):
     job = ALL_WORKFLOWS[filename]["jobs"][job_id]
-    cache_dir = "${{ runner.temp }}/tiktoken-cache"
+    cache_dir = "${{ github.workspace }}/../tiktoken-cache"
     assert job["env"]["TIKTOKEN_CACHE_DIR"] == cache_dir
     steps = job["steps"]
     caches = [step for step in steps if step.get("name") == "Cache tiktoken encodings"]
@@ -118,6 +118,16 @@ def test_tokenizer_data_is_prepared_before_isolated_pytest(filename, job_id):
 
 class TestSchemaValidation:
     """Every workflow file must be valid YAML with required top-level keys."""
+
+    def test_job_environment_does_not_use_runner_context(self):
+        """Runner context exists in steps, but GitHub rejects it in job env."""
+        for filename, workflow in ALL_WORKFLOWS.items():
+            for job_id, job in workflow.get("jobs", {}).items():
+                for name, value in job.get("env", {}).items():
+                    for expression in re.findall(r"\$\{\{(.*?)\}\}", str(value), re.S):
+                        assert not re.search(
+                            r"\brunner\.", expression
+                        ), f"{filename}:{job_id}:env:{name}: runner context unavailable"
 
     def test_all_workflow_files_are_valid_yaml(self):
         """Every .yml file in .github/workflows/ must parse as valid YAML."""
