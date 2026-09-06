@@ -36,8 +36,9 @@ answers, expiry, shutdown and validation races have negative regressions.
 Only the installation key survives restart. Windows activation fails closed
 until a private credential-store/ACL adapter exists. Policy-warm public native
 trials are unavailable: terminal completions expose no warm successor. Do not
-relabel process reuse as policy warmth. Actual host paint/human submission is
-still missing; keep the PR draft and do not claim the milestone complete.
+relabel process reuse as policy warmth. Two accepted live host trials are now
+recorded below; repeated display timing and fresh-session discovery are still
+missing. Keep the PR draft and do not claim the milestone complete.
 
 ## Verification
 
@@ -72,10 +73,17 @@ all other settings were compared and preserved. The former preview block is
 backed up in that runtime directory as previous-preview.toml. Preview provider
 credentials are empty and its state/config paths are isolated.
 
-Reconnect/reload the preview MCP server in Codex, then collect the actual host
-interaction; the current task tool catalog still lists the old server tools.
-No callable elicitation_route_form exists in the currently loaded old server.
-Follow the existing milestone measurement brief; leave unavailable strata open.
+The September 6 recovery session now exposes `elicitation_route_form` on the
+preview. Two live accepted completions are recorded in
+`docs/probes/host-surface-parity/codex-routed-form-2026-09-06.md`; Patrick confirmed
+the first trial's controls worked. The second used an ordinary band-website
+planning request and completed with one render and one presentation.
+
+The elicit source and agents projection now direct appropriate Codex planning
+requests to this endpoint, respecting preferences and terminal outcomes.
+The current agent read this guidance manually; fresh-session skill discovery
+and repeated request-to-visible timing remain unverified. Follow the existing
+measurement brief and keep the PR draft while that acceptance is open.
 
 ## Commands and logs
 
@@ -93,3 +101,8 @@ single-source package projections with scripts/project_surface_runtime.py --writ
 Final whole-suite receipt: 26,056 passed, 242 skipped, 3 xfailed in 73.04s.
 
 Pinned pre-commit hooks passed; good GPG signature independently verified.
+
+Guidance follow-up verification: 72 projection/config/help checks passed;
+final whole tree passed 26,056 tests (242 skipped, 3 xfailed). Log:
+`/private/tmp/form-guidance-whole-final.log`. No executable code changed.
+Generated concept/reference/quickstart help accompanies the skill mirror.

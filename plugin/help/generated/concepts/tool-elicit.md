@@ -9,7 +9,7 @@ source: plugin/skills/elicit/SKILL.md
 
 ## What
 
-Form-driven Socratic discovery — batch independent decision dimensions into one multi-select-capable form instead of N button-turns
+Gather missing, independent planning details in one validated form. Use for ordinary planning or scoping requests with multiple unknowns, explicit discovery forms, and multi-select questions
 
 ## Why
 
