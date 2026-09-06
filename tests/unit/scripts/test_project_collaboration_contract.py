@@ -98,6 +98,20 @@ def test_check_fires_when_master_changes_after_projection(tmp_path: Path) -> Non
     assert projector.HANDOFF_TARGET not in result.stale
 
 
+def test_check_refuses_hand_edit_inside_projected_block(tmp_path: Path) -> None:
+    _seed_repo(tmp_path)
+    projector.project(tmp_path)
+    agents = tmp_path / "AGENTS.md"
+    agents.write_text(
+        agents.read_text(encoding="utf-8").replace("Shared rule.", "Hand-edited rule."),
+        encoding="utf-8",
+    )
+
+    result = projector.project(tmp_path, check=True)
+
+    assert result.stale == [Path("AGENTS.md")]
+
+
 def test_second_projection_is_idempotent(tmp_path: Path) -> None:
     _seed_repo(tmp_path)
     projector.project(tmp_path)
