@@ -3,8 +3,8 @@ type: reference
 name: elicitation-forms-reference
 feature: elicitation-forms
 depth: reference
-generated_at: 2026-08-29T23:25:57.407014+00:00
-source_hash: adc929d111b4cf4bf48479bf6b325ab34d6f63740017d7fc0df1383da12ed22e
+generated_at: 2026-09-06T00:35:04.869548+00:00
+source_hash: 9162a67905eb555cfdd3b260da2b35f34972ceed46c693d35319d40e7370db18
 status: generated
 ---
 
@@ -33,6 +33,8 @@ supported import path inside attune-ai.
 | `inferred_field_count(form)` | How many fields carry an inferred value. |
 | `needs_widget(form)` | Low-level controls check — True if `AskUserQuestion` would lose fidelity. Does not own the surface decision. |
 | `collect_form_response(form, raw_answers, template_id="")` | Validate answers (R4) and return a `FormResponse`; raises `FormValidationError`. |
+| `form_from_template(name, slots=None)` | Load a stored template, fill its `{slot}` placeholders, validate the cast result; raises `FormValidationError` naming every slot or definition problem. |
+| `list_templates()` | Sorted names of the stored templates the fused MCP path and the preview can address. |
 | `WIDGET_RESPONSE_MARKER` | The sentinel key the widget posts back under. |
 | `FormValidationError` | Raised for a malformed definition or answer; lists every problem. |
 
@@ -57,4 +59,9 @@ three construct types `decision`, `pushback`, `progress` — ten in all.
 
 `elicitation_render_form`, `elicitation_render_widget`,
 `elicitation_collect_response`, and `elicitation_ask` — the same model,
-exposed for agents that drive forms through the MCP server.
+exposed for agents that drive forms through the MCP server. Each takes
+EITHER `form` (a declarative dict) OR `template` + `slots` (a stored
+template, cast server-side); `form` is no longer schema-required, and the
+handler enforces exactly one of the two. attune-ai's tool schemas and the
+standalone `attune-forms` server advertise the same arguments — a parity
+test pins them byte-identical.

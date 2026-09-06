@@ -3,12 +3,20 @@ type: faq
 name: elicitation-forms-faq
 feature: elicitation-forms
 depth: faq
-generated_at: 2026-08-29T23:25:57.407014+00:00
-source_hash: adc929d111b4cf4bf48479bf6b325ab34d6f63740017d7fc0df1383da12ed22e
+generated_at: 2026-09-06T00:35:04.869548+00:00
+source_hash: 9162a67905eb555cfdd3b260da2b35f34972ceed46c693d35319d40e7370db18
 status: generated
 ---
 
 # Elicitation Forms FAQ
+
+## When should a form be a stored template instead of a dict?
+
+When the same ask recurs across sessions. A template is the
+dict plus `slots` and `example_slots`; cast it by name through
+`form_from_template` or by passing `template` + `slots` to any
+form-taking MCP tool, and the definition never transits the agent's
+context. One-off asks stay dicts.
 
 ## What are elicitation forms?
 

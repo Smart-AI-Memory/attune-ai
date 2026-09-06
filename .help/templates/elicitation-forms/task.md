@@ -3,8 +3,8 @@ type: task
 name: elicitation-forms-task
 feature: elicitation-forms
 depth: task
-generated_at: 2026-08-29T23:25:57.407014+00:00
-source_hash: adc929d111b4cf4bf48479bf6b325ab34d6f63740017d7fc0df1383da12ed22e
+generated_at: 2026-09-06T00:35:04.869548+00:00
+source_hash: 9162a67905eb555cfdd3b260da2b35f34972ceed46c693d35319d40e7370db18
 status: generated
 ---
 
@@ -85,3 +85,46 @@ form = form_from_dict({
     }],
 })
 ```
+
+### Cast a stored template
+
+From Python, name the template and supply one string per declared slot;
+the result is a validated `FormSchema` like any other:
+
+```python
+from attune.elicitation import form_from_template, list_templates
+
+list_templates()                     # ['session-contract', ...]
+form = form_from_template("session-contract", {"project": "attune-ai"})
+form.title                           # 'Session contract — attune-ai'
+```
+
+Over MCP, pass `template` + `slots` INSTEAD of `form` to any form-taking
+tool — the cast, validation, and render all happen server-side:
+
+```json
+{"template": "session-contract", "slots": {"project": "attune-ai"},
+ "message": "Fill before non-trivial work."}
+```
+
+`elicitation_render_widget` returns the same `{success, html, title,
+field_ids}` it returns for a `form`; `elicitation_collect_response`
+takes the same `template` + `slots` beside `answers` and echoes
+`template_id`. Passing both `form` and `template`, neither, or `slots`
+without `template` comes back as a listed problem, never a raise. An
+unknown name lists the available templates.
+
+### Preview every stored template
+
+The authoring preview renders every stored template — cast with its
+`example_slots` — through the production widget renderer into one
+standalone page, light and dark, with the payload the widget posts
+shown on submit:
+
+```bash
+python -m attune_forms.preview --open          # every template
+python -m attune_forms.preview session-contract --out preview.html
+```
+
+Edit a template, reload, and see exactly what users will see. Preview
+casts do not count toward the form telemetry.
