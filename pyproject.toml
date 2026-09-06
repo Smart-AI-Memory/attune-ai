@@ -89,7 +89,9 @@ dependencies = [
     # without one (see tests/unit/memory/test_no_server_degradation.py).
     # agent-memory-client is capped tightly — it moves fast and now
     # sits on every user's resolution path; raise the cap only after
-    # re-validating. The [redis] extra remains as an empty alias.
+    # re-validating. There is no [redis] extra: the client
+    # libraries are core and the bundled attune_redis plugin degrades to the
+    # local file tier when no server is reachable (redis-config-truth D5).
     "agent-memory-client>=0.14.0,<0.15",
     "redis>=5.0.0,<9.0.0",
     # NOTE: attune-author retired 2026-07-27 (author-consolidation T4,

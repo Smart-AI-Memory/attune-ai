@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`attune memory status` and a doctor "Memory backend" line**
+  (redis-config-truth D5, 2026-09-06). Redis stays optional and
+  zero-config; the state stops being silent. `attune memory status`
+  names the resolved backend, transport and reachability and prints the
+  guidance for the three states a user can be in — zero-config file tier
+  (how to upgrade via `AMS_BASE_URL`), degraded with a dark upgrade, or
+  not usable with the reason — with `--json` for the raw mapping. `attune
+  doctor` reports the same line without ever failing on it. The stale
+  "[redis] extra remains as an empty alias" comment is corrected: there
+  is no `[redis]` extra; the client libraries are core and the bundled
+  plugin degrades to the file tier.
+
 - **Surface-producer inventory (host-surface-parity Task 1B, increment 1
   of the task).** `attune.elicitation.surface_inventory` mechanically
   discovers every in-tree producer of a host-presented surface — calls

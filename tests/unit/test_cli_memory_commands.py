@@ -9,6 +9,7 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
+from argparse import Namespace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -532,3 +533,125 @@ class TestCmdMemoryForgetTopic:
 
         assert result == 1
         assert "Error:" in capsys.readouterr().out
+
+
+class TestMemoryStatus:
+    """``attune memory status`` makes the backend state visible (redis-config-truth D5)."""
+
+    @staticmethod
+    def _status(monkeypatch, status: dict) -> None:
+        from attune.memory import session_stash
+
+        monkeypatch.setattr(session_stash, "backend_status", lambda: status)
+
+    def test_zero_config_file_tier_says_redis_is_optional(self, monkeypatch, capsys) -> None:
+        from attune.cli_commands.memory_commands import cmd_memory_status
+
+        self._status(
+            monkeypatch,
+            {
+                "backend": "FileStashBackend",
+                "fallback": True,
+                "unreachable_upgrade": None,
+                "ok": True,
+                "transport": "file",
+                "reachability": "reachable",
+                "reason": None,
+            },
+        )
+        code = cmd_memory_status(Namespace(json=False))
+        out = capsys.readouterr().out
+        assert code == 0
+        assert "zero-config default" in out and "Redis is optional" in out
+        assert "AMS_BASE_URL" in out
+
+    def test_dark_upgrade_is_reported_as_degraded(self, monkeypatch, capsys) -> None:
+        from attune.cli_commands.memory_commands import cmd_memory_status
+
+        self._status(
+            monkeypatch,
+            {
+                "backend": "FileStashBackend",
+                "fallback": True,
+                "unreachable_upgrade": "redis",
+                "ok": True,
+                "transport": "file",
+                "reachability": "reachable",
+                "reason": None,
+            },
+        )
+        code = cmd_memory_status(Namespace(json=False))
+        out = capsys.readouterr().out
+        assert code == 0
+        assert "DEGRADED" in out and "'redis' is unreachable" in out and "dark" in out
+
+    def test_live_upgrade_backend(self, monkeypatch, capsys) -> None:
+        from attune.cli_commands.memory_commands import cmd_memory_status
+
+        self._status(
+            monkeypatch,
+            {
+                "backend": "AMSMemoryBackend",
+                "fallback": False,
+                "unreachable_upgrade": None,
+                "ok": True,
+                "transport": "direct",
+                "reachability": "reachable",
+                "reason": None,
+            },
+        )
+        code = cmd_memory_status(Namespace(json=False))
+        out = capsys.readouterr().out
+        assert code == 0
+        assert "AMSMemoryBackend (direct, reachable)" in out and "live at" in out
+
+    def test_unusable_backend_exits_one_with_reason(self, monkeypatch, capsys) -> None:
+        from attune.cli_commands.memory_commands import cmd_memory_status
+
+        self._status(
+            monkeypatch,
+            {
+                "backend": None,
+                "fallback": False,
+                "unreachable_upgrade": None,
+                "ok": False,
+                "transport": "none",
+                "reachability": "unreachable_local",
+                "reason": "file_write_denied",
+            },
+        )
+        code = cmd_memory_status(Namespace(json=False))
+        out = capsys.readouterr().out
+        assert code == 1 and "NOT USABLE" in out and "file_write_denied" in out
+
+    def test_json_prints_the_raw_mapping(self, monkeypatch, capsys) -> None:
+        import json
+
+        from attune.cli_commands.memory_commands import cmd_memory_status
+
+        status = {
+            "backend": "FileStashBackend",
+            "fallback": True,
+            "unreachable_upgrade": None,
+            "ok": True,
+            "transport": "file",
+            "reachability": "reachable",
+            "reason": None,
+        }
+        self._status(monkeypatch, status)
+        code = cmd_memory_status(Namespace(json=True))
+        assert code == 0
+        assert json.loads(capsys.readouterr().out) == status
+
+    def test_ams_url_falls_back_when_plugin_absent(self, monkeypatch) -> None:
+        import sys
+
+        from attune.cli_commands.memory_commands import _ams_base_url
+
+        monkeypatch.setitem(sys.modules, "attune_redis", None)
+        monkeypatch.setitem(sys.modules, "attune_redis.config", None)
+        assert _ams_base_url() == "http://localhost:8000"
+        monkeypatch.setenv("AMS_BASE_URL", "http://10.0.0.5:8000")
+        monkeypatch.delitem(sys.modules, "attune_redis", raising=False)
+        monkeypatch.delitem(sys.modules, "attune_redis.config", raising=False)
+        assert _ams_base_url() == "http://10.0.0.5:8000"

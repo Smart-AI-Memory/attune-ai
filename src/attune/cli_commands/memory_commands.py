@@ -225,6 +225,67 @@ def cmd_memory_topics(args: Namespace) -> int:
         return 1
 
 
+def _ams_base_url() -> str:
+    """The Agent Memory Server URL the bundled plugin would use (AMS_BASE_URL)."""
+    try:
+        from attune_redis.config import RedisPluginConfig
+
+        return RedisPluginConfig.from_env().ams_base_url
+    except ImportError:
+        return "http://localhost:8000"
+
+
+def cmd_memory_status(args: Namespace) -> int:
+    """Say which memory backend recall resolves to, and why (redis-config-truth D5).
+
+    Redis is optional: the zero-config install runs on the local file tier and
+    upgrades to the Redis Agent Memory Server automatically when one is
+    reachable. This command makes that state visible instead of silent.
+
+    Args:
+        args: Parsed arguments; ``--json`` prints the raw status mapping.
+
+    Returns:
+        0 when a usable write/recall path exists, 1 otherwise.
+    """
+    import json
+
+    from attune.memory.session_stash import backend_status
+
+    status = backend_status()
+    if getattr(args, "json", False):
+        print(json.dumps(status, sort_keys=True))
+        return 0 if status.get("ok") else 1
+    backend = status.get("backend") or "none"
+    transport = status.get("transport") or "none"
+    reach = status.get("reachability") or "unknown"
+    dark = status.get("unreachable_upgrade")
+    url = _ams_base_url()
+    if not status.get("ok"):
+        print(f"Memory backend: {backend} ({transport}, {reach}) — NOT USABLE")
+        print(f"  reason: {status.get('reason') or 'unknown'}")
+        return 1
+    if dark:
+        print(f"Memory backend: {backend} (file tier, {reach}) — DEGRADED")
+        print(
+            f"  Registered upgrade '{dark}' is unreachable at {url}: findings stored there are"
+            " dark until it is back (e.g. restart the Agent Memory Server)."
+        )
+        print("  New findings go to the local file tier meanwhile.")
+        return 0
+    if status.get("fallback"):
+        print(f"Memory backend: {backend} (file tier, {reach}) — zero-config default")
+        print("  Redis is optional. Findings are stored locally and searched from files.")
+        print(
+            f"  To upgrade: run a Redis Agent Memory Server and point AMS_BASE_URL at it"
+            f" (currently {url}); attune switches automatically when it is reachable."
+        )
+        return 0
+    print(f"Memory backend: {backend} ({transport}, {reach})")
+    print(f"  Redis Agent Memory Server live at {url}; findings are searchable across sessions.")
+    return 0
+
+
 def cmd_memory_forget_topic(args: Namespace) -> int:
     """Delete a topic (or specific kind) from personal memory.
 

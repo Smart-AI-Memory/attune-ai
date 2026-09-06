@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from argparse import Namespace
+from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -340,6 +341,34 @@ def cmd_features(args: Namespace) -> int:
     return 0
 
 
+def _report_memory_backend(ok: Callable[..., None], warn: Callable[..., None]) -> None:
+    """One doctor line naming the memory backend recall resolves to; never a FAIL.
+
+    Memory is optional (redis-config-truth D5): the zero-config file tier is
+    OK, a live upgrade is OK, a registered-but-dark upgrade is a warning
+    that names it, and an unusable path is a warning with its reason.
+    """
+    try:
+        from attune.memory.session_stash import backend_status
+    except ImportError as e:
+        warn("Memory backend status unavailable", str(e))
+        return
+    status = backend_status()
+    backend = status.get("backend") or "none"
+    dark = status.get("unreachable_upgrade")
+    if dark:
+        warn(
+            f"Memory backend: {backend} (file tier)",
+            f"registered upgrade '{dark}' unreachable — findings stored there are dark",
+        )
+    elif status.get("fallback"):
+        ok(f"Memory backend: {backend} (file tier)", "Redis Agent Memory Server optional")
+    elif status.get("ok"):
+        ok(f"Memory backend: {backend}", status.get("transport") or "direct")
+    else:
+        warn("Memory backend: none usable", status.get("reason") or "unknown")
+
+
 def cmd_doctor(args: Namespace) -> int:
     """Run comprehensive environment health check.
 
@@ -445,6 +474,10 @@ def cmd_doctor(args: Namespace) -> int:
     except Exception:  # noqa: BLE001
         # INTENTIONAL: Redis is optional
         _warn("Redis server not reachable", "optional")
+
+    # 6b. Memory backend — zero-config file tier; the Redis AMS upgrade is optional
+    # (redis-config-truth D5: make the state visible, never silent).
+    _report_memory_backend(_ok, _warn)
 
     # 7. Workflows
     try:
