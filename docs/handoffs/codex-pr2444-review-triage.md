@@ -1,20 +1,43 @@
 # PR 2444 review-triage handoff
 
-The canonical task contract, all executed receipts, preserved-worktree state
-and next action are in [the increment-2 handoff](codex-host-surface-parity-task1b-increment2.md),
-sections **Active triage contract** and **Current triage validation**.
-Finding-by-finding dispositions live in [the parity ledger](../specs/host-surface-parity/receipts.md#claude-re-review-of-bf530993b-dispositions-2026-09-06).
+## Goal
 
-This session's branch is `codex/pr2444-review-triage`, based on PR 2444 head
-`1efa084062569de83e5e2a1d5b66458a96249dc8`. It publishes its correction to the
-existing PR branch, `codex/host-surface-parity-task1b-increment2`; the original
-9c6c checkout is untouched and will be behind that remote branch after push.
-Verify remote and local state before resuming either checkout.
+Close the 12 Claude re-review findings on PR 2444 within increment 2.
 
-Preserve PR 2449 and its local ledger additions. No API spend, auto-merge,
-merge or increment 3. No new clean-review receipt is claimed.
+## Acceptance criteria
 
-Publication verified: signed correction `a3f4c5fc6` reached PR 2444; its first
-CI pass found this handoff link used a double hyphen in the heading anchor.
-The link is corrected to the anchor reported by the wiring audit. No code
-or evidence declarations changed in this documentation follow-up.
+Each finding has a code/probe-backed disposition, confirmed defects are fixed,
+and the final tree passes local validation and fresh CI with limits explicit.
+
+## Scope and assumptions
+
+- Branch: `codex/pr2444-review-triage`; worktree: `6f7b/attune-ai`.
+- Base: `1efa084062569de83e5e2a1d5b66458a96249dc8`.
+- Codex triages for the chair. Preserve PR 2449 and its local ledger additions.
+- No API spend, auto-merge, merge or increment 3; no new clean-review receipt.
+
+## Current state
+
+The canonical task contract and detailed receipts are in
+[the increment-2 handoff](codex-host-surface-parity-task1b-increment2.md).
+Finding-by-finding dispositions are in [the parity ledger](../specs/host-surface-parity/receipts.md).
+
+Signed code correction `a3f4c5fc6` and documentation correction `2054703ab`
+were pushed to `codex/host-surface-parity-task1b-increment2` (PR 2444).
+CI then identified missing template sections in this additional handoff;
+this revision supplies them. The original 9c6c checkout remains untouched
+and behind the PR branch. Verify Git before resuming either checkout.
+
+## Verification
+
+- Code: 656 gates/quality tests passed; 99.55% combined coverage.
+- Before/after: 18 selected probes fail on the original source and pass after correction.
+- Initial whole tree: 25,903 passed, 241 skipped, 3 xfailed; this additional
+  handoff was added afterward, which exposed the CI corpus-lint failure.
+- The corrected handoff is included in the final validation; its logs are
+  `/private/tmp/2444-triage-final-whole.log` and `/private/tmp/2444-triage-final-docs.log`.
+
+## Next action
+
+Verify the final signed push and fresh CI at its exact head, then leave the
+PR open for the chair. PR 2449's shared CI patch and dirty ledger remain held.
