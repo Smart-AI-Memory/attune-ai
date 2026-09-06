@@ -285,6 +285,14 @@ by design.</p>
 the server restarts on the new version — the tool schema is loaded at
 startup. Verify the live <code>elicitation_render_widget</code> schema actually
 carries a new enum value before asserting the construct works end-to-end.</p>
+<h3>A template cast fails on a slot, not on the form</h3>
+<p><code>form_from_template</code> validates the declaration and the values in both
+directions before it substitutes anything: a missing value, an extra
+name, a declared-but-unused slot, or an undeclared <code>{placeholder}</code> in a
+field each surface as their own problem line. Read the slot problems
+first — the form-level validation only runs on a successfully cast
+definition. An unknown template name lists every available template, so
+a typo is a one-look fix.</p>
 <h3>A <code>progress</code> form whose blocked items disagree with its options</h3>
 <p>The bridge enforces <code>set(blocked labels) == set(options)</code>; a mismatch
 raises <code>FormValidationError</code>. The picker can never offer a non-existent

@@ -333,6 +333,35 @@ degrades to a pure status display with no answer:</p>
     }],
 })
 </code></pre>
+<h3>Cast a stored template</h3>
+<p>From Python, name the template and supply one string per declared slot;
+the result is a validated <code>FormSchema</code> like any other:</p>
+<pre><code class="language-python">from attune.elicitation import form_from_template, list_templates
+
+list_templates()                     # ['session-contract', ...]
+form = form_from_template(&quot;session-contract&quot;, {&quot;project&quot;: &quot;attune-ai&quot;})
+form.title                           # 'Session contract — attune-ai'
+</code></pre>
+<p>Over MCP, pass <code>template</code> + <code>slots</code> INSTEAD of <code>form</code> to any form-taking
+tool — the cast, validation, and render all happen server-side:</p>
+<pre><code class="language-json">{&quot;template&quot;: &quot;session-contract&quot;, &quot;slots&quot;: {&quot;project&quot;: &quot;attune-ai&quot;},
+ &quot;message&quot;: &quot;Fill before non-trivial work.&quot;}
+</code></pre>
+<p><code>elicitation_render_widget</code> returns the same <code>{success, html, title, field_ids}</code> it returns for a <code>form</code>; <code>elicitation_collect_response</code>
+takes the same <code>template</code> + <code>slots</code> beside <code>answers</code> and echoes
+<code>template_id</code>. Passing both <code>form</code> and <code>template</code>, neither, or <code>slots</code>
+without <code>template</code> comes back as a listed problem, never a raise. An
+unknown name lists the available templates.</p>
+<h3>Preview every stored template</h3>
+<p>The authoring preview renders every stored template — cast with its
+<code>example_slots</code> — through the production widget renderer into one
+standalone page, light and dark, with the payload the widget posts
+shown on submit:</p>
+<pre><code class="language-bash">python -m attune_forms.preview --open          # every template
+python -m attune_forms.preview session-contract --out preview.html
+</code></pre>
+<p>Edit a template, reload, and see exactly what users will see. Preview
+casts do not count toward the form telemetry.</p>
 
   </article>
   <footer>

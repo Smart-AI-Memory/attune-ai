@@ -339,6 +339,14 @@ supported import path inside attune-ai.</p>
 <td>Validate answers (R4) and return a <code>FormResponse</code>; raises <code>FormValidationError</code>.</td>
 </tr>
 <tr>
+<td><code>form_from_template(name, slots=None)</code></td>
+<td>Load a stored template, fill its <code>{slot}</code> placeholders, validate the cast result; raises <code>FormValidationError</code> naming every slot or definition problem.</td>
+</tr>
+<tr>
+<td><code>list_templates()</code></td>
+<td>Sorted names of the stored templates the fused MCP path and the preview can address.</td>
+</tr>
+<tr>
 <td><code>WIDGET_RESPONSE_MARKER</code></td>
 <td>The sentinel key the widget posts back under.</td>
 </tr>
@@ -397,7 +405,12 @@ three construct types <code>decision</code>, <code>pushback</code>, <code>progre
 <h3>MCP tools</h3>
 <p><code>elicitation_render_form</code>, <code>elicitation_render_widget</code>,
 <code>elicitation_collect_response</code>, and <code>elicitation_ask</code> — the same model,
-exposed for agents that drive forms through the MCP server.</p>
+exposed for agents that drive forms through the MCP server. Each takes
+EITHER <code>form</code> (a declarative dict) OR <code>template</code> + <code>slots</code> (a stored
+template, cast server-side); <code>form</code> is no longer schema-required, and the
+handler enforces exactly one of the two. attune-ai's tool schemas and the
+standalone <code>attune-forms</code> server advertise the same arguments — a parity
+test pins them byte-identical.</p>
 
   </article>
   <footer>

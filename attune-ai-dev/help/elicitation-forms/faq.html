@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Elicitation Forms FAQ — faq</title>
-  <meta name="description" content="Structured, interactive turns the agent uses instead of freeform prose: a multi-part question becomes one clickable form, a recommendation arrives as weighable cards, a disagreement renders side-by-si" />
+  <meta name="description" content="When the same ask recurs across sessions. A template is the dict plus `slots` and `example_slots`; cast it by name through `form_from_template` or by passing `template` + `slots` to any form-taking MC" />
   <meta property="og:title" content="Elicitation Forms FAQ — faq" />
-  <meta property="og:description" content="Structured, interactive turns the agent uses instead of freeform prose: a multi-part question becomes one clickable form, a recommendation arrives as weighable cards, a disagreement renders side-by-si" />
+  <meta property="og:description" content="When the same ask recurs across sessions. A template is the dict plus `slots` and `example_slots`; cast it by name through `form_from_template` or by passing `template` + `slots` to any form-taking MC" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/elicitation-forms/faq" />
   <style>
@@ -273,6 +273,12 @@
   </nav>
   <article class="markdown-body">
 <h1>Elicitation Forms FAQ</h1>
+<h2>When should a form be a stored template instead of a dict?</h2>
+<p>When the same ask recurs across sessions. A template is the
+dict plus <code>slots</code> and <code>example_slots</code>; cast it by name through
+<code>form_from_template</code> or by passing <code>template</code> + <code>slots</code> to any
+form-taking MCP tool, and the definition never transits the agent's
+context. One-off asks stay dicts.</p>
 <h2>What are elicitation forms?</h2>
 <p>Structured, interactive turns the agent uses instead of
 freeform prose: a multi-part question becomes one clickable form, a

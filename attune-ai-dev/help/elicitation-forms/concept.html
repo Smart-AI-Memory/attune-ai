@@ -492,6 +492,32 @@ intro-sentence-plus-list shape — each item pickable by mouse or the
 <code>1</code> / <code>2</code> / <code>3</code> vocabulary — instead of a dropdown or checkboxes. This is
 presentation only: the answer and its validation are unchanged. It is a
 render option on the select types, <strong>not</strong> a separate construct.</p>
+<h3>Template-bound forms — sculpt once, cast per fork</h3>
+<p>A recurring ask (the session contract, a release gate, a review choice)
+should not be re-composed as a fresh dict every time. A <strong>stored
+template</strong> is exactly the dict <code>form_from_dict</code> accepts plus a top-level
+<code>slots</code> list naming its <code>{placeholder}</code> substitution points and an
+<code>example_slots</code> mapping with one representative value per slot. Casting
+a template fills the slots and validates the <em>result</em> through the same
+seam as a hand-built dict — every problem listed, never a partial form.</p>
+<p>Two properties make templates load-bearing rather than a convenience:</p>
+<ul>
+<li><strong>The fused server path.</strong> Every form-taking MCP tool accepts
+<code>template</code> + <code>slots</code> in place of <code>form</code>. The server loads, casts,
+validates, and renders in one call, so neither the form definition
+nor its HTML transits the agent's context. Answers collected from a
+template-cast form carry the template name as <code>template_id</code>, which
+makes responses joinable across sessions.</li>
+<li><strong>The cast-every-template gate.</strong> Because every stored template
+carries <code>example_slots</code>, a drift test casts each one and validates the
+form the substitution actually produces. Validating an uncast template
+proves nothing about what the placeholders become; the gate checks the
+thing users see.</li>
+</ul>
+<p><code>form_from_dict</code> stamps every build with a <code>source</code> (<code>dict</code> by default,
+<code>template:&lt;name&gt;</code> for a cast), so template adoption is measured from the
+form telemetry rather than asserted. Preview casts (the authoring preview, <code>python -m attune_forms.preview</code>)
+suppress that telemetry so authoring never inflates the meter.</p>
 
   </article>
   <footer>
