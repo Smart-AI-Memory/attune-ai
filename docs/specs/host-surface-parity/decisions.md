@@ -690,6 +690,14 @@ own widget surface ruled the sequence:
    `attune-forms-handoff.md`; its 0.14.0 release stays a separate go.
    Task 1B, then Task 10, follow under their existing gates.
 
+**Receipt taken (2026-09-06 01:41Z).** The Task 4b observation was
+taken the same evening and passed its falsifier — `form_rendered` and
+`form_submitted` joined on `instance_id` `fb05442c…`, chair observed
+"card painted", Codex-launched server on attune-forms 0.13.0 — and is
+held in `docs/probes/host-surface-parity/codex-native-receipt-2026-09-06.md`
+until Task 1B creates `receipts.md`. Codex's R1 host profile: RICH
+tier via `ui://`, round-trip verified.
+
 **Corrections on the record.** A prior draft of this ruling (attune-ai
 #2441, folded here and closed) numbered itself D10 and asserted "Task 1
 is unpushed in Codex's worktree" from the branch name alone. False: no
