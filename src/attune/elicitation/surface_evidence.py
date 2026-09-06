@@ -68,15 +68,28 @@ def _project(record: rr.RendererRecord, target: rr.RendererTarget) -> Any:
     return cf.normalize(result) if isinstance(result, str) else result
 
 
-def _form_collection(output: Any, target: rr.RendererTarget) -> dict[str, Any]:
-    form = cf.canonical_form()
+def _form_collection(
+    output: Any, target: rr.RendererTarget, record: rr.RendererRecord
+) -> dict[str, Any]:
+    module, name = record.fixture.rsplit(".", 1)
+    form = getattr(importlib.import_module(module), name)()
     if target.status == "compatibility_only":
         # Derive IDs and values from the specialized output, never reconstruct
         # the expected questions from the input form as a shortcut.
         answers = {}
+        if not isinstance(output, list):
+            raise SurfaceRegistryError(f"{target.target_id}: invalid question batches")
         for batch in output:
+            if not isinstance(batch, list):
+                raise SurfaceRegistryError(f"{target.target_id}: invalid question batch")
             for question in batch:
+                if not isinstance(question, dict) or not isinstance(
+                    question.get("question_id"), str
+                ):
+                    raise SurfaceRegistryError(f"{target.target_id}: missing question_id")
                 choices = question.get("options", [])
+                if not isinstance(choices, list):
+                    raise SurfaceRegistryError(f"{target.target_id}: invalid options")
                 answers[question["question_id"]] = choices[0] if choices else "canonical text"
     else:
         answers = cf.canonical_form_answers()
@@ -85,8 +98,8 @@ def _form_collection(output: Any, target: rr.RendererTarget) -> dict[str, Any]:
     # form/schema/action authority; only these two paths are omitted.
     observed = {"template_id": response.template_id, "responses": response.responses}
     for surface in ("portable", "headless"):
-        twin = rr.RENDERER_REGISTRY[0].target(surface)
-        projected = _project(rr.RENDERER_REGISTRY[0], twin)
+        twin = record.target(surface)
+        projected = _project(record, twin)
         control_answers = _projected_answers(projected, surface, answers)
         control = collect_form_response(form, control_answers, template_id=form.form_id)
         if observed != {"template_id": control.template_id, "responses": control.responses}:
@@ -96,15 +109,26 @@ def _form_collection(output: Any, target: rr.RendererTarget) -> dict[str, Any]:
 
 def _projected_answers(output: Any, surface: str, answers: dict) -> dict:
     """Consume the emitted reply contract; never silently substitute input field IDs."""
-    if surface == "portable":
-        blocks = re.findall(r"```json\s*(.*?)\s*```", output, re.DOTALL)
-        if len(blocks) != 1:
-            raise SurfaceRegistryError("PORTABLE: missing canonical reply contract")
-        reply = json.loads(blocks[0])
-        fields = reply.get("answers", {})
-    else:
-        fields = output.get("properties", {})
-        jsonschema.validate(answers, output)
+    try:
+        if surface == "portable":
+            if not isinstance(output, str):
+                raise SurfaceRegistryError("PORTABLE: reply contract must be text")
+            blocks = re.findall(r"```json\s*(.*?)\s*```", output, re.DOTALL)
+            if len(blocks) != 1:
+                raise SurfaceRegistryError("PORTABLE: missing canonical reply contract")
+            reply = json.loads(blocks[0])
+            if not isinstance(reply, dict):
+                raise SurfaceRegistryError("PORTABLE: reply contract must be an object")
+            fields = reply.get("answers", {})
+        else:
+            if not isinstance(output, dict):
+                raise SurfaceRegistryError("HEADLESS: reply contract must be an object")
+            fields = output.get("properties", {})
+            jsonschema.validate(answers, output)
+    except (json.JSONDecodeError, jsonschema.ValidationError, jsonschema.SchemaError) as exc:
+        raise SurfaceRegistryError(f"{surface}: invalid projected reply contract") from exc
+    if not isinstance(fields, dict):
+        raise SurfaceRegistryError(f"{surface}: reply fields must be an object")
     if set(fields) != set(answers):
         raise SurfaceRegistryError(f"{surface}: projected reply field IDs differ")
     return {field: answers[field] for field in fields}
@@ -147,7 +171,7 @@ def replay_renderer_evidence() -> tuple[list[dict[str, Any]], dict[str, dict[str
                 )
             bound = [target, record.target("portable"), record.target("headless")]
             collection = (
-                _form_collection(outputs[target.target_id], target)
+                _form_collection(outputs[target.target_id], target, record)
                 if record.family == "form"
                 else _workspace_collection()
             )

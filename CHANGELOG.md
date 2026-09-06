@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Surface parity review corrections bind all delivery identities to declared
+  content, preserve producer provenance, validate receipt metadata and malformed
+  projections, and select renderer controls from their owning record.
+
 - Test inference isolation: pytest now blocks real provider HTTP calls and
   Claude/Agent SDK inference launches before dispatch, scrubs child credentials,
   and gives subprocesses a separate Claude profile. Fake transports and

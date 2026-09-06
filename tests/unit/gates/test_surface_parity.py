@@ -683,7 +683,7 @@ _SYNTHETIC_BASELINE = {
 @pytest.fixture
 def small_registry() -> dict:
     targets = [{"id": s.lower(), "surface": s} for s in ("RICH", "PORTABLE", "HEADLESS")]
-    return {
+    registry = {
         "renderers": [{"id": "renderer", "targets": copy.deepcopy(targets)}],
         "subjects": [
             {
@@ -747,6 +747,11 @@ def small_registry() -> dict:
         "experiment_exceptions": [],
     }
 
+    for subject in registry["subjects"]:
+        for route in subject.get("delivery_routes", []):
+            route["id"] = sr.canonical_digest({k: v for k, v in route.items() if k != "id"})[:16]
+    return registry
+
 
 def _synthetic_evidence(registry: dict) -> dict:
     evidence = {}
@@ -762,6 +767,9 @@ def _synthetic_evidence(registry: dict) -> dict:
                 "result_digest",
             )
         }
+        observed.update(
+            evidence_mode="synthetic", fixture="test_surface_parity._synthetic_evidence"
+        )
         registry["receipts"].append({"id": rid, "key": key, **identity, **observed})
         evidence[rid] = observed
     return evidence
@@ -773,8 +781,8 @@ def test_complete_synthetic_registry_has_exact_discriminated_receipts(small_regi
     assert "lifecycle:subject:form:accept" in obligations
     assert "lifecycle:subject:form:timeout" not in obligations
     assert "lifecycle:subject:transport:timeout" in obligations
-    assert "delivery:command:command:render" in obligations
-    assert "delivery:notice:start:render" not in obligations
+    assert "delivery:command:148bc24e5b8bafa0:render" in obligations
+    assert "delivery:notice:b73d9cfc43e85698:render" not in obligations
     sr.validate_receipts(
         small_registry, obligations, evidence, today=date(2026, 9, 6), baseline=_SYNTHETIC_BASELINE
     )
@@ -796,8 +804,8 @@ def test_deleting_twin_names_exact_owner_and_shortfall(small_registry, owner, su
         "lifecycle:subject:form:accept",
         "lifecycle:subject:transport:timeout",
         "lifecycle:subject:transport:validation_feedback_delivery",
-        "delivery:command:command:render",
-        "delivery:notice:start:delivery",
+        "delivery:command:148bc24e5b8bafa0:render",
+        "delivery:notice:b73d9cfc43e85698:delivery",
     ],
 )
 def test_deleting_one_receipt_fails_its_exact_obligation(small_registry, key) -> None:
@@ -1417,12 +1425,12 @@ def test_stale_inventory_report_cannot_admit_route_after_evidence_changes(small_
 
 
 def test_contract_surface_enforcer_is_scoped_to_inventory_not_complete_runtime() -> None:
-    text = (REPO / "content/collaboration/contract.md").read_text(encoding="utf-8")
-    assert "Surfaces enforcer: `tests/unit/gates/test_surface_parity.py`" in text
-    assert "Inventory success is not\n   complete parity" in text
-    assert (
-        "pending obligations and experiments cannot satisfy route\n   evidence requirements" in text
+    text = " ".join(
+        (REPO / "content/collaboration/contract.md").read_text(encoding="utf-8").split()
     )
+    assert "Surfaces enforcer: `tests/unit/gates/test_surface_parity.py`" in text
+    assert "Inventory success is not complete parity" in text
+    assert "pending obligations and experiments cannot satisfy route evidence requirements" in text
 
 
 def test_live_experiment_activation_is_blocked_until_artifact_verification_exists(
@@ -1741,3 +1749,128 @@ def test_refreshed_pin_does_not_hide_new_hook_signature_at_same_root(
     sr.validate_producers(registry["subjects"], baseline)
     with pytest.raises(sr.SurfaceRegistryError, match="event-qualified delivery routes"):
         sr.validate_inventory(registry, baseline, {}, today=date(2026, 9, 6))
+
+
+def test_renderer_reordering_cannot_change_receipt_controls(monkeypatch) -> None:
+    from attune.elicitation import surface_evidence as se
+
+    original, _ = se.replay_renderer_evidence()
+    monkeypatch.setattr(se.rr, "RENDERER_REGISTRY", tuple(reversed(se.rr.RENDERER_REGISTRY)))
+    reordered, _ = se.replay_renderer_evidence()
+    assert {r["id"]: r for r in original} == {r["id"]: r for r in reordered}
+
+
+@pytest.mark.parametrize("field", ["event", "matcher", "signature", "sink", "destination"])
+def test_non_hook_route_content_invalidates_old_identity(small_registry, field) -> None:
+    route = small_registry["subjects"][-1]["delivery_routes"][0]
+    before = sr.required_obligations(small_registry)
+    route[field] += "changed"
+    with pytest.raises(
+        sr.SurfaceRegistryError, match="delivery route identity does not bind content"
+    ):
+        sr.required_obligations(small_registry)
+    route["id"] = sr.canonical_digest({k: v for k, v in route.items() if k != "id"})[:16]
+    after = sr.required_obligations(small_registry)
+    assert len(set(before) - set(after)) == 4
+    assert len(set(after) - set(before)) == 4
+
+
+def test_artifact_collision_preserves_helper_provenance(reviewed) -> None:
+    baseline = reviewed.to_dict()
+    before = sr.producer_roots(baseline)
+    anchor = next(k for k, v in before.items() if v != [k])
+    baseline["artifacts"].append({"anchor": anchor})
+    assert set(sr.producer_roots(baseline)[anchor]) == set(before[anchor]) | {anchor}
+
+
+@pytest.mark.parametrize("field", ["fixture", "evidence_mode"])
+@pytest.mark.parametrize("value", [None, "", " ", 1])
+def test_matching_absent_or_invalid_provenance_cannot_pass(small_registry, field, value) -> None:
+    evidence = _synthetic_evidence(small_registry)
+    receipt = small_registry["receipts"][0]
+    for row in (receipt, evidence[receipt["id"]]):
+        if value is None:
+            row.pop(field)
+        else:
+            row[field] = value
+    with pytest.raises(sr.SurfaceRegistryError, match=f"stale/missing {field}"):
+        sr.validate_receipts(
+            small_registry,
+            sr.required_obligations(small_registry),
+            evidence,
+            today=date(2026, 9, 6),
+            baseline=_SYNTHETIC_BASELINE,
+        )
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "subjects",
+        "host_profiles",
+        "renderers",
+        "receipts",
+        "pending_obligations",
+        "experiments",
+        "experiment_history",
+        "experiment_exceptions",
+    ],
+)
+def test_missing_registry_collection_has_keyed_failure(stored_registry, reviewed, field) -> None:
+    registry = copy.deepcopy(stored_registry)
+    del registry[field]
+    with pytest.raises(sr.SurfaceRegistryError, match=f"{field}: missing or invalid collection"):
+        sr.validate_inventory(registry, reviewed.to_dict(), {}, today=date(2026, 9, 6))
+
+
+def test_workspace_cannot_inject_unvalidated_transport_ref(small_registry) -> None:
+    small_registry["subjects"][0]["route_transport_refs"] = {
+        "RICH": {"kind": "host_profile", "id": "missing"}
+    }
+    with pytest.raises(sr.SurfaceRegistryError, match="workspace owns its lifecycle"):
+        sr.required_obligations(small_registry)
+
+
+def test_relocated_ask_handler_loses_exact_anchor_exemption(reviewed, stored_registry) -> None:
+    baseline = reviewed.to_dict()
+    subjects = copy.deepcopy(stored_registry["subjects"])
+    old = "src/attune/mcp/server.py:AttuneMCPServer._handle_elicitation_ask"
+    new = "src/attune/other.py:AttuneMCPServer._handle_elicitation_ask"
+    subject = next(s for s in subjects if s["root_anchor"] == old)
+    subject["root_anchor"] = new
+    subject["producer_anchors"] = [new]
+    for group in ("renderer_call_anchors", "package_host_envelope_anchors"):
+        for row in baseline[group]:
+            if row["anchor"] == old:
+                row["anchor"] = new
+    with pytest.raises(sr.SurfaceRegistryError, match="detected target footprint shrank"):
+        sr.validate_producers(subjects, baseline)
+
+
+@pytest.mark.parametrize(
+    "surface,output",
+    [
+        ("headless", []),
+        ("headless", {"type": "nonsense"}),
+        ("headless", {"type": "string"}),
+        ("portable", {}),
+        ("portable", "```json\n[]\n```"),
+        ("portable", "```json\n{\n```"),
+        ("portable", '```json\n{"answers": []}\n```'),
+    ],
+)
+def test_malformed_reply_contract_has_surface_key(surface, output) -> None:
+    from attune.elicitation import surface_evidence as se
+
+    with pytest.raises(sr.SurfaceRegistryError, match=f"(?i){surface}"):
+        se._projected_answers(output, surface, {"answer": "value"})
+
+
+@pytest.mark.parametrize("output", [{}, [1], [[{}]], [[{"question_id": "x", "options": 1}]]])
+def test_malformed_specialized_questions_have_target_key(output) -> None:
+    from attune.elicitation import surface_evidence as se
+
+    record = next(r for r in se.rr.RENDERER_REGISTRY if r.family == "form")
+    target = next(t for t in record.targets if t.status == "compatibility_only")
+    with pytest.raises(sr.SurfaceRegistryError, match=target.target_id):
+        se._form_collection(output, target, record)

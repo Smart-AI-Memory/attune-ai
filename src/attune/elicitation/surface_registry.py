@@ -111,6 +111,11 @@ def _require(condition: bool, key: str, problem: str) -> None:
         raise SurfaceRegistryError(f"{key}: {problem}")
 
 
+def _collections(registry: dict, *names: str) -> None:
+    for name in names:
+        _require(isinstance(registry.get(name), list), name, "missing or invalid collection")
+
+
 def _index(records: list[dict[str, Any]], namespace: str) -> dict[str, dict[str, Any]]:
     result = {}
     for record in records:
@@ -138,7 +143,7 @@ def producer_roots(baseline: dict[str, Any]) -> dict[str, list[str]]:
             for root in reaching.get(anchor, {anchor}):
                 roots.setdefault(root, set()).add(anchor)
     for artifact in baseline["artifacts"]:
-        roots[artifact["anchor"]] = {artifact["anchor"]}
+        roots.setdefault(artifact["anchor"], set()).add(artifact["anchor"])
     return {key: sorted(value) for key, value in sorted(roots.items())}
 
 
@@ -215,7 +220,7 @@ def _validate_detected_footprint(subject: dict, baseline: dict) -> None:
     if not metadata:
         required = (
             {"HEADLESS"}
-            if anchor.endswith(":AttuneMCPServer._handle_elicitation_ask")
+            if anchor == "src/attune/mcp/server.py:AttuneMCPServer._handle_elicitation_ask"
             else SURFACES
         )
         actual = {t["surface"] for t in subject.get("targets", [])}
@@ -315,6 +320,11 @@ def _validate_subject(subject: dict[str, Any], subjects: dict, profiles: dict) -
                 sid,
                 "delivery route must bind event/matcher/signature/sink/destination",
             )
+            _require(
+                route["id"] == canonical_digest({k: v for k, v in route.items() if k != "id"})[:16],
+                sid,
+                "delivery route identity does not bind content",
+            )
         return
     if kind == "compatibility_endpoint":
         _require(
@@ -351,6 +361,12 @@ def _validate_subject(subject: dict[str, Any], subjects: dict, profiles: dict) -
             )
     if kind == "interactive_form":
         _route_refs(subject, subjects, profiles)
+    else:
+        _require(
+            "route_transport_refs" not in subject,
+            sid,
+            "workspace owns its lifecycle; delegated transport references are unsupported",
+        )
     _enhanced(subject, f"subject:{sid}")
     surfaces = {t["surface"] for t in subject.get("targets", [])}
     routes = set(subject["cold_routes"]) | set(subject["warm_routes"])
@@ -383,6 +399,7 @@ def _enhanced(owner: dict[str, Any], prefix: str) -> dict[str, dict[str, Any]]:
 
 def required_obligations(registry: dict[str, Any]) -> dict[str, dict[str, str]]:
     """Derive parity, owned lifecycle and qualified delivery keys; never count receipts."""
+    _collections(registry, "subjects", "host_profiles", "renderers")
     subjects = _index(registry["subjects"], "subject")
     profiles = _index(registry["host_profiles"], "host profile")
     renderers = _index(registry["renderers"], "renderer")
@@ -458,6 +475,7 @@ def validate_experiments(
 ) -> set[str]:
     """Subtract only active exact parity keys after history, expiry and cap checks."""
     validate_baseline_pin(registry, baseline)
+    _collections(registry, "experiments", "experiment_history", "experiment_exceptions", "receipts")
     active = _index(registry["experiments"], "experiment")
     history = _index(registry["experiment_history"], "experiment history")
     exceptions = _index(registry["experiment_exceptions"], "experiment exception")
@@ -601,7 +619,12 @@ def _validate_receipt_rows(rows: list[dict], required: dict, evidence: dict) -> 
             "unknown receipt field",
         )
         for field in ("evidence_mode", "fixture"):
-            _require(receipt.get(field) == observed.get(field), key, f"stale/missing {field}")
+            value = receipt.get(field)
+            _require(
+                isinstance(value, str) and bool(value.strip()) and value == observed.get(field),
+                key,
+                f"stale/missing {field}",
+            )
         for name in (
             "implementation_digest",
             "fixture_digest",
@@ -635,6 +658,17 @@ def validate_inventory(
         "unknown schema version",
     )
     validate_baseline_pin(registry, baseline)
+    _collections(
+        registry,
+        "subjects",
+        "host_profiles",
+        "renderers",
+        "receipts",
+        "pending_obligations",
+        "experiments",
+        "experiment_history",
+        "experiment_exceptions",
+    )
     _require(
         not registry["experiments"] and not registry["experiment_exceptions"],
         "experiments",
@@ -717,6 +751,9 @@ def route_evidence_missing(
 
     Pure evidence precondition for increment 3, not the capability/routing
     policy. Pending rows and experiment waivers are deliberately not proof.
+    The caller must supply the report returned by validate_inventory from trusted
+    executed evidence. This value object is not an authentication token and must
+    never be deserialized from an untrusted request as route authorization.
     """
     subjects = _index(registry["subjects"], "subject")
     _require(

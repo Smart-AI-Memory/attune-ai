@@ -168,3 +168,31 @@ only be removed by changing the detected obligation footprint or adding verified
 evidence, and cannot waive a route. Live experiments are explicitly refused,
 including self-asserted decision references. Full visual/semantic equivalence of
 package projections is not established by the reply-contract fixture.
+
+
+## Claude review of 7c21c2863 — chair accepted 2026-09-06
+
+The [published review](https://github.com/Smart-AI-Memory/attune-ai/pull/2444#issuecomment-5559744953)
+covered all 15 files with no omissions. Approval of that review authorizes
+corrections; it does not establish runtime parity or approve a merge.
+
+| Finding | Disposition and evidence |
+| --- | --- |
+| F1 | Fixed: form controls use the owning renderer record and its fixture, never registry position zero. Reordering the installed registry preserves every receipt. |
+| F2 | Fixed: every delivery route ID hashes event, matcher, signature, sink and destination. Mutating any field rejects the old ID; re-deriving it replaces the four artifact obligations. Existing pending keys were migrated, not marked verified. |
+| F3 | Trust-boundary clarification: `InventoryReport` is an in-process value object supplied by a trusted caller, not an authenticated token. The helper now documents that it must come from `validate_inventory` over trusted executed evidence. A Python caller can still fabricate one; increment 3 must not accept deserialized reports as authorization. No runtime routing is implemented here. |
+| F4 | Deferred to the experiment-activation increment: current rolling-cap checks guard windows intersecting the active experiment, not an audit of every historical window. Global history validation and retention of past bounded exceptions need a joint design. Live activation remains unconditionally refused by `validate_inventory`; this finding is not reported as fixed. |
+| F5 | Fixed: artifact/root collisions union provenance instead of overwriting helpers. A collision mutation asserts all prior anchors remain. |
+| F6 | Fixed: both provenance fields must be nonempty strings as well as equal to executed evidence. Missing, blank and wrong-typed pairs fail. Synthetic tests now declare their synthetic provenance explicitly. |
+| F7 | Fixed for the reported collection boundary: inventory, obligation derivation and experiment validation reject absent/wrong-typed collections with the owning key. This is not a claim of exhaustive nested JSON schema validation. |
+| F8 | Fixed: workspace subjects own their lifecycle and reject delegated transport references; unvalidated references cannot reach the route helper. |
+| F9 | Fixed: the HEADLESS-only handler exemption matches the exact repository anchor. Relocation loses the exemption and fails the footprint test. |
+| F10 | Fixed: malformed specialized question shapes and PORTABLE/HEADLESS reply contracts raise keyed `SurfaceRegistryError`; JSON/schema exceptions retain their causes. No broad exception swallowing was added. |
+| F11 | Retained fail-closed: unknown historical obligation keys remain rejected so renames cannot erase waiver history. A legitimate rename needs an explicitly reviewed migration design before experiment activation; no automatic alias is introduced in this increment. |
+| F12 | Retained dependency: `surface_evidence` is a shipped, importable evidence-replay module and directly imports `jsonschema`. Moving the dependency alone to a test extra would break that public module in a normal install. Separating the module into optional tooling would be a separate packaging change. |
+| F13 | Fixed: the contract gate normalizes whitespace before asserting the same required sentences, so cosmetic line wrapping is harmless. |
+
+F4 and F11 remain open experiment-activation work; F3 remains a documented
+trusted-caller limitation for the future runtime boundary. The 155 pending
+runtime obligations remain inadmissible. A registry digest and passing inventory
+are not host paint, transport lifecycle, or production route evidence.

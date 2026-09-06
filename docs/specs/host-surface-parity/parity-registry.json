@@ -101,49 +101,49 @@
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
-      "key": "delivery:artifact-plugin/commands/handoff.md:artifact:content_schema",
+      "key": "delivery:artifact-plugin/commands/handoff.md:4a40007eb396e042:content_schema",
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
-      "key": "delivery:artifact-plugin/commands/handoff.md:artifact:delivery",
+      "key": "delivery:artifact-plugin/commands/handoff.md:4a40007eb396e042:delivery",
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
-      "key": "delivery:artifact-plugin/commands/handoff.md:artifact:destination",
+      "key": "delivery:artifact-plugin/commands/handoff.md:4a40007eb396e042:destination",
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
-      "key": "delivery:artifact-plugin/commands/handoff.md:artifact:render",
+      "key": "delivery:artifact-plugin/commands/handoff.md:4a40007eb396e042:render",
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
-      "key": "delivery:chart-widget:artifact:content_schema",
+      "key": "delivery:chart-widget:79e5a92e67c07b42:content_schema",
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
-      "key": "delivery:chart-widget:artifact:delivery",
+      "key": "delivery:chart-widget:79e5a92e67c07b42:delivery",
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
-      "key": "delivery:chart-widget:artifact:destination",
+      "key": "delivery:chart-widget:79e5a92e67c07b42:destination",
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
-      "key": "delivery:chart-widget:artifact:render",
+      "key": "delivery:chart-widget:79e5a92e67c07b42:render",
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
@@ -311,49 +311,49 @@
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
-      "key": "delivery:mcp-resources:artifact:content_schema",
+      "key": "delivery:mcp-resources:8025a2a495aab2c3:content_schema",
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
-      "key": "delivery:mcp-resources:artifact:delivery",
+      "key": "delivery:mcp-resources:8025a2a495aab2c3:delivery",
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
-      "key": "delivery:mcp-resources:artifact:destination",
+      "key": "delivery:mcp-resources:8025a2a495aab2c3:destination",
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
-      "key": "delivery:mcp-resources:artifact:render",
+      "key": "delivery:mcp-resources:8025a2a495aab2c3:render",
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
-      "key": "delivery:mcp-tool-metadata:artifact:content_schema",
+      "key": "delivery:mcp-tool-metadata:b13ac87ac870dd19:content_schema",
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
-      "key": "delivery:mcp-tool-metadata:artifact:delivery",
+      "key": "delivery:mcp-tool-metadata:b13ac87ac870dd19:delivery",
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
-      "key": "delivery:mcp-tool-metadata:artifact:destination",
+      "key": "delivery:mcp-tool-metadata:b13ac87ac870dd19:destination",
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
-      "key": "delivery:mcp-tool-metadata:artifact:render",
+      "key": "delivery:mcp-tool-metadata:b13ac87ac870dd19:render",
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
@@ -575,25 +575,25 @@
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
-      "key": "delivery:workflow-report:artifact:content_schema",
+      "key": "delivery:workflow-report:31a079cf8e1114a2:content_schema",
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
-      "key": "delivery:workflow-report:artifact:delivery",
+      "key": "delivery:workflow-report:31a079cf8e1114a2:delivery",
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
-      "key": "delivery:workflow-report:artifact:destination",
+      "key": "delivery:workflow-report:31a079cf8e1114a2:destination",
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
-      "key": "delivery:workflow-report:artifact:render",
+      "key": "delivery:workflow-report:31a079cf8e1114a2:render",
       "next_increment": 3,
       "owner": "host-surface-parity",
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
@@ -1026,42 +1026,42 @@
   },
   "receipts": [
     {
-      "evidence_mode": "projection",
-      "fixture": "attune.elicitation.surface_evidence.replay_renderer_evidence",
-      "fixture_digest": "7c990010b418e48306e9b298f5669e411ed5a60bfcab2296bddef664e90c0a47",
       "id": "renderer.standalone-form.surface.RICH",
-      "implementation_digest": "0c07b142a37bba2aff046ede20d5ec5409ff57f37f36f92ee19945a76153d1cd",
       "key": "renderer:standalone-form:surface:RICH",
       "kind": "parity",
-      "normalization_digest": "c6d83aa2bca637fc8fbcb1fb7fec9c6ab378d7d1a9d72dc2cd1e5e13eea11584",
       "obligation_key": "renderer:standalone-form:surface:RICH",
+      "evidence_mode": "projection",
+      "fixture": "attune.elicitation.surface_evidence.replay_renderer_evidence",
+      "implementation_digest": "0c07b142a37bba2aff046ede20d5ec5409ff57f37f36f92ee19945a76153d1cd",
+      "fixture_digest": "ce18d5429250db0947d9970e034f679da3743cd16dada053818fe668fb907110",
       "record_digest": "2768d9eb8bbfb3d84443690b433e068db0df6767ebbc79591f7cd6500a15394b",
+      "normalization_digest": "c6d83aa2bca637fc8fbcb1fb7fec9c6ab378d7d1a9d72dc2cd1e5e13eea11584",
       "result_digest": "f6dbb9d07b14eb46fc89a5349c334ca444fb52c17e17b42a4fdf3585091d4b71"
     },
     {
-      "evidence_mode": "compatibility_projection",
-      "fixture": "attune.elicitation.surface_evidence.replay_renderer_evidence",
-      "fixture_digest": "7c990010b418e48306e9b298f5669e411ed5a60bfcab2296bddef664e90c0a47",
       "id": "renderer.standalone-form.host-native.form.askuserquestion",
-      "implementation_digest": "d5250a83ed19c63898f629f8946113f0df6cb40d481bcbcecfd5453533fb4980",
       "key": "renderer:standalone-form:host-native:form.askuserquestion",
       "kind": "parity",
-      "normalization_digest": "c6d83aa2bca637fc8fbcb1fb7fec9c6ab378d7d1a9d72dc2cd1e5e13eea11584",
       "obligation_key": "renderer:standalone-form:host-native:form.askuserquestion",
+      "evidence_mode": "compatibility_projection",
+      "fixture": "attune.elicitation.surface_evidence.replay_renderer_evidence",
+      "implementation_digest": "d5250a83ed19c63898f629f8946113f0df6cb40d481bcbcecfd5453533fb4980",
+      "fixture_digest": "ce18d5429250db0947d9970e034f679da3743cd16dada053818fe668fb907110",
       "record_digest": "226198aaad94756948fb660db77442c84e824ef06890b2574ce26d9ab9a7aecc",
+      "normalization_digest": "c6d83aa2bca637fc8fbcb1fb7fec9c6ab378d7d1a9d72dc2cd1e5e13eea11584",
       "result_digest": "73fb7c139271f2506f2584020e2766352bacd60018d8441791a91e5ea8edcf8f"
     },
     {
-      "evidence_mode": "projection",
-      "fixture": "attune.elicitation.surface_evidence.replay_renderer_evidence",
-      "fixture_digest": "7c990010b418e48306e9b298f5669e411ed5a60bfcab2296bddef664e90c0a47",
       "id": "renderer.generic-workspace.surface.RICH",
-      "implementation_digest": "47535673b71479f9976eb0b3f7cb7403525713a3b3502423b2aac613b61dc989",
       "key": "renderer:generic-workspace:surface:RICH",
       "kind": "parity",
-      "normalization_digest": "c6d83aa2bca637fc8fbcb1fb7fec9c6ab378d7d1a9d72dc2cd1e5e13eea11584",
       "obligation_key": "renderer:generic-workspace:surface:RICH",
+      "evidence_mode": "projection",
+      "fixture": "attune.elicitation.surface_evidence.replay_renderer_evidence",
+      "implementation_digest": "47535673b71479f9976eb0b3f7cb7403525713a3b3502423b2aac613b61dc989",
+      "fixture_digest": "ce18d5429250db0947d9970e034f679da3743cd16dada053818fe668fb907110",
       "record_digest": "2620ae12e9e32cc4c1f7ef7ccdd696bf93f77e54b98da5364360fc906ad6d434",
+      "normalization_digest": "c6d83aa2bca637fc8fbcb1fb7fec9c6ab378d7d1a9d72dc2cd1e5e13eea11584",
       "result_digest": "dc26c26e7ef125cd62b72fb5deef41d367dd763b510ca6f800707972cbc3d476"
     }
   ],
@@ -1168,7 +1168,7 @@
         {
           "destination": "host",
           "event": "command",
-          "id": "artifact",
+          "id": "4a40007eb396e042",
           "matcher": "",
           "signature": "markdown",
           "sink": "artifact:plugin/commands/handoff.md"
@@ -1911,7 +1911,7 @@
         {
           "destination": "host",
           "event": "mcp-response",
-          "id": "artifact",
+          "id": "8025a2a495aab2c3",
           "matcher": "",
           "signature": "host-content",
           "sink": "src/attune/mcp/server.py:AttuneMCPServer._register_resources"
@@ -1933,7 +1933,7 @@
         {
           "destination": "host",
           "event": "mcp-response",
-          "id": "artifact",
+          "id": "b13ac87ac870dd19",
           "matcher": "",
           "signature": "host-content",
           "sink": "src/attune/mcp/server.py:_handle_list_tools"
@@ -1955,7 +1955,7 @@
         {
           "destination": "host",
           "event": "mcp-response",
-          "id": "artifact",
+          "id": "31a079cf8e1114a2",
           "matcher": "",
           "signature": "host-content",
           "sink": "src/attune/mcp/workflow_handlers.py:_workflow_response"
@@ -2051,7 +2051,7 @@
         {
           "destination": "host",
           "event": "mcp-response",
-          "id": "artifact",
+          "id": "79e5a92e67c07b42",
           "matcher": "",
           "signature": "host-content",
           "sink": "src/attune/widgets/chart_widget_tool.py:render_chart_widget"

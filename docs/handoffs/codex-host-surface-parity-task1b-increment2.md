@@ -142,3 +142,25 @@ those were stopped. The explicitly requested reviewer alone uses the verified
 Claude Max subscription with API credentials removed. Billing for the stopped
 earlier test-launched agents was not independently measured; zero spend across
 those earlier attempts is therefore not independently certified.
+
+
+## Approved Claude review corrections (2026-09-06)
+
+Patrick read and approved the posted 13-finding Claude review of 7c21c2863.
+Nine findings have code/test corrections; F3 is a clarified trusted-caller
+boundary, F4/F11 remain experiment-activation design work, and F12 retains the
+required dependency for the shipped replay module. Full dispositions live in
+`docs/specs/host-surface-parity/receipts.md`.
+
+Review-fix validation: 195 focused tests passed; gates/quality passed 624 tests
+with 99.53% statement/branch coverage over both parity modules. All 43 changed
+executable lines are covered. The whole configured tree passed 25,869 tests,
+with 241 skips and 3 xfails in 75.20 seconds. Pinned hooks passed.
+After formatting, renderer fixture digests were re-derived from actual replay.
+Receipts: `/private/tmp/2444-review-gates.log`,
+`/private/tmp/2444-review-coverage.json`, `/private/tmp/2444-review-whole.log`,
+and `/private/tmp/2444-review-hooks.log`. The whole run used the committed
+inference guard, empty API credentials and disposable local Redis.
+Remaining: signed commit and push, then another bounded Claude review.
+PR #2449 owns the CONTRIBUTING tokenizer-cache CI fix; it is still separate.
+Do not merge either PR automatically or start increment 3.
