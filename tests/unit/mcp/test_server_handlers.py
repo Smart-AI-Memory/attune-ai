@@ -522,7 +522,11 @@ def test_runtime_registered_shapes_match_protocol_contract(tmp_path):
     app = server_module.AttuneMCPServer(workspace_root=str(tmp_path))
 
     assert set(app.tools) == set(app._tool_handlers) | set(app._plugin_handlers)
-    assert all(set(tool) == {"name", "description", "input_schema"} for tool in app.get_tool_list())
+    for tool in app.get_tool_list():
+        expected = {"name", "description", "input_schema"}
+        if tool["name"] == "elicitation_route_form":
+            expected.add("output_schema")
+        assert set(tool) == expected
     resources = app.get_resource_list()
     assert {resource["uri"] for resource in resources} == {
         "attune://workflows",

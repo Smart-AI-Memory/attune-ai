@@ -36,7 +36,7 @@ def runtime():
             {
                 "id": "transport",
                 "subject_kind": "interaction_transport",
-                "transport_id": "native-elicitation",
+                "transport_id": NATIVE_ROUTE.removeprefix("mcp-native:"),
                 "form_subject_ids": ["form"],
             },
         ],
@@ -167,6 +167,38 @@ async def test_session_close_while_waiting_prevents_commit(runtime, form):
     assert runtime.store._records == {}
 
 
+@pytest.mark.parametrize("failure", [None, OSError("fixture transport failure")])
+async def test_stdio_teardown_invalidates_all_owned_sessions(runtime, form, monkeypatch, failure):
+    from contextlib import asynccontextmanager
+
+    import attune.mcp.server as server
+
+    transports = [session(accepted()), session(accepted())]
+    ids = [runtime.session_id(transport) for transport in transports]
+
+    @asynccontextmanager
+    async def streams():
+        yield None, None
+
+    async def run(*args):
+        if failure is not None:
+            raise failure
+
+    monkeypatch.setattr(server, "_app", SimpleNamespace(_surface_runtime=runtime))
+    monkeypatch.setattr(server, "stdio_server", streams)
+    monkeypatch.setattr(server._mcp_server, "run", run)
+    if failure:
+        with pytest.raises(OSError, match="fixture transport failure"):
+            await server._run_stdio()
+    else:
+        await server._run_stdio()
+    assert set(ids) <= runtime.store._ended
+    for transport in transports:
+        result = await runtime.route_form(form, transport, "late")
+        assert result["error"] == "session_ended"
+        transport.elicit_form.assert_not_awaited()
+
+
 async def test_native_validation_exhaustion_aborts(runtime, form):
     transport = session(*(SimpleNamespace(action="accept", content={}) for _ in range(3)))
     result = await runtime.route_form(form, transport, "r")
@@ -197,7 +229,8 @@ async def test_mcp_handler_routes_through_server_owned_runtime(
     ]
 
 
-async def test_native_route_crosses_real_mcp_stdio(runtime, tmp_path):
+@pytest.mark.parametrize("production", [False, True])
+async def test_native_route_crosses_real_mcp_stdio(runtime, tmp_path, production):
     """Real SDK transport with fixture answers, not a host-paint assertion."""
     import asyncio
     import json
@@ -210,6 +243,8 @@ async def test_native_route_crosses_real_mcp_stdio(runtime, tmp_path):
     from mcp.types import ElicitResult
 
     root = Path(__file__).resolve().parents[3]
+    if production and os.name != "posix":
+        pytest.skip("Windows private key adapter is not implemented")
     registry_path = tmp_path / "fixture-registry.json"
     registry_path.write_text(json.dumps(runtime._registry), encoding="utf-8")
     script = tmp_path / "fixture_server.py"
@@ -222,6 +257,8 @@ from attune.elicitation.surface_policy import SurfaceContextStore
 from attune.elicitation.surface_registry import InventoryReport, canonical_digest, required_obligations
 from attune.elicitation.surface_runtime import SurfaceFormRuntime
 import attune.mcp.server as server
+import attune.mcp.version_check as version_check
+version_check._cached_status = {}
 registry = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
 keys = frozenset(required_obligations(registry))
 report = InventoryReport(keys, keys, frozenset(), frozenset(), canonical_digest(registry))
@@ -231,6 +268,13 @@ server.main()
 """,
         encoding="utf-8",
     )
+    if production:
+        script.write_text(
+            "from tests._inference_guard import install\ninstall()\n"
+            "import attune.mcp.version_check as version_check\nversion_check._cached_status = {}\n"
+            "from attune.mcp.server import main\nmain()\n",
+            encoding="utf-8",
+        )
     params = StdioServerParameters(
         command=sys.executable,
         args=[str(script), str(registry_path)],
@@ -336,3 +380,90 @@ async def test_unconfigured_public_route_is_discoverable_but_fails_closed(tmp_pa
     assert result["decision_summary"]["renderer_attempt_count"] == 0
     invalid = await app._handle_elicitation_route_form({"form": {"fields": [{"type": "bogus"}]}})
     assert not invalid["success"] and invalid["problems"]
+
+
+async def test_native_terminal_transition_race_fails_closed(runtime, form, monkeypatch):
+    runtime._max_attempts = 1
+    original = runtime.store.transition
+
+    def closing(receipt, binding, *, terminal):
+        if terminal:
+            runtime.store.close_session(binding.session_id)
+        return original(receipt, binding, terminal=terminal)
+
+    monkeypatch.setattr(runtime.store, "transition", closing)
+    result = await runtime.route_form(
+        form, session(SimpleNamespace(action="accept", content={})), "r"
+    )
+    assert result["error"] == "session_ended"
+    assert result["completion"] is None
+
+
+async def test_closed_public_result_contract_rejects_authority_and_token_leaks(runtime, form):
+    import copy
+
+    import jsonschema
+
+    from attune.elicitation.surface_contract import route_output_schema
+
+    result = await runtime.route_form(form, session(accepted()), "r")
+    schema = route_output_schema()
+    jsonschema.validate(result, schema)
+    for field, value in (
+        ("submission_id", "forged"),
+        ("receipt_id", "winner"),
+        ("selected_route", None),
+    ):
+        with pytest.raises(jsonschema.ValidationError):
+            jsonschema.validate({**result, field: value}, schema)
+    altered = copy.deepcopy(result)
+    altered["decision_summary"]["capabilities"] = {"RICH": True}
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate(altered, schema)
+    altered["decision_summary"].pop("capabilities")
+    altered["decision_summary"]["renderer_attempt_count"] = True
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate(altered, schema)
+
+
+async def test_selected_native_arm_refuses_different_route(runtime, form):
+    from dataclasses import asdict
+
+    from attune.elicitation.surface_policy import SurfaceBinding, SurfaceDecision
+    from attune.elicitation.surface_runtime import _present_native
+
+    binding = SurfaceBinding(
+        runtime.store.server_instance_id,
+        "s",
+        "c",
+        "interactive_form",
+        form.form_id,
+        form.form_id,
+        canonical_digest(asdict(form)),
+    )
+    decision = SurfaceDecision("RICH", "missing_receipt", 0, (), "fixture", "fixture")
+    transport = session(accepted())
+    with pytest.raises(ValueError, match="different selected route"):
+        await _present_native(runtime.store, form, transport, "r", binding, decision)
+    transport.elicit_form.assert_not_awaited()
+    runtime.close()
+    runtime.close()
+    assert not runtime._sessions
+
+
+async def test_session_close_between_feedback_and_retry_is_public_disposition(
+    runtime, form, monkeypatch
+):
+    original = runtime.store.complete_challenge
+    transport = session(SimpleNamespace(action="accept", content={}))
+
+    def completing(challenge, raw):
+        result = original(challenge, raw)
+        runtime.close_session(transport)
+        return result
+
+    monkeypatch.setattr(runtime.store, "complete_challenge", completing)
+    result = await runtime.route_form(form, transport, "r")
+    assert result["error"] == "session_ended"
+    assert result["completion"] is None
+    assert transport.elicit_form.await_count == 1

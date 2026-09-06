@@ -162,8 +162,10 @@ three `additionalContext` hooks, seven exit-2 guards, six SessionStart
 context hooks, and two producers the design never listed
 (`widgets/chart_widget_tool.py:render_chart_widget`,
 `mcp/workflow_handlers.py:_workflow_response`). Increment 2 merged in #2444: parity registry, receipts ledger and
-contract enforcer. Remaining: surface policy, receipt store and unified
-route handler (increment 3); cross-repo-compat workflow (increment 4).)*
+contract enforcer. Increment 3 in draft #2450 now includes native policy/store, verified startup,
+installation-key provisioning and stdio completion. Actual host display,
+policy-warm/deferred interactions and remaining producer receipts stay open;
+cross-repo-compat workflow remains increment 4.)*
 
 ```xml
 <task id="1B" name="context-routed-surface-parity-gate">

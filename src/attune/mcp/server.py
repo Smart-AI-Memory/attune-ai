@@ -22,6 +22,7 @@ from mcp.server import Server
 from mcp.server.lowlevel.helper_types import ReadResourceContents
 from mcp.server.stdio import stdio_server
 from mcp.types import (
+    CallToolResult,
     GetPromptResult,
     Prompt,
     PromptArgument,
@@ -54,6 +55,7 @@ logger = logging.getLogger(__name__)
 
 _VOICE_SKIP_TOOLS: frozenset[str] = frozenset(
     {
+        "elicitation_route_form",  # Closed protocol result; no workflow voice fields.
         "memory_store",
         "memory_retrieve",
         "memory_search",
@@ -1711,6 +1713,7 @@ async def _handle_list_tools() -> list[Tool]:
                 "input_schema",
                 {"type": "object", "properties": {}},
             ),
+            **({"outputSchema": defn["output_schema"]} if "output_schema" in defn else {}),
             **({"_meta": app_meta} if name == "fix_workspace_preview" and app_meta else {}),
         )
         for name, defn in app.tools.items()
@@ -1721,9 +1724,15 @@ async def _handle_list_tools() -> list[Tool]:
 async def _handle_call_tool(
     name: str,
     arguments: dict[str, Any] | None = None,
-) -> list[TextContent]:
+) -> list[TextContent] | CallToolResult:
     app = _get_app()
     result = await app.call_tool(name, arguments or {})
+    if name == "elicitation_route_form":
+        return CallToolResult(
+            content=[TextContent(type="text", text=json.dumps(result, indent=2))],
+            structuredContent=result,
+            isError="decision_summary" not in result,
+        )
     return [
         TextContent(
             type="text",
@@ -1832,12 +1841,35 @@ def _initialization_options() -> Any:
 
 async def _run_stdio() -> None:
     """Run the MCP server over stdio transport."""
-    async with stdio_server() as (read_stream, write_stream):
-        await _mcp_server.run(
-            read_stream,
-            write_stream,
-            _initialization_options(),
-        )
+    from attune.elicitation.surface_bootstrap import create_surface_runtime
+
+    app = _get_app()
+    if app._surface_runtime is None:
+        try:
+            app._surface_runtime = await create_surface_runtime(
+                Path(os.environ.get("ATTUNE_HOME", str(Path.home() / ".attune")))
+            )
+        except (
+            ImportError,
+            OSError,
+            ValueError,
+            RuntimeError,
+            LookupError,
+            AttributeError,
+            TypeError,
+        ) as exc:
+            logger.warning("Native form runtime unavailable: %s", type(exc).__name__)
+    try:
+        async with stdio_server() as (read_stream, write_stream):
+            await _mcp_server.run(
+                read_stream,
+                write_stream,
+                _initialization_options(),
+            )
+    finally:
+        if _app is not None and _app._surface_runtime is not None:
+            _app._surface_runtime.close()
+            _app._surface_runtime = None
 
 
 def main() -> None:

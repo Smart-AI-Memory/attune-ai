@@ -2,64 +2,81 @@
 
 ## Goal
 
-Advance the approved Task 1B increment-3 Codex form interaction.
+Advance the approved Task 1B increment-3 Codex form interaction in draft #2450.
 
 ## Acceptance criteria
 
-One same-task validated interaction, exactly-once completion, negative
-lifecycle and trust-boundary tests, and measured actual host display/submission.
+Same-task validated interaction, exactly-once completion, negative lifecycle
+and trust-boundary tests, and actual Codex display/submission measurements.
 
 ## Scope and assumptions
 
 - Branch: codex/codex-form-interaction; base a9e98f671.
 - Worktree: /private/tmp/attune-codex-form-interaction-20260906.
-- D14 lifts the increment-3 hold only for the bounded milestone.
-- Zero API spend; manual merge; no unrelated worktree changes.
+- D14 authorizes this bounded milestone. Zero API spend; manual merge.
+- Main and other worktrees are untouched. #2444/#2449 are already merged.
 
 ## Current state
 
-Plan status and executable package prerequisites reconciled. Initial policy,
-receipt store and native runtime implemented; public handler is discoverable
-but returns no_supported_surface without a server-installed runtime. No
-production evidence snapshot or installation-key provisioning is installed.
-Production parity and live host acceptance are not complete.
+The stdio composition root now replays packaged evidence, validates exact
+route obligations and provisions a private POSIX installation key before
+installing the native runtime. Eight obligations are verified (three package,
+five new native); 159 remain pending. Each replay crosses paired real SDK
+streams; the child-process receipt also uses normal production bootstrap.
+No all-verified synthetic report authorizes production routing.
 
-Changed surfaces: surface_policy.py, surface_runtime.py, server.py,
-tool_schemas.py, elicitation exports, behavioral/stdIO tests, producer baseline
-and registry, existing capability projections, and plan/receipt documents.
-Two same-provider advisory reviews found six defects, all fixed with negative
-tests; no different-model or live-host acceptance receipt is claimed.
+The distinct surface-native-elicitation transport owns its lifecycle evidence.
+Explicit route projection bindings preserve pending RICH/deferred obligations.
+The timeout contract is server-deadline => render_failed, no new receipt.
+The closed MCP output schema is enforced through structuredContent; the voice
+formatter is skipped for this protocol response. Transport exit closes and
+detaches runtime state. Acceptance, cancellation, malformed/duplicate/late
+answers, expiry, shutdown and validation races have negative regressions.
+
+Only the installation key survives restart. Windows activation fails closed
+until a private credential-store/ACL adapter exists. Policy-warm public native
+trials are unavailable: terminal completions expose no warm successor. Do not
+relabel process reuse as policy warmth. Actual host paint/human submission is
+still missing; keep the PR draft and do not claim the milestone complete.
 
 ## Verification
 
-- Preflight: 87 governance tests passed; dirty main left untouched.
-- Released non-editable forms 0.14.0: seven targets enumerated and three
-  canonical renderer evidence receipts replayed before mutation.
-- origin/main fetched and verified at a9e98f671; no open sibling PRs.
+- Session preflight: 87 passed; dirty main preserved.
+- Focused runtime/gate coverage: 338 passed, 95.84% over seven relevant modules.
+- Gates/quality: 662 passed before final lifecycle changes; final whole run
+  includes these guards. Complexity regression was refactored and five checks passed.
+- Two full-run failures were diagnosed: the tool-list test needed the newly
+  declared output_schema; three cost-default tests now use an empty private
+  patterns directory instead of concurrently created/deleted repository files.
+  Adjacent suites: 79 passed. No unrelated production code changed.
+- Wheel built offline from cached build dependencies. Its normal stdio entry
+  accepted decision/minutes/outcome with one render and one presentation,
+  loaded forms 0.14.0 + MCP 1.28.1, and enforced the output schema.
+- Wheel: /private/tmp/attune-form-preview-20260906/dist/attune_ai-16.2.1-py3-none-any.whl
+- Wheel SHA256: 1109fcaaa3b1a275f798f278d4f693382691f13dc698c5d8a35f88b346fb9200
+- Artifact receipt: /private/tmp/attune-form-preview-20260906/probe-home/receipt.json
+  (fixture-owned answers; host_paint=false).
+- Different-model read-only risk review: review_bootstrap_contract, gpt-5.6-sol,
+  evidence-chain receipt; dispositions in the spec and cross-review ledgers.
 
 ## Next action
 
-Continue the authorized milestone: implement trusted production evidence/key
-bootstrap and session-teardown wiring, satisfy route evidence requirements,
-then collect actual Codex cold/warm display and submission measurements.
-Do not enable routing with synthetic reports. The six new producer obligations
-remain pending (161 total). Deferred host adapters and full Task 1B remain open.
+Finish current checks/push, configure the verified preview artifact, then
+reload the preview MCP server in Codex and collect the actual host interaction.
+No callable elicitation_route_form exists in the currently loaded old server.
+Follow the existing milestone measurement brief; leave unavailable strata open.
 
-Local receipts: /private/tmp/form-interaction-coverage.log (72 passed, 95.04%),
-/private/tmp/form-interaction-gates.log (806 passed),
-/private/tmp/form-interaction-registration.log (94 passed),
-/private/tmp/form-interaction-hooks.log (pinned hooks), and
-/private/tmp/form-interaction-whole.log (full suite). The full-suite wrapper
-/private/tmp/run_form_interaction_suite.py isolates Redis and provider credentials.
-Use PYTHONPATH=src with the existing interpreter at
+## Commands and logs
+
+Use PYTHONPATH=src with
 /Users/patrickroebuck/.codex/worktrees/9c6c/attune-ai/.venv/bin/python.
-The pre-commit help hook needs UV_NO_SYNC=1 and that existing venv to avoid
-creating a new environment; UV_CACHE_DIR=/private/tmp/attune-form-uv-cache.
-The real MCP stdio test uses only fixture-owned answers and installs the
-committed inference guard. It is not evidence of native paint.
+Full suite wrapper /private/tmp/run_form_interaction_suite.py isolates Redis and
+provider credentials. Logs: /private/tmp/form-bootstrap-whole.log,
+/private/tmp/form-final-coverage.log, /private/tmp/form-bootstrap-hooks.log,
+/private/tmp/form-wheel-probe.log. Pre-commit needs UV_NO_SYNC=1,
+UV_PROJECT_ENVIRONMENT set to that venv and
+UV_CACHE_DIR=/private/tmp/attune-form-uv-cache.
+After any native code/fixture formatting, refresh executed receipts and their
+single-source package projections with scripts/project_surface_runtime.py --write.
 
-
-Final local verification: whole configured tree 26,017 passed, 242 skipped,
-3 xfailed (70.63s); pinned hooks passed. No API-backed review, host display
-claim, merge, or release. The tool remains registered (stable core inventory)
-and fails closed until a trusted runtime is installed.
+Final whole-suite receipt: 26,056 passed, 242 skipped, 3 xfailed in 73.04s.
