@@ -164,7 +164,9 @@ def _brief_priority(name: str) -> int:
     return 3
 
 
-def budget_manifest(per_file: dict[str, str], cap_chars: int = DIFF_CAP_CHARS) -> dict[str, Any]:
+def budget_manifest(
+    per_file: dict[str, str], cap_chars: int = DIFF_CAP_CHARS, require_complete: bool = False
+) -> dict[str, Any]:
     """Split files into sent/omitted under the cap.
 
     Packing order: priority class first (src, tests, everything else,
@@ -184,6 +186,8 @@ def budget_manifest(per_file: dict[str, str], cap_chars: int = DIFF_CAP_CHARS) -
             total += len(diff)
         else:
             omitted.append(name)
+    if require_complete and omitted:
+        raise ReviewTargetError("incomplete review: " + ", ".join(omitted))
     return {"sent": sent, "omitted": omitted, "chars": total, "cap": cap_chars}
 
 
@@ -250,6 +254,31 @@ def _seat_recipe(seat: str) -> tuple[str, ...]:
     raise ReviewTargetError(f"unknown seat: {seat!r}")
 
 
+def _validate_review_options(
+    seat: str, invoke_seat: Callable[..., Any], claude_auth: str, diff_cap_chars: int
+) -> None:
+    """Reject invalid launch configuration before resolving or sending a diff."""
+    if claude_auth not in ("api", "subscription"):
+        raise ReviewTargetError("claude_auth must be api or subscription")
+    if claude_auth == "subscription" and (
+        seat != "claude" or invoke_seat is not default_invoke_seat
+    ):
+        raise ReviewTargetError("subscription review requires the real Claude seat")
+    if type(diff_cap_chars) is not int or not 1 <= diff_cap_chars <= 250_000:
+        raise ReviewTargetError("diff_cap_chars must be an integer from 1 to 250000")
+
+
+def _invoke_review(
+    seat: str, claude_auth: str, invoke_seat: Callable[..., Any], brief: str
+) -> tuple[int, str]:
+    """Dispatch only the explicitly selected authentication route."""
+    if claude_auth == "subscription":
+        from attune.roundtable.subscription_review import invoke_subscription_review
+
+        return invoke_subscription_review(brief, reply_chars=ROLE_REPLY_CHARS["reviewer"])
+    return invoke_seat(_seat_recipe(seat), brief, reply_chars=ROLE_REPLY_CHARS["reviewer"])
+
+
 def run_review(
     repo_root: str | Path,
     seat: str = DEFAULT_SEAT,
@@ -259,6 +288,9 @@ def run_review(
     invoke_seat: Callable[[Sequence[str], str], tuple[int, str]] = default_invoke_seat,
     prior_rejections: Sequence[str] = (),
     paths: Sequence[str] | None = None,
+    claude_auth: str = "api",
+    diff_cap_chars: int = DIFF_CAP_CHARS,
+    require_complete: bool = False,
 ) -> dict[str, Any]:
     """Run one advisory review; ``ok`` is True whenever the run ran.
 
@@ -278,6 +310,11 @@ def run_review(
     (docs/specs/session-spend-ledger/). That refusal stops a NEW
     billable launch; it does not touch the binding posture above —
     nothing here gates a merge or scores a finding.
+    Explicit ``claude_auth="subscription"`` uses a verified Pro/Max login
+    in a scrubbed, tool-free CLI process; it never changes the API cap.
+    ``diff_cap_chars`` permits a deliberate bounded larger brief (up to
+    250,000 characters). ``require_complete`` refuses omissions before
+    invoking any seat; the default 60,000-character manifest is unchanged.
     ``paths`` scopes the review to those repo-relative files (posix
     separators) — the scoped re-lane for a PARTIAL manifest's omitted
     substantive files (2026-08-24 retro O2: the #2259 lane could not
@@ -286,6 +323,7 @@ def run_review(
     closed — codex D11, both rounds); the result carries
     ``scoped_to`` so the ledger row states the scope honestly.
     """
+    _validate_review_options(seat, invoke_seat, claude_auth, diff_cap_chars)
     target = resolve_target(repo_root, mode=mode, base_ref=base_ref)
     per_file = target["per_file"]
     scoped_to: list[str] | None = None
@@ -307,7 +345,9 @@ def run_review(
         # The seat must know it is reading a deliberate slice, not the
         # whole diff — scoping travels in the brief, not just the result.
         target["description"] += f" — SCOPED to {len(scoped_to)} path(s): " + ", ".join(scoped_to)
-    manifest = budget_manifest(per_file)
+    manifest = budget_manifest(
+        per_file, cap_chars=diff_cap_chars, require_complete=require_complete
+    )
     brief = build_brief(target, manifest)
     if prior_rejections:
         # Bounded so a long rejection history cannot crowd out the diff
@@ -323,7 +363,7 @@ def run_review(
             f"refutation:\n{lines}"
         )
 
-    code, reply = invoke_seat(_seat_recipe(seat), brief, reply_chars=ROLE_REPLY_CHARS["reviewer"])
+    code, reply = _invoke_review(seat, claude_auth, invoke_seat, brief)
     absent = code != 0 or not reply.strip()
 
     findings: list[dict[str, Any]] = []
@@ -369,6 +409,7 @@ def run_review(
         "manifest": manifest,
         "target": target["description"],
         "board": board_status,
+        "claude_auth": claude_auth if seat == "claude" else None,
     }
     if scoped_to is not None:
         result["scoped_to"] = scoped_to

@@ -438,3 +438,76 @@ class TestScopedReviewFailClosed:
         }
         manifest = review.budget_manifest(per_file, cap_chars=20)
         assert manifest["sent"] == ["docs/guide.md"]
+
+
+@pytest.mark.parametrize("cap", [0, -1, 250001, True, 1.5, "60000"])
+def test_invalid_explicit_diff_budget_fails_before_launch(repo, cap):
+    invoke = _invoke_stub("NO FINDINGS")
+    with pytest.raises(review.ReviewTargetError, match="diff_cap_chars"):
+        review.run_review(repo, base_ref="main", invoke_seat=invoke, diff_cap_chars=cap)
+    assert not invoke.calls
+
+
+def test_complete_review_refuses_omitted_files_before_launch(repo):
+    invoke = _invoke_stub("NO FINDINGS")
+    with pytest.raises(review.ReviewTargetError, match="incomplete review:.*big.py"):
+        review.run_review(
+            repo, base_ref="main", invoke_seat=invoke, diff_cap_chars=100, require_complete=True
+        )
+    assert not invoke.calls
+
+
+def test_complete_review_covers_file_larger_than_default_cap(repo):
+    (repo / "large.json").write_text("x" * 82000 + "\n", encoding="utf-8")
+    _git(repo, "add", "large.json")
+    _git(repo, "commit", "-q", "-m", "large fixture")
+    invoke = _invoke_stub("NO FINDINGS")
+    result = review.run_review(
+        repo, base_ref="main", invoke_seat=invoke, diff_cap_chars=250000, require_complete=True
+    )
+    assert not result["manifest"]["omitted"]
+    assert set(result["manifest"]["sent"]) == {"big.py", "small.py", "large.json"}
+    assert "x" * 82000 in invoke.calls[0]["brief"]
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"claude_auth": "unknown"},
+        {"claude_auth": "subscription", "seat": "codex"},
+        {
+            "claude_auth": "subscription",
+            "seat": "claude",
+            "invoke_seat": _invoke_stub("NO FINDINGS"),
+        },
+    ],
+)
+def test_invalid_subscription_dispatch_fails(repo, kwargs):
+    with pytest.raises(review.ReviewTargetError):
+        review.run_review(repo, base_ref="main", **kwargs)
+
+
+def test_subscription_review_uses_verified_launcher(repo, monkeypatch):
+    from attune.roundtable import subscription_review
+
+    calls = []
+
+    def launch(brief, **kwargs):
+        calls.append(brief)
+        return 0, "NO FINDINGS"
+
+    monkeypatch.setattr(subscription_review, "invoke_subscription_review", launch)
+    result = review.run_review(
+        repo, base_ref="main", seat="claude", claude_auth="subscription", require_complete=True
+    )
+    assert result["claude_auth"] == "subscription"
+    assert result["status"] == "clean" and len(calls) == 1
+
+
+def test_default_claude_still_refuses_zero_api_budget(repo, monkeypatch):
+    from attune.gates.session_ledger import SessionSpendCapError
+
+    monkeypatch.setenv("ATTUNE_SESSION_SPEND_CAP_USD", "0")
+    monkeypatch.delenv("ATTUNE_SESSION_LEDGER", raising=False)
+    with pytest.raises(SessionSpendCapError):
+        review.run_review(repo, base_ref="main", seat="claude")

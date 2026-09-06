@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Cross-review can explicitly use verified Claude Pro/Max subscription auth
+  without enabling API spending. Complete-review mode rejects omitted files
+  and supports a bounded larger brief on stdin. The clean-venv smoke job
+  prepares static tokenizer data before guarded tests.
+
 - Test inference isolation: pytest now blocks real provider HTTP calls and
   Claude/Agent SDK inference launches before dispatch, scrubs child credentials,
   and gives subprocesses a separate Claude profile. Fake transports and

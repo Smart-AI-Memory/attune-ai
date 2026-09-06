@@ -35,6 +35,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     continue-on-error: true # advisory while staging (G4c)
+    env:
+      TIKTOKEN_CACHE_DIR: ${{ github.workspace }}/../tiktoken-cache
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -50,6 +52,18 @@ jobs:
       - name: Extract the documented setup commands
         run: |
           python scripts/extract_contributing_setup.py | tee "$RUNNER_TEMP/contributing-setup.sh"
+
+      # Static test data only; the documented venv setup remains unchanged.
+      - name: Cache tiktoken encodings
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ github.workspace }}/../tiktoken-cache
+          key: tiktoken-cl100k_base-${{ runner.os }}
+
+      - name: Warm tiktoken encoding
+        run: |
+          python -m pip install tiktoken
+          python -c "import tiktoken; tiktoken.get_encoding('cl100k_base')"
 
       - name: Execute the documented setup in a fresh venv (keyless)
         env:

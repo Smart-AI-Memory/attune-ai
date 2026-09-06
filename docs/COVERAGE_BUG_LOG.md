@@ -2034,3 +2034,19 @@ measured duration receipt. Behavioral probes now use a module-local steady
 clock while retaining real Git/filesystem calls and their subprocess
 timeouts. A separate deterministic test exhausts the budget before the
 dirty worktree and requires no finding. Production limits are unchanged.
+
+### 2026-09-06 — cross-review auth classification and clean-venv cache (crash)
+
+The default Claude seat treated saved Max authentication as an API launch,
+so a zero API cap refused the explicitly requested subscription review.
+A separate opt-in launcher verifies subscription auth with API credentials
+removed, disables tools/custom integrations, and leaves API launch checking
+unchanged. Intercepted-process regressions verify refusal before inference
+for API, unknown or malformed authentication and incomplete diff coverage.
+
+After #2445 merged, #2444's clean-venv smoke check attempted a tiktoken
+vocabulary download inside pytest. The inference guard correctly refused
+that unregistered endpoint. The other CI jobs prepared this static data,
+but contributing-smoke did not. Its cache is now prepared before the literal
+CONTRIBUTING setup script runs; no guard exception or skipped assertion was
+added. Failed job: 101473769814, test_token_estimator.
