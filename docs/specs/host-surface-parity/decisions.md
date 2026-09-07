@@ -940,6 +940,62 @@ not been exercised on the current desktop model; until it is, those
 constructs carry the same unobserved-rendering caveat as the native
 control.
 
+## D17 — The Claude ladder, in the chair's words (2026-09-07 evening; recorded by the lead)
+
+Patrick, verbatim: "It uses native questions by default for claude you
+use askuserquestion using all controls, in claude's case, forms that
+handle widgets not covered by native questions (askuserquestions) are
+used. If they can't be used the would use enhanced prompts. Enhanced
+prompts are used by default by Antigravity btw." He then asked for
+pushback.
+
+The lead pushed back on rung 3 only, on the native control: the five
+non-expressible constructs exist to carry structure (an order, per-item
+rulings, a bounded number, a date, long text) and a conversational
+prompt drops the deterministic parse and R4 validation that the PORTABLE
+markdown form keeps. Counter-case carried with it: for one simple field
+a skeleton is ceremony, and the skill already says to state the format
+and ask a typed question. Patrick picked "Split rung 3 (Recommended)".
+
+Disclosures accepted with the pick: attune-forms admits nine types
+natively, not D16's ten — `assumption_review`'s edit lane expands to a
+text question in the library, so the library routes it to the widget
+(an agent-composed native card with accept / reject and a single edit
+through "Other" remains legal in dev sessions); and on the desktop Code
+tab the only painting widget path is `show_widget`, which the skills now
+name.
+
+Ruled:
+
+1. Rung 1 — native `AskUserQuestion` for every ask it can express,
+   decision-shaped asks included.
+2. Rung 2 — the Attune widget (`elicitation_render_widget` →
+   `show_widget`, validated through `elicitation_collect_response`) for
+   `ranking`, `triage` over four items, `assumption_review`, `number`,
+   `date`, and `textarea` on widget-capable Claude hosts. This narrows
+   D16's caveat: on the desktop Code tab the lead observed, with Patrick
+   at the keyboard on 2026-09-07, native one- and four-question renders,
+   partial submission (`[No preference]`), dismissal (a tool error on a
+   one-question card; the sentinel `[User dismissed — do not proceed,
+   wait for next instruction]` per question on a four-question card),
+   and the widget's render, keyboard-only operation, submit, and
+   validated collect (probe `host-native-trials-2026-09-07.md`).
+   Fresh-request discovery stays pending until the desktop plugin cache
+   carries #2459.
+3. Rung 3, split — where no widget exists or the user is in keyboard
+   mode: one typed question stating the expected format for a single
+   `number`, `date`, or `textarea`; the `form_to_markdown` skeleton with
+   `markdown_to_answers` for a ranking, triage, assumption review, or any
+   multi-field form. Never silently drop a field.
+4. Antigravity: enhanced conversational prompts by default (D15,
+   unchanged). Codex: built-in questions first (D15, unchanged).
+
+Shipped with this entry, same PR: the `elicit` and `planning` skills'
+Claude sections, the Socratic rule in `.claude/CLAUDE.md`, and the
+CHANGELOG line. attune-forms PR #91 (AF-2) encodes the same ladder in
+`select_form_surface` (host-native default; widget only when the
+installed host-question profile does not admit the form).
+
 ## Open decisions
 
 - None. Every proposed decision in this spec is ruled.
