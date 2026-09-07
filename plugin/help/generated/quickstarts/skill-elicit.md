@@ -7,7 +7,7 @@ source: plugin/skills/elicit/SKILL.md
 
 # Quickstart: Use /elicit
 
-Form-driven Socratic discovery — batch independent decision dimensions into one multi-select-capable form instead of N button-turns.
+Gather missing, independent planning details in one validated form.
 
 ```
 /elicit <what you're scoping, e.g. 'a new feature' or 'this session'>

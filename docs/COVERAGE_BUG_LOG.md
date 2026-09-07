@@ -1,3 +1,12 @@
+## 2026-09-07 — native form evidence and key storage (#2450)
+
+Raised coverage for `elicitation/surface_key.py`,
+`elicitation/surface_native_evidence.py`, and `elicitation/surface_registry.py`
+with filesystem race, evidence rejection, projection binding, and receipt assembly
+tests. **0 production bugs surfaced.** A Python 3.11 coverage tracing discrepancy
+was reproduced; focused assembly tests provide separately measurable evidence.
+Production code, exclusions, and thresholds are unchanged.
+
 ## 2026-08-01 — waves 2–6 of the coverage fleet (Sonnet lanes, Fable 5 lead)
 
 Twelve more tests-only lanes (waves 2–6, PRs #1855–#1870; hybrid

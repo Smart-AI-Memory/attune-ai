@@ -126,21 +126,21 @@ Numbers below are the `<check>` entries in Task 1B, in source order. All tests
 are in `tests/unit/gates/test_surface_parity.py` unless another path is named.
 “Partial” means only the named property is tested, not the entire check.
 
-| Checks | Status in increment 2 | Failure-sensitive tests / remaining work |
+| Checks | Current status (increments 2–3) | Failure-sensitive tests / remaining work |
 | --- | --- | --- |
 | 1 | Existing prerequisite verified | Before edits, locked 0.14.0 had no editable `direct_url`, all seven canonical projections executed. D12 corrects the task's 0.13.0 wording. `test_installed_renderer_evidence_replays_deterministically` reruns the projections. |
 | 2 | External AF-1 check remains open here | No claim to rerun the package's annotation/allowlist mutation suite. |
 | 3 | Partial | `test_live_registry_matches_installed_renderer_records`, `test_changed_evidence_invalidates_existing_receipt`, `test_compatibility_answer_comes_from_emitted_questions`, `test_route_active_target_cannot_reuse_compatibility_evidence`; full projection semantic equivalence, dynamic closure/profile audit and advisory workflow remain open. |
-| 4 | Open, increment 3 | Package HEADLESS collection is executed; the stateful attune-ai consumer round trip is not claimed. |
+| 4 | Partial | `tests/unit/elicitation/test_surface_runtime.py::test_native_route_crosses_real_mcp_stdio[True]` crosses normal bootstrap and common validation; other consumer routes remain open. |
 | 5 | Partial | `test_additional_host_native_target_creates_independent_obligation`, `test_changed_evidence_invalidates_existing_receipt`; local target execution remains pending. |
 | 6 | Structural portion enforced | `test_form_transport_associations_fail_closed`, `test_host_profile_ref_requires_matching_profile_and_lifecycle`, `test_receipts_cannot_borrow_or_invent_evidence`, `test_route_evidence_requires_delegated_timeout_even_when_form_accept_passes`; live lifecycle receipts remain pending. |
 | 7–12 | Discovery enforced (increment 1 + registry link) | Baseline tests and existing direct/alias/helper, manifest, wrong-event, same-file, new-command and attune_redis mutations; `test_root_subjects_preserve_shared_helpers_without_duplicate_interactions`, `test_live_inventory_mutations_fail_instead_of_becoming_exemptions`. |
-| 13 | Open, increment 3 | Trusted accessibility constraints and runtime precedence. |
-| 14 | Partial | Declared default orders checked; runtime selection/noninteractive branch remains open. |
-| 15 | Open, increment 3 | Authenticated capability sources, negative precedence and cache rules. |
-| 16 | Partial | `test_compatibility_endpoints_remain_exact_fixed_shape_anchors`; unified handler, exact production endpoint receipts (two explicit pending keys) and closed schema remain open. |
-| 17–25 | Open, increment 3 | Runtime admissibility, context table, session/store lifecycle, submission/challenge semantics, transport provenance and attempt bounds. |
-| 26 | Structural portion enforced | `test_deleting_one_receipt_fails_its_exact_obligation`, `test_changed_evidence_invalidates_existing_receipt`, `test_live_inventory_is_accounted_but_does_not_claim_complete_parity`; 155 real local receipts still absent. |
+| 13 | Partial | `test_surface_policy.py` covers trusted hard constraints and missing-evidence rejection; production supports the native adapter only. |
+| 14 | Partial | Declared orders and pure selector are tested in `test_surface_policy.py`; only native has an installed production presenter. |
+| 15 | Partial | Real SDK negotiation plus omitted/URL-only capability refusal in `test_surface_runtime.py`; persisted host-static provider/cache remains open. |
+| 16 | Partial | `test_closed_public_result_contract_rejects_authority_and_token_leaks` and real stdio enforce the native completion/error schema; deferred arms and exact legacy compatibility endpoint receipts remain open. |
+| 17–25 | Partial | `test_surface_policy.py`, `test_surface_runtime.py`, `test_surface_key.py`, and `test_surface_bootstrap.py` cover state/trust boundaries, replay, native retries, no-fallback, persistent-key restart, actual stdio teardown, and executed evidence mutations. Native paint, policy-warm public flow and deferred adapters remain open. |
+| 26 | Structural portion enforced | `test_deleting_one_receipt_fails_its_exact_obligation`, `test_changed_evidence_invalidates_existing_receipt`, `test_live_inventory_is_accounted_but_does_not_claim_complete_parity`; 159 current obligations remain explicitly pending. |
 | 27 | Partial | `test_deleting_twin_names_exact_owner_and_shortfall`, installed renderer replay; local interactive/informational execution remains pending. |
 | 28 | Partial | Active/expired/future/duration/history/cap/conflict/exception mutations; filesystem resolution and binding experimental artifacts/decision references to current execution remain open before any real experiment is activated. The live inventory rejects all experiment activation until that verification exists; only synthetic fixtures exercise the interval rules. |
 | 29 | Enforced for declared local twins | `test_live_inventory_mutations_fail_instead_of_becoming_exemptions[delete_portable-chart-widget.*missing PORTABLE]` removes a real local subject's PORTABLE declaration; execution of that twin remains open. |
@@ -237,3 +237,88 @@ Triage validation: 656 gates/quality tests passed at 99.55% combined coverage;
 241 skipped, 3 xfailed. Eighteen targeted defect probes fail against the
 original `1efa08406` source and pass in the corrected gate run. Pinned hooks
 pass. Commands, logs and environment limits are in the latest handoff section.
+
+
+## Increment-3 Codex interaction — implementation in progress (2026-09-06)
+
+D14 authorizes the bounded milestone. `surface_policy` now implements context
+classification, atomic receipt transitions, deferred common validation and
+single-use native completion challenges. `surface_runtime` executes one
+native projection with bounded same-route validation retries. The public
+`elicitation_route_form` handler accepts no capability, evidence, session or
+profile authority from request arguments.
+
+Normal stdio startup now replays the package-owned inventory and native
+MCP fixtures before installing the runtime. Five native receipts join the three
+package receipts; 159 other obligations remain pending. Exact route-to-target
+bindings admit the receipted HEADLESS-backed native transport while RICH and
+deferred routes remain unavailable. The new transport owns its own lifecycle
+receipts; it does not claim coverage of the legacy elicitation handler.
+
+The paired SDK fixture crosses real in-memory MCP messages for accept, cancel,
+invalid-answer feedback/retry, and deadline expiry. Its `timeout` obligation is
+a transport deadline receipt: the machine-bound `lifecycle_contract` specifies
+`render_failed`, no new active receipt, and preservation of any predecessor.
+It does not claim a successful timeout completion or host display. The public
+handler also passes a child-process stdio round trip through normal bootstrap,
+without injecting an inventory report. The closed output schema exposed an
+existing voice formatter adding extra protocol fields; this tool now bypasses
+that formatter. Session teardown closes and detaches the runtime.
+
+Only a private installation key persists; receipt state stays process-local.
+Real restart, concurrent process startup, corruption, symlink and permission
+probes cover the POSIX key adapter. Windows activation fails closed until a
+private credential-store/ACL adapter exists. A malicious process running as the
+same OS account is outside this filesystem boundary. Same-owner mode-0600
+hardlinks do not broaden access and are not rejected: atomic no-replace key
+publication briefly uses such an alias.
+
+Actual Codex display/submission and repeated timing remain unverified. Native
+accept/abort closes the receipt; timeout creates none; validation retries remain
+inside one call. Therefore the current public native flow cannot produce an
+echoable policy-warm receipt. The milestone brief expressly requires this
+stratum to be recorded missing, not relabeled from process/cache warmth. No
+terminal semantics or acceptance criterion has been weakened. Task 1B and this
+bounded milestone remain incomplete; later adapters and tasks retain their gates.
+
+Initial implementation receipts at 03aa03f58 follow (historical):
+
+Behavioral receipts so far: 72 policy/runtime tests passed, 95.04% combined
+coverage, including a real child-process MCP stdio exchange with the public
+handler and common validator. The client negotiated form capability and
+returned fixture-owned answers. This proves protocol crossing and validation,
+not native paint or a live human's answer. The subprocess installs the committed
+inference guard and uses empty provider keys.
+
+Two same-provider read-only review passes reproduced six defects, all corrected
+with negative regressions: terminal-chain reopening; expiry during validation;
+anonymous-form receipt reuse; malformed native response mutating authority;
+unhashable native action; and post-close disposition loss. These are advisory
+reviews, not a different-model review or a clean UI acceptance receipt.
+
+Final local validation for this implementation slice: 26,017 passed, 242 skipped,
+3 xfailed in 70.63 seconds across the whole configured tree; isolated Redis and
+empty provider keys. Pinned pre-commit hooks passed after formatting and the
+capability projector updated the stable registered count to 65. Focused policy
+and runtime coverage is 95.04%; 72 tests passed, including public stdio.
+
+
+Bootstrap review: `review_bootstrap_contract` (gpt-5.6-sol), read-only
+**evidence-chain** lane under the different-model risk-review rule. Confirmed
+and corrected: unrelated RICH gating, legacy transport evidence ownership,
+missing stdio teardown, ignored exhaustion transition, wrong selected-route
+acceptance, retained session objects, bootstrap error handling, and input/output
+schema gaps. The native timeout contract and unavailable warm stratum are
+explicitly recorded above. The review found no circular route authorization.
+Central behavioral receipts are rerun by the active provider; this is not a
+Claude review or a live host acceptance receipt.
+
+
+Current bootstrap slice: 338 focused tests passed with 95.84% coverage across
+policy, runtime, registry, key, bootstrap, public contract and native evidence.
+The offline-built wheel independently passed normal-startup stdio with one
+render/presentation (forms 0.14.0, MCP 1.28.1); artifact receipt and hash are in
+the branch handoff. These answers are fixture-owned and do not prove host paint.
+
+Final whole-suite receipt for the bootstrap update: 26,056 passed, 242 skipped,
+3 xfailed in 73.04 seconds, with isolated Redis and the inference guard.

@@ -125,8 +125,18 @@ from attune_forms.template_store import form_from_template, list_templates  # no
 from attune_forms.widget import WIDGET_RESPONSE_MARKER, form_to_widget_html  # noqa: E402
 
 from attune.elicitation.ask_payload import form_to_ask_payload  # noqa: E402
+from attune.elicitation.surface_policy import (  # noqa: E402
+    CapabilitySnapshot,
+    SurfaceBinding,
+    SurfaceContextStore,
+    select_surface,
+)
 
 __all__ = [
+    "CapabilitySnapshot",
+    "SurfaceBinding",
+    "SurfaceContextStore",
+    "select_surface",
     "EXAMPLE_ANSWERS",
     "REFERENCE_FORM",
     "WIDGET_RESPONSE_MARKER",

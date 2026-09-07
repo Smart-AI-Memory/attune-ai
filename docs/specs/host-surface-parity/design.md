@@ -4,7 +4,15 @@
 complete; Task 1 stopped before production when its baseline probe
 falsified the proposed registry and host-artifact assumptions. D10
 rules the replacement mechanism.
-**Last updated:** 2026-09-04
+**Last updated:** 2026-09-06
+
+**Execution correction (D14):** Task 0 and Task 1B increments 1–2 are merged.
+The bounded increment-3 Codex interaction is authorized and in progress.
+AF-1's actual locked release is forms 0.14.0; AF-2 targets 0.15.0 (D12).
+Historical 0.13.0/0.14.0 release references below describe the original plan,
+not executable prerequisites. The producer baseline now additionally includes
+`surface_runtime.py:SurfaceFormRuntime.route_form`, the new native serializer
+and transport owner; the original six-anchor list below remains historical.
 
 ## Verified baseline
 

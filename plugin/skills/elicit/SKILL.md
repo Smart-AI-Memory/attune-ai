@@ -1,6 +1,6 @@
 ---
 name: elicit
-description: "Form-driven Socratic discovery — batch independent decision dimensions into one multi-select-capable form instead of N button-turns. Triggers on: scope this, discovery form, ask me everything at once, multi-select question."
+description: "Gather missing, independent planning details in one validated form. Use for ordinary planning or scoping requests with multiple unknowns, explicit discovery forms, and multi-select questions."
 argument-hint: "<what you're scoping, e.g. 'a new feature' or 'this session'>"
 ---
 
@@ -12,9 +12,9 @@ argument-hint: "<what you're scoping, e.g. 'a new feature' or 'this session'>"
 > as one form (multi-select where it fits), instead of asking one
 > button at a time.
 
-This skill turns a **declarative form** (data, not code) into a real
-`AskUserQuestion` turn and validates the answers. It is the live wiring
-of `attune.elicitation` via two MCP tools:
+This skill turns a **declarative form** (data, not code) into a validated
+interaction. In Codex, use the server-routed path below when available;
+the user need not name a form or tool. The compatibility path uses:
 
 - `elicitation_render_form` — validate the form, get batched payloads.
 - `elicitation_collect_response` — validate the answers (R4).
@@ -297,6 +297,53 @@ instead of an answer.
 
 ## Choosing a surface
 
+### Codex: use the verified server route (bounded D14 milestone)
+
+For an ordinary planning or scoping request in Codex, first apply the
+batching rule and existing preference scope. Do not re-ask settled fields
+or manufacture a decision merely to demonstrate a form. An explicit
+conversation preference or incompatible presentation requirement does not
+authorize a native dialog; preserve that preference and explain any
+unavailable presentation without claiming it is implemented.
+
+When a form is appropriate and the connected attune-ai server exposes
+`elicitation_route_form`, use that endpoint instead of the compatibility
+surface selector below. Discover the actual connected tool; do not hard-code
+a preview server name or infer readiness from a package version. The server
+owns capability negotiation, evidence, and surface selection. Never send
+caller-invented capability, session, evidence, or binding fields.
+
+1. Build the form using steps 0–1. Call `elicitation_route_form` with
+   `form` (or `template` plus its `slots`) and an optional `message`.
+2. Wait for its same-call completion. Only an outer `success: true`
+   **and** `completion.success: true` with `completion.action: accept`
+   supplies accepted `completion.responses`. Summarize those values once
+   and continue the same task within its existing authorization. Do not
+   call `elicitation_collect_response` again or dispatch another form
+   to collect the already validated answers.
+3. An abort, timeout, or validation exhaustion supplies no accepted
+   answers. Respect that outcome; do not treat outer success alone as
+   acceptance or re-open the interaction automatically. The server owns
+   validation retries within the call.
+4. `no_supported_surface` means nothing was rendered. Report the unavailable
+   route without cycling through compatibility renderers. Likewise,
+   `render_failed`, `session_ended`, `challenge_invalidated`, or
+   `challenge_consumed` ends this attempt; do not retry another renderer.
+   A later presentation requires a separately established supported path.
+
+This milestone implements native MCP elicitation, not every rich widget
+layout or every host. Returned HTML, tool availability, and a successful
+tool return do not prove visible controls. Keep user-observed display,
+validated completion, and request-to-visible timing as separate evidence.
+Selection time is not display latency; process reuse is not policy warmth.
+
+If the endpoint is absent, the compatibility guidance below remains
+available subject to the host's actual support and the user's preferences.
+Do not claim that path has the new route's session-bound guarantees. Other
+hosts retain their existing guidance until independently verified.
+
+### Compatibility surfaces
+
 **The widget is the default. `AskUserQuestion` is the fallback.**
 (D21 — this reverses the earlier cheapest-surface-that-fits rule.)
 Don't route on what the surface can technically express; route on how
@@ -395,6 +442,9 @@ summaries, not screenfuls of HTML.
   fallback, or when you want the recommendation-first button UX.
 
 ## Step 2 — render it
+
+For the Codex server-routed path, follow its same-call procedure above
+instead of steps 2–4. The following steps are the compatibility path.
 
 Call `elicitation_render_form` with `{ "form": <the form> }`.
 
