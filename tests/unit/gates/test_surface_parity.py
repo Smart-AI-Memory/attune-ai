@@ -1209,6 +1209,47 @@ def test_live_route_active_target_is_absent_until_its_profile_is_registered(
     assert stored_registry["host_profiles"] == []
 
 
+def test_route_active_target_rows_are_rejected_when_injected(
+    stored_registry, reviewed, installed_evidence
+) -> None:
+    """The live target's absence is enforced, not incidental: a pending row for
+    it fails as a package-renderer waiver, and a forged receipt (carrying the
+    correct owning-record digest so it reaches the receipt check) fails as an
+    orphan. Codex lane finding on #2465, promoted to a pin."""
+    key = "renderer:standalone-form:host-native:form.host_question"
+    pending = copy.deepcopy(stored_registry)
+    pending["pending_obligations"].append(
+        {"key": key, "owner": "host-surface-parity", "reason": "Task 2", "next_increment": 3}
+    )
+    with pytest.raises(sr.SurfaceRegistryError, match="package-renderer pending obligation"):
+        sr.validate_inventory(
+            pending, reviewed.to_dict(), installed_evidence, today=date(2026, 9, 6)
+        )
+
+    forged = copy.deepcopy(stored_registry)
+    record = next(r for r in forged["renderers"] if r["id"] == "standalone-form")
+    zeros = "0" * 64
+    forged["receipts"].append(
+        {
+            "id": key.replace(":", "."),
+            "key": key,
+            "kind": "parity",
+            "obligation_key": key,
+            "evidence_mode": "route_roundtrip",
+            "fixture": "attune.elicitation.surface_evidence.replay_renderer_evidence",
+            "record_digest": sr.renderer_record_digest(record, "form.host_question"),
+            "implementation_digest": zeros,
+            "fixture_digest": zeros,
+            "normalization_digest": zeros,
+            "result_digest": zeros,
+        }
+    )
+    with pytest.raises(sr.SurfaceRegistryError, match="orphan or waived receipt"):
+        sr.validate_inventory(
+            forged, reviewed.to_dict(), installed_evidence, today=date(2026, 9, 6)
+        )
+
+
 def test_registering_the_host_profile_creates_the_route_active_obligation(small_registry) -> None:
     renderer = small_registry["renderers"][0]
     renderer["targets"].append(

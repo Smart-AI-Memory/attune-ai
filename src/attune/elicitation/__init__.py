@@ -21,11 +21,15 @@ Public surface (unchanged):
   plain serializable data.
 - :func:`form_to_askuserquestion` — batched ``AskUserQuestion`` payloads
   (≤4 questions per call).
-- :func:`select_form_surface` — the surface router (D21): the widget is
-  the default; ``AskUserQuestion`` is the explicit fallback, taken only
-  for a non-widget client, keyboard mode, or a trivial form.
-- :func:`is_trivial_form` — the narrow, mechanical triviality test the
-  router uses.
+- :func:`select_form_surface` — the surface router (host-surface-parity
+  D15–D17, attune-forms >= 0.15.0): the host's own question control is
+  the default (``"ask"``) for every form the installed host-question
+  profile admits; ``"widget"`` only for a form it cannot carry (a control
+  it lacks, over-cap questions or options, a ranking, an uncorrelatable
+  duplicate question). A non-widget client or keyboard mode still forces
+  ``"ask"``.
+- :func:`is_trivial_form` — the narrow, mechanical triviality predicate;
+  no longer a routing input, kept as a helper.
 - :func:`is_fully_inferred` / :func:`inferred_field_count` — inference
   state. A fully-inferred form renders as a one-tap confirmation rather
   than a question, and is never silently skipped.
