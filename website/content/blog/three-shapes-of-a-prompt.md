@@ -5,7 +5,7 @@ author: "Patrick Roebuck"
 excerpt: "Every request you hand an AI coding agent is a prompt in one of three shapes: a one-shot, an XML-enhanced task, or a spec whose tasks are XML-enhanced prompts. Attune ships two features that help you write all three well. This is a hands-on walkthrough, with the actual screens."
 tags: ["prompts", "dynamic forms", "prompt refinement", "spec-driven development", "Claude Code", "Codex"]
 coverImage: "/images/blog/three-shapes/00-three-shapes.svg"
-published: false
+published: true
 ---
 Most of what goes wrong with an AI coding agent goes wrong before it
 writes a line of code. You say something reasonable, the agent fills in
