@@ -79,7 +79,45 @@ abstract per workflow).
 
 ---
 
+## Q4 — Per-session calibration measure (OPEN — candidate, not ruled)
+
+**Raised:** 2026-09-07 · **By:** the lead, at the chair's direction
+(thread 3 of the 2026-09-07 session ranking) · **Ruling:** none yet
+
+Host-surface-parity D16 (2026-09-07) ruled the confirm-on-trigger
+calibration for this repository's dev sessions and named this spec as
+the place for the product-level version **and its measurement**. The
+measure is recorded in requirements.md ("Per-session calibration
+measure"): `asked` / `inferred` / `corrected` / `confirmed_untouched`
+per session, yielding a correction rate (high = under-asking) and a
+ceremony rate (high = over-asking), read together.
+
+Options for the chair:
+
+1. **Adopt read-only first** — count from the existing stores and the
+   `/retro` self-report for one week before building anything; then
+   decide whether the native-ask hook and attune-forms#90 option 3 are
+   worth their cost. *Lead's recommendation.*
+2. **Adopt with instrumentation** — the PostToolUse hook on
+   `AskUserQuestion` (local rows, `form_events` consent model) and the
+   forms accepted-untouched flag land together as G5's first task.
+3. **Decline** — ASI T4's per-occurrence counts are enough; close Q4.
+
+**Counter-case against the recommendation (carried unprompted):**
+self-report is the weakest source and biases toward under-counting the
+inferences the agent did not notice it made — exactly the ones arm 3
+exists to catch. A hook on the native control is small and captures
+the ceremony rate exactly; option 2 measures the same week with better
+numbers at the cost of one hook and one forms change.
+
+**Status impact:** none until ruled. The spec stays parked;
+Resume-Trigger is this ruling.
+
+---
+
 ## Status
 
-All three design-phase open questions (Q1–Q3) resolved. Spec moves
-**draft → approved**. Implementation remains queued **behind 9.0.0**.
+Q1–Q3 resolved 2026-06-25 (draft → approved; later parked at the
+2026-07-13 truth sweep). G1's rule text shipped 2026-09-07 through
+host-surface-parity D16 and #2459, outside this spec; G2–G4 remain
+queued. Q4 (the measure) is OPEN — a candidate awaiting the chair.
