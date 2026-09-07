@@ -60,17 +60,37 @@ research_synthesis(path="<dir or file>", depth="standard")
 
 ## Scoping
 
-Before running, ask:
+Before asking, reuse the subject, goal, scope, and constraints already
+supplied. For ordinary requests such as "Help me plan a website for a
+flower shop", ask only the material unknowns; do not make the user classify
+the request as a feature, TDD, or architecture exercise first.
+
+**Codex:** use the available built-in question tool for suitable independent
+unknowns, without waiting for the user to request a form. In Default mode,
+use `request_user_input_async`, respecting its current schema and limits.
+Read the `elicit` skill's **Host defaults** for answer retention,
+corrections, cancellation, and the asynchronous lifecycle. When the host
+delivers replies during the active turn, keep needed questions pending rather
+than finishing immediately; otherwise resume when its reply arrives.
+The Attune server route and widgets are experimental
+in Codex, not prerequisites or automatic fallbacks. Honor a request for
+conversation and avoid unnecessary questions when a useful plan can proceed.
+
+**Antigravity:** use the `elicit` host default: enhanced conversational
+prompts, with native forms experimental. Claude's existing mapping below
+is unchanged pending its own host-specific review.
+
+For engineering planning tasks, clarify only missing dimensions:
 
 1. **Type**: "What kind of planning? Feature spec, TDD
-   approach, or architecture review?"
+   approach, or architecture review?" Skip when the request implies the type.
 2. **Subject**: Depending on type:
    - Feature: "What feature? What problem does it solve?"
    - TDD: "What behavior should the tests verify?"
    - Architecture: "What system? Any specific concerns?"
 3. **Scope**: "How deep? Quick outline or detailed plan?"
 
-**Surface.** The **Subject** phrasing branches on **Type**, so don't
+**Compatibility surface (Claude and hosts not yet reviewed).** The **Subject** phrasing branches on **Type**, so don't
 batch all three — ask **Type** first (a single `AskUserQuestion`) when
 it isn't already given by the `<what to plan>` argument. Once the type
 is known, **Subject** (a textarea) and **Scope** (quick / detailed) are
