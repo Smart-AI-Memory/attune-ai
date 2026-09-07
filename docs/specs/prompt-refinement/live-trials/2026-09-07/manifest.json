@@ -1,0 +1,13 @@
+{
+  "commit": "705004a8ac59a67473987b39f6a25173e1606c5f",
+  "cases_sha256": "423734087cfe5fdcd04d498b87312adc059655cdf9646ea397fe80fb0d40f188",
+  "files": {
+    "src/attune/prompt_refinement.py": "69565cd60b33ed102529fc0cf6ebdf899550fdf954810ebc967812fec86c345f",
+    "plugin/hooks/prompt_refinement.py": "0c46cc6cb4d69fa22de195c6061ff77d63dd74a62a8c97912708632d9ab649bb",
+    "plugin/hooks/_sdk_gate.py": "5bdf20ba5f5b3984788551331a438cdbef6d4547d1840bdb0d5632401e7a05fa",
+    "plugin/hooks/hooks.json": "da3fea54006d0accf20d518ea4879738c47f53ace2892c561b986fe874283ae7",
+    "src/attune/mcp/server.py": "61d8b666c7478cf75cb44b54ddeac3850685671384fa96d5212ccfb50ab82b45"
+  },
+  "scope": "Scripted real CLI conversations, not desktop rendering or human outcome evidence",
+  "max_user_turns_per_host": 11
+}

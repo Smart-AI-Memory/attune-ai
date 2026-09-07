@@ -1,0 +1,34 @@
+{
+  "variant": "refined",
+  "source_hashes": {
+    "src/attune/prompt_refinement.py": "397fcc8894a7b79dc8fff826977e64a32c10f3a39306b352b323a7003c783ab7",
+    "src/attune/mcp/tool_schemas.py": "b2f94a1ddd7e8af485aed5f8a86ef28324f097b0a86851c3f8860ea248666a5e"
+  },
+  "planned_cases": {
+    "codex": [
+      "clear",
+      "vague",
+      "off_restart"
+    ],
+    "claude": [
+      "clear",
+      "vague",
+      "polish_only"
+    ]
+  },
+  "state_fixture": "off_restart will start with an explicitly seeded false preference in the refined Codex temporary home; no previous-run results are overwritten.",
+  "codex_disposition": "Stronger tool description did not produce a status lookup in either clear or vague follow-up. Metadata change reverted; planned off_restart follow-up not run after repeated noncompliance.",
+  "claude_source_hashes": {
+    "src/attune/prompt_refinement.py": "397fcc8894a7b79dc8fff826977e64a32c10f3a39306b352b323a7003c783ab7",
+    "src/attune/mcp/tool_schemas.py": "30ec51c2726fc88dc6b0f0dbe08fa14a9a8f5928f7526387b5950ccfc4b4fb8a"
+  },
+  "final_policy": {
+    "source_sha256": "4ae96b609de43c4de8d88b463e8b907b7a2a91e29bebcb2f0bd686b9070ff30e",
+    "planned_cases": {
+      "claude": [
+        "polish_only"
+      ]
+    },
+    "reason": "Reviewer identified overly broad ban on proposed scope; candidate still invented approval timing. Permit labeled proposed scope and preserve unspecified approval wording."
+  }
+}

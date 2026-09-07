@@ -1,6 +1,8 @@
 # Automatic prompt refinement
 
-**Status:** draft (2026-09-07) — implementation in PR #2454; host trials pending.
+**Status:** implementation merged in PR #2454; scripted CLI host trials completed
+2026-09-07. Installed desktop and human interaction validation remain pending.
+See [live host results](live-host-trials.md).
 
 This spec records Patrick's request on
 2026-09-07 UTC: assess every incoming prompt, gather information while polishing
@@ -48,8 +50,12 @@ end with an editable prompt; previously authorized work may continue once clear.
    `prompt_refinement` exposes live status and preference changes without needing
    prompt text. A host may ignore server instructions. Protocol delivery is not
    evidence of host obedience or access to every chat message.
-3. Planning skill: reuses that turn's policy or checks the tool before scoping.
-4. Python consumers: call `refinement_status` at their incoming-message boundary
+3. Codex CLI: an explicitly configured and trusted UserPromptSubmit hook can
+   deliver the same policy each turn. Eleven real CLI turns verified this route
+   on 0.153.4; MCP-only initialization did not reliably cause per-turn lookups.
+   Normal interactive trust setup and desktop installation remain unverified.
+4. Planning skill: reuses that turn's policy or checks the tool before scoping.
+5. Python consumers: call `refinement_status` at their incoming-message boundary
    and deliver the returned instructions to their LLM. Simply importing Attune
    does not intercept a third-party application's prompts.
 
