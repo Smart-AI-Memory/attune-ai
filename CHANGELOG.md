@@ -17,10 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Claude planning guidance now prefers the host's built-in `AskUserQuestion`
-  for ordinary scoping requests, asks schema-unrepresentable fields as typed
-  questions, and treats an interrupted call as cancellation. The Attune
-  widget and server route are experimental on Claude; desktop rendering and
-  keyboard acceptance remain pending observation.
+  for ordinary scoping requests, renders the Attune widget through
+  `show_widget` for the constructs the control cannot carry on widget-capable
+  hosts (desktop Code tab, Cowork; acceptance observed 2026-09-07), falls
+  back to one typed question for a single simple field or the markdown
+  skeleton for a structured form, and treats an interrupted or dismissed
+  call as cancellation (host-surface-parity D17). The Attune server route
+  and native MCP elicitation stay experimental on Claude.
 
 - Codex planning guidance now prefers built-in questions and handles pending
   asynchronous replies, corrections, and cancellation explicitly. Attune forms

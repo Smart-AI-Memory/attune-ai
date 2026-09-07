@@ -563,16 +563,20 @@ The native control carries the decision-shaped constructs too:
 
 ### Constructs the native control cannot express
 
-`ranking` (no ordering control), `triage` over four items, and the
-`number` / `date` / `textarea` fields have no honest `AskUserQuestion`
-shape. For these, and only these, build the `FormSchema` via
-`attune.elicitation.form_from_dict` and render
-`form_to_widget_html(form)` on a widget-capable session. Where no
-widget exists, or the user is in keyboard mode, use the typed fallback
-(`form_to_markdown` skeleton, deterministic parse) and never silently
-drop the field. Otherwise the widget and Attune forms are experimental
-in this repository too: use them only when the user asks for a form or
-a trial.
+`ranking` (no ordering control), `triage` over four items, the
+`number` / `date` / `textarea` fields, and a library-routed
+`assumption_review` (its edit lane is a text question; an agent-composed
+card with accept / reject and one edit through "Other" stays legal) have
+no honest `AskUserQuestion` shape. For these, and only these, build the
+`FormSchema` via `attune.elicitation.form_from_dict` and render
+`form_to_widget_html(form)` through `show_widget` on a widget-capable
+session (D17; desktop acceptance observed 2026-09-07). Where no widget
+exists, or the user is in keyboard mode: one typed question for a single
+`number` / `date` / `textarea`; the `form_to_markdown` skeleton with a
+deterministic parse for a ranking, triage, assumption review, or any
+multi-field form. Never silently drop a field. Otherwise the widget and
+Attune forms are experimental in this repository too: use them only when
+the user asks for a form or a trial.
 
 ### Two grammars, two directions — not a ranking
 

@@ -114,36 +114,55 @@ A correction replaces the affected answer; it never restarts intake.
 Answers scope the work; they do not grant additional action authority.
 
 **Synchronous lifecycle:** `AskUserQuestion` blocks until the user
-submits, and its tool result carries the answers keyed by question text
-(a multi-select answer lists the chosen labels). Only that returned
-answer set is a reply; a rendered question, elapsed time, or a highlighted
-option is not. A call the user interrupts or dismisses supplies no
-answers and is the user's cancellation: stop dependent work, do not
-re-post the same questions automatically, and respond to what the user
-says next. A call that errors, or a tool that is absent or reported
-unsupported, is a tool failure, not a user decision: say so, keep any
-answers already returned, and ask a concise conversational question
-without claiming a control was shown. When the user answers some
+submits, and its tool result carries the answers keyed by question text.
+A multi-select answer lists the chosen labels joined by a bare comma; a
+question left blank comes back as the literal `[No preference]`; the
+recommended option's label comes back with its " (Recommended)" suffix,
+so match on the label you emitted. Only that returned answer set is a
+reply; a rendered question, elapsed time, or a highlighted option is not.
+A call the user interrupts or dismisses supplies no answers and is the
+user's cancellation — on the desktop it arrives either as a tool error
+that ends the turn or as a result whose every value is
+`[User dismissed — do not proceed, wait for next instruction]`; treat
+both alike: stop dependent work, do not re-post the same questions
+automatically, and respond to what the user says next. A call that
+errors, or a tool that is absent or reported unsupported, is a tool
+failure, not a user decision: say so, keep any answers already returned,
+and ask a concise conversational question without claiming a control was
+shown. When the user answers some
 questions in prose instead, retain those answers and ask only the
 remainder once.
 
-**Controls the schema cannot represent:** there is no number, date, or
-long-text control, and options cap at four. State the expected answer
-format and ask a concise typed question, or use a two-tier picker
-(category, then item) for more than four options; validate the typed reply
-against what you asked and never silently drop the field. Do not switch to
-an experimental renderer to represent it unless the user asked for a form.
+**Controls the schema cannot represent (D17 ladder):** options cap at
+four and there is no ordering, number, date, or long-text control, so
+`ranking`, `triage` over four items, `assumption_review` (its edit lane
+is a text question), `number`, `date`, and `textarea` do not fit. On a
+widget-capable Claude host (the desktop Code tab, Cowork) render the
+Attune widget: `elicitation_render_widget`, then pass its `html` to
+`show_widget` — the MCP Apps card does not paint on the Code tab, and
+`show_widget` is the path that does — and validate the post-back through
+`elicitation_collect_response` with the render's `instance_id`. Desktop
+acceptance was observed 2026-09-07: render, keyboard-only operation,
+submit, and a validated collect. Where no widget exists or the user is
+in keyboard mode: for a single `number`, `date`, or `textarea`, state
+the expected format and ask one typed question; for a ranking, a triage
+board, an assumption review, or any multi-field form, relay the
+`form_to_markdown` skeleton and parse the reply deterministically with
+`markdown_to_answers`. Never silently drop a field. For more than four
+options on an otherwise expressible question, use a two-tier picker
+(category, then item) on the native control.
 
-**Experimental on Claude for ordinary requests:** the Attune widget
-(`elicitation_render_widget` → `show_widget`, present only on
-widget-capable hosts such as the desktop Code tab and Cowork), the Attune
-server route (`elicitation_route_form`), and native MCP elicitation
-(`elicitation_ask`, which Claude Code has auto-declined without rendering;
-decisions D10). Use them only for an explicitly requested Attune-form
-interaction or trial, following the sections below; availability does not
-make them the default. Visible rendering, keyboard operation, partial
-submission, and dismissal behavior of `AskUserQuestion` on the desktop
-app are pending observation — do not claim them from the schema alone.
+**Still experimental on Claude:** the Attune server route
+(`elicitation_route_form`) and native MCP elicitation (`elicitation_ask`,
+which Claude Code has auto-declined without rendering; decisions D10).
+Use them only for an explicitly requested Attune-form interaction or
+trial, following the sections below; availability does not make them the
+default. Observed on the desktop Code tab 2026-09-07: one- and
+four-question `AskUserQuestion` cards render, a partially answered card
+submits, dismissal returns no answers, and the widget path above round
+trips. Still pending: discovery of this guidance on a fresh ordinary
+request, a terminal render, and free text through "Other" — do not claim
+those.
 
 ### Antigravity: enhanced prompts; native forms experimental
 
