@@ -188,22 +188,24 @@ def replay_renderer_evidence() -> tuple[list[dict[str, Any]], dict[str, dict[str
     evidence = {}
     descriptions = {record["id"]: record for record in installed_renderers()}
     for record in rr.RENDERER_REGISTRY:
+        # route_active belongs to host-native targets only; on any other
+        # surface it is malformed and refused before a single projection runs.
         for target in record.targets:
-            if target.status == "route_active":
-                suffix = (
-                    "surface:RICH"
-                    if target.surface == "rich"
-                    else (
-                        f"host-native:{target.target_id}"
-                        if target.surface == "host_native"
-                        else target.target_id
-                    )
-                )
+            if target.status == "route_active" and target.surface != "host_native":
+                suffix = "surface:RICH" if target.surface == "rich" else target.target_id
                 raise SurfaceRegistryError(
-                    f"renderer:{record.record_id}:{suffix}: route_roundtrip requires installed adapter/profile evidence"
+                    f"renderer:{record.record_id}:{suffix}: route_roundtrip requires "
+                    "installed adapter/profile evidence"
                 )
-        outputs = {target.target_id: _project(record, target) for target in record.targets}
-        for target in record.targets:
+        # A route-active host-native target is evidenced only through a
+        # registered HostQuestionAdapter (host-surface-parity Task 2). Until one
+        # exists it yields no declaration and no receipt: compatibility
+        # projection can never stand in for route_roundtrip evidence, and the
+        # obligation itself is absent until the host profile is registered
+        # (``surface_registry.route_active_without_profile``).
+        replayable = [t for t in record.targets if t.status != "route_active"]
+        outputs = {target.target_id: _project(record, target) for target in replayable}
+        for target in replayable:
             if target.surface not in {"rich", "host_native"}:
                 continue
             suffix = (

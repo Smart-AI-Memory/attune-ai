@@ -876,10 +876,12 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
         }
         if recommended == "widget":
             result["surface_note"] = (
-                "The router recommends the widget for this form (D21 — the "
-                "rich surface is the default). AskUserQuestion will flatten "
-                "it. Use elicitation_render_widget unless the client cannot "
-                "render widgets or the user is in keyboard mode."
+                "The router recommends the widget for this form: the host's "
+                "question control cannot carry it without loss (a control it "
+                "lacks, too many questions or options, a ranking, or two "
+                "questions with the same text — host-surface-parity D17). Use "
+                "elicitation_render_widget unless the client cannot render "
+                "widgets or the user is in keyboard mode."
             )
         return result
 

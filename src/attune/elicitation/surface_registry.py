@@ -416,7 +416,27 @@ def _projection_targets(subject: dict, routes: set[str]) -> dict[str, dict]:
     return resolved
 
 
-def _enhanced(owner: dict[str, Any], prefix: str) -> dict[str, dict[str, Any]]:
+def route_active_without_profile(target: dict[str, Any], profiles: dict[str, Any]) -> bool:
+    """A route-active host-native target whose profile is not yet registered.
+
+    The installed package may ship a route-active target before this
+    consumer has locked its host profile and adapter (host-surface-parity
+    AF-2 boundary: the consuming obligation is *absent and ineligible, not
+    red*, until Task 2 registers the profile). Such a target derives no
+    obligation, is never replayed, and can never be satisfied by
+    compatibility evidence. Registering the profile in ``host_profiles``
+    is the act that makes the obligation exist.
+    """
+    return (
+        target.get("surface") == "host-native"
+        and target.get("status") == "route_active"
+        and target.get("profile_id", "") not in profiles
+    )
+
+
+def _enhanced(
+    owner: dict[str, Any], prefix: str, profiles: dict[str, Any] | None = None
+) -> dict[str, dict[str, Any]]:
     obligations = {}
     targets = owner.get("targets", [])
     _index(targets, f"{prefix} target")
@@ -431,6 +451,8 @@ def _enhanced(owner: dict[str, Any], prefix: str) -> dict[str, dict[str, Any]]:
         surface = target["surface"]
         _require(surface in SURFACES | {"host-native"}, prefix, f"unknown target surface {surface}")
         if surface not in {"RICH", "host-native"}:
+            continue
+        if route_active_without_profile(target, profiles or {}):
             continue
         suffix = "surface:RICH" if surface == "RICH" else f"host-native:{target['id']}"
         key = f"{prefix}:{suffix}"
@@ -449,7 +471,7 @@ def required_obligations(registry: dict[str, Any]) -> dict[str, dict[str, str]]:
     _require(bool(renderers), "renderers", "empty registry")
     result: dict[str, dict[str, str]] = {}
     for rid, record in renderers.items():
-        result.update(_enhanced(record, f"renderer:{rid}"))
+        result.update(_enhanced(record, f"renderer:{rid}", profiles))
     for sid, subject in subjects.items():
         _validate_subject(subject, subjects, profiles)
         result.update(_enhanced(subject, f"subject:{sid}"))
