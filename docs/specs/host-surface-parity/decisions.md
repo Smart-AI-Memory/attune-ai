@@ -923,10 +923,11 @@ user is in keyboard mode. The widget and Attune forms are otherwise on
 explicit request only. `.claude/CLAUDE.md`'s Socratic Interaction Rule
 was rewritten accordingly.
 
-Lead's reading, stated as such: the widget-for-non-expressible clause
-applies to this repository's dev sessions (dogfooding), not to the
-shipped `elicit` skill, whose Claude host default keeps the typed
-fallback until desktop acceptance is observed. The confirm-on-trigger
+Lead's reading, confirmed by the chair ("agreed", 2026-09-07): the
+widget-for-non-expressible clause applies to this repository's dev
+sessions (dogfooding), not to the shipped `elicit` skill, whose Claude
+host default keeps the typed fallback until desktop acceptance is
+observed. The confirm-on-trigger
 calibration is ruled for dev sessions by this entry; the
 socratic-ambiguity-calibration spec remains the place for the
 product-level version and its measurement. `select_form_surface` in
