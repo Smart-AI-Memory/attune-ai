@@ -293,17 +293,37 @@ as pickable work.
 
 ### Artifact selection
 
-- Match the artifact to the work before non-trivial implementation and
-  name the selected tier in the session contract:
-  - **Inline edit** — trivial, one file, no ambiguity.
-  - **Structured one-shot** — single-session work framed by a goal,
-    constraints, and acceptance criteria.
-  - **XML task** — dependent work across three or more files, or work
-    that must be executable as a cold handoff.
-  - **Spec** — multi-session or multi-PR work, design ambiguity, or an
-    irreversible choice.
-- Escalate the artifact tier when ambiguity or dependencies grow; do
-  not add ceremony to work that still fits a smaller tier.
+This section owns artifact tiers and shared communication requirements.
+Choose by consequence, ambiguity, dependency and continuity needs; file
+count is a signal, not a cutoff. Preserve existing workflow and consumer
+contracts before choosing a lighter tier. Check spec and XML-task needs before
+settling on a structured one-shot.
+
+- **Inline edit** — a clear, low-risk change in shared context with no dependent work.
+  The request still establishes the intended result; no separate plan is needed.
+- **Structured one-shot** — bounded single-session work framed by a goal,
+  relevant context, constraints and acceptance criteria. A clarity-enhanced prompt makes these
+  explicit; it may be a short request in the conversation, without a new file,
+  when the other tiers are unnecessary.
+- **XML task** — eligibility, required task information and parser-sensitive
+  format rules are canonical in
+  `.claude/rules/attune/xml-enhanced-prompts.md` ("When to Use" and schema).
+  Reference those criteria; do not restate them in another selection guide.
+- **Spec** — multi-session or multi-PR work, unresolved design ambiguity,
+  or a premise or irreversible choice needing a recorded decision. Carry requirements,
+  decisions, acceptance criteria and executable tasks; those tasks may use XML.
+
+Match the communication to its purpose, adding only information that matters:
+exploration surfaces uncertainty and alternatives; planning establishes scope,
+constraints and acceptance criteria; execution states actions, boundaries and
+verification; review connects findings to evidence and consequences; approval
+identifies the concrete action and authority being granted. These requirements
+apply across conversation, structured text and forms. A form is an optional
+communication surface, not an artifact tier or a grant of authority.
+
+Name the selected tier in the session contract before non-trivial implementation. Escalate when the
+work requires it; brevity does not waive necessary information, and rigor
+does not require a separate artifact for a clear inline change.
 
 ### Verification receipts
 

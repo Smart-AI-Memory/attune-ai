@@ -22,30 +22,21 @@ or omission.
 
 ## When this routine fires
 
-Any request that meets at least one of:
-
-- Touches 3+ files
-- Involves a design decision with more than one defensible answer
-- Could be executed multiple ways with materially different cost
-  or scope
-- References a premise that should be measured before
-  implementation
-
-For trivial work (single-file edits, bug fixes, config tweaks per
-`xml-enhanced-prompts.md`'s "Do NOT use" list), this routine does
-NOT fire. Just do the work.
+Use the [shared contract's artifact tiers](../../../content/collaboration/contract.md#artifact-selection)
+to decide whether the work needs a separate artifact. The routine fires when
+it does. An inline edit can proceed directly once its intended result is
+clear. A change category or file count alone does not make work trivial.
 
 ---
 
 ## Decision tree
 
 ```text
-Is this trivial per xml-enhanced-prompts.md?
-├─ YES → Just do it. No artifact.
+Is an inline edit allowed by the shared contract and existing workflow?
+├─ YES → Execute the clear request; no separate artifact.
 └─ NO  → continue
 
-Does this need decision recording, premise validation,
-or multi-session coordination?
+Does this need a spec under the shared contract?
 ├─ YES, and NO spec exists for it → Spec via /spec
 │        Within the spec, individual tasks use XML-enhanced
 │        prompts per xml-enhanced-prompts.md criteria.
@@ -60,9 +51,13 @@ or multi-session coordination?
 └─ NO  → continue
 
 Does this meet xml-enhanced-prompts.md's "When to Use" criteria?
-├─ YES → Single (or several) XML-enhanced prompts
-└─ NO  → Just do it inline
+├─ YES → XML-task contract; follow the canonical format rules.
+└─ NO  → Structured one-shot under the shared contract.
 ```
+
+The shared contract owns tier definitions and communication requirements.
+The spec and XML checks precede the one-shot fallback so a shorter prompt
+cannot bypass their requirements. Specs can contain executable task prompts.
 
 XML-enhanced prompt criteria are canonical in
 `xml-enhanced-prompts.md`. This file does not duplicate them. If
@@ -185,9 +180,8 @@ hard stop.
   in full, with the origin and how-to-apply
 - `.claude/rules/attune/xml-enhanced-prompts.md` — canonical for
   XML prompt criteria and schema
-- `.claude/CLAUDE.md` — Critical Rules section names when to use
-  XML format; Lessons Learned section has the "Version bumps touch
-  7+ files" checklist that `release-notes` references
-- `docs/implementation/TASK_PROMPTS.md` — 10 executed XML prompt
-  examples showing the spec → tasks → XML-prompts nesting
+- `.claude/CLAUDE.md` — Critical Rules references canonical artifact
+  selection; provider-specific instructions remain outside the generated block
+- `content/collaboration/contract.md` — canonical artifact tiers and
+  communication requirements; edit its master and regenerate projections
 - `/spec` command — spec-driven workflow with approval loop
