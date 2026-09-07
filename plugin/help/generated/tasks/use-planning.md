@@ -14,13 +14,13 @@ Invoke with: `/planning <what to plan: feature, tdd, architecture>`
 ## Steps
 
 1. **Define type**
-   "What kind of planning? Feature spec, TDD approach, or architecture review?"
+   "What kind of planning? Feature spec, TDD approach, or architecture review?" Skip when the request implies the type.
 
 2. **Define subject**
    Depending on type: - Feature: "What feature? What problem does it solve?" - TDD: "What behavior should the tests verify?" - Architecture: "What system? Any specific concerns?"
 
 3. **Define scope**
-   "How deep? Quick outline or detailed plan?" **Surface.** The **Subject** phrasing branches on **Type**, so don't
+   "How deep? Quick outline or detailed plan?" **Compatibility surface (Claude and hosts not yet reviewed).** The **Subject** phrasing branches on **Type**, so don't
    batch all three — ask **Type** first (a single `AskUserQuestion`) when
    it isn't already given by the `<what to plan>` argument. Once the type
    is known, **Subject** (a textarea) and **Scope** (quick / detailed) are
