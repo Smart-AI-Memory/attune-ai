@@ -194,14 +194,18 @@ buttons plus an empty unranked pool, headed "Ranked 4/4 proposed"; the
 triage renders six radiogroups. Every control is a native element with a
 `:focus-visible` outline, so Tab reach is plausible and unobserved.
 
-Finding for the forms repo, stated as an observation and not a bug claim:
-`suggested` on the ranking pre-fills the ranked list, and `suggested` on
-the triage pre-checks one radio per row, so an untouched Submit posts the
-proposals as the answer. The schema text calls a suggestion "a visible
-proposal, never the answer". Whether the renderer should leave the answer
-empty until the user acts is a forms-repo question (thread 4 territory).
+Observation for the forms repo, not a bug claim: `suggested` on the
+ranking pre-fills the ranked list, and `suggested` on the triage pre-checks
+one radio per row, so an untouched Submit posts the proposals as the
+answer. The renderer's own docstring (`attune_forms/widget.py`, read this
+session) states this is D2-c by design: "submitting without touching it
+posts the proposal — that submit IS the confirmation, and the badge is
+what makes it visible rather than silent." The open question is narrower
+than a bug: whether a required field with a suggestion should demand a
+touch, or log an accepted-untouched flag for calibration. Filed as an
+attune-forms issue at Patrick's direction (card pick below).
 
-Pending, needs Patrick at the keyboard: paint of all five controls;
+Pending at 19:06Z, resolved in the result section below: paint of all five controls;
 keyboard-only operation of the ranking buttons, the radios, the number
 spinner, the date picker and the textarea; Submit; the
 `__elicitation_response__` post-back arriving in this session;
@@ -212,8 +216,130 @@ land, the D16 caveat on these constructs stands unchanged.
 
 ### Other state at write time
 
-- #2461 open; its Tests workflow was still in progress (Windows lane and
-  coverage pending, nothing failed).
+- #2461 was open with its Tests workflow in progress when this section
+  began; it merged at 19:15:09Z as 46816577b.
 - Codex Task 1B increment 2 exists as branch
   `codex/host-surface-parity-task1b-increment2` at 1efa08406 in worktree
   9c6c; no PR yet.
+
+### Trial (b) result — submitted and validated at 19:12Z
+
+Patrick submitted the widget from this session about six minutes after the
+render. Evidence chain, each row with its basis:
+
+| Step | Evidence |
+| --- | --- |
+| Post-back | The `__elicitation_response__` payload arrived as a user message carrying instance `10404e263dd242a2b3e4e9b63466fcf8`, the render's id; only the widget's own script writes that field |
+| Collect | `elicitation_collect_response` with that instance id returned success and `resp-20260907-151254-6baac98d` |
+| Telemetry | `form_submitted` for form cf43dd900008 with the same instance id at 19:12:54.379Z, the same second as the response id (15:12:54 US-Eastern) |
+| Render to submit | 6 min 35 s wall clock, which includes the lead writing this probe; not a UX latency |
+
+Answers as validated: the ranking came back reordered to Codex Task 1B
+review first, then desktop trials, the Socratic metric, and the forms
+flip, so the ranking control was operated and the suggestion was not
+simply accepted. The triage kept every suggestion (five observe today,
+discovery defer). Number 45. Date 2026-09-07. Attestation verbatim: "It
+worked and worked well."
+
+Attested by Patrick: paint and successful completion of all five controls
+and Submit on Fable 5.1 in the desktop Code tab. Not yet attested at this
+point: whether the operation was keyboard-only; that is asked next, on the
+trial (a) one-question card. Number bounds, date-picker behavior and
+textarea resizing were not separately reported.
+
+### Trial (a) live observations — same session, Patrick at the keyboard
+
+Patrick ruled five items "observe today" on the widget, so the lead ran
+them here with real questions. The host control itself is under test; the
+skill discovery item stays deferred until the plugin cache is refreshed.
+
+#### One-question card (19:14Z)
+
+- Call: one single-select question, three options, no `metadata`. The
+  operator-local `~/.claude/hooks/ask_question_format_guard.py` (99 lines,
+  read this session) blocked it because the first option did not end in
+  "(Recommended)". Its rules, read from the file: more than one question
+  needs `metadata.source` containing "form"; at most four questions; the
+  first option of every single-select question must end in
+  "(Recommended)"; multi-select questions are exempt. The call was retried
+  with the marker disclosed in the question text as hook-mandated.
+- Tool result, shape verbatim: `Your questions have been answered:
+  "<full question text>"="Keyboard only (Recommended)". You can now
+  continue with these answers in mind.` The answer is the option LABEL,
+  marker included, keyed by the full question text, wrapped in prose
+  rather than JSON.
+- Attested by Patrick's pick: keyboard-only operation of the widget,
+  ranking move buttons included (the option text he chose says so). The
+  card itself rendered, evidenced by the answer arriving; paint details
+  were not described. Whether this card was completed keyboard-only is
+  asked on the next card.
+- Finding, guard versus ruling: the local guard forces a recommended
+  option on every single-select question. D16 rules that a confirm gate
+  carries NO recommended option, and the elicit skill says to put a
+  recommendation first only when justified. On this host the guard wins
+  mechanically, so a confirm gate or a factual attestation cannot be
+  asked as ruled without either a multi-select workaround or a guard
+  change. Operator infrastructure, not a shipped hook; Patrick's call.
+
+#### Multi-question card with a deliberate blank (19:16Z)
+
+- Call: four questions in one call with `metadata.source` set to
+  `elicit-form`; three single-select (first option marked "(Recommended)"
+  to satisfy the guard) and one multi-select. Question 3 asked Patrick to
+  leave it unanswered and submit; question 4 asked for keyboard
+  attestation on the native cards themselves.
+- Tool result, shape verbatim: `The user answered: "<q1 text>"="<label>",
+  "<q2 text>"="<label>", "<q3 text>"="[No preference]", "<q4
+  text>"="Previous card: keyboard only,This card: keyboard only,Used the
+  mouse somewhere". Read the answers carefully — they may request
+  clarification, changes, or that you not proceed — and follow what they
+  actually say.` The prefix differs from the one-question shape. A
+  skipped question comes back as the literal string `[No preference]`.
+  Multi-select answers are the chosen labels joined by commas with no
+  spaces. Free text through "Other" was not exercised.
+- Observed: a partially answered call CAN be submitted on the desktop
+  Code tab, and the result names the skipped question with
+  `[No preference]` rather than omitting it. The elicit skill's "retain
+  valid prior answers and ask only the remainder" clause therefore has a
+  concrete trigger string on this host.
+- Rulings carried by the same card: Patrick runs the plugin refresh
+  after this session (so the discovery trial stays deferred today); the
+  suggested-prefill observation goes to an attune-forms issue.
+- Keyboard attestation for the native cards: Patrick selected all three
+  options, including "Used the mouse somewhere", so keyboard-only
+  completion of the native cards is NOT cleanly attested; where the mouse
+  came in was not localized. The widget's keyboard-only attestation from
+  the one-question card stands on its own.
+
+#### Dismissal card (19:18Z)
+
+- Call: one single-select question asking Patrick to dismiss the card
+  with Escape instead of answering.
+- Tool result on dismissal, verbatim: `The user doesn't want to proceed
+  with this tool use. The tool use was rejected (eg. if it was a file
+  edit, the new_string was NOT written to the file). STOP what you are
+  doing and wait for the user to tell you how to proceed.` The transcript
+  carried `[Request interrupted by user for tool use]`, the assistant turn
+  ended, and no answers were returned. The string is the host's generic
+  tool-rejection message, not question-specific; a rejected Edit produces
+  the same text.
+- Patrick then confirmed in prose that he pressed Escape as the script
+  asked. This matches the elicit skill's clause that an interrupted or
+  dismissed call supplies no answers and is the user's cancellation: the
+  lead stopped, did not re-post the card, and continued only on his next
+  message.
+
+#### Trial (a) status after the live cards
+
+| Item | Status | Basis |
+| --- | --- | --- |
+| One-question card renders | observed | answer returned; paint attested by use, not described |
+| Multi-question card renders | observed | four-question answer set returned |
+| Keyboard-only completion | attested for the widget; not clean for the native cards | Patrick's picks (see the two cards above) |
+| Partial call can be submitted | observed | skipped question returned as `[No preference]` |
+| Tool result on dismissal | observed | generic rejection text, turn ended, no answers |
+| Fresh flower-shop request discovers #2459 | deferred | plugin cache stale; Patrick refreshes after this session |
+
+Not observed: a terminal Claude Code rendering, free text through
+"Other", and the desktop card's paint details (layout, focus ring,
+option descriptions). These remain pending.
