@@ -43,12 +43,15 @@ remain necessary for conversational behavior claims.
 | Guide navigation | scripts/audit_docs_wiring.py --check nav --format json | No findings |
 | Published docs | mkdocs build --strict using temporary docs dependencies | Passed |
 | Wheel includes usable module | Import from built .whl in a new subprocess; persist opt-out in temporary home | Passed |
+| Capability claims match the added tool | project_capabilities.py --write plus projector, claim-drift, website and tier tests | 127 passed; five generated claim surfaces refreshed |
 | Real host conversation | Vague task, clear task, terse reply, correction, persistent off/on, skip, polish-only | Not run |
 
 ## Next action
 
 Check CI on draft PR #2454. The initial hook lanes found an unparseable plain
 spec status line; the correction uses the corpus's `**Status:**` convention.
+The coverage preflight also found stale tool counts, repaired by the owning
+capability projector and verified by the related tests.
 After CI, run the host conversation
 matrix from `docs/specs/prompt-refinement/requirements.md` using the updated
 plugin/server in an isolated test session. Preserve raw results, including failures.
