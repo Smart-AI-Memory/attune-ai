@@ -154,3 +154,25 @@ matrix on that exact head. Keep #2450 draft while desktop acceptance is open.
 
 Release 16.3.0 remains deferred until CI repair, native-form integration, and
 installed-host/keyboard validation (phases 1–3) are complete, as Patrick requested.
+
+## Review suggestion cleanup (2026-09-07)
+
+Reviewed all five inline code-quality comments on #2450 at d02d7aa9c:
+3944576701/3944576706: use one direct runtime-module import throughout the
+runtime tests, including monkeypatch targets; no sys.modules indirection.
+3944660778: use that same import style in bootstrap tests. The suggested
+NATIVE_ROUTE.__module__ lookup is invalid because the route constant is a string.
+3944660784: use server.AttuneMCPServer consistently in both handler tests.
+3944660772: document expected CancelledError after cancelling the fixture server.
+
+The source comment changes the source-hashed fixture digest. The initial central
+suite caught 11 stale-receipt failures (259 passed), and independent review also
+identified the missing refresh. Accepted and regenerated the canonical receipts
+with scripts/project_surface_runtime.py --write. Only five fixture digests in
+both registry projections changed; implementation and result digests stayed equal.
+Central affected suites passed 270 tests; independent final review passed 37
+tests and found no remaining issues. Native evidence executable AST is unchanged.
+Pinned checks passed. Next: push, resolve the five review threads, and verify
+new-head CI. Production
+behavior, pending obligations, draft status, and desktop acceptance scope remain
+unchanged.

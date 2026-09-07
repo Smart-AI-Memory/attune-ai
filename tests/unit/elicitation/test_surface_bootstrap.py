@@ -13,6 +13,7 @@ except ModuleNotFoundError:
 import pytest
 from packaging.requirements import Requirement
 
+import attune.elicitation.surface_runtime as runtime_module
 from attune.elicitation import surface_bootstrap as bootstrap
 from attune.elicitation import surface_native_evidence as native
 from attune.elicitation.surface_registry import (
@@ -20,7 +21,6 @@ from attune.elicitation.surface_registry import (
     canonical_digest,
     route_evidence_missing,
 )
-from attune.elicitation.surface_runtime import NATIVE_ROUTE
 
 
 async def test_packaged_evidence_enables_only_the_receipted_route(tmp_path):
@@ -28,7 +28,7 @@ async def test_packaged_evidence_enables_only_the_receipted_route(tmp_path):
         pytest.skip("private key storage awaits Windows adapter")
     runtime = await bootstrap.create_surface_runtime(tmp_path)
     assert not route_evidence_missing(
-        runtime._registry, runtime._report, native.SUBJECT_ID, NATIVE_ROUTE
+        runtime._registry, runtime._report, native.SUBJECT_ID, runtime_module.NATIVE_ROUTE
     )
     assert route_evidence_missing(runtime._registry, runtime._report, native.SUBJECT_ID, "RICH")
     assert not runtime._report.complete
@@ -48,7 +48,7 @@ async def test_changed_or_missing_native_evidence_never_creates_key(
         row[f"{mutation}_digest"] = "0" * 64
     elif mutation == "mapping":
         owner = next(s for s in registry["subjects"] if s["id"] == native.SUBJECT_ID)
-        owner["route_projection_targets"][NATIVE_ROUTE] = "rich"
+        owner["route_projection_targets"][runtime_module.NATIVE_ROUTE] = "rich"
     else:
         registry["receipts"].remove(row)
         registry["pending_obligations"].append(
@@ -61,8 +61,6 @@ async def test_changed_or_missing_native_evidence_never_creates_key(
 
 
 async def test_executable_semantic_regression_invalidates_receipt(monkeypatch):
-    import attune.elicitation.surface_runtime as runtime_module
-
     original = runtime_module.form_to_elicitation_schema
 
     def broken(form):

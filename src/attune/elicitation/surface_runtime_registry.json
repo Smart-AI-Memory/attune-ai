@@ -987,7 +987,7 @@
     {
       "evidence_mode": "local_mcp_roundtrip",
       "fixture": "attune.elicitation.surface_native_evidence.replay_native_evidence",
-      "fixture_digest": "e9d861ae681e0416e0a5b835b5d0b327bc408be879f8a9765a126891f810f5ab",
+      "fixture_digest": "b0a0f75ba95fc9f1a9e4962511599c51d0d16bb4401205a98ccb724ca9bfeadc",
       "id": "lifecycle.subject.surface-native-elicitation.abort",
       "implementation_digest": "710e8fa80d19ca3cd22cd24015fcea6ca9281cb4f711baa3b672949fbf687dc6",
       "key": "lifecycle:subject:surface-native-elicitation:abort",
@@ -1001,7 +1001,7 @@
     {
       "evidence_mode": "local_mcp_roundtrip",
       "fixture": "attune.elicitation.surface_native_evidence.replay_native_evidence",
-      "fixture_digest": "e9d861ae681e0416e0a5b835b5d0b327bc408be879f8a9765a126891f810f5ab",
+      "fixture_digest": "b0a0f75ba95fc9f1a9e4962511599c51d0d16bb4401205a98ccb724ca9bfeadc",
       "id": "lifecycle.subject.surface-native-elicitation.timeout",
       "implementation_digest": "710e8fa80d19ca3cd22cd24015fcea6ca9281cb4f711baa3b672949fbf687dc6",
       "key": "lifecycle:subject:surface-native-elicitation:timeout",
@@ -1015,7 +1015,7 @@
     {
       "evidence_mode": "local_mcp_roundtrip",
       "fixture": "attune.elicitation.surface_native_evidence.replay_native_evidence",
-      "fixture_digest": "e9d861ae681e0416e0a5b835b5d0b327bc408be879f8a9765a126891f810f5ab",
+      "fixture_digest": "b0a0f75ba95fc9f1a9e4962511599c51d0d16bb4401205a98ccb724ca9bfeadc",
       "id": "lifecycle.subject.surface-native-elicitation.validation_feedback_delivery",
       "implementation_digest": "710e8fa80d19ca3cd22cd24015fcea6ca9281cb4f711baa3b672949fbf687dc6",
       "key": "lifecycle:subject:surface-native-elicitation:validation_feedback_delivery",
@@ -1029,7 +1029,7 @@
     {
       "evidence_mode": "local_mcp_roundtrip",
       "fixture": "attune.elicitation.surface_native_evidence.replay_native_evidence",
-      "fixture_digest": "e9d861ae681e0416e0a5b835b5d0b327bc408be879f8a9765a126891f810f5ab",
+      "fixture_digest": "b0a0f75ba95fc9f1a9e4962511599c51d0d16bb4401205a98ccb724ca9bfeadc",
       "id": "lifecycle.subject.surface-runtime-route-form.accept",
       "implementation_digest": "710e8fa80d19ca3cd22cd24015fcea6ca9281cb4f711baa3b672949fbf687dc6",
       "key": "lifecycle:subject:surface-runtime-route-form:accept",
@@ -1082,7 +1082,7 @@
     {
       "evidence_mode": "local_mcp_roundtrip",
       "fixture": "attune.elicitation.surface_native_evidence.replay_native_evidence",
-      "fixture_digest": "e9d861ae681e0416e0a5b835b5d0b327bc408be879f8a9765a126891f810f5ab",
+      "fixture_digest": "b0a0f75ba95fc9f1a9e4962511599c51d0d16bb4401205a98ccb724ca9bfeadc",
       "id": "route.surface-runtime-route-form.mcp-native.surface-native-elicitation.production_projection",
       "implementation_digest": "710e8fa80d19ca3cd22cd24015fcea6ca9281cb4f711baa3b672949fbf687dc6",
       "key": "route:surface-runtime-route-form:mcp-native:surface-native-elicitation:production_projection",

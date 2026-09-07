@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
+import attune.elicitation.surface_runtime as runtime_module
 from attune.elicitation import form_from_dict
 from attune.elicitation.surface_policy import SurfaceContextStore
 from attune.elicitation.surface_registry import (
@@ -12,7 +13,6 @@ from attune.elicitation.surface_registry import (
     canonical_digest,
     required_obligations,
 )
-from attune.elicitation.surface_runtime import NATIVE_ROUTE, SurfaceFormRuntime
 
 
 @pytest.fixture
@@ -26,17 +26,17 @@ def runtime():
                 "id": "form",
                 "subject_kind": "interactive_form",
                 "targets": targets,
-                "cold_routes": [NATIVE_ROUTE, "PORTABLE", "HEADLESS"],
-                "warm_routes": ["RICH", NATIVE_ROUTE, "PORTABLE", "HEADLESS"],
+                "cold_routes": [runtime_module.NATIVE_ROUTE, "PORTABLE", "HEADLESS"],
+                "warm_routes": ["RICH", runtime_module.NATIVE_ROUTE, "PORTABLE", "HEADLESS"],
                 "route_transport_refs": {
                     r: {"kind": "subject", "id": "transport"}
-                    for r in ("RICH", NATIVE_ROUTE, "PORTABLE", "HEADLESS")
+                    for r in ("RICH", runtime_module.NATIVE_ROUTE, "PORTABLE", "HEADLESS")
                 },
             },
             {
                 "id": "transport",
                 "subject_kind": "interaction_transport",
-                "transport_id": NATIVE_ROUTE.removeprefix("mcp-native:"),
+                "transport_id": runtime_module.NATIVE_ROUTE.removeprefix("mcp-native:"),
                 "form_subject_ids": ["form"],
             },
         ],
@@ -44,7 +44,9 @@ def runtime():
     keys = frozenset(required_obligations(registry))
     # Synthetic report for runtime behavior, never a production activation receipt.
     report = InventoryReport(keys, keys, frozenset(), frozenset(), canonical_digest(registry))
-    return SurfaceFormRuntime(SurfaceContextStore(b"x" * 32), registry, report, subject_id="form")
+    return runtime_module.SurfaceFormRuntime(
+        SurfaceContextStore(b"x" * 32), registry, report, subject_id="form"
+    )
 
 
 @pytest.fixture
@@ -93,16 +95,14 @@ def accepted():
 
 
 async def test_native_form_reject_reject_accept_renders_once(runtime, form, monkeypatch):
-    import attune.elicitation.surface_runtime as module
-
-    original = module.form_to_elicitation_schema
+    original = runtime_module.form_to_elicitation_schema
     calls = []
 
     def projection(value):
         calls.append(value)
         return original(value)
 
-    monkeypatch.setattr(module, "form_to_elicitation_schema", projection)
+    monkeypatch.setattr(runtime_module, "form_to_elicitation_schema", projection)
     transport = session(
         SimpleNamespace(action="accept", content={}),
         SimpleNamespace(action="accept", content={}),
@@ -123,10 +123,8 @@ async def test_native_form_reject_reject_accept_renders_once(runtime, form, monk
 
 
 async def test_missing_capability_or_evidence_never_renders(runtime, form, monkeypatch):
-    import attune.elicitation.surface_runtime as module
-
     monkeypatch.setattr(
-        module, "form_to_elicitation_schema", lambda _: pytest.fail("inadmissible renderer")
+        runtime_module, "form_to_elicitation_schema", lambda _: pytest.fail("inadmissible renderer")
     )
     transport = session(accepted())
     transport.client_params.capabilities.elicitation = None
@@ -212,10 +210,10 @@ async def test_mcp_handler_routes_through_server_owned_runtime(
 ):
     from unittest.mock import patch
 
-    from attune.mcp.server import AttuneMCPServer
+    import attune.mcp.server as server
 
-    with patch.object(AttuneMCPServer, "_register_plugin_tools"):
-        app = AttuneMCPServer(workspace_root=str(tmp_path), surface_runtime=runtime)
+    with patch.object(server.AttuneMCPServer, "_register_plugin_tools"):
+        app = server.AttuneMCPServer(workspace_root=str(tmp_path), surface_runtime=runtime)
     transport = session(SimpleNamespace(action="accept", content={"outcome": "Working form"}))
     monkeypatch.setattr(app, "_elicitation_session", lambda: (transport, "r"))
     raw = {
@@ -361,10 +359,10 @@ async def test_cancellation_and_deadline_leave_no_receipt(runtime, form):
 async def test_unconfigured_public_route_is_discoverable_but_fails_closed(tmp_path):
     from unittest.mock import patch
 
-    from attune.mcp.server import AttuneMCPServer
+    import attune.mcp.server as server
 
-    with patch.object(AttuneMCPServer, "_register_plugin_tools"):
-        app = AttuneMCPServer(workspace_root=str(tmp_path))
+    with patch.object(server.AttuneMCPServer, "_register_plugin_tools"):
+        app = server.AttuneMCPServer(workspace_root=str(tmp_path))
     assert "elicitation_route_form" in app.tools
     result = await app.call_tool(
         "elicitation_route_form",
@@ -430,7 +428,6 @@ async def test_selected_native_arm_refuses_different_route(runtime, form):
     from dataclasses import asdict
 
     from attune.elicitation.surface_policy import SurfaceBinding, SurfaceDecision
-    from attune.elicitation.surface_runtime import _present_native
 
     binding = SurfaceBinding(
         runtime.store.server_instance_id,
@@ -444,7 +441,7 @@ async def test_selected_native_arm_refuses_different_route(runtime, form):
     decision = SurfaceDecision("RICH", "missing_receipt", 0, (), "fixture", "fixture")
     transport = session(accepted())
     with pytest.raises(ValueError, match="different selected route"):
-        await _present_native(runtime.store, form, transport, "r", binding, decision)
+        await runtime_module._present_native(runtime.store, form, transport, "r", binding, decision)
     transport.elicit_form.assert_not_awaited()
     runtime.close()
     runtime.close()

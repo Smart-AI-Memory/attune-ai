@@ -119,6 +119,7 @@ async def _exchange(case: str) -> dict[str, Any]:
             try:
                 await task
             except asyncio.CancelledError:
+                # Expected after cancelling the fixture server task during teardown.
                 pass
     _check(bool(transcript), f"{case}: no elicitation crossed the stream")
     first_schema = transcript[0]["schema"]
