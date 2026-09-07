@@ -509,24 +509,67 @@ abstraction.
 
 ## Socratic Interaction Rule
 
-**Asking for more than one thing? That is a form. Build it before you
-write the sentence.**
+**Ask the material unknowns first, then execute — and when you ask,
+ask once.** This rule is Anthropic's default for Claude plus Attune's
+deltas (host-surface-parity D16, chair-ruled 2026-09-07). The baseline
+is the host's: on a routine call, assume the sensible reading, state
+the assumption, and proceed. Escalate to an ask only when the answer
+would change the work.
 
-Everything below elaborates that line. If you only remember one thing,
-remember that one — it is the case that fires most often and the case
-I most often get wrong, because prose is cheap to emit and a form costs
-a beat.
+### Ask when ANY of these holds
 
-**Build a form; don't hand-write a question turn.** (D21 — this rule
-used to name `AskUserQuestion`, and naming a tool got it executed as
-that tool, so the communication grammar almost never fired.) Construct
-a `FormSchema` via `attune.elicitation.form_from_dict` and let
-`select_form_surface` pick the surface. The widget is the default;
-`AskUserQuestion` is one of its fallbacks, not the starting point.
-When the session is widget-capable, render `form_to_widget_html(form)`
-on the widget surface — hand-writing an `AskUserQuestion` turn without
-consulting `select_form_surface` IS the D21 failure mode (re-hit live
-2026-08-02 on the /fix intake; caught by Patrick).
+- The choice changes scope, architecture, files, external state, or
+  acceptance criteria — or is hard to reverse.
+- Two or more readings of the request are genuinely valid and lead to
+  materially different work. Never guess on a genuine ambiguity.
+- Three or more alternatives, or two with tradeoffs worth stating
+  (the `decision` shape).
+- You are recommending against something the user named (the
+  `pushback` shape).
+- The answer is a number, a date, or free text longer than a phrase.
+
+When none holds, do not ask: assume, disclose the assumption in your
+report, and keep going. Ceremony is the failure mode this rule is most
+likely to cause.
+
+### One batched ask, on the host's native control
+
+When you do ask, gather every open dimension of the decision into ONE
+`AskUserQuestion` call, never N sequential turns: 1–4 questions, 2–4
+options each, the recommendation ordered first with " (Recommended)",
+free text through the built-in "Other" (do not add an Other option),
+and `metadata.source` set to `"elicit-form"` for a batch of more than
+one question (the format guard's opt-in). No `FormSchema` is needed on
+this path. Validate the returned answers against the questions you
+asked, retain partial answers, correct only the affected answer, and
+treat an interrupted or dismissed call as cancellation; an errored call
+is a tool failure, so say so and ask conversationally. The `elicit`
+skill's **Claude** host default is the full contract.
+
+The native control carries the decision-shaped constructs too:
+
+- `decision` / `pushback` — alternative or recommendation first,
+  tradeoffs in each option's `description`, the rationale as the
+  question's lead-in, richer notes in `preview`.
+- `progress` / `deliberation` — the summary in the question text, the
+  pickable items as options (two-tier picker beyond four).
+- `confirm` — exactly two options and **no recommended option**: a
+  pre-badged approval is what the construct exists to forbid.
+- `assumption_review` — one question per assumption (up to four per
+  call), accept / reject as options, edit through "Other".
+
+### Constructs the native control cannot express
+
+`ranking` (no ordering control), `triage` over four items, and the
+`number` / `date` / `textarea` fields have no honest `AskUserQuestion`
+shape. For these, and only these, build the `FormSchema` via
+`attune.elicitation.form_from_dict` and render
+`form_to_widget_html(form)` on a widget-capable session. Where no
+widget exists, or the user is in keyboard mode, use the typed fallback
+(`form_to_markdown` skeleton, deterministic parse) and never silently
+drop the field. Otherwise the widget and Attune forms are experimental
+in this repository too: use them only when the user asks for a form or
+a trial.
 
 ### Two grammars, two directions — not a ranking
 
@@ -535,68 +578,36 @@ opposite directions of the same exchange:
 
 | Direction | Grammar | When |
 |---|---|---|
-| I ask | a form | something genuinely needs settling |
+| I ask | a batched ask | something genuinely needs settling |
 | You answer | terse vocab (`y` / `go` / `1` / `→ X`) | it is already settled |
 
 A bare confirm is **not an ask** — it is you closing a loop I opened.
-Putting a form in front of `go` adds friction to the highest-frequency
+Putting an ask in front of `go` adds friction to the highest-frequency
 interaction in the loop. Do not do it.
 
-The failure mode this rule guards is not "used terse vocab where a form
-belonged." It is **mis-classifying a multi-dimension ask as a bare
-confirm** because prose is faster to write.
+The failure mode this rule guards is not "used terse vocab where a
+batched ask belonged." It is **mis-classifying a multi-dimension ask as
+a bare confirm** because prose is faster to write.
 
-### Fire a form when ANY of these holds
+### Examples
 
-- **Two or more independent dimensions must be settled** — batch them
-  into ONE form, never N sequential turns. This is the highest-value
-  case, and it is the headline above.
-
-  Build the `FormSchema` even when the surface ends up being
-  `AskUserQuestion`. It is a portable, validated artifact that renders
-  to every surface — `form_to_widget_html`, `form_to_elicitation_schema`,
-  and `form_to_askuserquestion` ("render a form to BATCHED
-  `AskUserQuestion` payloads"). Hand-writing the turn skips the
-  validation and pins you to one surface.
-
-  Actual limits, so you size the form rather than guess: **2–4 options
-  per question, 1–4 questions per call.** A batch of >1 question is
-  blocked by default by `ask_question_format_guard.py` and opts in via
-  `metadata.source` containing "form" (e.g. `"elicit-form"`) — a policy
-  default with a documented hatch, NOT a structural cap. Beyond 4
-  dimensions, split into a two-tier picker.
-- Three or more alternatives, or two with tradeoffs worth stating
-  (→ `decision` construct).
-- You are recommending against something the user named
-  (→ `pushback` construct).
-- The answer is a number, a date, or free text longer than a phrase.
-- The choice changes scope, architecture, files, external state, or
-  acceptance criteria — or is hard to reverse.
-
-### A raw button-turn is correct only when ALL of these hold
-
-One dimension, ≤3 options, no tradeoffs worth stating. Plus one
-standing exception: the user is in keyboard mode.
-
-(The terse-vocab path is not an exception here — see "two grammars"
-above. A bare confirm of a resolved referent is not a question turn at
-all, so this test never applies to it.)
-
-**Examples:**
-
-- "run tests" → one dimension, few options → button-turn is fine.
-- "security audit" → path + focus + depth → ONE form, three fields.
-- "review code" → area + focus + output shape → ONE form.
-- "commit" → files + change kind → ONE form.
+- "run tests" → routine; run them.
+- "audit src/ for secrets" → scope given; run it and disclose the depth
+  you chose.
+- "security audit" with nothing else → path + focus + depth → ONE
+  batched ask, three questions.
+- "commit" → files + change kind, when either is open → ONE batched
+  ask.
+- "retry 3x?" when backoff is better → `pushback` on the native
+  control.
 
 **Do NOT:**
 
-- Jump straight to running commands without scoping
 - Assume the user wants the broadest possible execution
-- Ask N sequential button-turns for what is one form
-- Pad a form with fields you don't need — ceremony is the failure mode
-  this rule is most likely to cause. If one dimension is genuinely all
-  you need, ask for one.
+- Ask N sequential button-turns for what is one batched ask
+- Re-ask a dimension the user already stated
+- Pad an ask with questions you don't need
+- Badge a recommended option on a confirm gate
 
 This rule applies to ALL workflow interactions, not just `/attune`.
 

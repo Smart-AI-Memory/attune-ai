@@ -106,5 +106,8 @@ multi-question call on the desktop app and on a terminal; keyboard-only
 completion; whether a partially answered call can be submitted; what the
 tool result reports when the user dismisses the card; and whether the
 revised guidance is discovered on a fresh ordinary planning request.
-When these are run, record tool returns separately from visible UI and
-user attestation, as the Codex section above does.
+Also pending after the D16 ruling: the Attune widget on Fable 5.1 for
+the constructs the native control cannot express (ranking, triage over
+four items, number, date, textarea) — render, submit, and keyboard
+operation. When these are run, record tool returns separately from
+visible UI and user attestation, as the Codex section above does.

@@ -48,9 +48,12 @@ experimental on Claude.
   `docs/specs/host-surface-parity/decisions.md` (D16 + open decision),
   `docs/probes/host-surface-parity/host-native-trials-2026-09-07.md`
   (Claude inspection addendum), `CHANGELOG.md`.
-- Decisions: D16 recorded. Open decision: whether `.claude/CLAUDE.md`'s
-  always-loaded Socratic rule adopts the Claude host default for this
-  repository's own dev sessions; deliberately not edited here.
+- Decisions: D16 recorded and RULED (chair, four question cards):
+  dev sessions follow Anthropic's default plus Attune's deltas; native
+  `AskUserQuestion` for the ten expressible types, widget for ranking,
+  triage over four, number, date, textarea on widget-capable sessions,
+  no recommended option on confirm gates. `.claude/CLAUDE.md`'s Socratic
+  Interaction Rule rewritten in this PR; spec open decisions back to none.
 - Risks or open questions: desktop rendering, keyboard operation, partial
   submission, and dismissal behavior of `AskUserQuestion` are unobserved.
   Native cards show less option context than the D21 widget (counter-case
@@ -72,6 +75,7 @@ experimental on Claude.
 | Whitespace | `git diff --check` | clean |
 | Different-model review | `run_review('.', seat='codex', mode='branch')` on gpt-6-astra (Codex CLI upgraded 0.144.6 → 0.153.4 with the chair's in-session pick; subscription login, no API spend) | 11 files sent / 0 omitted; 2 medium findings, both real and fixed (error-vs-dismissal split; plan-mode line narrowed); central re-run green |
 | Desktop `AskUserQuestion` behavior under this guidance | fresh desktop trial on a checkout carrying this branch | not run; pending |
+| Widget on Fable 5.1 for ranking / triage / number / date / textarea | render, submit, keyboard trial on the desktop app | not run; pending (Patrick: "we will need to test the use of widgets in fable 5.1") |
 
 ## Next action
 

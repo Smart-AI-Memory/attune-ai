@@ -13,27 +13,105 @@ Core UX principle: always guide users with questions before executing actions.
 
 ## Content
 
-**ALWAYS use `AskUserQuestion` to guide users through workflow discovery and scoping. NEVER skip straight to execution.**
+**Ask the material unknowns first, then execute — and when you ask,
+ask once.** This rule is Anthropic's default for Claude plus Attune's
+deltas (host-surface-parity D16, chair-ruled 2026-09-07). The baseline
+is the host's: on a routine call, assume the sensible reading, state
+the assumption, and proceed. Escalate to an ask only when the answer
+would change the work.
 
-This is the core design principle of Attune AI's developer experience. When a user invokes `/attune` or any workflow:
+### Ask when ANY of these holds
 
-1. **Initial discovery**: Use `AskUserQuestion` to understand their goal (what are you trying to accomplish?)
-2. **Scoping**: Use `AskUserQuestion` to narrow scope (which files? what test subset? what level of detail?)
-3. **Confirmation**: Use `AskUserQuestion` if there are meaningful choices before execution (approach, format, targets)
-4. **Then execute**: Only run CLI commands or tools after the user has been guided through the relevant decisions
+- The choice changes scope, architecture, files, external state, or
+  acceptance criteria — or is hard to reverse.
+- Two or more readings of the request are genuinely valid and lead to
+  materially different work. Never guess on a genuine ambiguity.
+- Three or more alternatives, or two with tradeoffs worth stating
+  (the `decision` shape).
+- You are recommending against something the user named (the
+  `pushback` shape).
+- The answer is a number, a date, or free text longer than a phrase.
 
-**Examples of when to ask:**
+When none holds, do not ask: assume, disclose the assumption in your
+report, and keep going. Ceremony is the failure mode this rule is most
+likely to cause.
 
-- User says "run tests" → Ask: which tests? full suite, CLI only, or quick smoke test?
-- User says "security audit" → Ask: which path? src/, tests/, or full project?
-- User says "review code" → Ask: which files or area? what focus (security, quality, performance)?
-- User says "commit" → Ask: which files to stage? what kind of change is this?
+### One batched ask, on the host's native control
+
+When you do ask, gather every open dimension of the decision into ONE
+`AskUserQuestion` call, never N sequential turns: 1–4 questions, 2–4
+options each, the recommendation ordered first with " (Recommended)",
+free text through the built-in "Other" (do not add an Other option),
+and `metadata.source` set to `"elicit-form"` for a batch of more than
+one question (the format guard's opt-in). No `FormSchema` is needed on
+this path. Validate the returned answers against the questions you
+asked, retain partial answers, correct only the affected answer, and
+treat an interrupted or dismissed call as cancellation; an errored call
+is a tool failure, so say so and ask conversationally. The `elicit`
+skill's **Claude** host default is the full contract.
+
+The native control carries the decision-shaped constructs too:
+
+- `decision` / `pushback` — alternative or recommendation first,
+  tradeoffs in each option's `description`, the rationale as the
+  question's lead-in, richer notes in `preview`.
+- `progress` / `deliberation` — the summary in the question text, the
+  pickable items as options (two-tier picker beyond four).
+- `confirm` — exactly two options and **no recommended option**: a
+  pre-badged approval is what the construct exists to forbid.
+- `assumption_review` — one question per assumption (up to four per
+  call), accept / reject as options, edit through "Other".
+
+### Constructs the native control cannot express
+
+`ranking` (no ordering control), `triage` over four items, and the
+`number` / `date` / `textarea` fields have no honest `AskUserQuestion`
+shape. For these, and only these, build the `FormSchema` via
+`attune.elicitation.form_from_dict` and render
+`form_to_widget_html(form)` on a widget-capable session. Where no
+widget exists, or the user is in keyboard mode, use the typed fallback
+(`form_to_markdown` skeleton, deterministic parse) and never silently
+drop the field. Otherwise the widget and Attune forms are experimental
+in this repository too: use them only when the user asks for a form or
+a trial.
+
+### Two grammars, two directions — not a ranking
+
+They are not competing methods and neither is "primary". They serve
+opposite directions of the same exchange:
+
+| Direction | Grammar | When |
+|---|---|---|
+| I ask | a batched ask | something genuinely needs settling |
+| You answer | terse vocab (`y` / `go` / `1` / `→ X`) | it is already settled |
+
+A bare confirm is **not an ask** — it is you closing a loop I opened.
+Putting an ask in front of `go` adds friction to the highest-frequency
+interaction in the loop. Do not do it.
+
+The failure mode this rule guards is not "used terse vocab where a
+batched ask belonged." It is **mis-classifying a multi-dimension ask as
+a bare confirm** because prose is faster to write.
+
+### Examples
+
+- "run tests" → routine; run them.
+- "audit src/ for secrets" → scope given; run it and disclose the depth
+  you chose.
+- "security audit" with nothing else → path + focus + depth → ONE
+  batched ask, three questions.
+- "commit" → files + change kind, when either is open → ONE batched
+  ask.
+- "retry 3x?" when backoff is better → `pushback` on the native
+  control.
 
 **Do NOT:**
 
-- Jump straight to running commands without scoping
 - Assume the user wants the broadest possible execution
-- Skip questions just because the next step seems obvious
+- Ask N sequential button-turns for what is one batched ask
+- Re-ask a dimension the user already stated
+- Pad an ask with questions you don't need
+- Badge a recommended option on a confirm gate
 
 This rule applies to ALL workflow interactions, not just `/attune`.
 

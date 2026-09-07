@@ -868,9 +868,9 @@ Lead's inferences, stated as inferences for the chair to confirm or amend:
    `AskUserQuestion` the fallback") to the explicitly requested
    Attune-form path on Claude. D21 is not reversed: within an Attune form
    the widget remains the default. The repository's always-loaded Socratic
-   rule in `.claude/CLAUDE.md` still states the D21 default for this
-   repository's own dev sessions and is NOT edited by this increment; see
-   Open decisions.
+   rule in `.claude/CLAUDE.md` stated the D21 default for this
+   repository's own dev sessions; the ruling below changed it in the same
+   PR.
 
 Counter-case, unprompted: D21 was a 3/3 roundtable ruling on the
 option-visibility axis, because folding three options and their tradeoffs
@@ -882,8 +882,9 @@ serves decision-shaped asks poorly, the chair can narrow this default to
 intake-shaped questions without touching the Codex or Antigravity halves.
 
 Scope: a structured one-shot — canonical elicit and planning guidance,
-projected mirrors and help, a changelog line, this record, and the probe
-addendum. No adapter, renderer, or persistence layer was added; the
+projected mirrors and help, a changelog line, this record, the probe
+addendum, and, under the ruling below, this repository's Socratic
+Interaction Rule. No adapter, renderer, or persistence layer was added; the
 existing server-route validation and receipt contracts are untouched.
 Direct `AskUserQuestion` answers do not inherit the server route's
 validation, session binding, or exactly-once guarantees. Desktop
@@ -892,12 +893,55 @@ pending observation; the guidance's schema claims come from the tool
 definition, not from a recorded trial. Full host parity and release
 readiness are not implied.
 
+**Ruling (chair, 2026-09-07, via four native question cards in the
+authoring session).** Asked which open item to execute, Patrick picked
+"Rule D16: dev sessions use the Claude host default". Asked to confirm
+the lead's four-part reading of that pick (native control for intake
+asks, widget kept for decision-shaped asks, lists unchanged, lands on
+PR #2459), he confirmed all four, then corrected the baseline: "I
+thought we were going to use the anthropic recommended options as the
+default." Offered "Anthropic default everywhere", he answered "I want to
+select 1 but I want to make sure AskUserQuestion is compatible with the
+newly supported form controls. pushback?" The lead checked the installed
+attune-forms 0.14.0 router (`_NO_PORTABLE_CONTROL` is number, date,
+textarea; eleven types are marked lossy) against the exposed
+`AskUserQuestion` schema: ten of fifteen types are honestly expressible
+on the native control; ranking, triage over four items, number, date,
+and textarea are not. Offered the amended option, Patrick picked "Yes,
+but widget for the non-expressible constructs."
+
+Ruled: this repository's dev sessions follow Anthropic's default for
+Claude plus Attune's deltas. Routine calls assume and disclose; an ask
+fires only on the trigger list (scope, files, external state, acceptance
+criteria, hard to reverse, genuine ambiguity, decision or pushback
+shape). Every expressible ask, decision-shaped ones included, uses
+`AskUserQuestion` with no `FormSchema`; a confirm gate carries no
+recommended option. Ranking, triage over four items, number, date, and
+textarea build the `FormSchema` and render the widget on widget-capable
+sessions, with the typed markdown fallback where no widget exists or the
+user is in keyboard mode. The widget and Attune forms are otherwise on
+explicit request only. `.claude/CLAUDE.md`'s Socratic Interaction Rule
+was rewritten accordingly.
+
+Lead's reading, stated as such: the widget-for-non-expressible clause
+applies to this repository's dev sessions (dogfooding), not to the
+shipped `elicit` skill, whose Claude host default keeps the typed
+fallback until desktop acceptance is observed. The confirm-on-trigger
+calibration is ruled for dev sessions by this entry; the
+socratic-ambiguity-calibration spec remains the place for the
+product-level version and its measurement. `select_form_surface` in
+attune-forms still defaults to the widget and will log surface
+disagreement on native asks until that package flips its default: a
+separate-repo follow-up, not this PR. Pending, in Patrick's words: "we
+will need to test the use of widgets in fable 5.1" — the widget path
+this ruling assigns to ranking, triage, number, date, and textarea has
+not been exercised on the current desktop model; until it is, those
+constructs carry the same unobserved-rendering caveat as the native
+control.
+
 ## Open decisions
 
-- **D16 follow-up (chair):** whether `.claude/CLAUDE.md`'s always-loaded
-  Socratic rule should adopt the Claude host default for this repository's
-  own dev sessions or keep the D21 widget default there. Left unedited by
-  the D16 increment because it is governance text outside the skill scope.
+- None. Every proposed decision in this spec is ruled.
 
 Resolved 2026-09-02/03/04: the table was convened (round 1 complete,
 promoted in D5); D2 ruled (routing label); Task 7 ships alone on
