@@ -713,15 +713,16 @@ Documentation: https://smartaimemory.com/framework-docs/
 #: Settings ``attune config set`` will write. An allowlist, not a
 #: free-form key/value store — an unknown key is a typo, and silently
 #: persisting it would leave the user believing a setting took effect.
-_CONFIG_KEYS: frozenset[str] = frozenset({"keyboard_mode"})
+_CONFIG_KEYS: frozenset[str] = frozenset({"keyboard_mode", "prompt_refinement"})
 
 _CONFIG_TRUTHY = {"true", "1", "yes", "on"}
 _CONFIG_FALSEY = {"false", "0", "no", "off"}
 
 
 def cmd_config_set(args) -> int:
-    """Set a project setting in ./attune.config.json."""
+    """Set a supported preference (prompt refinement is user-wide)."""
     from attune.elicitation import set_keyboard_mode
+    from attune.prompt_refinement import refinement_status, set_refinement_enabled
 
     key = args.key.strip()
     if key not in _CONFIG_KEYS:
@@ -739,12 +740,19 @@ def cmd_config_set(args) -> int:
         return 1
 
     try:
-        path = set_keyboard_mode(value)
+        path = (
+            set_refinement_enabled(value)
+            if key == "prompt_refinement"
+            else set_keyboard_mode(value)
+        )
     except (OSError, ValueError) as exc:
         print(f"Could not write the setting: {exc}")
         return 1
 
     print(f"{key} = {str(value).lower()}  ({path})")
+    if key == "prompt_refinement":
+        status = refinement_status()
+        print(f"Effective: {str(status['enabled']).lower()} ({status['source']}; user-wide)")
     if key == "keyboard_mode" and value:
         print("Forms that fit a plain question will now come back as button turns.")
     return 0
@@ -753,12 +761,17 @@ def cmd_config_set(args) -> int:
 def cmd_config_show(args) -> int:
     """Show the current project settings."""
     from attune.elicitation import keyboard_mode_enabled
+    from attune.prompt_refinement import refinement_status
 
     del args
     enabled = keyboard_mode_enabled()
     print(f"keyboard_mode = {str(enabled).lower()}")
     if os.environ.get("ATTUNE_KEYBOARD_MODE", "").strip():
         print("  (overridden for this shell by ATTUNE_KEYBOARD_MODE)")
+    status = refinement_status()
+    print(f"prompt_refinement = {str(status['enabled']).lower()} ({status['source']}; user-wide)")
+    if status.get("warning"):
+        print(status["warning"])
     return 0
 
 

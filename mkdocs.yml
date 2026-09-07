@@ -241,6 +241,7 @@ nav:
           - Ops Dashboard: how-to/ops-dashboard.md
       - Help System:
           - Maintenance: how-to/help-system-maintenance.md
+      - Prompt Refinement: guides/prompt-refinement.md
       - Prerequisites: how-to/prerequisites.md
 
   # RAG grounding - citation-forced generation
