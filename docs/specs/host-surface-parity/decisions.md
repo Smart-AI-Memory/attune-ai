@@ -840,6 +840,106 @@ session-binding, or exactly-once guarantees.
 The Codex built-in path skips V7 template lookup; template reuse continues
 on the compatibility and Attune server-route paths.
 
+## D16 — Claude host default: native questions first (chair direction, 2026-09-07; recorded by the lead)
+
+Patrick's direction, in his words: "use each host's supported native
+controls: Codex built-in questions, Claude's native questions where
+supported, and enhanced conversational prompts for Antigravity. Custom
+Attune forms remain experimental; Gemini is deferred." This entry records
+the Claude half; D15 recorded Codex and Antigravity.
+
+Lead's inferences, stated as inferences for the chair to confirm or amend:
+
+1. Claude's native question control is the built-in `AskUserQuestion`
+   tool. Verified by inspecting the tool exposed to the recording session
+   (desktop app, Code tab, Claude Code 2.1.260): 1–4 questions per call,
+   2–4 options each with label and description, `multiSelect`, `header`
+   of at most 12 characters, built-in "Other" free text,
+   `metadata.source`, and a synchronous result keyed by question text.
+   Terminal Claude Code exposes the same tool while `show_widget` exists
+   only on widget-capable desktop hosts — inferred from this session's
+   tool list and the D10/D21 history, not re-observed on a terminal today.
+2. The Attune widget (`elicitation_render_widget` → `show_widget`), the
+   server route (`elicitation_route_form`), and MCP elicitation
+   (`elicitation_ask`) are custom Attune forms and therefore experimental
+   on Claude for ordinary planning or scoping requests: explicit request
+   only.
+3. This scopes elicitation-form-surface D21 ("the widget is the default,
+   `AskUserQuestion` the fallback") to the explicitly requested
+   Attune-form path on Claude. D21 is not reversed: within an Attune form
+   the widget remains the default. The repository's always-loaded Socratic
+   rule in `.claude/CLAUDE.md` stated the D21 default for this
+   repository's own dev sessions; the ruling below changed it in the same
+   PR.
+
+Counter-case, unprompted: D21 was a 3/3 roundtable ruling on the
+option-visibility axis, because folding three options and their tradeoffs
+into prose above a select is a real loss. Native `AskUserQuestion` shows
+labels and one-line descriptions but no rationale callout or side-by-side
+tradeoff cards, so ordinary Claude requests trade some option visibility
+for the host's own control. If desktop observation shows the native card
+serves decision-shaped asks poorly, the chair can narrow this default to
+intake-shaped questions without touching the Codex or Antigravity halves.
+
+Scope: a structured one-shot — canonical elicit and planning guidance,
+projected mirrors and help, a changelog line, this record, the probe
+addendum, and, under the ruling below, this repository's Socratic
+Interaction Rule. No adapter, renderer, or persistence layer was added; the
+existing server-route validation and receipt contracts are untouched.
+Direct `AskUserQuestion` answers do not inherit the server route's
+validation, session binding, or exactly-once guarantees. Desktop
+rendering, keyboard operation, partial submission, and dismissal remain
+pending observation; the guidance's schema claims come from the tool
+definition, not from a recorded trial. Full host parity and release
+readiness are not implied.
+
+**Ruling (chair, 2026-09-07, via four native question cards in the
+authoring session).** Asked which open item to execute, Patrick picked
+"Rule D16: dev sessions use the Claude host default". Asked to confirm
+the lead's four-part reading of that pick (native control for intake
+asks, widget kept for decision-shaped asks, lists unchanged, lands on
+PR #2459), he confirmed all four, then corrected the baseline: "I
+thought we were going to use the anthropic recommended options as the
+default." Offered "Anthropic default everywhere", he answered "I want to
+select 1 but I want to make sure AskUserQuestion is compatible with the
+newly supported form controls. pushback?" The lead checked the installed
+attune-forms 0.14.0 router (`_NO_PORTABLE_CONTROL` is number, date,
+textarea; eleven types are marked lossy) against the exposed
+`AskUserQuestion` schema: ten of fifteen types are honestly expressible
+on the native control; ranking, triage over four items, number, date,
+and textarea are not. Offered the amended option, Patrick picked "Yes,
+but widget for the non-expressible constructs."
+
+Ruled: this repository's dev sessions follow Anthropic's default for
+Claude plus Attune's deltas. Routine calls assume and disclose; an ask
+fires only on the trigger list (scope, files, external state, acceptance
+criteria, hard to reverse, genuine ambiguity, decision or pushback
+shape). Every expressible ask, decision-shaped ones included, uses
+`AskUserQuestion` with no `FormSchema`; a confirm gate carries no
+recommended option. Ranking, triage over four items, number, date, and
+textarea build the `FormSchema` and render the widget on widget-capable
+sessions, with the typed markdown fallback where no widget exists or the
+user is in keyboard mode. The widget and Attune forms are otherwise on
+explicit request only. `.claude/CLAUDE.md`'s Socratic Interaction Rule
+was rewritten accordingly.
+
+Lead's reading, confirmed by the chair ("agreed", 2026-09-07): the
+widget-for-non-expressible clause applies to this repository's dev
+sessions (dogfooding), not to the shipped `elicit` skill, whose Claude
+host default keeps the typed fallback until desktop acceptance is
+observed. The confirm-on-trigger
+calibration is ruled for dev sessions by this entry; the
+socratic-ambiguity-calibration spec remains the place for the
+product-level version and its measurement. `select_form_surface` in
+attune-forms still defaults to the widget and will log surface
+disagreement on native asks until that package flips its default: a
+separate-repo follow-up, not this PR. Pending, in Patrick's words: "we
+will need to test the use of widgets in fable 5.1" — the widget path
+this ruling assigns to ranking, triage, number, date, and textarea has
+not been exercised on the current desktop model; until it is, those
+constructs carry the same unobserved-rendering caveat as the native
+control.
+
 ## Open decisions
 
 - None. Every proposed decision in this spec is ruled.

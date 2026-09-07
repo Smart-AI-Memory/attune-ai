@@ -82,3 +82,32 @@ Record tool returns separately from visible UI and user attestation. Repeated
 timing, broad accessibility, and universal automatic discovery remain unproven.
 Recordings and raw local receipts remain on the operator's machine; they are
 not published as part of this repository.
+
+## Claude host inspection — 2026-09-07
+
+Recorded by the Claude lead from the desktop app's Code tab (Claude Code
+2.1.260) in an autonomous session with no user present, so nothing below
+is a rendering or keyboard observation.
+
+Verified by inspection of the exposed tool definition: `AskUserQuestion`
+accepts 1–4 questions per call, each with 2–4 options carrying a label
+and description (optional preview), a `multiSelect` flag, a `header` of
+at most 12 characters, and optional `metadata.source`; the host always
+adds an "Other" free-text entry; the call is synchronous and its result
+carries the answers keyed by question text. `show_widget`,
+`elicitation_ask`, `elicitation_render_widget`, and
+`elicitation_route_form` were also exposed; exposure is not a rendering
+claim. The multi-question format guard that the elicit skill mentions is
+operator-local infrastructure under `~/.claude/hooks/`, not a shipped
+plugin hook.
+
+Pending, not observed today: visible rendering of a one-question and a
+multi-question call on the desktop app and on a terminal; keyboard-only
+completion; whether a partially answered call can be submitted; what the
+tool result reports when the user dismisses the card; and whether the
+revised guidance is discovered on a fresh ordinary planning request.
+Also pending after the D16 ruling: the Attune widget on Fable 5.1 for
+the constructs the native control cannot express (ranking, triage over
+four items, number, date, textarea) — render, submit, and keyboard
+operation. When these are run, record tool returns separately from
+visible UI and user attestation, as the Codex section above does.

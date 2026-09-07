@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Claude planning guidance now prefers the host's built-in `AskUserQuestion`
+  for ordinary scoping requests, asks schema-unrepresentable fields as typed
+  questions, and treats an interrupted call as cancellation. The Attune
+  widget and server route are experimental on Claude; desktop rendering and
+  keyboard acceptance remain pending observation.
+
 - Codex planning guidance now prefers built-in questions and handles pending
   asynchronous replies, corrections, and cancellation explicitly. Attune forms
   remain experimental; Antigravity defaults to enhanced conversational prompts

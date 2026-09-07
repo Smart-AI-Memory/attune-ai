@@ -20,11 +20,9 @@ Non-negotiable security and quality rules for the attune-ai codebase.
 - Type hints and docstrings required on all public APIs
 - Minimum 85% test coverage
 - Security tests required for file operations
-- When creating a detailed plan with 3+ tasks or touching
-  3+ files, use XML-enhanced prompt format (see
-  `.claude/rules/attune/xml-enhanced-prompts.md`). For
-  simpler work (single-file edits, config changes, bug
-  fixes), plain descriptions are fine.
+- Choose the artifact tier through the shared contract's Artifact selection
+  section. XML-task eligibility and format requirements are canonical in
+  `.claude/rules/attune/xml-enhanced-prompts.md`; do not restate them here.
 
 ---
 

@@ -20,18 +20,21 @@ Invoke with: `/planning <what to plan: feature, tdd, architecture>`
    Depending on type: - Feature: "What feature? What problem does it solve?" - TDD: "What behavior should the tests verify?" - Architecture: "What system? Any specific concerns?"
 
 3. **Define scope**
-   "How deep? Quick outline or detailed plan?" **Compatibility surface (Claude and hosts not yet reviewed).** The **Subject** phrasing branches on **Type**, so don't
-   batch all three — ask **Type** first (a single `AskUserQuestion`) when
-   it isn't already given by the `<what to plan>` argument. Once the type
-   is known, **Subject** (a textarea) and **Scope** (quick / detailed) are
-   independent and open: gather *those two* as one form via the `elicit`
-   skill, **preferring the rich widget surface** (`elicitation_render_widget`
-   → `show_widget`) with the AskUserQuestion mapping as fallback. If only
-   one dimension is open, ask it as a single question — never force a
-   one-field form (the §4 batching rule).
+   "How deep? Quick outline or detailed plan?" **Order on every host.** The **Subject** phrasing branches on **Type**,
+   so never batch all three. On Claude, ask **Type** and **Scope** (both
+   select-shaped and independent) in one `AskUserQuestion` call when both are
+   open, then ask **Subject** with the type-specific phrasing —
+   conversationally unless the conversation supplies honest candidate
+   options. On hosts not yet reviewed (Gemini is deferred), settle **Type**
+   first, then gather **Subject** and **Scope** as one form via the `elicit`
+   skill's compatibility path. If only one dimension is open, ask it as a
+   single question — never force a one-field form (the §4 batching rule).
 
 4. **Review planning execution guidance**
-   1. Use `EnterPlanMode` to create a structured plan
+   1. Use `EnterPlanMode` to create a structured plan; on Claude, settle
+      remaining material choices before leaving plan mode — `AskUserQuestion`
+      for select-shaped ones, a typed question otherwise, and never against a
+      stated conversation preference
    2. If context from multiple files is needed, call
       `research_synthesis` first to gather insights
    3. Present the plan for user approval before any
