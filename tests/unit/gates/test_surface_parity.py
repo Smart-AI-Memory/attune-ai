@@ -107,7 +107,7 @@ def test_baseline_reproduces_the_design_renderer_anchor_fixture(reviewed) -> Non
 
 
 def test_baseline_keeps_the_d6_hook_envelope_findings(reviewed) -> None:
-    """D6's probe found three additional_context producers; a broader scanner keeps them."""
+    """Keep D6's three producers and the later prompt-refinement hook."""
     ac = {
         (a.anchor.split(":")[0], a.event)
         for a in reviewed.hook_envelope_anchors
@@ -116,6 +116,7 @@ def test_baseline_keeps_the_d6_hook_envelope_findings(reviewed) -> None:
     assert ac == {
         ("plugin/hooks/jit_recall.py", "PreToolUse"),
         ("plugin/hooks/lesson_recall.py", "UserPromptSubmit"),
+        ("plugin/hooks/prompt_refinement.py", "UserPromptSubmit"),
         ("plugin/hooks/session_stash.py", "Stop"),
     }
     assert not any(a.signature == "system_message" for a in reviewed.hook_envelope_anchors)

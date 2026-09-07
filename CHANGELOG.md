@@ -34,6 +34,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Automatic prompt-refinement guidance for the Claude Code plugin and MCP
+  clients that follow server instructions, with user-wide opt-out, one-turn
+  skip, and existing form/conversation tools for gathering missing details.
+  Host conversation trials remain pending.
+
 - **Worktree-add guard hook** (`src/attune/hooks/scripts/
   worktree_add_guard.py`, retro 2026-09-06 R8). A PreToolUse Bash hook
   that refuses `git worktree add` from a session already running inside

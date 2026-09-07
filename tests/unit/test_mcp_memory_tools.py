@@ -52,7 +52,7 @@ class TestToolRegistration:
         if redis_tools.issubset(tool_names):
             # attune-redis also registers 5 session_memory_* tools when the
             # core session stash is importable (conditional registration).
-            expected = 64 if "session_memory_status" in tool_names else 59
+            expected = 65 if "session_memory_status" in tool_names else 60
             assert (
                 len(tools) == expected
             ), f"Expected {expected} tools with redis plugin, got {len(tools)}"

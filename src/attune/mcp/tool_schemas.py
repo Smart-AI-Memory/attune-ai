@@ -314,6 +314,26 @@ def get_utility_tools() -> dict[str, dict[str, Any]]:
                 },
             },
         },
+        "prompt_refinement": {
+            "description": (
+                "Read the current automatic prompt-refinement policy before refining a user "
+                "message. No prompt text is needed. Enable/disable persists a user-wide "
+                "preference ONLY on the user's explicit request. skip_this_prompt bypasses "
+                "refinement once without changing the preference."
+            ),
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "action": {
+                        "type": "string",
+                        "enum": ["status", "enable", "disable"],
+                        "default": "status",
+                    },
+                    "skip_this_prompt": {"type": "boolean", "default": False},
+                },
+                "additionalProperties": False,
+            },
+        },
         "context_get": {
             "description": "Get session context value.",
             "input_schema": {

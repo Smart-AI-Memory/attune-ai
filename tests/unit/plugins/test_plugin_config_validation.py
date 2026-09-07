@@ -350,7 +350,7 @@ class TestPluginStructure:
                         if "${CLAUDE_PLUGIN_ROOT}/" in cmd:
                             rel = cmd.split("${CLAUDE_PLUGIN_ROOT}/")[1]
                             # Strip any trailing arguments
-                            script = rel.split()[0]
+                            script = rel.split()[0].rstrip("\"'")
                             actual = PLUGIN_ROOT / script
                             assert actual.exists(), (
                                 f"Hook references {script} " f"but {actual} does not exist"

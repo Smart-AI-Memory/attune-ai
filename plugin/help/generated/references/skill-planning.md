@@ -13,6 +13,35 @@ High-level development planning — features, TDD, architecture review. Triggers
 
 **Usage:** `/planning <what to plan: feature, tdd, architecture>`
 
+## Prompt refinement before scoping
+
+Use the current turn's Attune refinement hook result, or call
+`prompt_refinement(action="status")` if none was supplied. Follow its shared
+policy to gather material missing context and incorporate answers into the
+working prompt. If the user asks only to polish a prompt, return that prompt
+without entering plan execution. An opt-out suppresses optional refinement,
+not clarification needed for the actual planning task. Never restart intake
+for a user's answer or correction, and never duplicate questions already asked
+by refinement. Enable/disable only on the user's explicit request; a one-time
+skip does not change the saved preference.
+
+This skill fallback reaches planning invocations. Automatic delivery across
+all messages requires a host that runs the plugin hook or follows MCP server
+instructions; installing a skill alone does not establish that behavior.
+
+**IMPORTANT: Start your response with a context preamble.**
+
+Call `help_lookup(topic="spec-engine", mode="preamble")` and
+display the returned `preamble` text as a blockquote. Then
+tell the user they can say "tell me more" for a step-by-step
+guide, or answer the scoping questions below to proceed.
+
+If the MCP call fails, fall back to:
+
+> **Planning** — Helps you plan features, architecture, and TDD strategy before writing code.
+
+High-level development planning and architecture design.
+
 ## Routes
 
 | Subcommand | Action |
