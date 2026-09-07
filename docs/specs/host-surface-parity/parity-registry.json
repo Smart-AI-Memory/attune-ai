@@ -366,6 +366,24 @@
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
+      "key": "delivery:plugin-prompt_refinement-module:99fbff9c15132722:content_schema",
+      "next_increment": 3,
+      "owner": "prompt-refinement",
+      "reason": "Hook subprocess delivers policy; actual host delivery and model-context interpretation need a host receipt."
+    },
+    {
+      "key": "delivery:plugin-prompt_refinement-module:99fbff9c15132722:delivery",
+      "next_increment": 3,
+      "owner": "prompt-refinement",
+      "reason": "Hook subprocess delivers policy; actual host delivery and model-context interpretation need a host receipt."
+    },
+    {
+      "key": "delivery:plugin-prompt_refinement-module:99fbff9c15132722:destination",
+      "next_increment": 3,
+      "owner": "prompt-refinement",
+      "reason": "Hook subprocess delivers policy; actual host delivery and model-context interpretation need a host receipt."
+    },
+    {
       "key": "delivery:plugin-security_guard-module:c0b0046d68345b0b:content_schema",
       "next_increment": 3,
       "owner": "host-surface-parity",
@@ -961,7 +979,7 @@
     }
   ],
   "producer_baseline": {
-    "digest": "2d4a138d3d3b35a143545d8086228e6e690338852baa1c7982d94f608efca2a0",
+    "digest": "b1059dcb8e666f43f063a9b05897818d07738861538d79d3b92f1d26ca101806",
     "path": "docs/specs/host-surface-parity/producer_baseline.json",
     "schema_version": "attune.surface-inventory.producer-baseline/1"
   },
@@ -971,7 +989,7 @@
       "fixture": "attune.elicitation.surface_native_evidence.replay_native_evidence",
       "fixture_digest": "e9d861ae681e0416e0a5b835b5d0b327bc408be879f8a9765a126891f810f5ab",
       "id": "lifecycle.subject.surface-native-elicitation.abort",
-      "implementation_digest": "7c781dce152b18e4ba7793238057f5b88f067f0ee866112aeb2dca15085f02a6",
+      "implementation_digest": "710e8fa80d19ca3cd22cd24015fcea6ca9281cb4f711baa3b672949fbf687dc6",
       "key": "lifecycle:subject:surface-native-elicitation:abort",
       "kind": "lifecycle",
       "normalization_digest": "9dd46bb8cdf4e7bba7723749e7066ae62b170035cf1c8b25690d7221f58decda",
@@ -985,7 +1003,7 @@
       "fixture": "attune.elicitation.surface_native_evidence.replay_native_evidence",
       "fixture_digest": "e9d861ae681e0416e0a5b835b5d0b327bc408be879f8a9765a126891f810f5ab",
       "id": "lifecycle.subject.surface-native-elicitation.timeout",
-      "implementation_digest": "7c781dce152b18e4ba7793238057f5b88f067f0ee866112aeb2dca15085f02a6",
+      "implementation_digest": "710e8fa80d19ca3cd22cd24015fcea6ca9281cb4f711baa3b672949fbf687dc6",
       "key": "lifecycle:subject:surface-native-elicitation:timeout",
       "kind": "lifecycle",
       "normalization_digest": "9dd46bb8cdf4e7bba7723749e7066ae62b170035cf1c8b25690d7221f58decda",
@@ -999,7 +1017,7 @@
       "fixture": "attune.elicitation.surface_native_evidence.replay_native_evidence",
       "fixture_digest": "e9d861ae681e0416e0a5b835b5d0b327bc408be879f8a9765a126891f810f5ab",
       "id": "lifecycle.subject.surface-native-elicitation.validation_feedback_delivery",
-      "implementation_digest": "7c781dce152b18e4ba7793238057f5b88f067f0ee866112aeb2dca15085f02a6",
+      "implementation_digest": "710e8fa80d19ca3cd22cd24015fcea6ca9281cb4f711baa3b672949fbf687dc6",
       "key": "lifecycle:subject:surface-native-elicitation:validation_feedback_delivery",
       "kind": "lifecycle",
       "normalization_digest": "9dd46bb8cdf4e7bba7723749e7066ae62b170035cf1c8b25690d7221f58decda",
@@ -1013,7 +1031,7 @@
       "fixture": "attune.elicitation.surface_native_evidence.replay_native_evidence",
       "fixture_digest": "e9d861ae681e0416e0a5b835b5d0b327bc408be879f8a9765a126891f810f5ab",
       "id": "lifecycle.subject.surface-runtime-route-form.accept",
-      "implementation_digest": "7c781dce152b18e4ba7793238057f5b88f067f0ee866112aeb2dca15085f02a6",
+      "implementation_digest": "710e8fa80d19ca3cd22cd24015fcea6ca9281cb4f711baa3b672949fbf687dc6",
       "key": "lifecycle:subject:surface-runtime-route-form:accept",
       "kind": "lifecycle",
       "normalization_digest": "9dd46bb8cdf4e7bba7723749e7066ae62b170035cf1c8b25690d7221f58decda",
@@ -1066,7 +1084,7 @@
       "fixture": "attune.elicitation.surface_native_evidence.replay_native_evidence",
       "fixture_digest": "e9d861ae681e0416e0a5b835b5d0b327bc408be879f8a9765a126891f810f5ab",
       "id": "route.surface-runtime-route-form.mcp-native.surface-native-elicitation.production_projection",
-      "implementation_digest": "7c781dce152b18e4ba7793238057f5b88f067f0ee866112aeb2dca15085f02a6",
+      "implementation_digest": "710e8fa80d19ca3cd22cd24015fcea6ca9281cb4f711baa3b672949fbf687dc6",
       "key": "route:surface-runtime-route-form:mcp-native:surface-native-elicitation:production_projection",
       "kind": "parity",
       "normalization_digest": "9dd46bb8cdf4e7bba7723749e7066ae62b170035cf1c8b25690d7221f58decda",
@@ -1255,6 +1273,27 @@
         "plugin/hooks/lesson_recall.py:main"
       ],
       "root_anchor": "plugin/hooks/lesson_recall.py:<module>",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "UserPromptSubmit",
+          "id": "99fbff9c15132722",
+          "matcher": "",
+          "signature": "additional_context",
+          "sink": "print"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "plugin-prompt_refinement-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "plugin/hooks/prompt_refinement.py:main"
+      ],
+      "root_anchor": "plugin/hooks/prompt_refinement.py:<module>",
       "subject_kind": "informational_delivery"
     },
     {

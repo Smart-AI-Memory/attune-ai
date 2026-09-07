@@ -21,7 +21,7 @@ and trust-boundary tests, and actual Codex display/submission measurements.
 The stdio composition root now replays packaged evidence, validates exact
 route obligations and provisions a private POSIX installation key before
 installing the native runtime. Eight obligations are verified (three package,
-five new native); 159 remain pending. Each replay crosses paired real SDK
+five new native); 162 remain pending after integrating prompt refinement from main. Each replay crosses paired real SDK
 streams; the child-process receipt also uses normal production bootstrap.
 No all-verified synthetic report authorizes production routing.
 
@@ -106,3 +106,51 @@ Guidance follow-up verification: 72 projection/config/help checks passed;
 final whole tree passed 26,056 tests (242 skipped, 3 xfailed). Log:
 `/private/tmp/form-guidance-whole-final.log`. No executable code changed.
 Generated concept/reference/quickstart help accompanies the skill mirror.
+
+## PR 2450 CI repair (2026-09-07)
+
+The original head b54417e5a generated native receipts with MCP 1.28.1, but
+CI resolved 1.29.1 through the core dependency range. All eleven failing test
+IDs traced to the SDK-version-bound implementation digest. An isolated 1.29.1
+environment reproduced the mismatch; changing only the version input produced
+the exact digest seen in CI.
+
+Pin MCP 1.29.1, replay canonical native and renderer fixtures, and project both
+registry and baseline into the package. The new generic dependency guard requires
+one exact SDK pin matching the test runtime; no receipt comparison is weakened.
+The tradeoff is deliberate receipt regeneration for future SDK upgrades.
+
+Current main includes merged #2456. Its prompt-refinement hook contributes three
+additional pending obligations; the merged baseline and registry retain them.
+No desktop-trial claim or Windows activation claim changes. The lock refresh
+updates only MCP's version, plus resolver normalization of the existing
+exceptiongroup/typing-extensions dependency marker.
+
+Repair verification: 354 focused tests passed (bootstrap, native runtime, surface
+parity, handoff and spec-status gates), and pinned checks passed. A newly built
+wheel installed in a clean venv resolved MCP 1.29.1 and accepted a real stdio
+form completion with one renderer attempt and one presentation. Import provenance
+was asserted to be site-packages; answers were fixture-owned, host_paint=false.
+Initial repair wheel SHA-256:
+e395a23d2c17ec9ba9eef3ddb4bf9a7c8e232f2b6bd1f55e8ce120ffe15be0b5.
+After capability projection, the rebuilt wheel passed the same clean-install
+stdio probe. Final wheel SHA-256:
+f85ab92dd0782539b81dd99b496bec3e03136374a86a6e7f51a5b50f1d0abc2f.
+Receipt: /private/tmp/attune-2450-artifact/probe-home/receipt.json.
+The first complete unit run found nine merged-tool-count failures (22,478 passed):
+main and this branch each added a tool, so the combined registry has 55 core /
+66 total tools. Regenerated capability claims with project_capabilities.py and
+updated the registration assertion to require both prompt_refinement and
+elicitation_route_form. All 109 affected checks passed. The final full CI
+selection passed: 26,103 passed, 242 skipped, 3 xfailed in 194.87s.
+Command: ANTHROPIC_API_KEY='' /private/tmp/attune-2450-ci-venv/bin/python
+/private/tmp/run_form_interaction_suite.py -q -n 4 --timeout=60
+--timeout-method=thread -m 'not network and not integration' --tb=short.
+Log: /private/tmp/attune-2450-final-suite.log.
+Different-model review (GPT-5.6 Sol) found no issues across 15 unique repair
+files; independent suites passed 14 bootstrap and 95 capability/registration
+checks. Next: push the signed merge and repairs, then verify the complete remote
+matrix on that exact head. Keep #2450 draft while desktop acceptance is open.
+
+Release 16.3.0 remains deferred until CI repair, native-form integration, and
+installed-host/keyboard validation (phases 1–3) are complete, as Patrick requested.

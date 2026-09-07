@@ -174,6 +174,7 @@ class TestGetUtilityTools:
             "auth_status",
             "auth_recommend",
             "telemetry_stats",
+            "prompt_refinement",
             "context_get",
             "context_set",
             "list_capabilities",

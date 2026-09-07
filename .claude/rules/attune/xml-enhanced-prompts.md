@@ -7,14 +7,32 @@
 
 ## When to Use
 
-Use XML-enhanced prompts when decomposing complex implementation tasks into self-contained, executable specifications. This applies to:
+This section owns eligibility for the XML-task tier; the
+[shared contract](../../../content/collaboration/contract.md#artifact-selection)
+owns the tiers and shared communication requirements. The
+[decision routine](decision-routine.md#decision-tree) routes work by reference.
 
-- Multi-file implementation tasks (3+ files)
-- Tasks with dependencies, validation steps, or risk factors
-- Subagent and workflow definitions
-- Any task given to another agent or future session to execute
+Use an XML-task contract when execution needs any of these:
 
-Do NOT use for single-file edits, bug fixes, or trivial changes.
+- A cold handoff to another agent or session, with context and completion
+  checks that cannot depend on the current conversation.
+- Explicit ordering of dependent changes or coordinated task outputs.
+- Material risk to authorization, retained data or compatibility that requires
+  explicit action boundaries, mitigations and verification, even for one file.
+- A consumer that parses XML task blocks, including the spec reader.
+
+File count and the label "bug fix" do not determine eligibility. A routine
+multi-file rename may fit a structured one-shot; a one-file authorization
+fix may need an XML task. Ordinary validation alone does not require XML.
+Check the contract's spec tier first; its executable tasks can use this schema.
+
+When a tool parses the artifact, preserve its supported XML schema.
+The [spec reader](../../../src/attune/pipeline/spec_reader.py) extracts XML
+task blocks; its [tests](../../../tests/unit/pipeline/test_spec_reader.py)
+exercise that input contract. Prose is not interchangeable on this route.
+For human/agent-only prompts with no XML consumer, equivalent structured
+text may carry the same task contract. The information requirements remain;
+format flexibility does not permit skipping handoff or risk details.
 
 ---
 
@@ -60,9 +78,9 @@ Do NOT use for single-file edits, bug fixes, or trivial changes.
 
 ## Key Principles
 
-1. **Self-contained** -- Each task prompt includes all context needed to execute without reading other docs
+1. **Self-contained** -- Include necessary context and precise source references. For handoffs, pin the baseline revision and required context; recipients check for changes before relying on it.
 2. **Specific paths** -- Always use exact file paths, not "the config file"
-3. **BEFORE/AFTER** -- Show existing code alongside changes for clarity
+3. **BEFORE/AFTER** -- Use for a verified, settled edit; otherwise state the required behavior and constraints without inventing an implementation
 4. **Validation-first** -- Define how to verify success before describing the implementation
 5. **Severity-tagged risks** -- Flag potential issues so the implementer can plan accordingly
 
@@ -95,5 +113,13 @@ Do NOT use for single-file edits, bug fixes, or trivial changes.
 
 ## References
 
-- [Full XML Prompts Guide](../../../docs/guides/xml-enhanced-prompts.md) -- Schema v1.0 spec with performance metrics
-- [Real Task Prompts](../../../docs/implementation/TASK_PROMPTS.md) -- 10 executed examples
+- [Shared contract](../../../content/collaboration/contract.md#artifact-selection) — tiers and communication requirements
+- [Spec reader](../../../src/attune/pipeline/spec_reader.py) — XML-consuming execution path
+- [Task parser](../../../src/attune/wizards/decomposer.py) — supported task fields
+- [OpenAI reasoning guidance](https://developers.openai.com/api/docs/guides/reasoning-best-practices) — direct goals, constraints and useful delimiters
+- [Anthropic prompting guidance](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices) — XML for separating mixed prompt content
+
+Provider guidance checked 2026-09-07 UTC. These are formatting recommendations,
+not evidence of a universal XML performance advantage. Examples, reasoning
+instructions and effort settings should follow the selected model's guidance;
+acceptance criteria and observable verification remain explicit.

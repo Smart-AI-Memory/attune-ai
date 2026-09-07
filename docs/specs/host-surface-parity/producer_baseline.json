@@ -28,6 +28,10 @@
       "root_anchor": "plugin/hooks/memory_backend_notice.py:<module>"
     },
     {
+      "helper_anchor": "plugin/hooks/prompt_refinement.py:main",
+      "root_anchor": "plugin/hooks/prompt_refinement.py:<module>"
+    },
+    {
       "helper_anchor": "plugin/hooks/session_recall.py:main",
       "root_anchor": "plugin/hooks/session_recall.py:<module>"
     },
@@ -118,6 +122,14 @@
       "destination": "model_context",
       "event": "SessionStart",
       "signature": "context_stdout",
+      "sink": "print",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "anchor": "plugin/hooks/prompt_refinement.py:main",
+      "destination": "model_context",
+      "event": "UserPromptSubmit",
+      "signature": "additional_context",
       "sink": "print",
       "subject_kind": "informational_delivery"
     },
@@ -535,6 +547,16 @@
       "ordinal": 0,
       "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" ${CLAUDE_PLUGIN_ROOT}/hooks/lesson_recall.py",
       "resolved_repo_path": "plugin/hooks/lesson_recall.py"
+    },
+    {
+      "error": null,
+      "event": "UserPromptSubmit",
+      "json_pointer": "/hooks/UserPromptSubmit/0/hooks/1/command",
+      "manifest_path": "plugin/hooks/hooks.json",
+      "matcher": "",
+      "ordinal": 1,
+      "raw_command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"${CLAUDE_PLUGIN_ROOT}/hooks/prompt_refinement.py\"",
+      "resolved_repo_path": "plugin/hooks/prompt_refinement.py"
     },
     {
       "error": null,

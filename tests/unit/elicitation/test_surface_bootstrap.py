@@ -2,9 +2,16 @@
 
 import copy
 import os
+from importlib.metadata import version
 from pathlib import Path
 
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
+
 import pytest
+from packaging.requirements import Requirement
 
 from attune.elicitation import surface_bootstrap as bootstrap
 from attune.elicitation import surface_native_evidence as native
@@ -25,7 +32,7 @@ async def test_packaged_evidence_enables_only_the_receipted_route(tmp_path):
     )
     assert route_evidence_missing(runtime._registry, runtime._report, native.SUBJECT_ID, "RICH")
     assert not runtime._report.complete
-    assert len(runtime._report.pending_keys) == 159
+    assert len(runtime._report.pending_keys) == 162
     assert (tmp_path / "surface-auth/receipt.key").is_file()
     assert not runtime.store._records  # Canonical fixture state never enters production.
 
@@ -144,3 +151,16 @@ async def test_bootstrap_normalizes_sdk_schema_failure(tmp_path, monkeypatch):
     with pytest.raises(SurfaceRegistryError, match="native evidence execution failed"):
         await bootstrap.create_surface_runtime(tmp_path)
     assert not (tmp_path / "surface-auth").exists()
+
+
+def test_native_receipt_sdk_is_exactly_pinned():
+    """Fresh dependency resolution must preserve the receipted SDK version."""
+    root = Path(__file__).resolve().parents[3]
+    project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+    requirements = [Requirement(value) for value in project["project"]["dependencies"]]
+    requirement = next(value for value in requirements if value.name == "mcp")
+    specifiers = list(requirement.specifier)
+    assert len(specifiers) == 1, "Native receipts require one exact MCP SDK pin"
+    pin = specifiers[0]
+    assert pin.operator == "==" and "*" not in pin.version
+    assert version("mcp") == pin.version, "Replay native receipts with the declared SDK"

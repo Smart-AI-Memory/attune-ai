@@ -64,6 +64,7 @@ _VOICE_SKIP_TOOLS: frozenset[str] = frozenset(
         "personal_memory_recall",
         "personal_memory_topics",
         "personal_memory_forget",
+        "prompt_refinement",
         "context_get",
         "context_set",
         "command_workspace_open",
@@ -395,6 +396,7 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
             "personal_memory_recall": self._handle_personal_memory_recall,
             "personal_memory_topics": lambda _args: self._handle_personal_memory_topics(_args),
             "personal_memory_forget": self._handle_personal_memory_forget,
+            "prompt_refinement": self._handle_prompt_refinement,
             "context_get": self._handle_context_get,
             "context_set": self._handle_context_set,
             "list_capabilities": lambda _args: self._handle_list_capabilities(),
@@ -765,6 +767,12 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
                 "tools": len(tools),
             },
         }
+
+    async def _handle_prompt_refinement(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Read the shared refinement policy or persist the user's preference."""
+        from attune.prompt_refinement import handle_prompt_refinement
+
+        return await handle_prompt_refinement(args)
 
     async def _handle_context_get(self, args: dict[str, Any]) -> dict[str, Any]:
         """Get session context value.
@@ -1829,6 +1837,8 @@ def create_server() -> AttuneMCPServer:
 
 def _initialization_options() -> Any:
     """Advertise the stable MCP Apps extension alongside core MCP."""
+    from attune.prompt_refinement import HOST_INSTRUCTIONS
+
     options = _mcp_server.create_initialization_options()
     extensions = {
         MCP_APPS_EXTENSION: {
@@ -1836,7 +1846,8 @@ def _initialization_options() -> Any:
         }
     }
     capabilities = options.capabilities.model_copy(update={"extensions": extensions})
-    return options.model_copy(update={"capabilities": capabilities})
+    instructions = "\n\n".join(filter(None, [options.instructions, HOST_INSTRUCTIONS]))
+    return options.model_copy(update={"capabilities": capabilities, "instructions": instructions})
 
 
 async def _run_stdio() -> None:
