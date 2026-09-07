@@ -24,6 +24,7 @@ remain necessary for conversational behavior claims.
 
 - Shared policy, fixed user setting, CLI/MCP preference controls, MCP initialize
   instructions, plugin prompt hook, planning fallback, docs and projections.
+- Draft PR: https://github.com/Smart-AI-Memory/attune-ai/pull/2454.
 - Review dispositions: `docs/specs/prompt-refinement/review.md`.
 - Separate open native-form PR #2450 overlaps MCP source and inventory files.
   Keep its runtime/evidence changes when integrating; this branch is based on
@@ -41,10 +42,13 @@ remain necessary for conversational behavior claims.
 | Surface inventory | tests/unit/gates/test_surface_parity.py | 227 passed; new hook keeps pending host obligations |
 | Guide navigation | scripts/audit_docs_wiring.py --check nav --format json | No findings |
 | Published docs | mkdocs build --strict using temporary docs dependencies | Passed |
+| Wheel includes usable module | Import from built .whl in a new subprocess; persist opt-out in temporary home | Passed |
 | Real host conversation | Vague task, clear task, terse reply, correction, persistent off/on, skip, polish-only | Not run |
 
 ## Next action
 
-Finish final checks and open a draft PR. After CI, run the host conversation
+Check CI on draft PR #2454. The initial hook lanes found an unparseable plain
+spec status line; the correction uses the corpus's `**Status:**` convention.
+After CI, run the host conversation
 matrix from `docs/specs/prompt-refinement/requirements.md` using the updated
 plugin/server in an isolated test session. Preserve raw results, including failures.

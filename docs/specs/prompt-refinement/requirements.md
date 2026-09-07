@@ -1,6 +1,8 @@
 # Automatic prompt refinement
 
-Status: implementation in progress. This spec records Patrick's request on
+**Status:** In progress — implementation in draft PR #2454; host trials pending.
+
+This spec records Patrick's request on
 2026-09-07 UTC: assess every incoming prompt, gather information while polishing
 it, default on, with a user opt-out. Artifact tier: spec (host integration and
 behavioral validation cross session boundaries).
