@@ -813,7 +813,34 @@ brief's five-cold/five-warm protocol remains a proposed measurement procedure,
 not a new general statistical or CI threshold. Full host parity and later
 tasks retain their existing dependency and execution gates.
 
-## Open
+## D15 — Host-native guidance and bounded Antigravity trial (chair, 2026-09-07)
+
+After #2450 merged, Patrick approved completing Codex's built-in question
+integration and keeping Attune forms experimental. This changes the Codex
+guidance default, not the existing server route or its evidence requirements.
+Claude's host-specific work awaits its own review; Gemini is a future
+candidate outside this scope. Release 16.3.0 remains deferred.
+
+Roundtable `q-antigravity-interaction-20260907` recorded independent Claude,
+Antigravity, and Codex positions (#3–5). Patrick selected capability testing
+before setting a default (#13), then made the default conditional on the
+trial (#14). Native choices rendered and submitted, but Patrick's subsequent
+keyboard trial did not meet acceptance (#15–16). Enhanced prompts are the
+Antigravity default; native forms remain experimental. No durable answer
+storage is added. The separate blanket custom-UI deferral candidate (#9)
+was not selected and is not promoted by this entry.
+
+The trial evidence and its limits are recorded in
+`docs/probes/host-surface-parity/host-native-trials-2026-09-07.md`.
+The Codex guidance increment is a structured one-shot: adjust canonical
+planning/elicit guidance, project mirrors/help, verify existing checks,
+and retain the remaining desktop acceptance as open until observed.
+Built-in Codex answers do not inherit the server route's validation,
+session-binding, or exactly-once guarantees.
+The Codex built-in path skips V7 template lookup; template reuse continues
+on the compatibility and Attune server-route paths.
+
+## Open decisions
 
 - None. Every proposed decision in this spec is ruled.
 

@@ -14,6 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   retries. The MCP route stays closed until a verified runtime is installed;
   production activation and Codex display measurements remain outstanding.
 
+### Changed
+
+- Codex planning guidance now prefers built-in questions and handles pending
+  asynchronous replies, corrections, and cancellation explicitly. Attune forms
+  remain experimental; Antigravity defaults to enhanced conversational prompts
+  after the desktop keyboard trial did not meet acceptance.
+
 ### Fixed
 
 - Pin the MCP SDK to the version used by native-form evidence, so fresh

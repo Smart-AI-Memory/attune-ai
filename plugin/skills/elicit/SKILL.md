@@ -13,8 +13,8 @@ argument-hint: "<what you're scoping, e.g. 'a new feature' or 'this session'>"
 > button at a time.
 
 This skill turns a **declarative form** (data, not code) into a validated
-interaction. In Codex, use the server-routed path below when available;
-the user need not name a form or tool. The compatibility path uses:
+interaction. Apply the host guidance below before building a form; the
+user need not name a form or tool. The compatibility path uses:
 
 - `elicitation_render_form` — validate the form, get batched payloads.
 - `elicitation_collect_response` — validate the answers (R4).
@@ -34,6 +34,70 @@ Batch 2–4 fields into **one** form-turn only when ALL hold:
 question depends on an earlier answer, or batching would feel like a
 bureaucratic intake for a simple ask. The form never adds fields the
 ordinary Socratic-ambiguity judgement wouldn't already ask.
+
+## Host defaults — apply before steps 0–4
+
+Do not add durable storage of answer contents as a side effect of asking.
+Keep working answers in the conversation; explicitly requested artifacts
+remain subject to the user's existing scope and authorization.
+
+### Codex: built-in questions first
+
+For an ordinary planning or scoping request, apply the batching rule and
+honor explicit conversation preferences. When questions are useful, use
+Codex's available built-in question tool directly; do not require the user
+to ask for a form. Discover the tools exposed in this session. At the time
+of writing, Default mode exposes `request_user_input_async`; use
+`request_user_input` only where the current host/mode permits it.
+Follow the actual tool schema and limits, including its question-count
+limit; never invent unsupported controls. Do not add an "Other" option
+when the tool schema already supplies free-text entry. Put a recommendation first only when justified. Use
+free text for information that has no honest predefined choices.
+
+This direct host path skips template lookup and steps 0–4. It does not
+provide the Attune runtime's server-bound validation or receipt guarantees.
+Check returned answers against the question actually asked, clarify only
+missing or inconsistent information, and retain all valid prior answers.
+Summarize the accepted choices once and continue the authorized task.
+A correction replaces the affected answer; it never restarts intake.
+Answers scope the work; they do not grant additional action authority.
+While answers are pending, limit independent work to authorized, reversible
+steps that do not depend on those answers.
+
+**Asynchronous lifecycle:** calling `request_user_input_async` posts the
+questions but does not wait for answers. Follow the exposed tool's delivery
+contract: this Codex host delivers asynchronous user replies during an active
+turn. On such a host, keep the turn active while a needed answer is pending;
+do independent work, or, if available, use an interruptible wait tool in
+intervals of at most 60 seconds. On a host that delivers answers only after
+the turn ends, state what is pending and resume on reply instead. Do not
+end with "the form is open", repost the same questions, or treat elapsed
+time, a highlighted option, or a tool-call return as an answer. Handle
+incoming replies before continuing work that depends on them. When replies
+are partial, retain the answered fields yourself and clarify only what is
+still missing. Never interpret silence as cancellation
+or approval. On explicit cancellation, respect it and stop dependent work;
+do not reopen a form automatically. If no result arrives and the host
+cannot keep the interaction pending, explain the limitation and use a
+concise conversational question without claiming submission succeeded.
+
+For multi-select, numeric bounds, or other controls the built-in schema
+cannot represent, state the expected answer format and validate the typed
+response; do not silently drop information or switch to an experimental
+renderer. A user's preference for plain conversation takes precedence.
+
+### Antigravity: enhanced prompts; native forms experimental
+
+Use concise conversational questions with explicit goal, known context,
+constraints, and acceptance criteria only where they help the decision.
+Ask only for material missing information and preserve corrections in the
+current workflow. Native controls are experimental: a controlled desktop
+trial demonstrated choices and submission, but the user reported keyboard
+problems. Use them only for an explicitly requested trial or interaction;
+state the observed keyboard limitation and offer conversation as a fallback.
+Do not infer reliable keyboard support from tool availability.
+
+Other hosts retain their existing guidance pending host-specific review.
 
 ## Step 0 — check the template library first (V7)
 
@@ -297,18 +361,19 @@ instead of an answer.
 
 ## Choosing a surface
 
-### Codex: use the verified server route (bounded D14 milestone)
+### Experimental Attune server route (bounded D14 milestone)
 
-For an ordinary planning or scoping request in Codex, first apply the
+For an explicitly requested Attune-form interaction or validation trial, apply the
 batching rule and existing preference scope. Do not re-ask settled fields
 or manufacture a decision merely to demonstrate a form. An explicit
 conversation preference or incompatible presentation requirement does not
 authorize a native dialog; preserve that preference and explain any
 unavailable presentation without claiming it is implemented.
 
-When a form is appropriate and the connected attune-ai server exposes
-`elicitation_route_form`, use that endpoint instead of the compatibility
-surface selector below. Discover the actual connected tool; do not hard-code
+Only use this route for an explicitly requested Attune-form interaction
+or validation trial. Availability does not make it the Codex default.
+When the connected attune-ai server exposes `elicitation_route_form`,
+discover the actual connected tool; do not hard-code
 a preview server name or infer readiness from a package version. The server
 owns capability negotiation, evidence, and surface selection. Never send
 caller-invented capability, session, evidence, or binding fields.
@@ -337,8 +402,8 @@ tool return do not prove visible controls. Keep user-observed display,
 validated completion, and request-to-visible timing as separate evidence.
 Selection time is not display latency; process reuse is not policy warmth.
 
-If the endpoint is absent, the compatibility guidance below remains
-available subject to the host's actual support and the user's preferences.
+If the endpoint is absent, report that limitation and apply the host
+default above, subject to the user's preferences.
 Do not claim that path has the new route's session-bound guarantees. Other
 hosts retain their existing guidance until independently verified.
 
@@ -443,8 +508,9 @@ summaries, not screenfuls of HTML.
 
 ## Step 2 — render it
 
-For the Codex server-routed path, follow its same-call procedure above
-instead of steps 2–4. The following steps are the compatibility path.
+For Codex built-in questions, follow the host default above. For an
+experimental server-route trial, follow its same-call procedure instead
+of steps 2–4. The following steps are the compatibility path.
 
 Call `elicitation_render_form` with `{ "form": <the form> }`.
 
