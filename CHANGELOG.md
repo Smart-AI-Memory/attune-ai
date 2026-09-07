@@ -46,6 +46,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and supports a bounded larger brief on stdin. The clean-venv smoke job
   prepares static tokenizer data before guarded tests.
 
+- attune-forms floor raised to 0.15.0 (host-surface-parity AF-2). The parity
+  gate now treats a route-active host-native target whose host profile is not
+  yet registered as absent and ineligible rather than red, per the AF-2
+  boundary: it derives no obligation, is never replayed, and can never reuse
+  compatibility evidence; registering the profile (Task 2) creates the
+  obligation. Renderer receipts re-locked against the 0.15.0 artifact.
+  attune-ai's router tests and the `elicitation_render_form` surface note
+  follow the host-native default (D17).
+
 - Surface parity review corrections bind all delivery identities to declared
   content, preserve producer provenance, validate receipt metadata and malformed
   projections, and select renderer controls from their owning record. Follow-up

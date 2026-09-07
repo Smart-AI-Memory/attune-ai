@@ -1154,28 +1154,78 @@ def test_compatibility_answer_comes_from_emitted_questions(monkeypatch) -> None:
 
 
 def test_route_active_target_cannot_reuse_compatibility_evidence(monkeypatch) -> None:
+    """A target promoted to route_active is not evidenced by its compatibility
+    projection: the replay yields no declaration for it while its siblings
+    still replay (AF-2 boundary: absent and ineligible, never red)."""
     from attune_forms import renderer_registry as rr
 
     from attune.elicitation.surface_evidence import replay_renderer_evidence
 
     form, workspace = rr.RENDERER_REGISTRY
-    target = dataclasses.replace(
-        form.targets[-1],
+    compat = next(t for t in form.targets if t.target_id == "form.askuserquestion")
+    promoted = dataclasses.replace(
+        compat,
         status="route_active",
         evidence_mode="route_roundtrip",
         profile_id="new-profile",
         compatibility_contract_id="",
         compatibility_shape_digest="",
     )
+    targets = tuple(promoted if t is compat else t for t in form.targets)
     monkeypatch.setattr(
-        rr,
-        "RENDERER_REGISTRY",
-        (dataclasses.replace(form, targets=(*form.targets[:-1], target)), workspace),
+        rr, "RENDERER_REGISTRY", (dataclasses.replace(form, targets=targets), workspace)
     )
-    with pytest.raises(
-        sr.SurfaceRegistryError, match="host-native:form.askuserquestion: route_roundtrip"
-    ):
-        replay_renderer_evidence()
+    declarations, evidence = replay_renderer_evidence()
+    keys = {d["key"] for d in declarations}
+    assert "renderer:standalone-form:host-native:form.askuserquestion" not in keys
+    assert "renderer.standalone-form.host-native.form.askuserquestion" not in evidence
+    assert "renderer:standalone-form:surface:RICH" in keys
+
+
+def test_live_route_active_target_is_absent_until_its_profile_is_registered(
+    stored_registry,
+) -> None:
+    """attune-forms 0.15.0 ships the route-active ``form.host_question`` target
+    (AF-2). With no ``claude-askuserquestion`` host profile registered here,
+    the target is inventoried but derives no obligation and is not replayed;
+    it is neither receipted nor pending."""
+    from attune.elicitation.surface_evidence import installed_renderers, replay_renderer_evidence
+
+    inventoried = {
+        t["id"]: t
+        for r in installed_renderers()
+        for t in r["targets"]
+        if r["id"] == "standalone-form"
+    }
+    host = inventoried["form.host_question"]
+    assert host["status"] == "route_active" and host["profile_id"] == "claude-askuserquestion"
+    assert sr.route_active_without_profile(host, {})
+    assert not sr.route_active_without_profile(inventoried["form.askuserquestion"], {})
+    key = "renderer:standalone-form:host-native:form.host_question"
+    assert key not in sr.required_obligations(stored_registry)
+    assert key not in {d["key"] for d in replay_renderer_evidence()[0]}
+    assert key not in {r["key"] for r in stored_registry["receipts"]}
+    assert key not in {r["key"] for r in stored_registry["pending_obligations"]}
+    assert stored_registry["host_profiles"] == []
+
+
+def test_registering_the_host_profile_creates_the_route_active_obligation(small_registry) -> None:
+    renderer = small_registry["renderers"][0]
+    renderer["targets"].append(
+        {
+            "id": "host-q",
+            "surface": "host-native",
+            "status": "route_active",
+            "evidence_mode": "route_roundtrip",
+            "profile_id": "claude-askuserquestion",
+        }
+    )
+    key = "renderer:renderer:host-native:host-q"
+    assert key not in sr.required_obligations(small_registry)
+    small_registry["host_profiles"].append({"id": "claude-askuserquestion"})
+    obligations = sr.required_obligations(small_registry)
+    assert obligations[key] == {"kind": "parity", "obligation_key": key}
+    assert "lifecycle:host_profile:claude-askuserquestion:abort" in obligations
 
 
 def test_empty_renderer_result_cannot_be_receipted(monkeypatch) -> None:

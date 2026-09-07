@@ -53,24 +53,30 @@ def _isolate_telemetry_and_env(tmp_path, monkeypatch):
 
 
 # --------------------------------------------------------------------
-# select_form_surface — the flipped default
+# select_form_surface — the host-native default (attune-forms 0.15.0, D15–D17)
 # --------------------------------------------------------------------
 
 
-def test_multi_dimension_form_defaults_to_widget() -> None:
-    """The D21 flip: >1 all-select field is no longer an AskUserQuestion form.
+def test_multi_dimension_expressible_form_routes_to_the_host_control() -> None:
+    """D15/D16: a form the host-question profile admits is asked natively.
 
-    This is the exact class the old ``needs_widget``-owned routing sent
-    to buttons. If this returns ``"ask"``, the flip was reverted.
+    Two distinct selects fit one AskUserQuestion call, so the router says
+    ``"ask"`` even though the widget could render them. If this returns
+    ``"widget"``, the host-native default in attune-forms was reverted.
     """
-    form = _form([_select(id="a"), _select(id="b")])
-    assert needs_widget(form) is False  # still AskUserQuestion-expressible
-    assert select_form_surface(form) == "widget"  # ...but no longer routed there
+    form = _form([_select(id="a", text="Which a?"), _select(id="b", text="Which b?")])
+    assert needs_widget(form) is False
+    assert select_form_surface(form) == "ask"
 
 
-def test_single_select_over_three_options_routes_to_widget() -> None:
-    form = _form([_select(options=["w", "x", "y", "z"])])
+def test_identical_question_texts_cannot_be_correlated_and_take_the_widget() -> None:
+    form = _form([_select(id="a"), _select(id="b")])  # both "Which?"
     assert select_form_surface(form) == "widget"
+
+
+def test_four_options_route_to_the_host_control_and_five_to_the_widget() -> None:
+    assert select_form_surface(_form([_select(options=["w", "x", "y", "z"])])) == "ask"
+    assert select_form_surface(_form([_select(options=["v", "w", "x", "y", "z"])])) == "widget"
 
 
 def test_trivial_boolean_routes_to_ask() -> None:
@@ -97,13 +103,10 @@ def test_no_portable_control_outranks_keyboard_mode() -> None:
 
 
 @pytest.mark.parametrize("construct", ["decision", "pushback", "progress"])
-def test_constructs_are_lossy_not_impossible(construct: str) -> None:
-    """Constructs default to the widget but yield to an explicit opt-out.
-
-    Unlike number/date/textarea they *do* have an AskUserQuestion
-    fallback (recommendation-first single-select), so keyboard mode may
-    take it.
-    """
+def test_constructs_route_to_the_host_control(construct: str) -> None:
+    """Decision-shaped constructs are expressible (recommendation-first
+    single-select), so they take the host control by default and under
+    keyboard mode alike (D16); only number/date/textarea are impossible."""
     field = {
         "id": "d",
         "type": construct,
@@ -120,7 +123,7 @@ def test_constructs_are_lossy_not_impossible(construct: str) -> None:
             {"label": "y", "status": "blocked"},
         ]
     form = _form([field])
-    assert select_form_surface(form) == "widget"
+    assert select_form_surface(form) == "ask"
     assert select_form_surface(form, keyboard_mode=True) == "ask"
 
 
@@ -275,6 +278,15 @@ _RICH = {
     ],
 }
 _TRIVIAL = {"title": "T", "fields": [{"id": "q", "type": "boolean", "text": "Proceed?"}]}
+#: A form the host control cannot carry (a number field), so the router wants
+#: the widget regardless of which handler the agent called.
+_WIDGET_ONLY = {
+    "title": "T",
+    "fields": [
+        {"id": "n", "type": "number", "text": "How many?"},
+        {"id": "a", "type": "single_select", "text": "Scope?", "options": ["src", "tests"]},
+    ],
+}
 
 
 def _surface_events() -> list[dict]:
@@ -285,7 +297,7 @@ def _surface_events() -> list[dict]:
 
 
 def test_render_widget_handler_records_the_decision() -> None:
-    result = _run("_handle_elicitation_render_widget", _RICH)
+    result = _run("_handle_elicitation_render_widget", _WIDGET_ONLY)
     assert result["success"] is True
 
     events = _surface_events()
@@ -296,8 +308,8 @@ def test_render_widget_handler_records_the_decision() -> None:
 
 
 def test_render_form_handler_records_disagreement_and_nudges() -> None:
-    """Agent flattened a form the router wanted rich — both must be visible."""
-    result = _run("_handle_elicitation_render_form", _RICH)
+    """Agent flattened a form the host control cannot carry — both must be visible."""
+    result = _run("_handle_elicitation_render_form", _WIDGET_ONLY)
     assert result["success"] is True
     assert "surface_note" in result  # the nudge back toward the widget
 
@@ -309,13 +321,13 @@ def test_render_form_handler_records_disagreement_and_nudges() -> None:
 
 
 def test_render_form_handler_stays_quiet_when_ask_is_correct() -> None:
-    """A trivial form on AskUserQuestion is right — no nag, agreement logged."""
+    """An admissible form on AskUserQuestion is right — no nag, agreement logged."""
     result = _run("_handle_elicitation_render_form", _TRIVIAL)
     assert "surface_note" not in result
 
     events = _surface_events()
     assert events[0]["agreed"] is True
-    assert events[0]["reason"] == "trivial_form"
+    assert events[0]["reason"] == "host_native_default"
 
 
 def test_handler_survives_broken_telemetry(monkeypatch: pytest.MonkeyPatch) -> None:
