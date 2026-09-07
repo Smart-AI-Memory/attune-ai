@@ -1,6 +1,6 @@
 # Automatic prompt refinement
 
-**Status:** In progress — implementation in draft PR #2454; host trials pending.
+**Status:** draft (2026-09-07) — implementation in PR #2454; host trials pending.
 
 This spec records Patrick's request on
 2026-09-07 UTC: assess every incoming prompt, gather information while polishing

@@ -223,6 +223,7 @@ def test_unavailable_policy_import_fails_visibly_without_blocking(monkeypatch, c
     import runpy
 
     # Simulate a missing import while retaining the suite's inference guard.
+    monkeypatch.syspath_prepend(str(ROOT / "plugin/hooks"))
     monkeypatch.setitem(sys.modules, "attune.prompt_refinement", None)
     with pytest.raises(SystemExit) as result:
         runpy.run_path(str(ROOT / "plugin/hooks/prompt_refinement.py"), run_name="__main__")

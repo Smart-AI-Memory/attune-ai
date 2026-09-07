@@ -44,14 +44,23 @@ remain necessary for conversational behavior claims.
 | Published docs | mkdocs build --strict using temporary docs dependencies | Passed |
 | Wheel includes usable module | Import from built .whl in a new subprocess; persist opt-out in temporary home | Passed |
 | Capability claims match the added tool | project_capabilities.py --write plus projector, claim-drift, website and tier tests | 127 passed; five generated claim surfaces refreshed |
+| CI regression corrections | SDK subprocess gate, utility schemas, both spec-status suites, refinement tests | 208 passed |
+| Full local keyless suite | pytest -n 4 --timeout=60 --timeout-method=thread; temporary HOME/USERPROFILE, ATTUNE_REDIS_MOCK=true at collection, blank ANTHROPIC_API_KEY | 25,937 passed, 286 skipped, 3 xfailed; no failures |
 | Real host conversation | Vague task, clear task, terse reply, correction, persistent off/on, skip, polish-only | Not run |
 
 ## Next action
 
-Check CI on draft PR #2454. The initial hook lanes found an unparseable plain
-spec status line; the correction uses the corpus's `**Status:**` convention.
-The coverage preflight also found stale tool counts, repaired by the owning
-capability projector and verified by the related tests.
+Check CI on draft PR #2454. CI found an invalid spec status, stale capability counts and utility-tool
+expectations, and a missing SDK subprocess guard. Corrections use the canonical
+`draft` status, capability projector, updated tool expectation, and existing
+`_sdk_gate`. The four failures shared by Ubuntu/macOS/coverage pass locally in
+the 208-test regression run. The full local suite also passed (see above).
+Earlier local attempts hit sandbox restrictions and then two live-Redis worker
+timeouts; their logs were retained outside the repo. Mock mode at collection
+prevents selecting live Redis tests and leaves owned-localhost fixture tests active.
+One Windows 3.11 lane also timed out in the existing public MCP form test; it
+passed a local focused rerun, but fresh Windows CI is still required. The
+background update-check denial in its log does not establish the timeout cause.
 After CI, run the host conversation
 matrix from `docs/specs/prompt-refinement/requirements.md` using the updated
 plugin/server in an isolated test session. Preserve raw results, including failures.

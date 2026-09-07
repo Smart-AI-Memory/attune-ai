@@ -41,3 +41,14 @@ bounded scope. Host-delivery/model-interpretation obligations remain pending.
 The strongest counter-case remains context cost in already-clear conversations.
 Shorter guidance mitigates that cost; it does not establish that refinement
 improves outcomes or that every host follows MCP instructions.
+
+## CI correction review
+
+CI subsequently caught a missing SDK-subprocess guard; the initial review did
+not catch it. The hook now calls the existing `_sdk_gate` before reading the
+prompt. A bounded eight-file follow-up by the same reviewer inspected the hook,
+`_sdk_gate.py`, `lesson_recall.py`, the refinement tests, SDK gate tests, utility
+schema tests, spec status corpus tests, and requirements. No remaining issue
+was reported in that scope. Real subprocess checks confirmed silent exits for
+SDK workers and context output for interactive entrypoints. Central verification
+of the corrected SDK, schema, status, and refinement suites passed 208 tests.
