@@ -539,8 +539,11 @@ When you do ask, gather every open dimension of the decision into ONE
 options each, the recommendation ordered first with " (Recommended)",
 free text through the built-in "Other" (do not add an Other option),
 and `metadata.source` set to `"elicit-form"` for a batch of more than
-one question (the format guard's opt-in). No `FormSchema` is needed on
-this path. Validate the returned answers against the questions you
+one question (the format guard's opt-in). Beyond four open dimensions,
+split into successive calls of at most four, most consequential first,
+and drop none; when the overflow is in options rather than questions,
+use a two-tier picker (category, then item). No `FormSchema` is needed
+on this path. Validate the returned answers against the questions you
 asked, retain partial answers, correct only the affected answer, and
 treat an interrupted or dismissed call as cancellation; an errored call
 is a tool failure, so say so and ask conversationally. The `elicit`

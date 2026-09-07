@@ -75,6 +75,7 @@ experimental on Claude.
 | Whitespace | `git diff --check` | clean |
 | Different-model review | `run_review('.', seat='codex', mode='branch')` on gpt-6-astra (Codex CLI upgraded 0.144.6 → 0.153.4 with the chair's in-session pick; subscription login, no API spend) | 11 files sent / 0 omitted; 2 medium findings, both real and fixed (error-vs-dismissal split; plan-mode line narrowed); central re-run green |
 | Desktop `AskUserQuestion` behavior under this guidance | fresh desktop trial on a checkout carrying this branch | not run; pending |
+| Scoped different-model review of the D16 ruling | `run_review(..., paths=['.claude/CLAUDE.md', 'docs/specs/host-surface-parity/decisions.md'])` on gpt-6-astra | 2 files sent / 0 omitted; 1 medium finding, real and fixed (overflow rule for more than four dimensions restored); central re-run green |
 | Widget on Fable 5.1 for ranking / triage / number / date / textarea | render, submit, keyboard trial on the desktop app | not run; pending (Patrick: "we will need to test the use of widgets in fable 5.1") |
 
 ## Next action
