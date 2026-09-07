@@ -203,3 +203,22 @@ Independent GPT-5.6 Sol review: no findings; 257 affected tests passed.
 Full CI selection passed: 26,114 passed, 242 skipped, 3 xfailed in 184.36s.
 Log: /private/tmp/attune-2450-coverage-full-suite.log. Pinned checks passed.
 Next: push and verify remote coverage on the new head.
+
+
+Remote follow-up on 560d8590c confirmed registry 100% and key 97.95% patch
+coverage, but native evidence stayed at 85.98%. The exact 15 missing lines
+reproduced under Python 3.11.14 + coverage.py 7.16.0; Python 3.10 full-suite
+coverage remained 100% for native evidence. Python-tracer diagnostic reproduced
+the same gap and crashed inside coverage.py (IndexError), so no tracer settings
+changed. Async comprehension suspension hid later receipt-assembly lines from
+3.11's tracing even though returned records proved execution.
+
+Added four isolated observation-to-receipt assembly cases with explicit synthetic
+observations, retaining all real SDK round-trip cases. Changing one observation
+must change only its exact obligation result digests; other bindings stay fixed.
+This independently tests assembly without changing production code or receipts.
+Python 3.11: 23 passed, native evidence 98.37% including branches (98.13% statements),
+with only structural teardown lines 118–119 unrecorded. Lines 255–261 are covered.
+JSON: /private/tmp/attune-2450-native311-fixed.json. Final affected suites: 298
+passed; independent review: clean and 23 Python 3.11 tests passed. Pinned checks
+passed. Next: push and verify the new remote coverage report.
