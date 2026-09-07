@@ -2226,6 +2226,24 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prompt Refinement
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         
   
@@ -2242,6 +2260,36 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#codex-native-hook-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Codex native hook setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -4777,6 +4825,25 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#codex-native-hook-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Codex native hook setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -4830,6 +4897,29 @@ host LLM and context tools retain their existing data handling.</p>
 <p>Python applications can call <code>attune.prompt_refinement.refinement_status()</code> at
 their message boundary, pass its instructions to the host LLM, and honor its
 <code>active</code> state. The library cannot observe prompts a host never passes to it.</p>
+<h2 id="codex-native-hook-setup">Codex native hook setup<a class="headerlink" href="#codex-native-hook-setup" title="Permanent link">&para;</a></h2>
+<p>A scripted trial on Codex CLI 0.153.4 verified the existing Attune hook at the
+UserPromptSubmit boundary. MCP-only instructions did not reliably trigger a
+policy check on ordinary turns. Use a native hook when per-turn delivery is
+required; model adherence still needs observation.</p>
+<p>For a source checkout with Attune installed in its Python environment, configure
+the following in your Codex configuration, replacing both absolute paths:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">[[hooks.UserPromptSubmit]]</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">[[hooks.UserPromptSubmit.hooks]]</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"command"</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">command</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"/absolute/path/to/venv/bin/python /absolute/path/to/attune-ai/plugin/hooks/prompt_refinement.py"</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">timeout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span>
+</code></pre></div>
+<p>Quote paths containing spaces using your shell's quoting rules. Use the same
+user account and preference location for the hook and Attune MCP server. Restart
+the host, review the exact command, and trust it through <code>/hooks</code>, as described
+in the <a href="https://learn.chatgpt.com/docs/hooks">Codex hooks documentation</a>. The
+hook supplies policy; retain the MCP connection or Attune CLI for saved setting
+changes. A hook registered but not trusted is not a working integration.</p>
+<p>This setup recipe is derived from the successful temporary CLI registration;
+normal interactive trust setup and installed desktop behavior still require
+validation. The <a href="../../specs/prompt-refinement/live-host-trials/">trial report</a>
+records the exact evidence and remaining UI obligations.</p>
 
 
 
