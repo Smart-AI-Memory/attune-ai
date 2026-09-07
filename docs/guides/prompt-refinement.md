@@ -46,3 +46,33 @@ host LLM and context tools retain their existing data handling.
 Python applications can call `attune.prompt_refinement.refinement_status()` at
 their message boundary, pass its instructions to the host LLM, and honor its
 `active` state. The library cannot observe prompts a host never passes to it.
+
+## Codex native hook setup
+
+A scripted trial on Codex CLI 0.153.4 verified the existing Attune hook at the
+UserPromptSubmit boundary. MCP-only instructions did not reliably trigger a
+policy check on ordinary turns. Use a native hook when per-turn delivery is
+required; model adherence still needs observation.
+
+For a source checkout with Attune installed in its Python environment, configure
+the following in your Codex configuration, replacing both absolute paths:
+
+```toml
+[[hooks.UserPromptSubmit]]
+[[hooks.UserPromptSubmit.hooks]]
+type = "command"
+command = "/absolute/path/to/venv/bin/python /absolute/path/to/attune-ai/plugin/hooks/prompt_refinement.py"
+timeout = 10
+```
+
+Quote paths containing spaces using your shell's quoting rules. Use the same
+user account and preference location for the hook and Attune MCP server. Restart
+the host, review the exact command, and trust it through `/hooks`, as described
+in the [Codex hooks documentation](https://learn.chatgpt.com/docs/hooks). The
+hook supplies policy; retain the MCP connection or Attune CLI for saved setting
+changes. A hook registered but not trusted is not a working integration.
+
+This setup recipe is derived from the successful temporary CLI registration;
+normal interactive trust setup and installed desktop behavior still require
+validation. The [trial report](../specs/prompt-refinement/live-host-trials.md)
+records the exact evidence and remaining UI obligations.

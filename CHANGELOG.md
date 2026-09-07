@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Prompt-refinement guidance limits initial questions for terse keyboard
+  conversations, preserves supplied approval wording, and respects prompt-only
+  output. Codex native-hook setup and scripted host validation are documented;
+  installed desktop and human usability validation remain pending.
+
 - Cross-review can explicitly use verified Claude Pro/Max subscription auth
   without enabling API spending. Complete-review mode rejects omitted files
   and supports a bounded larger brief on stdin. The clean-venv smoke job
@@ -37,7 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automatic prompt-refinement guidance for the Claude Code plugin and MCP
   clients that follow server instructions, with user-wide opt-out, one-turn
   skip, and existing form/conversation tools for gathering missing details.
-  Host conversation trials remain pending.
+  Scripted CLI host trials are recorded; installed desktop and human
+  interaction validation remain pending.
 
 - **Worktree-add guard hook** (`src/attune/hooks/scripts/
   worktree_add_guard.py`, retro 2026-09-06 R8). A PreToolUse Bash hook

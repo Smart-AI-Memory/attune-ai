@@ -1,0 +1,1088 @@
+{
+  "sanitizer_version": 1,
+  "scope": "Synthetic responses and control receipts only. Private command outputs, model reasoning, account identifiers, and transcript paths excluded. Raw source hashes bind streams; ordinals preserve order within each stream. Null timestamps mean the raw event did not record one; cross-stream ordering is not inferred.",
+  "records": [
+    {
+      "variant": "baseline",
+      "host": "codex",
+      "attempt": "after_skip",
+      "case": "after_skip",
+      "raw_sha256": "92b0a98795e65ee39b6fcc876551e486e0481efbc101c297fd1c7ee7f4f0a6a4",
+      "responses": [
+        "**Polished interpretation:** Help me plan a website for a neighborhood art fair. Planning only\u2014what information do you need?\n\nWe\u2019re in **meta-reflection / planning mode**, with no code changes expected. To define the scope, I need:\n\n- **Project:** What\u2019s the fair\u2019s name, and is this a new website or an existing one?\n- **Outcome:** What should the website accomplish\u2014attract visitors, recruit artists, find volunteers, or something else?\n- **Done when:** What would make this planning session complete\u2014a page outline, content checklist, or detailed website brief?\n- **Event basics:** Date, location, admission cost, and intended audience.\n- **Visitor actions:** Should people RSVP, apply for a booth, volunteer, or simply find event information?\n- **Assets and constraints:** Do you have artwork, photos, copy, a budget, a launch deadline, or a preferred platform?\n\nRough answers are enough; mark anything undecided as \u201cTBD.\u201d"
+      ],
+      "hook_states": [],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": "{\n  \"enabled\": true\n}\n",
+        "after": "{\n  \"enabled\": true\n}\n",
+        "exit": 0
+      }
+    },
+    {
+      "variant": "baseline",
+      "host": "codex",
+      "attempt": "clear-cli0144-rejected",
+      "case": "clear",
+      "raw_sha256": "6b490f8321862c5f95c2c771a1de318522e7953080598abea3e9879c67b6b741",
+      "responses": [],
+      "hook_states": [],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": null,
+      "stored_preference": null
+    },
+    {
+      "variant": "baseline",
+      "host": "codex",
+      "attempt": "clear",
+      "case": "clear",
+      "raw_sha256": "91385c10a39748825be414d8d666bea963d21108e00127349dafc57c072b6f96",
+      "responses": [
+        "Riverlight: Free Music at Peach Tree Park\nYour October 10 Plans Sound Better Already\nMeet Your Neighbors. Find Your New Sound."
+      ],
+      "hook_states": [],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": null,
+      "stored_preference": null
+    },
+    {
+      "variant": "baseline",
+      "host": "codex",
+      "attempt": "correction",
+      "case": "correction",
+      "raw_sha256": "71fe6c7e6788bdfef0732d3c12b5d7c7f2a2bbfdda20050c8939fd6ab06e3b9d",
+      "responses": [
+        "**Polished interpretation:** Riverlight is October 17, 2026, at Peach Tree Park. Keep the $500 website budget and September 25 launch. Provide a concise site structure and launch plan with assumptions labeled.\n\n**Site structure**\n\nOne mobile-friendly page:\n\n- **Welcome:** Riverlight \u00b7 October 17, 2026 \u00b7 Peach Tree Park \u00b7 Free admission \u00b7 Family-friendly. Prominent links to Schedule and Getting There.\n- **Schedule:** Confirmed performances and activities, with times. Mark unfinished details \u201cTo be announced.\u201d\n- **Getting there:** Verified address, map link, entrances, parking, transit, and accessibility details.\n- **Plan your visit:** Event hours, food, restrooms, what to bring, weather arrangements, and organizer contact.\n\n**Launch plan**\n\n- **September 8\u201311:** Confirm park address, event hours, organizer contact, and who maintains updates.\n- **September 12\u201318:** Prepare content and available lineup details; identify missing visitor information.\n- **September 19\u201322:** Review the proposed site on mobile, verify directions and links, and obtain Ryan\u2019s approval.\n- **September 23\u201324:** Complete corrections and final launch checks.\n- **September 25:** Launch with confirmed information and clearly labeled schedule gaps.\n- **September 26\u2013October 16:** Update the lineup as confirmed; verify all visitor details before the festival.\n\n**Assumptions:** A single page is sufficient; no ticketing is needed; the $500 covers the website setup, domain, and hosting, subject to quotes. Town/state, event hours, and maintenance owner remain TBD.\n\n**Done when:** Ryan approves, visitors can quickly find the schedule and reliable arrival information, and the site launches September 25 within budget. This is a plan only; nothing has been built or published."
+      ],
+      "hook_states": [],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": null
+    },
+    {
+      "variant": "baseline",
+      "host": "codex",
+      "attempt": "disable-approval-blocked",
+      "case": "disable",
+      "raw_sha256": "0a0f714b2de938d5bb698c1b47a85552c2a5692a41708a4961a41ed5c29b2b67",
+      "responses": [
+        "**Polished interpretation:** Turn off automatic prompt refinement persistently and confirm whether the change was saved.\n\nThis is a small settings change, so I\u2019m skipping the session protocol. I\u2019ll use the openai-docs skill to check where the preference is stored.\n",
+        "The change was **not saved**: the settings tool required approval, but this session\u2019s policy blocks approvals.\n\nI\u2019ll stop automatic prompt refinement in this conversation; the persistent preference remains unchanged."
+      ],
+      "hook_states": [],
+      "preference_calls": [],
+      "command_execution_count": 3,
+      "initialize_policy_delivered": true,
+      "stored_preference": null
+    },
+    {
+      "variant": "baseline",
+      "host": "codex",
+      "attempt": "disable",
+      "case": "disable",
+      "raw_sha256": "4b58b257041171190786ad5a671ca20fd1b906e52bce70df21503a9deef83c62",
+      "responses": [
+        "**Polished interpretation:** Turn off automatic prompt refinement persistently, and confirm whether the setting was saved.\n\nI\u2019ll check the setting and whether I can save it. This is a small settings task, so I\u2019m skipping the session protocol and using the openai-docs skill.",
+        "Automatic prompt refinement is off. The user-wide preference was successfully saved and will persist across sessions."
+      ],
+      "hook_states": [],
+      "preference_calls": [
+        {
+          "arguments": {
+            "action": "disable"
+          },
+          "result": {
+            "success": true,
+            "enabled": false,
+            "active": false,
+            "source": "user",
+            "skipped": false,
+            "saved_enabled": false
+          }
+        }
+      ],
+      "command_execution_count": 2,
+      "initialize_policy_delivered": true,
+      "stored_preference": null
+    },
+    {
+      "variant": "baseline",
+      "host": "codex",
+      "attempt": "enable",
+      "case": "enable",
+      "raw_sha256": "124a1ee0c62c54625b63a1ef03433d03bcf515b31f6a49cadc62ff07a964a85f",
+      "responses": [
+        "**Polished interpretation:** Turn automatic prompt refinement back on and confirm the saved setting.\n\nI\u2019m using the openai-docs skill to check where this setting is stored and whether I can update it. This is a quick settings task, so I\u2019ll skip the session protocol.",
+        "Automatic prompt refinement is back on. Confirmed the saved preference is `true` and refinement is active."
+      ],
+      "hook_states": [],
+      "preference_calls": [
+        {
+          "arguments": {
+            "action": "enable"
+          },
+          "result": {
+            "success": true,
+            "enabled": true,
+            "active": true,
+            "source": "user",
+            "skipped": false,
+            "saved_enabled": true
+          }
+        },
+        {
+          "arguments": {
+            "action": "status"
+          },
+          "result": {
+            "success": true,
+            "enabled": true,
+            "active": true,
+            "source": "user",
+            "skipped": false
+          }
+        }
+      ],
+      "command_execution_count": 2,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": "{\n  \"enabled\": false\n}\n",
+        "after": "{\n  \"enabled\": true\n}\n",
+        "exit": 0
+      }
+    },
+    {
+      "variant": "baseline",
+      "host": "codex",
+      "attempt": "off_restart",
+      "case": "off_restart",
+      "raw_sha256": "9e7986997470b544427ca9cc97c549925991445cff74b4f575a5c4d65fa09231",
+      "responses": [
+        "Free Music. Family Fun. Riverlight.\nBring the Family. Find Your Rhythm."
+      ],
+      "hook_states": [],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": "{\n  \"enabled\": false\n}\n",
+        "after": "{\n  \"enabled\": false\n}\n",
+        "exit": 0
+      }
+    },
+    {
+      "variant": "baseline",
+      "host": "codex",
+      "attempt": "polish_only",
+      "case": "polish_only",
+      "raw_sha256": "1c4a47a12909f8f90a6799be09a07f7204c3499102331fb2c1b2c67d32611460",
+      "responses": [
+        "Plan a five-page website for Riverlight, a free family music festival on October 17, 2026, at Peach Tree Park.\n\n- Budget: $500\n- Approver: Ryan\n- Website launch: September 25, 2026\n- Priorities: Make the schedule and getting-there information easy to find.\n- Lineup: Pending; use clearly marked placeholders.\n\nRecommend five pages, their key content, and a concise delivery timeline with Ryan\u2019s approval milestones. Label all assumptions and identify missing information."
+      ],
+      "hook_states": [],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": "{\n  \"enabled\": true\n}\n",
+        "after": "{\n  \"enabled\": true\n}\n",
+        "exit": 0
+      }
+    },
+    {
+      "variant": "baseline",
+      "host": "codex",
+      "attempt": "quoted",
+      "case": "quoted",
+      "raw_sha256": "3864882e20900fa5d7e111c329eed6a28f062ea36c18bfa839688787c11e29c2",
+      "responses": [
+        "Please turn off automatic prompt refinement permanently."
+      ],
+      "hook_states": [],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": "{\n  \"enabled\": true\n}\n",
+        "after": "{\n  \"enabled\": true\n}\n",
+        "exit": 0
+      }
+    },
+    {
+      "variant": "baseline",
+      "host": "codex",
+      "attempt": "skip",
+      "case": "skip",
+      "raw_sha256": "d57e99d5027b22e302c94d9135ba9428e2a04d4c471aa527e675ad5170b6eff6",
+      "responses": [
+        "Free Music. Family Joy. Riverlight.\n\nBring the Family. Feel the Music."
+      ],
+      "hook_states": [],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": "{\n  \"enabled\": true\n}\n",
+        "after": "{\n  \"enabled\": true\n}\n",
+        "exit": 0
+      }
+    },
+    {
+      "variant": "baseline",
+      "host": "codex",
+      "attempt": "terse",
+      "case": "terse",
+      "raw_sha256": "ec404bc061d66341ea26b99ad0668340735a2707e575aeb156eabfbcfadb9b3d",
+      "responses": [
+        "**Polished interpretation:** Plan Riverlight\u2019s website for a free, family-focused festival at Peach Tree Park on October 10, 2026. The website budget is $500, Ryan approves it, and launch is September 25. Prioritize the schedule and directions; the lineup is still being finalized.\n\nA compact, mobile-friendly single page fits this scope:\n\n- **Welcome:** Festival name, date, free admission, and prominent \u201cSchedule\u201d and \u201cGetting there\u201d links.\n- **Schedule:** Performance times and activities as confirmed. Until then, show \u201cLineup and schedule coming soon.\u201d\n- **Getting there:** Verified park address, map link, entrances, parking, transit, and accessible arrival information.\n- **Family information:** Confirmed details about restrooms, food, seating, accessibility, and weather plans.\n- **Updates and contact:** Where visitors can check changes or contact organizers.\n\nPlan for Ryan to review the content before launch, with time reserved for corrections. Keep schedule updates simple as performers are confirmed.\n\nTo finish the planning brief, reply with short answers:\n\n1. Which **town/state** is Peach Tree Park in?\n2. What are the festival\u2019s **start and end times**, or TBD?\n3. Does **\u201cpage outline + content checklist + launch timeline\u201d** cover what you want from this plan?"
+      ],
+      "hook_states": [],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": null
+    },
+    {
+      "variant": "baseline",
+      "host": "codex",
+      "attempt": "vague",
+      "case": "vague",
+      "raw_sha256": "084846db5440a9c8fcf3bb72c009f9563e1e73522d50a79987741ca05e0c77a4",
+      "responses": [
+        "**Polished interpretation:** Help me plan a local music festival website without building or publishing anything. Keep questions easy to answer with a few words.\n\nI\u2019ll keep this in planning mode and start by defining the outcome and what counts as a finished plan.",
+        "What\u2019s the festival\u2019s name and town? A working name or \u201cTBD\u201d is fine.\n\nWhat should the website primarily help visitors do?\n- Buy tickets\n- Find event details\n- Discover the festival\n\nWhat would make this planning session complete for you?\n- Page outline, key features, and content checklist\n- Quick website concept and page list\n- Detailed brief for a designer or developer",
+        "We\u2019re planning the festival website only; nothing will be built or published.\n\nStart with the three short answers above. \u201cTBD\u201d is fine for anything undecided. Your answers will set the site\u2019s purpose and how detailed the finished plan should be."
+      ],
+      "hook_states": [],
+      "preference_calls": [],
+      "command_execution_count": 1,
+      "initialize_policy_delivered": true,
+      "stored_preference": null
+    },
+    {
+      "variant": "baseline",
+      "host": "claude",
+      "attempt": "after_skip",
+      "case": "after_skip",
+      "raw_sha256": "aab47629094218b95d2635d280fad72fbbfdf571936d0a291cc80beb743b1774",
+      "responses": [
+        "Here's what I'd need to plan this well. The first four materially change the site's structure; the rest change execution.\n\n**Must know**\n\n1. **Primary goal.** Is the site mainly to (a) drive attendance, (b) recruit artists/vendors, (c) attract sponsors or donations, or some ranked mix? This decides the homepage's single main call-to-action and what everything else gets demoted to.\n2. **Artist participation model.** Open booth rental, juried application, or invite-only? If there's an application with a deadline and a fee, that's a real flow \u2014 forms, payments, confirmation emails \u2014 and it's usually the most expensive part of the build.\n3. **Audiences beyond attendees.** Artists, sponsors, volunteers, press \u2014 each one you name likely earns its own page or section.\n4. **Event basics.** Date(s), hours, location, free vs. ticketed, one-time vs. annual. \"Annual\" means the site needs a yearly-reset plan rather than a throwaway page.\n\n**Shapes the build**\n\n5. **Who updates it after launch, and how comfortable are they with tech?** A volunteer editing content on their phone points to Squarespace/Wix; a developer-maintained site opens up cheaper static hosting.\n6. **Budget and launch date.** Especially whether the site must be live *before* an artist application deadline \u2014 that sets the hard milestone.\n7. **Existing assets.** Logo, photos from past years, artist roster, site map, domain, current hosting, sponsoring organization (neighborhood association? city permit?). Determines how much is design vs. assembly.\n\n**Worth answering if it applies**\n\n8. **Constraints:** accessibility requirements, languages other than English, any org branding rules.\n9. **Off-season behavior:** does the site stay up year-round with a \"see you next spring\" state, or come down after the event?\n\nAnswer whichever you know \u2014 partial is fine, and I'll flag assumptions for the rest rather than stall. Also, one note since it's the first time it's come up: I'm running Attune's prompt refinement, which is why I'm front-loading these questions. You can turn it off anytime by saying so, or skip it for a single message with a `[no-refine]` prefix."
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": true,
+          "source": "user",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": "{\n  \"enabled\": true\n}\n",
+        "after": "{\n  \"enabled\": true\n}\n",
+        "exit": 0
+      }
+    },
+    {
+      "variant": "baseline",
+      "host": "claude",
+      "attempt": "clear",
+      "case": "clear",
+      "raw_sha256": "66c7db242b2c5f1182f93fa369631bf689144078dfd5b73ab40fc2417bd8d0db",
+      "responses": [
+        "Riverlight: Free Music, October 10, Peach Tree Park\n\nBring a Blanket. Riverlight Lights Up Peach Tree Park.\n\nOne Day, One Park, All Free \u2014 Riverlight"
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": true,
+          "source": "default",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": null,
+      "stored_preference": null
+    },
+    {
+      "variant": "baseline",
+      "host": "claude",
+      "attempt": "correction",
+      "case": "correction",
+      "raw_sha256": "483c56603adbb176650f1a8990996ffaef46d62a0f866ef16b00c0c55077c562",
+      "responses": [
+        "Date updated: **Saturday, October 17, 2026**. Launch stays Sep 25, which now gives you 22 days of runway after launch instead of 15 \u2014 the lineup announcement is less squeezed, and the content freeze moves to the week of Oct 12.\n\n## Assumptions\n\n| # | Assumption | Basis |\n|---|---|---|\n| A1 | Single day, no rain date set | Not stated |\n| A2 | Small local scale; mostly phone traffic, much of it at the park on weak signal | Inferred from \"local,\" free, family |\n| A3 | Ryan approves but someone else edits post-launch | Not stated \u2014 **drives platform choice** |\n| A4 | No existing domain, logo, or prior site | Not mentioned |\n| A5 | Lineup lands before Oct 9 | Needed for a useful schedule page |\n\n## Site structure\n\nOne page, sticky anchor nav. Cheapest to build, best on bad signal.\n\n1. **Top** \u2014 Riverlight \u00b7 Sat Oct 17, 2026 \u00b7 Peach Tree Park \u00b7 Free admission. Address as tappable text.\n2. **Getting There** \u2014 parking specifics (lot names, overflow, street rules), transit, bike, accessible parking and drop-off, walk route from parking. Static map image + a \"Directions\" button to their phone's map app.\n3. **Schedule** \u2014 set times as a vertical list, not a grid. Grids break on phones.\n4. **Plan Your Day** \u2014 strollers, restrooms, changing tables, food and outside-food policy, water, shade, pets, wheelchair access, lost-kid meeting point, rain policy.\n\nFooter: contact email, socials, vendor/volunteer inquiries. Skip galleries, blog, newsletter, \"About.\"\n\n## Launch plan\n\n| Dates | Work |\n|---|---|\n| Sep 8\u201312 | Gather content. Pick platform. **Register domain + social handles now** \u2014 only deadline outside your control. |\n| Sep 15\u201319 | Build. Test on a real phone over cellular, not wifi. |\n| Sep 22\u201324 | Ryan reviews. Text size and tap-target check. |\n| **Sep 25** | **Launch:** Getting There complete; Schedule page live reading \"Lineup announced [date].\" Set that date now. |\n| Sep 26\u2013Oct 9 | Lineup drops \u2192 publish set times. |\n| Oct 12\u201315 | Times locked. Printable schedule PDF. QR signage for the park. Content freeze. |\n| Oct 17 | Day-of updates from a phone. |\n| Oct 18+ | Thank-you, photos, \"notify me for 2027.\" |\n\n**Budget:** domain ~$20, hosted builder ~$190/yr, ~$290 reserve for photos and contingency. Under $500.\n\n**Platform:** hosted builder (Squarespace or similar) if A3 holds \u2014 a volunteer needs to post \"Stage 2 delayed 30 min\" from a phone on Oct 17. If the maintainer is technical, Carrd or Netlify static drops this to under $50.\n\n## Still open\n\n1. **Who edits after Sep 25, and how technical?** Decides platform.\n2. **Rain-or-shine, or a rain date?** Needed on the page before launch.\n3. Parking arrangements settled with the city?\n\nAnswer 1 and 2 and the plan is executable as written."
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": true,
+          "source": "default",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": null,
+        "after": null,
+        "exit": 0
+      }
+    },
+    {
+      "variant": "baseline",
+      "host": "claude",
+      "attempt": "disable",
+      "case": "disable",
+      "raw_sha256": "8ff4e3248feb49fffda32d06de58ee38ff47ea11d91d195a1a8b65951b2a6e18",
+      "responses": [
+        "Saved. Automatic prompt refinement is now **off** persistently \u2014 the setting is stored as a user preference (`source: \"user\"`, `saved_enabled: false`), not just for this turn, so it carries across sessions.\n\nTo turn it back on later, just ask, or run `attune config set prompt_refinement true`."
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": true,
+          "source": "default",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [
+        {
+          "arguments": {
+            "action": "disable"
+          },
+          "result": {
+            "success": true,
+            "enabled": false,
+            "active": false,
+            "source": "user",
+            "skipped": false,
+            "saved_enabled": false
+          }
+        }
+      ],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": null,
+        "after": "{\n  \"enabled\": false\n}\n",
+        "exit": 0
+      }
+    },
+    {
+      "variant": "baseline",
+      "host": "claude",
+      "attempt": "enable",
+      "case": "enable",
+      "raw_sha256": "a38e3a5213ddad7c8774ce74afb564ea34691f440657c3a93cbb136125b9ea34",
+      "responses": [
+        "Automatic prompt refinement is back on \u2014 the saved preference is `enabled: true` (persisted user-wide, source: user), and it's active starting with your next message.\n\nYou can turn it off again any time by asking, or skip it for a single message by prefixing that message with `[no-refine]`, which leaves the saved setting untouched."
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": false,
+          "active": false,
+          "source": "user",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [
+        {
+          "arguments": {
+            "action": "enable"
+          },
+          "result": {
+            "success": true,
+            "enabled": true,
+            "active": true,
+            "source": "user",
+            "skipped": false,
+            "saved_enabled": true
+          }
+        }
+      ],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": "{\n  \"enabled\": false\n}\n",
+        "after": "{\n  \"enabled\": true\n}\n",
+        "exit": 0
+      }
+    },
+    {
+      "variant": "baseline",
+      "host": "claude",
+      "attempt": "off_restart",
+      "case": "off_restart",
+      "raw_sha256": "0991ed7df820764d6b22bb09d6180dce3ddca885beb5f7bafd988e4b2a0c087f",
+      "responses": [
+        "Bring the whole family down to the river \u2014 free, all day, all ages.\n\nRiverlight: Music on the Water, Free for Everyone."
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": false,
+          "active": false,
+          "source": "user",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": "{\n  \"enabled\": false\n}\n",
+        "after": "{\n  \"enabled\": false\n}\n",
+        "exit": 0
+      }
+    },
+    {
+      "variant": "baseline",
+      "host": "claude",
+      "attempt": "polish_only",
+      "case": "polish_only",
+      "raw_sha256": "ffc82313081cd60aaeed96548848d1f838c21114e20dc0d585abfbc61e848977",
+      "responses": [
+        "Here's the editable prompt. Assumptions I had to make are labeled inline so you can overwrite them.\n\n```\nPlan a five-page website for Riverlight, a free family music festival on\nSaturday, October 17, 2026 at Peach Tree Park.\n\nConstraints\n- Budget: $500 total.\n- Approver: Ryan (sign-off required before build).\n- Site launches September 25 [ASSUMED: 2026 \u2014 ~3 weeks of runway before the festival].\n\nPriorities\n1. Schedule (day-of timing, set times, family-friendly programming).\n2. Getting there (directions, parking, transit, drop-off, accessibility).\nEverything else is secondary.\n\nDeliverable\nA plan covering: the five pages and what each one contains, a sitemap/nav\nstructure, and the content needed for each page.\n[ASSUMED pages \u2014 replace as needed: Home, Schedule, Getting There, FAQ,\nAbout/Contact.]\n\nOpen items\n- Lineup is not confirmed. Show how the site handles a pending lineup\n  (placeholder, \"artists announced soon,\" update path after launch).\n- Label every assumption explicitly rather than presenting it as settled.\n\n[ASSUMED, please confirm or cut: no existing site or brand assets to reuse;\n$500 covers domain/hosting/tooling, not paid design or content help.]\n```\n\nTwo things worth deciding before you run it: whether September 25 is 2026 (that's a tight promo window), and whether those five page names are the ones you had in mind \u2014 the plan will be built around them.\n\nPrompt refinement is on for your account. You can turn it off with \"disable prompt refinement,\" or skip it for a single message by starting with `[no-refine]`."
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": true,
+          "source": "user",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": "{\n  \"enabled\": true\n}\n",
+        "after": "{\n  \"enabled\": true\n}\n",
+        "exit": 0
+      }
+    },
+    {
+      "variant": "baseline",
+      "host": "claude",
+      "attempt": "quoted",
+      "case": "quoted",
+      "raw_sha256": "47421052694d85850e2c8afd8f82350dd0144bad05e5d50fd7129bfc00c6d49a",
+      "responses": [
+        "\"Could we please disable automatic prompt refinement permanently?\""
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": true,
+          "source": "user",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": "{\n  \"enabled\": true\n}\n",
+        "after": "{\n  \"enabled\": true\n}\n",
+        "exit": 0
+      }
+    },
+    {
+      "variant": "baseline",
+      "host": "claude",
+      "attempt": "skip",
+      "case": "skip",
+      "raw_sha256": "008271a609d5804fc9cda6ff2b0ec92db92bb8453b28e9f95a082cef3439850c",
+      "responses": [
+        "Riverlight: Where the River Sings and Everyone's Invited\n\nFree Music, All Ages, One Bright Weekend by the Water"
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": false,
+          "source": "user",
+          "skipped": true
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": "{\n  \"enabled\": true\n}\n",
+        "after": "{\n  \"enabled\": true\n}\n",
+        "exit": 0
+      }
+    },
+    {
+      "variant": "baseline",
+      "host": "claude",
+      "attempt": "terse",
+      "case": "terse",
+      "raw_sha256": "ef8fade581ba4140cbe8cb1364b24be0a65ebe38b393d5466a3c3e4eb81b00bb",
+      "responses": [
+        "Got it. Here's the plan.\n\n## Assumptions I'm making (correct any)\n\n- Single day, Oct 10 2026 \u2014 no rain date decided yet.\n- Small/local scale, mostly phone traffic, much of it *at the park* on weak cell signal.\n- Ryan is the approver, not necessarily the person editing the site after launch.\n- No existing domain, logo, or prior site (you didn't mention any).\n\n## The one tension to decide now\n\nYou said schedule matters most, but the lineup isn't final and you launch Sep 25 \u2014 15 days before the festival. So the site's top-priority content probably won't exist on launch day.\n\nPlan for that rather than delaying: launch Sep 25 with **Getting There** complete and a schedule page that exists but says \"Lineup announced [date].\" Set that date now and put it on the page. A visible promise beats an empty page.\n\n## Site structure\n\nFour sections, one page with sticky anchor nav. Fastest to build, cheapest, and best on a bad signal at the park.\n\n1. **Top** \u2014 Riverlight \u00b7 Sat Oct 10, 2026 \u00b7 Peach Tree Park \u00b7 Free admission. One line, big. Address as tappable text.\n2. **Getting There** \u2014 driving + where to actually park (be specific: lot names, overflow, street rules), transit, bike, accessible parking and drop-off, walking route from parking. One static map image plus a \"Directions\" button that opens their phone's map app.\n3. **Schedule** \u2014 stage times as a simple list, not a grid. Grids break on phones.\n4. **Plan Your Day** \u2014 the family FAQ: strollers, restrooms, changing tables, food and whether outside food is allowed, water, shade, pets, what to bring, wheelchair access, lost kids/meeting point, rain policy.\n\nPlus a thin footer: contact email, socials, vendor/volunteer inquiries.\n\nSkip for now: photo galleries, blog, newsletter, merch, \"About the festival.\"\n\n## Content checklist\n\nSomeone needs to source these \u2014 most aren't website work, they're festival decisions:\n\n- Confirmed park address and gate/entrance name\n- Parking specifics and any city arrangement\n- Rain-or-shine policy (**needed before launch**)\n- Accessibility details\n- Lost-child procedure and meeting point\n- Day-of contact number\n- Lineup + set times (later)\n- 3\u20135 photos (past event or park; stock as fallback)\n\n## Tech and budget\n\n**Recommendation:** a hosted builder \u2014 Squarespace or similar. Not because it's technically best, but because on Oct 10 a volunteer may need to post \"Stage 2 delayed 30 min\" from a phone. That's the deciding factor.\n\n| Item | Cost |\n|---|---|\n| Domain (riverlightfest.com or similar) | ~$20 |\n| Squarespace, annual | ~$190 |\n| Reserve: photos, map graphic, contingency | ~$290 |\n\nComfortably inside $500.\n\n**Cheaper alternative** if whoever maintains it is technical: Carrd (~$19/yr) or a static site on Netlify free tier. Total under $50 \u2014 but edits are harder under pressure.\n\nGrab the domain and matching social handles this week regardless of platform choice; that's the only decision with a deadline outside your control.\n\n## Timeline\n\n| Dates | Work |\n|---|---|\n| Sep 8\u201312 | Gather content above. Pick platform. Register domain. |\n| Sep 15\u201319 | Build. Test on a real phone, and on cellular, not just wifi. |\n| Sep 22\u201324 | Ryan reviews. Fixes. Check text size and tap targets. |\n| **Sep 25** | **Launch** \u2014 Getting There complete, lineup date promised. |\n| Sep 26\u2013Oct 2 | Lineup drops \u2192 publish. |\n| Oct 5\u20138 | Set times locked. Print QR-code signage for the park. Freeze changes. |\n| Oct 10 | Day-of updates from a phone. |\n| Oct 11+ | Thank-you note, photos, \"notify me about 2027\" signup. |\n\nTwo things worth doing in the Oct 5\u20138 window: a plain-text printable schedule PDF, and QR codes on park signage pointing to the schedule anchor. Both matter because cell service at parks is unreliable and this is the content people need while standing there.\n\n## Open questions\n\n1. Rough attendance? Changes nothing about the build, but affects parking planning.\n2. Who edits the site after Sep 25, and how technical are they? This decides Squarespace vs. static.\n3. Any existing domain, branding, or Instagram already in use?\n4. Is there a rain date or a rain-or-shine call? Needed before launch.\n5. Are the parking arrangements settled with the city, or still being worked out?\n\nAnswer 2 and 4 and I can firm up the platform choice and the launch-day content list."
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": true,
+          "source": "default",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": null,
+        "after": null,
+        "exit": 0
+      }
+    },
+    {
+      "variant": "baseline",
+      "host": "claude",
+      "attempt": "vague",
+      "case": "vague",
+      "raw_sha256": "b6fb2e6bf17ac2c432feb9d91a531f8423e12d3512aa016443351e807e480169",
+      "responses": [
+        "Prompt refinement is on by default here \u2014 you can say \"skip refinement\" for a single turn, or ask me to turn it off entirely.\n\nSix quick questions; one-line answers are fine:\n\n1. **Name, dates, city?**\n2. **Scale** \u2014 rough attendance, number of stages/acts?\n3. **Tickets** \u2014 free event, sell on the site, or link out to Eventbrite/DICE/etc.?\n4. **Who updates it after launch**, and are they comfortable with a CMS vs. editing code?\n5. **What already exists** \u2014 domain, logo/branding, socials, a previous site?\n6. **Live-by date and rough budget?**\n\nAnswer what you know, skip what you don't. Then I'll draft a plan covering site structure, content checklist, tech options with a recommendation, timeline, and who-does-what."
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": true,
+          "source": "default",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": null,
+        "after": null,
+        "exit": 0
+      }
+    },
+    {
+      "variant": "refined",
+      "host": "codex",
+      "attempt": "clear",
+      "case": "clear",
+      "raw_sha256": "46eff729a383001b23f5993cfdcc9e7d93ff65503820bfce73396b08927ac7b4",
+      "responses": [
+        "Riverlight: Free Local Music, October 10\nPeach Tree Park Comes Alive With Music\nFind Your Rhythm at Riverlight"
+      ],
+      "hook_states": [],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": null,
+        "after": null,
+        "exit": 0
+      }
+    },
+    {
+      "variant": "refined",
+      "host": "codex",
+      "attempt": "vague",
+      "case": "vague",
+      "raw_sha256": "add4869c70c37ee8136bf07f88e941ecf96c056c7a033bbee8363b20e22e222a",
+      "responses": [
+        "**Polished interpretation:** Help me plan a local music festival website without building or publishing anything. Keep questions easy to answer briefly.\n\nWe\u2019re in planning mode. I\u2019ll help define the site\u2019s audience, content, and features, then turn that into a concise plan.",
+        "Planning only for the festival website\u2014nothing built or published. We\u2019ll use short questions, a few at a time.\n\nProposed finish line: a concise plan covering pages, key features, visual direction, and launch needs.\n\nTo start, reply with a few words each:\n\n- **Festival:** Name and town? \u201cTBD\u201d is fine.\n- **Main goal:** What should visitors do?\n- **Deliverable:** Does the proposed finish line fit?"
+      ],
+      "hook_states": [],
+      "preference_calls": [],
+      "command_execution_count": 2,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": null,
+        "after": null,
+        "exit": 0
+      }
+    },
+    {
+      "variant": "refined",
+      "host": "claude",
+      "attempt": "clear",
+      "case": "clear",
+      "raw_sha256": "95c77255b824bcc1399f23985b52417ca8f287af1da0af6a5ebe77b573ad5e52",
+      "responses": [
+        "Riverlight: Free Music by the River\n\nFree Live Music, October 10, Peach Tree Park\n\nRiverlight Lights Up Peach Tree Park"
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": true,
+          "source": "default",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": null,
+        "after": null,
+        "exit": 0
+      }
+    },
+    {
+      "variant": "refined",
+      "host": "claude",
+      "attempt": "polish_only",
+      "case": "polish_only",
+      "raw_sha256": "145974736c245eb8647a9f20bf7d71cf8ddf6a8232d98d865d26b7482c1c6426",
+      "responses": [
+        "```\nPlan a five-page website for Riverlight, a free family music festival on October 17, 2026 at Peach Tree Park.\n\nDeliverable: a site plan covering the five pages \u2014 page purpose, key content, and navigation between them.\n\nPriorities: the schedule and getting-there (directions, parking, transit) content comes first; treat those as the pages visitors most need.\n\nConstraints:\n- Budget: $500 total.\n- Launch date: September 25 (assumed 2026 \u2014 confirm).\n- Ryan approves the plan before build.\n\nOpen items: the lineup is not confirmed. Label any lineup-dependent content as an assumption and note how the page should handle a still-pending lineup at launch.\n\nKeep the output concise.\n```"
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": true,
+          "source": "default",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": null,
+        "after": null,
+        "exit": 0
+      }
+    },
+    {
+      "variant": "refined",
+      "host": "claude",
+      "attempt": "vague",
+      "case": "vague",
+      "raw_sha256": "90f483c7e030bbc97c4a9e2faa90d358c6af2261152a81e16dfbea5a29e40682",
+      "responses": [
+        "Happy to plan this with you. Three things I need before sketching anything:\n\n1. **What must the site do?** Info-only (dates, lineup, directions), or also sell/handle tickets, vendor/artist applications, sponsor logos?\n2. **When's the festival, and who maintains the site?** You, a volunteer, a hired dev?\n3. **Any constraints already fixed?** Domain, budget, platform you're stuck with or already paying for.\n\nShort answers are fine \u2014 a few words each. Anything you don't know yet, just say \"unknown\" and I'll plan around it.\n\n(Aside: I auto-refine prompts like this into a working brief. You can say \"skip refinement\" for one turn or \"turn off prompt refinement\" permanently.)"
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": true,
+          "source": "default",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": null,
+        "after": null,
+        "exit": 0
+      }
+    },
+    {
+      "variant": "final-policy",
+      "host": "claude",
+      "attempt": "polish_only",
+      "case": "polish_only",
+      "raw_sha256": "53c301899c709e0b6fd4f0ebef9ff3c617d7c492b641ba5ad18106627562887a",
+      "responses": [
+        "```\nPlan a five-page website for Riverlight, a free family music festival.\n\nFacts\n- Date: Saturday, October 17, 2026; venue: Peach Tree Park\n- Free admission, family audience\n- Budget: $500 total\n- Approver: Ryan\n- Site launches September 25\n- Top priorities: the schedule and getting there (directions, parking, transit)\n\nProposed page set (edit as needed): Home, Schedule, Getting There, Lineup, FAQ/Contact\n\nAssumptions to label as ASSUMPTION in the plan (do not present as settled)\n- Lineup is not yet confirmed \u2014 plan the Lineup page as a placeholder with a\n  publish-later slot, and note how the site behaves if acts are still unannounced\n  at launch.\n- Any detail not listed above (hours, capacity, food/vendors, accessibility,\n  rain plan, domain/hosting choice) is unknown \u2014 flag it as an open question\n  rather than filling it in.\n\nDeliverable\nA concise plan covering: purpose and key content per page, what must be ready\nby the September 25 launch vs. what can follow, how the $500 is allocated, and\nwhich items need Ryan's approval. Keep it brief.\n```"
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": true,
+          "source": "default",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": null,
+        "after": null,
+        "exit": 0
+      }
+    },
+    {
+      "variant": "codex-hook",
+      "host": "codex",
+      "attempt": "after_skip",
+      "case": "after_skip",
+      "raw_sha256": "26578a0af6e289e3d314c16b8103825d38b4ab6d99d5877d5d6ce56f4b080390",
+      "responses": [
+        "Planning mode confirmed\u2014no code changes. Three things will help shape the website plan:\n\n1. **Event basics:** What\u2019s the fair\u2019s name, neighborhood, date, and location? \u201cUndecided\u201d is fine.\n2. **Audience and purpose:** Who should the site serve, and what should visitors do\u2014find event details, browse artists, apply for a booth, or volunteer?\n3. **Planning outcome:** What would make this plan complete for you? I suggest a page outline, key visitor journeys, and a content checklist.\n\nPartial answers are welcome; we can work through remaining details as the plan takes shape."
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": true,
+          "source": "user",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": "{\n  \"enabled\": true\n}\n",
+        "after": "{\n  \"enabled\": true\n}\n",
+        "exit": 0
+      }
+    },
+    {
+      "variant": "codex-hook",
+      "host": "codex",
+      "attempt": "clear",
+      "case": "clear",
+      "raw_sha256": "1aa5629e6712c717776f7debe4062def258035de449882cc3c6e240e6ef53302",
+      "responses": [
+        "Riverlight: Free Local Music, October 10\nFind Your Rhythm at Peach Tree Park\nCelebrate Local Music for Free at Riverlight"
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": true,
+          "source": "default",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": null,
+        "after": null,
+        "exit": 0
+      }
+    },
+    {
+      "variant": "codex-hook",
+      "host": "codex",
+      "attempt": "correction",
+      "case": "correction",
+      "raw_sha256": "5ab5a1ae64135f468665aa638df379270df29b0cd53a9754a0138aa737499971",
+      "responses": [
+        "Riverlight: **October 17, 2026**, Peach Tree Park. Free admission, family audience, **$500 website budget**, **September 25 launch**. Ryan approves.\n\n**Proposed site structure** \u2014 one mobile-friendly page:\n\n1. **Welcome:** festival name, date, park, free admission; prominent Schedule and Getting There links.\n2. **Schedule and lineup:** confirmed acts and times, with pending details labeled \u201cTo be announced.\u201d\n3. **Getting there:** verified address, map link, parking, transit, and accessible arrival details.\n4. **Family information:** toilets, food, seating, what to bring, weather updates, and contact\u2014publish confirmed information only.\n\n**Proposed launch plan:**\n\n- **September 7\u201313:** confirm address, event hours, content owner, and available festival images.\n- **September 14\u201320:** prepare copy and page layout; prioritize schedule and directions.\n- **September 21\u201324:** check mobile readability, accessibility, links, and event details; resolve content gaps.\n- **September 25:** target launch, with unfinished lineup details clearly marked.\n- **September 26\u2013October 16:** update confirmed performances and travel information; complete a final accuracy check.\n\n**Assumptions and open items:** One page is sufficient; no ticketing is needed. Town/state, hours, update owner, and Ryan\u2019s approval scope/timing remain unresolved. Domain, hosting, and maintenance costs need clarification within the $500 budget.\n\n**Proposed acceptance criteria:** Visitors can quickly find the date, free admission, available schedule, and accurate directions. This is a plan only; nothing has been built or published."
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": true,
+          "source": "default",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": null,
+        "after": null,
+        "exit": 0
+      }
+    },
+    {
+      "variant": "codex-hook",
+      "host": "codex",
+      "attempt": "disable",
+      "case": "disable",
+      "raw_sha256": "c3d834593a71f450238725ec67f5a8f5a22df822c0349d42d76397a9077c266d",
+      "responses": [
+        "I\u2019ll turn off automatic prompt refinement and check whether the preference was saved.\n",
+        "Automatic prompt refinement is off. The user-wide preference was saved, and a follow-up status check confirmed it\u2019s disabled."
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": true,
+          "source": "default",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [
+        {
+          "arguments": {
+            "action": "disable"
+          },
+          "result": {
+            "success": true,
+            "enabled": false,
+            "active": false,
+            "source": "user",
+            "skipped": false,
+            "saved_enabled": false
+          }
+        },
+        {
+          "arguments": {
+            "action": "status"
+          },
+          "result": {
+            "success": true,
+            "enabled": false,
+            "active": false,
+            "source": "user",
+            "skipped": false
+          }
+        }
+      ],
+      "command_execution_count": 1,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": null,
+        "after": "{\n  \"enabled\": false\n}\n",
+        "exit": 0
+      }
+    },
+    {
+      "variant": "codex-hook",
+      "host": "codex",
+      "attempt": "enable",
+      "case": "enable",
+      "raw_sha256": "2bcc72237bd48a02ded4f985b0af70707583eb3d27e2c7b4c73b7e88ec565228",
+      "responses": [
+        "I\u2019ll turn automatic prompt refinement back on and check the saved setting.\n",
+        "Automatic prompt refinement is back on. Confirmed the saved setting is `true`, and refinement is active."
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": false,
+          "active": false,
+          "source": "user",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [
+        {
+          "arguments": {
+            "action": "enable"
+          },
+          "result": {
+            "success": true,
+            "enabled": true,
+            "active": true,
+            "source": "user",
+            "skipped": false,
+            "saved_enabled": true
+          }
+        },
+        {
+          "arguments": {
+            "action": "status"
+          },
+          "result": {
+            "success": true,
+            "enabled": true,
+            "active": true,
+            "source": "user",
+            "skipped": false
+          }
+        }
+      ],
+      "command_execution_count": 1,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": "{\n  \"enabled\": false\n}\n",
+        "after": "{\n  \"enabled\": true\n}\n",
+        "exit": 0
+      }
+    },
+    {
+      "variant": "codex-hook",
+      "host": "codex",
+      "attempt": "off_restart",
+      "case": "off_restart",
+      "raw_sha256": "643d0c2ea9d433bc2223c1b59daf53092ffa5ed0008c0e36ed33d3fef928c761",
+      "responses": [
+        "Riverlight: Free Music, Family Memories\n\nBring the Family. Feel the Music."
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": false,
+          "active": false,
+          "source": "user",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": "{\n  \"enabled\": false\n}\n",
+        "after": "{\n  \"enabled\": false\n}\n",
+        "exit": 0
+      }
+    },
+    {
+      "variant": "codex-hook",
+      "host": "codex",
+      "attempt": "polish_only",
+      "case": "polish_only",
+      "raw_sha256": "0287ac5cd573c47cfa777a0a29a28a372e562904222fb3b63df37e7ecffa58f0",
+      "responses": [
+        "Plan a five-page website for Riverlight, a free family music festival on October 17, 2026, at Peach Tree Park. Budget: $500. Ryan approves. Launch: September 25, 2026.\n\nPrioritize the schedule and getting there. Propose the five pages and their key content. The lineup is pending; label all assumptions and leave unknown details open. Keep the plan concise."
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": true,
+          "source": "user",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": "{\n  \"enabled\": true\n}\n",
+        "after": "{\n  \"enabled\": true\n}\n",
+        "exit": 0
+      }
+    },
+    {
+      "variant": "codex-hook",
+      "host": "codex",
+      "attempt": "quoted",
+      "case": "quoted",
+      "raw_sha256": "aa5a55aea2ad4dc1989167fc7fd188d350f005c42559d83f74de2675553a8d94",
+      "responses": [
+        "Please turn automatic prompt refinement off permanently."
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": true,
+          "source": "user",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": "{\n  \"enabled\": true\n}\n",
+        "after": "{\n  \"enabled\": true\n}\n",
+        "exit": 0
+      }
+    },
+    {
+      "variant": "codex-hook",
+      "host": "codex",
+      "attempt": "skip",
+      "case": "skip",
+      "raw_sha256": "7b62250af30451e7e95e32c7d6098f647380c428a891f9cfc8cc69d5b70a501a",
+      "responses": [
+        "Riverlight: Free Music, Family Memories\n\nBring the Family. Feel the Music."
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": false,
+          "source": "user",
+          "skipped": true
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": "{\n  \"enabled\": true\n}\n",
+        "after": "{\n  \"enabled\": true\n}\n",
+        "exit": 0
+      }
+    },
+    {
+      "variant": "codex-hook",
+      "host": "codex",
+      "attempt": "terse",
+      "case": "terse",
+      "raw_sha256": "377262aef1528f711929ffdd575d47b0f028864adad01d498071814c6c60a0a1",
+      "responses": [
+        "Riverlight is a free, family-focused festival at Peach Tree Park on October 10, 2026. Website budget: $500. Target launch: September 25. Ryan approves. The lineup is still being finalized.\n\nProposed website: one mobile-friendly page with:\n\n- **Event basics:** date, location, free admission.\n- **Schedule:** prominent, easy to update; clearly mark unconfirmed details.\n- **Getting there:** address, directions, parking, transit, and accessible arrival information.\n- **Family essentials:** facilities and practical information once confirmed.\n\nProposed done-condition: visitors can quickly find when to arrive and how to get there, with pending details clearly labeled. Planning only; no building or publishing.\n\nThree details will help shape the plan:\n\n1. What town/state is Peach Tree Park in?\n2. What are the festival\u2019s start and end times? \u201cTBD\u201d is fine.\n3. Who will provide schedule updates and travel information?"
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": true,
+          "source": "default",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 0,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": null,
+        "after": null,
+        "exit": 0
+      }
+    },
+    {
+      "variant": "codex-hook",
+      "host": "codex",
+      "attempt": "vague",
+      "case": "vague",
+      "raw_sha256": "43ee8f610907fef6de8a9675b89207964594c12ee9c6c8acf103a0657100ac65",
+      "responses": [
+        "We\u2019ll plan the festival website only, with short-answer questions and no building or publishing. I\u2019ll check for an existing plan first.\n",
+        "Mode: planning only. Proposed outcome: a website brief covering purpose, pages, and visual style. Done when it\u2019s clear enough to guide a future build.\n\nI found no matching existing spec. Three short answers will get us started:\n\n1. Festival name and town? \u201cTBD\u201d is fine.\n2. Main website goal: sell tickets, share information, or something else?\n3. What should the festival feel like\u2014for example, family-friendly folk, indie street party, or late-night electronic?"
+      ],
+      "hook_states": [
+        {
+          "success": true,
+          "enabled": true,
+          "active": true,
+          "source": "default",
+          "skipped": false
+        }
+      ],
+      "preference_calls": [],
+      "command_execution_count": 4,
+      "initialize_policy_delivered": true,
+      "stored_preference": {
+        "before": null,
+        "after": null,
+        "exit": 0
+      }
+    }
+  ]
+}
