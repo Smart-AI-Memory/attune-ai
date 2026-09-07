@@ -111,3 +111,109 @@ the constructs the native control cannot express (ranking, triage over
 four items, number, date, textarea) — render, submit, and keyboard
 operation. When these are run, record tool returns separately from
 visible UI and user attestation, as the Codex section above does.
+
+## Claude desktop trial prep — 2026-09-07, second session
+
+Recorded by the Claude lead from the desktop app's Code tab in an
+autonomous session. Patrick was not at the keyboard, so nothing below is a
+paint or keyboard observation. Every claim names its basis.
+
+### Trial (a): the receiving plugin is stale — refresh before recording
+
+- Desktop `plugin:attune-ai` resolves through
+  `~/.claude/plugins/installed_plugins.json` to
+  `~/.claude/plugins/cache/attune-ai/attune-ai/16.2.1`, git SHA f51a2dd6
+  (#2422, merged 2026-09-05), last updated 2026-09-05T03:23Z. Verified by
+  reading that file and by `git merge-base --is-ancestor`: the cache does
+  not contain 7bdf4112e (#2459).
+- Its `skills/elicit/SKILL.md` has no "Claude: native questions first"
+  heading. Its `skills/planning/SKILL.md` still says to gather Subject and
+  Scope "as one form via the elicit skill, preferring the rich widget
+  surface" — the D21 default that #2459 replaced. A fresh flower-shop
+  request on this desktop would therefore exercise the OLD guidance no
+  matter which checkout the session opens in, because these two skills are
+  plugin-sourced. The repository's own `.claude/skills/plan` and `attune`
+  skills call `AskUserQuestion` but are not the skills #2459 changed. This
+  session's own `attune-ai:elicit` listing came from the same stale cache;
+  the lead followed the worktree's SKILL.md text instead.
+- The marketplace clone at `~/.claude/plugins/marketplaces/attune-ai` is
+  also at f51a2dd6. The plugin version on origin/main is still 16.2.1, so
+  the cache path will not change on refresh.
+- Precondition, NOT run this session because it changes the operator's
+  global plugin install for every session on the machine:
+
+```bash
+claude plugin marketplace update attune-ai
+claude plugin update attune-ai@attune-ai
+```
+
+Then restart the desktop app (the CLI states a restart is required), then
+take the receipt:
+
+```bash
+grep -n "native questions first" ~/.claude/plugins/cache/attune-ai/attune-ai/16.2.1/skills/elicit/SKILL.md
+```
+
+A match on that path is the go signal for the recording. No match means do
+not record — the bakery lesson above.
+
+- Observation protocol once refreshed: a fresh desktop session, the
+  ordinary request "Help me plan a website for a flower shop", no mention
+  of forms. Record per item: which tool was called (`AskUserQuestion`,
+  `elicitation_render_widget`, or prose only); card and question counts;
+  keyboard-only completion (Tab, arrows, Space, Enter); whether a partial
+  answer set can be submitted and what the tool result then carries; what
+  the tool result carries on dismissal (Escape); and whether the
+  continuation uses the accepted answers. Tool returns in one column,
+  visible UI in a second, Patrick's attestation in a third.
+
+### Trial (b): Fable 5.1 widget — rendered; submit and keyboard pending
+
+Setup: one form built in this session with the five constructs the native
+control cannot express. Ranking of the four starter threads with the
+starter's order as the suggestion; triage over six items (the pending
+observations above; dispositions observe today / defer / drop; discovery
+suggested defer because of the stale cache); number (0–120 minutes); date;
+textarea for the attestation (2000 characters). The content is real: the
+answers are this thread's rulings.
+
+Tool returns, verified from the returns and not from the screen:
+
+| Step | Return |
+| --- | --- |
+| `elicitation_render_widget` | success; five field ids; 28,137 HTML bytes |
+| Serving process | project `.mcp.json` server, pid 26830, this worktree's venv; attune 16.2.1 imported from this worktree's `src` at f10baa3e1; attune-forms 0.14.0 |
+| Telemetry 19:06:19Z | `form_build` cf43dd900008; `form_surface` chose widget, reason `no_portable_control`; `form_rendered` instance `10404e263dd242a2b3e4e9b63466fcf8` |
+| `show_widget` | "Content rendered and shown to the user" — a host tool claim, not a paint observation |
+
+HTML inspection, from the returned string: number is
+`<input type="number" min="0" max="120" step="any">`; date is
+`<input type="date">`; the textarea has `rows="3" maxlength="2000"`; the
+ranking renders four ranked rows with move-up, move-down and remove
+buttons plus an empty unranked pool, headed "Ranked 4/4 proposed"; the
+triage renders six radiogroups. Every control is a native element with a
+`:focus-visible` outline, so Tab reach is plausible and unobserved.
+
+Finding for the forms repo, stated as an observation and not a bug claim:
+`suggested` on the ranking pre-fills the ranked list, and `suggested` on
+the triage pre-checks one radio per row, so an untouched Submit posts the
+proposals as the answer. The schema text calls a suggestion "a visible
+proposal, never the answer". Whether the renderer should leave the answer
+empty until the user acts is a forms-repo question (thread 4 territory).
+
+Pending, needs Patrick at the keyboard: paint of all five controls;
+keyboard-only operation of the ranking buttons, the radios, the number
+spinner, the date picker and the textarea; Submit; the
+`__elicitation_response__` post-back arriving in this session;
+`elicitation_collect_response` with the instance id; the `form_submitted`
+telemetry row (the falsifier from the Codex receipt: the submit carries
+the render's instance id); and the attestation text itself. Until those
+land, the D16 caveat on these constructs stands unchanged.
+
+### Other state at write time
+
+- #2461 open; its Tests workflow was still in progress (Windows lane and
+  coverage pending, nothing failed).
+- Codex Task 1B increment 2 exists as branch
+  `codex/host-surface-parity-task1b-increment2` at 1efa08406 in worktree
+  9c6c; no PR yet.
