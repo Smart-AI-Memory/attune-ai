@@ -87,6 +87,8 @@ async def test_receipt_assembly_binds_each_observation_only_to_its_obligations(
     for key in affected_keys:
         old = dict(prior[key])
         new = dict(current[key])
-        assert old.pop("result_digest") != new.pop("result_digest")
+        old_result_digest = old.pop("result_digest")
+        new_result_digest = new.pop("result_digest")
+        assert old_result_digest != new_result_digest
         assert old == new  # Source, implementation, normalization and owner bindings are stable.
         assert evidence[current[key]["id"]]["result_digest"] == current[key]["result_digest"]
