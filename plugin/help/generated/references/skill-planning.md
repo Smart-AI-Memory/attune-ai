@@ -90,9 +90,14 @@ the built-in "Other"). Read the `elicit` skill's **Host defaults** for the
 synchronous reply lifecycle, answer retention, corrections, cancellation,
 and the typed fallback for controls the schema cannot represent. Ask a
 subject or problem statement as a plain conversational question when it
-has no honest predefined choices. The Attune widget and server route are
-experimental on Claude; use them only when the user asks for a form.
-Desktop rendering and keyboard behavior remain pending observation.
+has no honest predefined choices. For a form the control cannot carry
+(ranking, triage over four, assumption review, number, date, textarea)
+follow the `elicit` skill's Claude ladder (D17): the Attune widget via
+`show_widget` on a widget-capable host, else one typed question for a
+single simple field or the markdown skeleton for a structured form. The
+server route stays experimental on Claude. Desktop rendering and keyboard
+operation of the native card and the widget were observed 2026-09-07;
+fresh-request discovery is still pending.
 
 **Antigravity:** use the `elicit` host default: enhanced conversational
 prompts, with native forms experimental.
