@@ -1,6 +1,7 @@
 # Automatic prompt refinement
 
-**Status:** implementation merged in PR #2454; scripted CLI host trials completed
+**Status:** draft (2026-09-07) — implementation merged in PR #2454;
+scripted CLI host trials completed
 2026-09-07. Installed desktop and human interaction validation remain pending.
 See [live host results](live-host-trials.md).
 
