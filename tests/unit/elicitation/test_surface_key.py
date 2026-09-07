@@ -94,3 +94,64 @@ def test_separate_process_startups_share_key(tmp_path):
     ) as pool:
         keys = list(pool.map(load_installation_key, [tmp_path] * 6))
     assert len(set(keys)) == 1 and len(keys[0]) == 32
+
+
+def test_unsupported_platform_does_not_create_storage(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    from attune.elicitation import surface_key
+
+    monkeypatch.setattr(surface_key, "os", SimpleNamespace(name="nt"))
+    with pytest.raises(OSError, match="not available on this platform"):
+        load_installation_key(tmp_path)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_temporary_file_creation_failure_leaves_no_key(tmp_path, monkeypatch):
+    from attune.elicitation import surface_key
+
+    def unavailable(**_):
+        raise OSError("fixture temporary storage unavailable")
+
+    monkeypatch.setattr(surface_key.tempfile, "NamedTemporaryFile", unavailable)
+    with pytest.raises(OSError, match="temporary storage unavailable"):
+        load_installation_key(tmp_path)
+    assert list((tmp_path / "surface-auth").iterdir()) == []
+
+
+def test_key_replaced_during_open_fails_closed(tmp_path, monkeypatch):
+    original_key = load_installation_key(tmp_path)
+    path = tmp_path / "surface-auth/receipt.key"
+    replacement = path.with_name("replacement")
+    replacement.write_bytes(b"r" * 32)
+    replacement.chmod(0o600)
+    real_open = os.open
+
+    def replace_before_open(filename, flags, *args, **kwargs):
+        if Path(filename) == path:
+            replacement.replace(path)
+        return real_open(filename, flags, *args, **kwargs)
+
+    monkeypatch.setattr(os, "open", replace_before_open)
+    with pytest.raises(ValueError, match="changed while opening"):
+        load_installation_key(tmp_path)
+    assert path.read_bytes() == b"r" * 32 != original_key
+    assert set(path.parent.iterdir()) == {path}
+
+
+def test_concurrent_publisher_wins_without_leaking_temporary_key(tmp_path, monkeypatch):
+    real_link = os.link
+    winner = b"w" * 32
+
+    def publish_competing_key(source, destination):
+        descriptor = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(winner)
+        # Exercise the actual no-replace publication failure against the winning file.
+        return real_link(source, destination)
+
+    monkeypatch.setattr(os, "link", publish_competing_key)
+    assert load_installation_key(tmp_path) == winner
+    path = tmp_path / "surface-auth/receipt.key"
+    assert set(path.parent.iterdir()) == {path}
+    assert load_installation_key(tmp_path) == winner

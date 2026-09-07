@@ -2115,3 +2115,39 @@ def test_exact_mapping_does_not_waive_unrelated_rich_obligation(small_registry):
     )
     assert not sr.route_evidence_missing(small_registry, report, "form", "mcp-native:native")
     assert sr.route_evidence_missing(small_registry, report, "form", "RICH") == {rich}
+
+
+@pytest.mark.parametrize("target_id", ["trusted", "different"])
+def test_host_native_projection_requires_matching_target_and_evidence(small_registry, target_id):
+    form = next(s for s in small_registry["subjects"] if s["id"] == "form")
+    route = "host-native:trusted"
+    form["warm_routes"].append(route)
+    form["targets"].append({"id": target_id, "surface": "host-native"})
+    form["route_transport_refs"][route] = {"kind": "host_profile", "id": "trusted"}
+    small_registry["host_profiles"] = [{"id": "trusted"}]
+    form["route_projection_targets"] = {
+        "RICH": "rich",
+        "PORTABLE": "portable",
+        "HEADLESS": "headless",
+        "mcp-native:native": "headless",
+        route: target_id,
+    }
+    if target_id != "trusted":
+        with pytest.raises(sr.SurfaceRegistryError, match="wrong host-native target"):
+            sr.required_obligations(small_registry)
+        return
+
+    required = frozenset(sr.required_obligations(small_registry))
+    target_key = "subject:form:host-native:trusted"
+    assert target_key in required
+    report = sr.InventoryReport(
+        required,
+        required - {target_key},
+        frozenset({target_key}),
+        frozenset(),
+        sr.canonical_digest(small_registry),
+    )
+    assert sr.route_evidence_missing(small_registry, report, "form", route) == {target_key}
+    assert not sr.route_evidence_missing(small_registry, report, "form", "mcp-native:native")
+    complete = dataclasses.replace(report, verified_keys=required, pending_keys=frozenset())
+    assert not sr.route_evidence_missing(small_registry, complete, "form", route)

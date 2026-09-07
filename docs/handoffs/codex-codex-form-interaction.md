@@ -176,3 +176,30 @@ Pinned checks passed. Next: push, resolve the five review threads, and verify
 new-head CI. Production
 behavior, pending obligations, draft status, and desktop acceptance scope remain
 unchanged.
+
+## Per-file coverage follow-up (2026-09-07)
+
+Patrick requested at least 90% patch coverage for the files below that level in
+Codecov's report: surface_key.py, surface_native_evidence.py, surface_registry.py.
+Base HEAD: 64667ebbe. Only tests and review/handoff records change.
+
+Added eleven behavioral cases in test_surface_key.py, new
+test_surface_native_evidence.py, and test_surface_parity.py: unsupported storage,
+temporary-file creation failure, inode replacement during open, competing key
+publication, five corrupted completions after real SDK exchanges, and host-native
+projection identity plus missing-evidence checks. No production changes, coverage
+exclusions, or threshold changes. No new production defect was found.
+
+Fresh central affected suites: 294 passed. Coverage's initial whole-project gate
+failed because these targeted tests do not cover unrelated modules. The explicit
+scoped report then passed --fail-under=90: key 98.41%, native evidence 100%, registry
+100% including branches; every statement and every changed executable line in
+these three modules is covered. One key-cleanup branch remains unexercised.
+JSON: /private/tmp/attune-2450-coverage-after.json.
+Report command: /private/tmp/attune-2450-ci-venv/bin/python -m coverage report
+--include='*/elicitation/surface_key.py,*/elicitation/surface_native_evidence.py,*/elicitation/surface_registry.py'
+--fail-under=90.
+Independent GPT-5.6 Sol review: no findings; 257 affected tests passed.
+Full CI selection passed: 26,114 passed, 242 skipped, 3 xfailed in 184.36s.
+Log: /private/tmp/attune-2450-coverage-full-suite.log. Pinned checks passed.
+Next: push and verify remote coverage on the new head.
