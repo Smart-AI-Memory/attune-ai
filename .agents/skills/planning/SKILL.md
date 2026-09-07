@@ -111,7 +111,9 @@ single question — never force a one-field form (the §4 batching rule).
 ## Execution
 
 1. Use `EnterPlanMode` to create a structured plan; on Claude, settle
-   any remaining unknown with `AskUserQuestion` before leaving plan mode
+   remaining material choices before leaving plan mode — `AskUserQuestion`
+   for select-shaped ones, a typed question otherwise, and never against a
+   stated conversation preference
 2. If context from multiple files is needed, call
    `research_synthesis` first to gather insights
 3. Present the plan for user approval before any

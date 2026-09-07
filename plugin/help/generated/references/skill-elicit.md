@@ -111,13 +111,15 @@ Answers scope the work; they do not grant additional action authority.
 submits, and its tool result carries the answers keyed by question text
 (a multi-select answer lists the chosen labels). Only that returned
 answer set is a reply; a rendered question, elapsed time, or a highlighted
-option is not. An interrupted, dismissed, or errored call supplies no
-answers: treat it as explicit cancellation, stop dependent work, do not
+option is not. A call the user interrupts or dismisses supplies no
+answers and is the user's cancellation: stop dependent work, do not
 re-post the same questions automatically, and respond to what the user
-says next. When the user answers some questions in prose instead, retain
-those answers and ask only the remainder once. If the tool is absent or
-the host reports it unsupported, say so and ask a concise conversational
-question without claiming a control was shown.
+says next. A call that errors, or a tool that is absent or reported
+unsupported, is a tool failure, not a user decision: say so, keep any
+answers already returned, and ask a concise conversational question
+without claiming a control was shown. When the user answers some
+questions in prose instead, retain those answers and ask only the
+remainder once.
 
 **Controls the schema cannot represent:** there is no number, date, or
 long-text control, and options cap at four. State the expected answer

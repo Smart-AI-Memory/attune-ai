@@ -37,8 +37,9 @@ experimental on Claude.
 
 ## Current state
 
-- Status: implemented and checked locally; different-model review pending
-  at the time of this commit (see the ledger row added afterwards).
+- Status: implemented, checked locally, and reviewed by the Codex seat
+  (gpt-6-astra); both findings accepted and fixed; ledger row appended.
+  PR #2459 open for the chair.
 - Changed files: `plugin/skills/elicit/SKILL.md`,
   `plugin/skills/planning/SKILL.md`, their `.agents/skills/` mirrors,
   `plugin/help/generated/references/skill-elicit.md`,
@@ -69,7 +70,7 @@ experimental on Claude.
 | Gates and doc-import drift | `pytest tests/unit/gates tests/unit/test_generated_doc_import_drift.py` | 662 passed |
 | Pinned pre-commit on changed files | `uv run --with pre-commit pre-commit run --files …` (10 files) | passed |
 | Whitespace | `git diff --check` | clean |
-| Different-model review | `run_review('.', seat='codex', mode='branch')` | see ledger row and PR body |
+| Different-model review | `run_review('.', seat='codex', mode='branch')` on gpt-6-astra (Codex CLI upgraded 0.144.6 → 0.153.4 with the chair's in-session pick; subscription login, no API spend) | 11 files sent / 0 omitted; 2 medium findings, both real and fixed (error-vs-dismissal split; plan-mode line narrowed); central re-run green |
 | Desktop `AskUserQuestion` behavior under this guidance | fresh desktop trial on a checkout carrying this branch | not run; pending |
 
 ## Next action
