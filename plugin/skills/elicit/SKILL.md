@@ -86,6 +86,63 @@ cannot represent, state the expected answer format and validate the typed
 response; do not silently drop information or switch to an experimental
 renderer. A user's preference for plain conversation takes precedence.
 
+### Claude: native questions first
+
+For an ordinary planning or scoping request on a Claude host (Claude Code
+terminal, the desktop Code tab, Cowork), apply the batching rule and honor
+explicit conversation preferences. When questions are useful, call Claude's
+built-in `AskUserQuestion` directly; do not require the user to ask for a
+form. Discover the tool exposed in this session and follow its actual
+schema. At the time of writing it accepts 1–4 questions per call, each
+with 2–4 options carrying a `label` and `description`, a `multiSelect`
+flag, and a `header` of at most 12 characters; free text arrives through
+the built-in "Other" entry, so do not add an "Other" option. Put a
+recommendation first only when justified, ordered first with
+" (Recommended)" appended. Ask for information that has no honest
+predefined choices — a subject, a problem statement — as a concise
+conversational question instead; a select whose options are guesses costs
+a correction, not an answer. Where a local hook restricts multi-question
+calls (this repository's format guard), set `metadata.source` to
+`"elicit-form"` for a batch of more than one question.
+
+This direct host path skips template lookup and steps 0–4. It does not
+provide the Attune runtime's server-bound validation or receipt guarantees.
+Check returned answers against the questions actually asked, clarify only
+missing or inconsistent information, and retain all valid prior answers.
+Summarize the accepted choices once and continue the authorized task.
+A correction replaces the affected answer; it never restarts intake.
+Answers scope the work; they do not grant additional action authority.
+
+**Synchronous lifecycle:** `AskUserQuestion` blocks until the user
+submits, and its tool result carries the answers keyed by question text
+(a multi-select answer lists the chosen labels). Only that returned
+answer set is a reply; a rendered question, elapsed time, or a highlighted
+option is not. An interrupted, dismissed, or errored call supplies no
+answers: treat it as explicit cancellation, stop dependent work, do not
+re-post the same questions automatically, and respond to what the user
+says next. When the user answers some questions in prose instead, retain
+those answers and ask only the remainder once. If the tool is absent or
+the host reports it unsupported, say so and ask a concise conversational
+question without claiming a control was shown.
+
+**Controls the schema cannot represent:** there is no number, date, or
+long-text control, and options cap at four. State the expected answer
+format and ask a concise typed question, or use a two-tier picker
+(category, then item) for more than four options; validate the typed reply
+against what you asked and never silently drop the field. Do not switch to
+an experimental renderer to represent it unless the user asked for a form.
+
+**Experimental on Claude for ordinary requests:** the Attune widget
+(`elicitation_render_widget` → `show_widget`, present only on
+widget-capable hosts such as the desktop Code tab and Cowork), the Attune
+server route (`elicitation_route_form`), and native MCP elicitation
+(`elicitation_ask`, which Claude Code has auto-declined without rendering;
+decisions D10). Use them only for an explicitly requested Attune-form
+interaction or trial, following the sections below; availability does not
+make them the default. Visible rendering, keyboard operation, partial
+submission, and dismissal behavior of `AskUserQuestion` on the desktop
+app are pending observation — do not claim them from the schema alone.
+
 ### Antigravity: enhanced prompts; native forms experimental
 
 Use concise conversational questions with explicit goal, known context,
@@ -97,7 +154,8 @@ problems. Use them only for an explicitly requested trial or interaction;
 state the observed keyboard limitation and offer conversation as a fallback.
 Do not infer reliable keyboard support from tool availability.
 
-Other hosts retain their existing guidance pending host-specific review.
+Gemini is deferred; hosts not named above retain their existing guidance
+pending host-specific review.
 
 ## Step 0 — check the template library first (V7)
 
@@ -409,8 +467,15 @@ hosts retain their existing guidance until independently verified.
 
 ### Compatibility surfaces
 
-**The widget is the default. `AskUserQuestion` is the fallback.**
-(D21 — this reverses the earlier cheapest-surface-that-fits rule.)
+These surfaces carry an explicitly requested Attune-form interaction
+(steps 0–4, the widget round-trip, or a trial). For an ordinary planning
+or scoping request on Claude, the Claude host default above applies first
+(host-surface-parity D16); the surfaces below are then experimental
+unless the user asks for a form.
+
+**Within that path, the widget is the default and `AskUserQuestion` is
+the fallback.** (D21 — this reverses the earlier
+cheapest-surface-that-fits rule.)
 Don't route on what the surface can technically express; route on how
 much of the option space the user can see at once. Folding three
 options and their tradeoffs into prose above a single-select turns a
@@ -508,8 +573,8 @@ summaries, not screenfuls of HTML.
 
 ## Step 2 — render it
 
-For Codex built-in questions, follow the host default above. For an
-experimental server-route trial, follow its same-call procedure instead
+For Codex or Claude built-in questions, follow the host defaults above.
+For an experimental server-route trial, follow its same-call procedure instead
 of steps 2–4. The following steps are the compatibility path.
 
 Call `elicitation_render_form` with `{ "form": <the form> }`.

@@ -83,9 +83,19 @@ The Attune server route and widgets are experimental
 in Codex, not prerequisites or automatic fallbacks. Honor a request for
 conversation and avoid unnecessary questions when a useful plan can proceed.
 
+**Claude:** call the built-in `AskUserQuestion` directly for suitable
+independent unknowns, without waiting for the user to request a form, and
+follow its current schema (1–4 questions, 2–4 options each, free text via
+the built-in "Other"). Read the `elicit` skill's **Host defaults** for the
+synchronous reply lifecycle, answer retention, corrections, cancellation,
+and the typed fallback for controls the schema cannot represent. Ask a
+subject or problem statement as a plain conversational question when it
+has no honest predefined choices. The Attune widget and server route are
+experimental on Claude; use them only when the user asks for a form.
+Desktop rendering and keyboard behavior remain pending observation.
+
 **Antigravity:** use the `elicit` host default: enhanced conversational
-prompts, with native forms experimental. Claude's existing mapping below
-is unchanged pending its own host-specific review.
+prompts, with native forms experimental.
 
 For engineering planning tasks, clarify only missing dimensions:
 
@@ -97,19 +107,20 @@ For engineering planning tasks, clarify only missing dimensions:
    - Architecture: "What system? Any specific concerns?"
 3. **Scope**: "How deep? Quick outline or detailed plan?"
 
-**Compatibility surface (Claude and hosts not yet reviewed).** The **Subject** phrasing branches on **Type**, so don't
-batch all three — ask **Type** first (a single `AskUserQuestion`) when
-it isn't already given by the `<what to plan>` argument. Once the type
-is known, **Subject** (a textarea) and **Scope** (quick / detailed) are
-independent and open: gather *those two* as one form via the `elicit`
-skill, **preferring the rich widget surface** (`elicitation_render_widget`
-→ `show_widget`) with the AskUserQuestion mapping as fallback. If only
-one dimension is open, ask it as a single question — never force a
-one-field form (the §4 batching rule).
+**Order on every host.** The **Subject** phrasing branches on **Type**,
+so never batch all three. On Claude, ask **Type** and **Scope** (both
+select-shaped and independent) in one `AskUserQuestion` call when both are
+open, then ask **Subject** with the type-specific phrasing —
+conversationally unless the conversation supplies honest candidate
+options. On hosts not yet reviewed (Gemini is deferred), settle **Type**
+first, then gather **Subject** and **Scope** as one form via the `elicit`
+skill's compatibility path. If only one dimension is open, ask it as a
+single question — never force a one-field form (the §4 batching rule).
 
 ## Execution
 
-1. Use `EnterPlanMode` to create a structured plan
+1. Use `EnterPlanMode` to create a structured plan; on Claude, settle
+   any remaining unknown with `AskUserQuestion` before leaving plan mode
 2. If context from multiple files is needed, call
    `research_synthesis` first to gather insights
 3. Present the plan for user approval before any

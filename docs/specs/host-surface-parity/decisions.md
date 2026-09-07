@@ -840,9 +840,64 @@ session-binding, or exactly-once guarantees.
 The Codex built-in path skips V7 template lookup; template reuse continues
 on the compatibility and Attune server-route paths.
 
+## D16 — Claude host default: native questions first (chair direction, 2026-09-07; recorded by the lead)
+
+Patrick's direction, in his words: "use each host's supported native
+controls: Codex built-in questions, Claude's native questions where
+supported, and enhanced conversational prompts for Antigravity. Custom
+Attune forms remain experimental; Gemini is deferred." This entry records
+the Claude half; D15 recorded Codex and Antigravity.
+
+Lead's inferences, stated as inferences for the chair to confirm or amend:
+
+1. Claude's native question control is the built-in `AskUserQuestion`
+   tool. Verified by inspecting the tool exposed to the recording session
+   (desktop app, Code tab, Claude Code 2.1.260): 1–4 questions per call,
+   2–4 options each with label and description, `multiSelect`, `header`
+   of at most 12 characters, built-in "Other" free text,
+   `metadata.source`, and a synchronous result keyed by question text.
+   Terminal Claude Code exposes the same tool while `show_widget` exists
+   only on widget-capable desktop hosts — inferred from this session's
+   tool list and the D10/D21 history, not re-observed on a terminal today.
+2. The Attune widget (`elicitation_render_widget` → `show_widget`), the
+   server route (`elicitation_route_form`), and MCP elicitation
+   (`elicitation_ask`) are custom Attune forms and therefore experimental
+   on Claude for ordinary planning or scoping requests: explicit request
+   only.
+3. This scopes elicitation-form-surface D21 ("the widget is the default,
+   `AskUserQuestion` the fallback") to the explicitly requested
+   Attune-form path on Claude. D21 is not reversed: within an Attune form
+   the widget remains the default. The repository's always-loaded Socratic
+   rule in `.claude/CLAUDE.md` still states the D21 default for this
+   repository's own dev sessions and is NOT edited by this increment; see
+   Open decisions.
+
+Counter-case, unprompted: D21 was a 3/3 roundtable ruling on the
+option-visibility axis, because folding three options and their tradeoffs
+into prose above a select is a real loss. Native `AskUserQuestion` shows
+labels and one-line descriptions but no rationale callout or side-by-side
+tradeoff cards, so ordinary Claude requests trade some option visibility
+for the host's own control. If desktop observation shows the native card
+serves decision-shaped asks poorly, the chair can narrow this default to
+intake-shaped questions without touching the Codex or Antigravity halves.
+
+Scope: a structured one-shot — canonical elicit and planning guidance,
+projected mirrors and help, a changelog line, this record, and the probe
+addendum. No adapter, renderer, or persistence layer was added; the
+existing server-route validation and receipt contracts are untouched.
+Direct `AskUserQuestion` answers do not inherit the server route's
+validation, session binding, or exactly-once guarantees. Desktop
+rendering, keyboard operation, partial submission, and dismissal remain
+pending observation; the guidance's schema claims come from the tool
+definition, not from a recorded trial. Full host parity and release
+readiness are not implied.
+
 ## Open decisions
 
-- None. Every proposed decision in this spec is ruled.
+- **D16 follow-up (chair):** whether `.claude/CLAUDE.md`'s always-loaded
+  Socratic rule should adopt the Claude host default for this repository's
+  own dev sessions or keep the D21 widget default there. Left unedited by
+  the D16 increment because it is governance text outside the skill scope.
 
 Resolved 2026-09-02/03/04: the table was convened (round 1 complete,
 promoted in D5); D2 ruled (routing label); Task 7 ships alone on
