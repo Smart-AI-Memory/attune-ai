@@ -202,10 +202,11 @@ session) states this is D2-c by design: "submitting without touching it
 posts the proposal — that submit IS the confirmation, and the badge is
 what makes it visible rather than silent." The open question is narrower
 than a bug: whether a required field with a suggestion should demand a
-touch, or log an accepted-untouched flag for calibration. Filed as an
-attune-forms issue at Patrick's direction (card pick below).
+touch, or log an accepted-untouched flag for calibration. Filed as
+attune-forms#90 at Patrick's direction (card pick below).
 
-Pending at 19:06Z, resolved in the result section below: paint of all five controls;
+Pending at 19:06Z, resolved in the result section below: paint of all
+five controls;
 keyboard-only operation of the ranking buttons, the radios, the number
 spinner, the date picker and the textarea; Submit; the
 `__elicitation_response__` post-back arriving in this session;
@@ -304,7 +305,8 @@ skill discovery item stays deferred until the plugin cache is refreshed.
   concrete trigger string on this host.
 - Rulings carried by the same card: Patrick runs the plugin refresh
   after this session (so the discovery trial stays deferred today); the
-  suggested-prefill observation goes to an attune-forms issue.
+  suggested-prefill observation goes to an attune-forms issue, filed the
+  same session as attune-forms#90.
 - Keyboard attestation for the native cards: Patrick selected all three
   options, including "Used the mouse somewhere", so keyboard-only
   completion of the native cards is NOT cleanly attested; where the mouse
