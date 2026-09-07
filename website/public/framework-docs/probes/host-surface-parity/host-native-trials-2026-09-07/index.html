@@ -4801,6 +4801,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#claude-host-inspection-2026-09-07" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Claude host inspection — 2026-09-07
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -4890,6 +4901,31 @@ tool's current question limits and the user's conversation preference.</p>
 timing, broad accessibility, and universal automatic discovery remain unproven.
 Recordings and raw local receipts remain on the operator's machine; they are
 not published as part of this repository.</p>
+<h2 id="claude-host-inspection-2026-09-07">Claude host inspection — 2026-09-07<a class="headerlink" href="#claude-host-inspection-2026-09-07" title="Permanent link">&para;</a></h2>
+<p>Recorded by the Claude lead from the desktop app's Code tab (Claude Code
+2.1.260) in an autonomous session with no user present, so nothing below
+is a rendering or keyboard observation.</p>
+<p>Verified by inspection of the exposed tool definition: <code>AskUserQuestion</code>
+accepts 1–4 questions per call, each with 2–4 options carrying a label
+and description (optional preview), a <code>multiSelect</code> flag, a <code>header</code> of
+at most 12 characters, and optional <code>metadata.source</code>; the host always
+adds an "Other" free-text entry; the call is synchronous and its result
+carries the answers keyed by question text. <code>show_widget</code>,
+<code>elicitation_ask</code>, <code>elicitation_render_widget</code>, and
+<code>elicitation_route_form</code> were also exposed; exposure is not a rendering
+claim. The multi-question format guard that the elicit skill mentions is
+operator-local infrastructure under <code>~/.claude/hooks/</code>, not a shipped
+plugin hook.</p>
+<p>Pending, not observed today: visible rendering of a one-question and a
+multi-question call on the desktop app and on a terminal; keyboard-only
+completion; whether a partially answered call can be submitted; what the
+tool result reports when the user dismisses the card; and whether the
+revised guidance is discovered on a fresh ordinary planning request.
+Also pending after the D16 ruling: the Attune widget on Fable 5.1 for
+the constructs the native control cannot express (ranking, triage over
+four items, number, date, textarea) — render, submit, and keyboard
+operation. When these are run, record tool returns separately from
+visible UI and user attestation, as the Codex section above does.</p>
 
 
 
