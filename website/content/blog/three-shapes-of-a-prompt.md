@@ -253,9 +253,39 @@ pushback, progress (a status report whose blocked items are the picker),
 deliberation (several voices, endorsements visible), triage (per-item
 rulings across a board), confirm (a two-option gate with the
 consequences shown and deliberately no recommended option), ranking, and
-assumption review. Most of them map onto a host's native control, which
-is where they now go by default. Ranking does not, and neither do the
-number, date, and long-text fields, so those still bring up the widget.
+assumption review.
+
+The part worth spelling out, because it is what 16.3.0 actually
+delivered, is that most of that family now arrives on the host's own
+question control rather than on a card. Run each shape through
+`select_form_surface` and the split is not a matter of opinion:
+
+| Shape | Surface |
+|---|---|
+| decision, pushback, confirm | native |
+| triage, up to four items | native |
+| single-select, multi-select, boolean | native |
+| triage beyond four items | widget |
+| ranking | widget |
+| number, date, long text, plain text input | widget |
+| assumption review, routed by the library | widget |
+
+Two of those deserve a note. Plain text input goes to the widget, which
+surprises people: the native control's free text arrives through its
+"Other" affordance as a separate response, so a form whose whole point
+is a typed answer is better served elsewhere. And the assumption review
+splits — the library routes it to the widget because its edit lane is a
+text question, while an agent composing the same card natively, with
+accept and reject as options and the edit through "Other", is within
+the rules. The router is conservative; the agent has the latitude.
+
+One thing this table does not say is anything about Codex. Attune
+declares exactly one host-question profile today and it is Claude's,
+which is why the table can be precise about it. Codex gets the same
+batching discipline and the same instruction to use its built-in
+question tool, but its capabilities are read from the tool the session
+exposes rather than from a profile Attune ships, so the honest claim
+stops at "it asks natively too" without a per-shape guarantee.
 
 Each is the same declarative form underneath, so you can build one
 yourself in a few lines:
