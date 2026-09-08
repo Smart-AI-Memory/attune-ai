@@ -143,17 +143,24 @@ that data would settle more than another round table.
 
 The unit is one agent session on one host. Four counts per session:
 
-| Count | Definition | Arm |
+| Count | Definition | Arm read |
 | --- | --- | --- |
-| `asked` | asks put to the user before acting: native `AskUserQuestion` calls (questions counted, not calls), Attune forms rendered, typed fallback questions | 1 |
+| `asked` | questions put to the user before acting, one per question: each question in a native `AskUserQuestion` call, each field of an Attune form rendered, each typed fallback question | 1 |
 | `inferred` | decisions taken by assume-and-disclose instead of an ask: assumptions disclosed in the report, `assumption_review` items surfaced, form questions carrying a `default` with `inferred_from`, `suggested` values on ranking or triage | 2 |
-| `corrected` | inferred decisions the user reversed afterwards: `assumption_review` reject or edit rulings, a `suggested` value changed at submit, a user message redirecting an assumed reading | 3 (violated) |
-| `confirmed_untouched` | asks answered by accepting the proposal as offered: the " (Recommended)" option picked, a form submitted with a `suggested` value untouched, a `[No preference]` answer | 2 (violated) |
+| `corrected` | inferred decisions the user reversed afterwards: `assumption_review` reject or edit rulings, a `suggested` value changed at submit, a user message redirecting an assumed reading | 3 — under-asking signal |
+| `confirmed_untouched` | questions answered by accepting the proposal as offered, one per question: the " (Recommended)" option picked, a form field submitted with its `suggested` value untouched, a `[No preference]` answer | 2 — ceremony signal |
 
 Two rates: **correction rate** = `corrected / inferred`;
 **ceremony rate** = `confirmed_untouched / asked`. Read together, never
 one alone. No target band is proposed — the first week of counts is
 what a band would be set from.
+
+The unit is one question throughout, so neither rate can exceed 1. A
+count is a session-level signal, not a verdict on one ask: a confirm
+gate or an ask on D16's trigger list can be accepted as offered and
+still have been owed, and an inferred reading can be reversed because
+the user changed their mind. The rates say which session to read; the
+transcript says which asks were ceremony.
 
 ### Sources (existing stores first, per ASI-6)
 

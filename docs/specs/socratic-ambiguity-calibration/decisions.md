@@ -94,10 +94,15 @@ ceremony rate (high = over-asking), read together.
 
 Options for the chair:
 
-1. **Adopt read-only first** — count from the existing stores and the
-   `/retro` self-report for one week before building anything; then
-   decide whether the native-ask hook and attune-forms#90 option 3 are
-   worth their cost. *Lead's recommendation.*
+1. **Adopt read-only first** — count for one week before building
+   anything: form asks from `form_events`, surfaced inferences from
+   the validated responses, and native asks, `confirmed_untouched`,
+   prose inferences and corrections captured by hand at `/retro`.
+   Native asks have no store and forms have no accepted-untouched
+   flag, so the week's rates cover only what the close-out captured;
+   its output is a decision about instrumentation, not a band. Then
+   decide whether the native-ask hook and attune-forms#90 option 3
+   are worth their cost. *Lead's recommendation.*
 2. **Adopt with instrumentation** — the PostToolUse hook on
    `AskUserQuestion` (local rows, `form_events` consent model) and the
    forms accepted-untouched flag land together as G5's first task.
@@ -108,7 +113,10 @@ self-report is the weakest source and biases toward under-counting the
 inferences the agent did not notice it made — exactly the ones arm 3
 exists to catch. A hook on the native control is small and captures
 the ceremony rate exactly; option 2 measures the same week with better
-numbers at the cost of one hook and one forms change.
+numbers at the cost of one hook and one forms change. The D11 lane
+(Codex, 2026-09-08) pressed the same point unprompted: the read-only
+week cannot compute session-wide rates from the listed stores, which
+is why option 1 now states its coverage limit.
 
 **Status impact:** none until ruled. The spec stays parked;
 Resume-Trigger is this ruling.
