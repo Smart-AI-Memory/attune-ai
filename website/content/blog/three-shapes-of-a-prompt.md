@@ -180,6 +180,19 @@ routing your own render calls as a library consumer, its return value
 is binding. If you are using the plugin, it is a mirror of the rule
 rather than the thing enforcing it.
 
+That split matters for versions, because the two halves ship in
+different packages. The advisory router lives in `attune-forms`. The
+prose ladder the agent actually follows ships with `attune-ai`, in the
+plugin's skill text, and the host-native default arrived there in
+16.3.0 — not before. 16.3.0 also raises the floor to
+`attune-forms>=0.15.0`, so a current install has both halves in step.
+An older attune-ai is the case to watch: 16.2.1 pins
+`attune-forms>=0.12.2,<1.0`, an open upper bound, so installing it
+today resolves a newer forms than its own instructions were written
+against. The agent still follows its skill text, so it behaves like
+16.2.1. If you are reasoning about which surface you should be seeing,
+the attune-ai version is the one to check.
+
 Three things to notice, whichever surface the questions arrive on.
 
 - **The multi-select.** "Which features matter for launch" takes several
