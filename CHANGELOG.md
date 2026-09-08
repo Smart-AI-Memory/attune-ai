@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.3.0] - 2026-09-08
+
+This minor moves ordinary scoping questions onto each host's built-in
+control (Claude `AskUserQuestion`, Codex native questions), with the Attune
+widget reserved for the constructs those controls cannot carry; adds automatic
+prompt refinement with a user-wide opt-out; makes the memory backend visible
+and chosen (`attune memory status`, a doctor line, a persisted first-run
+choice); retargets the premium tier to Claude Fable 5.1; lands the
+surface-parity inventory and registry gates; and closes register classes C3
+and C4b before the cut.
+
 ### Fixed
 
 - MCP server startup runs its PyPI version check on at most one background

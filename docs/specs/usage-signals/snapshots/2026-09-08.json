@@ -1,0 +1,40 @@
+{
+  "attempts": [
+    {
+      "at": "2026-09-08T01:05:47.717807+00:00",
+      "captured": 1,
+      "outcome": "rate-limited"
+    }
+  ],
+  "date": "2026-09-08",
+  "github": {},
+  "manifest": {
+    "captured": [
+      "attune-ai"
+    ],
+    "complete": false,
+    "expected": [
+      "attune-ai",
+      "attune-rag",
+      "attune-help",
+      "attune-author",
+      "attune-verify"
+    ],
+    "missing": [
+      "attune-rag",
+      "attune-help",
+      "attune-author",
+      "attune-verify"
+    ],
+    "observed_at": "2026-09-08T01:05:47.718029+00:00",
+    "source": "pypistats.org/api/recent"
+  },
+  "pypi_recent": {
+    "attune-ai": {
+      "last_day": 175,
+      "last_month": 2563,
+      "last_week": 735
+    }
+  },
+  "taken_at": "2026-09-08T01:05:47.718029+00:00"
+}
