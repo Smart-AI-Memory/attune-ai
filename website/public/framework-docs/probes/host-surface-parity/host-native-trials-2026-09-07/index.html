@@ -4835,28 +4835,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#trial-b-fable-51-widget-rendered-submit-and-keyboard-pending" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Trial (b): Fable 5.1 widget — rendered; submit and keyboard pending
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#other-state-at-write-time" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Other state at write time
-      
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -5002,13 +4980,26 @@ paint or keyboard observation. Every claim names its basis.</p>
   also at f51a2dd6. The plugin version on origin/main is still 16.2.1, so
   the cache path will not change on refresh.</li>
 <li>Precondition, NOT run this session because it changes the operator's
-  global plugin install for every session on the machine:</li>
+  global plugin install for every session on the machine. <strong>Corrected
+  2026-09-07 late (next-session-start session):</strong> the two-command
+  refresh originally written here cannot deliver #2459. Patrick ran
+  <code>claude plugin marketplace update attune-ai</code> that evening and the
+  clone moved to d45019a0 (19:45Z, which contains 7bdf4112e), yet the
+  cache directory kept its 2026-09-04 mtime and <code>installed_plugins.json</code>
+  its f51a2dd6 SHA: <code>claude plugin update</code> is a no-op while the
+  declared plugin version is unchanged, because the cache is keyed by
+  version and the recorded commit SHA is not used for change detection.
+  Basis: the Claude Code plugin docs (via the guide agent) plus those
+  on-disk timestamps; not verified by running the update. Two ways the
+  cache can move:</li>
 </ul>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>claude<span class="w"> </span>plugin<span class="w"> </span>marketplace<span class="w"> </span>update<span class="w"> </span>attune-ai
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>claude<span class="w"> </span>plugin<span class="w"> </span>update<span class="w"> </span>attune-ai@attune-ai
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># interim, operator-run: drop the version-keyed cache and reinstall</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>claude<span class="w"> </span>plugin<span class="w"> </span>uninstall<span class="w"> </span>attune-ai@attune-ai
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>claude<span class="w"> </span>plugin<span class="w"> </span>install<span class="w"> </span>attune-ai@attune-ai
 </code></pre></div>
-<p>Then restart the desktop app (the CLI states a restart is required), then
-take the receipt:</p>
+<p>or wait for the 16.3.0 release, whose version bump is what delivers</p>
+<h1 id="2459-to-every-installed-user-either-way-restart-the-desktop-app-the">2459 to every installed user. Either way restart the desktop app (the<a class="headerlink" href="#2459-to-every-installed-user-either-way-restart-the-desktop-app-the" title="Permanent link">&para;</a></h1>
+<p>CLI states a restart is required), then take the receipt:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>grep<span class="w"> </span>-n<span class="w"> </span><span class="s2">"native questions first"</span><span class="w"> </span>~/.claude/plugins/cache/attune-ai/attune-ai/16.2.1/skills/elicit/SKILL.md
 </code></pre></div>
 <p>A match on that path is the go signal for the recording. No match means do
@@ -5253,7 +5244,7 @@ skill discovery item stays deferred until the plugin cache is refreshed.</p>
 <tr>
 <td>Fresh flower-shop request discovers #2459</td>
 <td>deferred</td>
-<td>plugin cache stale; Patrick refreshes after this session</td>
+<td>plugin cache stale by mechanism (version-keyed; <code>plugin update</code> is a no-op at 16.2.1); needs the 16.3.0 bump or uninstall + reinstall — corrected 2026-09-07 late</td>
 </tr>
 </tbody>
 </table>
