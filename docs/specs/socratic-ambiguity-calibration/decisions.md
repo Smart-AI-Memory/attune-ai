@@ -79,10 +79,11 @@ abstract per workflow).
 
 ---
 
-## Q4 — Per-session calibration measure (OPEN — candidate, not ruled)
+## Q4 — Per-session calibration measure (RULED 2026-09-08 — option 1)
 
 **Raised:** 2026-09-07 · **By:** the lead, at the chair's direction
-(thread 3 of the 2026-09-07 session ranking) · **Ruling:** none yet
+(thread 3 of the 2026-09-07 session ranking) · **Ruling:** option 1,
+chair, 2026-09-08 (below)
 
 Host-surface-parity D16 (2026-09-07) ruled the confirm-on-trigger
 calibration for this repository's dev sessions and named this spec as
@@ -118,8 +119,31 @@ numbers at the cost of one hook and one forms change. The D11 lane
 week cannot compute session-wide rates from the listed stores, which
 is why option 1 now states its coverage limit.
 
-**Status impact:** none until ruled. The spec stays parked;
-Resume-Trigger is this ruling.
+**Ruling (chair, 2026-09-08, in chat, after the D11 lane landed).**
+Patrick's words: "on q4 go with the leads recommendation" — option 1,
+adopt read-only first. Asked "pushback?", the lead pushed back on the
+mechanics only, not the substance: the counter-case cuts less than it
+looks (option 2's hook sharpens only the ceremony rate on native asks;
+the correction rate rests on self-report under both options), but the
+ruling had no instrument, so a week clocked from the merge would count
+nothing. Assumption review, per the 2026-09-06 rule: (1) the instrument
+is the `/retro` close-out asking the four counts and appending them to
+a local file under `~/.attune`, nothing built in the repo — accepted;
+(2) the week starts when that ask lands, not at merge — first rejected,
+then "thanks for the pushback, it sounds like i may have made a
+mistake. please fix it", recorded as accepted on the lead's reading and
+open to correction at chair-read; (3) recorded on #2467 before merge —
+accepted.
+
+**Consequence:** G5 is adopted as a read-only pilot. G5 task 1: add
+`asked` / `inferred` / `corrected` / `confirmed_untouched` to the
+`/retro` close-out ask (user-level skill, outside this repo) and append
+each session's counts to a local file under `~/.attune`, same consent
+model as `form_events`. After one week of counts, decide whether the
+`AskUserQuestion` hook and attune-forms#90 option 3 are worth building.
+
+**Status impact:** spec moves parked → active; G5 task 1 is the next
+task; Resume-Trigger becomes one week of counts after task 1 lands.
 
 ---
 
@@ -128,4 +152,5 @@ Resume-Trigger is this ruling.
 Q1–Q3 resolved 2026-06-25 (draft → approved; later parked at the
 2026-07-13 truth sweep). G1's rule text shipped 2026-09-07 through
 host-surface-parity D16 and #2459, outside this spec; G2–G4 remain
-queued. Q4 (the measure) is OPEN — a candidate awaiting the chair.
+queued. Q4 ruled 2026-09-08: option 1, the read-only pilot (G5);
+task 1 is the `/retro` counting ask. Spec parked → active.

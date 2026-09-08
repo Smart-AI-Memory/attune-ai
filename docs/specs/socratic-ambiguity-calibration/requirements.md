@@ -1,12 +1,13 @@
 # Socratic Ambiguity Calibration — Requirements
 
-**Status:** parked (2026-09-07; reqs+design shipped #1071/#1072; #1068 =
-paired trigger fix, not this scope; G1's rule text SHIPPED 2026-09-07 via
-host-surface-parity D16 + #2459, outside this spec; G2–G4 open; the
-per-session measure is a CANDIDATE, Q4 unruled — see
-[decisions.md](decisions.md)) · Resume-Trigger: chair ruling on Q4 ·
+**Status:** active (2026-09-08; Q4 RULED option 1 — G5 adopted as a
+read-only pilot, task 1 = the `/retro` counting ask, next; G1's rule
+text SHIPPED 2026-09-07 via host-surface-parity D16 + #2459, outside
+this spec; G2–G4 open; reqs+design shipped #1071/#1072; #1068 = paired
+trigger fix, not this scope — see [decisions.md](decisions.md)) ·
+Resume-Trigger: one week of counts after G5 task 1 lands ·
 **Owner:** Patrick + agent
-**Sequencing:** queued **behind 9.0.0** (the Empathy framework removal).
+**Sequencing:** 9.0.0 shipped; G5 task 1 next; G2–G4 unsequenced.
 **Born:** the 8.10.0-ship session (2026-06-25). After a compound reply
 I'd *guessed* at, Patrick's feedback was "always query me on an
 ambiguous reply — guessing isn't ideal; it can usher in missteps and
@@ -51,7 +52,8 @@ intent.**
 - G3. Bake the **learning frame** into the question copy guidance
   (question as intent-sharpening, not info-gathering).
 - G4. Propagate to the **skill template** so new skills inherit it.
-- G5 (candidate, unruled — Q4). Measure the calibration per session:
+- G5 (Q4 ruled 2026-09-08: option 1, read-only pilot). Measure the
+  calibration per session:
   `asked` / `inferred` / `corrected` / `confirmed_untouched` counts and
   the two rates they yield, so arms 2 and 3 of d1 can be read from data
   instead of argued. See "Per-session calibration measure" below.
@@ -116,14 +118,16 @@ ambiguous; honor anything they already specified.
   (`src/attune/meta_workflows/form_engine.py`) if the calibration
   should reach the code-level questioning path too — design decision.
 
-## Per-session calibration measure (candidate, unruled — Q4)
+## Per-session calibration measure (Q4: adopted read-only, 2026-09-08)
 
 Added 2026-09-07 at the chair's direction (thread 3 of that session's
 ranking). Host-surface-parity **D16** (2026-09-07) ruled the
 confirm-on-trigger calibration for this repository's dev sessions and
 named this spec as "the place for the product-level version and its
-measurement". This section is the measurement half. It is a candidate:
-nothing below is built, and Q4 records the ruling still owed.
+measurement". This section is the measurement half. Q4 (2026-09-08)
+adopted it read-only: nothing below is built; the counts are captured
+by hand at `/retro` for one week (G5 task 1), and the hook and
+attune-forms#90 option 3 are decided on that data.
 
 ### Why a measure
 
@@ -184,7 +188,7 @@ transcript says which asks were ceremony.
 - **Nothing counted is authority.** A low ceremony rate does not
   license skipping D16's trigger list.
 
-## Open questions (Q1–Q3 resolved 2026-06-25; Q4 open)
+## Open questions (Q1–Q3 resolved 2026-06-25; Q4 ruled 2026-09-08)
 
 Rulings live in [decisions.md](decisions.md).
 
@@ -193,9 +197,9 @@ Rulings live in [decisions.md](decisions.md).
   only**; engine is a deferred follow-up (d2).
 - Q3. How to operationalize "genuinely ambiguous"? → **shared one-line
   test (rule + template) + per-skill conditional `Scoping` table** (d3).
-- Q4. Adopt the per-session calibration measure (G5)? → **open**
-  (raised 2026-09-07; options and the lead's recommendation are in
-  decisions.md; not ruled).
+- Q4. Adopt the per-session calibration measure (G5)? → **option 1,
+  read-only first** (ruled 2026-09-08; the ruling, the assumption
+  review and G5 task 1 are in decisions.md).
 
 ## Related
 
