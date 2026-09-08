@@ -34,8 +34,9 @@ click, and verified on the PyPI simple index.
 
 ## Current state
 
-- Status: prep commit on the branch; waiting on #2471 before rebase,
-  Codex lane, push, and PR.
+- Status: #2471 merged (`b5a64ba7f`); branch rebased past it, changelog
+  consolidated, Codex lane clean; PR opens chair-read once the reach
+  snapshot retry is recorded.
 - Changed files: the 10 `bump_version.py` sites + `uv.lock` self-entry;
   `CHANGELOG.md` (`[Unreleased]` → `[16.3.0] - 2026-09-08`, intro, fresh
   empty `[Unreleased]`); `README.md` (rotating slot → 16.3.0; the 16.2.1
@@ -64,7 +65,10 @@ click, and verified on the PyPI simple index.
 | Lockfile current after the bump | `uv lock` | only the attune-ai self-entry changed (1 line) |
 | Pinned hooks clean on every touched file | `uv run --with pre-commit pre-commit run --files …` | all passed |
 | Whole tree keyless | `ANTHROPIC_API_KEY="" .venv/bin/python -m pytest tests -n auto` | 26,097 passed, 266 skipped, 3 xfailed, 0 failed in 96 s (prep commit 0a6a95bdd, before the #2471 rebase) |
-| Commit signed | `git log -1 --format=%G?` | G |
+| Whole tree keyless, final head | same command on `df649c60a` (rebased past #2471, changelog consolidated) | 26,114 passed, 266 skipped, 3 xfailed, 0 failed in 96 s |
+| D11 lane (release surface) | Codex seat, branch vs merge-base `b5a64ba7f`, `require_complete=True` | clean, 0 findings, 15/15 files sent, 0 omitted; R5 row appended |
+| Changelog gate after consolidation | `tests/unit/gates/test_changelog_gate.py` | 22 passed |
+| Commits signed | `git log --format=%G?` | G on every commit |
 
 ## Next action
 
