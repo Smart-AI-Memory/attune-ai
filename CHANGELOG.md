@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `scripts/consolidate_changelog.py` merges duplicate `###` headers
+  inside one changelog section, order-preserving and idempotent, with a
+  `--check` mode. PRs append their own header rather than inserting
+  under the existing one, so a release section accumulates several
+  `### Fixed` blocks; 16.3.0 was cut with seven headers merged by hand.
+  Headings inside fenced code blocks are ignored, so an entry that
+  quotes changelog syntax is never silently rewritten.
+
+### Changed
+
+- `scripts/reach_snapshot.py --out` now defaults to the snapshots
+  directory in the MAIN checkout rather than a path relative to the
+  current one, so a snapshot taken from a git worktree is no longer
+  written inside that worktree, where it is invisible to the main
+  checkout and lost when the worktree is removed. Falls back to the
+  relative path when git is unavailable or the directory is absent.
+
+### Fixed
+
+- A cross-review lane that reviewed and found nothing now writes a
+  ledger row that classifies itself (`clean — …`) instead of the
+  `not-triaged` placeholder. The placeholder is not a legal disposition,
+  so the repo's own ledger gate rejected the row `review.ledger_row()`
+  had just produced and every clean lane cost a hand-edit. A clean lane
+  over a PARTIAL manifest now states the omission in the row. Lanes that
+  went ABSENT or returned a non-compliant format keep the placeholder:
+  they carry zero findings because they judged nothing, and calling that
+  "clean" would launder a non-review into a receipt.
+
 ## [16.3.0] - 2026-09-08
 
 This minor moves ordinary scoping questions onto each host's built-in
