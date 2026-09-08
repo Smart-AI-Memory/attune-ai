@@ -39,7 +39,28 @@ CANONICAL_ORDER = (
 )
 
 
-def _section_bounds(lines: list[str], version: str) -> tuple[int, int]:
+def _heading_mask(lines: list[str]) -> list[bool]:
+    """Mark the lines that may be read as headings (outside code fences).
+
+    A changelog entry may QUOTE changelog syntax -- the entry for a
+    changelog gate naturally shows an example block. An unindented
+    ``### Added`` inside a fence is example text, not a category
+    boundary, and treating it as one silently DELETES that line from
+    inside its fence (cross-review lane finding, verified by probe
+    2026-09-08). Unbalanced fences mask the remainder of the file,
+    which fails safe: nothing is moved.
+    """
+    mask: list[bool] = []
+    in_fence = False
+    for line in lines:
+        delimiter = line.lstrip().startswith("```")
+        mask.append(not in_fence and not delimiter)
+        if delimiter:
+            in_fence = not in_fence
+    return mask
+
+
+def _section_bounds(lines: list[str], version: str, mask: list[bool]) -> tuple[int, int]:
     """Return the ``[start, end)`` line span of one release section.
 
     ``version`` is matched as the ``## [<version>]`` heading. Raises
@@ -49,13 +70,13 @@ def _section_bounds(lines: list[str], version: str) -> tuple[int, int]:
     heading = f"## [{version}]"
     start = None
     for i, line in enumerate(lines):
-        if line.startswith(heading):
+        if mask[i] and line.startswith(heading):
             start = i
             break
     if start is None:
         raise LookupError(f"no {heading} section in the changelog")
     for i in range(start + 1, len(lines)):
-        if lines[i].startswith("## ["):
+        if mask[i] and lines[i].startswith("## ["):
             return start, i
     return start, len(lines)
 
@@ -63,14 +84,15 @@ def _section_bounds(lines: list[str], version: str) -> tuple[int, int]:
 def consolidate(text: str, version: str) -> str:
     """Return ``text`` with the version's duplicate ``###`` headers merged."""
     lines = text.splitlines(keepends=True)
-    start, end = _section_bounds(lines, version)
+    mask = _heading_mask(lines)
+    start, end = _section_bounds(lines, version, mask)
 
     intro: list[str] = []
     blocks: dict[str, list[str]] = {}
     seen: list[str] = []
     current: str | None = None
-    for line in lines[start:end]:
-        if line.startswith("### "):
+    for offset, line in enumerate(lines[start:end], start=start):
+        if mask[offset] and line.startswith("### "):
             current = line.strip()
             if current not in blocks:
                 blocks[current] = []

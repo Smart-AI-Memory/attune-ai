@@ -120,6 +120,50 @@ class TestConsolidate:
         text = "# C\n\n## [Unreleased]\n\n## [1.0.0] - 2026-01-01\n\n### Added\n\n- a\n"
         assert mod.consolidate(text, "Unreleased") == text
 
+    def test_fenced_example_headers_are_not_boundaries(self, mod) -> None:
+        """A changelog entry may QUOTE changelog syntax.
+
+        The exact case a cross-review lane caught on this script
+        (2026-09-08): an UNINDENTED ``### Added`` inside a fenced block
+        was read as a category boundary and silently deleted from
+        inside its fence. Data loss in a script that writes
+        CHANGELOG.md, so it is pinned here rather than left to review.
+        """
+        text = (
+            "# C\n\n## [1.0.0] - 2026-01-01\n\n### Added\n\n"
+            "- the changelog gate, whose entries look like:\n\n"
+            "```markdown\n### Added\n- example entry\n```\n\n"
+            "### Fixed\n\n- a fix\n"
+        )
+        out = mod.consolidate(text, "1.0.0")
+        assert "```markdown\n### Added\n- example entry\n```" in out
+        assert out == text
+
+    def test_fenced_release_heading_is_not_a_section_boundary(self, mod) -> None:
+        """A fenced ``## [x]`` must not truncate the section either."""
+        text = (
+            "# C\n\n## [1.0.0] - 2026-01-01\n\n### Added\n\n"
+            "- documents the header shape:\n\n"
+            "```markdown\n## [9.9.9] - 2020-01-01\n```\n\n"
+            "### Fixed\n\n- a real fix\n"
+        )
+        out = mod.consolidate(text, "1.0.0")
+        assert "a real fix" in out
+        assert "## [9.9.9] - 2020-01-01" in out
+
+    def test_indented_fence_is_also_respected(self, mod) -> None:
+        text = (
+            "# C\n\n## [1.0.0] - 2026-01-01\n\n### Added\n\n"
+            "- a nested example:\n\n"
+            "  ```markdown\n  ### Added\n  ```\n\n### Fixed\n\n- f\n"
+        )
+        assert mod.consolidate(text, "1.0.0") == text
+
+    def test_unbalanced_fence_fails_safe(self, mod) -> None:
+        """An unclosed fence masks the rest: nothing is moved."""
+        text = "# C\n\n## [1.0.0] - 2026-01-01\n\n### Added\n\n- a\n\n```\n### Fixed\n- f\n"
+        assert mod.consolidate(text, "1.0.0") == text
+
     def test_missing_version_raises_rather_than_silently_passing(self, mod) -> None:
         with pytest.raises(LookupError, match="no ## \\[9.9.9\\] section"):
             mod.consolidate(SCATTERED, "9.9.9")
