@@ -292,11 +292,61 @@ class TestDispositionCheck:
         with pytest.raises(ValueError, match="fails the gates"):
             review.ledger_row(result, disposition="1 modified, 2 rejected — …")
 
-    def test_ledger_row_placeholder_skips_validation(self, repo: Path) -> None:
+    def test_clean_lane_self_classifies_and_passes_the_gates(self, repo: Path) -> None:
+        """A clean lane must not emit the placeholder.
+
+        ``not-triaged`` is not a legal disposition — ledger_precision's
+        tally rejects any row it cannot classify — so emitting it for a
+        no-findings lane made the module's own output fail the repo's
+        own pre-commit gate, and every clean lane cost a hand-edit
+        (2026-09-08). The round-trip through check_disposition is the
+        point of this test, not the wording.
+        """
         result = review.run_review(
             repo, base_ref="main", board=RecordingBoard(), invoke_seat=_invoke_stub("NO FINDINGS")
         )
+        row = review.ledger_row(result)
+        disposition = [c.strip() for c in row.strip("|").split("|")][5]
+        assert disposition.startswith("clean")
+        assert review.check_disposition(disposition, 0) == []
+
+    def test_clean_on_partial_manifest_says_so_in_the_disposition(self) -> None:
+        """Clean-on-partial is the case the spec warns about."""
+        result = {
+            "seat": "codex",
+            "target": "branch vs merge-base abc1234",
+            "status": "clean",
+            "findings": [],
+            "manifest": {"sent": ["a.py"], "omitted": ["b.py", "c.py"]},
+        }
+        disposition = [c.strip() for c in review.ledger_row(result).strip("|").split("|")][5]
+        assert "OMITTED 2" in disposition
+        assert review.check_disposition(disposition, 0) == []
+
+    @pytest.mark.parametrize("status", ["absent", "format_noncompliant"])
+    def test_lane_that_judged_nothing_keeps_the_placeholder(self, status: str) -> None:
+        """Zero findings is not "clean" when the seat never reviewed.
+
+        An ABSENT lane carries zero findings because it read nothing;
+        the tally deliberately skips those rows, and auto-classifying
+        one as clean would launder a non-review into a receipt.
+        """
+        result = {
+            "seat": "codex",
+            "target": "branch vs merge-base abc1234",
+            "status": status,
+            "findings": [],
+            "manifest": {"sent": [], "omitted": []},
+        }
         assert review.ledger_row(result).endswith("| not-triaged |")
+
+    def test_explicit_disposition_still_overrides_a_clean_lane(self, repo: Path) -> None:
+        result = review.run_review(
+            repo, base_ref="main", board=RecordingBoard(), invoke_seat=_invoke_stub("NO FINDINGS")
+        )
+        assert review.ledger_row(result, disposition="clean — triaged by hand").endswith(
+            "| clean — triaged by hand |"
+        )
 
 
 class TestPriorRejections:

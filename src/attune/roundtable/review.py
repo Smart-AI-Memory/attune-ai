@@ -489,6 +489,24 @@ def check_disposition(disposition: str, findings: int) -> list[str]:
     return problems
 
 
+def clean_disposition(manifest: dict[str, Any]) -> str:
+    """Render the disposition for a lane that reviewed and found nothing.
+
+    A clean lane over a PARTIAL manifest is the case the spec warns
+    about ("never describe a partial or absent review as complete"), so
+    the omission is stated in the row itself rather than left to the
+    reader to notice two columns to the left.
+    """
+    omitted = len(manifest["omitted"])
+    sent = len(manifest["sent"])
+    if omitted:
+        return (
+            f"clean \u2014 no findings, but the manifest OMITTED {omitted} "
+            "file(s): clean-on-partial, re-lane scoped to them before relying on it"
+        )
+    return f"clean \u2014 no findings; complete manifest ({sent} files sent)"
+
+
 def ledger_row(result: dict[str, Any], disposition: str = "not-triaged") -> str:
     """Render the R5 dogfood-ledger row for the spec's receipts.md.
 
@@ -496,9 +514,21 @@ def ledger_row(result: dict[str, Any], disposition: str = "not-triaged") -> str:
     validated against both ledger gates' grammars at authoring time
     (:func:`check_disposition`); a non-compliant one raises rather than
     shipping a row CI will reject two rounds later.
+
+    A lane whose status is ``clean`` gets its disposition filled in
+    automatically (:func:`clean_disposition`). The placeholder is not a
+    legal disposition -- ``ledger_precision``'s tally rejects any row it
+    cannot classify -- so emitting it for the COMMON case of a
+    no-findings lane made the module's own output unmergeable by its own
+    pre-commit gate, and every clean lane cost a hand-edit (2026-09-08).
+    ``absent`` and ``format_noncompliant`` lanes keep the placeholder:
+    they also carry zero findings, but they judged nothing, and calling
+    that "clean" would be a lie the tally is designed to skip.
     """
     date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     manifest = result["manifest"]
+    if disposition == "not-triaged" and result.get("status") == "clean":
+        disposition = clean_disposition(manifest)
     if disposition != "not-triaged":
         problems = check_disposition(disposition, len(result["findings"]))
         if problems:

@@ -405,3 +405,58 @@ class TestVerifyBefore:
         monkeypatch.setattr(mod, "fetch_pypistats_recent", boom)
         rc = mod.main(["--out", str(tmp_path), "--verify-before", self._tag_at().isoformat()])
         assert rc == 1
+
+
+class TestDefaultOutDir:
+    """The dated snapshot belongs in the MAIN checkout (2026-09-08).
+
+    Written from a worktree, it is invisible to the main checkout's
+    ``git status`` and dies when the worktree is reaped — which is how
+    the 16.3.0 snapshot nearly went missing.
+    """
+
+    def test_worktree_resolves_to_the_main_checkout(self, mod, tmp_path: Path) -> None:
+        import subprocess
+
+        main = tmp_path / "main"
+        main.mkdir()
+        run = lambda *a: subprocess.run(  # noqa: E731
+            a, cwd=str(main), check=True, capture_output=True
+        )
+        run("git", "init", "-q", "-b", "main")
+        run("git", "config", "user.email", "t@example.com")
+        run("git", "config", "user.name", "t")
+        run("git", "config", "commit.gpgsign", "false")
+        snaps = main / "docs" / "specs" / "usage-signals" / "snapshots"
+        snaps.mkdir(parents=True)
+        (snaps / ".keep").write_text("", encoding="utf-8")
+        run("git", "add", "-A")
+        run("git", "commit", "-qm", "init")
+        wt = tmp_path / "wt"
+        run("git", "worktree", "add", "-q", "-b", "side", str(wt))
+
+        assert mod.default_out_dir(wt) == snaps
+        assert mod.default_out_dir(main) == snaps
+
+    def test_outside_a_repo_falls_back_to_the_relative_path(self, mod, tmp_path: Path) -> None:
+        assert mod.default_out_dir(tmp_path) == mod.SNAPSHOT_SUBDIR
+
+    def test_unusable_cwd_degrades_instead_of_raising(self, mod, tmp_path: Path) -> None:
+        assert mod.default_out_dir(tmp_path / "no-such-dir") == mod.SNAPSHOT_SUBDIR
+
+    def test_missing_git_binary_degrades(self, mod, monkeypatch) -> None:
+        import subprocess
+
+        def _boom(*_a, **_k):
+            raise OSError("git not found")
+
+        monkeypatch.setattr(subprocess, "run", _boom)
+        assert mod.default_out_dir() == mod.SNAPSHOT_SUBDIR
+
+    def test_explicit_out_is_never_overridden(self, mod, tmp_path: Path, monkeypatch) -> None:
+        """--out must win; the default only fills in when absent."""
+        called = []
+        monkeypatch.setattr(mod, "default_out_dir", lambda *a, **k: called.append(1) or tmp_path)
+        rc = mod.main(["--out", str(tmp_path), "--verify-before", "2026-01-01"])
+        assert rc in (0, 1)
+        assert not called

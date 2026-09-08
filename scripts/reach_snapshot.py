@@ -58,6 +58,44 @@ REPO = "Smart-AI-Memory/attune-ai"
 #: US-4: the manifest names its data source explicitly.
 SOURCE = "pypistats.org/api/recent"
 
+#: Snapshots are tracked files, so they belong in the MAIN checkout.
+#: Relative to a worktree this path resolves inside that worktree,
+#: where the file is invisible to the main checkout's ``git status``
+#: and dies with the worktree when it is reaped (2026-09-08: the
+#: 16.3.0 snapshot sat untracked in a sibling worktree and was found
+#: only because a starter file happened to name it).
+SNAPSHOT_SUBDIR = Path("docs/specs/usage-signals/snapshots")
+
+
+def default_out_dir(cwd: Path | None = None) -> Path:
+    """Resolve the snapshots directory in the MAIN checkout.
+
+    ``git rev-parse --git-common-dir`` names the main checkout's
+    ``.git`` from every linked worktree (and the plain ``.git`` from
+    the main checkout itself), so its parent is the main working tree.
+    Degrades to the plain relative path whenever git is unavailable,
+    errors, or the resolved directory does not exist -- a snapshot in
+    the wrong directory beats a crash in a scheduled job.
+    """
+    try:
+        proc = subprocess.run(  # nosec B603 B607 — fixed argv, read-only git, no shell
+            ["git", "rev-parse", "--git-common-dir"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+            cwd=str(cwd) if cwd else None,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return SNAPSHOT_SUBDIR
+    if proc.returncode != 0 or not proc.stdout.strip():
+        return SNAPSHOT_SUBDIR
+    base = Path(cwd) if cwd else Path.cwd()
+    main_root = (base / proc.stdout.strip()).resolve().parent
+    candidate = main_root / SNAPSHOT_SUBDIR
+    return candidate if candidate.is_dir() else SNAPSHOT_SUBDIR
+
+
 #: US-4 attempt budget: one initial attempt plus at most two
 #: additional attempts per day, separated by >= 60 minutes.
 MAX_ATTEMPTS_PER_DAY = 3
@@ -320,8 +358,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--out",
         type=Path,
-        default=Path("docs/specs/usage-signals/snapshots"),
-        help="directory for the dated snapshot JSON",
+        default=None,
+        help=(
+            "directory for the dated snapshot JSON (default: the snapshots "
+            "directory in the MAIN checkout, so a run from a worktree does "
+            "not strand the file there)"
+        ),
     )
     parser.add_argument(
         "--spacing",
@@ -346,6 +388,8 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(message)s")
+    if args.out is None:
+        args.out = default_out_dir()
 
     if args.verify_before:
         return verify_before(args.out, args.verify_before, list(args.packages))
