@@ -135,10 +135,13 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     if merged == original:
-        print(f"[{args.version}] headers already consolidated")
+        print(f"[{args.version}] headers already merged and in order")
         return 0
     if args.check:
-        print(f"[{args.version}] has duplicate ### headers -- run without --check to merge")
+        print(
+            f"[{args.version}] needs consolidation (duplicate ### headers, "
+            "non-canonical category order, or both) -- run without --check"
+        )
         return 1
     args.path.write_text(merged, encoding="utf-8")
     print(f"[{args.version}] headers consolidated")
