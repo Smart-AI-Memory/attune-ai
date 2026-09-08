@@ -140,15 +140,28 @@ paint or keyboard observation. Every claim names its basis.
   also at f51a2dd6. The plugin version on origin/main is still 16.2.1, so
   the cache path will not change on refresh.
 - Precondition, NOT run this session because it changes the operator's
-  global plugin install for every session on the machine:
+  global plugin install for every session on the machine. **Corrected
+  2026-09-07 late (next-session-start session):** the two-command
+  refresh originally written here cannot deliver #2459. Patrick ran
+  `claude plugin marketplace update attune-ai` that evening and the
+  clone moved to d45019a0 (19:45Z, which contains 7bdf4112e), yet the
+  cache directory kept its 2026-09-04 mtime and `installed_plugins.json`
+  its f51a2dd6 SHA: `claude plugin update` is a no-op while the
+  declared plugin version is unchanged, because the cache is keyed by
+  version and the recorded commit SHA is not used for change detection.
+  Basis: the Claude Code plugin docs (via the guide agent) plus those
+  on-disk timestamps; not verified by running the update. Two ways the
+  cache can move:
 
 ```bash
-claude plugin marketplace update attune-ai
-claude plugin update attune-ai@attune-ai
+# interim, operator-run: drop the version-keyed cache and reinstall
+claude plugin uninstall attune-ai@attune-ai
+claude plugin install attune-ai@attune-ai
 ```
 
-Then restart the desktop app (the CLI states a restart is required), then
-take the receipt:
+or wait for the 16.3.0 release, whose version bump is what delivers
+#2459 to every installed user. Either way restart the desktop app (the
+CLI states a restart is required), then take the receipt:
 
 ```bash
 grep -n "native questions first" ~/.claude/plugins/cache/attune-ai/attune-ai/16.2.1/skills/elicit/SKILL.md
@@ -340,7 +353,7 @@ skill discovery item stays deferred until the plugin cache is refreshed.
 | Keyboard-only completion | attested for the widget; not clean for the native cards | Patrick's picks (see the two cards above) |
 | Partial call can be submitted | observed | skipped question returned as `[No preference]` |
 | Tool result on dismissal | observed | generic rejection text, turn ended, no answers |
-| Fresh flower-shop request discovers #2459 | deferred | plugin cache stale; Patrick refreshes after this session |
+| Fresh flower-shop request discovers #2459 | deferred | plugin cache stale by mechanism (version-keyed; `plugin update` is a no-op at 16.2.1); needs the 16.3.0 bump or uninstall + reinstall — corrected 2026-09-07 late |
 
 Not observed: a terminal Claude Code rendering, free text through
 "Other", and the desktop card's paint details (layout, focus ring,
