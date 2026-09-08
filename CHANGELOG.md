@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- MCP server startup runs its PyPI version check on at most one background
+  thread per process, and `ATTUNE_VERSION_CHECK=0` disables it. Constructing
+  several servers in one process (a per-test fixture under xdist) used to
+  start one thread each; two raced inside `ssl.load_default_certs` and
+  segfaulted the CI coverage job. The test suite now opts out entirely.
+
 ### Added
 
 - Initial context-routed form runtime: server-bound receipts, idempotent

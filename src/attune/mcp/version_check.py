@@ -6,12 +6,52 @@ Network failures are silently ignored — this is best-effort only.
 
 import json
 import logging
+import os
+import threading
 import urllib.request
 from typing import Any
 
 logger = logging.getLogger(__name__)
 
 _cached_status: dict[str, Any] | None = None
+
+#: ``ATTUNE_VERSION_CHECK`` values that switch the background check off.
+_FALSEY = frozenset({"0", "false", "no", "off"})
+_start_lock = threading.Lock()
+_started = False
+
+
+def background_check_enabled() -> bool:
+    """False when ``ATTUNE_VERSION_CHECK`` opts out (the test suite does)."""
+    return os.environ.get("ATTUNE_VERSION_CHECK", "1").strip().lower() not in _FALSEY
+
+
+def start_background_check() -> threading.Thread | None:
+    """Run :func:`check_for_updates` on a daemon thread at most ONCE per process.
+
+    Every ``AttuneMCPServer`` construction used to start its own thread. A
+    per-test server fixture then ran several concurrent checks inside one
+    xdist worker, and two of them racing in ``ssl.load_default_certs``
+    segfaulted the interpreter (CI run 34173042218, 2026-09-08). One thread
+    per process removes the race; the env opt-out keeps test suites from
+    reaching PyPI at all.
+
+    Returns:
+        The started thread, or None when the check is disabled or a thread
+        was already started in this process.
+
+    """
+    global _started  # noqa: PLW0603
+
+    if not background_check_enabled():
+        return None
+    with _start_lock:
+        if _started:
+            return None
+        _started = True
+    thread = threading.Thread(target=check_for_updates, name="attune-version-check", daemon=True)
+    thread.start()
+    return thread
 
 
 def check_for_updates() -> dict[str, Any] | None:

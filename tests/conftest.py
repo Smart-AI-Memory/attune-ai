@@ -37,7 +37,18 @@ _install_inference_guard()
 #: ``ATTUNE_*`` vars owned by the autouse fixtures further down, which
 #: set them per-test (tmp ``ATTUNE_HOME``, telemetry off). ``_scrub_attune_env``
 #: must not touch these — see its docstring for the failure it caused.
-_SUITE_MANAGED_ENV = frozenset({"ATTUNE_HOME", "ATTUNE_HELP_TELEMETRY"})
+_SUITE_MANAGED_ENV = frozenset({"ATTUNE_HOME", "ATTUNE_HELP_TELEMETRY", "ATTUNE_VERSION_CHECK"})
+
+#: No test may reach PyPI: ``AttuneMCPServer`` starts a background version
+#: check on construction, and several per-test servers in one xdist worker
+#: raced inside ``ssl.load_default_certs`` and segfaulted the worker (CI run
+#: 34173042218, 2026-09-08). Pinned at import so every worker inherits it;
+#: suite-managed so ``_scrub_attune_env`` keeps it. Assigned, not
+#: ``setdefault``: an inherited ``=1`` from a developer shell would otherwise
+#: survive the scrubber and let the suite reach PyPI (Codex lane, 2026-09-08).
+#: A test that exercises the thread itself deletes the var via monkeypatch
+#: and stubs the check.
+os.environ["ATTUNE_VERSION_CHECK"] = "0"
 
 #: The eight Redis connection components (redis-config-truth R1) that
 #: ``resolve_redis_connection`` reads, minus ``REDIS_HOST``.

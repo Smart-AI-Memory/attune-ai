@@ -224,13 +224,12 @@ class AttuneMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin, HandoffHandler
         self._rate_limiter = RateLimiter(max_calls=60, window_seconds=60.0)
         self._tool_handlers = self._build_dispatch_table()
 
-        # Check for updates in background to avoid blocking init
+        # Check for updates in background to avoid blocking init. Single-flight:
+        # one thread per process, and none under ATTUNE_VERSION_CHECK=0 (tests).
         try:
-            import threading
+            from .version_check import start_background_check
 
-            from .version_check import check_for_updates
-
-            threading.Thread(target=check_for_updates, daemon=True).start()
+            start_background_check()
         except Exception:  # noqa: BLE001
             pass  # INTENTIONAL: Version check is best-effort
 
