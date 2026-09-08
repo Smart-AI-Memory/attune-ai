@@ -313,7 +313,9 @@ def _v1_only(rule_id: str) -> Callable[[ast.AST, str], list[Hit]]:
 
 
 # --------------------------------------------------------------------------
-# v2 rules (R7a/R7b) — ported verbatim in behavior from sweep_suite_v2_r7.py
+# v2 rules (R7a/R7b) — ported verbatim in behavior from sweep_suite_v2_r7.py,
+# then refined once (2026-09-08, #2310): R7b treats an access whose enclosing
+# ``try`` catches what it would raise as guarded (see _except_guarded).
 # --------------------------------------------------------------------------
 
 _PARSER_EXPECTS = {
@@ -363,6 +365,20 @@ def _handler_names(handler: ast.ExceptHandler) -> set[str]:
         elif isinstance(p, ast.Attribute):
             out.add(p.attr)
     return out
+
+
+#: Bodies that run AFTER the enclosing ``try`` has exited, so an exception
+#: raised inside them escapes its handlers (Codex lane F1, 2026-09-08).
+_DEFERRED = (ast.Lambda, ast.GeneratorExp, ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
+
+
+def _eager_nodes(node: ast.AST):
+    """Yield ``node`` and its descendants, skipping deferred bodies."""
+    stack = [node]
+    while stack:
+        n = stack.pop()
+        yield n
+        stack.extend(c for c in ast.iter_child_nodes(n) if not isinstance(c, _DEFERRED))
 
 
 class _R7Visitor(ast.NodeVisitor):
@@ -424,9 +440,51 @@ class _R7Visitor(ast.NodeVisitor):
             return n.value.id
         return None
 
+    @staticmethod
+    def _except_guarded(node) -> set[int]:
+        """Access nodes whose enclosing ``try`` catches what they would raise.
+
+        ``entry["ts"]`` on a list/str/int raises ``TypeError``; ``data.get``
+        on a non-dict raises ``AttributeError``. A handler that names the
+        right one (or a catch-all) already contains the non-dict case, so
+        the access is guarded by the handler rather than by ``isinstance``
+        (the session_ledger false positive, #2310; the discriminator is
+        pinned in tests/unit/classes/test_rules.py).
+        """
+        guarded: set[int] = set()
+        for t in ast.walk(node):
+            if not isinstance(t, ast.Try):
+                continue
+            caught: set[str] = set()
+            for h in t.handlers:
+                # A handler that re-raises BARE contains nothing (Codex lane F2);
+                # one that converts (``raise Typed(...) from e``) handles the case.
+                if not any(isinstance(stmt, ast.Raise) and stmt.exc is None for stmt in h.body):
+                    caught |= _handler_names(h)
+            if not caught:
+                continue
+            for sub in t.body:
+                for n in _eager_nodes(sub):
+                    if isinstance(n, ast.Subscript):
+                        needed = "TypeError"
+                    elif (
+                        isinstance(n, ast.Call)
+                        and isinstance(n.func, ast.Attribute)
+                        and n.func.attr == "get"
+                    ):
+                        needed = "AttributeError"
+                    else:
+                        continue
+                    if caught & _CATCH_ALL or needed in caught:
+                        guarded.add(id(n))
+        return guarded
+
     def _scan_function(self, node) -> None:
         parsed, guarded = self._collect_bindings(node)
+        except_guarded = self._except_guarded(node)
         for n in ast.walk(node):
+            if id(n) in except_guarded:
+                continue
             target = self._access_target(n)
             if target and target in parsed and target not in guarded:
                 self.hits.append(
