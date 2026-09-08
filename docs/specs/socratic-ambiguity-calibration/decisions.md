@@ -79,7 +79,78 @@ abstract per workflow).
 
 ---
 
+## Q4 — Per-session calibration measure (RULED 2026-09-08 — option 1)
+
+**Raised:** 2026-09-07 · **By:** the lead, at the chair's direction
+(thread 3 of the 2026-09-07 session ranking) · **Ruling:** option 1,
+chair, 2026-09-08 (below)
+
+Host-surface-parity D16 (2026-09-07) ruled the confirm-on-trigger
+calibration for this repository's dev sessions and named this spec as
+the place for the product-level version **and its measurement**. The
+measure is recorded in requirements.md ("Per-session calibration
+measure"): `asked` / `inferred` / `corrected` / `confirmed_untouched`
+per session, yielding a correction rate (high = under-asking) and a
+ceremony rate (high = over-asking), read together.
+
+Options for the chair:
+
+1. **Adopt read-only first** — count for one week before building
+   anything: form asks from `form_events`, surfaced inferences from
+   the validated responses, and native asks, `confirmed_untouched`,
+   prose inferences and corrections captured by hand at `/retro`.
+   Native asks have no store and forms have no accepted-untouched
+   flag, so the week's rates cover only what the close-out captured;
+   its output is a decision about instrumentation, not a band. Then
+   decide whether the native-ask hook and attune-forms#90 option 3
+   are worth their cost. *Lead's recommendation.*
+2. **Adopt with instrumentation** — the PostToolUse hook on
+   `AskUserQuestion` (local rows, `form_events` consent model) and the
+   forms accepted-untouched flag land together as G5's first task.
+3. **Decline** — ASI T4's per-occurrence counts are enough; close Q4.
+
+**Counter-case against the recommendation (carried unprompted):**
+self-report is the weakest source and biases toward under-counting the
+inferences the agent did not notice it made — exactly the ones arm 3
+exists to catch. A hook on the native control is small and captures
+the ceremony rate exactly; option 2 measures the same week with better
+numbers at the cost of one hook and one forms change. The D11 lane
+(Codex, 2026-09-08) pressed the same point unprompted: the read-only
+week cannot compute session-wide rates from the listed stores, which
+is why option 1 now states its coverage limit.
+
+**Ruling (chair, 2026-09-08, in chat, after the D11 lane landed).**
+Patrick's words: "on q4 go with the leads recommendation" — option 1,
+adopt read-only first. Asked "pushback?", the lead pushed back on the
+mechanics only, not the substance: the counter-case cuts less than it
+looks (option 2's hook sharpens only the ceremony rate on native asks;
+the correction rate rests on self-report under both options), but the
+ruling had no instrument, so a week clocked from the merge would count
+nothing. Assumption review, per the 2026-09-06 rule: (1) the instrument
+is the `/retro` close-out asking the four counts and appending them to
+a local file under `~/.attune`, nothing built in the repo — accepted;
+(2) the week starts when that ask lands, not at merge — first rejected,
+then "thanks for the pushback, it sounds like i may have made a
+mistake. please fix it", recorded as accepted on the lead's reading and
+open to correction at chair-read; (3) recorded on #2467 before merge —
+accepted.
+
+**Consequence:** G5 is adopted as a read-only pilot. G5 task 1: add
+`asked` / `inferred` / `corrected` / `confirmed_untouched` to the
+`/retro` close-out ask (user-level skill, outside this repo) and append
+each session's counts to a local file under `~/.attune`, same consent
+model as `form_events`. After one week of counts, decide whether the
+`AskUserQuestion` hook and attune-forms#90 option 3 are worth building.
+
+**Status impact:** spec moves parked → active; G5 task 1 is the next
+task; Resume-Trigger becomes one week of counts after task 1 lands.
+
+---
+
 ## Status
 
-All three design-phase open questions (Q1–Q3) resolved. Spec moves
-**draft → approved**. Implementation remains queued **behind 9.0.0**.
+Q1–Q3 resolved 2026-06-25 (draft → approved; later parked at the
+2026-07-13 truth sweep). G1's rule text shipped 2026-09-07 through
+host-surface-parity D16 and #2459, outside this spec; G2–G4 remain
+queued. Q4 ruled 2026-09-08: option 1, the read-only pilot (G5);
+task 1 is the `/retro` counting ask. Spec parked → active.
