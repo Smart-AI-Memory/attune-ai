@@ -115,11 +115,21 @@ flower-shop request are independent of each other, so the agent asks
 them **in one batch** instead of three turns.
 
 Where that batch renders is the part 16.3.0 changed. The host's own
-question control is now the default: on Claude the three questions
-arrive as a single `AskUserQuestion`, on Codex as its built-in
-questions. Not because the native control is richer — it is not — but
-because it is the one you already know how to answer, it needs no
-install, and it cannot break in a way Attune would have to support.
+question control is now the default. On Claude the three questions
+arrive as a single `AskUserQuestion`. Not because the native control is
+richer — it is not — but because it is the one you already know how to
+answer, it needs no install, and it cannot break in a way Attune would
+have to support.
+
+Attune ships one host profile today, and it is Claude's: at most four
+questions, two to four options each, multi-select supported, free text
+through the host's own "Other", and ranking declared inadmissible. That
+profile is what the router checks a form against. On Codex the guidance
+is deliberately weaker, because the control differs by mode and
+version: use the built-in question tool the session actually exposes,
+follow its real schema and limits, and never invent a control it does
+not have. So read the Codex behavior below as "whatever your Codex
+offers", not as a promise of parity with the list above.
 
 Attune's own card is what you get when a form asks for something the
 host control cannot carry: a number, a date, a long text answer, a
@@ -174,7 +184,11 @@ Three things to notice, whichever surface the questions arrive on.
 
 - **The multi-select.** "Which features matter for launch" takes several
   answers at once. A sequential question would have made you pick one
-  or type a list. Both surfaces support it.
+  or type a list. Claude's control supports it and so does the widget.
+  Codex's built-in question tool may not, depending on the tool your
+  session exposes; where it cannot, the field does not silently collapse
+  to one answer — the form goes to a surface that can carry it, or the
+  question comes to you typed.
 - **The guess, shown.** The agent inferred "quick outline" from the
   words "help me plan" and says so, as a badge on the widget or as the
   first option on the native control. You confirm or change it in the
