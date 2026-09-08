@@ -136,16 +136,25 @@ memory storage and recall, and every local transform.
      release with the headline feature; the displaced content moves to
      a permanent section below. Don't stack a second "New in" here. -->
 
-## New in 16.2.1 — strict dynamic forms render again
+## New in 16.3.0 — questions on the host's own control, a memory backend that names itself
 
-Guided Fix and Spec intake now omit optional field properties when they are
-absent instead of serializing them as JSON `null`. Strict native MCP hosts can
-accept the generated payload unchanged, so the dynamic form, scope picker, and
-probe suggestions render instead of failing client-side schema validation.
+Ordinary scoping questions now go through each host's built-in question
+control — `AskUserQuestion` in Claude Code, native questions in Codex — as
+one batched ask with the recommendation first and free text through the
+built-in "Other". The Attune widget is reserved for the constructs those
+controls cannot carry (ranking, triage boards, number and date fields), and
+only on widget-capable hosts. Automatic prompt refinement asks for material
+missing details up front; `attune config set prompt_refinement false` opts
+out user-wide and a leading `[no-refine]` skips one turn.
 
-The release-gate parser also rejects arrays and scalar values where an object
-is required, allowing its remaining response strategies to recover instead of
-reporting a misleading `quality_score 0.0` failure.
+The memory layer stops being silent about what it is. `attune memory status`
+and a new `attune doctor` line name the resolved backend, transport, and
+reachability, and a first-run choice (`attune memory use auto|file|redis`)
+is persisted and honored, so the file tier never probes for a Redis it was
+told not to use. Also in 16.3.0: the premium tier moves to Claude Fable 5.1,
+`attune doctor` becomes a full install diagnostic, cross-review runs on a
+verified Claude subscription without API spend, and the MCP server's PyPI
+version check is one thread per process (`ATTUNE_VERSION_CHECK=0` disables it).
 
 <details>
 <summary>Previously new in 16.1.0 — harness-lite lands</summary>
@@ -384,6 +393,12 @@ works everywhere and degrades gracefully. The full construct vocabulary
 ships via `attune-forms` 0.7.0 (new in 13.0.0). Chart specs render
 through the same sealed SVG kernel (`chart_render_widget`, nine chart
 types).
+
+Guided Fix and Spec intake omit optional field properties when they are
+absent instead of serializing them as JSON `null`, so strict native MCP
+hosts accept the generated payload unchanged and the dynamic form, scope
+picker, and probe suggestions render instead of failing client-side schema
+validation (16.2.1).
 
 ### State-bound command workspaces
 
