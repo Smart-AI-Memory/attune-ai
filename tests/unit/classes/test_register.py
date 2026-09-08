@@ -80,6 +80,24 @@ class TestDriftGuard:
 
 
 class TestDeriveRegister:
+    def test_no_stale_dispositions(self):
+        """Every disposition still matches a raw hit; entries are per (rule, path),
+        so a stale one would silently mask the next real hit in that file."""
+        from attune.classes.register import load_dispositions, scan_paths
+
+        def _rel(path: str) -> str:
+            p = Path(path)
+            return (p.resolve().relative_to(REPO_ROOT) if p.is_absolute() else p).as_posix()
+
+        scan = scan_paths([REPO_ROOT / "src"], repo_root=REPO_ROOT)
+        live = {(h["rule_id"], _rel(h["path"])) for h in scan["hits"]}
+        dispositions, problems = load_dispositions(REPO_ROOT)
+        assert not problems, problems
+        stale = [
+            (d["rule_id"], d["path"]) for d in dispositions if (d["rule_id"], d["path"]) not in live
+        ]
+        assert not stale, f"dispositions matching no raw hit (remove them): {stale}"
+
     def test_open_when_calibrated_hits_and_no_gate(self, tmp_path):
         repo = _fixture_repo(tmp_path)
         result = derive_register(repo_root=repo)
@@ -297,7 +315,11 @@ class TestShippedDispositions:
     def test_shipped_dispositions_file_is_schema_valid(self):
         valid, problems = load_dispositions(REPO_ROOT)
         assert problems == []
-        assert len(valid) >= 45  # populated 2026-08-22 from the review ledgers
+        # populated 2026-08-22 from the review ledgers (45); 16 retired 2026-09-08
+        # when R7b learned handler-guarded access (#2310), 1 added for the
+        # digest-locked evidence probe. Floor guards against silent deletion;
+        # test_no_stale_dispositions guards the other direction.
+        assert len(valid) >= 30
 
     def test_shipped_dispositions_reasons_are_never_empty(self):
         valid, _ = load_dispositions(REPO_ROOT)

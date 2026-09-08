@@ -327,6 +327,9 @@ def manifest_registrations(repo: Path) -> tuple[tuple[Registration, ...], list[s
             problems.append(f"manifest:{manifest}: missing")
             continue
         data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            problems.append(f"manifest:{manifest}: not a JSON object")
+            continue
         count = 0
         for event, groups in data.get("hooks", {}).items():
             for gi, group in enumerate(groups):

@@ -104,6 +104,11 @@ GATES: tuple[GateRef, ...] = (
         "test_guarded_ast_parse_also_catches_value_error",
     ),
     GateRef(
+        "C4b",
+        "tests/unit/gates/test_parse_under_narrow_except_gate.py",
+        "test_no_parser_outside_its_handler_set",
+    ),
+    GateRef(
         "H1",
         "tests/unit/gates/test_reachability_oracle_gate.py",
         "test_no_unresolved_redis_endpoint",

@@ -4,6 +4,10 @@
 # it came from. Sources: C3-triage-2026-08-20.md (machine-local,
 # ~/.attune/reports/attune-ai-review/), PR #2123 C4b triage.
 # Paths are posix, repo-relative. Entries are per (rule_id, path).
+# 2026-09-08 (#2310): 16 entries removed because rule R7b now treats an
+# access under a handler that catches what it raises as guarded, so they
+# matched no raw hit; a stale entry masks future hits in its file
+# (tests/unit/classes/test_register.py::test_no_stale_dispositions).
 
 # --- C3 group C: internal, self-written, same-process (~25 sites,
 # --- dismissed as a class: "a non-dict is not reachable without the
@@ -22,9 +26,6 @@
   reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
 - rule_id: R7b-parse-then-unguarded-access
   path: src/attune/patterns/summary.py
-  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
-- rule_id: R7b-parse-then-unguarded-access
-  path: src/attune/state_manager.py
   reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
 - rule_id: R7b-parse-then-unguarded-access
   path: src/attune/project_index/index.py
@@ -60,22 +61,13 @@
   path: src/attune/gates/envelope.py
   reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
 - rule_id: R7b-parse-then-unguarded-access
-  path: src/attune/pipeline_learner/decisions.py
-  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
-- rule_id: R7b-parse-then-unguarded-access
   path: src/attune/meta_workflows/models.py
   reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
 - rule_id: R7b-parse-then-unguarded-access
   path: src/attune/cli_commands/help_commands.py
   reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
-- rule_id: R7b-parse-then-unguarded-access
-  path: src/attune/hooks/scripts/starter_reconciler.py
-  reason: "C3 group C (internal writer, same process) - C3-triage-2026-08-20"
 
 # --- C3 verified dismissal (spot-checked in the ledger).
-- rule_id: R7b-parse-then-unguarded-access
-  path: src/attune/mcp/version_check.py
-  reason: "verified dismissal - every .get inside catch-all try, degrades to None (C3-triage-2026-08-20)"
 
 # --- C3 group B: stored/replayed-later - OUTSIDE the C3 gate's
 # --- asserted scope (gate covers group A external-input only) and
@@ -92,12 +84,6 @@
   path: src/attune/memory/short_term/working.py
   reason: "C3 group B (stored data, batch-3 thesis) - outside gate scope, carried work"
 - rule_id: R7b-parse-then-unguarded-access
-  path: src/attune/redis_memory_coordination.py
-  reason: "C3 group B (stored data, batch-3 thesis) - outside gate scope, carried work"
-- rule_id: R7b-parse-then-unguarded-access
-  path: src/attune/redis_memory_storage.py
-  reason: "C3 group B (stored data, batch-3 thesis) - outside gate scope, carried work"
-- rule_id: R7b-parse-then-unguarded-access
   path: src/attune/memory/cross_session/coordinator.py
   reason: "C3 group B (stored data, batch-3 thesis) - outside gate scope, carried work"
 - rule_id: R7b-parse-then-unguarded-access
@@ -108,9 +94,6 @@
   reason: "C3 group B (stored data, batch-3 thesis) - outside gate scope, carried work"
 - rule_id: R7b-parse-then-unguarded-access
   path: src/attune/memory/simple_storage.py
-  reason: "C3 group B (stored data, batch-3 thesis) - outside gate scope, carried work"
-- rule_id: R7b-parse-then-unguarded-access
-  path: src/attune/memory/verdict_log.py
   reason: "C3 group B (stored data, batch-3 thesis) - outside gate scope, carried work"
 - rule_id: R7b-parse-then-unguarded-access
   path: src/attune/models/telemetry/storage.py
@@ -130,32 +113,14 @@
 # --- mechanical axis: use-inside-catch-all-try = DEGRADES, dismissed
 # --- as a class ("they already do what the guard would make them do").
 - rule_id: R7b-parse-then-unguarded-access
-  path: src/attune/config/xml_config.py
-  reason: "DEGRADES - catch-all try absorbs (mechanical axis, 2026-08-22 residual triage)"
-- rule_id: R7b-parse-then-unguarded-access
-  path: src/attune/memory/storage_backend.py
-  reason: "DEGRADES - catch-all try absorbs (mechanical axis, 2026-08-22 residual triage)"
-- rule_id: R7b-parse-then-unguarded-access
-  path: src/attune/orchestration/pattern_learner.py
-  reason: "DEGRADES - catch-all try absorbs (mechanical axis, 2026-08-22 residual triage)"
-- rule_id: R7b-parse-then-unguarded-access
-  path: src/attune/orchestration/tools/security.py
-  reason: "DEGRADES - catch-all try absorbs (mechanical axis, 2026-08-22 residual triage)"
-- rule_id: R7b-parse-then-unguarded-access
-  path: src/attune/orchestration/tools/testing.py
-  reason: "DEGRADES - catch-all try absorbs (mechanical axis, 2026-08-22 residual triage)"
-- rule_id: R7b-parse-then-unguarded-access
-  path: src/attune/routing/classifier.py
-  reason: "DEGRADES - catch-all try absorbs (mechanical axis, 2026-08-22 residual triage)"
-- rule_id: R7b-parse-then-unguarded-access
-  path: src/attune/tools.py
-  reason: "DEGRADES - catch-all try absorbs (mechanical axis, 2026-08-22 residual triage)"
-- rule_id: R7b-parse-then-unguarded-access
-  path: src/attune/workflows/dependency_check_audit.py
-  reason: "DEGRADES - catch-all try absorbs (mechanical axis, 2026-08-22 residual triage)"
-- rule_id: R7b-parse-then-unguarded-access
-  path: src/attune/workflows/test_gen_parallel.py
-  reason: "DEGRADES - catch-all try absorbs (mechanical axis, 2026-08-22 residual triage)"
-- rule_id: R7b-parse-then-unguarded-access
   path: src/attune/memory/file_session_persistence.py
   reason: "C3 group B (stored current.json, non-dict escapes documented ValueError contract) - outside gate scope, batch-3-family carried work"
+
+# --- 2026-09-08 (#2310): the native-evidence probe is digest-locked into the
+# --- surface-parity receipt chain; a guard there would invalidate every
+# --- stored receipt. Its ``result`` comes from a fixture-owned tool in the
+# --- same process and a non-object fails the _check chain loudly on the
+# --- first subscript, which is the probe's intended behaviour.
+- rule_id: R7b-parse-then-unguarded-access
+  path: src/attune/elicitation/surface_native_evidence.py
+  reason: "evidence probe, digest-locked (surface-parity receipts); fixture-owned tool result in-process, non-object fails the _check chain loudly by design (#2310, 2026-09-08)"

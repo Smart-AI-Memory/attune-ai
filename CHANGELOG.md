@@ -40,6 +40,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Register classes owed before the cut (#2310). C3: the hook-manifest
+  scanner reports a non-object manifest as a problem instead of raising;
+  the digest-locked native-evidence probe keeps its loud failure and
+  carries a recorded disposition; rule R7b now treats an access whose
+  enclosing `try` catches what it would raise (`TypeError` for `[]`,
+  `AttributeError` for `.get`, or a catch-all) as guarded, unless the
+  handler re-raises or the access sits in a deferred body, which removes
+  the session_ledger false positive, is pinned by fixtures, and retires 16
+  hand-written dispositions (a new register test fails on any stale one).
+  C4b: a gate
+  binds the class to its calibrated rule R7a over the shipped tree. The
+  register reads CLOSED for both instead of BROKEN-GATE and
+  FIXED-BUT-UNGATED.
+
 - Pin the MCP SDK to the version used by native-form evidence, so fresh
   installations can activate the verified route without stale-receipt failures.
   SDK upgrades now require refreshed receipts and an exact-version check.

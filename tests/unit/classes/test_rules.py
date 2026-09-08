@@ -111,6 +111,110 @@ class TestR7Rules:
         """
         assert _hits(src, "R7b-parse-then-unguarded-access")
 
+    def test_r7b_subscript_under_typeerror_handler_clean(self):
+        """The session_ledger shape (#2310 false positive): ``entry["ts"]`` on a
+        list/str/int raises TypeError, and the handler names it."""
+        src = """
+            import json
+            def f(line):
+                try:
+                    entry = json.loads(line)
+                    ts = float(entry["ts"])
+                except (ValueError, KeyError, TypeError):
+                    return None
+                return ts
+        """
+        assert not _hits(src, "R7b-parse-then-unguarded-access")
+
+    def test_r7b_get_under_attributeerror_handler_clean(self):
+        src = """
+            import json
+            def f(raw):
+                try:
+                    data = json.loads(raw)
+                    return data.get("k")
+                except AttributeError:
+                    return None
+        """
+        assert not _hits(src, "R7b-parse-then-unguarded-access")
+
+    def test_r7b_get_under_catch_all_clean(self):
+        src = """
+            import json
+            def f(raw):
+                try:
+                    data = json.loads(raw)
+                    return data.get("k")
+                except Exception:
+                    return None
+        """
+        assert not _hits(src, "R7b-parse-then-unguarded-access")
+
+    def test_r7b_subscript_under_keyerror_only_still_flags(self):
+        """KeyError does not contain the non-dict case (TypeError)."""
+        src = """
+            import json
+            def f(raw):
+                try:
+                    data = json.loads(raw)
+                    return data["k"]
+                except KeyError:
+                    return None
+        """
+        assert _hits(src, "R7b-parse-then-unguarded-access")
+
+    def test_r7b_access_outside_the_try_still_flags(self):
+        src = """
+            import json
+            def f(raw):
+                try:
+                    data = json.loads(raw)
+                except ValueError:
+                    return None
+                return data.get("k")
+        """
+        assert _hits(src, "R7b-parse-then-unguarded-access")
+
+    def test_r7b_deferred_generator_inside_try_still_flags(self):
+        """The generator body runs after the try exits (Codex lane F1)."""
+        src = """
+            import json
+            def f(raw, keys):
+                try:
+                    data = json.loads(raw)
+                    return (data.get(k) for k in keys)
+                except AttributeError:
+                    return None
+        """
+        assert _hits(src, "R7b-parse-then-unguarded-access")
+
+    def test_r7b_reraising_handler_still_flags(self):
+        """Naming the exception and re-raising contains nothing (Codex lane F2)."""
+        src = """
+            import json
+            def f(raw):
+                try:
+                    data = json.loads(raw)
+                    return data["k"]
+                except TypeError:
+                    raise
+        """
+        assert _hits(src, "R7b-parse-then-unguarded-access")
+
+    def test_r7b_converting_handler_is_clean(self):
+        """Logging then raising a TYPED error handles the non-dict case; only a
+        bare ``raise`` contains nothing (orchestration/tools shape)."""
+        src = """
+            import json
+            def f(raw):
+                try:
+                    data = json.loads(raw)
+                    return data["totals"]["pct"]
+                except Exception as e:
+                    raise RuntimeError(f"failed: {e}") from e
+        """
+        assert not _hits(src, "R7b-parse-then-unguarded-access")
+
     def test_r7b_isinstance_guard_clean(self):
         src = """
             import json
