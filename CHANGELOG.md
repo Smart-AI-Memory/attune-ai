@@ -18,14 +18,6 @@ choice); retargets the premium tier to Claude Fable 5.1; lands the
 surface-parity inventory and registry gates; and closes register classes C3
 and C4b before the cut.
 
-### Fixed
-
-- MCP server startup runs its PyPI version check on at most one background
-  thread per process, and `ATTUNE_VERSION_CHECK=0` disables it. Constructing
-  several servers in one process (a per-test fixture under xdist) used to
-  start one thread each; two raced inside `ssl.load_default_certs` and
-  segfaulted the CI coverage job. The test suite now opts out entirely.
-
 ### Added
 
 - Initial context-routed form runtime: server-bound receipts, idempotent
@@ -33,80 +25,6 @@ and C4b before the cut.
   retries. The MCP route stays closed until a verified runtime is installed;
   production activation and Codex display measurements remain outstanding.
 
-### Changed
-
-- Claude planning guidance now prefers the host's built-in `AskUserQuestion`
-  for ordinary scoping requests, renders the Attune widget through
-  `show_widget` for the constructs the control cannot carry on widget-capable
-  hosts (desktop Code tab, Cowork; acceptance observed 2026-09-07), falls
-  back to one typed question for a single simple field or the markdown
-  skeleton for a structured form, and treats an interrupted or dismissed
-  call as cancellation (host-surface-parity D17). The Attune server route
-  and native MCP elicitation stay experimental on Claude.
-
-- Codex planning guidance now prefers built-in questions and handles pending
-  asynchronous replies, corrections, and cancellation explicitly. Attune forms
-  remain experimental; Antigravity defaults to enhanced conversational prompts
-  after the desktop keyboard trial did not meet acceptance.
-
-### Fixed
-
-- Register classes owed before the cut (#2310). C3: the hook-manifest
-  scanner reports a non-object manifest as a problem instead of raising;
-  the digest-locked native-evidence probe keeps its loud failure and
-  carries a recorded disposition; rule R7b now treats an access whose
-  enclosing `try` catches what it would raise (`TypeError` for `[]`,
-  `AttributeError` for `.get`, or a catch-all) as guarded, unless the
-  handler re-raises or the access sits in a deferred body, which removes
-  the session_ledger false positive, is pinned by fixtures, and retires 16
-  hand-written dispositions (a new register test fails on any stale one).
-  C4b: a gate
-  binds the class to its calibrated rule R7a over the shipped tree. The
-  register reads CLOSED for both instead of BROKEN-GATE and
-  FIXED-BUT-UNGATED.
-
-- Pin the MCP SDK to the version used by native-form evidence, so fresh
-  installations can activate the verified route without stale-receipt failures.
-  SDK upgrades now require refreshed receipts and an exact-version check.
-
-- Prompt-refinement guidance limits initial questions for terse keyboard
-  conversations, preserves supplied approval wording, and respects prompt-only
-  output. Codex native-hook setup and scripted host validation are documented;
-  installed desktop and human usability validation remain pending.
-
-- Cross-review can explicitly use verified Claude Pro/Max subscription auth
-  without enabling API spending. Complete-review mode rejects omitted files
-  and supports a bounded larger brief on stdin. The clean-venv smoke job
-  prepares static tokenizer data before guarded tests.
-
-- attune-forms floor raised to 0.15.0 (host-surface-parity AF-2). The parity
-  gate now treats a route-active host-native target whose host profile is not
-  yet registered as absent and ineligible rather than red, per the AF-2
-  boundary: it derives no obligation, is never replayed, and can never reuse
-  compatibility evidence; registering the profile (Task 2) creates the
-  obligation. Renderer receipts re-locked against the 0.15.0 artifact.
-  attune-ai's router tests and the `elicitation_render_form` surface note
-  follow the host-native default (D17).
-
-- Surface parity review corrections bind all delivery identities to declared
-  content, preserve producer provenance, validate receipt metadata and malformed
-  projections, and select renderer controls from their owning record. Follow-up
-  checks reject mixed interactive/delivery footprints, narrowed obligation maps,
-  shipped experiment roots and route-active controls; workspace receipts consume
-  actual HEADLESS and PORTABLE reply contracts.
-
-- Test inference isolation: pytest now blocks real provider HTTP calls and
-  Claude/Agent SDK inference launches before dispatch, scrubs child credentials,
-  and gives subprocesses a separate Claude profile. Fake transports and
-  non-inference CLI diagnostics remain usable; the local Ollama unit receipt
-  now uses a fixture-owned HTTP server. Interactive authentication is unchanged.
-  Windows audit events retain command checks when no executable override
-  is supplied. CI prepares tokenizer data before pytest, and no-auth
-  integration tests retain HTTP and MCP receipts through local fixtures.
-  Windows command decoding preserves quoted Python programs and still blocks
-  quoted inference wrappers.
-
-### Added
 
 - Automatic prompt-refinement guidance for the Claude Code plugin and MCP
   clients that follow server instructions, with user-wide opt-out, one-turn
@@ -228,6 +146,21 @@ and C4b before the cut.
 
 ### Changed
 
+- Claude planning guidance now prefers the host's built-in `AskUserQuestion`
+  for ordinary scoping requests, renders the Attune widget through
+  `show_widget` for the constructs the control cannot carry on widget-capable
+  hosts (desktop Code tab, Cowork; acceptance observed 2026-09-07), falls
+  back to one typed question for a single simple field or the markdown
+  skeleton for a structured form, and treats an interrupted or dismissed
+  call as cancellation (host-surface-parity D17). The Attune server route
+  and native MCP elicitation stay experimental on Claude.
+
+- Codex planning guidance now prefers built-in questions and handles pending
+  asynchronous replies, corrections, and cancellation explicitly. Attune forms
+  remain experimental; Antigravity defaults to enhanced conversational prompts
+  after the desktop keyboard trial did not meet acceptance.
+
+
 - **`attune-verify` cap widened `<0.6` → `<1.0`; `uv.lock` `0.2.2` → `0.5.0`.**
   attune-ai has ridden 0.2 → 0.5 with zero breaks in the `/verify` skill's
   taught contract (`verify` / `VerifyContext(project_root)` /
@@ -262,6 +195,69 @@ and C4b before the cut.
   once attune-rag ships the same defaults.
 
 ### Fixed
+
+- MCP server startup runs its PyPI version check on at most one background
+  thread per process, and `ATTUNE_VERSION_CHECK=0` disables it. Constructing
+  several servers in one process (a per-test fixture under xdist) used to
+  start one thread each; two raced inside `ssl.load_default_certs` and
+  segfaulted the CI coverage job. The test suite now opts out entirely.
+
+
+- Register classes owed before the cut (#2310). C3: the hook-manifest
+  scanner reports a non-object manifest as a problem instead of raising;
+  the digest-locked native-evidence probe keeps its loud failure and
+  carries a recorded disposition; rule R7b now treats an access whose
+  enclosing `try` catches what it would raise (`TypeError` for `[]`,
+  `AttributeError` for `.get`, or a catch-all) as guarded, unless the
+  handler re-raises or the access sits in a deferred body, which removes
+  the session_ledger false positive, is pinned by fixtures, and retires 16
+  hand-written dispositions (a new register test fails on any stale one).
+  C4b: a gate
+  binds the class to its calibrated rule R7a over the shipped tree. The
+  register reads CLOSED for both instead of BROKEN-GATE and
+  FIXED-BUT-UNGATED.
+
+- Pin the MCP SDK to the version used by native-form evidence, so fresh
+  installations can activate the verified route without stale-receipt failures.
+  SDK upgrades now require refreshed receipts and an exact-version check.
+
+- Prompt-refinement guidance limits initial questions for terse keyboard
+  conversations, preserves supplied approval wording, and respects prompt-only
+  output. Codex native-hook setup and scripted host validation are documented;
+  installed desktop and human usability validation remain pending.
+
+- Cross-review can explicitly use verified Claude Pro/Max subscription auth
+  without enabling API spending. Complete-review mode rejects omitted files
+  and supports a bounded larger brief on stdin. The clean-venv smoke job
+  prepares static tokenizer data before guarded tests.
+
+- attune-forms floor raised to 0.15.0 (host-surface-parity AF-2). The parity
+  gate now treats a route-active host-native target whose host profile is not
+  yet registered as absent and ineligible rather than red, per the AF-2
+  boundary: it derives no obligation, is never replayed, and can never reuse
+  compatibility evidence; registering the profile (Task 2) creates the
+  obligation. Renderer receipts re-locked against the 0.15.0 artifact.
+  attune-ai's router tests and the `elicitation_render_form` surface note
+  follow the host-native default (D17).
+
+- Surface parity review corrections bind all delivery identities to declared
+  content, preserve producer provenance, validate receipt metadata and malformed
+  projections, and select renderer controls from their owning record. Follow-up
+  checks reject mixed interactive/delivery footprints, narrowed obligation maps,
+  shipped experiment roots and route-active controls; workspace receipts consume
+  actual HEADLESS and PORTABLE reply contracts.
+
+- Test inference isolation: pytest now blocks real provider HTTP calls and
+  Claude/Agent SDK inference launches before dispatch, scrubs child credentials,
+  and gives subprocesses a separate Claude profile. Fake transports and
+  non-inference CLI diagnostics remain usable; the local Ollama unit receipt
+  now uses a fixture-owned HTTP server. Interactive authentication is unchanged.
+  Windows audit events retain command checks when no executable override
+  is supplied. CI prepares tokenizer data before pytest, and no-auth
+  integration tests retain HTTP and MCP receipts through local fixtures.
+  Windows command decoding preserves quoted Python programs and still blocks
+  quoted inference wrappers.
+
 
 - **Owner-checked lock release and refresh (class H6)**: `release_lock`
   compared the lock owner and deleted the key in two Redis round trips,
