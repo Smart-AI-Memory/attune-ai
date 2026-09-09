@@ -13,10 +13,10 @@
   ],
   "date": "2026-09-08",
   "github": {
-    "clones_14d": 25592,
+    "clones_14d": 21100,
     "forks": 2,
     "stars": 10,
-    "views_14d": 723
+    "views_14d": 519
   },
   "manifest": {
     "captured": [
@@ -35,7 +35,7 @@
       "attune-verify"
     ],
     "missing": [],
-    "observed_at": "2026-09-08T02:07:05.176472+00:00",
+    "observed_at": "2026-09-08T11:30:04.242990+00:00",
     "source": "pypistats.org/api/recent"
   },
   "pypi_recent": {
@@ -65,5 +65,5 @@
       "last_week": 464
     }
   },
-  "taken_at": "2026-09-08T02:07:05.176472+00:00"
+  "taken_at": "2026-09-08T11:30:04.242990+00:00"
 }
