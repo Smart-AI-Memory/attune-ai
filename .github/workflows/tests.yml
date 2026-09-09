@@ -164,7 +164,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install 'uv==0.9.22'
-        uv export --locked --extra dev --no-emit-project --no-hashes \
+        uv export --locked --all-extras --no-emit-project --no-hashes \
           -o "$RUNNER_TEMP/ci-constraints.txt"
         pip install -e .[dev] -c "$RUNNER_TEMP/ci-constraints.txt"
 
@@ -320,7 +320,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install 'uv==0.9.22'
-        uv export --locked --extra dev --no-emit-project --no-hashes \
+        uv export --locked --all-extras --no-emit-project --no-hashes \
           -o "$RUNNER_TEMP/ci-constraints.txt"
         pip install -e .[dev] -c "$RUNNER_TEMP/ci-constraints.txt"
 
@@ -407,7 +407,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install 'uv==0.9.22'
-        uv export --locked --extra dev --no-emit-project --no-hashes \
+        uv export --locked --all-extras --no-emit-project --no-hashes \
           -o "$RUNNER_TEMP/ci-constraints.txt"
         pip install -e .[dev] -c "$RUNNER_TEMP/ci-constraints.txt"
 
@@ -550,9 +550,21 @@ jobs:
           uv.lock
 
     - name: Install dependencies
+      # Package deps come from uv.lock (see the test job for why). The lint
+      # TOOLS deliberately do not: black is pinned to 24.10.0 to match
+      # .pre-commit-config.yaml, which is this repo's formatting contract.
+      # uv.lock resolves black to 26.5.1 for the dev extra, so constraining
+      # this line would force a different formatter and fail the gate.
+      # ruff and bandit are pinned to the lock's versions so a new release
+      # cannot change lint results without a commit.
+      shell: bash
       run: |
         python -m pip install --upgrade pip
-        pip install -e . 'black==24.10.0' ruff bandit[toml]
+        pip install 'uv==0.9.22'
+        uv export --locked --all-extras --no-emit-project --no-hashes \
+          -o "$RUNNER_TEMP/ci-constraints.txt"
+        pip install -e . -c "$RUNNER_TEMP/ci-constraints.txt"
+        pip install 'black==24.10.0' 'ruff==0.15.21' 'bandit[toml]==1.9.4'
 
     - name: Check formatting with Black
       run: black --check .
@@ -692,9 +704,13 @@ jobs:
           uv.lock
 
     - name: Install dependencies
+      shell: bash
       run: |
         python -m pip install --upgrade pip
-        pip install -e .[software]
+        pip install 'uv==0.9.22'
+        uv export --locked --all-extras --no-emit-project --no-hashes \
+          -o "$RUNNER_TEMP/ci-constraints.txt"
+        pip install -e .[software] -c "$RUNNER_TEMP/ci-constraints.txt"
 
     - name: Count tech debt markers
       id: debt
