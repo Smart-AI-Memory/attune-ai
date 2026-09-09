@@ -5,12 +5,16 @@ characterization check amended 2026-09-08 (D18).
 Task 0 merged in #2442. Task 1B increment 1 merged in #2443;
 increment 2 merged in #2444; increment 3 merged in #2450
 (2026-09-07, 6934b177e). Full Task 1B remains incomplete.
+Task 2 increment 1 (checks 1 and 6, evidence only) merged in #2494;
+increment 2 added the trusted host-question presentation boundary
+(`host_question_adapter.py`) and touched no routing seam.
 AF-1 is available in the released, non-editable attune-forms 0.14.0
-artifact and AF-2 in 0.17.0; the locked consumer specifier is
->=0.15.0,<0.16 — the D12 floor, with the ceiling narrowed from <1.0 by
-#2476 because the AF-2 registry breaks the Task 1B parity gates —
-which Task 2 raises to >=0.17.0 with a ceiling it must establish
-(D18, corrected by D19).
+artifact and AF-2 in 0.17.0. The locked consumer specifier is
+`attune-forms>=0.17.0,<0.18` (`pyproject.toml:75`, `uv.lock:535`,
+verified 2026-09-09): #2488 landed BOTH halves of what D18 ruled and D19
+left open — the 0.17.0 floor, and a replacement ceiling at the consumed
+minor rather than a restored <1.0. Task 2's pyproject/uv.lock entries are
+therefore already satisfied; see their files-to-modify lines.
 
 D14 authorizes the bounded increment-3 Codex form interaction from the
 existing milestone brief. It lifts the prior increment-3 hold for that
@@ -488,7 +492,35 @@ test asserting "PORTABLE was selected" PASSES FOR THE WRONG REASON
 here, because PORTABLE is what happens with or without the adapter.
 Increment-3 tests must read the disposition reason and distinguish
 `unsupported_capability` from `missing_adapter`, or they prove nothing
-about the adapter at all.)*
+about the adapter at all.
+
+TWO CORRECTIONS to this note, measured 2026-09-09 during increment 2 and
+recorded because each moves work the note did not name.
+
+First, the note describes what happens to "a host-native candidate", and
+there is no such candidate to describe. The routing subject
+`surface-runtime-route-form` declares cold
+`[mcp-native:surface-native-elicitation, PORTABLE, HEADLESS]` and warm
+`[RICH, ...]`; the loop iterates that order, so no host-native row is
+produced and the disposition the note asks increment 3 to assert on does
+not exist yet. The note is not false — it is conditional on a candidate
+the registry does not offer. Adding the route to that subject's order (a
+`scripts/project_surface_runtime.py` projection) is a precondition of the
+receipt, not a detail of it.
+
+Second, and the reason increment 2 stopped short of the seam:
+REGISTERING THE PROFILE IS THE OBLIGATION-CREATING ACT.
+`surface_registry.py:420` states it — "Registering the profile in
+`host_profiles` is the act that makes the obligation exist" — and
+`tests/unit/gates/test_surface_parity.py:1253` pins the consequence:
+appending `claude-askuserquestion` to `host_profiles` turns
+`renderer:...:host-native:<target>` from ABSENT into a required parity
+obligation and adds `lifecycle:host_profile:...:abort`. `host_profiles`
+is `[]` today. So the seam is not separable from its receipt: whichever
+increment registers the profile must land `parity-registry.json`,
+`receipts.md`, the demo render and a green parity gate in the same PR —
+while D20 ruling 3 still forbids that receipt from reporting the route as
+firing.)*
 
 ```xml
 <task id="2" name="host-tier-zero-consumer">
@@ -517,7 +549,9 @@ about the adapter at all.)*
     <file path="tests/unit/elicitation/test_host_question_adapter.py">Profile/target identity binding, Task 1B challenge use, same-call collection, completion compare-and-consume, session-close race, absent-adapter fallback and fake-adapter interface receipts.</file>
   </files-to-create>
   <files-to-modify>
-    <file path="src/attune/elicitation/surface_policy.py">Register the released profile target as host-native only when a live matching HostQuestionAdapter object is installed; preserve selected-only rendering.</file>
+    <file path="src/attune/elicitation/surface_policy.py">Consume the host-native candidate in the selection loop and preserve selected-only rendering. NOTE (measured 2026-09-09): the ADMISSIBILITY GATE is not here. `deliverable_routes` is built by the caller and only read at `:579`; the name's three occurrences in this file are the parameter, a docstring line and that `not in` check. Nothing in this file registers an adapter.</file>
+    <file path="src/attune/elicitation/surface_runtime.py">ADDED 2026-09-09, absent from the authored list: `route_form` is where `deliverable_routes` is actually constructed (`:141`, currently `frozenset({NATIVE_ROUTE}) if native else frozenset()`), so "only when a live matching adapter is installed" is a change HERE. `resolve_host_adapter` returns None for an absent or mismatched adapter, which is the pre-render answer the loop needs.</file>
+    <file path="src/attune/elicitation/surface_runtime_registry.json">ADDED 2026-09-09, via `scripts/project_surface_runtime.py` (generated; do not hand-edit). The routing subject `surface-runtime-route-form` carries cold `[mcp-native:surface-native-elicitation, PORTABLE, HEADLESS]` and warm `[RICH, ...]` — NO host-native route. The selection loop iterates that order, so today no host-native candidate is produced and NO disposition row for it exists. Until the route joins this order, the `unsupported_capability` vs `missing_adapter` distinction the route-selection note requires cannot be observed at all, and a test claiming to prove it would be vacuous.</file>
     <file path="src/attune/elicitation/ask_payload.py">Add the raw host codec/correlation and Other/cancellation decoder from immutable QuestionAnswerBinding records into the common validator bridge for a same-call trusted HostQuestionCompletion; invoke the released renderer only with the trusted profile and preserve form_to_ask_payload unchanged.</file>
     <file path="src/attune/mcp/server.py">Register the immutable adapter outside request data; for the unified host-question arm call present_and_collect with an in-memory challenge and collect its completion without returning a relay payload.</file>
     <file path="src/attune/mcp/tool_schemas.py">Define host-question-completion as the unified response arm; expose no caller input for bindings, profile, tier, presentation challenge or completion attestation.</file>
@@ -528,9 +562,9 @@ about the adapter at all.)*
       Add the tier-0 render and profile-change fallback of the existing audit demo form.
     </file>
     <file path="pyproject.toml">
-      Raise the attune-forms floor to 0.17.0 in the same commit as the green parity receipt, and lift the 0.16 ceiling #2476 installed. ESTABLISH the replacement ceiling from that receipt; do not restore the former 1.0 bound. #2476 narrowed it because a fresh resolve picked up a minor this repo had not consumed, and that hazard recurs at every unconsumed minor. There is no 1.0 upper bound in the tree to "retain", and raising only the floor against the current pin yields an empty specifier (D19).
+      DONE — no action remains. #2488 landed `attune-forms>=0.17.0,<0.18` ahead of this task (`pyproject.toml:75`, verified 2026-09-09). That PR both raised the floor to D18's ruled 0.17.0 and lifted the `<0.16` ceiling #2476 installed, settling it at the consumed minor rather than restoring `<1.0` — which is the ceiling D19 ruling 4 explicitly left for "Task 2 to establish with its receipt or for a later ruling". It was established by receipt, one PR early. The former instruction to raise the floor here is retained in git history only; acting on it now would be a no-op at best.
     </file>
-    <file path="uv.lock">Lock that released package artifact.</file>
+    <file path="uv.lock">DONE — no action remains. `uv.lock:535` records the `>=0.17.0,<0.18` specifier and the locked 0.17.0 artifact (verified 2026-09-09).</file>
     <file path="docs/specs/host-surface-parity/parity-registry.json">Add the new profile target's machine receipt foreign keys.</file>
     <file path="docs/specs/host-surface-parity/receipts.md">Record the human evidence keyed to those receipt IDs.</file>
   </files-to-modify>
