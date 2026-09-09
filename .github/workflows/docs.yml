@@ -108,7 +108,13 @@ jobs:
       # same import graph mkdocs build sees.
       - name: Install package (mkdocstrings symbols must resolve)
         if: needs.changes.outputs.docs == 'true'
-        run: pip install -e ".[dev,developer]" pathspec pyyaml
+        shell: bash
+        run: |
+          pip install 'uv==0.9.22'
+          uv export --locked --all-extras --no-emit-project --no-hashes \
+            -o "$RUNNER_TEMP/ci-constraints.txt"
+          pip install -e ".[dev,developer]" pathspec pyyaml \
+            -c "$RUNNER_TEMP/ci-constraints.txt"
 
       - name: Run wiring audit
         if: needs.changes.outputs.docs == 'true'
@@ -147,7 +153,13 @@ jobs:
 
       - name: Install package (import graph must resolve)
         if: needs.changes.outputs.docs == 'true'
-        run: pip install -e ".[dev,developer]" pathspec
+        shell: bash
+        run: |
+          pip install 'uv==0.9.22'
+          uv export --locked --all-extras --no-emit-project --no-hashes \
+            -o "$RUNNER_TEMP/ci-constraints.txt"
+          pip install -e ".[dev,developer]" pathspec \
+            -c "$RUNNER_TEMP/ci-constraints.txt"
 
       - name: Run doc-import audit
         if: needs.changes.outputs.docs == 'true'

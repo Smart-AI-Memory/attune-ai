@@ -37,10 +37,17 @@ jobs:
         restore-keys: pre-commit-
 
     - name: Install dependencies
+      # Install from uv.lock, not a fresh resolve — an upstream publish must
+      # not be able to change what this gate installs without a commit.
+      # uv is installed first and pinned, since it produces the constraints.
+      shell: bash
       run: |
-        pip install pre-commit uv
+        pip install 'uv==0.9.22'
+        uv export --locked --all-extras --no-emit-project --no-hashes \
+          -o "$RUNNER_TEMP/ci-constraints.txt"
+        pip install pre-commit -c "$RUNNER_TEMP/ci-constraints.txt"
         # Install package for local hooks (pattern-summary, etc.)
-        pip install -e .[dev,software]
+        pip install -e .[dev,software] -c "$RUNNER_TEMP/ci-constraints.txt"
 
     - name: Run pre-commit hooks
       run: pre-commit run --all-files --show-diff-on-failure
