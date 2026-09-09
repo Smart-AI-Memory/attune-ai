@@ -3,7 +3,7 @@
 
 Runs quickly (<2s) and prints a short summary to stdout when any of:
 
-    1. Manifest features have missing template kinds (< 11)
+    1. Manifest features have missing directories or template kinds (< 11)
     2. Template directories exist that aren't in the manifest (orphans)
     3. Source files newer than their feature's concept.md (coarse staleness hint)
 
@@ -90,13 +90,17 @@ def main() -> int:
     help_dir = repo_root / ".help"
     templates_dir = help_dir / "templates"
 
-    if not help_dir.is_dir() or not templates_dir.is_dir():
+    if not help_dir.is_dir():
         return 0
 
     manifest = _load_manifest(help_dir)
     manifest_names = set(manifest)
-    on_disk = {p.name for p in templates_dir.iterdir() if p.is_dir()}
+    templates_missing = not templates_dir.is_dir()
+    on_disk = (
+        {p.name for p in templates_dir.iterdir() if p.is_dir()} if not templates_missing else set()
+    )
 
+    missing = sorted(manifest_names - on_disk)
     orphans = sorted(on_disk - manifest_names)
     incomplete: list[str] = []
     for feat in sorted(manifest_names & on_disk):
@@ -106,12 +110,16 @@ def main() -> int:
 
     stale = _coarse_staleness(manifest, repo_root, templates_dir)
 
-    if not (orphans or incomplete or stale):
+    if not (templates_missing or missing or orphans or incomplete or stale):
         return 0
 
     bits = []
+    if missing:
+        bits.append(f"{len(missing)} missing")
+    elif templates_missing:
+        bits.append("templates directory missing")
     if stale:
-        bits.append(f"{len(stale)} stale")
+        bits.append(f"{len(stale)} stale (mtime hint)")
     if incomplete:
         bits.append(f"{len(incomplete)} incomplete")
     if orphans:

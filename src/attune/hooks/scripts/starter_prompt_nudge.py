@@ -157,6 +157,26 @@ def _find_project_starter(start: Path | None = None) -> Path | None:
     return None
 
 
+def select_starters(
+    repo_root: Path | None, project_path: Path | None, global_path: Path
+) -> list[tuple[Path, str]]:
+    """Select handoff and project context, with a legacy-only global fallback.
+
+    Both starter hooks use this selection so reconciliation covers exactly
+    the artifacts advertised by the nudge. Empty or vanished files are skipped.
+    """
+    selected: list[tuple[Path, str]] = []
+    if repo_root is not None:
+        handoff = find_handoff(repo_root)
+        if handoff is not None:
+            selected.append(handoff)
+    if project_path is not None and _size_or_zero(project_path) > 0:
+        selected.append((project_path, "project"))
+    if not selected and _size_or_zero(global_path) > 0:
+        selected.append((global_path, "global:LEGACY"))
+    return selected
+
+
 def _format_age(mtime_ts: float, now: float | None = None) -> str:
     """Return a short human-readable age like '2h ago', '3d ago'.
 
@@ -208,27 +228,13 @@ def _emit_notice(path: Path, scope: str, suffix: str = "") -> bool:
 
 def main() -> int:
     """Surface the best handoff surface, most-specific first (R9)."""
-    repo_root = _repo_root()
-    emitted = False
-
-    if repo_root is not None:
-        handoff = find_handoff(repo_root)
-        if handoff is not None:
-            emitted = _emit_notice(handoff[0], handoff[1]) or emitted
-
-    project_path = _find_project_starter()
-    if project_path is not None:
-        emitted = _emit_notice(project_path, "project") or emitted
-
-    # LEGACY fallback only: the un-namespaced global file is retiring
-    # (session-start-integrity R9) — never advertise it unlabeled, and
-    # only when no repo-scoped surface exists.
-    if not emitted and (project_path is None or STARTER_PATH.resolve() != project_path.resolve()):
-        _emit_notice(
-            STARTER_PATH,
-            "global:LEGACY",
-            " (retiring surface — migrate content to docs/handoffs/ or" " the project starter)",
-        )
+    for path, scope in select_starters(_repo_root(), _find_project_starter(), STARTER_PATH):
+        suffix = ""
+        if scope == "global:LEGACY":
+            suffix = (
+                " (retiring surface — migrate content to docs/handoffs/ or the project starter)"
+            )
+        _emit_notice(path, scope, suffix)
     return 0
 
 

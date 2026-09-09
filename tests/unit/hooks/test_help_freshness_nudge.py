@@ -116,6 +116,34 @@ class TestCoarseStaleness:
 
 
 class TestMain:
+    def test_reports_missing_feature_directory(self, tmp_path, monkeypatch, capsys):
+        help_dir, _ = _make_help_tree(tmp_path)
+        _write_manifest(help_dir, {"missing-feature": []})
+        monkeypatch.setattr(hook, "_repo_root", lambda: tmp_path)
+
+        assert hook.main() == 0
+        assert "1 missing" in capsys.readouterr().out
+
+    def test_reports_missing_templates_tree(self, tmp_path, monkeypatch, capsys):
+        help_dir = tmp_path / ".help"
+        help_dir.mkdir()
+        _write_manifest(help_dir, {"missing-feature": []})
+        monkeypatch.setattr(hook, "_repo_root", lambda: tmp_path)
+
+        assert hook.main() == 0
+        assert "1 missing" in capsys.readouterr().out
+
+    def test_missing_templates_tree_warns_without_manifest_entries(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        help_dir = tmp_path / ".help"
+        help_dir.mkdir()
+        _write_manifest(help_dir, {})
+        monkeypatch.setattr(hook, "_repo_root", lambda: tmp_path)
+
+        assert hook.main() == 0
+        assert "templates directory missing" in capsys.readouterr().out
+
     def test_returns_zero_when_no_help_dir(self, tmp_path, monkeypatch):
         monkeypatch.setattr(hook, "_repo_root", lambda: tmp_path)
         assert hook.main() == 0
