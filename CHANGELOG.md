@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [16.4.0] - 2026-09-09
+
+This release hardens session-start checks across repository, process, and
+filesystem boundaries, consumes attune-forms 0.17 with a matching minor
+ceiling, and improves changelog and review-ledger reliability. All three
+help/starter hooks remain available.
+
 ### Added
 
 - `scripts/consolidate_changelog.py` merges duplicate `###` headers
