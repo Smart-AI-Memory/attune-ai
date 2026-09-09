@@ -1,10 +1,12 @@
 # Host Surface Parity — Tasks
 
-**Status:** active, execution-reconciled (2026-09-06; D14).
+**Status:** active, execution-reconciled (2026-09-06; D14); Task 2's
+characterization check amended 2026-09-08 (D18).
 Task 0 merged in #2442. Task 1B increment 1 merged in #2443;
 increment 2 merged in #2444. Full Task 1B remains incomplete.
 AF-1 is available in the released, non-editable attune-forms 0.14.0
-artifact; the locked consumer floor is >=0.14.0,<1.0 (D12).
+artifact and AF-2 in 0.17.0; the locked consumer floor is
+>=0.15.0,<1.0 (D12), which Task 2 raises to >=0.17.0 (D18).
 
 D14 authorizes the bounded increment-3 Codex form interaction from the
 existing milestone brief. It lifts the prior increment-3 hold for that
@@ -13,10 +15,11 @@ there is no release, API-spend, or automatic-merge authorization.
 
 D8's existing gos for Tasks 2, 4, 10 and 12 remain unchanged. Task 12
 is independently eligible after Task 0. The remaining critical path is
-`1B completion → 4 → 10 → AF-2 release → 2`. The bounded Codex
-milestone does not by itself complete 1B or satisfy those downstream
-dependencies. AF-2 targets 0.15.0 under D12 and still requires separate
-implementation and release authorization. Task 11 awaits its own go.
+`1B completion → 4 → 10 → 2`. The bounded Codex milestone does not by
+itself complete 1B or satisfy those downstream dependencies. AF-2 is
+released: it shipped in attune-forms 0.17.0, superseding D12's 0.15.0
+target (D18), and Task 2 still requires separate implementation
+authorization. Task 11 awaits its own go.
 
 Tasks 3, 6, and 9 depend only on Task 0's relevant characterization and
 are dependency-eligible independently of the attune-forms release chain. The
@@ -462,7 +465,7 @@ consumes only the verified released artifact.
   <objective>
     STOP PRECONDITION — human/agent-enforced because the current spec
     runner has no cross-repository gate. Before any file mutation,
-    verify a released attune-forms 0.14.0 artifact exports AF-2's
+    verify a released attune-forms 0.17.0-or-later artifact exports AF-2's
     HostQuestionProfile, QuestionAnswerBinding, HostQuestionBatch,
     host_question_admissibility, form_to_host_question,
     and its host-profile registry target; verify that target resolves to the
@@ -493,19 +496,19 @@ consumes only the verified released artifact.
       Add the tier-0 render and profile-change fallback of the existing audit demo form.
     </file>
     <file path="pyproject.toml">
-      Raise the attune-forms floor to 0.14.0; retain the existing exclusive 1.0 upper bound.
+      Raise the attune-forms floor to 0.17.0, up from the 0.15.0 floor in force since #2465; retain the existing exclusive 1.0 upper bound.
     </file>
     <file path="uv.lock">Lock that released package artifact.</file>
     <file path="docs/specs/host-surface-parity/parity-registry.json">Add the new profile target's machine receipt foreign keys.</file>
     <file path="docs/specs/host-surface-parity/receipts.md">Record the human evidence keyed to those receipt IDs.</file>
   </files-to-modify>
   <validation>
-    <check>A pre-implementation receipt proves the installed released artifact is attune-forms 0.14.0, exports HostQuestionProfile, QuestionAnswerBinding, HostQuestionBatch, host_question_admissibility, form_to_host_question, and its registry target; that target's profile_id resolves to exactly one installed InteractionProfile host-question facet; the artifact is not an editable checkout. Absence fails the task.</check>
+    <check>A pre-implementation receipt proves the installed released artifact is attune-forms 0.17.0 or later, exports HostQuestionProfile, QuestionAnswerBinding, HostQuestionBatch, host_question_admissibility, form_to_host_question, and its registry target; that target's profile_id resolves to exactly one installed InteractionProfile host-question facet; the artifact is not an editable checkout. Absence fails the task.</check>
     <check>A direct defensive call outside the active profile returns None from form_to_host_question, while the routed policy rejects that candidate through host_question_admissibility without invoking it and renders PORTABLE unchanged with one renderer attempt total.</check>
     <check>If a profile-admissible selected host renderer raises or unexpectedly returns None, the receipt is render_failed and PORTABLE is not attempted on that request.</check>
     <check>The demo proves a profile capability change changes admissibility without changing form data; malformed host answers re-enter common validation and are never accepted. If the profile supports feedback, the server derives an immutable ValidationFeedbackEnvelope from canonical errors, binds its digest into a fresh challenge, and passes it as a separate argument while reusing the original HostQuestionBatch and original non-resetting deadline. The positive max_validation_attempts includes the initial call. Each present_and_collect call increments presentation_attempt_count, renderer_attempt_count remains one, and rejection rotates/re-presents only that route. Caller/host-authored or mutated feedback is rejected. A cap-3 fixture with reject/reject/accept records one route decision, renderer count 1, presentation count 3, and zero fallback calls. Exhaustion aborts; adapter exception/None/wrong challenge/deadline failure is render_failed and preserves the receipt active when that attempt began; trusted user timeout remains timeout. No case selects another surface.</check>
     <check>Recommended options use a stable partition; the suffixed emitted label is included in per-question length/collision admissibility after profile normalization and cannot collide with the profile's reserved Other label/token. HostQuestionBatch.answer_bindings is an immutable tuple of QuestionAnswerBinding records carrying stable question_id, emitted ordinal, exact emitted question text, and that question's ordered emitted_label/response_atom/option_id triples; repeated Yes/No labels across questions remain unambiguous. The renderer retains no hidden state; only the trusted adapter sends the batch payload, while the same server call retains the bindings/profile mode and collects the completion without stripping text or accepting a caller-supplied map.</check>
-    <check>HostQuestionProfile declares closed question/option normalization, response_correlation question_id/emitted_text/ordinal, raw multi-select atom kind/codec, finite attempt cap and deadline. A characterization receipt from installed Claude Code 2.1.260 pins the current AskUserQuestion profile: header max 12; emitted-text answer keys; canonical comma-space-delimited emitted-label atoms; JSON-string quoting for labels containing the delimiter or a quote; canonical re-encoding required; and freeform in a separate global response. The server maps atoms through retained bindings to option IDs. Empty/unknown/duplicate/noncanonical atoms, duplicate normalized questions, structured-plus-freeform conflict, zero/multiple unanswered-question freeform ambiguity, malformed correlation/encoding, and profile-digest changes are covered. A future token-returning profile must declare response_token atoms and bind them distinctly.</check>
+    <check>HostQuestionProfile declares closed question/option normalization, response_correlation question_id/emitted_text/ordinal, raw multi-select atom kind/codec, finite attempt cap and deadline. A characterization receipt from installed Claude Code 2.1.260 pins the current AskUserQuestion profile: header max 12; emitted-text answer keys; canonical bare-comma-delimited emitted-label atoms, the delimiter being a comma with no space; no escaping of any kind, so a multi-select label containing the delimiter or a quote is permanently inadmissible rather than inadmissible pending evidence; and canonical re-encoding required. Freeform delivery is declared as a separate global response but has been exercised by no trial, and is deliberately not pinned (D18). The server maps atoms through retained bindings to option IDs. Empty/unknown/duplicate/noncanonical atoms, duplicate normalized questions, structured-plus-freeform conflict, zero/multiple unanswered-question freeform ambiguity, malformed correlation/encoding, and profile-digest changes are covered. A future token-returning profile must declare response_token atoms and bind them distinctly.</check>
     <check>A live HostQuestionAdapter is immutable and registered by the server outside request/tool/model data; its adapter/profile identity must match the installed InteractionProfile and route-active target. The unified arm calls present_and_collect once per bounded presentation attempt with a non-serializable PresentationChallenge and optional server-owned validation-feedback envelope and accepts only a completion returning that challenge object. Trusted completion atomically creates/advances the record; failure creates no new receipt and preserves a predecessor. Second completion returns challenge_consumed; close/invalidation wins as session_ended/challenge_invalidated without mutation. No/mismatched adapter makes the candidate inadmissible before rendering and selects PORTABLE; a fake proves only the interface.</check>
     <check>The released registry gives the pre-existing AskUserQuestion target and new generic profile target distinct target IDs; for their overlapping profile the old target is compatibility-only and the new target is the sole route-active choice, while each keeps its own parity obligation.</check>
     <check>Task 1B's two compatibility regressions remain byte-for-byte green after AF-2 consumption: form_to_ask_payload retains its list of tool-ready `{questions,metadata}` batch payloads, while deprecated elicitation_render_form separately retains `{success,title,description,batches}` over the specialized target. Only the unified elicitation_route_form path calls the trusted adapter and emits the selected_route/payload_kind union with a host-question-completion arm.</check>

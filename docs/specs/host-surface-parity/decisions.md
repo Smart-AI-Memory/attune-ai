@@ -996,6 +996,81 @@ CHANGELOG line. attune-forms PR #91 (AF-2) encodes the same ladder in
 `select_form_surface` (host-native default; widget only when the
 installed host-question profile does not admit the form).
 
+## D18 — Task 2's characterization check binds to measured host behavior (RULED 2026-09-08, chair, via decision form)
+
+Task 2's validation demanded a characterization receipt asserting host
+behavior that a live trial measured false. Implementing against that text
+would have written a disproved measurement into a `parity-registry.json`
+receipt — the exact defect class this spec exists to prevent.
+
+Evidence, both retained:
+
+- attune-forms `docs/probes/host-question-escaping-2026-09-08.md` — one
+  `AskUserQuestion` call, two multi-select questions, returned verbatim
+  `"TRIAL 1 …"="red, green,blue", "TRIAL 2 …"="say "hi",back\slash"`.
+  The join is a bare comma; quotes and backslashes pass through raw.
+  `red, green` + `blue` is indistinguishable from the three atoms `red`,
+  `green`, `blue`, so such a label can never be carried unambiguously.
+- attune-ai `docs/probes/host-surface-parity/host-native-trials-2026-09-07.md`
+  — established the delimiter ("Multi-select answers are the chosen labels
+  joined by commas with no spaces") but exercised no comma-, quote- or
+  backslash-bearing label, and records "Free text through 'Other' was not
+  exercised." That is why the escaping claim survived unverified across
+  two releases.
+
+Re-measured for this ruling from the released PyPI artifact installed in a
+clean venv (non-editable site-packages), not from a checkout:
+
+| version | `delimiter` | `escaping` | `escaping_verified` |
+|---|---|---|---|
+| 0.15.0 — the floor in force before this ruling | `,` | `json_quote_when_delimiter_or_quote` | `False` |
+| 0.17.0 | `,` | `none` | `True` |
+
+Note that "comma-space" was never true of any declaration either: both
+versions declare a bare `,`. Verified unchanged and therefore retained in
+the check: `max_header_chars=12`, `response_correlation='emitted_text'`,
+`canonical_reencode=True`, and the named host version — `claude --version`
+reports 2.1.260.
+
+### Ruled
+
+1. **Delimiter and escaping.** Task 2 validation check 6 replaces
+   "canonical comma-space-delimited emitted-label atoms; JSON-string
+   quoting for labels containing the delimiter or a quote" with canonical
+   **bare-comma** (`,`, no space) emitted-label atoms and **no escaping of
+   any kind**. A multi-select label containing the delimiter or a quote is
+   therefore **permanently** inadmissible, not inadmissible pending
+   evidence. The distinction is load-bearing for a caller: an unverified
+   rule may become admissible once a host demonstrates it; `none` never
+   will. Such a form routes to the widget or to portable markdown.
+2. **Consumer floor `>=0.17.0`.** The AF-2 symbols first shipped in
+   **0.15.0**, not the 0.14.0 Task 2 names, so the STOP precondition and
+   validation check 1 were unsatisfiable as written. 0.15.0 and 0.16.0
+   carry the disproved declaration, which is the whole reason 0.17.0
+   exists. The `files-to-modify` line "Raise the attune-forms floor to
+   0.14.0" was additionally a *lowering*: `pyproject.toml` has pinned
+   `>=0.15.0,<1.0` since #2465. It becomes `>=0.17.0`, retaining the
+   exclusive 1.0 upper bound.
+3. **The freeform pin is struck.** Check 6 also required the receipt to
+   pin "freeform in a separate global response". The 0.17.0 facet does
+   declare `freeform='separate_response'`, but no trial has exercised it —
+   both probes say so in terms. Requiring a receipt to assert it would
+   reproduce the escaping defect one clause over. The declaration stands;
+   the receipt stops claiming it was measured. A later "Other" trial may
+   restore the pin.
+4. **The header is corrected in the same commit.** AF-2 is released, so
+   the remaining critical path is `1B completion → 4 → 10 → 2`; the
+   "AF-2 targets 0.15.0" line names the shipped 0.17.0; and the locked
+   consumer floor reads its actual value, `>=0.15.0,<1.0`.
+
+### Not ruled here
+
+This amendment corrects text, not sequencing. Task 2 stays blocked on its
+declared dependency: Task 10 is unimplemented (`src/attune/surfaces/` does
+not exist), Task 10 depends on Task 4, and Task 1B remains incomplete. No
+execution, release, API-spend or automatic-merge authorization is granted
+or changed by this entry.
+
 ## Open decisions
 
 - None. Every proposed decision in this spec is ruled.
