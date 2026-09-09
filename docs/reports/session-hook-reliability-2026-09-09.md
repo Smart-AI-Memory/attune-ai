@@ -269,3 +269,37 @@ remain untested here. Local filesystem stalls have no new hard deadline.
 The help hook checks help outputs; projected docs pages retain their existing
 drift gate. The subsequent shipping go-ahead does not replace validation:
 required CI, including Windows, must pass before proceeding toward merge.
+
+### CI portability follow-up — PR #2499
+
+The initial published head `d868dee78` failed four hook jobs: both Windows
+lanes exposed the test wrapper's missing UTF-8 bootstrap, and both macOS lanes
+failed to reach the owned HTTP fixture. Head `26be85a5c` restored the real
+bootstrap and isolated fixture proxy routing. Both Windows and both Linux
+hook jobs passed; macOS still failed. Proxy isolation alone was not its fix.
+
+A guarded real-worker probe with an injected DNS stall reproduced the macOS
+failure signature: standard HTTPServer construction spent 4.004s in its
+unbounded reverse lookup and returned no version; numeric socket binding
+returned 1.2.3 in 0.117s with the same stall active. The fixture now skips that
+irrelevant lookup, asserts hostname resolution is never used, and preserves
+actual subprocess exception details. The production deadline is unchanged.
+This proves the fixture dependency; the runner's actual DNS behavior remains
+unverified until CI supplies the final platform receipt.
+
+The broader initial matrix exposed two stale baselines and one Python-version
+semantic difference. The broad-catch debt decreased from 4 to 3, now recorded
+in the shrink-only ratchet. The surface inventory and its subject/digest now
+include the PyPI worker's module-level stdout anchor; existing pending runtime
+obligations remain pending. Strict spec-directory resolution exposes loops on
+Python 3.13+, while containment is checked first so dangling foreign symlinks
+remain unverified. Real directory/phase-file symlinks and missing/active/empty
+siblings are covered. Central checks: 671 repository gates and 35 boundary
+tests passed; filesystem probes agree on Python 3.12, 3.13 and 3.14. Required
+CI on the final PR head remains the acceptance condition.
+
+Final combined hooks/gates: 1,796 passed. A full keyless unit run exposed the
+packaged inventory copy requiring regeneration (22,662 passed, one failed,
+116 skipped, 3 xfailed). The existing runtime projector updated both packaged
+JSON files; 278 bootstrap/parity/ledger checks then passed. No existing receipt
+or pending runtime obligation changed. Pinned pre-commit passed on all changes.

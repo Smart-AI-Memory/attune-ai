@@ -153,13 +153,15 @@ def test_foreign_spec_cannot_read_opposite_local_status(tmp_path, prefix):
 
 
 @pytest.mark.parametrize("symlink_phase", [False, True])
-def test_symlinked_spec_cannot_read_outside_repository(tmp_path, symlink_phase):
+@pytest.mark.parametrize("target_exists", [False, True])
+def test_symlinked_spec_cannot_read_outside_repository(tmp_path, symlink_phase, target_exists):
     root = tmp_path / "repo"
     specs = root / "docs/specs"
     specs.mkdir(parents=True)
     outside = tmp_path / "outside"
-    outside.mkdir()
-    (outside / "tasks.md").write_text("**Status:** shipped\n")
+    if target_exists:
+        outside.mkdir()
+        (outside / "tasks.md").write_text("**Status:** shipped\n")
     try:
         if symlink_phase:
             (specs / "shared").mkdir()
@@ -173,18 +175,36 @@ def test_symlinked_spec_cannot_read_outside_repository(tmp_path, symlink_phase):
     assert hook.check_specs("docs/specs/shared", root) == {"shared": "unverified (nonlocal path)"}
 
 
-def test_spec_resolve_failure_preserves_other_findings(tmp_path, monkeypatch):
+@pytest.mark.parametrize("loop_phase", [False, True])
+def test_spec_resolve_failure_preserves_other_findings(tmp_path, monkeypatch, loop_phase):
     specs = tmp_path / "docs/specs"
     specs.mkdir(parents=True)
     try:
-        (specs / "loop").symlink_to("loop", target_is_directory=True)
+        if loop_phase:
+            (specs / "loop").mkdir()
+            (specs / "loop/tasks.md").symlink_to("tasks.md")
+        else:
+            (specs / "loop").symlink_to("loop", target_is_directory=True)
     except OSError:
         if os.name == "nt":
             pytest.skip("symlink creation unavailable")
         raise
+    # Absent optional phase files are normal, unlike an unreadable loop.
+    (specs / "active").mkdir()
+    (specs / "active/tasks.md").write_text("**Status:** active\n", encoding="utf-8")
+    (specs / "empty").mkdir()
     monkeypatch.setattr(hook, "pypi_latest", lambda pkg: "1.2.3")
-    results = hook.reconcile("docs/specs/loop and docs/specs/missing", "fixture-package", tmp_path)
-    assert results["specs"] == {"loop": "unverified (read failed)", "missing": "missing"}
+    results = hook.reconcile(
+        "docs/specs/loop docs/specs/missing docs/specs/active docs/specs/empty",
+        "fixture-package",
+        tmp_path,
+    )
+    assert results["specs"] == {
+        "loop": "unverified (read failed)",
+        "missing": "missing",
+        "active": "active",
+        "empty": "no-status",
+    }
     assert results["pypi"] == "1.2.3"
 
 
@@ -241,15 +261,24 @@ def test_real_hook_exits_before_timeout_with_slow_response_body(tmp_path, record
     worker_receipt = tmp_path / "worker-result.json"
     probe = tmp_path / "probe.py"
     probe.write_text(
-        "import importlib.util, json, runpy, sys, threading, time, urllib.request\n"
+        "import importlib.util, json, runpy, socket, sys, threading, time, urllib.request\n"
         "from pathlib import Path\n"
         "from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer\n"
+        "from socketserver import TCPServer\n"
         f"script = Path({str(script)!r})\n"
         "sys.path.insert(0, str(script.parent))\n"
         "from _bootstrap import ensure_utf8_stdio\n"
         "ensure_utf8_stdio()\n"
         "if '--pypi-query' in sys.argv:\n"
         "    from tests._inference_guard import loopback_http_fixture\n"
+        "    def unexpected_hostname_lookup(*args):\n"
+        "        raise AssertionError('numeric HTTP fixture must not resolve hostnames')\n"
+        "    socket.getfqdn = unexpected_hostname_lookup\n"
+        "    class LocalServer(ThreadingHTTPServer):\n"
+        "        def server_bind(self):\n"
+        "            TCPServer.server_bind(self)  # Skip HTTPServer's reverse DNS lookup.\n"
+        "            self.server_name = 'localhost'\n"
+        "            self.server_port = self.server_address[1]\n"
         "    class SlowResponse(BaseHTTPRequestHandler):\n"
         "        def do_GET(self):\n"
         f"            Path({str(marker)!r}).write_text('received')\n"
@@ -262,7 +291,7 @@ def test_real_hook_exits_before_timeout_with_slow_response_body(tmp_path, record
         "                self.wfile.flush()\n"
         f"                time.sleep({delay})\n"
         "        def log_message(self, *args): pass\n"
-        "    server = ThreadingHTTPServer(('127.0.0.1', 0), SlowResponse)\n"
+        "    server = LocalServer(('127.0.0.1', 0), SlowResponse)\n"
         "    threading.Thread(target=server.serve_forever, daemon=True).start()\n"
         "    original = urllib.request.build_opener(urllib.request.ProxyHandler({})).open\n"
         "    def fixture_urlopen(url, *args, **kwargs):\n"
@@ -275,14 +304,20 @@ def test_real_hook_exits_before_timeout_with_slow_response_body(tmp_path, record
         "    hook = importlib.util.module_from_spec(spec)\n"
         "    spec.loader.exec_module(hook)\n"
         "    hook.__file__ = __file__  # Route its worker through the HTTP fixture.\n"
-        "    original_run = hook._run\n"
-        "    def observed_run(command, cwd):\n"
-        "        result = original_run(command, cwd)\n"
+        "    original_run = hook.subprocess.run\n"
+        "    def observed_run(command, *args, **kwargs):\n"
+        "        try:\n"
+        "            result = original_run(command, *args, **kwargs)\n"
+        "        except (hook.subprocess.TimeoutExpired, OSError) as exc:\n"
+        "            if '--pypi-query' in command:\n"
+        "                receipt = {'error': type(exc).__name__, 'detail': str(exc), 'stderr': repr(getattr(exc, 'stderr', None))}\n"
+        f"                Path({str(worker_receipt)!r}).write_text(json.dumps(receipt), encoding='utf-8')\n"
+        "            raise\n"
         "        if '--pypi-query' in command:\n"
-        "            receipt = {'returncode': result.returncode, 'stderr': result.stderr} if result else {'timeout_or_skipped': True}\n"
+        "            receipt = {'returncode': result.returncode, 'stderr': result.stderr}\n"
         f"            Path({str(worker_receipt)!r}).write_text(json.dumps(receipt), encoding='utf-8')\n"
         "        return result\n"
-        "    hook._run = observed_run\n"
+        "    hook.subprocess.run = observed_run\n"
         "    sys.exit(hook.main())\n"
     )
     root = tmp_path / "repo"

@@ -504,12 +504,18 @@ def check_specs(text: str, repo_root: Path | None) -> dict[str, str]:
         spec_dir = repo_root / "docs" / "specs" / slug
         try:
             resolved_root = repo_root.resolve()
-            contained = spec_dir.resolve().is_relative_to(resolved_root)
+            if not spec_dir.resolve().is_relative_to(resolved_root):
+                out[slug] = "unverified (nonlocal path)"
+                continue
+            # Non-strict resolve suppresses symlink-loop errors on Python
+            # 3.13+, and is_dir() then reports False. Keep failed resolution
+            # distinguishable from an actually absent directory.
+            spec_dir = spec_dir.resolve(strict=True)
+        except FileNotFoundError:
+            out[slug] = "missing"
+            continue
         except (OSError, RuntimeError):
             out[slug] = "unverified (read failed)"
-            continue
-        if not contained:
-            out[slug] = "unverified (nonlocal path)"
             continue
         if not spec_dir.is_dir():
             out[slug] = "missing"
