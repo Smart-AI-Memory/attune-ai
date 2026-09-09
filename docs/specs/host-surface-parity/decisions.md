@@ -1063,6 +1063,15 @@ reports 2.1.260.
    "AF-2 targets 0.15.0" line names the shipped 0.17.0; and the locked
    consumer floor reads its actual value, `>=0.15.0,<1.0`.
 
+**D19 consumer-bound correction (2026-09-09):** items 2 and 4 above
+describe a `<1.0` upper bound that was already false when this entry
+merged. PR #2476 narrowed `pyproject.toml` to
+`attune-forms>=0.15.0,<0.16` at 02:15:51Z; this decision merged at
+02:34:07Z, nineteen minutes later, carrying the pre-#2476 value. The
+floor ruling (`>=0.17.0`) and every escaping, delimiter and freeform
+correction stand unchanged; only the stated upper bound and the "reads
+its actual value" claim are corrected, by D19.
+
 ### Not ruled here
 
 This amendment corrects text, not sequencing. Task 2 stays blocked on its
@@ -1070,6 +1079,79 @@ declared dependency: Task 10 is unimplemented (`src/attune/surfaces/` does
 not exist), Task 10 depends on Task 4, and Task 1B remains incomplete. No
 execution, release, API-spend or automatic-merge authorization is granted
 or changed by this entry.
+
+## D19 — The consumer bound D18 stated was already stale (chair direction, 2026-09-09; recorded by the lead)
+
+D18 ruled the Task 2 attune-forms floor to `>=0.17.0` and, in the same
+entry, twice described the upper bound as `<1.0`. Both descriptions were
+false about the tree at the moment D18 merged.
+
+Verified for this entry by reading the files and the merge times, not
+the record:
+
+| | |
+|---|---|
+| `pyproject.toml:71` | `"attune-forms>=0.15.0,<0.16"` |
+| PR #2476 merged (installed that ceiling) | 2026-09-09T02:15:51Z |
+| PR #2475 merged (carried D18) | 2026-09-09T02:34:07Z |
+
+#2476 narrowed the ceiling because attune-forms 0.16.0+ ships AF-2
+registry changes this repo has not consumed, and the Task 1B
+surface-parity gates fail against them
+(`SurfaceRegistryError: lifecycle:subject:surface-native-elicitation:abort:
+stale/missing implementation_digest`). D18's text was authored before
+#2476 existed and was not re-read against the tree it landed on — the
+same defect class D18 was written to correct, a claim about the world
+stated in the grammar of a verified fact.
+
+### Ruled
+
+1. **D18's floor ruling stands.** The Task 2 consumer floor is
+   `>=0.17.0`. No delimiter, escaping or freeform correction is
+   reopened.
+2. **Two present-tense claims in D18 are corrected.** Item 2's
+   "retaining the exclusive 1.0 upper bound" and item 4's "the locked
+   consumer floor reads its actual value, `>=0.15.0,<1.0`" are both
+   false about the tree, which reads `attune-forms>=0.15.0,<0.16`.
+   Note the precise error: the FLOOR is correct — 0.15.0 matches —
+   and only the ceiling is wrong. Item 2's earlier clause,
+   "`pyproject.toml` has pinned `>=0.15.0,<1.0` since #2465", was true
+   for the window #2465 to #2476 and is false only in its
+   present-perfect framing. The correction is an inline dated note
+   inside D18; no ruled text is deleted.
+3. **Task 2's `files-to-modify` no longer instructs "retain the
+   existing exclusive 1.0 upper bound".** There is no `<1.0` bound in
+   the tree to retain, and read literally against what is there the
+   instruction yields `>=0.17.0,<0.16` — an empty specifier.
+4. **The replacement ceiling is NOT decided here.** #2476 set `<0.16`
+   on measured evidence. Restoring `<1.0` would recreate the
+   fresh-resolve exposure that turned main red on 2026-09-08 —
+   conditional on some future unconsumed minor, since Task 2 is itself
+   what makes 0.17.0 pass. Whether the lifted pin should be `<0.18`,
+   `<1.0`, or something else is for Task 2 to establish with its
+   receipt or for a later ruling; this entry only removes the false
+   instruction and records the hazard.
+5. **Task 1B's increment-3 record is corrected.** The header lists
+   increments 1 and 2 as merged and names increment 3 only as
+   AUTHORIZED (D14, lines 11-12), never as landed; line 168 calls
+   #2450 "in draft" though it merged 2026-09-07 as `6934b177e`, an
+   ancestor of `origin/main`. Only the PR's status is stale — that
+   line's substance is corroborated by the merge diffstat. "Full Task
+   1B remains incomplete" stays true and is preserved: increment 4,
+   the cross-repo-compat advisory jobs, has not started.
+
+### Not ruled here
+
+Sequencing is untouched. Task 2's `<dep>10</dep>`, the critical path,
+and D18's own "Not ruled here" all stand exactly as written. A
+dependency audit run on 2026-09-09 found no code coupling between
+Task 2 and Task 10 and one narrow technical need in the capability
+snapshot's static channel. That finding is deliberately NOT recorded
+here: its wording did not survive verification (two clauses were
+literally false, and whether the unwritten static channel is a defect
+or an intended not-yet-implemented state was not established). It
+changes no order without its own ruling, on language that has been
+checked.
 
 ## Open decisions
 
