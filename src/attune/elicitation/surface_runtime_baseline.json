@@ -222,6 +222,14 @@
       "subject_kind": "informational_delivery"
     },
     {
+      "anchor": "src/attune/hooks/scripts/starter_reconciler.py:<module>",
+      "destination": "model_context",
+      "event": "SessionStart",
+      "signature": "context_stdout",
+      "sink": "print",
+      "subject_kind": "informational_delivery"
+    },
+    {
       "anchor": "src/attune/hooks/scripts/starter_reconciler.py:_reconcile_and_emit",
       "destination": "model_context",
       "event": "SessionStart",

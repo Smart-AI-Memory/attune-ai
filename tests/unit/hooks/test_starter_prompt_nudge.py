@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 import time
@@ -188,7 +189,7 @@ class TestProjectLocalStarter:
 
 
 class TestFindHandoff:
-    """R9: tracked docs/handoffs/ surfacing, branch-slug first."""
+    """R9: docs/handoffs/ surfacing, branch-slug first."""
 
     def _make_repo(self, tmp_path: Path) -> Path:
         (tmp_path / ".git").mkdir()
@@ -205,7 +206,7 @@ class TestFindHandoff:
         assert found is not None
         path, scope = found
         assert path.name == "claude-my-branch.md"
-        assert scope == "handoff:branch"
+        assert scope == "handoff:branch:unverified"
 
     def test_newest_when_no_branch_match(self, hook_module, tmp_path, monkeypatch):
         import os
@@ -221,7 +222,7 @@ class TestFindHandoff:
         found = hook_module.find_handoff(repo)
         assert found is not None
         assert found[0].name == "new.md"
-        assert found[1] == "handoff:newest"
+        assert found[1] == "handoff:fallback:unverified"
 
     def test_readme_and_empty_skipped(self, hook_module, tmp_path, monkeypatch):
         repo = self._make_repo(tmp_path)
@@ -246,7 +247,7 @@ class TestFindHandoff:
         found = hook_module.find_handoff(repo)
         assert found is not None
         assert found[0].name == "other.md"
-        assert found[1] == "handoff:newest"
+        assert found[1] == "handoff:fallback:unverified"
 
     def test_handoff_emitted_first_by_main(self, hook_module, tmp_path, monkeypatch, capsys):
         repo = self._make_repo(tmp_path)
@@ -258,8 +259,220 @@ class TestFindHandoff:
         monkeypatch.setattr(hook_module, "STARTER_PATH", tmp_path / "unused-global.md")
         hook_module.main()
         out = capsys.readouterr().out
-        assert "[starter-prompt:handoff:branch]" in out
+        assert "[starter-prompt:handoff:branch:unverified]" in out
+        assert "Git tracking unverified" in out
         assert "[starter-prompt:global" not in out
+
+
+@pytest.fixture
+def real_handoff_repo(tmp_path):
+    """A real Git index and branch; no commits or network are needed."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(
+        ["git", "init", "-q", "--initial-branch=codex/receipt"],
+        cwd=repo,
+        check=True,
+        capture_output=True,
+    )
+    (repo / "docs" / "handoffs").mkdir(parents=True)
+    return repo
+
+
+def _symlink_or_skip(path: Path, target: Path, *, directory: bool = False) -> None:
+    """Exercise symlinks where the OS and current account permit them."""
+    try:
+        path.symlink_to(target, target_is_directory=directory)
+    except (OSError, NotImplementedError) as exc:
+        pytest.skip(f"symlink creation unavailable: {exc}")
+
+
+class TestHandoffProvenance:
+    """Real Git/filesystem receipts for scope labels and path containment."""
+
+    @pytest.mark.parametrize("indexed", [False, True])
+    def test_entrypoint_labels_real_branch_tracking(self, real_handoff_repo, indexed):
+        repo = real_handoff_repo
+        branch = repo / "docs" / "handoffs" / "codex-receipt.md"
+        branch.write_text("branch context\n", encoding="utf-8")
+        if indexed:
+            subprocess.run(["git", "add", "--", str(branch)], cwd=repo, check=True)
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT_PATH)],
+            cwd=repo,
+            env={**os.environ, "ATTUNE_SDK_GATE_OVERRIDE": "1"},
+            capture_output=True,
+            text=True,
+            timeout=_registered_session_start_timeout(),
+        )
+        assert result.returncode == 0
+        assert result.stderr == ""
+        scope = "handoff:branch" if indexed else "handoff:branch:draft"
+        assert f"[starter-prompt:{scope}]" in result.stdout
+        assert ("untracked handoff draft" in result.stdout) is not indexed
+
+    def test_branch_draft_still_beats_tracked_fallback(self, hook_module, real_handoff_repo):
+        repo = real_handoff_repo
+        branch = repo / "docs" / "handoffs" / "codex-receipt.md"
+        fallback = branch.with_name("newer.md")
+        branch.write_text("draft context\n", encoding="utf-8")
+        fallback.write_text("tracked other branch\n", encoding="utf-8")
+        os.utime(branch, (1_600_000_000, 1_600_000_000))
+        subprocess.run(["git", "add", "--", str(fallback)], cwd=repo, check=True)
+        assert hook_module.find_handoff(repo) == (branch, "handoff:branch:draft")
+
+    @pytest.mark.parametrize("indexed", [False, True])
+    def test_outside_symlink_never_becomes_local_handoff(
+        self, hook_module, real_handoff_repo, tmp_path, indexed
+    ):
+        repo = real_handoff_repo
+        foreign = tmp_path / "foreign.md"
+        foreign.write_text("another project's handoff\n", encoding="utf-8")
+        branch = repo / "docs" / "handoffs" / "codex-receipt.md"
+        _symlink_or_skip(branch, foreign)
+        fallback = branch.with_name("safe.md")
+        fallback.write_text("this repository\n", encoding="utf-8")
+        paths = [str(fallback), str(branch)] if indexed else [str(fallback)]
+        subprocess.run(["git", "add", "--", *paths], cwd=repo, check=True)
+        assert hook_module.find_handoff(repo) == (fallback, "handoff:fallback")
+
+    @pytest.mark.parametrize("target_indexed", [False, True])
+    def test_contained_symlink_requires_tracked_content(
+        self, hook_module, real_handoff_repo, target_indexed
+    ):
+        repo = real_handoff_repo
+        target = repo / "context.md"
+        target.write_text("local context\n", encoding="utf-8")
+        branch = repo / "docs" / "handoffs" / "codex-receipt.md"
+        _symlink_or_skip(branch, target)
+        paths = [str(branch), str(target)] if target_indexed else [str(branch)]
+        subprocess.run(["git", "add", "--", *paths], cwd=repo, check=True)
+        expected = "handoff:branch" if target_indexed else "handoff:branch:draft"
+        assert hook_module.find_handoff(repo) == (branch, expected)
+
+    def test_outside_handoff_directory_preserves_project_fallback(
+        self, hook_module, real_handoff_repo, tmp_path
+    ):
+        repo = real_handoff_repo
+        foreign = tmp_path / "foreign-handoffs"
+        foreign.mkdir()
+        (foreign / "codex-receipt.md").write_text("foreign\n", encoding="utf-8")
+        handoffs = repo / "docs" / "handoffs"
+        handoffs.rmdir()
+        _symlink_or_skip(handoffs, foreign, directory=True)
+        project = repo / ".attune" / "next_session_starter.md"
+        project.parent.mkdir()
+        project.write_text("project queue\n", encoding="utf-8")
+        assert hook_module.select_starters(repo, project, tmp_path / "unused.md") == [
+            (project, "project")
+        ]
+        result = subprocess.run(
+            [sys.executable, str(SCRIPT_PATH)],
+            cwd=repo,
+            env={**os.environ, "ATTUNE_SDK_GATE_OVERRIDE": "1"},
+            capture_output=True,
+            text=True,
+            timeout=_registered_session_start_timeout(),
+        )
+        assert result.returncode == 0
+        assert "[starter-prompt:project]" in result.stdout
+        assert "handoff:branch" not in result.stdout
+        assert str(foreign) not in result.stdout
+
+    def test_outside_project_symlink_preserves_legacy_fallback(
+        self, hook_module, real_handoff_repo, tmp_path
+    ):
+        repo = real_handoff_repo
+        foreign = tmp_path / "foreign.md"
+        foreign.write_text("foreign queue\n", encoding="utf-8")
+        project = repo / ".attune" / "next_session_starter.md"
+        project.parent.mkdir()
+        _symlink_or_skip(project, foreign)
+        legacy = tmp_path / "legacy.md"
+        legacy.write_text("global queue\n", encoding="utf-8")
+        assert hook_module._find_project_starter(repo) is None
+        assert hook_module.select_starters(repo, project, legacy) == [(legacy, "global:LEGACY")]
+
+    @pytest.mark.parametrize("names", [("a.md", "z.md"), ("z.md", "a.md")])
+    def test_equal_checkout_mtimes_have_deterministic_fallback(
+        self, hook_module, real_handoff_repo, names, monkeypatch, capsys
+    ):
+        repo = real_handoff_repo
+        handoffs = repo / "docs" / "handoffs"
+        for name in names:
+            path = handoffs / name
+            path.write_text("context\n", encoding="utf-8")
+            os.utime(path, (1_600_000_000, 1_600_000_000))
+        subprocess.run(["git", "add", "docs/handoffs"], cwd=repo, check=True)
+        assert hook_module.find_handoff(repo) == (handoffs / "z.md", "handoff:fallback")
+        monkeypatch.chdir(repo)
+        hook_module.main()
+        assert (
+            "fallback by filesystem mtime; not verified authoring order" in capsys.readouterr().out
+        )
+
+    def test_exhausted_branch_budget_skips_inventory(
+        self, hook_module, real_handoff_repo, monkeypatch
+    ):
+        repo = real_handoff_repo
+        path = repo / "docs" / "handoffs" / "codex-receipt.md"
+        path.write_text("context\n", encoding="utf-8")
+        clock = iter([10.0, 10.0 + hook_module.GIT_TIMEOUT])
+        monkeypatch.setattr(hook_module.time, "monotonic", lambda: next(clock))
+        monkeypatch.setattr(hook_module, "_current_branch", lambda root: "codex/receipt")
+
+        def unexpected_git(*args, **kwargs):
+            pytest.fail("inventory must not start after the shared budget expires")
+
+        monkeypatch.setattr(hook_module.subprocess, "run", unexpected_git)
+        assert hook_module.find_handoff(repo) == (path, "handoff:branch:unverified")
+
+    @pytest.mark.parametrize(
+        "failure", [OSError("git missing"), subprocess.TimeoutExpired("git", 1)]
+    )
+    def test_inventory_failure_is_unverified(self, hook_module, monkeypatch, failure):
+        def fail(*args, **kwargs):
+            raise failure
+
+        monkeypatch.setattr(hook_module.subprocess, "run", fail)
+        assert hook_module._tracked_files(Path("/repo"), time.monotonic() + 1) is None
+
+    def test_inventory_receives_only_remaining_budget(self, hook_module, monkeypatch):
+        observed = {}
+
+        def run(*args, **kwargs):
+            observed.update(kwargs)
+            return subprocess.CompletedProcess(args[0], 0, "docs/handoffs/a.md\0")
+
+        monkeypatch.setattr(hook_module.time, "monotonic", lambda: 11.5)
+        monkeypatch.setattr(hook_module.subprocess, "run", run)
+        assert "docs/handoffs/a.md" in hook_module._tracked_files(Path("/repo"), 12)
+        assert observed["timeout"] == 0.5
+
+    def test_symlink_loop_is_not_local(self, hook_module, real_handoff_repo):
+        repo = real_handoff_repo
+        path = repo / "loop.md"
+        _symlink_or_skip(path, path)
+        assert hook_module._validated_local_file(path, repo) is False
+
+    def test_vanished_handoff_preserves_project_context(
+        self, hook_module, real_handoff_repo, monkeypatch, tmp_path
+    ):
+        repo = real_handoff_repo
+        handoff = repo / "docs" / "handoffs" / "codex-receipt.md"
+        handoff.write_text("temporary context\n", encoding="utf-8")
+        project = repo / ".attune" / "next_session_starter.md"
+        project.parent.mkdir()
+        project.write_text("project context\n", encoding="utf-8")
+
+        def inventory(*args):
+            handoff.unlink()
+            return set()
+
+        monkeypatch.setattr(hook_module, "_tracked_files", inventory)
+        assert hook_module.select_starters(repo, project, tmp_path / "unused.md") == [
+            (project, "project")
+        ]
 
 
 class TestAgeFormatter:
