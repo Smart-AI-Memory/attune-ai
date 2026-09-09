@@ -1217,6 +1217,78 @@ does not schedule it.
 No release, API-spend or automatic-merge authorization is granted or
 changed.
 
+## D21 — Increment 3 is built behind an unregistered profile; both open PRs take one combined review lane (RULED 2026-09-09, chair, via round table)
+
+Promoted from round-table thread `q-2496-2497-next-step-001` (board
+messages 2, 3, 6; full transcript machine-local at
+`~/.attune/reports/roundtable/q-2496-2497-next-step-001.md`, per D2). One
+round, fixed roster, 3/3 seats answered, no absent seat. The chair
+promoted items 3, 6 and 7; items 1, 2, 4 and 5 were presented and NOT
+ruled, and nothing was written for them.
+
+### Ruled
+
+1. **One combined review lane over both open PRs, before chair-read.**
+   #2496 (the host-question adapter boundary) and #2497 (this spec's
+   text reconciliation) are reviewed in a single different-model pass
+   rather than two. Two seats reached this independently; the reason
+   recorded here is the one only the Claude seat stated, because it is
+   the reason the combined shape beats two separate lanes: **the
+   highest-value finding available is cross-PR.** #2497 corrects the
+   task text to say the admissibility gate belongs in
+   `surface_runtime.py`, while #2496 declares the boundary that gate
+   will admit or refuse. A reviewer holding one diff cannot check that
+   the corrected text and the shipped adapter agree about where
+   enforcement lives — which is the entire point of reconciling text
+   against tree, and is invisible to a single-PR lane.
+
+2. **Increment 3 is built behind an UNREGISTERED profile.** The seam is
+   implemented and fully tested without adding the profile to
+   `host_profiles`; registration plus the parity-registry rows, the
+   receipts, the demo render and a green parity gate then land together
+   as one small final PR. This reuses the technique #2496 already proved
+   — the adapter is deliberately not exported from the package
+   `__init__` — and it splits a large diff **without splitting the
+   atomic obligation**, which is the constraint that makes the naive
+   split illegal.
+
+   The reason it is illegal to split the other way: **registration is a
+   one-way door.** Registering the profile is the act that CREATES the
+   parity obligation (`surface_registry.py:420`, pinned by
+   `tests/unit/gates/test_surface_parity.py:1253`), so the gate demands
+   satisfaction in the same PR that registers. There is no state in
+   which the profile is registered and the receipt is still owed.
+
+3. **The receipt shape for increment 3 is an OPEN question, recorded not
+   answered.** Raised by the Antigravity seat (board message 6): the
+   parity gate will demand a receipt for the newly-obligated host-native
+   target, while D20 ruling 3 forbids any Task 2 receipt from reporting
+   the host-native route as firing, because nothing writes the static
+   capability cell. Both constraints are settled and neither yields.
+   Increment 3 may not begin until this has an answer; producing one is
+   in scope for its planning, not for this entry.
+
+### Recorded, not ruled
+
+The table was **unanimous** that the D11 lane is owed on BOTH PRs, and
+that splitting the spec text into #2497 relocated the trigger rather
+than discharging it. The chair did not rule that question here; ruling 1
+authorizes the lane as an action without settling the doctrine, and the
+two precedent questions the table raised — whether a shrink-only
+ratchet's baseline entry is itself a D11 trigger (seats split 2/1), and
+whether a risk class that is DECLARED but not yet CROSSED fires the lane
+at the declaring or the wiring diff — remain open for a future ruling.
+
+One correction the table produced about this project's own reporting,
+kept because it outlives the thread: **100% statement and branch
+coverage on `host_question_adapter.py` was measured and is true, but it
+does not speak to the boundary contract, because the adapter under test
+is a fake.** Coverage over a cooperative fake proves the module's own
+control flow. This is the same shape as the MGET-migration lesson, where
+ten emptiness-asserting tests passed precisely because the logic never
+ran. The figure should not be cited as evidence about the trust
+boundary.
+
 ## Open decisions
 
 - None. Every proposed decision in this spec is ruled.
