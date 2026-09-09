@@ -63,12 +63,16 @@ dependencies = [
     "typing-extensions>=4.0.0,<5.0.0",
     "python-dotenv>=1.0.0,<2.0.0",
     "structlog>=24.0.0,<27.0.0",
-    # CEILING IS LOAD-BEARING: 0.16.0+ ships AF-2 registry changes this repo
-    # has not consumed yet, and the surface-parity gates fail against them
-    # (verified: 0.15.0 -> 238 passed, 0.17.0 -> 10 failed in
-    # tests/unit/gates/test_surface_parity.py). host-surface-parity Task 2
-    # lands the new receipt line and raises this to >=0.17.0 (D18).
-    "attune-forms>=0.15.0,<0.16",  # AF-2: HostQuestionProfile, route-active host target, host-native router default (D15-D17)
+    # CEILING IS LOAD-BEARING: bounded to the minor this repo has actually
+    # consumed. 0.17.0 is consumed as of this commit — the surface-parity
+    # receipts were regenerated against it via
+    # `python scripts/project_surface_runtime.py --write`. 0.18.0+ is
+    # unconsumed and would fail those gates the same way 0.17.0 did before
+    # regeneration (measured: 0.17.0 with a stale registry -> 12 failed;
+    # after regeneration -> 275 passed). Do NOT widen this to <1.0: a
+    # floating ceiling plus a fresh resolve is what turned main red on
+    # 2026-09-08, and the hazard recurs at every unconsumed minor (D19).
+    "attune-forms>=0.17.0,<0.18",  # AF-2: HostQuestionProfile, route-active host target, host-native router default (D15-D17)
     "jsonschema>=4.26.0,<5.0.0",  # Direct use by surface-evidence HEADLESS contract validation
     "defusedxml>=0.7.0,<1.0.0",
     "rich>=13.0.0,<16.0.0",  # Beautiful CLI output
