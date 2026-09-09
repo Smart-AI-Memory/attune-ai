@@ -45,14 +45,14 @@ class FakeHostAdapter:
         self._result = result
         self.calls: list[dict] = []
 
-    def present_and_collect(self, challenge, batch, *, feedback=None, deadline_seconds):
+    def present_and_collect(self, challenge, batch, *, feedback=None, advisory_deadline_seconds):
         """Capture the arguments, then behave as the scripted result says."""
         self.calls.append(
             {
                 "challenge": challenge,
                 "batch": batch,
                 "feedback": feedback,
-                "deadline_seconds": deadline_seconds,
+                "advisory_deadline_seconds": advisory_deadline_seconds,
             }
         )
         if self._result == "raise":
@@ -191,7 +191,7 @@ def test_absent_or_mismatched_adapter_resolves_to_none():
 def test_same_call_completion_is_consumed_against_the_real_af2_batch(store, challenge, batch, form):
     adapter = FakeHostAdapter()
     result = present_host_question(
-        store, _registration(adapter), challenge, batch, deadline_seconds=1800
+        store, _registration(adapter), challenge, batch, advisory_deadline_seconds=1800
     )
     assert result["success"] is True
     assert result["provenance_status"] == "server_observed_completion"
@@ -199,7 +199,7 @@ def test_same_call_completion_is_consumed_against_the_real_af2_batch(store, chal
     assert seen["challenge"] is challenge
     assert isinstance(seen["batch"], HostQuestionBatch)
     assert seen["batch"].answer_bindings[0].question_id == "scope"
-    assert seen["deadline_seconds"] == 1800
+    assert seen["advisory_deadline_seconds"] == 1800
     assert len(adapter.calls) == 1
 
 
@@ -215,17 +215,19 @@ def test_the_challenge_handed_to_an_adapter_cannot_be_serialized(challenge):
 
 def test_a_second_completion_is_refused_as_consumed(store, challenge, batch):
     registration = _registration(FakeHostAdapter())
-    assert present_host_question(store, registration, challenge, batch, deadline_seconds=1800)[
-        "success"
-    ]
-    again = present_host_question(store, registration, challenge, batch, deadline_seconds=1800)
+    assert present_host_question(
+        store, registration, challenge, batch, advisory_deadline_seconds=1800
+    )["success"]
+    again = present_host_question(
+        store, registration, challenge, batch, advisory_deadline_seconds=1800
+    )
     assert again == {"success": False, "error": "challenge_consumed"}
 
 
 def test_session_close_wins_over_a_later_completion(store, challenge, batch, binding):
     store.close_session(binding.session_id)
     result = present_host_question(
-        store, _registration(FakeHostAdapter()), challenge, batch, deadline_seconds=1800
+        store, _registration(FakeHostAdapter()), challenge, batch, advisory_deadline_seconds=1800
     )
     assert result == {"success": False, "error": "session_ended"}
 
@@ -241,7 +243,7 @@ def test_every_adapter_failure_is_render_failed_and_selects_nothing_else(
         _registration(FakeHostAdapter(result=result)),
         challenge,
         batch,
-        deadline_seconds=1800,
+        advisory_deadline_seconds=1800,
     )
     assert outcome == {"success": False, "error": "render_failed"}
 
@@ -252,10 +254,10 @@ def test_a_render_failure_leaves_the_challenge_unusable(store, challenge, batch)
         _registration(FakeHostAdapter(result="raise")),
         challenge,
         batch,
-        deadline_seconds=1800,
+        advisory_deadline_seconds=1800,
     )
     retry = present_host_question(
-        store, _registration(FakeHostAdapter()), challenge, batch, deadline_seconds=1800
+        store, _registration(FakeHostAdapter()), challenge, batch, advisory_deadline_seconds=1800
     )
     assert retry["success"] is False
 
@@ -269,7 +271,7 @@ def test_an_adapter_exception_is_logged_before_it_becomes_render_failed(
             _registration(FakeHostAdapter(result="raise")),
             challenge,
             batch,
-            deadline_seconds=1800,
+            advisory_deadline_seconds=1800,
         )
     assert "host question adapter fake-host-adapter raised" in caplog.text
     assert "host transport exploded" in caplog.text
@@ -281,7 +283,7 @@ def test_a_trusted_abort_is_collected_rather_than_treated_as_failure(store, chal
         _registration(FakeHostAdapter(result="abort")),
         challenge,
         batch,
-        deadline_seconds=1800,
+        advisory_deadline_seconds=1800,
     )
     assert result.get("error") != "render_failed"
     assert result["action"] == "abort"
@@ -295,7 +297,12 @@ def test_derived_feedback_is_intact_and_reaches_the_adapter_unchanged(store, cha
     assert feedback.intact()
     adapter = FakeHostAdapter()
     present_host_question(
-        store, _registration(adapter), challenge, batch, feedback=feedback, deadline_seconds=1800
+        store,
+        _registration(adapter),
+        challenge,
+        batch,
+        feedback=feedback,
+        advisory_deadline_seconds=1800,
     )
     assert adapter.calls[0]["feedback"] is feedback
 
@@ -305,7 +312,12 @@ def test_mutated_feedback_is_refused_before_the_adapter_is_called(store, challen
     assert not forged.intact()
     adapter = FakeHostAdapter()
     result = present_host_question(
-        store, _registration(adapter), challenge, batch, feedback=forged, deadline_seconds=1800
+        store,
+        _registration(adapter),
+        challenge,
+        batch,
+        feedback=forged,
+        advisory_deadline_seconds=1800,
     )
     assert result == {"success": False, "error": "render_failed"}
     assert adapter.calls == []
@@ -328,3 +340,156 @@ def test_the_first_attempt_counts_toward_the_profile_cap():
     profile = installed_profile(PROFILE_ID)
     assert profile.host_question.max_validation_attempts == 3
     assert derive_validation_feedback(1, ()).attempt == 1
+
+
+# --- regressions for the D11 lane findings (2026-09-09) --------------------
+#
+# Each test below pins a defect a different-model review lane found in code
+# that already carried 100% statement AND branch coverage. The coverage was
+# real; it was measured against a cooperative fake, so it proved this
+# module's control flow and nothing about the boundary's contract.
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="F5 held (chair, 2026-09-09): the pre-presentation reservation needs a "
+    "SurfaceContextStore change that moves a parity implementation_digest the "
+    "projector cannot currently refresh (its native replay times out). When the "
+    "reservation lands this xfail turns into an unexpected pass and must be removed.",
+)
+def test_a_consumed_challenge_does_not_reach_the_adapter_again(store, challenge, batch):
+    """The guard runs BEFORE the side effect, so no second prompt is shown.
+
+    The original test asserted only that the second call returned
+    ``challenge_consumed`` — which was true while the adapter had already
+    been invoked twice. For a presentation boundary the side effect is a
+    prompt shown to a person, so the invocation count IS the claim; the
+    return value cannot distinguish "refused before presenting" from
+    "presented, then refused".
+    """
+    adapter = FakeHostAdapter()
+    registration = _registration(adapter)
+    assert present_host_question(
+        store, registration, challenge, batch, advisory_deadline_seconds=1800
+    )["success"]
+    again = present_host_question(
+        store, registration, challenge, batch, advisory_deadline_seconds=1800
+    )
+    assert again == {"success": False, "error": "challenge_consumed"}
+    assert adapter.calls == [adapter.calls[0]], "adapter must not be invoked a second time"
+    assert len(adapter.calls) == 1
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="F5 held (chair, 2026-09-09): the pre-presentation reservation needs a "
+    "SurfaceContextStore change that moves a parity implementation_digest the "
+    "projector cannot currently refresh (its native replay times out). When the "
+    "reservation lands this xfail turns into an unexpected pass and must be removed.",
+)
+def test_a_closed_session_refuses_before_the_adapter_is_called(store, challenge, batch, binding):
+    adapter = FakeHostAdapter()
+    store.close_session(binding.session_id)
+    result = present_host_question(
+        store, _registration(adapter), challenge, batch, advisory_deadline_seconds=1800
+    )
+    assert result == {"success": False, "error": "session_ended"}
+    assert adapter.calls == []
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="F5 held (chair, 2026-09-09): the pre-presentation reservation needs a "
+    "SurfaceContextStore change that moves a parity implementation_digest the "
+    "projector cannot currently refresh (its native replay times out). When the "
+    "reservation lands this xfail turns into an unexpected pass and must be removed.",
+)
+def test_a_reentrant_presentation_on_one_challenge_is_refused(store, challenge, batch):
+    """A challenge already being presented cannot be presented concurrently."""
+    seen: list[dict] = []
+
+    class Reentrant(FakeHostAdapter):
+        def present_and_collect(self, ch, ba, *, feedback=None, advisory_deadline_seconds):
+            seen.append(
+                present_host_question(
+                    store, _registration(FakeHostAdapter()), ch, ba, advisory_deadline_seconds=1
+                )
+            )
+            return HostQuestionCompletion(ch, {"action": "accept", "answers": {}})
+
+    present_host_question(
+        store, _registration(Reentrant()), challenge, batch, advisory_deadline_seconds=1800
+    )
+    assert seen == [{"success": False, "error": "challenge_presenting"}]
+
+
+def test_an_adapter_tearing_itself_down_cannot_defeat_its_own_invalidation(store, challenge, batch):
+    """Failure handling reads the registration snapshot, never the failed object."""
+
+    class Teardown(FakeHostAdapter):
+        def present_and_collect(self, ch, ba, *, feedback=None, advisory_deadline_seconds):
+            del self.adapter_id
+            raise RuntimeError("boom during teardown")
+
+    result = present_host_question(
+        store, _registration(Teardown()), challenge, batch, advisory_deadline_seconds=1800
+    )
+    assert result == {"success": False, "error": "render_failed"}
+    retry = present_host_question(
+        store, _registration(FakeHostAdapter()), challenge, batch, advisory_deadline_seconds=1800
+    )
+    assert retry["success"] is False, "an invalidated challenge must not later succeed"
+
+
+def test_an_adapter_that_mutates_its_identity_stops_resolving(store, challenge, batch):
+    adapter = FakeHostAdapter()
+    registration = _registration(adapter)
+    assert (
+        resolve_host_adapter(registration, profile_id=PROFILE_ID, target_id=TARGET_ID) is not None
+    )
+    adapter.profile_id = "some-other-profile"
+    assert resolve_host_adapter(registration, profile_id=PROFILE_ID, target_id=TARGET_ID) is None
+    result = present_host_question(
+        store, registration, challenge, batch, advisory_deadline_seconds=1800
+    )
+    assert result == {"success": False, "error": "render_failed"}
+    assert adapter.calls == []
+
+
+@pytest.mark.parametrize(
+    "attempt,problems,exc",
+    [
+        (1, None, TypeError),
+        (1, ["a", "list"], TypeError),
+        (1, (1, 2), TypeError),
+        (0, (), ValueError),
+        (True, (), ValueError),
+        (-1, (), ValueError),
+    ],
+)
+def test_a_malformed_envelope_cannot_be_constructed_at_all(attempt, problems, exc):
+    """Invariants are enforced on construction, so ``intact()`` is total.
+
+    Previously a directly built envelope with ``problems=None`` raised
+    ``TypeError`` from inside ``intact()`` at the boundary, escaping the
+    handler and leaving the challenge usable.
+    """
+    with pytest.raises(exc):
+        ValidationFeedbackEnvelope(attempt, problems, "digest")
+
+
+@pytest.mark.parametrize("digest", ["", None, 7])
+def test_an_envelope_without_a_usable_digest_is_refused(digest):
+    """``intact()`` can only be total if the digest field is known to be a string."""
+    with pytest.raises(TypeError, match="digest must be a non-empty string"):
+        ValidationFeedbackEnvelope(1, ("scope: required",), digest)
+
+
+def test_the_deadline_is_named_advisory_because_it_is_not_enforced_here():
+    """The parameter's name states what the code does, not what it implies."""
+    import inspect
+
+    params = inspect.signature(present_host_question).parameters
+    assert "advisory_deadline_seconds" in params
+    assert "deadline_seconds" not in params
+    assert "does NOT enforce it" in HostQuestionAdapter.__doc__
