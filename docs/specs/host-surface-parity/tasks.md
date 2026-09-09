@@ -466,6 +466,30 @@ consumes only the verified released artifact.
 
 ## Task 2 — Consume the host tier 0 renderer (R1)
 
+*(Route-selection note, measured 2026-09-09 — read before increment 3.
+A registered HostQuestionAdapter is NECESSARY BUT NOT SUFFICIENT to
+make this route selectable, and nothing in this task can change that.
+Host-native routes are built as `f"host-native:{target_id}"`
+(`surface_registry.py:457`, `:811`). `CapabilitySnapshot.supports()`
+resolves `RICH` and `mcp-native:` prefixes from `negotiated`; every
+other route falls through to `host_static` then `cached_static`
+(`surface_policy.py:520-526`). Both are empty: `host_static` is
+declared at `:513` and read at `:522` — its only two references in
+`src/` — and the runtime builds the snapshot from the negotiated tuple
+alone (`surface_runtime.py:116-120`). The single call site is the
+selection loop at `surface_policy.py:577`, so a host-native candidate
+is rejected with reason `unsupported_capability` ONE CONDITION BEFORE
+the `missing_adapter` check on the next line. Task 10's doctor — or a
+narrower substitute writing that cell — is what lights this route
+(D20 ruling 3 and 4).
+
+TEST-DESIGN CONSEQUENCE, since the failure is invisible by default: a
+test asserting "PORTABLE was selected" PASSES FOR THE WRONG REASON
+here, because PORTABLE is what happens with or without the adapter.
+Increment-3 tests must read the disposition reason and distinguish
+`unsupported_capability` from `missing_adapter`, or they prove nothing
+about the adapter at all.)*
+
 ```xml
 <task id="2" name="host-tier-zero-consumer">
   <dependencies>
