@@ -37,6 +37,18 @@ committing, pushing, opening the PR, and checking required CI before merge.
 
 ## Current state
 
+PR: https://github.com/Smart-AI-Memory/attune-ai/pull/2499. Initial published
+head `d868dee78` passed both Linux hook lanes but failed both macOS and both
+Windows hook lanes in the HTTP fixture. Windows logs proved the fixture's
+parent wrapper bypassed UTF-8 bootstrap. A guarded owned-loopback probe proved
+the default fixture opener can be redirected by ambient proxy settings; that
+matches the missing-request shape but does not establish the macOS CI cause.
+The fixture correction restores the real bootstrap, isolates its local opener,
+forces ASCII/proxy conditions in the regression, and preserves worker error
+details. Local Python 3.11 with three workers: all 1,122 hook tests passed.
+No production deadline or test timeout was widened. Check the latest head's
+remote CI before advancing; initial red jobs must not be counted as passing.
+
 All three hooks and their original registrations remain. Corrections are in the
 three scripts and their focused test files. The report records the original
 reproducers and the remediation evidence; it is the detailed verification index:
@@ -74,7 +86,7 @@ drift gate. No production occurrence rate is inferred from controlled failures.
 
 ## Next action
 
-The correction review and central local receipts are complete. Commit and open
-the scoped PR following Patrick's go-ahead, then wait for required CI, including
+The fixture correction review and central local receipts are complete. Commit
+and push the correction to PR #2499, then wait for required CI, including
 Windows, before proceeding toward merge. Do not modify the dirty main checkout.
 Delete this handoff when the branch merges.

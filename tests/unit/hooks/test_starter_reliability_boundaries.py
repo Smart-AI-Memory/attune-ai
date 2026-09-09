@@ -238,6 +238,7 @@ def test_real_hook_exits_before_timeout_with_slow_response_body(tmp_path, record
     """
     script = Path(hook.__file__).resolve()
     marker = tmp_path / "response-started"
+    worker_receipt = tmp_path / "worker-result.json"
     probe = tmp_path / "probe.py"
     probe.write_text(
         "import importlib.util, json, runpy, sys, threading, time, urllib.request\n"
@@ -245,6 +246,8 @@ def test_real_hook_exits_before_timeout_with_slow_response_body(tmp_path, record
         "from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer\n"
         f"script = Path({str(script)!r})\n"
         "sys.path.insert(0, str(script.parent))\n"
+        "from _bootstrap import ensure_utf8_stdio\n"
+        "ensure_utf8_stdio()\n"
         "if '--pypi-query' in sys.argv:\n"
         "    from tests._inference_guard import loopback_http_fixture\n"
         "    class SlowResponse(BaseHTTPRequestHandler):\n"
@@ -261,7 +264,7 @@ def test_real_hook_exits_before_timeout_with_slow_response_body(tmp_path, record
         "        def log_message(self, *args): pass\n"
         "    server = ThreadingHTTPServer(('127.0.0.1', 0), SlowResponse)\n"
         "    threading.Thread(target=server.serve_forever, daemon=True).start()\n"
-        "    original = urllib.request.urlopen\n"
+        "    original = urllib.request.build_opener(urllib.request.ProxyHandler({})).open\n"
         "    def fixture_urlopen(url, *args, **kwargs):\n"
         "        return original(f'http://127.0.0.1:{server.server_port}/json', *args, **kwargs)\n"
         "    urllib.request.urlopen = fixture_urlopen\n"
@@ -272,6 +275,14 @@ def test_real_hook_exits_before_timeout_with_slow_response_body(tmp_path, record
         "    hook = importlib.util.module_from_spec(spec)\n"
         "    spec.loader.exec_module(hook)\n"
         "    hook.__file__ = __file__  # Route its worker through the HTTP fixture.\n"
+        "    original_run = hook._run\n"
+        "    def observed_run(command, cwd):\n"
+        "        result = original_run(command, cwd)\n"
+        "        if '--pypi-query' in command:\n"
+        "            receipt = {'returncode': result.returncode, 'stderr': result.stderr} if result else {'timeout_or_skipped': True}\n"
+        f"            Path({str(worker_receipt)!r}).write_text(json.dumps(receipt), encoding='utf-8')\n"
+        "        return result\n"
+        "    hook._run = observed_run\n"
         "    sys.exit(hook.main())\n"
     )
     root = tmp_path / "repo"
@@ -279,7 +290,16 @@ def test_real_hook_exits_before_timeout_with_slow_response_body(tmp_path, record
     _git(root, "init", "--quiet")
     (root / "pyproject.toml").write_text('[project]\nname = "fixture-package"\n')
     (root / ".attune/next_session_starter.md").write_text("Ship 1.2.3\n")
-    env = dict(os.environ, ATTUNE_SDK_GATE_OVERRIDE="1")
+    env = dict(
+        os.environ,
+        ATTUNE_SDK_GATE_OVERRIDE="1",
+        # Exercise the real UTF-8 bootstrap even on a UTF-8 developer host.
+        PYTHONIOENCODING="ascii",
+        # Owned loopback HTTP must not depend on runner/user proxy settings.
+        http_proxy="http://127.0.0.1:1",
+        no_proxy="",
+        NO_PROXY="",
+    )
     started = time.monotonic()
     result = subprocess.run(
         [sys.executable, str(probe)],
@@ -287,11 +307,15 @@ def test_real_hook_exits_before_timeout_with_slow_response_body(tmp_path, record
         env=env,
         capture_output=True,
         text=True,
+        encoding="utf-8",
         timeout=15,
     )
     elapsed = time.monotonic() - started
     record_property("hook_process_elapsed_seconds", round(elapsed, 3))
-    assert marker.is_file(), f"worker missed HTTP fixture: {result.stdout!r} {result.stderr!r}"
+    receipt = worker_receipt.read_text(encoding="utf-8") if worker_receipt.exists() else "no worker"
+    assert (
+        marker.is_file()
+    ), f"worker missed HTTP fixture: {receipt}; {result.stdout!r} {result.stderr!r}"
     assert result.returncode == 0
     if delay:
         assert "PyPI fixture-package: unverified" in result.stdout
