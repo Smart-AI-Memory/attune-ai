@@ -3,10 +3,14 @@
 **Status:** active, execution-reconciled (2026-09-06; D14); Task 2's
 characterization check amended 2026-09-08 (D18).
 Task 0 merged in #2442. Task 1B increment 1 merged in #2443;
-increment 2 merged in #2444. Full Task 1B remains incomplete.
+increment 2 merged in #2444; increment 3 merged in #2450
+(2026-09-07, 6934b177e). Full Task 1B remains incomplete.
 AF-1 is available in the released, non-editable attune-forms 0.14.0
-artifact and AF-2 in 0.17.0; the locked consumer floor is
->=0.15.0,<1.0 (D12), which Task 2 raises to >=0.17.0 (D18).
+artifact and AF-2 in 0.17.0; the locked consumer specifier is
+>=0.15.0,<0.16 — the D12 floor, with the ceiling narrowed from <1.0 by
+#2476 because the AF-2 registry breaks the Task 1B parity gates —
+which Task 2 raises to >=0.17.0 with a ceiling it must establish
+(D18, corrected by D19).
 
 D14 authorizes the bounded increment-3 Codex form interaction from the
 existing milestone brief. It lifts the prior increment-3 hold for that
@@ -165,7 +169,7 @@ three `additionalContext` hooks, seven exit-2 guards, six SessionStart
 context hooks, and two producers the design never listed
 (`widgets/chart_widget_tool.py:render_chart_widget`,
 `mcp/workflow_handlers.py:_workflow_response`). Increment 2 merged in #2444: parity registry, receipts ledger and
-contract enforcer. Increment 3 in draft #2450 now includes native policy/store, verified startup,
+contract enforcer. Increment 3 merged in #2450 now includes native policy/store, verified startup,
 installation-key provisioning and stdio completion. Actual host display,
 policy-warm/deferred interactions and remaining producer receipts stay open;
 cross-repo-compat workflow remains increment 4.)*
@@ -496,7 +500,7 @@ consumes only the verified released artifact.
       Add the tier-0 render and profile-change fallback of the existing audit demo form.
     </file>
     <file path="pyproject.toml">
-      Raise the attune-forms floor to 0.17.0, up from the 0.15.0 floor in force since #2465; retain the existing exclusive 1.0 upper bound.
+      Raise the attune-forms floor to 0.17.0 in the same commit as the green parity receipt, and lift the 0.16 ceiling #2476 installed. ESTABLISH the replacement ceiling from that receipt; do not restore the former 1.0 bound. #2476 narrowed it because a fresh resolve picked up a minor this repo had not consumed, and that hazard recurs at every unconsumed minor. There is no 1.0 upper bound in the tree to "retain", and raising only the floor against the current pin yields an empty specifier (D19).
     </file>
     <file path="uv.lock">Lock that released package artifact.</file>
     <file path="docs/specs/host-surface-parity/parity-registry.json">Add the new profile target's machine receipt foreign keys.</file>
