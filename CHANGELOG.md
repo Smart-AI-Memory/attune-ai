@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `scripts/consolidate_changelog.py` merges duplicate `###` headers
+  inside one changelog section, order-preserving and idempotent, with a
+  `--check` mode. PRs append their own header rather than inserting
+  under the existing one, so a release section accumulates several
+  `### Fixed` blocks; 16.3.0 was cut with seven headers merged by hand.
+  Headings inside fenced code blocks are ignored, so an entry that
+  quotes changelog syntax is never silently rewritten.
+
 ### Changed
 
 - The `attune-forms` dependency is pinned to the minor this repo has
@@ -25,17 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   162 and `evidence_status` stays `incomplete`, so no parity claim is
   implied.
 
-### Added
-
-- `scripts/consolidate_changelog.py` merges duplicate `###` headers
-  inside one changelog section, order-preserving and idempotent, with a
-  `--check` mode. PRs append their own header rather than inserting
-  under the existing one, so a release section accumulates several
-  `### Fixed` blocks; 16.3.0 was cut with seven headers merged by hand.
-  Headings inside fenced code blocks are ignored, so an entry that
-  quotes changelog syntax is never silently rewritten.
-
-### Changed
 
 - `scripts/reach_snapshot.py --out` now defaults to the snapshots
   directory in the MAIN checkout rather than a path relative to the
