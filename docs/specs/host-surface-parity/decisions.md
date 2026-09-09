@@ -1246,11 +1246,21 @@ ruled, and nothing was written for them.
    implemented and fully tested without adding the profile to
    `host_profiles`; registration plus the parity-registry rows, the
    receipts, the demo render and a green parity gate then land together
-   as one small final PR. This reuses the technique #2496 already proved
-   — the adapter is deliberately not exported from the package
-   `__init__` — and it splits a large diff **without splitting the
-   atomic obligation**, which is the constraint that makes the naive
-   split illegal.
+   as one small final PR. This reuses the shape #2496 already
+   proved — a complete, fully tested component with **no production
+   caller** — and it splits a large diff **without splitting the atomic
+   obligation**, which is the constraint that makes the naive split
+   illegal.
+
+   Corrected 2026-09-09, same day, by the review lane this ruling
+   authorized: the first wording credited that isolation to the adapter
+   being "not exported from the package `__init__`", which is not what
+   makes it inert. The module is directly importable — #2496's own tests
+   import it — so omitting a re-export hides nothing. What makes it inert
+   is that **nothing calls it**. The distinction is load-bearing for
+   increment 3: the property to maintain is "no caller", which an author
+   must hold deliberately, not "no re-export", which packaging could
+   satisfy while a caller quietly existed.
 
    The reason it is illegal to split the other way: **registration is a
    one-way door.** Registering the profile is the act that CREATES the
@@ -1291,7 +1301,24 @@ boundary.
 
 ## Open decisions
 
-- None. Every proposed decision in this spec is ruled.
+Three, all opened by D21 (2026-09-09). Recorded because an inventory
+reading "None" while a ruling in the same file leaves questions open is a
+claim the file itself disproves.
+
+- **Increment 3's receipt shape.** The parity gate will demand a receipt
+  for the newly-obligated host-native target the moment the profile is
+  registered, while D20 ruling 3 forbids any Task 2 receipt from reporting
+  the route as firing. Both constraints are settled and neither yields.
+  D21 ruling 3 makes answering this a precondition of starting increment 3.
+- **Does a shrink-only ratchet's baseline entry trigger a D11 lane?** The
+  round table split 2/1: two seats held that permitting one more broad
+  catch changes what the gate allows even with gate logic untouched; one
+  held the trigger weak, because the baseline GREW with an annotation
+  rather than shrinking, and treating every entry as a trigger makes the
+  ratchet's own escape hatch expensive to use honestly. Unruled.
+- **Declared versus crossed.** When a risk class is DECLARED but not yet
+  CROSSED — an unexported trust boundary with no caller — does the lane
+  fire at the declaring diff or at the wiring diff? Unruled.
 
 Resolved 2026-09-02/03/04: the table was convened (round 1 complete,
 promoted in D5); D2 ruled (routing label); Task 7 ships alone on
