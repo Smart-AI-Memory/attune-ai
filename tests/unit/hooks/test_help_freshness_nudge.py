@@ -12,6 +12,8 @@ from __future__ import annotations
 
 import os
 
+import pytest
+
 from attune.hooks.scripts import help_freshness_nudge as hook
 
 EXPECTED_KINDS = hook.EXPECTED_KINDS
@@ -33,10 +35,10 @@ def _complete_feature(templates, name):
 
 
 def _write_manifest(help_dir, features):
-    lines = ["features:"]
+    lines = ["features:" if features else "features: {}"]
     for name, globs in features.items():
         lines.append(f"  {name}:")
-        lines.append("    files:")
+        lines.append("    files:" if globs else "    files: []")
         for g in globs:
             lines.append(f"      - {g}")
     (help_dir / "features.yaml").write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -48,8 +50,9 @@ def _write_manifest(help_dir, features):
 
 
 class TestLoadManifest:
-    def test_missing_file_returns_empty(self, tmp_path):
-        assert hook._load_manifest(tmp_path) == {}
+    def test_missing_file_is_distinguishable_from_empty(self, tmp_path):
+        with pytest.raises(FileNotFoundError):
+            hook._load_manifest(tmp_path)
 
     def test_parses_features_and_file_globs(self, tmp_path):
         help_dir, _ = _make_help_tree(tmp_path)
@@ -151,7 +154,10 @@ class TestMain:
     def test_clean_tree_prints_nothing(self, tmp_path, monkeypatch, capsys):
         help_dir, templates = _make_help_tree(tmp_path)
         _complete_feature(templates, "memory")
-        _write_manifest(help_dir, {"memory": []})
+        source = tmp_path / "source.py"
+        source.write_text("# source\n", encoding="utf-8")
+        os.utime(source, (1, 1))
+        _write_manifest(help_dir, {"memory": ["source.py"]})
         monkeypatch.setattr(hook, "_repo_root", lambda: tmp_path)
 
         assert hook.main() == 0

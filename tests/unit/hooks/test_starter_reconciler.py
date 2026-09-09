@@ -123,15 +123,15 @@ class _FakeProc:
 class TestCheckPr:
     def test_returns_state_uppercased(self, hook_module, monkeypatch):
         monkeypatch.setattr(hook_module, "_run", lambda *a, **k: _FakeProc("merged\n", 0))
-        assert hook_module.check_pr(1118, None) == "MERGED"
+        assert hook_module.check_pr(1118, None, "github.com/owner/repo") == "MERGED"
 
     def test_unverified_on_nonzero(self, hook_module, monkeypatch):
         monkeypatch.setattr(hook_module, "_run", lambda *a, **k: _FakeProc("", 1))
-        assert hook_module.check_pr(1, None) == "unverified"
+        assert hook_module.check_pr(1, None, "github.com/owner/repo") == "unverified"
 
     def test_unverified_when_run_none(self, hook_module, monkeypatch):
         monkeypatch.setattr(hook_module, "_run", lambda *a, **k: None)
-        assert hook_module.check_pr(1, None) == "unverified"
+        assert hook_module.check_pr(1, None, "github.com/owner/repo") == "unverified"
 
 
 class TestCheckBranch:
@@ -172,7 +172,7 @@ class TestPypiLatest:
             raise OSError("offline")
 
         monkeypatch.setattr(hook_module.urllib.request, "urlopen", boom)
-        assert hook_module.pypi_latest("attune-ai") is None
+        assert hook_module._fetch_pypi_latest("attune-ai") is None
 
 
 # --- reconcile() aggregation -----------------------------------------
@@ -180,7 +180,7 @@ class TestPypiLatest:
 
 class TestReconcile:
     def test_aggregates_all_checks(self, hook_module, monkeypatch):
-        monkeypatch.setattr(hook_module, "check_pr", lambda n, c: "MERGED")
+        monkeypatch.setattr(hook_module, "check_pr", lambda n, c, target: "MERGED")
         monkeypatch.setattr(hook_module, "check_branch", lambda b, c: "gone")
         monkeypatch.setattr(hook_module, "pypi_latest", lambda p: "9.0.0")
         # Keep the widening's git call hermetic.
@@ -207,7 +207,7 @@ class TestReconcile:
         assert results["pypi"] is None
 
     def test_check_exception_does_not_sink_others(self, hook_module, monkeypatch):
-        def boom(n, c):
+        def boom(n, c, target):
             raise RuntimeError("gh exploded")
 
         monkeypatch.setattr(hook_module, "check_pr", boom)
@@ -344,7 +344,7 @@ class TestMain:
         monkeypatch.setattr(hook_module, "STARTER_PATH", starter)
         monkeypatch.setattr(hook_module, "_find_project_starter", lambda *a, **k: None)
         monkeypatch.setattr(hook_module, "_repo_root", lambda *a, **k: None)
-        monkeypatch.setattr(hook_module, "check_pr", lambda n, c: "MERGED")
+        monkeypatch.setattr(hook_module, "check_pr", lambda n, c, target: "MERGED")
         hook_module.main()
         out = capsys.readouterr().out
         assert "[starter-reconcile:global:LEGACY]" in out
@@ -363,8 +363,8 @@ class TestMain:
         monkeypatch.setattr(hook_module, "_find_project_starter", lambda *a, **k: proj)
         # Absent global file → the global emit no-ops.
         monkeypatch.setattr(hook_module, "STARTER_PATH", tmp_path / "absent_global.md")
-        monkeypatch.setattr(hook_module, "_repo_root", lambda *a, **k: None)
-        monkeypatch.setattr(hook_module, "check_pr", lambda n, c: "MERGED")
+        monkeypatch.setattr(hook_module, "_repo_root", lambda *a, **k: tmp_path)
+        monkeypatch.setattr(hook_module, "check_pr", lambda n, c, target: "MERGED")
         hook_module.main()
         out = capsys.readouterr().out
         assert "[starter-reconcile:project]" in out
@@ -379,8 +379,8 @@ class TestMain:
         proj.write_text("PR #7 merged.\n", encoding="utf-8")
         monkeypatch.setattr(hook_module, "_find_project_starter", lambda *a, **k: proj)
         monkeypatch.setattr(hook_module, "STARTER_PATH", proj)
-        monkeypatch.setattr(hook_module, "_repo_root", lambda *a, **k: None)
-        monkeypatch.setattr(hook_module, "check_pr", lambda n, c: "MERGED")
+        monkeypatch.setattr(hook_module, "_repo_root", lambda *a, **k: tmp_path)
+        monkeypatch.setattr(hook_module, "check_pr", lambda n, c, target: "MERGED")
         hook_module.main()
         out = capsys.readouterr().out
         assert "[starter-reconcile:project]" in out
@@ -456,7 +456,7 @@ class TestPypiLatestSuccess:
                 return False
 
         monkeypatch.setattr(hook_module.urllib.request, "urlopen", lambda *a, **k: _FakeResp())
-        assert hook_module.pypi_latest("attune-ai") == "9.0.0"
+        assert hook_module._fetch_pypi_latest("attune-ai") == "9.0.0"
 
 
 class TestReconcileAndEmitNoThreads:
@@ -584,7 +584,7 @@ class TestFormatBannerNewerMerges:
 
 class TestReconcileWidening:
     def test_flags_newer_merges(self, hook_module, monkeypatch):
-        monkeypatch.setattr(hook_module, "check_pr", lambda n, c: "MERGED")
+        monkeypatch.setattr(hook_module, "check_pr", lambda n, c, target: "MERGED")
         monkeypatch.setattr(hook_module, "merged_prs_on_main", lambda c: [1136, 1135, 1134, 1132])
         results = hook_module.reconcile("Merged #1132.", None, None)
         assert results["newer_merges"] == [1136, 1135, 1134]
@@ -658,7 +658,7 @@ class TestSpecStatusCrossRead:
             },
         )
         specs = hook_module.check_specs("docs/specs/half-spec", tmp_path)
-        assert specs == {"half-spec": "shipped"}
+        assert specs == {"half-spec": "parked"}
 
     def test_banner_carries_closed_warning(self, hook_module, tmp_path):
         results = {
@@ -716,6 +716,7 @@ class TestParseProvenance:
         )
         prov, body = hook_module.parse_provenance(text)
         assert prov["repo"] == "smart-ai-memory/attune-ai"
+        assert "repo_host" not in prov  # Legacy stamps remain parseable.
         assert prov["branch"] == "claude/x"
         assert body == "Body mentions #1234\n"
 
@@ -785,12 +786,15 @@ class TestFailClosedCrossRepo:
     def test_match_verifies_normally(self, hook_module, tmp_path, capsys, monkeypatch):
         starter = tmp_path / "s.md"
         starter.write_text(
-            "---\nrepo: smart-ai-memory/attune-ai\n"
+            "---\nrepo: smart-ai-memory/attune-ai\nrepo_host: github.com\n"
             "written_at: 2026-08-18T00:00:00+00:00\n---\nsee PR #7\n",
             encoding="utf-8",
         )
         monkeypatch.setattr(hook_module, "repo_slug", lambda root: "smart-ai-memory/attune-ai")
-        monkeypatch.setattr(hook_module, "check_pr", lambda n, c: "MERGED")
+        monkeypatch.setattr(
+            hook_module, "repo_target", lambda root: "github.com/smart-ai-memory/attune-ai"
+        )
+        monkeypatch.setattr(hook_module, "check_pr", lambda n, c, target: "MERGED")
         monkeypatch.setattr(hook_module, "merged_prs_on_main", lambda c: [])
         monkeypatch.setattr(hook_module, "_package_name", lambda root: None)
         assert hook_module._reconcile_and_emit(starter, "global", tmp_path) is True
@@ -801,12 +805,15 @@ class TestFailClosedCrossRepo:
     def test_stale_banner_line(self, hook_module, tmp_path, capsys, monkeypatch):
         starter = tmp_path / "s.md"
         starter.write_text(
-            "---\nrepo: smart-ai-memory/attune-ai\n"
+            "---\nrepo: smart-ai-memory/attune-ai\nrepo_host: github.com\n"
             "written_at: 2020-01-01T00:00:00+00:00\n---\nsee PR #7\n",
             encoding="utf-8",
         )
         monkeypatch.setattr(hook_module, "repo_slug", lambda root: "smart-ai-memory/attune-ai")
-        monkeypatch.setattr(hook_module, "check_pr", lambda n, c: "MERGED")
+        monkeypatch.setattr(
+            hook_module, "repo_target", lambda root: "github.com/smart-ai-memory/attune-ai"
+        )
+        monkeypatch.setattr(hook_module, "check_pr", lambda n, c, target: "MERGED")
         monkeypatch.setattr(hook_module, "merged_prs_on_main", lambda c: [])
         monkeypatch.setattr(hook_module, "_package_name", lambda root: None)
         hook_module._reconcile_and_emit(starter, "global", tmp_path)
@@ -816,7 +823,7 @@ class TestFailClosedCrossRepo:
         starter = tmp_path / "s.md"
         starter.write_text("see PR #7\n", encoding="utf-8")
         monkeypatch.setattr(hook_module, "repo_slug", lambda root: "smart-ai-memory/attune-ai")
-        monkeypatch.setattr(hook_module, "check_pr", lambda n, c: "MERGED")
+        monkeypatch.setattr(hook_module, "check_pr", lambda n, c, target: "MERGED")
         monkeypatch.setattr(hook_module, "merged_prs_on_main", lambda c: [])
         monkeypatch.setattr(hook_module, "_package_name", lambda root: None)
         hook_module._reconcile_and_emit(starter, "global", tmp_path)
@@ -844,6 +851,7 @@ class TestStampProvenance:
         assert second.endswith("queue item one\n")
         prov, body = hook_module.parse_provenance(second)
         assert prov["repo"] == "smart-ai-memory/attune-ai"
+        assert prov["repo_host"] == "github.com"
         assert body == "queue item one\n"
 
 
@@ -1053,7 +1061,7 @@ class TestSharedDeadline:
         elapsed = time.monotonic() - start
 
         assert proc.returncode == 0
-        assert "[starter-reconcile:handoff:newest]" in proc.stdout
+        assert "[starter-reconcile:handoff:fallback:unverified]" in proc.stdout
         assert "[starter-reconcile:project]" in proc.stdout
         assert elapsed < registered, (
             f"hook took {elapsed:.1f}s ≥ registered {registered}s timeout "
@@ -1085,7 +1093,7 @@ class TestSharedDeadlineSkipPaths:
         )
         monkeypatch.setattr(hook_module, "_DEADLINE", hook_module.time.monotonic() - 1)
 
-        assert hook_module.pypi_latest("attune-ai") is None
+        assert hook_module._fetch_pypi_latest("attune-ai") is None
         assert opened == []
 
     def test_subprocess_skipped_when_budget_spent(self, hook_module, monkeypatch):

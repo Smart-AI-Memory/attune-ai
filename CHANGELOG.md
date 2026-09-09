@@ -45,6 +45,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- SessionStart retains all three help/starter hooks while binding PR checks to
+  the verified repository and host, enforcing a killable PyPI deadline, and
+  reporting failed checks without losing other findings. Help freshness now
+  compares authored projections; handoff selection rejects outside-repository
+  targets and labels drafts and mtime fallbacks. Older repository stamps need
+  verified re-stamping to add `repo_host` before named-thread verdicts resume.
+
 - A cross-review lane that reviewed and found nothing now writes a
   ledger row that classifies itself (`clean — …`) instead of the
   `not-triaged` placeholder. The placeholder is not a legal disposition,

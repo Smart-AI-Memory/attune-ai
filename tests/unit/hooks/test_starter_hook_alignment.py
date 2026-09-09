@@ -77,8 +77,8 @@ def test_standalone_hooks_read_the_same_branch_handoff(tmp_path):
     scripts = Path(nudge.__file__).resolve().parent
     env = dict(os.environ, ATTUNE_SDK_GATE_OVERRIDE="1")
     for script, marker in (
-        ("starter_prompt_nudge.py", "[starter-prompt:handoff:branch]"),
-        ("starter_reconciler.py", "[starter-reconcile:handoff:branch]"),
+        ("starter_prompt_nudge.py", "[starter-prompt:handoff:branch:draft]"),
+        ("starter_reconciler.py", "[starter-reconcile:handoff:branch:draft]"),
     ):
         result = subprocess.run(
             [sys.executable, str(scripts / script)],

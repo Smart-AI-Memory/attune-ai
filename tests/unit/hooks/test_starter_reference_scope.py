@@ -17,7 +17,7 @@ from attune.hooks.scripts import starter_reconciler as hook
 )
 def test_foreign_reference_never_queried_as_local(reference, monkeypatch, tmp_path):
     calls = []
-    monkeypatch.setattr(hook, "check_pr", lambda num, cwd: calls.append(num) or "MERGED")
+    monkeypatch.setattr(hook, "check_pr", lambda num, cwd, target: calls.append(num) or "MERGED")
     monkeypatch.setattr(hook, "merged_prs_on_main", lambda cwd: [2495, 2494])
     results = hook.reconcile(f"Local #2494; follow {reference}", None, tmp_path)
 
@@ -31,7 +31,7 @@ def test_foreign_reference_never_queried_as_local(reference, monkeypatch, tmp_pa
 
 def test_qualified_refs_cannot_consume_the_local_check_budget(monkeypatch):
     calls = []
-    monkeypatch.setattr(hook, "check_pr", lambda num, cwd: calls.append(num) or "OPEN")
+    monkeypatch.setattr(hook, "check_pr", lambda num, cwd, target: calls.append(num) or "OPEN")
     monkeypatch.setattr(hook, "merged_prs_on_main", lambda cwd: [43])
     text = " ".join(f"foreign/repo#{n}" for n in range(100, 110)) + " local #42"
 
@@ -85,7 +85,7 @@ def test_expired_budget_does_not_fabricate_directory_identity(tmp_path, monkeypa
 )
 def test_matching_repo_is_checked_and_deduplicated(reference, monkeypatch):
     calls = []
-    monkeypatch.setattr(hook, "check_pr", lambda num, cwd: calls.append(num) or "OPEN")
+    monkeypatch.setattr(hook, "check_pr", lambda num, cwd, target: calls.append(num) or "OPEN")
     monkeypatch.setattr(hook, "merged_prs_on_main", lambda cwd: [43])
 
     results = hook.reconcile(
@@ -99,7 +99,7 @@ def test_matching_repo_is_checked_and_deduplicated(reference, monkeypatch):
 
 
 def test_matching_repo_uses_uncapped_ceiling(monkeypatch):
-    monkeypatch.setattr(hook, "check_pr", lambda num, cwd: "OPEN")
+    monkeypatch.setattr(hook, "check_pr", lambda num, cwd, target: "OPEN")
     monkeypatch.setattr(hook, "merged_prs_on_main", lambda cwd: [901, 800])
     text = " ".join(f"#{n}" for n in range(10, 20)) + " local/repo#900"
 
