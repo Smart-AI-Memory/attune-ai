@@ -322,3 +322,68 @@ the branch handoff. These answers are fixture-owned and do not prove host paint.
 
 Final whole-suite receipt for the bootstrap update: 26,056 passed, 242 skipped,
 3 xfailed in 73.04 seconds, with isolated Redis and the inference guard.
+
+## Task 2 increment 1 — preconditions and characterization (2026-09-09)
+
+Satisfies Task 2 validation checks 1 and 6. No production code; this
+increment's whole claim is that the evidence those checks demand exists
+and says what the task assumes. Probed against the artifact resolved by
+this repo's own pinned environment, not a checkout.
+
+### Check 1 — the installed released artifact
+
+| Property | Observed |
+|---|---|
+| version | `0.17.0` (`importlib.metadata`) |
+| loads from | `.venv/lib/python3.11/site-packages/attune_forms` |
+| dist-info | `attune_forms-0.17.0.dist-info` |
+| exports | `HostQuestionProfile`, `QuestionAnswerBinding`, `HostQuestionBatch`, `host_question_admissibility`, `form_to_host_question` — all present |
+| registry target | `form.host_question` · status `route_active` · profile `claude-askuserquestion` |
+| profile resolution | exactly ONE installed `InteractionProfile` carries the matching host-question facet |
+
+**Not an editable checkout**, established by asking the question about
+this package rather than about the environment: no
+`__editable__*attune_forms*` finder, no `*attune_forms*.pth`, no
+`direct_url.json` in the dist-info, and the module resolves inside
+site-packages. A first pass reported "editable = True" because it
+globbed for any `__editable__*` marker and matched
+`__editable__.attune_ai-16.3.0.pth` — THIS repo's own editable install,
+not attune-forms'. Recorded because the false positive is the more
+likely reading of a naive probe.
+
+The pin backing this is `attune-forms>=0.17.0,<0.18` (#2488), whose
+ceiling deliberately tracks the consumed minor rather than returning to
+`<1.0`.
+
+### Check 6 — characterization of the installed AskUserQuestion profile
+
+Read from the installed facet, and matching what D18 amended and D19
+corrected:
+
+| Field | Value |
+|---|---|
+| `max_header_chars` | 12 |
+| `response_correlation` | `emitted_text` |
+| multi-select | `comma_delimited`, delimiter `','` (bare comma, no space) |
+| escaping | `none`, `escaping_verified=True` |
+| `canonical_reencode` | `True` |
+| `freeform` | `separate_response` |
+| `other_label` / `unanswered_marker` | `Other` / `[No preference]` |
+| caps | 4 questions, 4 options, 3 validation attempts, 1800s deadline |
+| `inadmissible_types` | `('ranking',)` |
+
+Two of these carry history worth keeping attached. The delimiter is a
+BARE comma and the escaping is `none` — D18 struck the spec's
+"comma-space-delimited" and "JSON-string quoting" after a live host
+trial measured both false, so a delimiter- or quote-bearing multi-select
+label is PERMANENTLY inadmissible rather than pending evidence. And
+`freeform` is recorded here as DECLARED, not characterized: no trial has
+exercised free text through "Other", which is why D18 struck it from the
+pinned set. This receipt does not claim it was measured.
+
+### What this increment does NOT establish
+
+Nothing about routing. The host-native route remains unselectable
+regardless of this evidence — see the route-selection note on Task 2 and
+D20 rulings 3 and 4. No adapter exists, no production file changed, and
+no receipt here should be read as the route being live.
