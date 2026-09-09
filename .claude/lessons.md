@@ -27381,3 +27381,691 @@ form's clothes.
 - **pre-commit's `check-merge-conflict` is a NO-OP outside an in-progress merge — a "Passed" on a file full of `<<<<<<<` markers is the tell, and the fix is `args: ['--assume-in-merge']`**: 2026-09-06, wiring the hook into attune-forms (retro R7, after a rebase resolver committed conflict markers on #83). I staged a probe file carrying `<<<<<<<`/`=======`/`>>>>>>>` and ran the hook to take the receipt; it printed `Passed`. By default the hook checks `.git/MERGE_MSG` + `MERGE_HEAD`/`rebase-*` first and skips every file when no merge is in progress — which makes it useless against the case that motivated it (markers committed AFTER `git rebase --continue` resolved the state, or pasted in by an agent's resolver). With `--assume-in-merge` it inspects every commit: the same probe fails with three `Merge conflict string … found` lines and a clean file still passes. Two carry-forwards: (1) **a receipt that PASSES when you expected it to FAIL is the finding, not a formality** — I had already written "the hook fails on a probe file" into the PR body from the expectation, and only the re-read of the output caught that the sentence was false (principle 16; the body was corrected in the same push); (2) any pre-commit hook whose docs mention "when in a merge" needs the assume flag if the goal is a ratchet rather than a merge-time convenience.
 
 - **A retro `do now` on a spec-text item is a go to WRITE the proposal, not a chair ruling — record it as PROPOSED with its counter-case, and let the chair's read on the PR promote it**: 2026-09-06, host-surface-parity D13. The retro listed "the parity registry should read the reviewed baseline at test time instead of embedding a copy" as R3; the chair marked it `do now`; I wrote D13 into decisions.md as "RULED 2026-09-06, chair" with a Why/Ruling/Application block, posted an instruction on the affected peer PR (#2444: "drop the embedded copy per D13"), and opened #2447 unarmed. The chair's read of #2447 came back "D13 needs discussion." Two failures compound here. (1) A `do now` on a retro row I authored is a disposition on MY framing of the item, not a ruling on the design question underneath it — the row's one-line text cannot carry the alternatives, so the pick cannot be a choice among them. (2) I did not carry the counter-case (D11d: a ruling recommendation reaches the chair with the strongest argument against itself, unprompted). It existed and was strong: the embedded copy is a derived-from pin — Codex's 152 obligations derive from the baseline, and by-reference loading lets an EXISTING subject's producer set change without forcing re-derivation, while the copy (or a one-line digest pin, which gets the same forcing function without the ~650-line twin) breaks the gate and makes someone look. Had the counter-case been on the page, the third shape would have been in the proposal and the "ruling" would have read as what it was. Mechanics that follow: a retro-born spec change is written as PROPOSED (both positions + the recommended shape), never as RULED, until the chair's PR read or an explicit ruling word; any instruction relayed to a peer on the strength of it says "proposed, hold until ruled"; and a relayed instruction that later turns out to over-claim is withdrawn on the peer's PR BEFORE the discussion form goes to the chair (PROTECT-THEN-ASK, own prior action). Pairs with the 2026-09-06 feedback memory on assumption review before recording a pick — that one is about mid-flow card picks; this one is about the retro's disposition grammar specifically.
+
+- **`git switch X 2>&1 | tail -1 && git pull …` runs the pull even when the switch FAILED — a pipeline's exit status is the LAST command's (tail's 0), so `&&` guards nothing, and the follow-on git command runs on whatever branch you were still on**: 2026-09-06, returning a session worktree to main after its PR merged. `git switch main` failed (`'main' is already used by worktree at ~/attune-ai` — a worktree cannot check out a branch another worktree holds), but the `| tail -1` swallowed the status, so `git pull --ff-only origin main` ran on the still-checked-out FEATURE branch. It aborted only because that branch had diverged from main; on a branch that fast-forwards cleanly it would have silently pulled main INTO the feature branch — the wrong-branch-state class the dirty-switch guard exists for, reached through shell plumbing the guard cannot see. Two rules: (1) never put `| tail`/`| head`/`| grep` on a state-changing git command inside an `&&` chain — print it bare (stderr included, per the existing "never suppress stderr on a state-changing git command" rule) or use `set -o pipefail` for the block; (2) in a worktree, "return to main" is `git switch --detach origin/main` (or a fresh branch off it) — `main` itself is normally held by the primary checkout, so `git switch main` from a worktree is expected to fail, not a transient. Pairs with the "interrupted compound command may have PARTIALLY executed" lesson: here nothing was interrupted, the chain simply lied about the first step, so the same rule applies — after any compound git command, re-read `git branch --show-current` + `git log -1` before the next command.
+
+- **A coverage-total DROP right after an omit-audit is usually accounting, not decay — the measured-FILE-COUNT is the tell, so diff it before reading the percentage as a regression**: 2026-09-07, the weekly `modules-needing-work` refresh. The report moved project total 96.16% -> 95.84% and Tier 1 from **0 modules to 6**, which reads like a coverage collapse. It was not. Two independent things had happened since the prior 2026-08-17 generation: (a) the 2026-08-25 omit-audit (#2294) de-omitted seven entries (six standalone hook scripts + `help_freshness_nudge.py`), so modules sitting at ~91-93% entered the denominator for the first time and pulled the mean down; (b) five of the six new Tier 1 modules were **newly-landed code that arrived under the bar**, not regressions on existing work — four `src/attune/classes/` modules added 2026-08-22 and `hooks/scripts/worktree_add_guard.py` added 2026-09-06. Exactly ONE (`workflows/__init__.py`, last touched by the 16.0.0 seam collapse #2334) was a genuine regression on a long-lived module. **The signal that reframed the whole delta was the file count in the report header: 717 -> 742.** A percentage cannot distinguish "the same code got worse" from "more code is now being looked at", but the denominator can. Diagnostic order for any coverage-total drop: (1) diff the measured-file count — a jump means the population changed, so the percentage is not comparable to last period's; (2) `git log -S'<omit entry>' -- pyproject.toml` to confirm what left the omit list and when; (3) `git log --diff-filter=A -1 -- <module>` on every newly-listed module — an add-date AFTER the previous report's generation stamp means new code under the bar, which is a different (and cheaper) problem than a regression. Reporting the six as "six modules regressed" would have been an inference wearing the grammar of a verified fact, and would have mis-sized the remediation: new-code-under-bar is one scoped lane, regression is an investigation. Note the corpus already carries the mirror case — `project_qa6_package_targets` ("apparent coverage GAPS are omit-list illusions; cross-check `omit` first"); this is the same mechanism running the other direction, where de-omitting makes healthy numbers look worse. Both say: the omit list is part of the measurement, so read it before reading the number.
+
+- **A Codex cross-review lane that returns `status=absent` may be a CLI-version
+  problem, not a seat failure — read the raw reply tail before switching
+  models**: 2026-09-07, D11 lane for PR #2459. `run_review(seat="codex")`
+  logged `status=absent findings=0` twice. The `reply` field's tail carried
+  the cause: `codex exec` exited 1 with a 400 "The 'gpt-6-astra' model
+  requires a newer version of Codex" — the installed CLI (0.144.6) was
+  behind the configured model (`~/.codex/config.toml`, `model = "gpt-6-astra"`),
+  and npm already had 0.153.4. Three durable points. (1) ABSENT is a
+  wrapper status; the diagnosis is in `result["reply"]`, so print or save it
+  on every run — my first run lost it because a shell variable set as
+  `OUT=…;` on its own statement is NOT in the child's environment (only
+  `VAR=… cmd` prefixes or `export` are); the crash was a `KeyError` after
+  the seat had already run. (2) Do not silently fall back to an older model
+  (`-m gpt-5.6-sol`): it changes the reviewer identity the ledger records,
+  and Patrick's standing direction is "we are using gpt-6 for codex". A CLI
+  upgrade affects other sessions' future `codex exec` spawns, so it is a
+  one-question ask (upgrade / per-lane override / skip), recommendation
+  first. (3) After `npm i -g @openai/codex@latest` no restart is needed for
+  new spawns — `codex --version` in a fresh subprocess is the receipt; only
+  an already-open interactive `codex` session keeps the old binary.
+  Diagnostic pair: `codex --version` vs `npm view @openai/codex version`.
+
+- **Host-native question guidance: keep "the user cancelled" and "the tool
+  failed" as separate branches, and re-check any late one-line directive
+  against the skill's own exceptions**: 2026-09-07, Codex review of the
+  Claude host default (PR #2459), two medium findings, both real. (1) I wrote
+  "an interrupted, dismissed, or errored call supplies no answers: treat it
+  as explicit cancellation". Dismissal is user intent (stop dependent work,
+  never re-post automatically); an errored, absent, or unsupported tool is
+  infrastructure (say so, KEEP any answers already returned, fall back to a
+  conversational question). Conflating them stalls authorized work on a
+  transient failure and, worse, reads a crash as the user saying no. The
+  Codex section already had the split (explicit cancellation vs "if no
+  result arrives and the host cannot keep the interaction pending") — I
+  collapsed it when porting to a synchronous control. Every host's lifecycle
+  paragraph needs both branches, whatever the control's shape. (2) A late
+  addition to the planning skill's Execution list said "settle any remaining
+  unknown with `AskUserQuestion` before leaving plan mode" — a blanket
+  directive that silently overrode two exceptions the SAME skill had just
+  established (typed questions for fields the schema cannot represent; a
+  stated conversation preference wins). Pattern: when you append a
+  one-liner to a skill that already carries host defaults, grep the skill
+  for its own "unless"/"never"/"preference" clauses and qualify the new line
+  against each. Cheap to do at authoring time; a different-model review is
+  what caught it here.
+
+- **Blog graphics for a UI feature should be real renders of the production
+  renderer, captured headlessly and READ back before placing — not mockups
+  or hand-drawn approximations**: 2026-09-07, the "Three Shapes of a Prompt"
+  post (#2460). The pipeline that worked, end to end in one session: build
+  each form with `form_from_dict`, render with `form_to_widget_html(form,
+  message)`, wrap in a minimal host shell that supplies the design-system
+  variables via `attune_forms.preview._host_vars("light")` (the same shell
+  the library's own template preview uses, so nothing is re-drawn), then
+  screenshot with `"/Applications/Google Chrome.app/Contents/MacOS/Google
+  Chrome" --headless=new --disable-gpu --hide-scrollbars
+  --force-device-scale-factor=2 --window-size=820,<h> --screenshot=<png>
+  file://<page>` (playwright's Python package was not installed; system
+  Chrome was). Three gotchas caught only by READING the PNGs back with the
+  Read tool: (1) the widget renders `message` itself, so a shell that also
+  prints it shows the lead-in twice; (2) `--screenshot` captures the
+  viewport, so pick the window height per form or you ship a card with a
+  screen of dead space under it; (3) a diagram label drawn over a connector
+  line needs a background rect. Sizes came out 90–125 KB at 2x, under the
+  500 KB pre-commit cap. Rider: to verify the post's Python fences you
+  cannot run them through the dynamic-execution builtin — the security
+  guard blocks it, correctly, and it also blocks any Bash command whose
+  TEXT merely names that builtin with parentheses — so write each fence to
+  its own `.py` in the scratchpad and run it as a subprocess. The two blog
+  directories lesson still applies: `website/content/blog/` serves;
+  `published: false` keeps a post out of the index and the static routes
+  until the chair flips it.
+
+- **Two numbered lists in consecutive turns make a bare "do 2" ambiguous by
+  construction, and a recommendation that contradicts the analysis you just
+  gave will be caught by the chair, not by you**: 2026-09-07, the Socratic
+  discussion. (1) I closed one message with a numbered list (metric / rule
+  D16 / reword the always-line) and the next with another (keep
+  assume-and-disclose / escalate on triggers / keep the form model / adopt
+  the unattended policy). Patrick wrote "reword the always line then do 2"
+  — item 3 of the first list plus a "2" that resolved differently in each.
+  The referent gate fired correctly (one question, resolved), but the
+  ambiguity was mine: when a conversation carries more than one live list,
+  number continuously or name the list ("earlier list, item 2"). (2) Having
+  just argued that Anthropic's default should be the baseline and Attune's
+  rule a delta from it, I recommended a ruling option that kept the widget
+  for decision-shaped asks — the opposite of that baseline — and Patrick
+  confirmed it before catching the contradiction himself ("I thought we
+  were going to use the anthropic recommended options as the default").
+  Before rendering a recommendation, check it against the principle your
+  own previous message established; if it departs, say so in the option
+  text or drop it. The counter-case rule (D11d) exists for exactly this.
+
+- **A Claude desktop session loads plugin-sourced skills (`attune-ai:elicit`,
+  `attune-ai:planning`) from `~/.claude/plugins/cache/<marketplace>/<plugin>/
+  <version>/`, NOT from the checkout the session opened in — so "the
+  receiving checkout carries the PR" is the wrong receipt for a
+  skill-guidance trial; grep the CACHE**: 2026-09-07, prepping the
+  flower-shop discovery trial for #2459. The worktree and the main checkout
+  both carried the new "Claude: native questions first" heading, and a
+  checkout-level receipt would have passed. The installed plugin
+  (`installed_plugins.json` → cache path, `gitCommitSha` f51a2dd6,
+  `lastUpdated` 09-05) predated the PR by two days; its planning skill
+  still said "prefer the rich widget surface" — the exact guidance the PR
+  replaced. A recording would have exercised the old text and read as a
+  discovery failure. This is the bakery-recording lesson one level deeper:
+  that one caught a stale CHECKOUT; the cache sits behind every checkout.
+  Receipt that answers the question: `grep -n "<new heading>"
+  ~/.claude/plugins/cache/<mkt>/<plugin>/<version>/skills/<skill>/SKILL.md`
+  after `claude plugin marketplace update <mkt> && claude plugin update
+  <plugin>@<mkt>` and a desktop restart (the CLI says restart required).
+  The cache path is keyed by plugin VERSION, so a same-version update
+  overwrites in place — check `git merge-base --is-ancestor <pr-sha>
+  <cache gitCommitSha>` rather than trusting the version string. Corollary
+  from the same session: the running session's own skill listing came from
+  the stale cache too; follow the worktree's SKILL.md text and say so.
+
+- **Parsing `AskUserQuestion` results on the Claude desktop host: the
+  returned value is the option LABEL verbatim (marker included), a skipped
+  question comes back as the literal `[No preference]`, multi-select joins
+  labels with commas and NO spaces, and a dismissal is a tool ERROR that
+  ends the turn**: observed live 2026-09-07 (probe
+  `docs/probes/host-surface-parity/host-native-trials-2026-09-07.md`).
+  Consequences for any code or skill that reads answers: (1) strip a
+  trailing " (Recommended)" before matching labels — the local format
+  guard forces that marker onto the first option, and it round-trips;
+  (2) treat `[No preference]` as "unanswered, retained partial submit",
+  not as a free-text answer — it is the trigger string for the elicit
+  skill's "ask only the remainder" clause; (3) a label containing a comma
+  is ambiguous in a multi-select result, so keep multi-select labels
+  comma-free; (4) dismissal has TWO shapes on the same host, observed the same
+  day: Escape on a one-question card failed the tool call with the host's
+  generic rejection text ("The user doesn't want to proceed with this tool
+  use…") and ended the assistant turn with no answers; dismissing a
+  four-question card returned a NORMAL result whose every value was the
+  literal `[User dismissed — do not proceed, wait for next instruction]`.
+  Lifecycle code must treat both as the user's cancellation (never retry,
+  continue only on the next user message), and a decoder must recognize
+  that sentinel as a non-answer exactly like `[No preference]`. The single-question and multi-question results also differ in
+  prefix ("Your questions have been answered:" vs "The user answered:");
+  key on the quoted question text, not the prefix.
+
+- **A `gh pr view --json` that omits `state`/`mergedAt` makes a MERGED PR
+  look open — and `mergeStateStatus=UNKNOWN` on an all-green PR is the tell
+  that GitHub stopped computing it because the PR is already closed**:
+  2026-09-07, presenting the "how do we merge" plan. #2462 had been
+  admin-merged by the Class 1 lane at 19:43Z; twenty minutes later I read
+  it with `--json title,headRefOid,mergeStateStatus,labels,files` (no
+  `state`), saw `UNKNOWN`/all-checks-pass, carried forward an "OPEN" from an
+  earlier list, and asked the chair how to land a PR that had landed. The
+  chair's "2462 published" was the correction; the arm was skipped only
+  because the executing step re-read `state` first. The existing lesson
+  says verify `mergedAt` before treating a PR as MERGED; this is the
+  inverse direction and the same fix: **every PR read that drives a
+  recommendation or an action includes `state,mergedAt,mergeCommit`**, and
+  a PR whose checks are all green but whose merge state is `UNKNOWN` is
+  read as "probably closed — check", never as "open, blocked". Re-list
+  `gh pr list --state open` immediately before presenting a merge plan;
+  an open-PR list from earlier in the session is stale by construction
+  once any lane can merge.
+
+- **GitHub's contents API silently OMITS `content` for files over 1 MB, so
+  `gh api repos/<o>/<r>/contents/<path> --jq .content | base64 -d` yields
+  an EMPTY result with exit 0 — request the raw media type instead**:
+  2026-09-07, verifying the community plugin catalog for #2313. The
+  `anthropics/claude-plugins-community` marketplace.json is 1,565,989
+  bytes; the metadata call showed `size` fine, the content call returned
+  a 404-shaped body and the pipeline produced an empty file, so a name
+  search would have reported "not listed" for every plugin. Fix:
+  `gh api -H "Accept: application/vnd.github.raw"
+  "repos/<o>/<r>/contents/<path>?ref=<branch>" > file` (or the Git blob
+  API by sha). Sanity gate before searching any fetched catalog:
+  `wc -c` must match the metadata `size`, and a positive control (here
+  `attune-lite`, known listed) must hit — an absence claim from an empty
+  file is the same vacuous-assertion class as the emptiness-asserting
+  test lesson.
+
+- **attune-forms release convention: the version bump rides the FEATURE
+  PR, and the "release prep" PR only dates the CHANGELOG header — read
+  the last release PR's `--stat` AND the feature PR before it, not just
+  the release PR's title**: 2026-09-07, AF-2. I read `chore(release):
+  prepare attune-forms 0.14.0 (#85)` as the place bumps live and shipped
+  #91 without one; `git show --stat 5600afe` shows #85 touched only
+  CHANGELOG.md, while the AF-1 feature PR (#84) carried pyproject, both
+  plugin manifests and the README "What's new" heading. The 0.15.0 prep
+  (#92) therefore had to carry the bump too — harmless here, but the
+  handoff's line "Advance the package version to 0.15.0" was telling me
+  where the bump belonged and I overrode it with an inference from a PR
+  title. Five sites move together and `tests/test_version_sync.py` pins
+  them: `pyproject.toml`, `plugin/.claude-plugin/plugin.json`,
+  `.claude-plugin/marketplace.json` (two fields), and the README heading.
+  Publish is `publish.yml` on a `v*.*.*` tag push; the tag is the chair's
+  act.
+
+- **A skill edit has THREE projections, and the preflight's
+  "skills-projection: in sync" vouches for only one — after editing any
+  `plugin/skills/*/SKILL.md`, run BOTH `scripts/sync_agents_skills.py
+  --write` AND `scripts/generate_reference_templates.py`, or CI goes red
+  on a docs-only PR**: 2026-09-07, #2464 (D17 skill text). The `.agents/`
+  mirror was regenerated, the preflight reported the skills projection in
+  sync, 82 local guard tests passed, and every test lane still failed on
+  one assertion: `scripts/generate_reference_templates.py --check` found
+  `plugin/help/generated/references/skill-elicit.md` and
+  `skill-planning.md` stale — the skills are also the SOURCE for those
+  generated reference templates (see the script's docstring), and nothing
+  in the mirror sync or the preflight covers them. A docs-only diff
+  failing every test lane while main is green is the tell that a
+  projection is stale, not that a test is flaky. Footgun on the way to the
+  fix: the generator has no `--help`; any unrecognized flag runs it in
+  WRITE mode. Mechanical fix worth picking: add the reference-template
+  `--check` to `collaboration_preflight.py` beside the mirror check.
+
+- **When you add a uniqueness or correlation rule, audit the test
+  fixture helpers first — a helper that mints questions with one
+  constant text or label turns every multi-item fixture into an
+  accidental collision**: 2026-09-07, attune-forms AF-2. The new
+  emitted-text correlation rule (two questions whose normalized text
+  matches are inadmissible on AskUserQuestion, because the host keys
+  answers by question text) was correct, and it immediately failed two
+  router tests that built two-question forms with `_select(id="a"),
+  _select(id="b")` — a helper whose default `text` was "Which?" for
+  both. The failure was real behavior and a bad fixture at once; the
+  fix was distinct texts plus a NEW test pinning that identical texts
+  route to the widget, so the rule earned a guard instead of being
+  weakened. Generalizes to any dedupe, collision, or digest rule:
+  `grep -n 'def _' tests/ | xargs grep -l 'text=\|label='` finds the
+  helpers to check before running the suite.
+
+- **The `changelog-entry` gate fails any PR touching `src/` without a
+  CHANGELOG line or the `no-changelog` label — a docstring-only shipped-path
+  change takes the LABEL, not a changelog line, and the gate re-runs on the
+  `labeled` event**: 2026-09-07, #2466 (one docstring in
+  `src/attune/elicitation/__init__.py` plus tests/docs). The gate's own
+  message names both exits; the label is for "internal-only (refactors,
+  test-only fixes, import moves)", which a docstring correction is. After
+  `gh pr edit N --add-label no-changelog`, `gh pr checks` still shows the OLD
+  run's `fail` until the new `labeled`-triggered run reports — read `gh run
+  list --workflow="Changelog Entry Gate" --branch <b>` and wait on the newest
+  run, not on the check line.
+
+- **`scripts/project_surface_runtime.py --write` must be the LAST step after
+  every source edit, and its check mode must be judged by its own exit code,
+  never through a pipe**: 2026-09-07, #2465. The native lifecycle receipts
+  digest the SOURCE of `surface_registry.py` / `surface_evidence.py` /
+  `surface_runtime.py`, and the renderer receipts' `fixture_digest` includes
+  `inspect.getsource(surface_evidence)`, so an edit to any of them after the
+  refresh leaves every receipt stale. The stale result was then hidden by
+  `python scripts/project_surface_runtime.py | tail -1 && echo "in sync"`:
+  the `&&` tested `tail`'s exit, and the last line happened to be the
+  registry-error text scrolled off by the filter. Rule: `if python
+  scripts/project_surface_runtime.py; then …; else …; fi` (or `set -o
+  pipefail`), and run `--write` once, after the final edit, before the
+  focused suite.
+
+- **`git push` printing `* [new branch]` for a branch that already had an
+  open PR is the tell that the PR merged and GitHub auto-deleted the branch
+  — the push has just RE-CREATED it with no PR behind it, and `gh pr view`
+  keeps showing the merged PR's frozen head**: 2026-09-07, #2465. The chair
+  merged while the D11 lane's fixes were being committed; my follow-up push
+  reported a new branch and `headRefOid` never moved. Recovery: verify
+  `state,mergedAt,mergeCommit`; branch fresh off the new `origin/main`;
+  `git cherry-pick` the follow-up commit (a squash-merged base means the
+  old branch cannot be reused); open a new PR; delete the stray re-created
+  remote branch. Corollary: `gh pr edit --body` on a merged PR silently
+  succeeds and edits history nobody reads — check `state` before editing.
+
+- **Before triaging a REVIEW.md, compare its mtime against the repo's merges
+  since — the reviewer may already have landed its own fixes, and a stale
+  verdict read as live work double-implements it**: 2026-09-07, the Codex
+  pre-tag review of attune-forms aa9b28bf2 (REVIEW.md 22:16Z, verdict "fix
+  before tagging", five P2 findings). By the time it was read here, Codex
+  had merged those fixes as attune-forms #93 (22:25Z) and the chair had
+  tagged v0.15.0 on top (22:26Z, PyPI 22:32Z) — the "0.15.1 needed" plan
+  was already false, and only a `git log origin/main -4` on the forms repo
+  showed it. Probe order for any review file: (1) `gh pr list --state
+  merged --limit 5` on the reviewed repo since the file's mtime; (2) grep
+  main for the fix's distinctive strings; (3) THEN triage what remains.
+  The chair's agents can act faster than the lead's read loop.
+
+- **`claude plugin update <plugin>@<marketplace>` is a NO-OP when the
+  marketplace plugin's declared `version` is unchanged — the cache dir is
+  keyed by version (`~/.claude/plugins/cache/<mp>/<plugin>/<version>/`)
+  and the recorded `gitCommitSha` is NOT used for change detection — so a
+  skill/hook edit merged to main WITHOUT a version bump is unreachable by
+  the refresh sequence the prior lessons prescribe**: 2026-09-07. #2459
+  (the `elicit` / `planning` Claude host default) merged at 16.2.1 with no
+  bump. Patrick ran `claude plugin marketplace update attune-ai` (the
+  clone moved to d45019a0, 19:45Z, which contains #2459), yet the install
+  receipt `grep -n "native questions first"
+  ~/.claude/plugins/cache/attune-ai/attune-ai/16.2.1/skills/elicit/SKILL.md`
+  still matched nothing; the cache dir kept its Sep 4 mtime and
+  `installed_plugins.json` its 09-05 `gitCommitSha f51a2dd6`. Basis: the
+  Claude Code plugin docs via the guide agent (unchanged version → users
+  keep the cached copy; omitting `version` keys the cache on the commit
+  SHA instead) plus the on-disk timestamps — NOT verified by running the
+  update. Rules: (1) a marketplace-refresh receipt (`git -C
+  ~/.claude/plugins/marketplaces/<mp> log -1`) says nothing about the
+  installed cache; the install receipt is the grep on the CACHE path.
+  (2) Skill/hook/help text that must reach installed users needs a
+  version bump in the SAME PR or the next release — "merged" is not
+  "delivered" (extends the help-bundle lesson). (3) The user-side
+  workarounds are `claude plugin uninstall` + `install`, or waiting for
+  the release. Pairs with the 2026-08-25 "hook merged into plugin/hooks
+  does NOT go live" lesson: same cache, sharper mechanism (version-keyed,
+  not merely lagging).
+
+- **Run the D11 lane BEFORE a chair-read D11-class PR opens, and treat the Codex seat as spend-gate-exempt — it is ChatGPT subscription login with no API spend**: 2026-09-08, #2467. The authoring session opened the PR with "D11 lane owed, not run: spend gate" and the lane ran only after the chair was already holding the merge. Three real findings, each a push, cost three CI cycles (~15 min each) and a rebase. The spend gate (decision-routine) fires on the first BILLABLE call; `codex exec` under subscription login bills nothing (`codex login status` → "Logged in using ChatGPT"; `~/.codex/config.toml` model gpt-6-astra), so the gate never applied. Rule: on a D11-class diff (authored spec/rule text with a lead recommendation), run the lane from the branch before `gh pr create`; the PR then opens with the ledger row in it and the chair reads a lane-checked head once.
+
+- **R5 ledger rows append at END of `docs/specs/cross-review/receipts.md`, so any two PRs that each ran a lane conflict by construction — expect CONFLICTING the moment a sibling with a lane merges, and rebase with both rows kept**: 2026-09-08. #2466 (lane row) merged after #2467 was cut; when #2467 gained its own lane row it flipped from "no shared files" to CONFLICTING. `git rebase origin/main` resolved the two end-of-file additions itself (no conflict markers) but the branch still needed the rebase + `--force-with-lease` + a `%G?` re-check (both replayed commits stayed `G`). Diagnostic before assuming "docs-only, no shared files": `git diff --stat <merge-base> origin/main -- docs/specs/cross-review/receipts.md` — a non-empty stat means the next lane row on your branch will conflict. Structural fix worth a chair pick: per-PR ledger files or date-bucketed sections, so parallel lanes do not race one tail.
+
+- **A `worker 'gwN' crashed` on a docs-only PR's `coverage` job can be a SEGFAULT from the MCP server's own startup thread — read the faulthandler dump in the JOB log (`gh api repos/<o>/<r>/actions/jobs/<id>/logs | grep -n "Fatal Python error"`), not the FAILED line**: 2026-09-08, PR #2467 (two spec files). The FAILED line named `tests/monitoring/test_mcp_path_containment.py::…[_run_performance_audit-path]`; the dump 200 lines above it showed `Fatal Python error: Segmentation fault` with TWO threads both inside `ssl.load_default_certs` via `src/attune/mcp/version_check.py:47 check_for_updates`. Cause: `AttuneMCPServer.__init__` (server.py:233) starts a fresh daemon thread per construction that opens a live HTTPS request to PyPI; a per-test `server` fixture therefore spawns several concurrent threads in one xdist worker, and concurrent default-SSL-context creation raced the interpreter to death. Coverage itself was 96.45% ≥ 94%. Three rules: (1) a required check failing on a diff that cannot influence it is a signal about the BASE or the HARNESS, never the branch — compare main's runs first (`gh run list --branch main --workflow=tests.yml`), and note that rapid merges leave main with only CANCELLED runs, so "main is green" may be unverifiable at that moment; (2) `gh run view --log-failed` is empty while the run is in flight, but the completed JOB's log is already fetchable by job id — use it; (3) the named test is only the one running when the worker died; the dump's "Current thread" frame is the culprit. Fix shape: single-flight the version check (module lock + started flag, one thread per process) and honor an env opt-out that the test conftest sets so the suite never phones PyPI; add a regression test that constructing N servers starts at most one thread and zero under the opt-out. Pairs with the existing "`--cov-fail-under` failure presents as worker crashed" and "Windows xdist worker crashes often come from the harness" lessons — same family, new member: a production background network thread.
+
+- **A module that is digest-locked into a receipt chain cannot take even a one-line guard without re-locking every receipt — record a disposition instead; and refining a calibrated rule turns a per-path disposition list into two hazards at once (stale entries that mask future hits, and entries whose hand-written reason was wrong)**: 2026-09-08, #2310 (PR #2471). Adding `_check(isinstance(result, dict), …)` to `src/attune/elicitation/surface_native_evidence.py` failed TEN surface-parity tests with `stale/missing fixture_digest`: the probe module's digest is part of the stored receipts, so any edit invalidates the chain. Reverted; the C3 hit took a `.attune/class-dispositions.yaml` entry with the real reason (fixture-owned tool result in-process; a non-object fails the `_check` chain loudly by design). **Tell before editing:** `grep -rn "<module>" tests/unit/gates/test_surface_parity.py docs/specs/host-surface-parity/*.json` — a digest or fixture reference means the register's disposition mechanism is the intended path, not a code change. Second half: teaching R7b that a handler-guarded access is guarded made 16 of 45 dispositions match no raw hit. Dispositions are keyed `(rule_id, path)`, so a stale one silently masks the NEXT real hit in that file — prune them and add a staleness test (`test_no_stale_dispositions`), with the shipped-file floor lowered and both directions guarded. Then the Codex lane's "a re-raising handler contains nothing" narrowed the rule and THREE pruned sites came back as raw hits — reading them showed each handler logs then `raise RuntimeError(...) from e`: a conversion, not an escape, so the rule was narrowed to the BARE `raise` and the pruning stood. The original hand-written reason ("catch-all try absorbs") had been wrong for those three and nobody could tell until a mechanical rule replaced the prose. **Calibration receipt in the PR: 52 raw hits → 36, every removal read by hand, one evaluation-order false positive named.** Pairs with "teaching a scanner a new safe idiom can make its gate go blind" (same allowlist-ratchet family, opposite direction: here the refinement made the list too LARGE, and the staleness test is the missing ratchet).
+
+- **Never announce a head SHA (PR comment, message to a peer, starter line) before `git ls-remote` reads it back — and a bare `--force-with-lease` needs a LOCAL tracking ref, or it fails "stale info" on a branch you pushed with a swallowed `-u`**: 2026-09-08, #2470 after its rebase. The chain was `git push --force-with-lease … | grep -E "forced|error"` → `gh pr comment … "New head d885a1289"`. The push was REFUSED (`! [rejected] … (stale info)`), the grep hid the reason, the chain continued because a pipeline's exit is `grep`'s, and the comment named a head that was not on the remote — Patrick saw "a comment and a conflict" for the minute it took to notice. Two causes: (1) the earlier `git push -u` had its output swallowed by a bad grep option, so `origin/<branch>` never existed locally, and a valueless `--force-with-lease` compares against that missing tracking ref; (2) the announcement was ordered before the read-back. Rules: (a) pin the lease to the SHA you verified on the remote — `--force-with-lease=<branch>:<remote-sha>` — never the bare form after any push whose output you did not read; (b) `R=$(git ls-remote origin <branch>); [ "$R" = "$(git rev-parse HEAD)" ] || exit 1` BEFORE any comment/message/starter edit that names the head; (c) never filter a state-changing git command's output through `grep` in a `&&`/`;` chain — read it whole, or `set -o pipefail`. Pairs with the existing "pipeline exit code is the last command's" and "never suppress stderr on a state-changing git command" lessons; this is the read-back half.
+
+- **A LaunchAgent plist sitting in `~/Library/LaunchAgents/` is NOT a
+  running job — three releases carried the same US-4 incomplete-snapshot
+  warning because the daily reach capture had never been bootstrapped,
+  and the warning read as "known" instead of "unowned"**: 2026-09-08,
+  cutting 16.3.0. `scripts/launchd/com.smartaimemory.attune.reach-snapshot.plist`
+  had been copied to `~/Library/LaunchAgents/` at some point, so every
+  check that asked "is the daily snapshot set up?" by looking for the
+  FILE said yes. The job was never registered:
+  `launchctl print gui/$UID/com.smartaimemory.attune.reach-snapshot`
+  answered `Could not find service ... in domain for user gui: 501`, and
+  `launchctl list | grep` returned nothing. Consequence: US-4's 24-72h
+  BEFORE-snapshot window — which the daily capture exists to satisfy BY
+  CONSTRUCTION — was unsatisfied at 16.2.1 (09-03 snapshot incomplete),
+  at 16.3.0 (09-08 incomplete on the first attempt), and the last
+  COMPLETE snapshot before this session was 2026-08-24. Each release
+  attached the incomplete-receipt warning verbatim and proceeded, which
+  is correct per US-4 — but nobody traced the recurring warning to a
+  root cause, because the warning is designed to be survivable.
+  **Two durable rules.** (1) For launchd, `ls ~/Library/LaunchAgents/`
+  proves NOTHING; the load check is `launchctl print gui/$UID/<label>`
+  (or `launchctl list | grep <label>`), and the load action is
+  `launchctl bootstrap gui/$UID ~/Library/LaunchAgents/<file>.plist`
+  (`bootout` to disarm). This plist's OWN header comment said "TEMPLATE
+  — install manually after a proven manual run" and named both commands;
+  reading the artifact you are diagnosing would have closed it in
+  seconds. (2) **A warning that fires every time and is always waived is
+  an unowned root cause wearing the grammar of a known limitation.**
+  When the same warning appears at three consecutive releases, the
+  question is not "attach it again?" but "what was supposed to prevent
+  it, and is that thing running?" Pairs with the existing
+  "`reach_snapshot.py` EXITS 0 on rate-limit" lesson (same subsystem,
+  different failure surface: that one is a soft-fail exit code, this one
+  is a scheduler that was never armed) and with the "same-day 5/5
+  snapshot satisfies the AFTER window, not the next release's BEFORE
+  window" lesson, which is what makes the daily cadence load-bearing
+  rather than optional.
+
+- **When a helper WRITES a record that a repo gate VALIDATES, the
+  helper's default output must satisfy that gate — otherwise every
+  correct use costs a hand-edit, and the failure lands on the person
+  doing everything right**: 2026-09-08, appending the R5 cross-review
+  ledger row for a clean lane. `attune.roundtable.review.ledger_row()`
+  emits the disposition `not-triaged` for a run with zero findings; the
+  repo's own pre-commit hook (`check-ledger-row-gates` ->
+  `tests/unit/scripts/test_ledger_precision.py::
+  test_real_ledger_has_no_new_unclassified_review_rows`) rejects any row
+  whose disposition the precision tally cannot read — it requires one of
+  `clean` / `real` / `N real` / `dismissed|noise|rejected`. So the
+  module's own output is unmergeable by construction: `git commit`
+  failed on a row I had just generated with the sanctioned API, and the
+  fix was to rewrite the disposition by hand to `clean — <summary>`.
+  Nothing was broken in either component; they simply disagreed, and the
+  disagreement is invisible until you use the helper on the one case it
+  gets wrong (a 0-finding lane — which is the COMMON case for a clean
+  release diff). **Diagnostic shape: when a pre-commit gate fails on
+  content you did not hand-write, suspect the generator, not your
+  edit.** **Fix (retro 2026-09-08 item 3, chair-ruled do-now, deferred
+  to a post-release branch): `ledger_row()` emits `clean — <manifest
+  summary>` when `findings == 0`, keeping `not-triaged` only for rows
+  that actually carry findings awaiting triage.** Generalizes: any
+  emitter/validator pair in the same repo should have a test that feeds
+  the emitter's output straight into the validator — the cheapest
+  possible round-trip, and it did not exist here.
+
+- **A per-session counter whose append step lives inside a re-runnable
+  skill double-counts the moment that skill runs twice in one session —
+  ask before the second run, not after**: 2026-09-08, during the G5
+  Socratic-calibration pilot (week 09-08 -> 09-15). The chair asked for
+  a `/retro` mid-session, while a release PR's CI was running. The retro
+  skill's "Calibration counts" step appends one JSON line to
+  `~/.attune/calibration/session_counts.jsonl` per invocation, and
+  nothing in the script or the file dedupes by session — the schema
+  carries `ts`, `host`, `project` and the four counts, with no session
+  id. A mid-session retro plus the close-out retro would therefore have
+  written TWO rows for ONE session, and the pilot's readout divides by
+  session (correction rate = corrected/inferred, ceremony rate =
+  confirmed_untouched/asked), so a split session skews both rates and
+  the week's N. Surfaced as a `pushback` before running the skill; the
+  chair picked "retro now, count once at close". **Two takeaways.** (1)
+  **The probe is cheap and specific: read the append path for a dedupe
+  key before invoking a skill that writes measurement data twice.** Here
+  it was one `grep` over `~/.attune/bin/calibration_counts.py` plus
+  `wc -l` on the JSONL (1 row at the time — so the double-count would
+  have been 50% of the corpus). (2) For any read-only measurement pilot,
+  the count belongs at the SESSION BOUNDARY, not at the skill boundary —
+  the two coincide only when the skill runs exactly once. If mid-session
+  retros become common, the durable fix is a session id in the row plus
+  last-write-wins per session, not a convention to remember.
+
+- **A repo script that shells out to `pytest --collect-only` reports a
+  FALSE failure under the wrong interpreter, and piping it to `tail`
+  destroys the exit code that would have contradicted it**: 2026-09-08,
+  16.3.0 release prep. `python scripts/check_badge_freshness.py` (the
+  pyenv 3.10 shim) reported `tests badge OVER-CLAIMS: floor 25,000 >
+  actual collected 3,449` and printed a remediation prompt naming three
+  fixes. All of it was fiction: under that interpreter most test deps
+  are absent, collection dies early, and 3,449 is what survived. The
+  same script under `.venv/bin/python` printed `Badge freshness OK.`
+  The tell that something was wrong with the MEASUREMENT rather than
+  the README: the number was off by ~7x, not by a plausible drift
+  margin — a floor that "went stale" drifts by hundreds, not by
+  twenty-one thousand. **Second half, and the reason the false alarm
+  was not caught instantly: `cmd 2>&1 | tail -3` makes `$?` the exit
+  status of `tail`, which is always 0.** I printed `badge_exit=$?`
+  after exactly that pipeline and got an empty/zero value that told me
+  nothing — the diagnostic I added to check the claim was itself
+  neutralized by the pipe. Use `${PIPESTATUS[0]}` (bash) /
+  `${pipestatus[1]}` (zsh), or drop the pipe, whenever the exit code is
+  the thing you are reading. **Rules:** (1) run repo scripts with the
+  worktree's `.venv/bin/python`, never the bare `python` shim — this is
+  the write-side twin of the existing editable-install MAPPING lesson,
+  now on the SCRIPT side rather than the import side; (2) a
+  collection-count comparison must refuse to compare when collection
+  errored or the count falls under a sanity floor, and should print the
+  interpreter it used (queued as a fix, retro 2026-09-08 item 5); (3)
+  when a script's verdict is surprising, re-run it under the known-good
+  interpreter BEFORE acting on the remediation it suggests — the fix it
+  names (here: "bump the README tests floor") would have written a
+  wrong number into a tracked file.
+
+- **For any tool that REWRITES a file, the idempotence property
+  (`f(f(x)) == f(x)`) and a run against the REAL repo artifact each find
+  a different class of bug — neither substitutes for the other, and both
+  are one line**: 2026-09-08, building `scripts/consolidate_changelog.py`
+  (PR #2474). Two defects, found by two different cheap checks, neither
+  of which was the test suite's main body.
+  **(1) The idempotence test caught silent mutation of a CLEAN file.**
+  When the target section was the LAST one in the file, the rebuild
+  appended a trailing blank line, so running the tool on an
+  already-consolidated changelog CHANGED it — and `--check` would report
+  "needs consolidation" forever, on a file that was already correct. The
+  fixture-based tests all passed, because every fixture happened to have
+  a following section. `assert f(f(x)) == f(x)` is the whole test, and
+  it belongs on every rewriter (formatter, codemod, projector,
+  normalizer) precisely because the end-of-input case is the one
+  fixtures forget.
+  **(2) Running it on the repo's OWN changelog caught a misleading
+  message.** After adding this PR's changelog entry, `--check` printed
+  `has duplicate ### headers` — but the section's headers were each
+  unique; only their ORDER was non-canonical. The message named one
+  cause for a check with several, which sends the next reader looking
+  for a duplicate that does not exist. Fixed to name both. **A
+  check-mode message must describe the PREDICATE that failed, not the
+  most common reason it fails.**
+  Generalizes past changelogs: a rewriting tool has three cheap
+  properties worth asserting before any fixture work — idempotence,
+  no-op on already-correct input (the stronger form of the same), and
+  content conservation (nothing in, nothing lost). This session's third
+  defect, deletion of headings inside code fences, is the conservation
+  property failing; see [[markdown-rewriter-must-track-code-fences]].
+  Companion to [[helper-default-rejected-by-its-own-gate]], which is the
+  same discipline applied to an emitter/validator pair: feed the
+  emitter's output straight into the validator.
+
+- **A tool that rewrites markdown by line-prefix matching MUST track code
+  fences — and the domain that makes the tool useful is exactly the
+  domain whose syntax its own inputs quote**: 2026-09-08, the new
+  `scripts/consolidate_changelog.py` (retro fix, PR #2474). It merged
+  duplicate `### Added` / `### Fixed` headers inside one changelog
+  section by testing `line.startswith("### ")`. A cross-review lane
+  (codex, medium) flagged that headings inside fenced code blocks would
+  be read as category boundaries. **Confirmed by probe before accepting,
+  and the probe is what made it decidable**: the INDENTED form
+  (`  ### Added` inside a list item's fence) was safe purely by accident,
+  because the prefix test requires column zero — so a casual check would
+  have "refuted" the finding. The UNINDENTED form corrupted: the
+  `### Added` line inside the fence was treated as a header, merged into
+  the section's real Added block, and — because the header already
+  existed — **silently DELETED from inside its fence**. Not mangled
+  output you would notice in review; a line that simply stops existing,
+  in a script whose job is to WRITE `CHANGELOG.md`.
+  **The reachability argument is the durable half.** This is not an
+  exotic input: the changelog entry for a *changelog gate* naturally
+  shows an example entry, and the entry for a markdown tool naturally
+  shows markdown. **A structural rewriter's most likely adversarial
+  input is documentation OF ITSELF.** Ask, for any line-prefix parser:
+  what does a document that describes this tool look like, and does the
+  parser survive it?
+  **Fix shape**: compute a mask once (`_heading_mask`) marking lines
+  outside fences, and gate EVERY structural test on it — both the
+  section-bounds scan (`## [x]`) and the category split (`### x`), since
+  a fenced release heading truncates the section instead of deleting a
+  line. Toggle on `line.lstrip().startswith("```")` so indented fences
+  count too, and let an unbalanced fence mask the remainder: that fails
+  safe, because a malformed document is one you should refuse to rewrite
+  rather than rewrite confidently. Four fixtures pinned (the reported
+  case, a fenced `## [x]`, an indented fence, an unbalanced fence) per
+  the standing rule that the discriminator is the most fragile part of a
+  rule and the easiest thing for a later simplification to drop.
+
+- **When a probe disproves one clause of an enumerated characterization
+  list, re-audit EVERY clause in that list against the same evidence —
+  the list had one authorship event and therefore one verification
+  level, so the defect is a property of the sentence, not of the clause
+  that happened to get tested**: 2026-09-08, host-surface-parity Task
+  2's validation check 6. The check demanded a characterization receipt
+  pinning six properties of Claude Code's `AskUserQuestion` in a single
+  sentence: header max 12; emitted-text answer keys; comma-space-
+  delimited atoms; JSON-string quoting for delimiter- or quote-bearing
+  labels; canonical re-encoding; and freeform in a separate global
+  response. A live trial disproved clauses 3 and 4, and the incoming
+  handoff named exactly those two. Reading both probe docs against the
+  installed facet showed clause 6 had the SAME shape: the profile
+  declares `freeform='separate_response'`, and both probes say in terms
+  that free text through "Other" was never exercised — 2026-09-07,
+  *"Free text through 'Other' was not exercised"*; 2026-09-08, *"Free
+  text through 'Other' remains unexercised here."* Requiring a receipt
+  to PIN it would have reproduced the disproved-measurement defect one
+  clause over, inside the very amendment fixing the other two. Clauses
+  1, 2 and 5 re-probed TRUE (`max_header_chars=12`,
+  `response_correlation='emitted_text'`, `canonical_reencode=True`) and
+  were deliberately left alone — the audit is per-clause, not a blanket
+  rewrite, and a correct clause is evidence the list is worth keeping.
+  **Diagnostic: finding any member of an enumerated "pins the
+  following: a; b; c; d" list false relocates the question from "is d
+  true?" to "which of a–f was ever measured?"** Corollary that also
+  fired here: a version claim can be stale in the UNEXPECTED direction
+  — the same task said "Raise the attune-forms floor to 0.14.0" while
+  `pyproject.toml` had pinned `>=0.15.0` since #2465, so the
+  instruction was a LOWERING; read the current value before classifying
+  a version correction as a raise. Pairs with the core "claims carry
+  their basis" lesson — this is its list-shaped case, where the
+  unverified clause is camouflaged by verified neighbors.
+
+- **A handoff that correctly names one blocker can be silently wrong
+  about whether the task is runnable at all — read the task's own
+  `<dependencies>` and existence-probe each dependency's declared
+  `files-to-create` BEFORE accepting the handoff's proposed contract**:
+  2026-09-08, host-surface-parity Task 2. The incoming cross-repo
+  handoff was accurate and well-evidenced about what it covered: the
+  STOP precondition passes, two of Task 2's validation checks assert
+  host behavior a live trial measured false, amend before implementing.
+  All true, all reproduced. But its "Contract to declare in turn one"
+  read *"the characterization check amended, then the tier-0 consumer
+  landed"* — and Task 2 declares `<dependencies><dep>10</dep>`, Task 10
+  declares `<dep>4</dep>`, and `tasks.md`'s own header still said "Full
+  Task 1B remains incomplete". One `ls src/attune/surfaces/` — the
+  directory Task 10's own `files-to-create` names — returned nothing.
+  Task 10 is unbuilt, so Task 2 could not have been implemented no
+  matter how the amendment read. **The probe is nearly free and the spec
+  spells it out for you: every task block already lists the files its
+  dependencies must have created, so "is dependency N done?" is an `ls`,
+  not an investigation.** The failure mode is specific to handoffs
+  because the author was deep in ONE question (is the spec text true?)
+  and answered it well; the dependency graph was never their question,
+  so their contract inherits an assumption nobody checked — and it
+  arrives wearing the grammar of the parts they did verify. Pairs with
+  contract principle 14 ("a handoff is context, not authority"), which
+  prescribes verifying against Git state and tests — both of which were
+  clean and green here, because a missing directory is invisible to
+  both; and with the "spec-named work-scope drifts from code reality"
+  lesson (same family — that one is about a phase's SCOPE, this one is
+  about a task's ELIGIBILITY).
+
+- **A floating upper bound plus a CI job that resolves dependencies
+  fresh instead of from the lockfile lets an upstream PUBLISH turn main
+  red with no commit — and "check main's last run" then answers GREEN
+  and points you at the innocent PR**: 2026-09-08/09. A two-file
+  markdown PR under `docs/specs/**` failed 12 required checks including
+  `coverage` and `test-matrix-complete`. The core lesson says a required
+  check failing on a diff that cannot affect it means MAIN is red, so
+  check main first — I did, and main's last `tests.yml` run was
+  **success**. **That answer was worthless and would have sent me to
+  debug the docs PR, because main's last run predated the trigger, and
+  the trigger was not a commit.** `pyproject.toml` floated
+  `attune-forms>=0.15.0,<1.0`, and the CI test job installs
+  `attune-ai==16.3.0` resolving fresh, so it takes whatever satisfies
+  the range AT JOB TIME. attune-forms 0.16.0 published 22:19 UTC and
+  0.17.0 at 23:43 UTC; main's last run was 03:57 UTC that morning; the
+  PR's run at 00:27 UTC installed 0.17.0 and went red. Main had been
+  broken for two hours and still looked green because nobody had pushed.
+  **Corrected diagnostic: main's last run is evidence only if it ran
+  AFTER the suspected trigger — compare its timestamp against the
+  dependency's upload time (`curl -s https://pypi.org/pypi/<pkg>/json`,
+  `releases[v][0].upload_time_iso_8601`) before concluding anything.**
+  Second trap, worse than the first: **`uv.lock` pinned the good version
+  the entire time and was completely irrelevant, because the job that
+  broke never consulted it.** A correct lockfile is not protection; only
+  a job that READS it is — grep what the CI install step actually runs
+  before treating a lock as a guarantee.
+  **The isolating probe, an A/B on version alone:** build a directory
+  holding ONLY a symlink to the package under test plus its
+  `.dist-info` (so `importlib.metadata.version` agrees) and put THAT on
+  `PYTHONPATH`. Do NOT put a whole foreign `site-packages` on the path —
+  it drags in binary wheels built for another Python and dies at
+  `ModuleNotFoundError: No module named 'pydantic_core._pydantic_core'`
+  before your test runs. With the narrow shadow, one unchanged tree gave
+  238 passed on 0.15.0 and 10 failed on 0.17.0 with the failing names
+  matching CI, converting "probably the dependency" into a receipt in
+  under a minute.
+  **This AMENDS the core lesson** "A required check failing on a PR that
+  cannot possibly affect it means MAIN is red — check main's last run
+  BEFORE debugging the PR": that lesson is right about where to look and
+  wrong about what a green answer means. Rider on the fix: 0.15.0 was
+  verified green and 0.17.0 verified red, but 0.16.0 was never tested,
+  so the ceiling went to `<0.16` — pin to the line you MEASURED, not the
+  one you infer is fine.
+
+- **"Feature X isn't working" for anything delivered by a plugin is a
+  VERSION question before it is a bug question — and
+  `git merge-base --is-ancestor <feature-sha> <tag>` is the decisive
+  probe, not dates or CHANGELOG prose**: 2026-09-09. Patrick reported
+  prompt refinement not working. Refinement had merged (#2454), its
+  tests were green, and the MCP tool was present in the session's tool
+  list — every signal said "shipped", which is exactly what makes this
+  worth debugging in the wrong direction for an hour. The mechanism is
+  not the tool: it is a UserPromptSubmit hook,
+  `plugin/hooks/prompt_refinement.py` plus a `hooks.json` entry. The
+  installed plugin was **16.2.1** and its cache contained no such file.
+  **Four-step chain, each link a probe rather than an inference:**
+  (1) `claude plugin list` for the INSTALLED version — not the repo's,
+  not PyPI's; (2) `git show --stat <feature-PR>` to learn which files
+  actually carry the mechanism, since a feature's tool, docs and hook
+  can ship in different places and only one of them is load-bearing;
+  (3) `git merge-base --is-ancestor <sha> v<version>` to bind the
+  feature to a RELEASE — a PR merging on the 7th says nothing about
+  whether the release cut on the 8th contains it, and this is the step
+  most likely to be skipped in favour of reading a date; (4) `ls` the
+  newest cache version dir for the file from step 2, because the
+  update's own success message is a claim and the file on disk is the
+  receipt. Fix here was `claude plugin update <plugin>@<marketplace>`
+  (namespaced — see the existing lesson) taking 16.2.1 -> 16.3.0, then
+  re-checking that `prompt_refinement.py` was present under the NEW
+  version dir. **Corollary worth its own line:** an MCP tool being
+  listed in the session proves the SERVER exposes it, not that the
+  hook which calls it exists — a half-present feature looks identical
+  to a working one from the tool list alone. Builds on the existing
+  plugin-cache lessons (version-pinned dirs, namespaced update id,
+  "update is a no-op at an unchanged version"), which cover HOW to
+  update and verify; this one covers WHEN to suspect the version at
+  all, which is: immediately, before reading any of the feature's code.
+
+- **Before applying a lockfile-derived constraints file to an install
+  command, check whether that command ALREADY pins something — an
+  explicit pin plus a lock constraint is a hard conflict, and when the
+  explicit pin is a behavioral contract rather than a version
+  preference, "honoring the lock" silently changes behavior**:
+  2026-09-09, converting CI lanes to install from `uv.lock`. The
+  mechanical change is uniform — export the locked versions, pass them
+  as `pip install -c` — and it is tempting to sweep every lane at once.
+  The `lint` lane would have broken. It installs `black==24.10.0`,
+  matching `.pre-commit-config.yaml`'s `rev: 24.10.0`, which is the
+  repo's FORMATTING CONTRACT; `uv.lock` resolves black to `26.5.1` for
+  the dev extra, because the lock records what the dev extra resolves
+  to, not what the formatter must be. Constraining that line would
+  either fail the install outright on the version conflict or, if the
+  pin had been dropped in favour of the lock, format with a different
+  black and fail the gate on a diff containing no Python at all — a
+  determinism change producing a nondeterministic-looking failure.
+  **Two versions of the same tool in one repo is not drift; it can be
+  two different questions** ("what must format this code" vs "what does
+  the dev extra resolve to"), and a lockfile answers only the second.
+  Resolution used: constrain the PACKAGE install, pin the TOOLS
+  separately in the same step, and move the previously-unpinned ones
+  (`ruff`, `bandit`) to the lock's versions — verified equal to
+  `uv.lock` by programmatic comparison, not by eye — so a new release
+  still cannot change gate results without a commit, while the
+  formatter's contract is untouched. **Cheap pre-flight for any
+  constraints-file rollout: `grep -nE "==|~=" ` the install commands
+  you are about to constrain; every hit is a decision, not a
+  formality.** Rider from the same change: two of the lanes I had
+  listed as "still resolving fresh" install NOTHING (a stdlib script,
+  and a gate with no install step), which is the enumerated-list
+  failure of [[disproved-clause-audit-list-neighbors]] recurring within
+  the same session — the list came from `required_status_checks`, whose
+  membership answers "does this gate merges", never "does this install
+  dependencies".
