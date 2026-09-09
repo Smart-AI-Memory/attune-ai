@@ -135,6 +135,13 @@ _BASELINE: dict[str, int] = {
     "src/attune/curator/sources/specs.py": 2,
     "src/attune/diagnosis/priors.py": 1,
     "src/attune/diagnosis/triage.py": 1,
+    # host_question_adapter.py seeded at 1 (Task 2, host-surface-parity):
+    # an installed HostQuestionAdapter is third-party presentation code
+    # invoked across the one trusted non-MCP boundary. ANY exception it
+    # raises is that route's render_failed — it must not escape into the
+    # caller's arm, and it must not fall through to another surface. The
+    # site logs with logger.exception before converting.
+    "src/attune/elicitation/host_question_adapter.py": 1,
     "src/attune/handoff/memory_link.py": 5,
     "src/attune/help/feedback.py": 1,
     "src/attune/help/polish.py": 1,
