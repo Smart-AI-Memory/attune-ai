@@ -18,8 +18,13 @@ milestone only. Each other task retains its own execution conditions;
 there is no release, API-spend, or automatic-merge authorization.
 
 D8's existing gos for Tasks 2, 4, 10 and 12 remain unchanged. Task 12
-is independently eligible after Task 0. The remaining critical path is
-`1B completion → 4 → 10 → 2`. The bounded Codex milestone does not by
+is independently eligible after Task 0. Task 2 is NEXT and has no
+remaining prerequisite (D20, chair 2026-09-09): the audit found no code
+coupling to Task 10, and Task 4 emits no code. Tasks 1B increment 4 and 4
+proceed on their own schedules; Task 10 is DEFERRED, not cancelled
+(D20 ruling 4) and keeps its D8 go. Task 2's receipt may not report
+the host-native route as firing while nothing writes the static
+capability cell — see D20 ruling 3. The bounded Codex milestone does not by
 itself complete 1B or satisfy those downstream dependencies. AF-2 is
 released: it shipped in attune-forms 0.17.0, superseding D12's 0.15.0
 target (D18), and Task 2 still requires separate implementation
@@ -464,7 +469,6 @@ consumes only the verified released artifact.
 ```xml
 <task id="2" name="host-tier-zero-consumer">
   <dependencies>
-    <dep>10</dep>
   </dependencies>
   <objective>
     STOP PRECONDITION — human/agent-enforced because the current spec

@@ -1153,6 +1153,70 @@ or an intended not-yet-implemented state was not established). It
 changes no order without its own ruling, on language that has been
 checked.
 
+## D20 — Task 2 executes next; Task 10 is not its prerequisite (RULED 2026-09-09, chair)
+
+Chair, verbatim: "rule task 2: do task 2 next, skip 10".
+
+D18 and D19 both state in present tense that Task 2 is blocked on its
+declared dependency. This ruling supersedes that sequencing. It does
+not reopen any other part of either entry.
+
+### Basis, re-verified against the tree for this entry
+
+A 12-agent dependency audit on 2026-09-09 found the Task 2 to Task 10
+dependency is spec sequencing, not code coupling; all six adversarial
+refuters agreed. Each load-bearing fact was re-measured before being
+written here:
+
+| Claim | Probe | Result |
+|---|---|---|
+| No Task 10 artifact exists | `ls src/attune/surfaces` | absent |
+| Nothing references its API | `grep -rn CapabilityProvider src/ tests/ scripts/` | 0 hits |
+| Task 2's four modified source files name no Task 10 artifact | grep for `attune.surfaces`, `CapabilityProvider`, `capability_matrix` | 0 hits |
+| The only Task-10-flavoured string in them | `surface_policy.py:508` | the word "doctor", in a docstring |
+| What Task 2 actually needs already exists | `surface_policy.py:141` | `class PresentationChallenge` |
+| Task 4 produces no code | its own objective | "No production change unless either receipt fails" |
+
+### Ruled
+
+1. **Task 2 is next.** Its `dependencies` block no longer names Task
+   10, and `tasks.md`'s critical path drops Task 10 from Task 2's
+   prerequisites.
+2. **Task 4 and Task 1B increment 4 are not prerequisites either.**
+   Task 4 emits prose plus `r4-receipts.json`, which `grep -rn
+   "r4-receipts" src tests scripts .github` shows is consumed by
+   nothing. They proceed on their own schedules.
+3. **Task 2's receipt must NOT claim the host-native route is live.**
+   `CapabilitySnapshot.supports()` consults `host_static` then
+   `cached_static` for routes outside the negotiated channel
+   (`surface_policy.py:522`), and **nothing writes either**: the field
+   is declared at `:513` and read at `:522`, and those are its only two
+   references in `src/`. The runtime builds the snapshot with the
+   negotiated tuple alone (`surface_runtime.py:116-120`). So a
+   host-native route is selectable only once some provider writes that
+   cell. Task 2 may land the consumer; it may not report the route as
+   firing. Registry state at this ruling: two renderer targets carry
+   `surface: host-native` and one receipt exists for the
+   compatibility target.
+
+4. **Task 10 is DEFERRED, not cancelled** (chair, same session:
+   "defer 10"). It leaves Task 2's critical path and keeps its D8
+   execution go; it is not descoped, and R9 stands. This matters
+   precisely because of ruling 3: Task 10's doctor remains the only
+   thing designed to write the static capability cell, so deferral —
+   unlike cancellation — leaves a named owner for closing that gap.
+   Until it lands, or a narrower substitute writes `host_static`, the
+   host-native route stays admissible-but-latent and no receipt may
+   report it firing.
+
+### Not ruled here
+
+**When Task 10 executes.** Deferral fixes that it still happens; it
+does not schedule it.
+
+No release, API-spend or automatic-merge authorization is granted or
+changed.
+
 ## Open decisions
 
 - None. Every proposed decision in this spec is ruled.
