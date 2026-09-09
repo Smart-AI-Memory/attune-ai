@@ -28283,3 +28283,83 @@ form's clothes.
   `gh api .../branches/main/protection --jq
   '.required_status_checks.checks[].context'` and confirming each is
   `pass` — 13/13 here. Absent and skipped both read as "not failing".
+
+- **A declared dependency can be WRONG as a blocker and still RIGHT
+  about a consequence — refuting the coupling does not refute the
+  capability gap, and a ruling that removes the prerequisite must name
+  what the removal does not unblock**: 2026-09-09, D20 on
+  host-surface-parity. Task 2 declared `dep 10`, and a 12-agent audit
+  (six adversarial refuters, unanimous) established there was no code
+  coupling whatever: `src/attune/surfaces/` absent, `grep -rn
+  CapabilityProvider src/ tests/ scripts/` zero hits, and the only
+  Task-10-flavoured string in Task 2's four modified source files being
+  the word "doctor" inside a docstring. Every one of those holds. The
+  tempting conclusion — "therefore Task 10 does not matter to Task 2" —
+  does not. Task 10's doctor is the only thing designed to write the
+  static capability cell that `CapabilitySnapshot.supports()` consults
+  for non-negotiated routes (`surface_policy.py:522`; the field is
+  declared at `:513` and read at `:522`, its only two references in
+  `src/`, and the runtime builds the snapshot from the negotiated tuple
+  alone at `surface_runtime.py:116-120`). So Task 2 can land its
+  consumer and the host-native route still cannot be SELECTED. **The
+  dependency was mis-typed, not imaginary: it encoded a real
+  capability gap in the grammar of a build-order constraint, and
+  deleting the constraint leaves the gap untouched.** Practice that
+  follows: when a ruling removes a prerequisite, ask what that
+  prerequisite was incidentally the only supplier of, and write that
+  into the ruling as a bound on what the unblocked task may CLAIM —
+  D20 ruling 3 says Task 2 may land the consumer but its receipt may
+  not report the route as firing. Without that clause the next session
+  reads "unblocked" and ships a receipt asserting a live route.
+  Rider on chair words: "do task 2 next, skip 10" is decisive about
+  ordering and silent about whether Task 10 is DEFERRED or CANCELLED —
+  materially different, since cancellation strands the capability
+  permanently. Record the ruling that was given and mark the second
+  question explicitly unruled in the same entry, rather than resolving
+  it silently or bouncing the whole ruling back for a clarification it
+  did not need.
+
+- **An increment cut derived from a task's CHECK TEXT instead of from
+  the code path it runs through produces boundaries that cannot be made
+  non-vacuous — read the selection/dispatch function first, and cut on
+  where a claim becomes REACHABLE, not on where the spec groups its
+  assertions**: 2026-09-09, cutting host-surface-parity Task 2 (14
+  files, 11 checks) into increments. I grouped checks 2/3/5 as
+  "increment 2 — pure admissibility and PORTABLE fallback, policy only,
+  no adapter" and told the chair it was independent of the adapter
+  work. Wrong twice, each time discovered only by reading further:
+  (1) FIRST REVISION. No test in the repo had ever populated
+  `host_static`, so increment 2's tests — written from the existing
+  `CapabilitySnapshot(...)` pattern, negotiated-channel only — would
+  select PORTABLE via `unsupported_capability` and pass with none of
+  the admissibility logic existing. I "fixed" the cut by moving
+  `host_static` fixtures into increment 2.
+  (2) THAT FIX WAS ALSO WRONG, and reading the selection loop settled
+  it. The ladder in `surface_policy.py:574-586` is
+  `accessibility_constraint -> unsupported_capability ->
+  missing_adapter -> missing_evidence -> selected`, and **there is no
+  admissibility step in it at all** — `host_question_admissibility` is
+  never consulted there; Task 2 has to ADD that branch. Worse,
+  `deliverable_routes` is built as
+  `frozenset({NATIVE_ROUTE}) if native else frozenset()`
+  (`surface_runtime.py:141`), so a `host-native:*` route can never be
+  in it. Populating `host_static` therefore only moves the rejection
+  from `unsupported_capability` to `missing_adapter` — one gate later,
+  still not admissibility. **The claim was unreachable without the
+  adapter, so the 2/3 boundary could not exist where I drew it.**
+  The tell I ignored both times: I was reading the task's `<check>`
+  prose, which groups assertions by SUBJECT MATTER, and inferring an
+  execution order from it. Checks are grouped for review, not for
+  reachability. **Cut where a claim first becomes reachable in the real
+  dispatch path** — which requires reading that function end to end
+  BEFORE proposing any increments, not after the chair has seen them.
+  The constructive re-cut, once the path was read: check 2's first
+  clause ("a direct defensive call outside the active profile returns
+  None from `form_to_host_question`") is a LIBRARY call needing no
+  routing at all, so it separates cleanly; everything touching the
+  policy, `host_static`, `deliverable_routes` and the adapter is one
+  claim — "the host route becomes reachable and answers round-trip" —
+  that cannot honestly be split.
+  Pairs with the Task 1B cut-at-claim-boundaries lesson, which is
+  correct about the PRINCIPLE and silent about how you find the
+  boundary: you find it in the dispatch code, not in the check list.
