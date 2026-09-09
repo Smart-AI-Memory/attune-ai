@@ -57,10 +57,43 @@ case "$HEAD" in
         ;;
 esac
 
+# CLAIM FRESHNESS. The head-SHA gate above answers "did the content
+# change since the chair read it". It cannot answer "is what this
+# content ASSERTS still true" — a sibling PR touching no file in common
+# can invalidate a claim, and the merge order is decided after both were
+# written. D18 landed 19 minutes after #2476 falsified a version bound it
+# stated in present tense; nothing conflicted, rebased or went red.
+if git rev-parse --verify --quiet "$AUTHORIZED_SHA^{commit}" >/dev/null; then
+    git fetch origin main --quiet 2>/dev/null || true
+    MB=$(git merge-base "$AUTHORIZED_SHA" origin/main 2>/dev/null || true)
+    if [ -n "$MB" ]; then
+        LANDED=$(git log --oneline "$MB..origin/main" 2>/dev/null)
+        if [ -n "$LANDED" ]; then
+            echo "[land_pr] landed on main since this branch forked:"
+            printf '%s\n' "$LANDED" | sed 's/^/    /'
+            echo "[land_pr] ^ did any of these change a fact this PR ASSERTS"
+            echo "          (a version bound, a count, a status, \"X is not implemented\")?"
+            echo "          Ctrl-C now if so; the head-SHA gate does not cover it."
+        fi
+    fi
+else
+    echo "[land_pr] note: $AUTHORIZED_SHA not resolvable locally —" >&2
+    echo "          claim-freshness window skipped, verify by hand." >&2
+fi
+
 echo "[land_pr] all checks green at authorized head — merging…"
 # Local post-merge steps (branch delete, checkout refresh) often fail
-# from a worktree even when the REMOTE merge succeeded; verify below.
-gh pr merge "$PR" --squash --delete-branch || true
+# from a worktree even when the REMOTE merge succeeded; the known
+# worktree case is reported calmly, anything else is surfaced.
+MERGE_ERR=$(gh pr merge "$PR" --squash --delete-branch 2>&1 >/dev/null) || true
+if [ -n "$MERGE_ERR" ]; then
+    case "$MERGE_ERR" in
+        *"already used by worktree"*|*"failed to run git"*)
+            echo "[land_pr] local branch cleanup skipped (running from a worktree); remote merge unaffected" ;;
+        *)
+            printf '%s\n' "$MERGE_ERR" >&2 ;;
+    esac
+fi
 
 STATE=$(gh pr view "$PR" --json state --jq '.state')
 if [ "$STATE" != "MERGED" ]; then
