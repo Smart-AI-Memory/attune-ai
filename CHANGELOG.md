@@ -19,6 +19,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The `attune-forms` dependency is pinned to the minor this repo has
+  actually consumed: `>=0.17.0,<0.18`, up from the `<0.16` hotfix
+  ceiling installed when an upstream 0.17.0 release turned `main` red
+  with no commit involved. 0.17.0 is consumed as of this change — the
+  surface-parity receipts were regenerated against it with
+  `python scripts/project_surface_runtime.py --write`, refreshing the
+  `implementation_digest` values that are computed over the installed
+  attune-forms renderers. Measured: 0.17.0 against the stale registry
+  failed 12 parity tests; after regeneration, 275 passed. The ceiling
+  deliberately tracks the consumed minor rather than returning to
+  `<1.0` — a floating ceiling plus a fresh dependency resolve is what
+  caused the outage, and that hazard recurs at every unconsumed minor.
+  The regeneration refreshes digests only: pending obligations stay at
+  162 and `evidence_status` stays `incomplete`, so no parity claim is
+  implied.
+
+
 - `scripts/reach_snapshot.py --out` now defaults to the snapshots
   directory in the MAIN checkout rather than a path relative to the
   current one, so a snapshot taken from a git worktree is no longer
