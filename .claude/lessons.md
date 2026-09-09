@@ -28069,3 +28069,217 @@ form's clothes.
   the same session — the list came from `required_status_checks`, whose
   membership answers "does this gate merges", never "does this install
   dependencies".
+
+- **Two PRs that touch NO files in common can still invalidate each
+  other's CLAIMS — a ruling's facts bind to the tree at MERGE time, not
+  at authoring time, so re-read every factual assertion against
+  `origin/main` immediately before merging, not against the tree you
+  wrote it on**: 2026-09-09. D18 (PR #2475) ruled a dependency floor and
+  twice described the pin's upper bound as `<1.0`. PR #2476 — a
+  different file, `pyproject.toml`, zero overlap with D18's two
+  `docs/specs/` files — narrowed that ceiling to `<0.16` and merged at
+  **02:15:51Z**. D18 merged at **02:34:07Z**, nineteen minutes later,
+  asserting in present tense that "the locked consumer floor reads its
+  actual value, `>=0.15.0,<1.0`". It did not. The ruling landed already
+  stale, and the task text it governed still instructed an implementer
+  to "retain the existing exclusive 1.0 upper bound" — which, read
+  against the pin that actually existed, yields `>=0.17.0,<0.16`, an
+  empty specifier. **Every mechanism that would normally catch this was
+  silent by construction**: no merge conflict (disjoint files), a clean
+  rebase, green CI on both, and the chair's merge word correctly bound
+  to an unmoved head SHA. The SHA receipt answers "did the content
+  change since you read it" — never "is what this content ASSERTS still
+  true". I authored D18's text, then merged the pin first because it was
+  the outage fix, and never re-read the ruling against the tree the pin
+  had just created. **The cheap probe, run between the chair's word and
+  the merge: grep the ruling's own factual assertions and check each
+  against the current tree** — here one `grep -n 'attune-forms>=' pyproject.toml`
+  would have shown `<0.16` against a ruling that said `<1.0`. Generalizes
+  to any PR whose text ASSERTS something about state a sibling PR
+  CHANGES: version pins, counts, file inventories, "X is not
+  implemented", status lines, critical paths. **File-level non-overlap
+  is not claim-level independence**, and the ordering that matters is
+  merge order, which is decided after both were written. Pairs with the
+  existing sequential-arming rule (D13a), which prevents predicted FILE
+  conflicts and is blind to this class entirely.
+
+- **A CORRECTION has its own failure modes, distinct from the error it
+  fixes — verify each premise of the fix before writing it, because the
+  measured failure rate is high: 4 of 7 of my own framings did not
+  survive**: 2026-09-09, writing D19 to correct D18's stale version
+  bound. I ran one adversarial reader per premise, each instructed to
+  return `premise_holds=false` if the claim was wrong, OVERSTATED, or
+  already fixed. Four came back false — and none of them refuted the
+  underlying problem, which was real in every case. They refuted my
+  WORDING, and each failure is its own reusable class:
+  - **Wrong noun.** I wrote "the locked consumer FLOOR no longer
+    matches"; the floor matched exactly (0.15.0 == 0.15.0) and the
+    CEILING was wrong. A reader checking the ruling would have found it
+    false in under a minute — the precise failure the correction existed
+    to prevent, reproduced inside the correction.
+  - **Over-general quantifier.** "any route", "nothing in the tree" —
+    both had counterexamples (two route kinds short-circuit before the
+    checked branch). The conclusion held; the sentence did not.
+  - **Unsupported precedent.** I claimed "an established pattern for
+    correcting a ruled decision"; the verifier found the closest literal
+    precedent was the one that FAILED, and that 8 instances across 6
+    specs with no enforcer is a habit, not a pattern. A correction that
+    borrows authority it has not established is just a second unbacked
+    claim.
+  - **A decision smuggled inside a fix.** I recommended the bound become
+    `>=0.17.0,<1.0` as "the coherent end state". Naming a replacement
+    VALUE is a ruling, not a correction — and this particular value
+    would have restored the exact fresh-resolve exposure that caused the
+    outage, at every future unconsumed minor. **The honest correction
+    removes the false instruction and leaves the value to whoever holds
+    the authority**; the fixed text says what is not true and records the
+    hazard, nothing more.
+  Practices worth keeping: (1) run the premise check BEFORE writing, not
+  as review after — three of the four errors were in my framing of the
+  problem, so reviewing the draft would have inherited them; (2) instruct
+  the verifier to quote VERBATIM with line numbers, since the ruling
+  reproduces that text; (3) treat `premise_holds=false` as "fix the
+  wording", not "drop the item" — one verifier said so explicitly
+  ("do not let premise_holds=false suppress the edit"); (4) measure the
+  diff shape — 82 insertions / 0 deletions proves no ruled text was
+  rewritten, which is a checkable property rather than a promise.
+
+- **Two byte-identical files are evidence of a PROJECTION at least as
+  much as evidence of duplication — and in a repo whose stated
+  principle is "one source, projected, never hand-edited twins", the
+  projection reading is the likelier one; read the producing script
+  before calling it a defect**: 2026-09-09. I compared
+  `src/attune/elicitation/surface_runtime_registry.json` with
+  `docs/specs/host-surface-parity/parity-registry.json`, found 12 of 12
+  keys byte-identical, found no test naming the first, and reported a
+  principle-3 violation — "hand-edited twins with no guard" — as the
+  headline finding of a pushback that killed my own recommendation. It
+  was wrong. `scripts/project_surface_runtime.py` is 60 lines, names
+  the docs file as its source and both package files as projections,
+  and raises on drift in check mode. **The file named `project_*.py`
+  answers the question, and I never opened it.** Three compounding
+  reasons the mistake felt safe: (a) byte-identity is genuinely
+  ambiguous evidence, and I treated it as diagnostic; (b) I searched
+  `tests/` for a guard, which is where guards usually live but not
+  where this one lived, and read absence-of-test as absence-of-guard;
+  (c) the finding was exciting — it reframed a whole sequencing
+  recommendation — and excitement is when the cheap confirming probe
+  gets skipped. **Diagnostic order for suspected duplication: (1) grep
+  the repo for a script whose name contains `project`, `generate`,
+  `sync` or `mirror` and read it; (2) grep for the filename in
+  `scripts/` and `.github/`, not only `tests/`; (3) only then call it a
+  twin.** Bitter rider: this was the third confident claim of mine to
+  fail verification inside one hour — after "the locked consumer FLOOR
+  no longer matches" (the floor matched; the ceiling was wrong) and
+  ">=0.17.0,<1.0 is the coherent end state" (restoring `<1.0` recreates
+  the fresh-resolve exposure that reddened main). All three were
+  checkable in under a minute, and the machinery I had already built to
+  catch this class did catch it — verification agents, and reading the
+  source. **The lesson is not "check more"; it is that a finding which
+  REFRAMES something is the highest-risk moment to skip the check**,
+  because its payoff biases the judgment that decides whether to look.
+
+- **A projector's check mode is a drift guard only if something PULLS
+  it — and grepping `tests/` for the artifact's filename answers
+  "is there a test", never "is it guarded", because the guard can live
+  in the producing script**: 2026-09-09, `scripts/project_surface_runtime.py`.
+  The script projects `docs/specs/host-surface-parity/parity-registry.json`
+  (source) into `src/attune/elicitation/surface_runtime_registry.json`
+  and `surface_runtime_baseline.json` (wheel copies), and without
+  `--write` it raises `ValueError(f"stale runtime projection: {path}")`
+  on any mismatch. That is a correct, complete drift guard. I grepped
+  `tests/` for `surface_runtime_registry`, found nothing, and concluded
+  "no drift guard" — the search was in the place guards usually live,
+  not the place this one lived. **Ask "what would detect drift", not
+  "is there a test file mentioning it".** Two real findings did survive
+  the correction, and they compound:
+  (1) **Nothing invokes the check.** `grep -rn project_surface_runtime
+  .github/ .pre-commit-config.yaml tests/ scripts/` returns only the
+  script itself. A guard nobody pulls fires never; the projection can
+  go stale after any upstream bump and no lane notices.
+  (2) **The check exits 0 when its evidence replay fails.** A live run
+  printed `Native form transport failed: TimeoutError` to stderr and
+  returned exit 0, because `replay_native_evidence` needs a live host
+  and degrades. **So wiring (1) without fixing (2) installs a green
+  light that means nothing** — a CI lane that passes having replayed no
+  native evidence at all, which reads as coverage and is worse than the
+  absent gate it replaces. Order matters: make the producer fail loudly
+  first, wire the gate second. This repo already has
+  `docs/specs/exit-code-honesty-guard/` (approved 2026-08-09,
+  requirements only) — the class has a home, so the finding routes
+  there rather than becoming an ad-hoc fix.
+  Rider from the same ten minutes: `cmd | tail -3; echo "exit: $?"`
+  reports **`tail`'s** status, not the command's. I nearly filed
+  "exit: 0" as evidence the projector succeeded, in an investigation
+  whose subject was a dishonest exit code. Redirect to files and read
+  `$?` immediately: `cmd >out 2>err; echo $?`.
+
+- **A scoped suite run AFTER an edit is not a receipt for that edit —
+  and "is the change still true" (freshness) is a different question
+  from "is the change complete", so a probe for the first catches none
+  of the second**: 2026-09-09, PR #2488 burned THREE chair merge words,
+  all three invalidations mine, neither caught by my own verification.
+  (1) The commit omitted a CHANGELOG entry — `changelog-entry` failed.
+  (2) The entry I then wrote inserted a SECOND `### Changed` block into
+  `[Unreleased]`, which already had one — `tests/unit/scripts/
+  test_consolidate_changelog.py::test_the_repo_changelog_is_consolidated`
+  failed on all 13 test lanes (one assertion, replicated, which reads
+  alarmingly like 13 distinct problems until you pull one job log).
+  **Why my local runs missed both: I ran the whole tree BEFORE writing
+  the changelog, then ran only `tests/unit/ci` afterwards — and the
+  guard for this lives in `tests/unit/scripts`.** Running a scoped suite
+  after an edit tests the code you did not just change. The mechanical
+  rule, unglamorous and worth more than resolving to be careful: **the
+  whole tree runs after the LAST edit, not before it**; if the last edit
+  came after the last full run, there is no receipt yet.
+  Second, sharper half: earlier the same session I built a
+  claim-freshness probe into `land_pr.sh` (does a sibling PR falsify a
+  fact this one asserts) after D18 landed stale. Neither #2488 failure
+  was a freshness failure. **Freshness and completeness are orthogonal,
+  and having a habit for one produces false confidence about the
+  other** — I checked freshness three times on this PR, correctly and
+  cleanly, while shipping an incomplete change twice.
+  Repo-specific riders: the duplicate-header shape is exactly what
+  `scripts/consolidate_changelog.py` exists to prevent, and its own
+  CHANGELOG entry describes the mistake ("PRs append their own header
+  rather than inserting under the existing one") — I read that entry
+  while making it. Fix with the tool, not by hand:
+  `python scripts/consolidate_changelog.py Unreleased` (it takes a
+  POSITIONAL version; `--check` alone exits 2 on a usage error, which
+  is easy to misread as a failed check).
+
+- **A DEFENSIVE block added to a `set -e` script can defend by
+  breaking — every command substitution in it needs `|| true`, and my
+  own tests missed it because they exercised the happy paths of the
+  thing I added, not its failure paths**: 2026-09-09, PR #2489 adding a
+  claim-freshness window to `scripts/land_pr.sh` (`set -euo pipefail`).
+  I guarded the fetch (`|| true`) and the merge-base (`|| true`) and
+  then wrote `LANDED=$(git log --oneline "$MB..origin/main" 2>/dev/null)`
+  bare. Under `set -e` a failing command substitution in an assignment
+  aborts the script — so a block whose entire purpose is to PRINT a
+  warning before merging could instead kill the run before the merge.
+  The direction is safe (refuse, never mis-merge) and it is
+  near-unreachable (`MB` is guarded non-empty, `origin/main` was just
+  fetched), which is exactly why it survived: **fail-closed latent bugs
+  do not announce themselves, and "safe direction" is a reason to ship
+  knowingly, not a reason not to notice.** I found it re-reading my own
+  diff at MERGE time — not while authoring, and not while testing.
+  My tests were the tell in hindsight: I exercised both branches of the
+  error filter and both states of the window (nothing landed -> silent;
+  six commits -> six listed) and never once asked what happens when the
+  git call itself fails. **A test suite for a defensive addition that
+  only covers the paths where the defence succeeds is testing the
+  feature, not the defence.**
+  Two operational riders from the same merge:
+  (1) **Applying `auto-merge-when-green` to a PR whose checks are
+  ALREADY all green merges it immediately** — the label is "merge when
+  green", and if green is now, the merge is now. There is no pause to
+  reconsider between arming and landing; treat the label on a fully
+  green PR as pressing merge.
+  (2) **A smaller total check count than sibling PRs is normal** (path
+  filters skip lanes) **so completeness cannot be inferred from
+  `0 fail`.** #2489 showed 40 checks where other PRs showed 50+. The
+  receipt is enumerating the REQUIRED contexts by name from
+  `gh api .../branches/main/protection --jq
+  '.required_status_checks.checks[].context'` and confirming each is
+  `pass` — 13/13 here. Absent and skipped both read as "not failing".
