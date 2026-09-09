@@ -142,9 +142,31 @@ jobs:
 
     - name: Install dependencies
       if: needs.changes.outputs.website_only != 'true'
+      # Install the versions in uv.lock, never a fresh resolve. A floating
+      # upper bound plus a fresh resolve let an upstream PUBLISH turn main
+      # red with no commit: attune-forms 0.17.0 shipped 2026-09-08 22:19Z
+      # and the next run installed it, failing 12 required checks, while
+      # main's last (older) run still read green. uv exports the locked
+      # versions as a pip constraints file, so the same tree installs the
+      # same dependencies until a commit changes uv.lock. `--locked` fails
+      # loudly when the lock is stale instead of silently re-resolving.
+      #
+      # The uv pin tracks whatever writes uv.lock; a newer lock revision
+      # fails this export loudly, and the fix is to bump both together.
+      #
+      # NOT locked, on purpose: the default-install-smoke lane still
+      # resolves fresh. That lane is the signal for "the published range is
+      # broken for users", and this change must not hide it.
+      #
+      # shell: bash forces Git Bash on Windows runners so $RUNNER_TEMP and
+      # the quoting below behave identically across the matrix.
+      shell: bash
       run: |
         python -m pip install --upgrade pip
-        pip install -e .[dev]
+        pip install 'uv==0.9.22'
+        uv export --locked --extra dev --no-emit-project --no-hashes \
+          -o "$RUNNER_TEMP/ci-constraints.txt"
+        pip install -e .[dev] -c "$RUNNER_TEMP/ci-constraints.txt"
 
     # Download tokenizer data during setup; pytest stays inference-blocked.
     - name: Cache tiktoken encodings
@@ -276,9 +298,31 @@ jobs:
 
     - name: Install dependencies
       if: needs.changes.outputs.website_only != 'true'
+      # Install the versions in uv.lock, never a fresh resolve. A floating
+      # upper bound plus a fresh resolve let an upstream PUBLISH turn main
+      # red with no commit: attune-forms 0.17.0 shipped 2026-09-08 22:19Z
+      # and the next run installed it, failing 12 required checks, while
+      # main's last (older) run still read green. uv exports the locked
+      # versions as a pip constraints file, so the same tree installs the
+      # same dependencies until a commit changes uv.lock. `--locked` fails
+      # loudly when the lock is stale instead of silently re-resolving.
+      #
+      # The uv pin tracks whatever writes uv.lock; a newer lock revision
+      # fails this export loudly, and the fix is to bump both together.
+      #
+      # NOT locked, on purpose: the default-install-smoke lane still
+      # resolves fresh. That lane is the signal for "the published range is
+      # broken for users", and this change must not hide it.
+      #
+      # shell: bash forces Git Bash on Windows runners so $RUNNER_TEMP and
+      # the quoting below behave identically across the matrix.
+      shell: bash
       run: |
         python -m pip install --upgrade pip
-        pip install -e .[dev]
+        pip install 'uv==0.9.22'
+        uv export --locked --extra dev --no-emit-project --no-hashes \
+          -o "$RUNNER_TEMP/ci-constraints.txt"
+        pip install -e .[dev] -c "$RUNNER_TEMP/ci-constraints.txt"
 
     # Download tokenizer data during setup; pytest stays inference-blocked.
     - name: Cache tiktoken encodings
@@ -341,9 +385,31 @@ jobs:
 
     - name: Install dependencies
       if: needs.changes.outputs.website_only != 'true'
+      # Install the versions in uv.lock, never a fresh resolve. A floating
+      # upper bound plus a fresh resolve let an upstream PUBLISH turn main
+      # red with no commit: attune-forms 0.17.0 shipped 2026-09-08 22:19Z
+      # and the next run installed it, failing 12 required checks, while
+      # main's last (older) run still read green. uv exports the locked
+      # versions as a pip constraints file, so the same tree installs the
+      # same dependencies until a commit changes uv.lock. `--locked` fails
+      # loudly when the lock is stale instead of silently re-resolving.
+      #
+      # The uv pin tracks whatever writes uv.lock; a newer lock revision
+      # fails this export loudly, and the fix is to bump both together.
+      #
+      # NOT locked, on purpose: the default-install-smoke lane still
+      # resolves fresh. That lane is the signal for "the published range is
+      # broken for users", and this change must not hide it.
+      #
+      # shell: bash forces Git Bash on Windows runners so $RUNNER_TEMP and
+      # the quoting below behave identically across the matrix.
+      shell: bash
       run: |
         python -m pip install --upgrade pip
-        pip install -e .[dev]
+        pip install 'uv==0.9.22'
+        uv export --locked --extra dev --no-emit-project --no-hashes \
+          -o "$RUNNER_TEMP/ci-constraints.txt"
+        pip install -e .[dev] -c "$RUNNER_TEMP/ci-constraints.txt"
 
     # Download tokenizer data during setup; pytest stays inference-blocked.
     - name: Cache tiktoken encodings
