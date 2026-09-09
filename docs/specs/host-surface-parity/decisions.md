@@ -1199,14 +1199,20 @@ written here:
    `surface: host-native` and one receipt exists for the
    compatibility target.
 
+4. **Task 10 is DEFERRED, not cancelled** (chair, same session:
+   "defer 10"). It leaves Task 2's critical path and keeps its D8
+   execution go; it is not descoped, and R9 stands. This matters
+   precisely because of ruling 3: Task 10's doctor remains the only
+   thing designed to write the static capability cell, so deferral —
+   unlike cancellation — leaves a named owner for closing that gap.
+   Until it lands, or a narrower substitute writes `host_static`, the
+   host-native route stays admissible-but-latent and no receipt may
+   report it firing.
+
 ### Not ruled here
 
-**Whether Task 10 is deferred or cancelled.** The chair's words remove
-it as a prerequisite; they do not say it never happens, and this entry
-does not decide that. It matters: Task 10's doctor is the thing
-designed to write the static capability cell, so without it — or a
-narrower substitute — the route ruled admissible in (3) stays latent
-indefinitely. A later ruling settles it.
+**When Task 10 executes.** Deferral fixes that it still happens; it
+does not schedule it.
 
 No release, API-spend or automatic-merge authorization is granted or
 changed.
