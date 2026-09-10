@@ -569,3 +569,55 @@ class TestPluginExceptions:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+@pytest.mark.asyncio
+async def test_deprecated_analyzer_still_runs():
+    """Existing plugin analyzers warn but retain their callable contract."""
+
+    class Analyzer(BaseWorkflow):
+        async def analyze(self, context):
+            self.validate_context(context)
+            return {"value": context["value"]}
+
+        def get_required_context(self):
+            return ["value"]
+
+    with pytest.warns(DeprecationWarning, match="attune.workflows.base.BaseWorkflow"):
+        analyzer = Analyzer("example", "test")
+    assert await analyzer.analyze({"value": 42}) == {"value": 42}
+
+
+def test_software_plugin_registers_engine_workflows():
+    """Bundled workflow discovery uses executable classes, not analyzers."""
+    from attune.workflows.base import BaseWorkflow as EngineWorkflow
+    from attune_software.plugin import SoftwarePlugin
+
+    workflows = SoftwarePlugin().register_workflows()
+    assert len(workflows) == 7
+    assert all(issubclass(workflow, EngineWorkflow) for workflow in workflows.values())
+    assert all(not issubclass(workflow, BaseWorkflow) for workflow in workflows.values())
+
+
+def test_engine_workflow_metadata_does_not_construct_workflow():
+    """Metadata discovery works for engine classes without model setup."""
+    from attune.workflows.base import BaseWorkflow as EngineWorkflow
+    from attune_software.plugin import SoftwarePlugin
+
+    class MetadataOnlyWorkflow(EngineWorkflow):
+        name = "metadata-only"
+
+        def __init__(self):
+            raise AssertionError("metadata lookup must not instantiate engine workflows")
+
+    plugin = SoftwarePlugin()
+    plugin.initialize()
+    plugin._workflows["metadata-only"] = MetadataOnlyWorkflow
+    assert plugin.get_workflow_info("metadata-only") == {
+        "id": "metadata-only",
+        "name": "metadata-only",
+        "domain": "software",
+        "category": None,
+        "required_context": [],
+    }
+    assert plugin.get_workflow_info("code-review")["domain"] == "software"

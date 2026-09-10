@@ -472,7 +472,7 @@ jobs:
         # `spawn`). With the cause gone, run coverage plainly — the job
         # `timeout-minutes` plus the conftest hang-watchdog (which still
         # uploads hang-dumps/) remain as the backstop.
-        pytest -n auto --cov=src/attune --cov-report=xml --cov-fail-under=94 --timeout=60 --timeout-method=thread -m "not network and not integration"
+        pytest -n auto --cov=src/attune --cov=attune_software --cov-report=xml --cov-fail-under=94 --timeout=60 --timeout-method=thread -m "not network and not integration"
       env:
         ANTHROPIC_API_KEY: ""  # keyless by design — live-key CI burned $1200+ on 2026-06-10 (mismarked tests make real API calls when keyed); the real secret is for integration-auth.yml + deliberate dispatches ONLY
 

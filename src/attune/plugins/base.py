@@ -7,11 +7,17 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
+from __future__ import annotations
+
 import logging
+import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from attune.workflows.base import BaseWorkflow as EngineWorkflow
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +37,7 @@ class PluginMetadata:
 
 
 class BaseWorkflow(ABC):
-    """Base class for plugin-contributed analysis workflows.
+    """Deprecated base class for plugin-internal analyzers.
 
     Note:
         The engine does NOT run ``analyze()``: workflows discovered via
@@ -59,6 +65,13 @@ class BaseWorkflow(ABC):
             category: Optional category within domain
 
         """
+        warnings.warn(
+            "attune.plugins.BaseWorkflow is deprecated. For registered workflows, "
+            "subclass attune.workflows.base.BaseWorkflow (execute() entry point). "
+            "Plugin-internal analyzers can use their own base class.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.name = name
         self.domain = domain
         self.category = category
@@ -68,8 +81,8 @@ class BaseWorkflow(ABC):
     async def analyze(self, context: dict[str, Any]) -> dict[str, Any]:
         """Analyze the given context and return results.
 
-        This is the main entry point for all workflows. The context structure
-        is domain-specific but the return format should follow a standard pattern.
+        This method is called by plugin code, never by the workflow engine.
+        The context structure is domain-specific; the return format is a convention.
         Subclasses must implement domain-specific analysis logic.
 
         Args:
@@ -187,7 +200,7 @@ class BasePlugin(ABC):
     def __init__(self):
         """Initialize the domain plugin and register its workflows."""
         self.logger = logging.getLogger(f"plugin.{self.get_metadata().domain}")
-        self._workflows: dict[str, type[BaseWorkflow]] = {}
+        self._workflows: dict[str, type[EngineWorkflow | BaseWorkflow]] = {}
         self._initialized = False
 
     @abstractmethod
@@ -221,21 +234,23 @@ class BasePlugin(ABC):
         """
 
     @abstractmethod
-    def register_workflows(self) -> dict[str, type[BaseWorkflow]]:
+    def register_workflows(self) -> dict[str, type[EngineWorkflow | BaseWorkflow]]:
         """Register all workflows provided by this plugin.
 
-        This method defines all analysis workflows available in this plugin.
-        Workflows are lazy-instantiated by get_workflow() when first requested.
+        Return engine workflows derived from attune.workflows.base.BaseWorkflow,
+        whose entry point is execute(). The deprecated analyzer class in this
+        module is not an engine workflow. get_workflow() returns a class; the
+        caller is responsible for instantiation.
         This method is called during plugin initialization.
 
         Returns:
-            dict[str, type[BaseWorkflow]]
+            dict[str, type[EngineWorkflow | BaseWorkflow]]
                 Dictionary mapping workflow identifiers to Workflow classes (not instances).
                 Keys should be lowercase, snake_case identifiers. Values should be
                 uninstantiated class references.
 
         Returns:
-            dict[str, type[BaseWorkflow]]
+            dict[str, type[EngineWorkflow | BaseWorkflow]]
                 Mapping structure:
                 {
                     'workflow_id': WorkflowClass,
@@ -255,7 +270,7 @@ class BasePlugin(ABC):
         Note:
             - Return only the class, not instances (instantiation is lazy)
             - Use consistent, descriptive workflow IDs
-            - All returned classes must be subclasses of BaseWorkflow
+            - Return subclasses of attune.workflows.base.BaseWorkflow
             - Can return empty dict {} if plugin provides no workflows initially
             - Called once during initialization via initialize()
             - Framework caches results in self._workflows
@@ -333,7 +348,7 @@ class BasePlugin(ABC):
         """
         return []
 
-    def get_workflow(self, workflow_id: str) -> type[BaseWorkflow] | None:
+    def get_workflow(self, workflow_id: str) -> type[EngineWorkflow | BaseWorkflow] | None:
         """Get a workflow by ID.
 
         Args:
@@ -361,7 +376,11 @@ class BasePlugin(ABC):
         return list(self._workflows.keys())
 
     def get_workflow_info(self, workflow_id: str) -> dict[str, Any] | None:
-        """Get information about a workflow without instantiating it.
+        """Get metadata without constructing engine workflows.
+
+        Legacy analyzers retain instance-based metadata extraction. Engine
+        metadata uses the class name and plugin domain; category and required
+        context are not declared by the engine base and default to None and [].
 
         Args:
             workflow_id: Workflow identifier
@@ -373,6 +392,15 @@ class BasePlugin(ABC):
         workflow_class = self.get_workflow(workflow_id)
         if not workflow_class:
             return None
+
+        if not issubclass(workflow_class, BaseWorkflow):
+            return {
+                "id": workflow_id,
+                "name": workflow_class.name,
+                "domain": self.get_metadata().domain,
+                "category": None,
+                "required_context": [],
+            }
 
         # Create temporary instance to get metadata
         # (workflows should be lightweight to construct)

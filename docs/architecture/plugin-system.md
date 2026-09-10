@@ -4,14 +4,11 @@ description: Attune AI Plugin System — workflow- and MCP-centric extension mod
 
 # Attune AI Plugin System
 
-The plugin system lets external packages extend Attune with new workflows
-and new MCP tools without modifying the core. It is built around a single
-abstract class — `BasePlugin` — discovered through Python entry points and
-managed by a process-wide registry.
-
-This document describes the actual surface in `src/attune/plugins/`.
-Every concrete claim below is verified against source in
-`src/attune/plugins/`.
+The plugin system manages bundled software and Redis workflows and MCP
+tools through `BasePlugin` and a process-wide registry. Since 16.0.0,
+auto-discovery imports those bundled plugins directly; third-party
+`attune.plugins` entry points are no longer loaded. Application code can
+still register a plugin explicitly in its own registry.
 
 ## Architecture overview
 
@@ -21,18 +18,15 @@ There are three moving parts:
    Each plugin subclasses it, declares metadata, and registers workflows
    and/or MCP tools.
 2. **`PluginRegistry`** (`src/attune/plugins/registry.py`) — singleton
-   that discovers installed plugins via the `attune.plugins` entry-point
-   group, instantiates them, and routes lookups by plugin name and
-   workflow id.
+   that imports bundled plugins, instantiates them, and routes lookups
+   by plugin name and workflow id.
 3. **`AttuneMCPServer`** (`src/attune/mcp/server.py`) — during
    construction it iterates the registry and calls each plugin's
    `register_mcp_tools(self)` so plugins can contribute MCP tools to the
    live server.
 
-Workflows in this context are subclasses of the plugin-system
-`BaseWorkflow` (in `src/attune/plugins/base.py`), not the larger
-multi-model-pipeline `BaseWorkflow` in `src/attune/workflows/base.py`.
-The two share a name but are independent classes.
+Registered engine workflows subclass `attune.workflows.base.BaseWorkflow`.
+The separate `attune.plugins.BaseWorkflow` analyzer is deprecated.
 
 ## Public exports
 
@@ -94,9 +88,10 @@ not override:
 - `get_workflow(workflow_id)` — returns the registered workflow class or
   `None`; triggers `initialize()` on first call.
 - `list_workflows()` — returns the registered workflow ids.
-- `get_workflow_info(workflow_id)` — instantiates the workflow class
-  briefly to surface `name`, `domain`, `empathy_level`, `category`, and
-  `required_context`.
+- `get_workflow_info(workflow_id)` — reads engine class metadata without
+  constructing it, using the plugin domain and defaulting `category` to
+  `None` and `required_context` to `[]`. Legacy analyzers retain instance
+  metadata extraction.
 
 ## `register_mcp_tools(server)` — the MCP extension hook
 
@@ -117,14 +112,10 @@ This is the seam plugins use to add MCP tools to the running server.
 
 ## Plugin lifecycle
 
-1. **Discovery.** `PluginRegistry.auto_discover()` scans the
-   `attune.plugins` entry-point group (and the legacy
-   `attune_framework.plugins` group, kept for backward compatibility and
-   slated for removal in v3.0.0). Discovery results are cached in a
-   module-level `_discovery_cache` so subsequent registries reuse them.
-2. **Instantiation.** For each discovered entry point, the registry
-   calls the class constructor. Failures are logged but do not abort
-   discovery (graceful degradation).
+1. **Discovery.** `PluginRegistry.auto_discover()` imports the static
+   `_BUILTIN_PLUGINS` table. Results are cached in `_discovery_cache`.
+2. **Instantiation.** The registry calls each bundled class constructor.
+   Failures are logged and skipped.
 3. **Validation.** `register_plugin()` calls `get_metadata()` and
    verifies that `name` and `domain` are non-empty.
 4. **Activation.** The registry calls `plugin.on_activate()` after
@@ -140,27 +131,22 @@ There is no formal teardown hook. `clear_discovery_cache()` resets both
 the module-level discovery cache and the global registry singleton —
 intended for tests or post-install reloads, not normal shutdown.
 
-## The plugin-side `BaseWorkflow` contract
+## Registered workflow contract
 
-The `BaseWorkflow` returned from `register_workflows()` is the abstract
-class defined in `src/attune/plugins/base.py` (not the pipeline class in
-`src/attune/workflows/base.py`).
+New registered workflows subclass `attune.workflows.base.BaseWorkflow`.
+Its public entry point is `execute()`; subclasses define stages, tier
+mappings, and stage handlers as described in that class's docstring.
 
-It is an `ABC` initialised with `(name, domain, empathy_level, category=None)`
-and requires subclasses to implement:
+The separate `attune.plugins.BaseWorkflow` class is a deprecated analyzer
+base. It emits `DeprecationWarning` when constructed. Existing analyzers
+retain `analyze()`, `get_required_context()`, `validate_context()`, and
+`contribute_patterns()`, but the engine never calls `analyze()`. Keep
+plugin-internal analyzers under your own plugin's control, or migrate
+executable workflows to the engine base. Renaming `analyze()` alone is
+not a migration to the staged execution contract.
 
-- `async analyze(context: dict[str, Any]) -> dict[str, Any]` — main entry
-  point. Expected return keys include `issues`, `predictions`,
-  `recommendations`, `patterns`, `confidence`, `workflow`,
-  `empathy_level`, `timestamp` (per the docstring contract).
-- `get_required_context() -> list[str]` — declares the context keys
-  `analyze()` requires.
-
-Helpers provided: `validate_context()`, `get_empathy_level()`,
-`contribute_patterns()`.
-
-Plugins are not required to ship workflows. `register_workflows()` may
-return `{}` — see the reference plugin below.
+Registration still accepts legacy analyzers for compatibility. New plugin
+types should use the engine class. Plugins without workflows return `{}`.
 
 ## The `PluginRegistry`
 
@@ -182,19 +168,20 @@ Singleton-style registry. Public surface used by callers:
 - `clear_discovery_cache()` — resets both the discovery cache and the
   global registry instance.
 
-Auto-discovery is best-effort: an entry point that fails to load logs a
-warning and is skipped.
+Auto-discovery is best-effort: a bundled plugin that fails to load logs
+a warning and is skipped.
 
 ## Reference plugin: `attune_redis.RedisPlugin`
 
-The repository ships one in-tree reference plugin —
+One of the bundled plugins is
 [`attune_redis/plugin.py`](../../attune_redis/plugin.py) — which is the
 clearest worked example of the contract.
 
 Key shape:
 
 ```python
-from attune.plugins import BasePlugin, BaseWorkflow, PluginMetadata
+from attune.plugins import BasePlugin, PluginMetadata
+from attune.workflows.base import BaseWorkflow
 
 
 class RedisPlugin(BasePlugin):
@@ -231,16 +218,11 @@ class RedisPlugin(BasePlugin):
         except ImportError:
             logger.warning(
                 "attune-redis: agent-memory-client not installed. "
-                "Install with: pip install attune-ai
+                "Install with: pip install attune-ai"
             )
 ```
 
-And the entry point in `attune_redis/pyproject.toml`:
-
-```toml
-[project.entry-points."attune.plugins"]
-redis = "attune_redis.plugin:RedisPlugin"
-```
+The core registry loads this bundled class directly from its static table.
 
 Notable features illustrated:
 
@@ -255,7 +237,8 @@ Notable features illustrated:
 1. **Subclass `BasePlugin`** in your package:
 
    ```python
-   from attune.plugins import BasePlugin, BaseWorkflow, PluginMetadata
+   from attune.plugins import BasePlugin, PluginMetadata
+   from attune.workflows.base import BaseWorkflow
 
 
    class MyPlugin(BasePlugin):
@@ -277,22 +260,15 @@ Notable features illustrated:
 2. **(Optional) override `register_mcp_tools(server)`** if you have MCP
    tools to add. The `server` argument is the live `AttuneMCPServer`.
 
-3. **Declare the entry point** in your `pyproject.toml`:
-
-   ```toml
-   [project.entry-points."attune.plugins"]
-   my_domain = "my_package.plugin:MyPlugin"
-   ```
-
-4. **Install your package** in the same environment as `attune-ai`.
-   `get_global_registry()` will discover it on next process start.
-
-5. **Verify discovery**:
+3. **Register explicitly in application code.** Entry-point declarations
+   do not cause loading in 16.x. This example creates a local registry;
+   it does not install the plugin into another running process:
 
    ```python
-   from attune.plugins import get_global_registry
+   from attune.plugins import PluginRegistry
 
-   registry = get_global_registry()
+   registry = PluginRegistry()
+   registry.register_plugin("my_domain", MyPlugin())
    assert "my_domain" in registry.list_plugins()
    ```
 
@@ -311,9 +287,8 @@ These are intentionally not covered here — they live in their own docs
 or are not part of the plugin-system surface:
 
 - The `BaseWorkflow` in `src/attune/workflows/base.py` (the multi-model
-  pipeline base used by built-in workflows like `code-review`,
-  `security-audit`, `bug-predict`). It is unrelated to the
-  plugin-system `BaseWorkflow` despite the shared name.
+  pipeline base used by built-in and new registered workflows). Its
+  stage implementation details are outside this plugin guide.
 - Specific MCP tool definitions and the broader MCP server protocol.
 - CLI command discovery details — `get_cli_commands()` is part of the
   plugin contract but is not invoked by the core today.

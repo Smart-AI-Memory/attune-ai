@@ -1,7 +1,7 @@
 """Redis plugin for the Attune AI framework.
 
 Registers the AMS memory backend and Redis-specific
-workflows via the plugin entry-point system.
+workflows as a bundled plugin loaded directly by the core registry.
 
 Copyright 2025-2026 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
@@ -10,8 +10,12 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
-from attune.plugins import BasePlugin, BaseWorkflow, PluginMetadata
+from attune.plugins import BasePlugin, PluginMetadata
+
+if TYPE_CHECKING:
+    from attune.workflows.base import BaseWorkflow
 
 logger = logging.getLogger(__name__)
 
