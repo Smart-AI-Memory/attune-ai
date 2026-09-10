@@ -90,7 +90,7 @@ Result keys: `ok` (always `True` for a completed run), `status`
 | Name | Value | Meaning |
 | --- | --- | --- |
 | `DEFAULT_SEAT` | `"codex"` | Reviewer seat when the host is Claude, unknown, or ambiguous |
-| `HOST_ENV_MARKERS` | claude/codex env markers | Identify the moderating host; an omitted `seat` resolves to a NON-host seat, so a Codex-hosted run briefs `claude` |
+| `HOST_ENV_PREFIXES` | `CLAUDECODE` / `CODEX_` | Identify the moderating host by env-var prefix (names verified from a live Codex shell, not inferred); an omitted `seat` resolves to a NON-host seat, so a Codex-hosted run briefs `claude` |
 | `DIFF_CAP_CHARS` | `60_000` | Per-run diff budget for the manifest |
 
 The reviewer reply budget is `ROLE_REPLY_CHARS["reviewer"]`
@@ -117,4 +117,4 @@ The reviewer reply budget is `ROLE_REPLY_CHARS["reviewer"]`
 There is deliberately no CLI command, no MCP tool, and no
 suggested cadence: invocation is manual (chair-ruled, OPEN-2).
 
-<!-- attune-generated: source_hash=58c9e8e81436016ffc446f3411bfe92f56ee98e649190ea7b4c108f275627283 feature=cross-review kind=how-to generated_at=2026-09-10 -->
+<!-- attune-generated: source_hash=e370de34d241f5aa9c03988ff78a6aa2796d29a284d14b0de149a158c43cec81 feature=cross-review kind=how-to generated_at=2026-09-10 -->

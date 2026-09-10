@@ -208,10 +208,22 @@ applied. Rotation remains unruled and is untouched.
 | Codex | `claude` |
 | none / ambiguous | `codex` — `DEFAULT_SEAT` |
 
-**Fails open, stamps loud.** The Codex markers are INFERRED from
-`~/.codex/shell_snapshots/`, not confirmed against a live `codex exec`
-child; the chair declined the confirming probe and accepted first-run
-dogfooding as the receipt. So detection returns `None` on both no-marker
+**Fails open, stamps loud — and the inferred marker list was WRONG.**
+The first draft keyed on four `CODEX_*` names harvested from
+`~/.codex/shell_snapshots/`. A live probe of a Codex tool-call shell
+(2026-09-10, chair-directed) exported **none of them**; it exports
+`CODEX_SESSION_ID`, `CODEX_THREAD_ID`, `CODEX_SANDBOX`, `CODEX_CI`,
+`CODEX_PERMISSION_PROFILE`, `CODEX_MANAGED_BY_NPM`,
+`CODEX_MANAGED_PACKAGE_ROOT`, `CODEX_SANDBOX_NETWORK_DISABLED`. So the
+feature would have returned `None` inside the very host it was written
+for and fallen back to `codex` — the self-review it exists to prevent.
+The fail-open design contained the blast radius (it degrades to prior
+behavior and stamps `self_review: null`), which is the whole argument
+for failing open rather than guessing. Detection now matches the
+`CODEX_` PREFIX rather than a fixed list, precisely because the fixed
+list proved wrong once: the marker set differs between an interactive
+session and `codex exec`, and any single name can be renamed by a
+release. Detection returns `None` on both no-marker
 and two-marker (nested launch) environments rather than guessing, and
 every result stamps `host` and `self_review`. A missed marker therefore
 degrades to today's behavior AND shows in the ledger row, instead of

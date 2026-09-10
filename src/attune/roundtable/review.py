@@ -43,26 +43,21 @@ DIFF_CAP_CHARS = 60_000
 #: ruled default" and "a non-authoring seat" were the same value.
 #: A Codex-hosted ``/cross-review`` breaks that identity: the ruled
 #: default would brief the AUTHORING seat on its own diff, and a
-#: self-review reads exactly like a clean one. Resolution below keeps
-#: OPEN-1's value wherever OPEN-1 could apply and only diverges where
-#: it could not.
+#: self-review reads exactly like a clean one.
 #:
-#: The Codex markers are INFERRED from shell snapshots under
-#: ``~/.codex/shell_snapshots/``, not confirmed against a live
-#: ``codex exec`` child. Detection therefore fails OPEN (host None),
-#: and every result stamps what was detected so a missed marker shows
-#: up in the ledger row instead of hiding in a clean verdict.
-HOST_ENV_MARKERS: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ("claude", ("CLAUDECODE",)),
-    (
-        "codex",
-        (
-            "CODEX_SHELL",
-            "CODEX_APP_TOOLS_PIPE_PATH",
-            "CODEX_MCP_NODE_PATH",
-            "CODEX_INTERNAL_ORIGINATOR_OVERRIDE",
-        ),
-    ),
+#: The Codex names are VERIFIED, not inferred — read out of a live
+#: Codex tool-call shell on 2026-09-10. An earlier draft keyed on
+#: ``CODEX_SHELL``/``CODEX_APP_TOOLS_PIPE_PATH``/``CODEX_MCP_NODE_PATH``/
+#: ``CODEX_INTERNAL_ORIGINATOR_OVERRIDE``, harvested from
+#: ``~/.codex/shell_snapshots/``; a live probe exported NONE of them, so
+#: detection would have returned None inside the very host it was written
+#: for. Prefix-matching is used rather than a fixed list precisely because
+#: that list proved wrong once: the marker set differs between an
+#: interactive session and ``codex exec``, and a new release may rename
+#: any single variable.
+HOST_ENV_PREFIXES: tuple[tuple[str, str], ...] = (
+    ("claude", "CLAUDECODE"),
+    ("codex", "CODEX_"),
 )
 
 _GIT_TIMEOUT_SECONDS = 15.0
@@ -286,7 +281,11 @@ def detect_moderator_host(environ: dict[str, str] | None = None) -> str | None:
     ambiguous case is reported as unknown and handled by the caller.
     """
     env = os.environ if environ is None else environ
-    found = [seat for seat, markers in HOST_ENV_MARKERS if any(env.get(m) for m in markers)]
+    found = [
+        seat
+        for seat, prefix in HOST_ENV_PREFIXES
+        if any(key.startswith(prefix) and value for key, value in env.items())
+    ]
     return found[0] if len(found) == 1 else None
 
 

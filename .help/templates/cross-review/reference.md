@@ -3,8 +3,8 @@ type: reference
 name: cross-review-reference
 feature: cross-review
 depth: reference
-generated_at: 2026-09-10T02:49:28.367557+00:00
-source_hash: 58c9e8e81436016ffc446f3411bfe92f56ee98e649190ea7b4c108f275627283
+generated_at: 2026-09-10T03:32:43.149566+00:00
+source_hash: e370de34d241f5aa9c03988ff78a6aa2796d29a284d14b0de149a158c43cec81
 status: generated
 ---
 
@@ -37,7 +37,7 @@ Result keys: `ok` (always `True` for a completed run), `status`
 | Name | Value | Meaning |
 | --- | --- | --- |
 | `DEFAULT_SEAT` | `"codex"` | Reviewer seat when the host is Claude, unknown, or ambiguous |
-| `HOST_ENV_MARKERS` | claude/codex env markers | Identify the moderating host; an omitted `seat` resolves to a NON-host seat, so a Codex-hosted run briefs `claude` |
+| `HOST_ENV_PREFIXES` | `CLAUDECODE` / `CODEX_` | Identify the moderating host by env-var prefix (names verified from a live Codex shell, not inferred); an omitted `seat` resolves to a NON-host seat, so a Codex-hosted run briefs `claude` |
 | `DIFF_CAP_CHARS` | `60_000` | Per-run diff budget for the manifest |
 
 The reviewer reply budget is `ROLE_REPLY_CHARS["reviewer"]`

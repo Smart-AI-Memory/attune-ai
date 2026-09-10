@@ -3,6 +3,7 @@ advisory invariant, board degrade, ledger rendering."""
 
 from __future__ import annotations
 
+import os
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -567,10 +568,10 @@ def test_default_claude_still_refuses_zero_api_budget(repo, monkeypatch):
     ("env", "host", "seat"),
     [
         ({"CLAUDECODE": "1"}, "claude", "codex"),
-        ({"CODEX_SHELL": "zsh"}, "codex", "claude"),
-        ({"CODEX_APP_TOOLS_PIPE_PATH": "/tmp/p"}, "codex", "claude"),
+        ({"CODEX_SESSION_ID": "s1"}, "codex", "claude"),
+        ({"CODEX_SANDBOX": "1"}, "codex", "claude"),
         ({}, None, "codex"),
-        ({"CLAUDECODE": "1", "CODEX_SHELL": "zsh"}, None, "codex"),
+        ({"CLAUDECODE": "1", "CODEX_SESSION_ID": "s1"}, None, "codex"),
     ],
 )
 def test_default_seat_is_never_the_moderating_host(env, host, seat):
@@ -593,7 +594,7 @@ def test_claude_host_still_gets_the_open_1_ruled_default():
 
 
 def test_codex_host_default_reaches_claude_not_itself(repo, monkeypatch):
-    monkeypatch.setenv("CODEX_SHELL", "zsh")
+    monkeypatch.setenv("CODEX_SESSION_ID", "s1")
     monkeypatch.delenv("CLAUDECODE", raising=False)
     invoke = _invoke_stub("NO FINDINGS")
     result = review.run_review(repo, base_ref="main", invoke_seat=invoke)
@@ -608,7 +609,7 @@ def test_named_self_review_is_stamped_not_silently_passed_off(repo, monkeypatch)
     A self-review that returned a clean verdict without this stamp is
     indistinguishable from a real cross-review in the ledger row.
     """
-    monkeypatch.setenv("CODEX_SHELL", "zsh")
+    monkeypatch.setenv("CODEX_SESSION_ID", "s1")
     monkeypatch.delenv("CLAUDECODE", raising=False)
     invoke = _invoke_stub("NO FINDINGS")
     result = review.run_review(repo, base_ref="main", seat="codex", invoke_seat=invoke)
@@ -620,10 +621,10 @@ def test_named_self_review_is_stamped_not_silently_passed_off(repo, monkeypatch)
 @pytest.mark.parametrize(
     ("env", "expected"),
     [
-        ({"CODEX_SHELL": "zsh"}, "subscription"),
+        ({"CODEX_SESSION_ID": "s1"}, "subscription"),
         ({"CLAUDECODE": "1"}, "api"),
         ({}, "api"),
-        ({"CLAUDECODE": "1", "CODEX_SHELL": "zsh"}, "api"),
+        ({"CLAUDECODE": "1", "CODEX_SESSION_ID": "s1"}, "api"),
     ],
 )
 def test_auto_auth_picks_subscription_only_cross_host(env, expected):
@@ -660,7 +661,7 @@ def test_codex_host_bare_run_reaches_the_subscription_launcher(repo, monkeypatch
     """The end-to-end shape of the original ask: bare /cross-review in Codex."""
     from attune.roundtable import subscription_review
 
-    monkeypatch.setenv("CODEX_SHELL", "zsh")
+    monkeypatch.setenv("CODEX_SESSION_ID", "s1")
     monkeypatch.delenv("CLAUDECODE", raising=False)
     monkeypatch.setenv("ATTUNE_SESSION_SPEND_CAP_USD", "0")
     monkeypatch.delenv("ATTUNE_SESSION_LEDGER", raising=False)
@@ -687,9 +688,9 @@ def _neutral_host(monkeypatch):
     raising (codex D11 lane, 2026-09-09). Tests that want a host set it
     explicitly.
     """
-    for _, markers in review.HOST_ENV_MARKERS:
-        for marker in markers:
-            monkeypatch.delenv(marker, raising=False)
+    for key in list(os.environ):
+        if any(key.startswith(prefix) for _, prefix in review.HOST_ENV_PREFIXES):
+            monkeypatch.delenv(key, raising=False)
 
 
 def test_unknown_host_reports_unverified_independence_not_false(repo):
@@ -702,7 +703,7 @@ def test_unknown_host_reports_unverified_independence_not_false(repo):
 
 def test_ambiguous_host_also_reports_unverified(repo, monkeypatch):
     monkeypatch.setenv("CLAUDECODE", "1")
-    monkeypatch.setenv("CODEX_SHELL", "zsh")
+    monkeypatch.setenv("CODEX_SESSION_ID", "s1")
     invoke = _invoke_stub("NO FINDINGS")
     result = review.run_review(repo, base_ref="main", invoke_seat=invoke)
     assert result["host"] is None and result["self_review"] is None
