@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   constructing them; bundled software workflow lookup no longer crashes on
   legacy analyzer-only fields.
 
+- Class scans and class-register commands now return a non-zero exit code
+  when a Python file cannot be parsed. The parse diagnostic remains in the
+  output, and scanning continues for other files; an incomplete scan can
+  no longer silently pass the register's scan-error check.
 - `/cross-review` no longer briefs the authoring seat on its own diff
   when the moderator is not Claude. `run_review()` resolves an omitted
   `seat` against the moderating host: Claude-hosted and host-less runs

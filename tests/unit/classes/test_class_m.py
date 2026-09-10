@@ -133,3 +133,22 @@ class TestCheckRangeRealGit:
     def test_bad_ref_raises(self, repo):
         with pytest.raises(subprocess.CalledProcessError):
             check_range("no-such-ref", "HEAD", cwd=str(repo))
+
+    @pytest.mark.parametrize("invalid", [False, True])
+    def test_cli_reports_receipt_verdict_from_real_git(self, repo, monkeypatch, capsys, invalid):
+        from attune.classes.class_m import main
+
+        message = (
+            "fix G1 store race\n\nClass-Fix: G1\nReceipt-Type: suite\nEvidence: tests/x.py\n"
+            if invalid
+            else "docs: clarify setup\n"
+        )
+        self._commit(repo, message)
+        monkeypatch.chdir(repo)
+        assert main(["--base", "HEAD~1"]) == int(invalid)
+        output = capsys.readouterr().out
+        if invalid:
+            assert "class M by declaration" in output
+            assert "1 receipt problem(s)" in output
+        else:
+            assert output.strip() == "receipt check clean"

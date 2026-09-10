@@ -174,3 +174,32 @@ class TestScanPlumbing:
         )
         items = scan_paths([tmp_path])
         assert len(items) == 1
+
+
+def test_cli_reports_candidates_without_treating_them_as_failures(tmp_path, capsys):
+    from attune.classes.mock_worklist import main
+
+    path = _write(
+        tmp_path,
+        """
+        from unittest.mock import patch
+
+        def test_calls_store():
+            with patch("pkg.mod.get_store") as mocked:
+                run()
+                mocked.assert_called_once()
+    """,
+    )
+    assert main([str(path)]) == 0
+    output = capsys.readouterr().out
+    assert "patched-call-site" in output
+    assert "1 worklist item(s)" in output
+    assert "worklist, not verdicts" in output
+
+
+def test_cli_reports_empty_scan(tmp_path, capsys):
+    from attune.classes.mock_worklist import main
+
+    path = _write(tmp_path, "def test_value():\n    assert 1 + 1 == 2\n")
+    assert main([str(path)]) == 0
+    assert capsys.readouterr().out.strip() == "0 worklist item(s) — worklist, not verdicts"

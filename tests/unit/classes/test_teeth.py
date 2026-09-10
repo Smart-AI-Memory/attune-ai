@@ -129,3 +129,30 @@ class TestDecide:
         result = decide(repo_root=repo, baseline_sha=base_sha, changed_files=["src/mod.py"])
         assert result["blocks"] == []
         assert any("never blocks" in w["reason"] for w in result["warns"])
+
+
+@pytest.mark.parametrize("armed", [False, True])
+def test_cli_exposes_blocks_and_only_fails_when_armed(repo, capsys, armed):
+    import json
+
+    from attune.classes.teeth import main
+
+    baseline = _sha(repo)
+    (repo / "src" / "mod.py").write_text(textwrap.dedent(R7A_SITE))
+    _git(repo, "commit", "-qam", "introduce parse defect")
+    args = ["--repo-root", str(repo), "--baseline", baseline]
+    if armed:
+        args.append("--armed")
+    assert main(args) == int(armed)
+    result = json.loads(capsys.readouterr().out)
+    assert result["blocks"]
+    assert result["blocks"][0]["rule_id"] == "R7a-parse-under-narrow-except"
+
+
+def test_cli_reports_unresolvable_baseline(repo, capsys):
+    import json
+
+    from attune.classes.teeth import main
+
+    assert main(["--repo-root", str(repo), "--baseline", "no-such-ref"]) == 1
+    assert "error" in json.loads(capsys.readouterr().out)

@@ -7,6 +7,18 @@
   metadata now reads class attributes and plugin domain; legacy analyzer
   metadata remains compatible.
 
+## 2026-09-10 — class CLI coverage review (#1569)
+
+- **Dead error gate: unparseable source could produce a successful class
+  register.** `scan_source()` emitted a `PARSE-ERROR` hit, but
+  `scan_paths()` left `scan_errors` empty. The derived register discards
+  hits without a mapped class, so the parse failure disappeared and the
+  register CLI exited 0. A real temporary Git repository containing
+  `def broken(:` reproduced this in
+  `test_cli_fails_when_source_cannot_be_scanned`. Parse failures now retain
+  their diagnostic hit and also mark the scan incomplete, so scan and
+  register CLIs fail while continuing to report other files.
+
 ## 2026-09-07 — native form evidence and key storage (#2450)
 
 Raised coverage for `elicitation/surface_key.py`,

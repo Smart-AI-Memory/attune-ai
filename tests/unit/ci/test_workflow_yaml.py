@@ -311,6 +311,15 @@ class TestPipCaching:
 class TestCoverageThreshold:
     """tests.yml must enforce a minimum coverage threshold."""
 
+    def test_coverage_measures_bundled_software_plugin(self):
+        """The uploaded report must instrument both production package roots."""
+        steps = ALL_WORKFLOWS["tests.yml"]["jobs"]["coverage"]["steps"]
+        command = next(
+            step["run"] for step in steps if step.get("name") == "Run tests with coverage"
+        )
+        assert "--cov=src/attune" in command
+        assert "--cov=attune_software" in command
+
     def test_coverage_threshold_is_at_least_80(self):
         """tests.yml must enforce a coverage threshold >= 80% in *some* job.
 
