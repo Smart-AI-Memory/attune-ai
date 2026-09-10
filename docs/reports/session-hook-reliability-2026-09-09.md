@@ -303,3 +303,33 @@ packaged inventory copy requiring regeneration (22,662 passed, one failed,
 116 skipped, 3 xfailed). The existing runtime projector updated both packaged
 JSON files; 278 bootstrap/parity/ledger checks then passed. No existing receipt
 or pending runtime obligation changed. Pinned pre-commit passed on all changes.
+
+## Merged remediation and 16.4.0 artifact checks — 2026-09-09
+
+The final CI obligation above is discharged. PR [#2499](https://github.com/Smart-AI-Memory/attune-ai/pull/2499)
+merged as `b79a4701fb53f6988adbd5f3f2ef6e9997237c56`. Its final head,
+`f9cc99dde328172d5d230b7038eacd5f46693c07`, passed all 15 platform/Python
+suites, both timezone suites, coverage and the final build in
+[Tests run 34398921719](https://github.com/Smart-AI-Memory/attune-ai/actions/runs/34398921719).
+The original failures and local retest measurements remain historical evidence.
+
+Release preparation [#2501](https://github.com/Smart-AI-Memory/attune-ai/pull/2501)
+merged as `bb120c62cfe2a596014923433030d925e923801f`; a tree comparison and
+whole-branch patch-id comparison confirmed the reviewed diff survived the squash.
+Wheel and source archive rebuilt from that merge passed metadata checks and
+separate clean-install smokes outside the checkout with isolated user state.
+All three installed hook scripts match the merged source byte for byte. The
+exact wheel passed the capture/recall gate from an empty directory: hit@3 3/3.
+These are built-artifact receipts, not claims of PyPI publication.
+
+Prompt refinement does not depend on the deferred host-question adapter in
+[#2496](https://github.com/Smart-AI-Memory/attune-ai/pull/2496). Its 34 focused
+tests passed without that module. Both rebuilt artifacts also passed a real MCP
+stdio probe for host instructions, default-on status, persistent disable/enable
+and a one-turn skip, with the adapter module confirmed absent. This establishes
+policy delivery and preference behavior, not automatic invocation on every
+message, the quality of a model's rewrite, or a human interaction receipt.
+
+Live Claude SessionStart acceptance remains unverified. The earlier filesystem
+stall, filesystem-time fallback and legacy-stamp limits still apply. Repository
+state reconciliation does not establish the correctness of decision content.

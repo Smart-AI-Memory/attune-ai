@@ -1,7 +1,7 @@
 {
   "version": 1,
   "stats": {
-    "total_templates": 1286,
+    "total_templates": 1287,
     "linked_templates": 910,
     "total_tags": 121
   },
@@ -9181,6 +9181,13 @@
         "workflow"
       ]
     },
+    "ref-tool-prompt-refinement": {
+      "tags": [
+        "mcp",
+        "tool",
+        "utility"
+      ]
+    },
     "ref-tool-rag-knowledge-query": {
       "tags": [
         "mcp",
@@ -13869,6 +13876,7 @@
       "ref-tool-memory-search",
       "ref-tool-memory-store",
       "ref-tool-performance-audit",
+      "ref-tool-prompt-refinement",
       "ref-tool-rag-knowledge-query",
       "ref-tool-refactor-plan",
       "ref-tool-release-notes",
@@ -15364,6 +15372,7 @@
       "ref-tool-memory-search",
       "ref-tool-memory-store",
       "ref-tool-performance-audit",
+      "ref-tool-prompt-refinement",
       "ref-tool-rag-knowledge-query",
       "ref-tool-refactor-plan",
       "ref-tool-release-notes",
@@ -15396,6 +15405,7 @@
       "ref-tool-context-get",
       "ref-tool-context-set",
       "ref-tool-list-capabilities",
+      "ref-tool-prompt-refinement",
       "ref-tool-telemetry-stats"
     ],
     "ux": [
