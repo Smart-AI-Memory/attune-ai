@@ -15,6 +15,7 @@ read-only (same allowlist discipline as ``attune.handoff.verify``).
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess  # nosec B404 — fixed argv, read-only git, never shell=True
@@ -451,6 +452,11 @@ def run_review(
     seat, host = _resolve_seat(seat)
     claude_auth = _resolve_claude_auth(seat, host, claude_auth, invoke_seat)
     _validate_review_options(seat, invoke_seat, claude_auth, diff_cap_chars)
+    context = {
+        "host": host,
+        "self_review": _independence(seat, host),
+        "claude_auth": claude_auth if seat == "claude" else None,
+    }
     target = resolve_target(repo_root, mode=mode, base_ref=base_ref)
     per_file = target["per_file"]
     scoped_to: list[str] | None = None
@@ -520,6 +526,7 @@ def run_review(
                 body,
                 status=status,
                 manifest=manifest_note(manifest),
+                **context,
             )
             board_status = "posted"
         except Exception as exc:  # noqa: BLE001 — degrade-silent by contract
@@ -536,9 +543,7 @@ def run_review(
         "manifest": manifest,
         "target": target["description"],
         "board": board_status,
-        "claude_auth": claude_auth if seat == "claude" else None,
-        "host": host,
-        "self_review": _independence(seat, host),
+        **context,
     }
     if scoped_to is not None:
         result["scoped_to"] = scoped_to
@@ -663,7 +668,10 @@ def ledger_row(result: dict[str, Any], disposition: str = "not-triaged") -> str:
         if problems:
             raise ValueError("ledger disposition fails the gates: " + "; ".join(problems))
     return (
-        f"| {date} | {result['seat']} | {result['target']} | "
+        f"| {date} | {result['seat']} | {result['target']}; "
+        f"host={result.get('host') or 'unknown'}, "
+        f"self_review={json.dumps(result.get('self_review'))}, "
+        f"claude_auth={result.get('claude_auth') or 'n/a'} | "
         f"{len(manifest['sent'])} sent / {len(manifest['omitted'])} omitted | "
         f"{len(result['findings'])} ({result['status']}) | {disposition} |"
     )

@@ -20,7 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `host` and `self_review` so a missed marker is visible in the ledger
   row instead of hiding inside a clean result. Naming a seat still wins,
   including the moderator's own; that run is stamped `self_review: True`
-  rather than passed off as a cross-review.
+  rather than passed off as a cross-review. Saved board posts and ledger
+  rows retain the host, self-review state, and resolved Claude auth route.
 - `claude_auth` defaults to `"auto"`, which selects the verified Pro/Max
   subscription route ONLY for a real `claude` seat briefed from a known
   non-Claude host. That cross-host case previously failed with

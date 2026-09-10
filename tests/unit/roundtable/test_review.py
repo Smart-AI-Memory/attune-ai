@@ -227,6 +227,36 @@ class TestAdvisoryInvariant:
 
 
 class TestLedger:
+    @pytest.mark.parametrize(
+        ("env", "host", "self_review", "stamp"),
+        [
+            ({"CODEX_SESSION_ID": "s1"}, "codex", True, "true"),
+            ({"CLAUDECODE": "1"}, "claude", False, "false"),
+            ({}, None, None, "null"),
+            ({"CLAUDECODE": "1", "CODEX_SESSION_ID": "s1"}, None, None, "null"),
+        ],
+    )
+    def test_saved_receipts_preserve_independence(
+        self, repo, monkeypatch, env, host, self_review, stamp
+    ) -> None:
+        for key, value in env.items():
+            monkeypatch.setenv(key, value)
+        board = RecordingBoard()
+        result = review.run_review(
+            repo,
+            seat="codex",
+            base_ref="main",
+            board=board,
+            invoke_seat=_invoke_stub("NO FINDINGS"),
+        )
+        assert board.posts[0]["host"] == host
+        assert board.posts[0]["self_review"] is self_review
+        assert board.posts[0]["claude_auth"] is None
+        cells = [c.strip() for c in review.ledger_row(result).strip("|").split("|")]
+        assert len(cells) == 6
+        assert f"host={host or 'unknown'}" in cells[2]
+        assert f"self_review={stamp}" in cells[2]
+
     def test_row_shape(self, repo: Path) -> None:
         result = review.run_review(
             repo,
@@ -671,11 +701,16 @@ def test_codex_host_bare_run_reaches_the_subscription_launcher(repo, monkeypatch
         "invoke_subscription_review",
         lambda brief, **kw: (calls.append(brief), (0, "NO FINDINGS"))[1],
     )
-    result = review.run_review(repo, base_ref="main")
+    board = RecordingBoard()
+    result = review.run_review(repo, base_ref="main", board=board)
     assert result["seat"] == "claude"
     assert result["claude_auth"] == "subscription"
     assert result["self_review"] is False
     assert result["status"] == "clean" and len(calls) == 1
+    assert board.posts[0]["claude_auth"] == "subscription"
+    assert board.posts[0]["host"] == "codex"
+    assert board.posts[0]["self_review"] is False
+    assert "claude_auth=subscription" in review.ledger_row(result)
 
 
 @pytest.fixture(autouse=True)
