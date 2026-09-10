@@ -15,7 +15,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Host-native routing is not enabled by this change. Preventing repeated
   presentation of consumed or closed challenges remains deferred.
 
+### Deprecated
+
+- Deprecated the plugin-internal `attune.plugins.BaseWorkflow` analyzer base
+  with a `DeprecationWarning`; existing analyzers continue to work. Registered
+  engine workflows use `attune.workflows.base.BaseWorkflow.execute()` instead.
+
 ### Fixed
+
+- Plugin metadata lookup now handles registered engine workflows without
+  constructing them; bundled software workflow lookup no longer crashes on
+  legacy analyzer-only fields.
 
 - `/cross-review` no longer briefs the authoring seat on its own diff
   when the moderator is not Claude. `run_review()` resolves an omitted

@@ -1,7 +1,7 @@
 """Software Development Plugin for Attune AI Framework.
 
-Registers software development workflows as a plugin that can be
-auto-discovered via entry points.
+Registers software development workflows as a bundled plugin loaded
+directly by the core registry.
 
 Requires attune-ai core for BasePlugin, BaseWorkflow, and PluginMetadata.
 
@@ -9,10 +9,16 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under Apache-2.0
 """
 
+from __future__ import annotations
+
 import importlib
 import logging
+from typing import TYPE_CHECKING
 
-from attune.plugins import BasePlugin, BaseWorkflow, PluginMetadata
+from attune.plugins import BasePlugin, PluginMetadata
+
+if TYPE_CHECKING:
+    from attune.workflows.base import BaseWorkflow
 
 logger = logging.getLogger(__name__)
 

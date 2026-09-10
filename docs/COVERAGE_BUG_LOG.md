@@ -1,3 +1,12 @@
+## 2026-09-10 — plugin workflow metadata (#2238)
+
+- **Crash:** `BasePlugin.get_workflow_info()` instantiated engine workflows
+  and read analyzer-only fields. Bundled `SoftwarePlugin` code-review
+  metadata raised `AttributeError` for `domain`. A regression test also
+  proved metadata unnecessarily invoked workflow constructors. Engine
+  metadata now reads class attributes and plugin domain; legacy analyzer
+  metadata remains compatible.
+
 ## 2026-09-07 — native form evidence and key storage (#2450)
 
 Raised coverage for `elicitation/surface_key.py`,

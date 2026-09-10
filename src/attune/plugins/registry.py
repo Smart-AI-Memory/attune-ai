@@ -6,9 +6,15 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING
 
 from .base import BasePlugin, BaseWorkflow, PluginValidationError
+
+if TYPE_CHECKING:
+    from attune.workflows.base import BaseWorkflow as EngineWorkflow
 
 logger = logging.getLogger(__name__)
 
@@ -173,7 +179,9 @@ class PluginRegistry:
 
         return result
 
-    def get_workflow(self, plugin_name: str, workflow_id: str) -> type[BaseWorkflow] | None:
+    def get_workflow(
+        self, plugin_name: str, workflow_id: str
+    ) -> type[EngineWorkflow | BaseWorkflow] | None:
         """Get a workflow from a specific plugin.
 
         Args:
