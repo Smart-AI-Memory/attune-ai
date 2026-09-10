@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- Updated the locked WeasyPrint dependency used for documentation PDF
+  generation from 69.0 to 70.0. The update rejects EPS image input to
+  address [GHSA-r543-q48m-4c9j](https://github.com/Kozea/WeasyPrint/security/advisories/GHSA-r543-q48m-4c9j).
+
 ## [16.4.0] - 2026-09-09
 
 This release hardens session-start checks across repository, process, and
