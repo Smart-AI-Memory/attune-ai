@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added an internal host-question adapter boundary for presenting question
+  batches and collecting responses in one call, with adapter identity checks,
+  challenge-bound completions, and explicit presentation failure handling.
+  Host-native routing is not enabled by this change. Preventing repeated
+  presentation of consumed or closed challenges remains deferred.
+
 ### Fixed
 
 - `/cross-review` no longer briefs the authoring seat on its own diff
