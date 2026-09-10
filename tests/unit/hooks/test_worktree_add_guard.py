@@ -146,3 +146,28 @@ def test_registered_in_project_settings():
     bash_groups = [g for g in settings["hooks"]["PreToolUse"] if g["matcher"] == "Bash"]
     commands = [h["command"] for g in bash_groups for h in g["hooks"]]
     assert any("worktree_add_guard.py" in c for c in commands)
+
+
+@pytest.mark.parametrize("payload", ["", " \n", "{broken", "[]", "null", "42"])
+def test_unusable_stdin_is_an_empty_context(mod, monkeypatch, payload):
+    from io import StringIO
+
+    monkeypatch.setattr(sys, "stdin", StringIO(payload))
+    assert mod._read_stdin_context() == {}
+
+
+def test_stdin_preserves_valid_hook_context(mod, monkeypatch):
+    from io import StringIO
+
+    context = _ctx("git worktree add ../other")
+    monkeypatch.setattr(sys, "stdin", StringIO(json.dumps(context)))
+    assert mod._read_stdin_context() == context
+
+
+def test_closed_stdin_does_not_break_the_hook(mod, monkeypatch):
+    from io import StringIO
+
+    stream = StringIO()
+    stream.close()
+    monkeypatch.setattr(sys, "stdin", stream)
+    assert mod._read_stdin_context() == {}

@@ -3,13 +3,14 @@
 Emits JSON: repo identity, per-rule calibration state, and every hit.
 An uncalibrated-here rule's hits are labeled advisory — they never
 block and never clear a class (R1). A file the pack cannot parse
-yields a ``PARSE-ERROR`` hit; a rule that CRASHES yields a
-``SCAN-ERROR`` entry and a non-zero exit — a failed gatekeeper fails
+yields a ``PARSE-ERROR`` hit and a ``scan_errors`` entry; a rule that
+CRASHES also yields a ``scan_errors`` entry. Both fail the exit code — a failed gatekeeper fails
 the gate (contract §7, Agy#7).
 """
 
 from __future__ import annotations
 
+import ast
 import json
 from dataclasses import asdict
 from pathlib import Path
@@ -66,7 +67,11 @@ def scan_paths(
             scan_errors.append({"path": str(f), "error": str(exc)})
             continue
         try:
-            hits.extend(scan_source(source, str(f), rules))
+            file_hits = scan_source(source, str(f), rules)
+            hits.extend(file_hits)
+            if any(hit.rule_id == "PARSE-ERROR" for hit in file_hits):
+                # Confirm the parse failure: custom rules can use the same ID.
+                ast.parse(source)
         # Broad by design (evidence collector): an arbitrary rule
         # callable can raise anything; the crash is RECORDED as a
         # scan_error and fails the exit code (contract §7 / Agy#7) —
