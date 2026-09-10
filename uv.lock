@@ -751,11 +751,11 @@ wheels = [
 
 [[package]]
 name = "attune-verify"
-version = "0.5.0"
+version = "0.6.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7d/d7/fe9689a45a72d0109fd6733cc276b91a06ca4673043b1a7afc94010402df/attune_verify-0.5.0.tar.gz", hash = "sha256:b569d068b233e6ebabc710ab2c56c513db071c54153c0b57be04e74a7f753121", size = 35371, upload-time = "2026-08-11T20:31:39.995Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d5/66/cded1ca9814f645aa15b8fe1b664685c4d90f12051624241b48dce56c6bf/attune_verify-0.6.1.tar.gz", hash = "sha256:708d371711e172336087980ae1aa267880daf7bab199d50d66c6ef126e9126da", size = 84580, upload-time = "2026-09-10T22:53:55.101Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/4b/a7/7f37a6b450a47a573028eb66f713ef8d4e4a5094bc2df25ae9472416496a/attune_verify-0.5.0-py3-none-any.whl", hash = "sha256:bdf6a7ae2b4bacafcf47441a98277383c03e848b0a128cbcc1c5ddd9625421f6", size = 26067, upload-time = "2026-08-11T20:31:38.816Z" },
+    { url = "https://files.pythonhosted.org/packages/89/5d/9cac78efcc4fa2492b86bbe5318a4e204f2d77c42e895a62550ec436e518/attune_verify-0.6.1-py3-none-any.whl", hash = "sha256:e2dba02af1deaa0fa2af930ae6324beeb29e4dbf691c01fbc22a01fe452217ba", size = 47924, upload-time = "2026-09-10T22:53:53.491Z" },
 ]
 
 [[package]]

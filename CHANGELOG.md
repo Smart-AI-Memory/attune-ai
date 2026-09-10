@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Host-native routing is not enabled by this change. Preventing repeated
   presentation of consumed or closed challenges remains deferred.
 
+### Changed
+
+- Updated the locked `attune-verify` dependency from 0.5.0 to 0.6.1.
+  The existing `<1.0` compatibility range is unchanged, and the installed
+  `/verify` integration contract passes against the published 0.6.1 wheel.
+
 ### Deprecated
 
 - Deprecated the plugin-internal `attune.plugins.BaseWorkflow` analyzer base
