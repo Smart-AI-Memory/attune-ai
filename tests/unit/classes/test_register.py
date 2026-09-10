@@ -324,3 +324,29 @@ class TestShippedDispositions:
     def test_shipped_dispositions_reasons_are_never_empty(self):
         valid, _ = load_dispositions(REPO_ROOT)
         assert all(d["reason"].strip() for d in valid)
+
+
+def test_cli_emits_register_json_from_real_repository(tmp_path, capsys):
+    import json
+
+    from attune.classes.register import main
+
+    repo = _fixture_repo(tmp_path)
+    assert main(["--repo-root", str(repo), "--scan-roots", str(repo / "src")]) == 0
+    result = json.loads(capsys.readouterr().out)
+    rows = {row["class_id"]: row for row in result["rows"]}
+    assert rows["C3"]["status"] == "OPEN"
+    assert rows["C3"]["calibrated_hits"] == 1
+    assert result["scan_errors"] == []
+
+
+def test_cli_fails_when_source_cannot_be_scanned(tmp_path, capsys):
+    import json
+
+    from attune.classes.register import main
+
+    repo = _fixture_repo(tmp_path)
+    (repo / "src" / "mod.py").write_text("def broken(:\n")
+    assert main(["--repo-root", str(repo)]) == 1
+    result = json.loads(capsys.readouterr().out)
+    assert result["scan_errors"]
