@@ -96,4 +96,4 @@ trail and the evidence base any posture change must cite.
 - **New seats** — anything added to the round table's
   `SEAT_RECIPES` is immediately usable as a reviewer.
 
-<!-- attune-generated: source_hash=68691bdb8533cb43d997bbec5457fa5ba004c65c48af6cfc90d4d4c8c87a638d feature=cross-review kind=architecture generated_at=2026-07-29 -->
+<!-- attune-generated: source_hash=58c9e8e81436016ffc446f3411bfe92f56ee98e649190ea7b4c108f275627283 feature=cross-review kind=architecture generated_at=2026-09-10 -->

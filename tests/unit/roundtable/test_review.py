@@ -561,3 +561,148 @@ def test_default_claude_still_refuses_zero_api_budget(repo, monkeypatch):
     monkeypatch.delenv("ATTUNE_SESSION_LEDGER", raising=False)
     with pytest.raises(SessionSpendCapError):
         review.run_review(repo, base_ref="main", seat="claude")
+
+
+@pytest.mark.parametrize(
+    ("env", "host", "seat"),
+    [
+        ({"CLAUDECODE": "1"}, "claude", "codex"),
+        ({"CODEX_SHELL": "zsh"}, "codex", "claude"),
+        ({"CODEX_APP_TOOLS_PIPE_PATH": "/tmp/p"}, "codex", "claude"),
+        ({}, None, "codex"),
+        ({"CLAUDECODE": "1", "CODEX_SHELL": "zsh"}, None, "codex"),
+    ],
+)
+def test_default_seat_is_never_the_moderating_host(env, host, seat):
+    """The whole point of the feature: the default seat is not the author.
+
+    The ambiguous row (both markers) resolves to None deliberately — a
+    nested launch cannot be told apart by environment, and guessing is
+    what would put the authoring seat back on its own diff.
+    """
+    assert review.detect_moderator_host(env) == host
+    resolved = review.resolve_default_seat(host)
+    assert resolved == seat
+    assert resolved != host
+
+
+def test_claude_host_still_gets_the_open_1_ruled_default():
+    """OPEN-1 (2026-07-28) ruled `codex`; that value is unchanged where it applied."""
+    assert review.resolve_default_seat("claude") == review.DEFAULT_SEAT
+    assert review.resolve_default_seat(None) == review.DEFAULT_SEAT
+
+
+def test_codex_host_default_reaches_claude_not_itself(repo, monkeypatch):
+    monkeypatch.setenv("CODEX_SHELL", "zsh")
+    monkeypatch.delenv("CLAUDECODE", raising=False)
+    invoke = _invoke_stub("NO FINDINGS")
+    result = review.run_review(repo, base_ref="main", invoke_seat=invoke)
+    assert result["host"] == "codex"
+    assert result["seat"] == "claude"
+    assert result["self_review"] is False
+
+
+def test_named_self_review_is_stamped_not_silently_passed_off(repo, monkeypatch):
+    """Explicit seat==host stays allowed, but the result says so.
+
+    A self-review that returned a clean verdict without this stamp is
+    indistinguishable from a real cross-review in the ledger row.
+    """
+    monkeypatch.setenv("CODEX_SHELL", "zsh")
+    monkeypatch.delenv("CLAUDECODE", raising=False)
+    invoke = _invoke_stub("NO FINDINGS")
+    result = review.run_review(repo, base_ref="main", seat="codex", invoke_seat=invoke)
+    assert result["host"] == "codex"
+    assert result["self_review"] is True
+    assert result["status"] == "clean"
+
+
+@pytest.mark.parametrize(
+    ("env", "expected"),
+    [
+        ({"CODEX_SHELL": "zsh"}, "subscription"),
+        ({"CLAUDECODE": "1"}, "api"),
+        ({}, "api"),
+        ({"CLAUDECODE": "1", "CODEX_SHELL": "zsh"}, "api"),
+    ],
+)
+def test_auto_auth_picks_subscription_only_cross_host(env, expected):
+    """`auto` is narrow: a KNOWN non-Claude host, nothing else.
+
+    The unknown-host row is the load-bearing one — it keeps CI and a
+    laptop on the same route, and keeps the zero-cap refusal that
+    test_default_claude_still_refuses_zero_api_budget pins.
+    """
+    host = review.detect_moderator_host(env)
+    assert (
+        review._resolve_claude_auth("claude", host, "auto", review.default_invoke_seat) == expected
+    )
+
+
+def test_auto_auth_never_overrides_an_explicit_route():
+    for explicit in ("api", "subscription"):
+        assert (
+            review._resolve_claude_auth("claude", "codex", explicit, review.default_invoke_seat)
+            == explicit
+        )
+
+
+def test_auto_auth_ignores_non_claude_seats_and_injected_invokers():
+    assert (
+        review._resolve_claude_auth("codex", "claude", "auto", review.default_invoke_seat) == "api"
+    )
+    assert (
+        review._resolve_claude_auth("claude", "codex", "auto", _invoke_stub("NO FINDINGS")) == "api"
+    )
+
+
+def test_codex_host_bare_run_reaches_the_subscription_launcher(repo, monkeypatch):
+    """The end-to-end shape of the original ask: bare /cross-review in Codex."""
+    from attune.roundtable import subscription_review
+
+    monkeypatch.setenv("CODEX_SHELL", "zsh")
+    monkeypatch.delenv("CLAUDECODE", raising=False)
+    monkeypatch.setenv("ATTUNE_SESSION_SPEND_CAP_USD", "0")
+    monkeypatch.delenv("ATTUNE_SESSION_LEDGER", raising=False)
+    calls = []
+    monkeypatch.setattr(
+        subscription_review,
+        "invoke_subscription_review",
+        lambda brief, **kw: (calls.append(brief), (0, "NO FINDINGS"))[1],
+    )
+    result = review.run_review(repo, base_ref="main")
+    assert result["seat"] == "claude"
+    assert result["claude_auth"] == "subscription"
+    assert result["self_review"] is False
+    assert result["status"] == "clean" and len(calls) == 1
+
+
+@pytest.fixture(autouse=True)
+def _neutral_host(monkeypatch):
+    """Clear ambient host markers so a test's route never depends on the shell.
+
+    Without this the suite is environment-dependent: run from a Codex
+    session, `test_default_claude_still_refuses_zero_api_budget` resolves
+    the subscription route and reaches the real launcher instead of
+    raising (codex D11 lane, 2026-09-09). Tests that want a host set it
+    explicitly.
+    """
+    for _, markers in review.HOST_ENV_MARKERS:
+        for marker in markers:
+            monkeypatch.delenv(marker, raising=False)
+
+
+def test_unknown_host_reports_unverified_independence_not_false(repo):
+    """`self_review` is None when the host is unknown — never a bare False."""
+    invoke = _invoke_stub("NO FINDINGS")
+    result = review.run_review(repo, base_ref="main", invoke_seat=invoke)
+    assert result["host"] is None
+    assert result["self_review"] is None, "False would claim independence we cannot evidence"
+
+
+def test_ambiguous_host_also_reports_unverified(repo, monkeypatch):
+    monkeypatch.setenv("CLAUDECODE", "1")
+    monkeypatch.setenv("CODEX_SHELL", "zsh")
+    invoke = _invoke_stub("NO FINDINGS")
+    result = review.run_review(repo, base_ref="main", invoke_seat=invoke)
+    assert result["host"] is None and result["self_review"] is None

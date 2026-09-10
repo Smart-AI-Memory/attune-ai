@@ -3,8 +3,8 @@ type: warning
 name: cross-review-warning
 feature: cross-review
 depth: warning
-generated_at: 2026-07-29T00:49:32.207827+00:00
-source_hash: 68691bdb8533cb43d997bbec5457fa5ba004c65c48af6cfc90d4d4c8c87a638d
+generated_at: 2026-09-10T02:49:28.367557+00:00
+source_hash: 58c9e8e81436016ffc446f3411bfe92f56ee98e649190ea7b4c108f275627283
 status: generated
 ---
 
