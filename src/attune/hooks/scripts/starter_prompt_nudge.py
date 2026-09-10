@@ -8,11 +8,11 @@ prompt had to be pasted manually at the start of each new session.
 Surfaces the most-specific handoff first (session-start-integrity
 R9, OQ1 ruled RETIRE 2026-08-18):
 
-1. **Tracked branch handoff** ``docs/handoffs/<branch-slug>.md`` for
-   the CURRENT branch (slug = branch with ``/`` → ``-``), else the
-   newest tracked handoff in ``docs/handoffs/``. Tracked artifacts
-   are provenance-safe by construction — they live in the repo they
-   describe.
+1. **Branch handoff** ``docs/handoffs/<branch-slug>.md`` for the CURRENT
+   branch (slug = branch with ``/`` → ``-``), else a handoff selected by
+   filesystem mtime, with filename breaking ties. Targets outside the repo
+   are rejected. Untracked drafts and unavailable tracking checks carry
+   explicit labels; Git tracking does not verify the handoff's content.
 2. **Project-local** ``<repo-root>/.attune/next_session_starter.md``
    — the repo-scoped queue. ``<repo-root>`` is the git toplevel
    discovered by walking up from the cwd.
@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -56,14 +57,13 @@ HANDOFFS_RELPATH = Path("docs") / "handoffs"
 #: Non-handoff files living in docs/handoffs/ to skip.
 HANDOFF_SKIP_NAMES = frozenset({"readme.md", "template.md"})
 
-#: Timeout for the single ``git branch --show-current`` call (seconds).
+#: Shared timeout for branch lookup and tracked-file inventory (seconds).
 #: The registered SessionStart timeout is 3s (``.claude/settings.json``);
 #: this sits BELOW it so interpreter start-up, file stats, and the print
 #: still fit before the harness SIGKILLs the hook. At the boundary (git
 #: timeout == registered timeout) a wedged git — index.lock contention, a
 #: hung filesystem — consumes the whole budget and the handoff banner is
-#: lost. ``git branch --show-current`` is a local, near-instant read, so
-#: 2s never truncates a healthy call; it only bounds a stuck one.
+#: lost. The inventory receives only the time left after branch lookup.
 GIT_TIMEOUT = 2
 
 
@@ -113,30 +113,73 @@ def _mtime_or_zero(path: Path) -> float:
         return 0.0
 
 
+def _validated_local_file(path: Path, repo_root: Path) -> bool:
+    """Whether a nonempty file resolves inside this repository."""
+    try:
+        path.resolve(strict=True).relative_to(repo_root.resolve(strict=True))
+    except (OSError, RuntimeError, ValueError):
+        return False
+    return _size_or_zero(path) > 0
+
+
+def _tracked_files(repo_root: Path, deadline: float) -> set[str] | None:
+    """Read indexed paths within the remaining shared Git budget."""
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        return None
+    try:
+        result = subprocess.run(
+            ["git", "ls-files", "--cached", "-z"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=remaining,
+            cwd=str(repo_root),
+        )
+    except (subprocess.TimeoutExpired, OSError):
+        return None
+    if result.returncode != 0:
+        return None
+    return set(result.stdout.split("\0"))
+
+
 def find_handoff(repo_root: Path) -> tuple[Path, str] | None:
-    """Best tracked handoff: (path, scope label), or None.
+    """Best contained handoff: (path, truthful scope label), or None.
 
     The current branch's ``docs/handoffs/<branch-slug>.md`` wins;
-    otherwise the newest handoff by mtime. Empty files and
-    README/template are skipped.
+    otherwise use filesystem mtime, then filename for equal timestamps.
+    Empty files, outside targets and README/template are skipped. Untracked
+    content is labeled draft; unavailable index checks are unverified.
     """
     handoffs_dir = repo_root / HANDOFFS_RELPATH
     if not handoffs_dir.is_dir():
         return None
-    branch = _current_branch(repo_root)
-    if branch:
-        candidate = handoffs_dir / (branch.replace("/", "-") + ".md")
-        if _size_or_zero(candidate) > 0:
-            return candidate, "handoff:branch"
     candidates = [
         p
         for p in handoffs_dir.glob("*.md")
-        if p.name.lower() not in HANDOFF_SKIP_NAMES and _size_or_zero(p) > 0
+        if p.name.lower() not in HANDOFF_SKIP_NAMES and _validated_local_file(p, repo_root)
     ]
     if not candidates:
         return None
-    newest = max(candidates, key=lambda p: _mtime_or_zero(p))
-    return newest, "handoff:newest"
+    deadline = time.monotonic() + GIT_TIMEOUT
+    branch = _current_branch(repo_root)
+    branch_name = branch.replace("/", "-") + ".md" if branch else None
+    candidate = next((p for p in candidates if p.name == branch_name), None)
+    scope = "handoff:branch"
+    if candidate is None:
+        candidate = max(candidates, key=lambda p: (_mtime_or_zero(p), p.name))
+        scope = "handoff:fallback"
+    tracked = _tracked_files(repo_root, deadline)
+    try:
+        resolved_name = candidate.resolve(strict=True).relative_to(repo_root.resolve()).as_posix()
+    except (OSError, RuntimeError, ValueError):
+        return None
+    if tracked is None:
+        scope += ":unverified"
+    elif candidate.relative_to(repo_root).as_posix() not in tracked or resolved_name not in tracked:
+        scope += ":draft"
+    return candidate, scope
 
 
 def _find_project_starter(start: Path | None = None) -> Path | None:
@@ -144,8 +187,8 @@ def _find_project_starter(start: Path | None = None) -> Path | None:
 
     Walks up from ``start`` (default: cwd) looking for a ``.git``
     entry (dir for a normal checkout, file for a worktree/submodule).
-    Returns the project-local starter path if that file exists; None
-    if no repo root is found or the file is absent. ``start`` is a
+    Returns the nonempty project starter when it resolves inside the repo;
+    None otherwise. ``start`` is a
     parameter so tests can pin the search root.
     """
     if start is None:
@@ -153,8 +196,32 @@ def _find_project_starter(start: Path | None = None) -> Path | None:
     for parent in [start, *start.parents]:
         if (parent / ".git").exists():
             candidate = parent / PROJECT_STARTER_RELPATH
-            return candidate if candidate.is_file() else None
+            return candidate if _validated_local_file(candidate, parent) else None
     return None
+
+
+def select_starters(
+    repo_root: Path | None, project_path: Path | None, global_path: Path
+) -> list[tuple[Path, str]]:
+    """Select handoff and project context, with a legacy-only global fallback.
+
+    Both starter hooks use this selection so reconciliation covers exactly
+    the artifacts advertised by the nudge. Empty or vanished files are skipped.
+    """
+    selected: list[tuple[Path, str]] = []
+    if repo_root is not None:
+        handoff = find_handoff(repo_root)
+        if handoff is not None:
+            selected.append(handoff)
+    if (
+        repo_root is not None
+        and project_path is not None
+        and _validated_local_file(project_path, repo_root)
+    ):
+        selected.append((project_path, "project"))
+    if not selected and _size_or_zero(global_path) > 0:
+        selected.append((global_path, "global:LEGACY"))
+    return selected
 
 
 def _format_age(mtime_ts: float, now: float | None = None) -> str:
@@ -208,27 +275,20 @@ def _emit_notice(path: Path, scope: str, suffix: str = "") -> bool:
 
 def main() -> int:
     """Surface the best handoff surface, most-specific first (R9)."""
-    repo_root = _repo_root()
-    emitted = False
-
-    if repo_root is not None:
-        handoff = find_handoff(repo_root)
-        if handoff is not None:
-            emitted = _emit_notice(handoff[0], handoff[1]) or emitted
-
-    project_path = _find_project_starter()
-    if project_path is not None:
-        emitted = _emit_notice(project_path, "project") or emitted
-
-    # LEGACY fallback only: the un-namespaced global file is retiring
-    # (session-start-integrity R9) — never advertise it unlabeled, and
-    # only when no repo-scoped surface exists.
-    if not emitted and (project_path is None or STARTER_PATH.resolve() != project_path.resolve()):
-        _emit_notice(
-            STARTER_PATH,
-            "global:LEGACY",
-            " (retiring surface — migrate content to docs/handoffs/ or" " the project starter)",
-        )
+    for path, scope in select_starters(_repo_root(), _find_project_starter(), STARTER_PATH):
+        suffix = ""
+        if scope == "global:LEGACY":
+            suffix = (
+                " (retiring surface — migrate content to docs/handoffs/ or the project starter)"
+            )
+        elif scope.startswith("handoff:"):
+            if ":fallback" in scope:
+                suffix += " (fallback by filesystem mtime; not verified authoring order)"
+            if scope.endswith(":draft"):
+                suffix += " (untracked handoff draft)"
+            elif scope.endswith(":unverified"):
+                suffix += " (Git tracking unverified)"
+        _emit_notice(path, scope, suffix)
     return 0
 
 

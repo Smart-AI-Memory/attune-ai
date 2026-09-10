@@ -15,6 +15,8 @@ read-only (same allowlist discipline as ``attune.handoff.verify``).
 
 from __future__ import annotations
 
+import json
+import os
 import re
 import subprocess  # nosec B404 — fixed argv, read-only git, never shell=True
 from collections.abc import Callable, Sequence
@@ -35,6 +37,29 @@ logger = structlog.get_logger(__name__)
 #: decisions.md (2026-07-28 entries) and receipts.md.
 DEFAULT_SEAT = "codex"
 DIFF_CAP_CHARS = 60_000
+
+#: Environment markers identifying the MODERATING host — the session
+#: resolving the diff and briefing a seat. OPEN-1 (2026-07-28) fixed
+#: the default at ``codex`` when Claude was the only host, so "the
+#: ruled default" and "a non-authoring seat" were the same value.
+#: A Codex-hosted ``/cross-review`` breaks that identity: the ruled
+#: default would brief the AUTHORING seat on its own diff, and a
+#: self-review reads exactly like a clean one.
+#:
+#: The Codex names are VERIFIED, not inferred — read out of a live
+#: Codex tool-call shell on 2026-09-10. An earlier draft keyed on
+#: ``CODEX_SHELL``/``CODEX_APP_TOOLS_PIPE_PATH``/``CODEX_MCP_NODE_PATH``/
+#: ``CODEX_INTERNAL_ORIGINATOR_OVERRIDE``, harvested from
+#: ``~/.codex/shell_snapshots/``; a live probe exported NONE of them, so
+#: detection would have returned None inside the very host it was written
+#: for. Prefix-matching is used rather than a fixed list precisely because
+#: that list proved wrong once: the marker set differs between an
+#: interactive session and ``codex exec``, and a new release may rename
+#: any single variable.
+HOST_ENV_PREFIXES: tuple[tuple[str, str], ...] = (
+    ("claude", "CLAUDECODE"),
+    ("codex", "CODEX_"),
+)
 
 _GIT_TIMEOUT_SECONDS = 15.0
 _ALLOWED_SUBCOMMANDS = frozenset({"branch", "merge-base", "diff", "rev-parse"})
@@ -247,11 +272,97 @@ def parse_findings(text: str) -> list[dict[str, Any]]:
     return findings
 
 
+def detect_moderator_host(environ: dict[str, str] | None = None) -> str | None:
+    """Name the host running this moderator, or ``None`` when unsure.
+
+    ``None`` covers both "no marker" (a plain shell, CI, a test) and
+    "markers for two hosts" — a nested launch, where the innermost host
+    cannot be told from the outer one by environment alone. Guessing
+    between them is what would reintroduce a silent self-review, so the
+    ambiguous case is reported as unknown and handled by the caller.
+    """
+    env = os.environ if environ is None else environ
+    found = [
+        seat
+        for seat, prefix in HOST_ENV_PREFIXES
+        if any(key.startswith(prefix) and value for key, value in env.items())
+    ]
+    return found[0] if len(found) == 1 else None
+
+
+def resolve_default_seat(host: str | None) -> str:
+    """Pick the reviewer seat for a caller that named none.
+
+    Returns OPEN-1's ruled ``codex`` in every case OPEN-1 contemplated —
+    a Claude-hosted or host-less run — and diverges only when ``codex``
+    IS the moderator, which is the one case the ruling predates.
+    """
+    if host != DEFAULT_SEAT:
+        return DEFAULT_SEAT
+    return "claude"
+
+
+def _resolve_seat(seat: str | None) -> tuple[str, str | None]:
+    """Return the seat to brief and the host that asked for it."""
+    host = detect_moderator_host()
+    resolved = resolve_default_seat(host) if seat is None else seat
+    if resolved == host:
+        # Reachable only when a caller NAMES the moderating seat. Allowed
+        # — explicit is explicit — but it is not a cross-review, so it is
+        # stamped rather than passed off as one.
+        logger.warning("cross_review_self_review", seat=resolved, host=host)
+    return resolved, host
+
+
 def _seat_recipe(seat: str) -> tuple[str, ...]:
     for name, recipe in SEAT_RECIPES:
         if name == seat:
             return recipe
     raise ReviewTargetError(f"unknown seat: {seat!r}")
+
+
+def _independence(seat: str, host: str | None) -> bool | None:
+    """Is the reviewer independent of the author? ``None`` = unverified.
+
+    Not ``False`` for an undetected host: that would assert independence
+    the run has not evidenced, and the ambiguous nested-launch case
+    resolves to ``codex`` — which may BE the moderator (codex D11 lane,
+    2026-09-09). Consumers treat ``None`` as "do not trust a clean
+    result on independence grounds".
+    """
+    if host is None:
+        return None
+    return seat == host
+
+
+def _resolve_claude_auth(
+    seat: str, host: str | None, claude_auth: str, invoke_seat: Callable[..., Any]
+) -> str:
+    """Resolve ``auto`` narrowly: only a KNOWN non-Claude host gets it.
+
+    The cross-host case is the one where ``api`` cannot succeed anyway —
+    a Codex moderator asking for the Claude seat at a zero cap gets a
+    refusal instead of a review, and no single invocation can carry the
+    right route for both hosts (passing ``subscription`` from a Claude
+    host raises, because the seat there resolves to ``codex``).
+
+    An UNKNOWN host resolves to ``api`` deliberately, on two grounds:
+    it preserves the zero-cap refusal pinned by
+    ``test_default_claude_still_refuses_zero_api_budget``, and it keeps
+    the route from depending on whether a marker happened to be set —
+    a CI run must not take a different route than the same call on a
+    laptop.
+
+    Known footgun, accepted by the chair 2026-09-09: if the API cap is
+    ever raised deliberately, a cross-host run still prefers the
+    subscription. Override with an explicit ``claude_auth="api"``.
+    """
+    if claude_auth != "auto":
+        return claude_auth
+    cross_host = host is not None and host != "claude"
+    if seat == "claude" and cross_host and invoke_seat is default_invoke_seat:
+        return "subscription"
+    return "api"
 
 
 def _validate_review_options(
@@ -281,14 +392,14 @@ def _invoke_review(
 
 def run_review(
     repo_root: str | Path,
-    seat: str = DEFAULT_SEAT,
+    seat: str | None = None,
     mode: str = "branch",
     base_ref: str = "origin/main",
     board: Any | None = None,
     invoke_seat: Callable[[Sequence[str], str], tuple[int, str]] = default_invoke_seat,
     prior_rejections: Sequence[str] = (),
     paths: Sequence[str] | None = None,
-    claude_auth: str = "api",
+    claude_auth: str = "auto",
     diff_cap_chars: int = DIFF_CAP_CHARS,
     require_complete: bool = False,
 ) -> dict[str, Any]:
@@ -310,8 +421,15 @@ def run_review(
     (docs/specs/session-spend-ledger/). That refusal stops a NEW
     billable launch; it does not touch the binding posture above —
     nothing here gates a merge or scores a finding.
-    Explicit ``claude_auth="subscription"`` uses a verified Pro/Max login
-    in a scrubbed, tool-free CLI process; it never changes the API cap.
+    ``claude_auth`` defaults to ``"auto"``, which selects ``"subscription"``
+    ONLY for a real ``claude`` seat briefed from a KNOWN non-Claude host —
+    the cross-host case, where ``api`` is refused at a zero cap and no one
+    invocation could carry the right route for both hosts. Every other
+    combination, an unknown host included, resolves to ``api``. The
+    subscription route uses a verified Pro/Max login in a scrubbed,
+    tool-free CLI process; neither route changes the API cap. The RESOLVED
+    route is what validation checks and what the result reports, so a
+    ledger row never names a route the run did not take.
     ``diff_cap_chars`` permits a deliberate bounded larger brief (up to
     250,000 characters). ``require_complete`` refuses omissions before
     invoking any seat; the default 60,000-character manifest is unchanged.
@@ -322,8 +440,23 @@ def run_review(
     be in the diff or the run raises ``ReviewTargetError`` (fail
     closed — codex D11, both rounds); the result carries
     ``scoped_to`` so the ledger row states the scope honestly.
+    An omitted ``seat`` resolves against the moderating host so the run
+    cannot brief the authoring seat on its own diff (OPEN-1 refined
+    2026-09-09): Claude-hosted and host-less runs keep OPEN-1's ruled
+    ``codex``, a Codex-hosted run gets ``claude``. Naming a seat always
+    wins, including the moderator's own; the result then reports
+    ``self_review: True`` rather than passing it off as a cross-review.
+    ``host`` and ``self_review`` are stamped on every result so a missed
+    host marker is visible in the ledger row.
     """
+    seat, host = _resolve_seat(seat)
+    claude_auth = _resolve_claude_auth(seat, host, claude_auth, invoke_seat)
     _validate_review_options(seat, invoke_seat, claude_auth, diff_cap_chars)
+    context = {
+        "host": host,
+        "self_review": _independence(seat, host),
+        "claude_auth": claude_auth if seat == "claude" else None,
+    }
     target = resolve_target(repo_root, mode=mode, base_ref=base_ref)
     per_file = target["per_file"]
     scoped_to: list[str] | None = None
@@ -393,6 +526,7 @@ def run_review(
                 body,
                 status=status,
                 manifest=manifest_note(manifest),
+                **context,
             )
             board_status = "posted"
         except Exception as exc:  # noqa: BLE001 — degrade-silent by contract
@@ -409,7 +543,7 @@ def run_review(
         "manifest": manifest,
         "target": target["description"],
         "board": board_status,
-        "claude_auth": claude_auth if seat == "claude" else None,
+        **context,
     }
     if scoped_to is not None:
         result["scoped_to"] = scoped_to
@@ -534,7 +668,10 @@ def ledger_row(result: dict[str, Any], disposition: str = "not-triaged") -> str:
         if problems:
             raise ValueError("ledger disposition fails the gates: " + "; ".join(problems))
     return (
-        f"| {date} | {result['seat']} | {result['target']} | "
+        f"| {date} | {result['seat']} | {result['target']}; "
+        f"host={result.get('host') or 'unknown'}, "
+        f"self_review={json.dumps(result.get('self_review'))}, "
+        f"claude_auth={result.get('claude_auth') or 'n/a'} | "
         f"{len(manifest['sent'])} sent / {len(manifest['omitted'])} omitted | "
         f"{len(result['findings'])} ({result['status']}) | {disposition} |"
     )

@@ -174,7 +174,9 @@ _BASELINE: dict[str, int] = {
     # (2026-08-27 retro item): the optional memory-layer read must never
     # break session start — glob/permission/layout failures degrade to
     # "no headline", matching the hook's every-failure-is-a-no-op contract.
-    "src/attune/hooks/scripts/starter_reconciler.py": 4,
+    # 4 -> 3: the bounded PyPI worker uses specific fetch errors; its
+    # process entrypoint retains the hook's fail-open boundary.
+    "src/attune/hooks/scripts/starter_reconciler.py": 3,
     # telemetry_hook added 1 for library-review L2 (PR #2117): the
     # PostToolUse exit-0-always contract must survive a non-dict
     # payload reaching record_telemetry, not only OSError.

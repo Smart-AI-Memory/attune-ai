@@ -979,7 +979,7 @@
     }
   ],
   "producer_baseline": {
-    "digest": "b1059dcb8e666f43f063a9b05897818d07738861538d79d3b92f1d26ca101806",
+    "digest": "edfcfa3656bc0b63019142c25b06a50c9113ae588edf826e569e9d8959abd308",
     "path": "docs/specs/host-surface-parity/producer_baseline.json",
     "schema_version": "attune.surface-inventory.producer-baseline/1"
   },
@@ -1692,6 +1692,7 @@
       "id": "core-starter_reconciler-module",
       "normalization_paths": [],
       "producer_anchors": [
+        "src/attune/hooks/scripts/starter_reconciler.py:<module>",
         "src/attune/hooks/scripts/starter_reconciler.py:_reconcile_and_emit",
         "src/attune/hooks/scripts/starter_reconciler.py:main"
       ],

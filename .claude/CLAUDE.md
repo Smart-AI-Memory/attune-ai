@@ -1,4 +1,4 @@
-# Attune AI Framework v16.3.0
+# Attune AI Framework v16.4.0
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -643,7 +643,7 @@ attune_redis/          # Redis plugin — BUNDLED, ships in the attune-ai
 
 ---
 
-**Version:** 16.3.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 16.4.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 ## Lessons — core
 

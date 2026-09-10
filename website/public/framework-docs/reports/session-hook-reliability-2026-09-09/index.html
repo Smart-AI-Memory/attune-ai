@@ -12,7 +12,7 @@
         <meta name="author" content="Patrick Roebuck">
       
       
-        <link rel="canonical" href="https://smartaimemory.com/framework-docs/architecture/cross-review/">
+        <link rel="canonical" href="https://smartaimemory.com/framework-docs/reports/session-hook-reliability-2026-09-09/">
       
       
       
@@ -25,7 +25,7 @@
     
     
       
-        <title>Cross Review - Attune AI</title>
+        <title>Session-hook reliability review - Attune AI</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#cross-review" class="md-skip">
+        <a href="#session-hook-reliability-review" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Cross Review
+              Session-hook reliability review
             
           </span>
         </div>
@@ -3431,7 +3431,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../ops-dashboard/" class="md-nav__link">
+      <a href="../../architecture/ops-dashboard/" class="md-nav__link">
         
   
   
@@ -4741,33 +4741,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#findings-in-priority-order" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Findings in priority order
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#concepts" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Concepts
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Concepts">
+    <nav class="md-nav" aria-label="Findings in priority order">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#advisory-by-construction" class="md-nav__link">
+  <a href="#r1-high-pr-queries-are-not-bound-to-the-verified-repository" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Advisory by construction
+        R1 — High: PR queries are not bound to the verified repository
       
     </span>
   </a>
@@ -4775,10 +4764,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#the-mandatory-reply-format" class="md-nav__link">
+  <a href="#r2-high-the-deadline-bounds-reconciliation-not-process-termination" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The mandatory reply format
+        R2 — High: the deadline bounds reconciliation, not process termination
       
     </span>
   </a>
@@ -4786,10 +4775,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#the-honest-truncation-manifest" class="md-nav__link">
+  <a href="#r3-medium-foreign-spec-paths-become-local-spec-verdicts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The honest truncation manifest
+        R3 — Medium: foreign spec paths become local spec verdicts
       
     </span>
   </a>
@@ -4797,10 +4786,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#seats" class="md-nav__link">
+  <a href="#r4-medium-failed-checks-can-look-identical-to-having-nothing-to-report" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Seats
+        R4 — Medium: failed checks can look identical to having nothing to report
       
     </span>
   </a>
@@ -4808,10 +4797,32 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#the-dogfood-ledger" class="md-nav__link">
+  <a href="#r5-medium-help-freshness-does-not-cover-the-current-authored-sources" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The dogfood ledger
+        R5 — Medium: help freshness does not cover the current authored sources
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#r6-medium-handoff-scope-labels-overstate-provenance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        R6 — Medium: handoff scope labels overstate provenance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#g1-release-blocker-the-last-change-fails-the-complexity-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        G1 — Release blocker: the last change fails the complexity gate
       
     </span>
   </a>
@@ -4824,22 +4835,44 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#design-extension" class="md-nav__link">
+  <a href="#verification-and-limits" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Design &amp; extension
+        Verification and limits
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Design &amp; extension">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#original-recommended-next-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Original recommended next work
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#local-remediation-2026-09-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Local remediation — 2026-09-09
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Local remediation — 2026-09-09">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#design-decisions" class="md-nav__link">
+  <a href="#final-local-receipts" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Design decisions
+        Final local receipts
       
     </span>
   </a>
@@ -4847,10 +4880,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#extension-points" class="md-nav__link">
+  <a href="#compatibility-and-remaining-limits" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Extension points
+        Compatibility and remaining limits
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ci-portability-follow-up-pr-2499" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CI portability follow-up — PR #2499
       
     </span>
   </a>
@@ -4859,6 +4903,17 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#merged-remediation-and-1640-artifact-checks-2026-09-09" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Merged remediation and 16.4.0 artifact checks — 2026-09-09
+      
+    </span>
+  </a>
   
 </li>
       
@@ -4882,88 +4937,321 @@
   
 
 
-<h1 id="cross-review">Cross Review<a class="headerlink" href="#cross-review" title="Permanent link">&para;</a></h1>
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p>Cross-review sends the real diff you are about to ship to ONE
-non-authoring seat at the round table — a <strong>different model</strong>
-(Codex or Antigravity) with different blind spots — and renders
-its reply as an advisory findings list. The whole mechanism lives
-in <code>attune.roundtable.review</code>: it resolves the diff read-only,
-briefs the seat under an honest truncation manifest, posts the
-reply to the shared board, and renders a dogfood-ledger row.</p>
-<p>The binding posture is a spec requirement, not a style choice:
-<strong>board-only advisory</strong>. A run "succeeds" whenever the review RAN
-— including a clean <code>NO FINDINGS</code> reply and an ABSENT seat.
-Nothing in this feature may gate a merge, wire an exit code, or
-block a command. Only a chair ruling backed by the spec's dogfood
-ledger can ever upgrade that posture.</p>
-<p>Cross-review is deliberately smaller than the full round table:
-one seat, one pass, no deliberation, no promotion loop of its own.
-It exists because a second model reading the actual diff catches
-contract gaps the authoring model reasons past — the first dogfood
-ledger rows record exactly that.</p>
-<h2 id="concepts">Concepts<a class="headerlink" href="#concepts" title="Permanent link">&para;</a></h2>
-<h3 id="advisory-by-construction">Advisory by construction<a class="headerlink" href="#advisory-by-construction" title="Permanent link">&para;</a></h3>
-<p><code>run_review()</code> returns <code>ok: True</code> for every completed run and a
-<code>status</code> naming what happened: <code>findings</code>, <code>clean</code>, <code>absent</code>, or
-<code>format_noncompliant</code>. There is no failure exit code to couple a
-gate to. Board unreachability degrades to <code>board: skipped
-(&lt;reason&gt;)</code> — recorded, never fatal.</p>
-<h3 id="the-mandatory-reply-format">The mandatory reply format<a class="headerlink" href="#the-mandatory-reply-format" title="Permanent link">&para;</a></h3>
-<p>The brief instructs the seat to reply with one line per finding —
-<code>FINDING: &lt;file&gt;:&lt;line&gt; [low|medium|high|critical] &lt;claim&gt;</code> — or
-the single line <code>NO FINDINGS</code>. <code>lint_review()</code> checks compliance;
-a noncompliant reply is <strong>flagged, never repaired</strong> — the run
-reports <code>format_noncompliant</code> and shows the raw reply, so you see
-what the seat actually said rather than a cleaned-up fiction.</p>
-<h3 id="the-honest-truncation-manifest">The honest truncation manifest<a class="headerlink" href="#the-honest-truncation-manifest" title="Permanent link">&para;</a></h3>
-<p>Diffs are packed per-file under a budget (<code>DIFF_CAP_CHARS</code>,
-60,000 characters). Files that fit are sent whole; files that do
-not fit are named in the manifest as omitted. The manifest rides
-everywhere the review does — in the brief the seat sees, in the
-board post, and in the rendered result — so a partial review is
-always visibly partial.</p>
-<h3 id="seats">Seats<a class="headerlink" href="#seats" title="Permanent link">&para;</a></h3>
-<p>The default reviewer seat is <code>codex</code> (chair-ruled, OPEN-1). Any
-seat in the round table's <code>SEAT_RECIPES</code> works — pass
-<code>seat="antigravity"</code> for the alternative. A seat whose CLI is not
-installed or not authenticated produces an <code>absent</code> run, which is
-a valid, recorded outcome — not an error.</p>
-<h3 id="the-dogfood-ledger">The dogfood ledger<a class="headerlink" href="#the-dogfood-ledger" title="Permanent link">&para;</a></h3>
-<p>Every real run appends one row to
-<code>docs/specs/cross-review/receipts.md</code>: date, seat, target, files
-sent/omitted, findings count, and a disposition the human rules
-(<code>not-triaged</code> until then). Rows are honest by contract — only
-real runs, no synthetic entries. The ledger is both the receipt
-trail and the evidence base any posture change must cite.</p>
-<h2 id="design-extension">Design &amp; extension<a class="headerlink" href="#design-extension" title="Permanent link">&para;</a></h2>
-<h3 id="design-decisions">Design decisions<a class="headerlink" href="#design-decisions" title="Permanent link">&para;</a></h3>
+<h1 id="session-hook-reliability-review">Session-hook reliability review<a class="headerlink" href="#session-hook-reliability-review" title="Permanent link">&para;</a></h1>
+<p>Original review: 2026-09-09 against commit <code>c15c92103d9ff00c984f7429cf22b47694a1262e</code>.
+Scope: <code>help_freshness_nudge.py</code>, <code>starter_prompt_nudge.py</code>, and
+<code>starter_reconciler.py</code>, their tests, and their SessionStart registrations.
+The original review below made no production changes. Patrick subsequently
+authorized local remediation, recorded in the follow-up section at the end.</p>
+<p>The hooks remain useful safeguards. The current design has explicit branch
+handoff precedence, shared artifact selection, labeled legacy fallback, and
+unverified results for many failed checks. A fresh run passed all 181 focused
+tests. Existing tests exercise real script imports, local Git discovery and
+slow subprocesses. The previous coverage run on this same code measured 98.01%
+across the three hooks.</p>
+<p><strong>Recommendation: retain all three, but do not ship this branch yet.</strong> One
+repository gate fails, and controlled probes found incorrect-repository
+verdicts, a process deadline overrun, and silent monitoring gaps. High coverage
+does not establish reliability at those boundaries. These are reproducible
+failure modes, not claims that all of them have occurred in production.</p>
+<h2 id="findings-in-priority-order">Findings in priority order<a class="headerlink" href="#findings-in-priority-order" title="Permanent link">&para;</a></h2>
+<h3 id="r1-high-pr-queries-are-not-bound-to-the-verified-repository">R1 — High: PR queries are not bound to the verified repository<a class="headerlink" href="#r1-high-pr-queries-are-not-bound-to-the-verified-repository" title="Permanent link">&para;</a></h3>
+<p><code>starter_reconciler.py:369–374</code> runs <code>gh pr view &lt;number&gt;</code> without <code>--repo</code>.
+<code>_run()</code> inherits the environment. The installed CLI's <code>gh help environment</code>
+documents that <code>GH_REPO</code> chooses the repository for such commands.</p>
+<p><strong>Receipt:</strong> a starter stamped <code>repo: local/project</code> and containing
+<code>local/project#49</code> passed provenance and extraction. A controlled <code>gh</code>
+subprocess honoring <code>GH_REPO=foreign/project</code> received arguments without a
+repository selector and returned the foreign PR's simulated <code>MERGED</code> state.
+The hook printed <code>PRs: #49 MERGED</code> under the local starter. This establishes
+the command-wiring defect; no real remote PR state was queried.</p>
+<p><strong>Improve:</strong> carry verified repository identity through to the actual query,
+including host where applicable. Pass an explicit repository selector; when
+identity cannot be established, report unverified. Test with an ambient
+<code>GH_REPO</code> that conflicts with provenance and a control fixture where local and
+foreign states differ. Assert the selected repository, not just the state.</p>
+<h3 id="r2-high-the-deadline-bounds-reconciliation-not-process-termination">R2 — High: the deadline bounds reconciliation, not process termination<a class="headerlink" href="#r2-high-the-deadline-bounds-reconciliation-not-process-termination" title="Permanent link">&para;</a></h3>
+<p><code>starter_reconciler.py:476–490</code> reads the whole PyPI response using urllib's
+socket timeout. At <code>579–597</code>, executor waiting is bounded, but
+<code>shutdown(wait=False)</code> leaves running worker threads alive. A responder that
+keeps sending bytes can keep the HTTP read active beyond the total budget;
+the Python process then waits for its worker during shutdown.</p>
+<p><strong>Receipt:</strong> a real loopback HTTP server streamed a small JSON response one byte
+every 0.55 seconds. Only the destination URL was redirected to the fixture;
+urllib response reading and the executor were real. Reconciliation returned
+after <strong>6.005 seconds</strong>, but the interpreter exited after <strong>15.107 seconds</strong>.
+The registered hook timeout is <strong>12 seconds</strong>. The existing slow-git test does
+not cover this slow-response-body case. No external HTTP service was contacted.</p>
+<p><strong>Improve:</strong> enforce an absolute deadline at a boundary that can actually be
+terminated, such as a bounded worker process for network work. Preserve and
+flush partial results, mark unfinished work unverified, and test interpreter
+exit time as well as function return time. A smaller socket idle timeout alone
+does not solve a continuously progressing response.</p>
+<h3 id="r3-medium-foreign-spec-paths-become-local-spec-verdicts">R3 — Medium: foreign spec paths become local spec verdicts<a class="headerlink" href="#r3-medium-foreign-spec-paths-become-local-spec-verdicts" title="Permanent link">&para;</a></h3>
+<p><code>starter_reconciler.py:452–470</code> extracts a slug from any matching
+<code>docs/specs/&lt;slug&gt;</code> substring and reconstructs the path under the current repo.
+It discards the prefix that can identify another repository.</p>
+<p><strong>Receipt:</strong> an actual temporary
+<code>../foreign/docs/specs/shared-feature/tasks.md</code> contained <code>Status: active</code>.
+A different local spec with the same slug contained <code>Status: shipped</code>.
+The hook returned <code>terminal:shipped</code> and generated a CLOSED-spec warning for
+the foreign reference, using real filesystem reads.</p>
+<p><strong>Improve:</strong> accept explicitly repo-relative references or resolve the named
+path against its context and verify containment. Leave foreign or ambiguous
+paths unverified. A regression should put opposite states in the two real
+files so using the wrong file cannot pass.</p>
+<h3 id="r4-medium-failed-checks-can-look-identical-to-having-nothing-to-report">R4 — Medium: failed checks can look identical to having nothing to report<a class="headerlink" href="#r4-medium-failed-checks-can-look-identical-to-having-nothing-to-report" title="Permanent link">&para;</a></h3>
+<p>Two independently reproduced cases remain:</p>
 <ul>
-<li><strong>D1 — composition over new machinery</strong>: seat recipes, the
-  invocation runner, the board, and the compiler's role budgets
-  are the round table's; review.py only adds diff resolution,
-  the brief, lint, and rendering.</li>
-<li><strong>D2 — read-only git with an everywhere-visible manifest</strong>: the
-  resolver allowlists <code>branch</code> / <code>merge-base</code> / <code>diff</code> /
-  <code>rev-parse</code>; truncation is always declared.</li>
-<li><strong>D3 — mandatory format, flagged never repaired</strong>.</li>
-<li><strong>D4 — advisory rendering, no exit-code coupling</strong>.</li>
-<li><strong>D5 — per-run ledger rows, honest by contract</strong>.</li>
-<li><strong>OPEN-1..3 (chair-ruled)</strong> — fixed <code>codex</code> default, manual-only
-  invocation, 60k diff cap ratified on the T3 ledger's diff-size
-  evidence.</li>
+<li>At <code>starter_reconciler.py:487–490</code>, PyPI failure becomes <code>None</code>; at
+  <code>650–657</code>, that can suppress the entire banner. A correctly stamped,
+  version-only starter attempted PyPI once under a controlled <code>URLError</code>, then
+  returned <code>False</code> with <strong>empty stdout</strong>. It did not report unverified.</li>
+<li>At <code>help_freshness_nudge.py:111</code>, staleness scanning occurs before structural
+  findings are printed. The catch at <code>142–143</code> silently exits. An unchanged
+  script copy executed through its real entry point received an unsupported
+  absolute glob and a separately missing feature. It returned <strong>exit 0, empty
+  stdout, empty stderr</strong>, erasing the already-computable missing-feature notice.</li>
 </ul>
-<h3 id="extension-points">Extension points<a class="headerlink" href="#extension-points" title="Permanent link">&para;</a></h3>
+<p><strong>Improve:</strong> distinguish not applicable, completed, failed, and skipped checks.
+Preserve completed findings when another check fails. Emit one concise
+degradation notice while keeping SessionStart nonblocking. Add entry-point
+tests with mixed success and failure; a test that merely reconstructs a catch
+block does not establish the behavior of the installed script.</p>
+<h3 id="r5-medium-help-freshness-does-not-cover-the-current-authored-sources">R5 — Medium: help freshness does not cover the current authored sources<a class="headerlink" href="#r5-medium-help-freshness-does-not-cover-the-current-authored-sources" title="Permanent link">&para;</a></h3>
+<p><code>help_freshness_nudge.py:69–85</code> scans only manifest <code>files</code> patterns. Reading the
+actual YAML with both the hook and a YAML parser found <strong>31 features, all
+manual, and zero source patterns</strong>. The manifest deliberately omits these
+globs for authored projections. This hook's freshness calculation consequently
+has no sources in this repository; directory completeness still works.</p>
+<p><strong>Receipt:</strong> a fixture used the current manual-feature convention, complete
+but old help templates, and a newer canonical <code>content/features</code> master.
+The hook printed nothing. This establishes a monitoring gap, not that the
+actual committed templates are stale. A separate fixture also showed that
+a valid quoted YAML glob stays quoted in the regex parser and misses its file.</p>
+<p><strong>Improve:</strong> use the existing authored-projection drift mechanism or its source
+metadata. <code>attune.authoring.projector.check_projection_drift</code> is already used
+by <code>tests/unit/authoring/test_projection_drift.py</code>, including mutation tests.
+Do not restore generation globs that the manifest intentionally removed.
+Until freshness is checked, describe this hook as a completeness check or
+make the unavailable freshness coverage explicit. If legacy YAML parsing
+remains, use a schema-aware parser or reject unsupported forms visibly.</p>
+<h3 id="r6-medium-handoff-scope-labels-overstate-provenance">R6 — Medium: handoff scope labels overstate provenance<a class="headerlink" href="#r6-medium-handoff-scope-labels-overstate-provenance" title="Permanent link">&para;</a></h3>
+<p><code>starter_prompt_nudge.py:116–139</code> describes the selected handoff as tracked,
+but checks file existence and size, not Git tracking or resolved containment.</p>
+<p><strong>Receipt:</strong> a real temporary Git repository contained an untracked,
+branch-named symlink to another project's file. <code>find_handoff()</code> selected it
+as <code>handoff:branch</code>; <code>git ls-files</code> returned no tracked entry and the resolved
+path was outside the repository.</p>
+<p><strong>Improve:</strong> reject or visibly distinguish outside-repository targets. Decide
+explicitly whether untracked local drafts are usable; if they are, label them
+as drafts rather than granting tracked provenance. Test both ordinary files
+and symlinks. Also test equal mtimes after a fresh checkout before treating
+the newest-mtime fallback as reliable recency evidence.</p>
+<h3 id="g1-release-blocker-the-last-change-fails-the-complexity-gate">G1 — Release blocker: the last change fails the complexity gate<a class="headerlink" href="#g1-release-blocker-the-last-change-fails-the-complexity-gate" title="Permanent link">&para;</a></h3>
+<p>Preflight now fails
+<code>tests/unit/quality/test_complexity_ratchet.py::test_no_new_d_or_worse_blocks</code>.
+Radon measured <code>starter_reconciler.format_banner</code> at <strong>17 before the last
+commit and 21 now</strong>, crossing the gate's D-grade threshold. Preflight results
+were <strong>86 passed, 1 failed</strong>; the focused suite still passed all 181 tests.</p>
+<p>This is a verified repository-policy failure, not an observed runtime crash.
+The last implementation ran preflight before editing, but did not rerun this
+broader gate after editing; the focused tests and commit hooks did not catch it.</p>
+<p><strong>Improve:</strong> simplify the formatter below the existing threshold and rerun
+post-edit preflight. Do not widen the allowlist to accommodate this change.
+This is the smallest immediate repair; R1 and R2 are the most urgent runtime
+reliability improvements.</p>
+<h2 id="verification-and-limits">Verification and limits<a class="headerlink" href="#verification-and-limits" title="Permanent link">&para;</a></h2>
+<p>All imports used for probes were checked against this worktree's actual files.
+The lead reran both delegated probe scripts centrally. Evidence types were
+real filesystem reads, real local subprocesses, controlled failure injection,
+installed CLI help, and one real loopback HTTP response. Git remained at the
+reviewed commit during all probes.</p>
+<p>Reproducers are saved as local review artifacts:</p>
 <ul>
-<li><strong>Seat rotation</strong> — the ruled default is fixed <code>codex</code>, but
-  rotation was explicitly left open pending more ledger evidence;
-  <code>seat=</code> already accepts any recipe key.</li>
-<li><strong>Posture upgrade</strong> — the only sanctioned path: accumulate
-  ledger rows whose triaged finding quality earns a chair ruling.</li>
-<li><strong>New seats</strong> — anything added to the round table's
-  <code>SEAT_RECIPES</code> is immediately usable as a reviewer.</li>
+<li><a href="/Users/patrickroebuck/.codex/visualizations/2026/09/09/01a08772-e7fb-7900-974d-4fcb9e59f737/probe_reconciler_correctness.py">Repository/spec/offline probes</a></li>
+<li><a href="/Users/patrickroebuck/.codex/visualizations/2026/09/09/01a08772-e7fb-7900-974d-4fcb9e59f737/probe_help_handoff.py">Help and handoff probes</a></li>
+<li><a href="/Users/patrickroebuck/.codex/visualizations/2026/09/09/01a08772-e7fb-7900-974d-4fcb9e59f737/probe_hook_deadline.py">HTTP deadline probe</a></li>
 </ul>
-<!-- attune-generated: source_hash=e370de34d241f5aa9c03988ff78a6aa2796d29a284d14b0de149a158c43cec81 feature=cross-review kind=architecture generated_at=2026-09-10 -->
+<p>The first two run directly with Python. The deadline probe takes the repo
+root as its sole argument and requires loopback socket access. Its test
+endpoint substitutes for PyPI; the result is not a measurement of PyPI.</p>
+<p>Windows, Linux, the actual Claude SessionStart harness, and live GitHub/PyPI
+services were not exercised in this review. No production occurrence rates
+or cross-platform guarantees are inferred from these tests.</p>
+<h2 id="original-recommended-next-work">Original recommended next work<a class="headerlink" href="#original-recommended-next-work" title="Permanent link">&para;</a></h2>
+<p>Keep the approved three-hook structure. Clear G1, then address R1 and R2 with
+failure-sensitive boundary tests. Follow with explicit failed/skipped states
+(R4), context-preserving spec references (R3), and truthful help/handoff
+provenance (R5/R6). These changes improve correctness and detectability without
+adding another gate or a broader orchestration layer.</p>
+<h2 id="local-remediation-2026-09-09">Local remediation — 2026-09-09<a class="headerlink" href="#local-remediation-2026-09-09" title="Permanent link">&para;</a></h2>
+<p><strong>All three hooks are retained. The reported defects were corrected and
+verified locally before publication.</strong> This section supersedes the
+original implementation status above while preserving the failure evidence.
+Corrections follow <code>c15c92103</code>, on <code>codex/session-hook-targeted-fixes</code>.
+The local work was initially held from shipping; Patrick's subsequent "go"
+authorized committing, opening the PR, and checking required CI. Inspect the
+PR for current remote checks; the receipts below describe the local review.</p>
+<table>
+<thead>
+<tr>
+<th>Finding</th>
+<th>Correction</th>
+<th>Failure-sensitive receipt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R1 — repository identity</td>
+<td><code>gh pr view</code> receives an explicit host/owner/repository selector. New stamps include <code>repo_host</code>; host changes and legacy hostless stamps cannot silently receive repository verdicts. The verified target reaches the query without rediscovery.</td>
+<td>Opposite local/foreign PR states with conflicting GH_REPO/GH_HOST; real Git stamp under host A, change origin to host B with the same owner/name, assert no PR query.</td>
+</tr>
+<tr>
+<td>R2 — process deadline</td>
+<td>PyPI runs in a subprocess killed and reaped by the remaining deadline. Executor workers finish before the shared deadline is reset.</td>
+<td>Owned loopback HTTP fixture, real urllib response parsing and worker entrypoint: successful response prints latest; slow body prints unverified and the whole process exits in 4.338s. Registered timeout remains 12s.</td>
+</tr>
+<tr>
+<td>R3 — spec paths</td>
+<td>Preserve path context, reject foreign paths and outside symlinks, isolate resolution/read failures per spec.</td>
+<td>Real opposite-state local/foreign files, symlinked directory/phase files, and a symlink loop alongside another spec and a successful PyPI result.</td>
+</tr>
+<tr>
+<td>R4 — failed monitoring</td>
+<td>PyPI failures and exhausted budgets are visible; help structural findings are flushed independently and feature failures are summarized.</td>
+<td>Version-only failed lookup, no-process-on-expired-budget assertion, and real help entrypoints combining missing/incomplete/stale/invalid inputs.</td>
+</tr>
+<tr>
+<td>R5 — authored help</td>
+<td>Parse actual YAML and compare canonical dry-run help projections, including their planned kind set. Validate template/source containment before trusting content or mtimes.</td>
+<td>Real projector round trips; actual help-system prose change invisible to the old hash; removed section/all sections; direct template edit; legacy outside-template/source cases; standalone checkout-local projector import.</td>
+</tr>
+<tr>
+<td>R6 — handoff provenance</td>
+<td>Reject outside-resolving files; distinguish indexed, draft, and unverified handoffs; use an explicitly labeled deterministic mtime fallback. Git discovery and index lookup share two seconds.</td>
+<td>Real Git indexes and script entrypoints; branch/fallback selection, internal/external symlinks, equal mtimes, and a slow-Git nudge that preserves both notices and exits in 2.033s, below its 3s registration.</td>
+</tr>
+<tr>
+<td>G1 — complexity</td>
+<td>Simplify banner construction without changing the ratchet.</td>
+<td><code>format_banner</code> is now 15, below the existing 21 threshold; post-change preflight passes all 87 governance tests.</td>
+</tr>
+</tbody>
+</table>
+<p>The different-model review (gpt-5.6-sol) found five further defects during
+implementation: hostless provenance, lossy authored hashes, legacy template
+containment, spec-directory resolution failure, and incomplete projection sets.
+All five were accepted, corrected, and independently rechecked. The reviewer
+reported no remaining actionable blocker within R1–R6/G1. The lead reran the
+behavioral receipts centrally rather than relying on the reviewer's report.</p>
+<h3 id="final-local-receipts">Final local receipts<a class="headerlink" href="#final-local-receipts" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>260 focused tests passed</strong>, with <strong>96.16% combined statement/branch coverage</strong>:
+  help 91.53%, nudge 96.92%, reconciler 97.58%. These are tested-boundary results,
+  not a substitute for the real subprocess/filesystem/HTTP receipts above.</li>
+<li><strong>87 governance tests passed</strong> in post-change collaboration preflight,
+  with zero failures. Three expected Git-state warnings remain: this working
+  tree has local changes, and the separate main checkout is dirty and behind
+  cached origin/main. That checkout was not modified.</li>
+<li><strong>77 integration and projection guards passed</strong>: SDK subprocess gating,
+  path validation, hook-fleet wiring, and authored projection drift.</li>
+<li><strong>28 review-ledger checks passed</strong> after recording the delegation and review.</li>
+<li>Pinned Black 24.10.0 and Ruff 0.8.4 passed on all ten changed Python files;
+  <code>git diff --check</code> passed.</li>
+<li>The actual help script, with empty inherited PYTHONPATH and import tracing,
+  loaded this checkout's projector and returned no findings in <strong>0.592s</strong>,
+  below its unchanged five-second timeout. All 31 manifest features have
+  authored masters. No generated help or docs outputs were edited.</li>
+</ul>
+<p>Combined test command (keyless; the HTTP fixtures use owned loopback sockets):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">PYTHONPATH</span><span class="o">=</span>src<span class="w"> </span><span class="nv">ANTHROPIC_API_KEY</span><span class="o">=</span><span class="s1">''</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pytest<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>tests/unit/hooks/test_help_freshness_nudge.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>tests/unit/hooks/test_help_freshness_reliability.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>tests/unit/hooks/test_starter_prompt_nudge.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>tests/unit/hooks/test_starter_reconciler.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>tests/unit/hooks/test_starter_hook_alignment.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>tests/unit/hooks/test_starter_reference_scope.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span>tests/unit/hooks/test_spec_status_corpus.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="w">  </span>tests/unit/hooks/test_starter_reliability_boundaries.py<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span>-q<span class="w"> </span>-o<span class="w"> </span><span class="nv">addopts</span><span class="o">=</span><span class="s1">''</span><span class="w"> </span>-n<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">  </span>--cov<span class="o">=</span>attune.hooks.scripts.help_freshness_nudge<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span>--cov<span class="o">=</span>attune.hooks.scripts.starter_prompt_nudge<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">  </span>--cov<span class="o">=</span>attune.hooks.scripts.starter_reconciler<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="w">  </span>--cov-branch<span class="w"> </span>--cov-report<span class="o">=</span>term-missing
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="nv">PYTHONPATH</span><span class="o">=</span>src<span class="w"> </span><span class="nv">ANTHROPIC_API_KEY</span><span class="o">=</span><span class="s1">''</span><span class="w"> </span>python<span class="w"> </span>scripts/collaboration_preflight.py
+</code></pre></div>
+<p>The HTTP fixture adapts only worker launch and URL routing so the worker owns
+its server and the repository's inference guard remains active. It runs the
+real worker entrypoint and urllib parser. This is a controlled process-lifetime
+receipt, not a live PyPI availability measurement. A separate fast response
+completed in 0.653s and emitted the expected version.</p>
+<h3 id="compatibility-and-remaining-limits">Compatibility and remaining limits<a class="headerlink" href="#compatibility-and-remaining-limits" title="Permanent link">&para;</a></h3>
+<p>Retaining the hooks adds startup work and makes formerly silent failures
+visible; the measured local budgets remain below their registrations. Legacy
+hostless stamps now require checking their intended repository and explicitly
+re-stamping to add <code>repo_host</code>. Existing user starters were not rewritten.
+Untracked local handoffs stay usable as drafts. Mtime fallback is evidence of
+filesystem modification time, not last authored or committed content.</p>
+<p>Windows, Linux, live GitHub/PyPI, and the actual Claude SessionStart harness
+remain untested here. Local filesystem stalls have no new hard deadline.
+The help hook checks help outputs; projected docs pages retain their existing
+drift gate. The subsequent shipping go-ahead does not replace validation:
+required CI, including Windows, must pass before proceeding toward merge.</p>
+<h3 id="ci-portability-follow-up-pr-2499">CI portability follow-up — PR #2499<a class="headerlink" href="#ci-portability-follow-up-pr-2499" title="Permanent link">&para;</a></h3>
+<p>The initial published head <code>d868dee78</code> failed four hook jobs: both Windows
+lanes exposed the test wrapper's missing UTF-8 bootstrap, and both macOS lanes
+failed to reach the owned HTTP fixture. Head <code>26be85a5c</code> restored the real
+bootstrap and isolated fixture proxy routing. Both Windows and both Linux
+hook jobs passed; macOS still failed. Proxy isolation alone was not its fix.</p>
+<p>A guarded real-worker probe with an injected DNS stall reproduced the macOS
+failure signature: standard HTTPServer construction spent 4.004s in its
+unbounded reverse lookup and returned no version; numeric socket binding
+returned 1.2.3 in 0.117s with the same stall active. The fixture now skips that
+irrelevant lookup, asserts hostname resolution is never used, and preserves
+actual subprocess exception details. The production deadline is unchanged.
+This proves the fixture dependency; the runner's actual DNS behavior remains
+unverified until CI supplies the final platform receipt.</p>
+<p>The broader initial matrix exposed two stale baselines and one Python-version
+semantic difference. The broad-catch debt decreased from 4 to 3, now recorded
+in the shrink-only ratchet. The surface inventory and its subject/digest now
+include the PyPI worker's module-level stdout anchor; existing pending runtime
+obligations remain pending. Strict spec-directory resolution exposes loops on
+Python 3.13+, while containment is checked first so dangling foreign symlinks
+remain unverified. Real directory/phase-file symlinks and missing/active/empty
+siblings are covered. Central checks: 671 repository gates and 35 boundary
+tests passed; filesystem probes agree on Python 3.12, 3.13 and 3.14. Required
+CI on the final PR head remains the acceptance condition.</p>
+<p>Final combined hooks/gates: 1,796 passed. A full keyless unit run exposed the
+packaged inventory copy requiring regeneration (22,662 passed, one failed,
+116 skipped, 3 xfailed). The existing runtime projector updated both packaged
+JSON files; 278 bootstrap/parity/ledger checks then passed. No existing receipt
+or pending runtime obligation changed. Pinned pre-commit passed on all changes.</p>
+<h2 id="merged-remediation-and-1640-artifact-checks-2026-09-09">Merged remediation and 16.4.0 artifact checks — 2026-09-09<a class="headerlink" href="#merged-remediation-and-1640-artifact-checks-2026-09-09" title="Permanent link">&para;</a></h2>
+<p>The final CI obligation above is discharged. PR <a href="https://github.com/Smart-AI-Memory/attune-ai/pull/2499">#2499</a>
+merged as <code>b79a4701fb53f6988adbd5f3f2ef6e9997237c56</code>. Its final head,
+<code>f9cc99dde328172d5d230b7038eacd5f46693c07</code>, passed all 15 platform/Python
+suites, both timezone suites, coverage and the final build in
+<a href="https://github.com/Smart-AI-Memory/attune-ai/actions/runs/34398921719">Tests run 34398921719</a>.
+The original failures and local retest measurements remain historical evidence.</p>
+<p>Release preparation <a href="https://github.com/Smart-AI-Memory/attune-ai/pull/2501">#2501</a>
+merged as <code>bb120c62cfe2a596014923433030d925e923801f</code>; a tree comparison and
+whole-branch patch-id comparison confirmed the reviewed diff survived the squash.
+Wheel and source archive rebuilt from that merge passed metadata checks and
+separate clean-install smokes outside the checkout with isolated user state.
+All three installed hook scripts match the merged source byte for byte. The
+exact wheel passed the capture/recall gate from an empty directory: hit@3 3/3.
+These are built-artifact receipts, not claims of PyPI publication.</p>
+<p>Prompt refinement does not depend on the deferred host-question adapter in
+<a href="https://github.com/Smart-AI-Memory/attune-ai/pull/2496">#2496</a>. Its 34 focused
+tests passed without that module. Both rebuilt artifacts also passed a real MCP
+stdio probe for host instructions, default-on status, persistent disable/enable
+and a one-turn skip, with the adapter module confirmed absent. This establishes
+policy delivery and preference behavior, not automatic invocation on every
+message, the quality of a model's rewrite, or a human interaction receipt.</p>
+<p>Live Claude SessionStart acceptance remains unverified. The earlier filesystem
+stall, filesystem-time fallback and legacy-stamp limits still apply. Repository
+state reconciliation does not establish the correctness of decision content.</p>
 
 
 

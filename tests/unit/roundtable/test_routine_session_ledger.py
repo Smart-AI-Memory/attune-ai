@@ -169,4 +169,5 @@ class TestReviewRefusal:
             },
         )
         with pytest.raises(SessionSpendCapError):
-            review.run_review(tmp_path, seat="claude")
+            # This test owns the billable route, regardless of its host.
+            review.run_review(tmp_path, seat="claude", claude_auth="api")

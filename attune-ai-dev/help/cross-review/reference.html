@@ -303,7 +303,12 @@
 <tr>
 <td><code>DEFAULT_SEAT</code></td>
 <td><code>&quot;codex&quot;</code></td>
-<td>Reviewer seat when none is passed</td>
+<td>Reviewer seat when the host is Claude, unknown, or ambiguous</td>
+</tr>
+<tr>
+<td><code>HOST_ENV_PREFIXES</code></td>
+<td><code>CLAUDECODE</code> / <code>CODEX_</code></td>
+<td>Identify the moderating host by env-var prefix (names verified from a live Codex shell, not inferred); an omitted <code>seat</code> resolves to a NON-host seat, so a Codex-hosted run briefs <code>claude</code></td>
 </tr>
 <tr>
 <td><code>DIFF_CAP_CHARS</code></td>

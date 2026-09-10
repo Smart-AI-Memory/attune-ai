@@ -2,7 +2,8 @@
 """SessionStart hook: reconcile next_session_starter.md threads vs reality.
 
 The companion to ``starter_prompt_nudge.py``. That hook *surfaces* the
-cross-session handoff file; this one *fact-checks* it. A handoff goes
+cross-session handoff file; this one checks its named repository states.
+Decision content is not verified. A handoff goes
 stale on arrival when its headline "do this big thing" item is already
 done — e.g. the starter says "merge PR #1118" but #1118 merged hours
 ago, or "ship 9.0.0" but 9.0.0 is already on PyPI. Reconciling that by
@@ -20,8 +21,8 @@ PyPI in parallel, then prints a one-block freshness banner:
       ⚠ main has NEWER merges the starter omits: #1136 #1135 #1134 #1133
         (starter's newest: #1132) — work may have landed since it was written
 
-A MERGED PR / GONE branch / already-published version is the tell that
-the headline action is done — read the banner before trusting the lead.
+A MERGED PR / GONE branch / already-published version is a reason to
+re-read the queued action against its own decision record before acting.
 The ``⚠ NEWER merges`` line catches the *other* staleness shape: the
 starter is behind reality because PRs landed on ``main`` that it never
 names — exactly what a named-thread check can't see (you can't verify a
@@ -53,6 +54,7 @@ import time
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import urlsplit
 
 STARTER_PATH = Path.home() / ".attune" / "next_session_starter.md"
 
@@ -74,8 +76,8 @@ SUBPROC_TIMEOUT = 4
 #: shared ``_DEADLINE`` so it can never exceed the remaining global
 #: budget.
 WALL_BUDGET = 8
-#: Total wall-clock budget for the ENTIRE hook invocation — both
-#: reconcile passes (project + global) and every git/gh/PyPI call they
+#: Total wall-clock budget for the ENTIRE hook invocation — the
+#: selected handoffs/starters and every git/gh/PyPI call they
 #: make, combined (seconds). The registered SessionStart timeout is 12s
 #: (``.claude/settings.json``); this stays safely under it even when
 #: every subprocess blocks to its ``SUBPROC_TIMEOUT`` ceiling, so a
@@ -92,7 +94,7 @@ HTTP_TIMEOUT = 4
 
 #: Monotonic instant by which all subprocess / network work must finish,
 #: set once at the top of the reconcile path in ``main()`` and shared
-#: across both passes. ``None`` (the default) means unbounded — the
+#: across selected artifacts. ``None`` (the default) means unbounded — the
 #: manual ``--stamp`` path and unit tests keep the per-call ceilings.
 _DEADLINE: float | None = None
 
@@ -112,10 +114,17 @@ def _remaining(ceiling: float) -> float:
 # --- Thread extraction patterns --------------------------------------
 #: ``#1121`` PR references (markdown headings always have a space after
 #: ``#`` so ``# Heading`` never matches; ``#1121`` does).
-PR_RE = re.compile(r"#(\d{1,6})\b")
+PR_RE = re.compile(r"(?<![\w#./-])(?:(?P<repo>[\w.-]+/[\w.-]+))?#(?P<number>\d{1,6})\b")
+#: Harvest link destinations before masking whole links: a foreign
+#: ``[#49](.../pull/49)`` label must never become a local bare reference.
+GITHUB_REF_RE = re.compile(
+    r"(?i:https?://(?:www\.)?github\.com)/(?P<repo>[\w.-]+/[\w.-]+)/"
+    r"(?P<kind>pull|issues)/(?P<number>\d{1,6})\b"
+)
+MD_LINK_RE = re.compile(r"\[[^\]\n]*\]\([^)\n]*\)")
 #: Branch names — restricted to the prefixes this project actually uses
 #: for branches, to avoid matching doc paths like ``docs/specs/...``.
-BRANCH_RE = re.compile(r"\b(?:release|hotfix|claude|feat|fix)/[A-Za-z0-9._/-]+")
+BRANCH_RE = re.compile(r"\b(?:release|hotfix|claude|codex|feat|fix)/[A-Za-z0-9._/-]*[A-Za-z0-9_-]")
 #: ``X.Y.Z`` semantic versions.
 VERSION_RE = re.compile(r"\b\d+\.\d+\.\d+\b")
 #: ``(#NNNN)`` PR markers in squash-merge commit subjects on main, e.g.
@@ -123,7 +132,7 @@ VERSION_RE = re.compile(r"\b\d+\.\d+\.\d+\b")
 #: marker from an inline ``#1133`` cross-reference in prose.
 MERGE_PR_RE = re.compile(r"\(#(\d{1,6})\)")
 #: ``docs/specs/<slug>`` mentions — the starter's work-queue claims.
-SPEC_RE = re.compile(r"docs/specs/([a-z0-9][a-z0-9-]+)")
+SPEC_RE = re.compile(r"[^\s`<>\[\]()]*docs/specs/[a-z0-9][a-z0-9-]*[^\s`<>\[\]()]*")
 #: Cap spec-status reads (local file reads, but keep the banner short).
 MAX_SPECS = 8
 #: Status-line pattern — the three conventions recognized by the
@@ -172,7 +181,7 @@ STALE_TTL_HOURS = 48
 PROVENANCE_RE = re.compile(r"\A---\n(.*?)\n---\n?", re.DOTALL)
 
 #: Recognized provenance keys — anything else in the block is ignored.
-PROVENANCE_KEYS = ("repo", "branch", "head_sha", "written_at")
+PROVENANCE_KEYS = ("repo", "repo_host", "branch", "head_sha", "written_at")
 
 
 def parse_provenance(text: str) -> tuple[dict[str, str], str]:
@@ -201,13 +210,43 @@ def _normalize_remote(url: str) -> str:
 
 
 def repo_slug(repo_root: Path | None) -> str | None:
-    """Current repo identity: origin slug, else directory name (D1)."""
+    """Origin slug or directory fallback (D1); None when git was unavailable."""
     if repo_root is None:
         return None
     result = _run(["git", "remote", "get-url", "origin"], repo_root)
-    if result is not None and result.returncode == 0 and result.stdout.strip():
+    if result is None:
+        return None
+    if result.returncode == 0 and result.stdout.strip():
         return _normalize_remote(result.stdout.strip())
     return repo_root.name.lower()
+
+
+def repo_target(repo_root: Path | None) -> str | None:
+    """Return an explicit HOST/OWNER/REPO selector from origin, or None.
+
+    Local paths and unrecognized remotes cannot establish a GitHub identity.
+    Including the host prevents GH_HOST as well as GH_REPO from redirecting
+    a verified PR query. This supports HTTPS and SSH (including SCP) remotes.
+    """
+    if repo_root is None:
+        return None
+    result = _run(["git", "remote", "get-url", "origin"], repo_root)
+    if result is None or result.returncode:
+        return None
+    remote = result.stdout.strip()
+    if re.fullmatch(r"[^/@:]+@[^/:]+:[^\s]+", remote):
+        remote = "ssh://" + remote.replace(":", "/", 1)
+    try:
+        parsed = urlsplit(remote)
+        host = parsed.hostname
+    except ValueError:
+        return None
+    path = parsed.path.strip("/").removesuffix(".git")
+    if parsed.scheme not in {"https", "ssh"} or not host:
+        return None
+    if not re.fullmatch(r"[\w.-]+/[\w.-]+", path):
+        return None
+    return f"{host}/{path}".lower()
 
 
 def starter_age_hours(provenance: dict[str, str]) -> float | None:
@@ -243,9 +282,12 @@ def stamp_provenance(path: Path, repo_root: Path | None) -> str:
     Returns the block that was written (for the caller to print).
     """
     fields: dict[str, str] = {}
-    slug = repo_slug(repo_root)
+    target = repo_target(repo_root)
+    slug = target.split("/", 1)[1] if target else repo_slug(repo_root)
     if slug:
         fields["repo"] = slug
+    if target:
+        fields["repo_host"] = target.split("/", 1)[0]
     branch = _run(["git", "branch", "--show-current"], repo_root)
     if branch is not None and branch.returncode == 0 and branch.stdout.strip():
         fields["branch"] = branch.stdout.strip()
@@ -260,17 +302,60 @@ def stamp_provenance(path: Path, repo_root: Path | None) -> str:
     return block
 
 
-def extract_threads(text: str) -> tuple[list[int], list[str], list[str]]:
+def _pr_mentions(text: str, current_repo: str | None = None) -> tuple[list[int], list[str]]:
+    """Uncapped local PR numbers and qualified references left unverified.
+
+    Qualified references require a matching current repository. Explicit
+    issue URLs stay unverified because this hook only queries PR state.
+    """
+    hits = [
+        (
+            match.start(),
+            match.group("repo"),
+            int(match.group("number")),
+            match.group("kind") == "pull",
+            "github.com",
+        )
+        for match in GITHUB_REF_RE.finditer(text)
+    ]
+    scrubbed = MD_LINK_RE.sub(lambda match: " " * len(match.group()), text)
+    scrubbed = GITHUB_REF_RE.sub(lambda match: " " * len(match.group()), scrubbed)
+    hits.extend(
+        (match.start(), match.group("repo"), int(match.group("number")), True, None)
+        for match in PR_RE.finditer(scrubbed)
+    )
+    local: list[int] = []
+    unverified: list[str] = []
+    current = current_repo.lower() if current_repo else None
+    host = "github.com"
+    if current and current.count("/") == 2:
+        host, current = current.split("/", 1)
+    for _, repo, number, is_pr, ref_host in sorted(hits):
+        repo = repo.lower() if repo else None
+        if is_pr and (repo is None or repo == current) and ref_host in {None, host}:
+            local.append(number)
+        else:
+            unverified.append(f"{repo}#{number}")
+    return list(dict.fromkeys(local)), _dedupe(unverified)
+
+
+def extract_threads(
+    text: str, current_repo: str | None = None
+) -> tuple[list[int], list[str], list[str]]:
     """Pull (pr_numbers, branches, versions) from starter ``text``.
 
     PR numbers and branches are capped (``MAX_PRS`` / ``MAX_BRANCHES``)
     so the reconciler's network fan-out stays bounded; versions are not
     capped (no per-version network call — one PyPI lookup serves all).
     """
-    prs = [int(n) for n in _dedupe(PR_RE.findall(text))][:MAX_PRS]
-    branches = _dedupe(BRANCH_RE.findall(text))[:MAX_BRANCHES]
+    prs, _ = _pr_mentions(text, current_repo)
+    # Repository names and URL paths can start with a branch prefix too.
+    # Mask references before scanning, e.g. codex/other#49 is not a branch.
+    branch_text = GITHUB_REF_RE.sub(" ", text)
+    branch_text = PR_RE.sub(" ", MD_LINK_RE.sub(" ", branch_text))
+    branches = _dedupe(BRANCH_RE.findall(branch_text))[:MAX_BRANCHES]
     versions = _dedupe(VERSION_RE.findall(text))
-    return prs, branches, versions
+    return prs[:MAX_PRS], branches, versions
 
 
 def _package_name(repo_root: Path | None) -> str | None:
@@ -317,12 +402,18 @@ def _run(cmd: list[str], cwd: Path | None) -> subprocess.CompletedProcess | None
         return None
 
 
-def check_pr(num: int, cwd: Path | None) -> str:
+def check_pr(num: int, cwd: Path | None, target: str | None = None) -> str:
     """Return a PR's state (``MERGED`` / ``OPEN`` / ``CLOSED``) or ``unverified``."""
-    result = _run(["gh", "pr", "view", str(num), "--json", "state", "-q", ".state"], cwd)
+    if target is None:
+        return "unverified"
+    result = _run(
+        ["gh", "pr", "view", str(num), "--repo", target, "--json", "state", "-q", ".state"],
+        cwd,
+    )
     if result is None or result.returncode != 0:
         return "unverified"
-    return result.stdout.strip().upper() or "unverified"
+    state = result.stdout.strip().upper()
+    return state if state in {"MERGED", "OPEN", "CLOSED"} else "unverified"
 
 
 def check_branch(name: str, cwd: Path | None) -> str:
@@ -354,7 +445,9 @@ def merged_prs_on_main(cwd: Path | None, limit: int = MAIN_LOG_SCAN) -> list[int
     return nums
 
 
-def newer_unmentioned(text: str, merged_main_prs: list[int]) -> list[int]:
+def newer_unmentioned(
+    text: str, merged_main_prs: list[int], current_repo: str | None = None
+) -> list[int]:
     """Merged-on-main PRs newer than the starter's highest mentioned PR.
 
     The named-thread checks can only verify PRs the starter *names*; this
@@ -367,7 +460,7 @@ def newer_unmentioned(text: str, merged_main_prs: list[int]) -> list[int]:
     capped at ``MAX_NEWER_MERGES``. Empty when the starter names no PR
     (no frontier to compare) or git yielded nothing.
     """
-    mentioned = {int(n) for n in PR_RE.findall(text)}
+    mentioned = set(_pr_mentions(text, current_repo)[0])
     if not mentioned or not merged_main_prs:
         return []
     ceiling = max(mentioned)
@@ -398,32 +491,67 @@ def check_specs(text: str, repo_root: Path | None) -> dict[str, str]:
     if repo_root is None:
         return {}
     out: dict[str, str] = {}
-    for slug in _dedupe(SPEC_RE.findall(text))[:MAX_SPECS]:
+    for reference in _dedupe(SPEC_RE.findall(text))[:MAX_SPECS]:
+        # Preserve path context: extracting just the slug rebases foreign
+        # references onto an unrelated local spec with the same name.
+        match = re.fullmatch(
+            r"(?:\./)?docs/specs/([a-z0-9][a-z0-9-]*)(?:/[\w.-]+)*[/.,:;!?]*", reference
+        )
+        if match is None or ".." in reference.split("/"):
+            out[reference] = "unverified (nonlocal path)"
+            continue
+        slug = match.group(1)
         spec_dir = repo_root / "docs" / "specs" / slug
+        try:
+            resolved_root = repo_root.resolve()
+            if not spec_dir.resolve().is_relative_to(resolved_root):
+                out[slug] = "unverified (nonlocal path)"
+                continue
+            # Non-strict resolve suppresses symlink-loop errors on Python
+            # 3.13+, and is_dir() then reports False. Keep failed resolution
+            # distinguishable from an actually absent directory.
+            spec_dir = spec_dir.resolve(strict=True)
+        except FileNotFoundError:
+            out[slug] = "missing"
+            continue
+        except (OSError, RuntimeError):
+            out[slug] = "unverified (read failed)"
+            continue
         if not spec_dir.is_dir():
             out[slug] = "missing"
             continue
-        tokens: list[str] = []
-        for fname in SPEC_PHASE_FILES:
-            try:
-                content = (spec_dir / fname).read_text(encoding="utf-8")
-            except OSError:
-                continue
-            match = STATUS_RE.search(content)
-            if match:
-                value = match.group(1) if match.group(1) is not None else match.group(2)
-                tokens.append(_spec_leading_token(value))
-        if not tokens:
-            out[slug] = "no-status"
-        elif all(t in TERMINAL_TOKENS for t in tokens):
-            out[slug] = f"terminal:{tokens[0]}"
-        else:
-            out[slug] = tokens[0]
+        out[slug] = _spec_status(spec_dir, resolved_root)
     return out
 
 
-def pypi_latest(pkg: str) -> str | None:
-    """Return the latest version string for ``pkg`` on PyPI, or None."""
+def _spec_status(spec_dir: Path, root: Path) -> str:
+    """Read status only from phase files whose resolved paths stay in this repo."""
+    tokens: list[str] = []
+    for fname in SPEC_PHASE_FILES:
+        try:
+            phase = spec_dir / fname
+            if not phase.resolve().is_relative_to(root):
+                return "unverified (nonlocal path)"
+            content = phase.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            continue
+        except (OSError, UnicodeError, RuntimeError):
+            return "unverified (read failed)"
+        match = STATUS_RE.search(content)
+        if match:
+            value = match.group(1) if match.group(1) is not None else match.group(2)
+            tokens.append(_spec_leading_token(value))
+    if not tokens:
+        return "no-status"
+    if all(t in TERMINAL_TOKENS for t in tokens):
+        return f"terminal:{tokens[0]}"
+    return next(t for t in tokens if t not in TERMINAL_TOKENS)
+
+
+def _fetch_pypi_latest(pkg: str) -> str | None:
+    """Fetch PyPI inside the killable worker; socket timeouts alone are insufficient."""
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", pkg):
+        return None
     url = f"https://pypi.org/pypi/{pkg}/json"
     timeout = _remaining(HTTP_TIMEOUT)
     if timeout <= 0:
@@ -432,11 +560,23 @@ def pypi_latest(pkg: str) -> str | None:
         # noqa: S310 / nosec B310 — hardcoded https PyPI URL, scheme is fixed.
         with urllib.request.urlopen(url, timeout=timeout) as resp:  # noqa: S310  # nosec B310
             data = json.load(resp)
-        return data["info"]["version"]
-    except Exception:  # noqa: BLE001
-        # INTENTIONAL: any PyPI hiccup (offline, 404, parse) is non-fatal
-        # — the version line is simply omitted from the banner.
+        value = data["info"]["version"]
+        return value if isinstance(value, str) and value else None
+    except (OSError, ValueError, KeyError, TypeError):
+        # The parent reports lookup failure; this worker has no user banner.
         return None
+
+
+def pypi_latest(pkg: str) -> str | None:
+    """Fetch in a process that _run kills and reaps at the shared deadline."""
+    result = _run([sys.executable, str(Path(__file__).resolve()), "--pypi-query", pkg], None)
+    if result is None or result.returncode:
+        return None
+    try:
+        value = json.loads(result.stdout)
+    except ValueError:
+        return None
+    return value if isinstance(value, str) and value else None
 
 
 #: Where per-project Claude memories keep the release-state pointer.
@@ -481,7 +621,14 @@ def release_state_headline(pkg: str | None, home: Path | None = None) -> str | N
         return None
 
 
-def reconcile(text: str, pkg: str | None, cwd: Path | None) -> dict:
+def reconcile(
+    text: str,
+    pkg: str | None,
+    cwd: Path | None,
+    current_repo: str | None = None,
+    *,
+    target: str | None = None,
+) -> dict:
     """Check every extracted thread concurrently under ``WALL_BUDGET``.
 
     Returns a dict with ``prs`` / ``branches`` (name → status), the
@@ -489,11 +636,20 @@ def reconcile(text: str, pkg: str | None, cwd: Path | None) -> dict:
     the starter. Threads whose check doesn't finish within the budget
     are reported ``unverified``.
     """
-    prs, branches, versions = extract_threads(text)
+    if target is None and (PR_RE.search(text) or GITHUB_REF_RE.search(text)):
+        target = repo_target(cwd)
+    # A URL's host is part of its identity; a github.com link cannot name an
+    # enterprise PR merely because OWNER/REPO happens to match.
+    reference_repo = target or current_repo
+    prs, branches, versions = extract_threads(text, reference_repo)
+    all_mentioned, unverified = _pr_mentions(text, reference_repo)
     results: dict = {
         "prs": dict.fromkeys(prs, "unverified"),
+        "unverified_refs": unverified[:MAX_PRS],
         "branches": dict.fromkeys(branches, "unverified"),
         "pypi": None,
+        "pkg": pkg,
+        "pypi_status": "unverified (budget exhausted)" if pkg else "not-applicable",
         "versions": versions,
         "newer_merges": [],
         "pr_ceiling": None,
@@ -507,16 +663,15 @@ def reconcile(text: str, pkg: str | None, cwd: Path | None) -> dict:
     # network-free. The ceiling is the true max over ALL mentioned PRs
     # (not the capped extract), matching what newer_unmentioned compares.
     if prs:
-        all_mentioned = [int(n) for n in PR_RE.findall(text)]
         results["pr_ceiling"] = max(all_mentioned)
-        results["newer_merges"] = newer_unmentioned(text, merged_prs_on_main(cwd))
+        results["newer_merges"] = newer_unmentioned(text, merged_prs_on_main(cwd), reference_repo)
     if not prs and not branches and not pkg:
         return results
 
     executor = concurrent.futures.ThreadPoolExecutor(max_workers=8)
     futures: dict = {}
     for num in prs:
-        futures[executor.submit(check_pr, num, cwd)] = ("pr", num)
+        futures[executor.submit(check_pr, num, cwd, target)] = ("pr", num)
     for branch in branches:
         futures[executor.submit(check_branch, branch, cwd)] = ("branch", branch)
     if pkg:
@@ -529,6 +684,8 @@ def reconcile(text: str, pkg: str | None, cwd: Path | None) -> dict:
             value = future.result()
         except Exception:  # noqa: BLE001
             # INTENTIONAL: a single check raising must not sink the others.
+            if kind == "pypi":
+                results["pypi_status"] = "unverified (lookup failed)"
             continue
         if kind == "pr":
             results["prs"][key] = value
@@ -536,10 +693,15 @@ def reconcile(text: str, pkg: str | None, cwd: Path | None) -> dict:
             results["branches"][key] = value
         else:  # kind == "pypi" — the only remaining submitted kind
             results["pypi"] = value
+            if value is not None:
+                results["pypi_status"] = "verified"
+            elif _remaining(WALL_BUDGET) > 0:
+                results["pypi_status"] = "unverified (lookup failed)"
 
-    # Don't block the session on stragglers — their subprocesses are
-    # already timeout-bounded; abandon any still running.
-    executor.shutdown(wait=False, cancel_futures=True)
+    # Every worker now uses a killable, deadline-bound subprocess. Reap the
+    # workers before main resets the shared deadline; otherwise a queued
+    # worker could see a fresh budget during interpreter shutdown.
+    executor.shutdown(wait=True, cancel_futures=True)
     return results
 
 
@@ -564,6 +726,9 @@ def _pypi_lines(results: dict) -> list[str]:
     """Banner lines for the PyPI version and release-state drift."""
     pypi = results["pypi"]
     if pypi is None:
+        if results.get("pkg"):
+            status = results.get("pypi_status", "unverified")
+            return [f"  PyPI {results['pkg']}: {status}"]
         return []
     versions = results["versions"]
     suffix = f" (starter mentions: {', '.join(versions)})" if versions else ""
@@ -595,14 +760,13 @@ def format_banner(
     """
     prs = results["prs"]
     branches = results["branches"]
-    pypi = results["pypi"]
     newer = results.get("newer_merges") or []
     specs = results.get("specs") or {}
-    if not prs and not branches and pypi is None and not newer and not specs and not header_lines:
-        return None
-
-    lines = [f"[starter-reconcile:{label}] {path}"]
-    lines.extend(header_lines or [])
+    unverified = results.get("unverified_refs") or []
+    lines = list(header_lines or [])
+    if unverified:
+        joined = " · ".join(f"{ref} unverified" for ref in unverified)
+        lines.append(f"  Outside local PR checks: {joined}")
     if prs:
         joined = " · ".join(f"#{num} {state}" for num, state in prs.items())
         lines.append(f"  PRs: {joined}")
@@ -619,14 +783,57 @@ def format_banner(
         )
     lines.extend(_spec_lines(specs))
     lines.extend(_pypi_lines(results))
-    return "\n".join(lines)
+    if not lines:
+        return None
+    return "\n".join(
+        [
+            f"[starter-reconcile:{label}] {path}",
+            "  Repository state checks only; decision content unverified.",
+            *lines,
+        ]
+    )
+
+
+def _provenance_warning(
+    provenance: dict[str, str], current: str | None, target: str | None
+) -> str | None:
+    """Refuse ambiguous identities as well as a proven different repository."""
+    prov_repo = provenance.get("repo", "").lower() or None
+    if prov_repo is None:
+        return None
+    # A timeout/budget skip is not evidence of a different repository.
+    # Likewise, a directory-only fallback cannot disprove an origin slug.
+    if current is None or ("/" in prov_repo) != ("/" in current):
+        return "Repository identity unverified — named-thread verification SKIPPED."
+
+    # R2 fail-closed: a PROVEN cross-repo starter gets no verdicts —
+    # plausible verification against the wrong repo is worse than none.
+    if prov_repo != current:
+        return (
+            f"⚠ starter provenance repo={prov_repo} ≠ current={current}"
+            " — named-thread verification SKIPPED (cross-repo);"
+            " stamp a starter for this repo:"
+            " starter_reconciler.py --stamp <file>"
+        )
+    if "/" not in prov_repo:
+        return None
+    host = provenance.get("repo_host", "").lower()
+    if not host or target is None:
+        return (
+            "Repository host unverified — named-thread verification SKIPPED;"
+            " re-stamp after checking this starter's repository:"
+            " starter_reconciler.py --stamp <file>"
+        )
+    if host != target.split("/", 1)[0]:
+        return (
+            f"⚠ starter provenance host={host} differs from current={target}"
+            " — named-thread verification SKIPPED (cross-repo)."
+        )
+    return None
 
 
 def _reconcile_and_emit(path: Path, label: str, repo_root: Path | None) -> bool:
-    """Reconcile a single starter file and print its banner if any.
-
-    Returns True if a banner was printed, False on any no-op.
-    """
+    """Print one starter's banner; return False when there is nothing to emit."""
     try:
         if not path.is_file() or path.stat().st_size == 0:
             return False
@@ -635,19 +842,11 @@ def _reconcile_and_emit(path: Path, label: str, repo_root: Path | None) -> bool:
         return False
 
     provenance, body = parse_provenance(text)
-    current = repo_slug(repo_root)
-    prov_repo = provenance.get("repo", "").lower() or None
-
-    # R2 fail-closed: a PROVEN cross-repo starter gets no verdicts —
-    # plausible verification against the wrong repo is worse than none.
-    if prov_repo and current and prov_repo != current:
-        print(
-            f"[starter-reconcile:{label}] {path}\n"
-            f"  ⚠ starter provenance repo={prov_repo} ≠ current={current}"
-            " — named-thread verification SKIPPED (cross-repo);"
-            " stamp a starter for this repo:"
-            " starter_reconciler.py --stamp <file>"
-        )
+    target = repo_target(repo_root)
+    current = target.split("/", 1)[1] if target else repo_slug(repo_root)
+    warning = _provenance_warning(provenance, current, target)
+    if warning:
+        print(f"[starter-reconcile:{label}] {path}\n  {warning}")
         return True
 
     header_lines: list[str] = []
@@ -659,12 +858,12 @@ def _reconcile_and_emit(path: Path, label: str, repo_root: Path | None) -> bool:
         )
 
     pkg = _package_name(repo_root)
-    results = reconcile(body, pkg, repo_root)
+    results = reconcile(body, pkg, repo_root, current, target=target)
     results["pkg"] = pkg or ""
     banner = format_banner(results, label, path, header_lines)
     if banner is None:
         return False
-    if prov_repo is None:
+    if not provenance.get("repo"):
         # Annotate only banners that carry verdicts — an empty starter
         # gets no warning, so the refusal path stays rare (D2).
         lines = banner.splitlines()
@@ -696,6 +895,11 @@ def main() -> int:
     project-local starter, created if absent) with machine-derived
     provenance from the current git state, then exits.
     """
+    if __package__:
+        from .starter_prompt_nudge import select_starters
+    else:
+        from starter_prompt_nudge import select_starters
+
     repo_root = _repo_root()
     if "--stamp" in sys.argv[1:]:
         args = [a for a in sys.argv[1:] if a != "--stamp"]
@@ -715,9 +919,7 @@ def main() -> int:
         print(f"stamped {target}\n{block}", end="")
         return 0
 
-    project_path = _find_project_starter()
-
-    # One wall-clock budget shared across BOTH passes (project + global),
+    # One wall-clock budget shared across selection and ALL selected artifacts,
     # so total hook time stays under the registered SessionStart timeout
     # even when every git/gh call blocks to its ceiling. Reset in the
     # finally so nothing leaks between invocations (or module-scoped test
@@ -725,11 +927,8 @@ def main() -> int:
     global _DEADLINE
     _DEADLINE = time.monotonic() + GLOBAL_WALL_BUDGET
     try:
-        if project_path is not None:
-            _reconcile_and_emit(project_path, "project", repo_root)
-
-        if project_path is None or STARTER_PATH.resolve() != project_path.resolve():
-            _reconcile_and_emit(STARTER_PATH, "global", repo_root)
+        for path, label in select_starters(repo_root, _find_project_starter(), STARTER_PATH):
+            _reconcile_and_emit(path, label, repo_root)
     finally:
         _DEADLINE = None
     return 0
@@ -743,6 +942,10 @@ if __name__ == "__main__":
 
     exit_if_sdk_subprocess()
     try:
+        if len(sys.argv) == 3 and sys.argv[1] == "--pypi-query":
+            version = _fetch_pypi_latest(sys.argv[2])
+            print(json.dumps(version), flush=True)
+            sys.exit(0 if version is not None else 1)
         sys.exit(main())
     except Exception as exc:  # noqa: BLE001
         # INTENTIONAL: hook errors must never block session start.

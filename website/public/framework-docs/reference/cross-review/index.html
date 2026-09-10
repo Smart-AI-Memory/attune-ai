@@ -4852,7 +4852,12 @@
 <tr>
 <td><code>DEFAULT_SEAT</code></td>
 <td><code>"codex"</code></td>
-<td>Reviewer seat when none is passed</td>
+<td>Reviewer seat when the host is Claude, unknown, or ambiguous</td>
+</tr>
+<tr>
+<td><code>HOST_ENV_PREFIXES</code></td>
+<td><code>CLAUDECODE</code> / <code>CODEX_</code></td>
+<td>Identify the moderating host by env-var prefix (names verified from a live Codex shell, not inferred); an omitted <code>seat</code> resolves to a NON-host seat, so a Codex-hosted run briefs <code>claude</code></td>
 </tr>
 <tr>
 <td><code>DIFF_CAP_CHARS</code></td>
@@ -4919,7 +4924,7 @@
 </table>
 <p>There is deliberately no CLI command, no MCP tool, and no
 suggested cadence: invocation is manual (chair-ruled, OPEN-2).</p>
-<!-- attune-generated: source_hash=68691bdb8533cb43d997bbec5457fa5ba004c65c48af6cfc90d4d4c8c87a638d feature=cross-review kind=reference generated_at=2026-07-29 -->
+<!-- attune-generated: source_hash=e370de34d241f5aa9c03988ff78a6aa2796d29a284d14b0de149a158c43cec81 feature=cross-review kind=reference generated_at=2026-09-10 -->
 
 
 

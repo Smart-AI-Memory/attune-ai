@@ -136,7 +136,20 @@ memory storage and recall, and every local transform.
      release with the headline feature; the displaced content moves to
      a permanent section below. Don't stack a second "New in" here. -->
 
-## New in 16.3.0 — questions on the host's own control, a memory backend that names itself
+## New in 16.4.0 — more reliable session-start checks
+
+Session-start PR checks now use the verified repository and host. Slow PyPI
+lookups stop at a shared deadline, and failed checks remain visible alongside
+other findings. All three help and starter hooks remain available.
+
+Help freshness compares authored output, and handoff selection rejects paths
+outside the repository while labeling drafts and filesystem-time fallbacks.
+Older repository-stamped starters request verified re-stamping before PR
+verdicts resume. This release also consumes attune-forms 0.17 with a matching
+minor-version ceiling.
+
+<details>
+<summary>Previously new in 16.3.0 — questions on the host's own control, a memory backend that names itself</summary>
 
 Ordinary scoping questions now go through each host's built-in question
 control — `AskUserQuestion` in Claude Code, native questions in Codex — as
@@ -155,6 +168,8 @@ told not to use. Also in 16.3.0: the premium tier moves to Claude Fable 5.1,
 `attune doctor` becomes a full install diagnostic, cross-review runs on a
 verified Claude subscription without API spend, and the MCP server's PyPI
 version check is one thread per process (`ATTUNE_VERSION_CHECK=0` disables it).
+
+</details>
 
 <details>
 <summary>Previously new in 16.1.0 — harness-lite lands</summary>
