@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `/cross-review` no longer briefs the authoring seat on its own diff
+  when the moderator is not Claude. `run_review()` resolves an omitted
+  `seat` against the moderating host: Claude-hosted and host-less runs
+  keep OPEN-1's ruled `codex`, a Codex-hosted run gets `claude`.
+  Previously a bare `/cross-review` from Codex reviewed Codex's own
+  changes and returned a clean-looking verdict that meant nothing.
+  Detection is environment-marker based and fails OPEN — an unknown or
+  ambiguous host keeps `DEFAULT_SEAT` — and every result now carries
+  `host` and `self_review` so a missed marker is visible in the ledger
+  row instead of hiding inside a clean result. Naming a seat still wins,
+  including the moderator's own; that run is stamped `self_review: True`
+  rather than passed off as a cross-review. Saved board posts and ledger
+  rows retain the host, self-review state, and resolved Claude auth route.
+- `claude_auth` defaults to `"auto"`, which selects the verified Pro/Max
+  subscription route ONLY for a real `claude` seat briefed from a known
+  non-Claude host. That cross-host case previously failed with
+  `SessionSpendCapError` at a zero API spend cap, which read as "Claude
+  cannot be a seat" but meant "took the billable route you never asked
+  for" — and no single invocation could carry the correct route for both
+  hosts, since passing `claude_auth="subscription"` from a Claude host
+  raises `ReviewTargetError`. An unknown host still resolves to `"api"`,
+  preserving the zero-cap refusal. Pass `claude_auth="api"` to force the
+  billable route.
+
 ## [16.4.0] - 2026-09-09
 
 This release hardens session-start checks across repository, process, and

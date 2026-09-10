@@ -184,3 +184,104 @@ pinned in `tests/unit/scripts/test_ledger_precision.py` as a
 shrink-only set: a NEW row outside the vocabulary fails the test,
 so the tally cannot silently stop being "measured". Posture
 unchanged — a report, never a gate; exit code is always 0.
+
+## 2026-09-09 — OPEN-1 refined: the default seat follows the host (chair)
+
+Chair ruling, from a live session where `/cross-review` was run from a
+Codex host and failed. Chair's framing: *"Don't you think the
+default_seat should be associated with either Codex or Claude's LLM
+being used by the user at the moment?"*
+
+**What OPEN-1 actually ruled, and why this is not a reversal.** The
+2026-07-28 entry fixed the default at `codex` for v1 and held rotation
+for T3 evidence. At that time Claude was the only host with an
+invocation surface, so "the ruled value" and "a seat that is not the
+author" were the SAME value. A Codex-hosted `/cross-review` separates
+them: the ruled value briefs the authoring seat on its own diff. This
+entry keeps `DEFAULT_SEAT = "codex"` and keeps returning it in every
+case OPEN-1 contemplated; it diverges only where OPEN-1 could not have
+applied. Rotation remains unruled and is untouched.
+
+| Host | Default seat |
+|---|---|
+| Claude | `codex` — OPEN-1's value, unchanged |
+| Codex | `claude` |
+| none / ambiguous | `codex` — `DEFAULT_SEAT` |
+
+**Fails open, stamps loud — and the inferred marker list was WRONG.**
+The first draft keyed on four `CODEX_*` names harvested from
+`~/.codex/shell_snapshots/`. A live probe of a Codex tool-call shell
+(2026-09-10, chair-directed) exported **none of them**; it exports
+`CODEX_SESSION_ID`, `CODEX_THREAD_ID`, `CODEX_SANDBOX`, `CODEX_CI`,
+`CODEX_PERMISSION_PROFILE`, `CODEX_MANAGED_BY_NPM`,
+`CODEX_MANAGED_PACKAGE_ROOT`, `CODEX_SANDBOX_NETWORK_DISABLED`. So the
+feature would have returned `None` inside the very host it was written
+for and fallen back to `codex` — the self-review it exists to prevent.
+The fail-open design contained the blast radius (it degrades to prior
+behavior and stamps `self_review: null`), which is the whole argument
+for failing open rather than guessing. Detection now matches the
+`CODEX_` PREFIX rather than a fixed list, precisely because the fixed
+list proved wrong once: the marker set differs between an interactive
+session and `codex exec`, and any single name can be renamed by a
+release. Detection returns `None` on both no-marker
+and two-marker (nested launch) environments rather than guessing, and
+every result stamps `host` and `self_review`. A missed marker therefore
+degrades to today's behavior AND shows in the ledger row, instead of
+returning a clean-looking verdict from a seat reviewing itself.
+
+**Rejected on the way here** (recorded because the lead argued for it
+and the chair overruled): resolving the host in the SKILL prose and
+leaving the constant alone. The chair's objection stands — "one
+non-authoring seat" is the feature's invariant, and an invariant carried
+in prose is a promise a moderator can skip, not an enforcer. The lead
+had also mis-cited the stale `PROVISIONAL until OPEN-1 is ruled` line in
+`plugin/skills/cross-review/SKILL.md` as evidence OPEN-1 was still open;
+that line is corrected in the same change.
+
+**Also ruled: `claude_auth` defaults to `"auto"`, narrowly.** Fixing the
+seat made this load-bearing rather than optional — a Codex-hosted bare
+run now resolves to the `claude` seat and then died on the `api` route at
+the zero cap (measured, not argued). The deciding fact: NO single
+invocation works from both hosts. From Codex the shipped snippet raises
+`SessionSpendCapError`; adding `claude_auth="subscription"` to that same
+snippet raises `ReviewTargetError` from a Claude host, because the seat
+there resolves to `codex`. Leaving the default would have forced
+host-conditional branching into skill prose — the same prose-as-invariant
+this entry rejects one paragraph above.
+
+`"auto"` selects `"subscription"` ONLY for a real `claude` seat from a
+KNOWN non-Claude host. An unknown host resolves to `"api"`, which is what
+preserves `test_default_claude_still_refuses_zero_api_budget` unchanged
+and keeps CI and a laptop on the same route. Codex was consulted on that
+pin's intent (its own, from #2449) and read it as a spend gate, not a
+consent gate — recorded as advisory: it stated it was reconstructing from
+the code, not recalling the authoring discussion.
+
+Chair weighed and accepted two costs. (1) If the API cap is ever raised
+deliberately, a cross-host run still prefers the subscription; the
+override is an explicit `claude_auth="api"`. (2) `subscription_review`
+records at `0.0`, so subscription calls are invisible in the session
+ledger — the chair's strongest objection, and NOT fixed here. Making that
+route visible as usage is open follow-up work and is worth more than the
+default either way.
+
+**D11 lane (codex, 2026-09-10) — both findings real, both accepted.**
+Scoped to the 5 substantive paths (the full staged diff was 476k chars,
+8x the cap, so an unscoped lane would have gone PARTIAL on the files the
+review was for); 5 sent / 0 omitted. (1) `self_review` reported `False`
+when no host was detected — claiming an independence the run had not
+evidenced, and the ambiguous nested-launch case resolves to `codex`,
+which may BE the moderator. Now `None` for an unknown host. (2) The
+zero-budget pin did not clear ambient host markers, so running the suite
+from a Codex session — the chair's actual workflow — resolved the
+subscription route and reached the real launcher instead of raising;
+only the inference guard stopped a live spawn. Fixed with an autouse
+fixture clearing every `HOST_ENV_MARKERS` entry. The lane reviewed the
+diff introducing host-relative resolution and auto-resolved its own seat
+through that feature (host=claude → seat=codex).
+
+Receipts: 10 new tests; mutation checks — deleting the host-relative
+branch fails 3, un-narrowing `cross_host` fails 4 including Codex's own
+zero-budget pin; suite returns 72 passed identically under Claude,
+Codex, and no-host ambients; full tree 1 failed / 26289 passed, the
+failure verified pre-existing on a pristine `git archive HEAD` export.

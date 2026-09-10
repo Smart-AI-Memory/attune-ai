@@ -45,15 +45,17 @@ appends a dogfood-ledger row. All mechanics live in
    lint, board post):
 
 ```bash
-SEAT="codex" MODE="branch" python -c "import os, json; from attune.roundtable import Board; from attune.roundtable.review import run_review; b=None
+MODE="branch" python -c "import os, json; from attune.roundtable import Board; from attune.roundtable.review import run_review; b=None
 try:
     b=Board(); b.ensure_functions()
 except Exception as e: print(f'board unavailable: {e}')
-print(json.dumps(run_review('.', seat=os.environ['SEAT'], mode=os.environ['MODE'], board=b), ensure_ascii=False))"
+print(json.dumps(run_review('.', mode=os.environ['MODE'], board=b), ensure_ascii=False))"
 ```
 
-   `MODE="staged"` reviews the staged diff. Seat default is
-   PROVISIONAL (`review.DEFAULT_SEAT`) until OPEN-1 is ruled.
+   `MODE="staged"` reviews the staged diff. Pass `seat=` only to
+   override; omitted, it resolves to a seat that is NOT the
+   moderating host (see below), so the run is a cross-review by
+   construction rather than by the moderator remembering to be one.
 3. **Render** the result as an advisory list: severity, file:line
    anchor, claim — plus the truncation manifest verbatim when any
    file was omitted (a partial review must say so). ABSENT and
@@ -72,6 +74,33 @@ print(json.dumps(run_review('.', seat=os.environ['SEAT'], mode=os.environ['MODE'
 - `/cross-review` — review the current branch vs merge-base.
 - `/cross-review staged` — review the staged diff.
 - `/cross-review seat=antigravity` — pick the reviewer seat.
+- `/cross-review seat=claude` — from a non-Claude host this resolves to
+  the machine's Pro/Max login automatically (`claude_auth="auto"`). From
+  a Claude host, or an unknown one, it stays on `"api"` and refuses at a
+  zero session spend cap. Pass `claude_auth="api"` to force the billable
+  route.
+
+## Seat defaults follow the host
+
+`run_review` resolves an omitted seat against the MODERATING host:
+
+| Host | Default seat |
+|---|---|
+| Claude | `codex` (OPEN-1's ruled value, unchanged) |
+| Codex | `claude` |
+| none / ambiguous | `codex` (`review.DEFAULT_SEAT`) |
+
+OPEN-1 (2026-07-28) fixed the default at `codex` when Claude was the
+only host, so the ruled value and "a non-authoring seat" were the
+same thing. They part company on a Codex-hosted run, where the ruled
+value would brief the AUTHORING seat on its own diff. Detection is
+environment-marker based and fails OPEN; every result carries `host`
+and `self_review`, so a missed marker shows up in the ledger row
+instead of hiding inside a clean verdict. **Check `self_review` before
+trusting a clean result** — a seat reviewing itself reads identically
+to a real cross-review. It is `true`/`false` when the host was
+detected and `null` when it was not: `null` means independence is
+UNVERIFIED, not confirmed, so treat it like `true` for trust purposes.
 
 ## Scoped re-lane (partial manifests)
 
