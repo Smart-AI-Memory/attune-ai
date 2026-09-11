@@ -66,6 +66,26 @@ canonical file instead.
 
 ---
 
+## Design note before code on core paths (ratified 2026-09-11)
+
+On a **core path** — spec execution (`read_spec`, the decomposer),
+gates and guards, persistence, security boundaries — or for any change
+expected to exceed **~50 lines**, the first deliverable is a half-page
+**design note**, not a diff:
+
+1. the cases enumerated (must work / must fail / edge shapes);
+2. the experiments actually run, in scratch, with results — code as a
+   question is welcome; code as the answer is what this step delays;
+3. the alternative rejected, one line each.
+
+The diff comes second and its PR body links the note. Below the
+threshold, or off the core paths, the tiers above apply unchanged.
+Origin: #2511 went from a one-paragraph mental design to a 135-line
+parser, and three review lanes then found the cases an enumeration
+pass would have surfaced for free.
+
+---
+
 ## Concerns palette
 
 When recommending one or more XML-enhanced prompts, also propose
