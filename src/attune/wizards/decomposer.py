@@ -21,6 +21,10 @@ from attune.workflows.compat import ModelTier
 
 logger = logging.getLogger(__name__)
 
+#: What defusedxml raises for input it will not parse: malformed XML, or
+#: XML it refuses on purpose (entity declarations, DTDs).
+_PARSE_ERRORS = (DET.ParseError, DefusedXmlException)
+
 # =========================================================================
 # Decomposition prompt template
 # =========================================================================
@@ -249,15 +253,20 @@ class TaskDecomposer:
     #: the span handed to the XML parser, so fences and prose around the
     #: block never have to be well-formed themselves.
     _TASK_REGION = re.compile(r"<task[\s>].*</task\s*>", re.DOTALL)
+    #: One candidate block: an opening ``<task …>`` to the nearest ``</task>``.
+    #: A task missing its close tag swallows its neighbour here, which the
+    #: parser rejects and the regex path then reports.
+    _TASK_BLOCK = re.compile(r"(?P<open><task(?:\s[^>]*)?>).*?</task\s*>", re.DOTALL)
 
     def _parse_tasks_from_xml(self, xml_content: str) -> list[DecomposedTask]:
         """Parse ``<task>`` elements from an LLM response or a plan file.
 
         Well-formed XML goes through a real parser (defusedxml), so quoting
-        style, attribute order and whitespace cannot drop a task. Anything
-        the parser rejects — a bare ``&`` in prose, an unclosed tag, a ``<``
-        inside a description — falls back to the regex path, which warns
-        about what it cannot see.
+        style, attribute order and whitespace cannot drop a task. When the
+        parser rejects the span as a whole — a bare ``&`` in prose, an
+        unclosed tag, a ``<`` inside a description — each ``<task>`` block
+        is retried on its own, and only a block the parser rejects by itself
+        falls back to the regex path, which warns about what it cannot see.
 
         Args:
             xml_content: Raw LLM response text or plan-file content.
@@ -270,12 +279,28 @@ class TaskDecomposer:
         if region is None:
             return self._parse_tasks_with_regex(xml_content)
         try:
-            root = DET.fromstring(f"<r>{region.group(0)}</r>")
-        except (DET.ParseError, DefusedXmlException) as exc:
+            return self._parse_well_formed(region.group(0))
+        except _PARSE_ERRORS as exc:
             logger.warning(
-                "Task XML is not well-formed (%s) - falling back to regex extraction", exc
+                "Task XML is not well-formed (%s) - parsing task blocks one at a time", exc
             )
-            return self._parse_tasks_with_regex(xml_content)
+        tasks: list[DecomposedTask] = []
+        for block in self._TASK_BLOCK.finditer(region.group(0)):
+            try:
+                tasks.extend(self._parse_well_formed(block.group(0)))
+            except _PARSE_ERRORS as exc:
+                logger.warning(
+                    "Task block %s is not well-formed (%s) - falling back to regex extraction",
+                    block.group("open"),
+                    exc,
+                )
+                tasks.extend(self._parse_tasks_with_regex(block.group(0)))
+        self._warn_on_dropped_task_content(xml_content, self._TASK_BLOCK, len(tasks))
+        return tasks
+
+    def _parse_well_formed(self, xml: str) -> list[DecomposedTask]:
+        """Tasks from well-formed task XML; raises when the parser rejects it."""
+        root = DET.fromstring(f"<r>{xml}</r>")
         # Direct children only: a <task> nested inside a description is an
         # example, not a task — iter("task") would mint a phantom from it.
         tasks = [self._task_from_element(element) for element in root.findall("task")]
@@ -428,7 +453,7 @@ class TaskDecomposer:
             logger.warning("No <task> elements found in decomposition response")
         # Runs even when nothing parsed: a response whose only task carries a
         # single-quoted attribute is exactly the case this warning exists for.
-        self._warn_on_dropped_task_content(xml_content, task_pattern)
+        self._warn_on_dropped_task_content(xml_content, task_pattern, len(tasks))
 
         return tasks
 
@@ -438,7 +463,9 @@ class TaskDecomposer:
     #: (``<file path=``, ``<objective >``) without matching ``<files-to-…>``.
     _ORPHAN_TAG = re.compile(r"<(objective|file|check|risk|dep)[\s>]")
 
-    def _warn_on_dropped_task_content(self, xml_content: str, task_pattern: re.Pattern) -> None:
+    def _warn_on_dropped_task_content(
+        self, xml_content: str, task_pattern: re.Pattern, parsed: int
+    ) -> None:
         """Warn when task-shaped content sits outside every ``<task>`` block.
 
         The parser is regex-based, so anything it does not match is discarded
@@ -462,7 +489,7 @@ class TaskDecomposer:
                 "Found task content outside any <task> block (%s) - "
                 "%d task(s) parsed; check for a malformed or unclosed <task> tag",
                 ", ".join(orphaned),
-                len(task_pattern.findall(xml_content)),
+                parsed,
             )
 
     def _warn_on_dropped_fields(

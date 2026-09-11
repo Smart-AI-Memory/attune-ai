@@ -74,6 +74,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tasks or files in silence; `docs/specs/cross-provider-memory-transport/
   tasks.md` now yields its six tasks instead of one. `&lt;`/`&gt;` written
   as escapes now decode in task text.
+- When task XML is not well-formed as a whole (a bare `&` between blocks,
+  one broken task among many), each `<task>` block is now parsed on its
+  own and only the blocks the parser rejects fall back to regex, so one
+  bad fragment no longer costs every task the parser. Over the tracked
+  plan corpus this recovers a second `<files-to-create>` section in
+  `.claude/plans/feature-rag-code-grounding-2026-04-17.md`.
 
 ### Security
 

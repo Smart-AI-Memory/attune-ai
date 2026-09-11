@@ -1014,15 +1014,79 @@ class TestTaskDecomposerElementTreePath:
         assert [t.task_id for t in tasks] == ["2"]
         assert any("no id attribute" in m for m in messages)
 
-    def test_bare_ampersand_in_prose_falls_back_to_regex(self, caplog):
+    def test_bare_ampersand_in_prose_retries_each_block_with_the_parser(self, caplog):
+        """A bare ``&`` between blocks fails the span as a whole; every block
+        still gets the parser, so the single-quoted task is not lost to the
+        regex path (codex follow-up on #2511)."""
         xml = """
         <task id="1"><objective>A</objective></task>
         Notes & caveats between the blocks.
+        <task name='quoted' depends-on="1" id='2'><objective>B</objective></task>
+        """
+        tasks, messages = self._parse(caplog, xml)
+        assert [(t.task_id, t.name, t.objective) for t in tasks] == [
+            ("1", "1", "A"),
+            ("2", "quoted", "B"),
+        ]
+        [message] = [m for m in messages if "not well-formed" in m]
+        assert message.startswith("Task XML is not well-formed (")
+        assert message.endswith(") - parsing task blocks one at a time")
+
+    def test_only_the_block_the_parser_rejects_falls_back_to_regex(self, caplog):
+        """Document order survives the mix: block 2 is regex-parsed (its
+        objective keeps the raw ``&``), blocks 1 and 3 are parser-parsed."""
+        xml = """
+        <task id="1"><objective>A &amp; B</objective></task>
+        <task id="2" name="raw"><objective>C & D</objective></task>
+        <task id='3'><objective>E</objective></task>
+        """
+        tasks, messages = self._parse(caplog, xml)
+        assert [(t.task_id, t.objective) for t in tasks] == [
+            ("1", "A & B"),
+            ("2", "C & D"),
+            ("3", "E"),
+        ]
+        [message] = [m for m in messages if "falling back" in m]
+        assert message.startswith('Task block <task id="2" name="raw"> is not well-formed (')
+        assert message.endswith(") - falling back to regex extraction")
+
+    def test_unclosed_task_still_reports_the_swallowed_neighbour_per_block(self, caplog):
+        """The swallow case the regex fallback warns about: the unclosed
+        block fails the parser on its own and the regex path names the
+        merge, while the task after it still gets the parser."""
+        xml = """
+        <task id="1"><objective>never closed</objective>
+        <task id="2"><objective>swallowed</objective></task>
+        <task id='3'><objective>kept</objective></task>
+        """
+        tasks, messages = self._parse(caplog, xml)
+        assert [t.task_id for t in tasks] == ["1", "3"]
+        assert any("Task 1: body contains another <task> opening" in m for m in messages)
+        assert any('Task block <task id="1"> is not well-formed' in m for m in messages)
+
+    def test_orphaned_content_between_blocks_is_still_named(self, caplog):
+        xml = """
+        <task id="1"><objective>A</objective></task>
+        Prose & <objective>a task that lost its wrapper</objective>
         <task id="2"><objective>B</objective></task>
         """
         tasks, messages = self._parse(caplog, xml)
         assert [t.task_id for t in tasks] == ["1", "2"]
-        assert any("not well-formed" in m for m in messages)
+        assert any(
+            "outside any <task> block (<objective>) - 2 task(s) parsed" in m for m in messages
+        )
+
+    def test_block_that_fails_both_parsers_is_named_and_counted_as_dropped(self, caplog):
+        xml = """
+        <task id="1"><objective>A</objective></task>
+        <task id='2'><objective>B & C</objective></task>
+        """
+        tasks, messages = self._parse(caplog, xml)
+        assert [t.task_id for t in tasks] == ["1"]
+        assert any("Task block <task id='2'> is not well-formed" in m for m in messages)
+        assert any(
+            "outside any <task> block (<objective>) - 0 task(s) parsed" in m for m in messages
+        )
 
     def test_entity_declarations_are_refused_and_fall_back(self, caplog):
         xml = (
