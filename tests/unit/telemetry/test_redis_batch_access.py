@@ -250,7 +250,7 @@ class TestMgetJsonHelper:
         from attune.telemetry import _redis_batch
 
         keys = [f"k{i}" for i in range(_redis_batch._MGET_CHUNK + 1)]
-        client = CountingClient({k: b'{"n": 1}' for k in keys})
+        client = CountingClient(dict.fromkeys(keys, b'{"n": 1}'))
 
         records = mget_json(client, keys)
 

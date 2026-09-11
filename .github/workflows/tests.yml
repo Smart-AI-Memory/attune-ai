@@ -570,7 +570,13 @@ jobs:
       run: black --check .
 
     - name: Lint with Ruff
-      run: ruff check .
+      # --no-fix is load-bearing: pyproject.toml sets `fix = true`, so a bare
+      # `ruff check .` REWRITES the runner's checkout and exits 0. Every
+      # auto-fixable violation then passes this gate and merges unfixed,
+      # because the runner is discarded. .pre-commit-config.yaml already
+      # guards the local path with --exit-non-zero-on-fix; CI reports rather
+      # than mutates, matching the `black --check .` step above.
+      run: ruff check --no-fix .
 
     - name: Security scan with Bandit
       run: bandit -c .bandit -r src/ attune_software/ --severity-level medium --confidence-level medium
