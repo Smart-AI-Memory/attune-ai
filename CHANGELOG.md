@@ -71,6 +71,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   handoff-named branch: an existing branch is qualified by its pull-request
   state (`exists (PR #N MERGED|OPEN)`, `exists, NO PR — pushed, not landed`,
   or `exists (PR unverified)` when `gh` cannot answer).
+- Task XML (`read_spec()`, `/spec` resume, the wizard decomposer) is now
+  parsed with defusedxml first and by regex only when the XML is not
+  well-formed. Single-quoted or reordered attributes, extra attributes such
+  as `depends-on=`, and self-closing `<file … />` entries no longer drop
+  tasks or files in silence; `docs/specs/cross-provider-memory-transport/
+  tasks.md` now yields its six tasks instead of one. `&lt;`/`&gt;` written
+  as escapes now decode in task text.
 
 ### Security
 
