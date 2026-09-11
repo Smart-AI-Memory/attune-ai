@@ -70,15 +70,19 @@ canonical file instead.
 
 On a **core path** — spec execution (`read_spec`, the decomposer),
 gates and guards, persistence, security boundaries — or for any change
-expected to exceed **~50 lines**, the first deliverable is a half-page
-**design note**, not a diff:
+expected to add **~50 or more net lines to `src/` across the PR**
+(estimated when the work is planned; when in doubt, write the note),
+the first deliverable is a half-page **design note**, not a diff:
 
 1. the cases enumerated (must work / must fail / edge shapes);
 2. the experiments actually run, in scratch, with results — code as a
    question is welcome; code as the answer is what this step delays;
 3. the alternative rejected, one line each.
 
-The diff comes second and its PR body links the note. Below the
+The diff comes second. The note lives where the review happens: in the
+owning spec's `design.md` when the work has a spec, otherwise as the
+first section of the PR body — durable and reviewer-accessible either
+way; a note in chat or scratch does not satisfy the rule. Below the
 threshold, or off the core paths, the tiers above apply unchanged.
 Origin: #2511 went from a one-paragraph mental design to a 135-line
 parser, and three review lanes then found the cases an enumeration
