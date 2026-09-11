@@ -347,7 +347,12 @@ class TaskDecomposer:
     def _text_with_tags(cls, element: DET.Element) -> str:
         parts = [element.text or ""]
         for child in element:
-            attrs = "".join(f' {key}="{value}"' for key, value in child.attrib.items())
+            # Decoded values are quoted back; a double quote inside one is the
+            # only character that would break the rebuilt tag's own quoting.
+            attrs = "".join(
+                f' {key}="{value.replace(chr(34), "&quot;")}"'
+                for key, value in child.attrib.items()
+            )
             inner = cls._text_with_tags(child)
             parts.append(
                 f"<{child.tag}{attrs}>{inner}</{child.tag}>" if inner else f"<{child.tag}{attrs} />"

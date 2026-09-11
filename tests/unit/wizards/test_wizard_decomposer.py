@@ -964,6 +964,17 @@ class TestTaskDecomposerElementTreePath:
             '<change location="f">def f(x) -> int: pass</change> then <code><div></code>'
         )
 
+    def test_double_quotes_inside_rebuilt_attributes_stay_quoted(self, caplog):
+        """Re-lane finding on #2511: a decoded quote inside an attribute
+        value must not break the rebuilt tag's own quoting."""
+        xml = (
+            '<task id="1"><objective>'
+            '<change location="say &quot;hi&quot; &amp; wave">x</change>'
+            "</objective></task>"
+        )
+        tasks, _ = self._parse(caplog, xml)
+        assert tasks[0].objective == '<change location="say &quot;hi&quot; & wave">x</change>'
+
     def test_nested_task_inside_a_description_is_not_a_phantom_task(self, caplog):
         """A well-formed example <task> inside a body is text, not a task
         (lane finding on #2511: iter('task') minted one)."""
