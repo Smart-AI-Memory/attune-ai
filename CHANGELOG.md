@@ -67,6 +67,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `<task>` block (a single-quoted attribute drops the whole task) or when a
   `<file>`/`<risk>` tag is present but yields no value (missing `path=` or
   `severity=`), instead of discarding the content in silence.
+- The session-start reconciler no longer reports a bare `exists` for a
+  handoff-named branch: an existing branch is qualified by its pull-request
+  state (`exists (PR #N MERGED|OPEN)`, `exists, NO PR — pushed, not landed`,
+  or `exists (PR unverified)` when `gh` cannot answer).
 
 ### Security
 
