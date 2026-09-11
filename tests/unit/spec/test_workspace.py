@@ -563,3 +563,43 @@ def test_direct_adapter_rejects_incompatible_and_illegal_transitions(tmp_path: P
         adapter.apply(preview, _response("approve_plan"))
     with pytest.raises(CommandWorkspaceError, match="unknown Spec event"):
         adapter.publish(preview, {"kind": "missing"})
+
+
+def test_publish_rejects_artifact_under_missing_top_level_directory(tmp_path: Path) -> None:
+    """A sibling-repo prefix is a valid ``_portable_path`` string (relative, no
+    ``..``) that resolves to nothing here; publish must fail loudly rather than
+    let the executor write to a location that never existed."""
+    adapter = SpecWorkspaceAdapter(_repo(tmp_path))
+    preview = adapter.create(_intake())
+    creating = adapter.apply(preview, _response("create_spec", confirmed=True)).state
+    event = _artifacts()
+    event["artifacts"] = [
+        {"path": ".claude/plans/demo.md", "kind": "plan"},
+        {"path": "attune-rag/docs/specs/demo/requirements.md", "kind": "requirements"},
+    ]
+    with pytest.raises(CommandWorkspaceError, match="top-level directory that does not exist"):
+        adapter.publish(creating, event)
+    # A new directory UNDER an existing top level is the normal creation shape:
+    # docs/specs/demo/ is absent from _repo() and must still be accepted.
+    assert adapter.publish(creating, _artifacts()).state.stage == "gate_running"
+
+
+def test_publish_rejects_artifact_that_resolves_outside_the_repo(tmp_path: Path) -> None:
+    """``..`` is rejected as a string; a symlink escapes only after resolution."""
+    repo = _repo(tmp_path)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    try:
+        (repo / "escape").symlink_to(outside, target_is_directory=True)
+    except OSError as exc:  # Windows without the symlink privilege
+        pytest.skip(f"symlinks unavailable: {exc}")
+    adapter = SpecWorkspaceAdapter(repo)
+    preview = adapter.create(_intake())
+    creating = adapter.apply(preview, _response("create_spec", confirmed=True)).state
+    event = _artifacts()
+    event["artifacts"] = [
+        {"path": ".claude/plans/demo.md", "kind": "plan"},
+        {"path": "escape/requirements.md", "kind": "requirements"},
+    ]
+    with pytest.raises(CommandWorkspaceError, match="artifact escapes the repository"):
+        adapter.publish(creating, event)
