@@ -13,7 +13,6 @@ import logging
 import re
 from dataclasses import dataclass, field
 from typing import Any
-from xml.sax.saxutils import unescape
 
 import defusedxml.ElementTree as DET
 from defusedxml import DefusedXmlException
@@ -277,7 +276,9 @@ class TaskDecomposer:
                 "Task XML is not well-formed (%s) - falling back to regex extraction", exc
             )
             return self._parse_tasks_with_regex(xml_content)
-        tasks = [self._task_from_element(element) for element in root.iter("task")]
+        # Direct children only: a <task> nested inside a description is an
+        # example, not a task — iter("task") would mint a phantom from it.
+        tasks = [self._task_from_element(element) for element in root.findall("task")]
         return [task for task in tasks if task is not None]
 
     def _task_from_element(self, element: DET.Element) -> DecomposedTask | None:
@@ -286,6 +287,14 @@ class TaskDecomposer:
         if not task_id:
             logger.warning("Skipping a <task> element with no id attribute")
             return None
+        nested = sum(1 for _ in element.iter("task")) - 1
+        if nested:
+            logger.warning(
+                "Task %s: %d nested <task> element(s) kept as body text, not parsed "
+                "as tasks - check for a misplaced </task>",
+                task_id,
+                nested,
+            )
         files_to_create = self._files_from_element(element, "files-to-create")
         files_to_modify = self._files_from_element(element, "files-to-modify")
         risks_seen = list(element.iterfind("risks/risk"))
@@ -321,17 +330,30 @@ class TaskDecomposer:
             if node.get("path")
         ]
 
-    @staticmethod
-    def _inner_xml(element: DET.Element) -> str:
-        """Text of an element with any inline child markup re-serialized.
+    @classmethod
+    def _inner_xml(cls, element: DET.Element) -> str:
+        """Text of an element with inline child tags kept, as plain text.
 
-        ``.text`` alone would drop ``<code>x</code>`` from "use <code>x</code>";
-        serializing the children keeps what the regex path returned verbatim.
+        ``.text`` alone would drop ``<code>x</code>`` from "use <code>x</code>".
+        Child tags are rebuilt verbatim around their content; every text
+        node is what the parser decoded, once — no re-serializing, so
+        ``->`` never comes back as ``-&gt;`` and an escaped ``&lt;div&gt;``
+        reads as ``<div>``, the text its author meant. The result is prose
+        for a reader, not XML for a parser.
         """
-        children = "".join(DET.tostring(child, encoding="unicode") for child in element)
-        # The serializer re-escapes text it just decoded (``->`` came back as
-        # ``-&gt;``); undo that so a description reads as its author wrote it.
-        return ((element.text or "") + unescape(children)).strip()
+        return cls._text_with_tags(element).strip()
+
+    @classmethod
+    def _text_with_tags(cls, element: DET.Element) -> str:
+        parts = [element.text or ""]
+        for child in element:
+            attrs = "".join(f' {key}="{value}"' for key, value in child.attrib.items())
+            inner = cls._text_with_tags(child)
+            parts.append(
+                f"<{child.tag}{attrs}>{inner}</{child.tag}>" if inner else f"<{child.tag}{attrs} />"
+            )
+            parts.append(child.tail or "")
+        return "".join(parts)
 
     def _parse_tasks_with_regex(self, xml_content: str) -> list[DecomposedTask]:
         """Regex fallback for task XML the real parser rejects.

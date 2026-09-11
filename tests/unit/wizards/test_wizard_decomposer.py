@@ -948,6 +948,35 @@ class TestTaskDecomposerElementTreePath:
         tasks, _ = self._parse(caplog, xml)
         assert tasks[0].objective == "Use <code>x</code> here"
 
+    def test_text_inside_child_tags_is_decoded_once_never_re_escaped(self, caplog):
+        """The corpus case: ``->`` inside a <change> block came back as
+        ``-&gt;`` when children were re-serialized. Escaped markup in child
+        text reads as the text its author meant (lane finding on #2511 —
+        the result is prose, not XML)."""
+        xml = (
+            '<task id="1"><files-to-modify><file path="a.py">'
+            '<change location="f">def f(x) -> int: pass</change>'
+            " then <code>&lt;div&gt;</code>"
+            "</file></files-to-modify></task>"
+        )
+        tasks, _ = self._parse(caplog, xml)
+        assert tasks[0].files_to_modify[0]["description"] == (
+            '<change location="f">def f(x) -> int: pass</change> then <code><div></code>'
+        )
+
+    def test_nested_task_inside_a_description_is_not_a_phantom_task(self, caplog):
+        """A well-formed example <task> inside a body is text, not a task
+        (lane finding on #2511: iter('task') minted one)."""
+        xml = (
+            '<task id="1"><objective>Emit blocks like '
+            '<task id="example"><objective>x</objective></task></objective></task>'
+            '<task id="2"><objective>real</objective></task>'
+        )
+        tasks, messages = self._parse(caplog, xml)
+        assert [t.task_id for t in tasks] == ["1", "2"]
+        assert tasks[0].objective.startswith('Emit blocks like <task id="example">')
+        assert any("Task 1: 1 nested <task> element(s) kept as body text" in m for m in messages)
+
     def test_entities_decode_on_the_parser_path(self, caplog):
         """The one deliberate divergence: ``&amp;`` reaches the caller as ``&``."""
         xml = '<task id="1"><objective>A &amp; B</objective></task>'
