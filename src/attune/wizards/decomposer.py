@@ -275,6 +275,15 @@ class TaskDecomposer:
             risks = self._extract_risks(body)
             dependencies = self._extract_list(body, "dependencies", "dep")
 
+            # A missing </task> lets the non-greedy span run through the NEXT
+            # task's closing tag; everything then sits "inside" this body, so
+            # neither orphan nor field warning can see the swallowed task.
+            if re.search(r"<task[\s>]", body):
+                logger.warning(
+                    "Task %s: body contains another <task> opening - a missing "
+                    "</task> merged the following task(s) into this one",
+                    task_id,
+                )
             self._warn_on_dropped_fields(
                 task_id,
                 body,

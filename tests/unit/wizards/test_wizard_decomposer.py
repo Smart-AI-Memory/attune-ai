@@ -864,3 +864,15 @@ class TestTaskDecomposerDropWarnings:
         tasks, messages = self._parse(caplog, "Sorry, I could not decompose this request.")
         assert tasks == []
         assert messages == ["No <task> elements found in decomposition response"]
+
+    def test_warns_when_a_missing_close_tag_swallows_the_next_task(self, caplog):
+        """Without </task> on the first task the non-greedy regex runs through
+        the second task's closing tag: one task parses, the other vanishes
+        INSIDE its body, out of reach of both other warnings."""
+        xml = """
+        <task id="1"><objective>First, never closed</objective>
+        <task id="2"><objective>Second</objective></task>
+        """
+        tasks, messages = self._parse(caplog, xml)
+        assert [task.task_id for task in tasks] == ["1"]
+        assert any("Task 1: body contains another <task> opening" in m for m in messages)
