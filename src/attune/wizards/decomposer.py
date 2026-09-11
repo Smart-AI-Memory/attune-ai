@@ -275,6 +275,15 @@ class TaskDecomposer:
             risks = self._extract_risks(body)
             dependencies = self._extract_list(body, "dependencies", "dep")
 
+            self._warn_on_dropped_fields(
+                task_id,
+                body,
+                len(files_to_create) + len(files_to_modify),
+                len(validation_checks),
+                len(risks),
+                len(dependencies),
+            )
+
             tasks.append(
                 DecomposedTask(
                     task_id=task_id,
@@ -290,8 +299,79 @@ class TaskDecomposer:
 
         if not tasks:
             logger.warning("No <task> elements found in decomposition response")
+        else:
+            self._warn_on_dropped_task_content(xml_content, task_pattern)
 
         return tasks
+
+    #: Markers that only appear inside a <task> body. Finding one in the text
+    #: between task blocks means a task lost its wrapper and was dropped.
+    _ORPHAN_MARKERS = ("<objective>", "<file ", "<check>", "<risk ", "<dep>")
+
+    def _warn_on_dropped_task_content(self, xml_content: str, task_pattern: re.Pattern) -> None:
+        """Warn when task-shaped content sits outside every ``<task>`` block.
+
+        The parser is regex-based, so anything it does not match is discarded
+        in silence. A single-quoted attribute, a missing ``path=``, or a
+        mistyped closing tag drops a whole task and still returns a plausible
+        list. The caller has no way to tell a two-task plan from a three-task
+        plan whose third task was malformed.
+        """
+        leftovers: list[str] = []
+        cursor = 0
+        for match in task_pattern.finditer(xml_content):
+            leftovers.append(xml_content[cursor : match.start()])
+            cursor = match.end()
+        leftovers.append(xml_content[cursor:])
+
+        orphaned = [
+            marker for chunk in leftovers for marker in self._ORPHAN_MARKERS if marker in chunk
+        ]
+        if orphaned:
+            logger.warning(
+                "Found task content outside any <task> block (%s) - "
+                "%d task(s) parsed; check for a malformed or unclosed <task> tag",
+                ", ".join(sorted(set(orphaned))),
+                len(task_pattern.findall(xml_content)),
+            )
+
+    def _warn_on_dropped_fields(
+        self,
+        task_id: str,
+        body: str,
+        files: int,
+        checks: int,
+        risks: int,
+        deps: int,
+    ) -> None:
+        """Warn when a tag appears in a task body but no value came out of it.
+
+        The sub-extractors are regexes too. ``<file>`` without ``path=`` and
+        ``<risk>`` without ``severity=`` match nothing and are dropped without
+        a word, so a task can parse "successfully" while losing every file it
+        named. Counting raw opening tags against extracted values catches that
+        without re-parsing.
+        """
+        for tag, extracted in (
+            ("<file", files),
+            ("<check", checks),
+            ("<risk", risks),
+            ("<dep", deps),
+        ):
+            # Require a space or '>' after the tag name, so the section
+            # wrappers are not miscounted as their own children:
+            # '<files-to-modify>' is not a '<file>', '<risks>' is not a
+            # '<risk>', '<dependencies>' is not a '<dep>'.
+            seen = len(re.findall(re.escape(tag) + r"[\s>]", body))
+            if seen > extracted:
+                logger.warning(
+                    "Task %s: %d %s tag(s) present but %d parsed - "
+                    "check for a missing or single-quoted attribute",
+                    task_id,
+                    seen,
+                    tag,
+                    extracted,
+                )
 
     # -----------------------------------------------------------------
     # XML extraction helpers
