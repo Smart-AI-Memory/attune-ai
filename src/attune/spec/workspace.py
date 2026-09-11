@@ -407,6 +407,37 @@ class SpecWorkspaceAdapter:
             artifacts=(SpecArtifactReceipt(raw_path, "plan"),),
         )
 
+    def _resolved_repo_path(self, raw: str, label: str) -> Path:
+        """Resolve a project-relative path inside this repo, or raise.
+
+        ``_portable_path`` is a pure string validator: it rejects absolute
+        paths and ``..``, but a sibling-prefixed path like
+        ``attune-rag/src/x.py`` is a valid project-relative string that
+        resolves to nothing here. Containing no ``..``, it passes validation,
+        and the executor then writes to a location that never existed instead
+        of raising - a silent misplacement rather than a loud failure.
+
+        Only the FIRST path segment is required to exist. A spec legitimately
+        creates new directories (``docs/specs/<new-slug>/``), so neither the
+        file nor its parent can be required - see
+        ``tests/unit/spec/test_workspace.py::_repo``, which creates
+        ``docs/specs/existing-spec/`` while the creation flow emits receipts
+        under ``docs/specs/demo/``. What a spec artifact should never do is
+        introduce a new TOP-LEVEL directory, which is exactly the shape a
+        sibling-repo prefix takes.
+        """
+        candidate = (self.repo_root / raw).resolve()
+        try:
+            relative = candidate.relative_to(self.repo_root)
+        except ValueError as exc:
+            raise CommandWorkspaceError([f"Spec {label} escapes the repository"]) from exc
+        top = relative.parts[0] if relative.parts else ""
+        if not top or not (self.repo_root / top).exists():
+            raise CommandWorkspaceError(
+                [f"Spec {label} names a top-level directory that does not exist here: {raw}"]
+            )
+        return _validate_file_path(str(candidate))
+
     def _publish_artifacts(
         self,
         state: SpecWorkspaceState,
@@ -420,6 +451,8 @@ class SpecWorkspaceAdapter:
         artifacts = tuple(_artifact(raw) for raw in raw_artifacts if isinstance(raw, Mapping))
         if not artifacts or len(artifacts) != len(raw_artifacts):
             raise CommandWorkspaceError(["Spec artifacts require receipt mappings"])
+        for artifact in artifacts:
+            self._resolved_repo_path(artifact.path, "artifact")
         task_ids = _string_list(event.get("task_ids"), "task_ids", required=True)
         probes = _string_list(event.get("probes"), "probes", required=True)
         plan_path = _portable_path(event.get("plan_path", ""), "plan_path")
