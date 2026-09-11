@@ -417,11 +417,43 @@ def check_pr(num: int, cwd: Path | None, target: str | None = None) -> str:
 
 
 def check_branch(name: str, cwd: Path | None) -> str:
-    """Return ``exists`` / ``gone`` for a remote branch, or ``unverified``."""
+    """Return ``gone`` / ``unverified``, or ``exists`` qualified by PR state.
+
+    A branch that exists with NO pull request is the state a handoff most
+    often misreports as "landed": pushed, unmerged, unreviewed, untested
+    (2026-09-11, HANDOVER.md called a 3-commit PR-less branch "landed").
+    ``exists`` alone reads as reassurance; the qualifier is the verdict.
+    """
     result = _run(["git", "ls-remote", "--heads", "origin", name], cwd)
     if result is None or result.returncode != 0:
         return "unverified"
-    return "exists" if result.stdout.strip() else "gone"
+    if not result.stdout.strip():
+        return "gone"
+    pr = _run(
+        [
+            "gh",
+            "pr",
+            "list",
+            "--head",
+            name,
+            "--state",
+            "all",
+            "--limit",
+            "1",
+            "--json",
+            "number,state",
+        ],
+        cwd,
+    )
+    if pr is None or pr.returncode != 0:
+        return "exists (PR unverified)"
+    try:
+        found = json.loads(pr.stdout or "[]")
+    except ValueError:
+        return "exists (PR unverified)"
+    if not found:
+        return "exists, NO PR — pushed, not landed"
+    return f"exists (PR #{found[0].get('number')} {str(found[0].get('state', '')).upper()})"
 
 
 def merged_prs_on_main(cwd: Path | None, limit: int = MAIN_LOG_SCAN) -> list[int]:
