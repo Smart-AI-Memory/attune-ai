@@ -67,6 +67,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `<task>` block (a single-quoted attribute drops the whole task) or when a
   `<file>`/`<risk>` tag is present but yields no value (missing `path=` or
   `severity=`), instead of discarding the content in silence.
+- Task XML (`read_spec()`, `/spec` resume, the wizard decomposer) is now
+  parsed with defusedxml first and by regex only when the XML is not
+  well-formed. Single-quoted or reordered attributes, extra attributes such
+  as `depends-on=`, and self-closing `<file … />` entries no longer drop
+  tasks or files in silence; `docs/specs/cross-provider-memory-transport/
+  tasks.md` now yields its six tasks instead of one. `&lt;`/`&gt;` written
+  as escapes now decode in task text.
 
 ### Security
 
