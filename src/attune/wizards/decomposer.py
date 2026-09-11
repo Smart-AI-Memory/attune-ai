@@ -299,14 +299,17 @@ class TaskDecomposer:
 
         if not tasks:
             logger.warning("No <task> elements found in decomposition response")
-        else:
-            self._warn_on_dropped_task_content(xml_content, task_pattern)
+        # Runs even when nothing parsed: a response whose only task carries a
+        # single-quoted attribute is exactly the case this warning exists for.
+        self._warn_on_dropped_task_content(xml_content, task_pattern)
 
         return tasks
 
-    #: Markers that only appear inside a <task> body. Finding one in the text
-    #: between task blocks means a task lost its wrapper and was dropped.
-    _ORPHAN_MARKERS = ("<objective>", "<file ", "<check>", "<risk ", "<dep>")
+    #: Opening tags that only appear inside a <task> body. Finding one in the
+    #: text between task blocks means a task lost its wrapper and was dropped.
+    #: ``[\s>]`` after the name admits attributes and stray whitespace
+    #: (``<file path=``, ``<objective >``) without matching ``<files-to-…>``.
+    _ORPHAN_TAG = re.compile(r"<(objective|file|check|risk|dep)[\s>]")
 
     def _warn_on_dropped_task_content(self, xml_content: str, task_pattern: re.Pattern) -> None:
         """Warn when task-shaped content sits outside every ``<task>`` block.
@@ -324,14 +327,14 @@ class TaskDecomposer:
             cursor = match.end()
         leftovers.append(xml_content[cursor:])
 
-        orphaned = [
-            marker for chunk in leftovers for marker in self._ORPHAN_MARKERS if marker in chunk
-        ]
+        orphaned = sorted(
+            {f"<{m.group(1)}>" for chunk in leftovers for m in self._ORPHAN_TAG.finditer(chunk)}
+        )
         if orphaned:
             logger.warning(
                 "Found task content outside any <task> block (%s) - "
                 "%d task(s) parsed; check for a malformed or unclosed <task> tag",
-                ", ".join(sorted(set(orphaned))),
+                ", ".join(orphaned),
                 len(task_pattern.findall(xml_content)),
             )
 

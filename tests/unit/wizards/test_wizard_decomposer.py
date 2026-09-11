@@ -826,8 +826,7 @@ class TestTaskDecomposerDropWarnings:
         tasks, messages = self._parse(caplog, xml)
         assert [task.task_id for task in tasks] == ["1"]
         [message] = [m for m in messages if "outside any <task> block" in m]
-        assert "<objective>" in message
-        assert "<file " in message
+        assert "(<file>, <objective>)" in message
         assert "1 task(s) parsed" in message
 
     def test_warns_when_a_field_tag_yields_no_value(self, caplog):
@@ -851,9 +850,17 @@ class TestTaskDecomposerDropWarnings:
         assert not any("<check" in m for m in messages)
         assert not any("outside any <task> block" in m for m in messages)
 
-    def test_no_tasks_at_all_keeps_the_existing_warning_only(self, caplog):
-        """With zero <task> blocks the orphan scan does not run — the existing
-        'No <task> elements found' warning already covers that case."""
-        tasks, messages = self._parse(caplog, "<objective>orphaned</objective>")
+    def test_no_tasks_still_reports_orphaned_content(self, caplog):
+        """A response whose ONLY task is malformed must not collapse into the
+        generic 'No <task> elements' warning — that is the case the orphan
+        diagnostic exists for. Plain prose with no task-shaped tags keeps the
+        generic warning alone."""
+        tasks, messages = self._parse(caplog, "<task id='1'><objective >x</objective></task>")
+        assert tasks == []
+        assert messages[0] == "No <task> elements found in decomposition response"
+        assert "outside any <task> block (<objective>) - 0 task(s) parsed" in messages[1]
+
+        caplog.clear()
+        tasks, messages = self._parse(caplog, "Sorry, I could not decompose this request.")
         assert tasks == []
         assert messages == ["No <task> elements found in decomposition response"]
