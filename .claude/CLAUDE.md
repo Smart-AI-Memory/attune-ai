@@ -539,7 +539,9 @@ When you do ask, gather every open dimension of the decision into ONE
 options each, the recommendation ordered first with " (Recommended)",
 free text through the built-in "Other" (do not add an Other option),
 and `metadata.source` set to `"elicit-form"` for a batch of more than
-one question (the format guard's opt-in). Beyond four open dimensions,
+one question, or `"confirm-gate"` for a two-option confirm with no
+recommended pick (the format guard's two opt-ins; added 2026-09-11 —
+the guard predated D16). Beyond four open dimensions,
 split into successive calls of at most four, most consequential first,
 and drop none; when the overflow is in options rather than questions,
 use a two-tier picker (category, then item). No `FormSchema` is needed

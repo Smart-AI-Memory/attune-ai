@@ -103,7 +103,8 @@ predefined choices — a subject, a problem statement — as a concise
 conversational question instead; a select whose options are guesses costs
 a correction, not an answer. Where a local hook restricts multi-question
 calls (this repository's format guard), set `metadata.source` to
-`"elicit-form"` for a batch of more than one question.
+`"elicit-form"` for a batch of more than one question, or to
+`"confirm-gate"` for a two-option confirm gate with no recommended pick.
 
 This direct host path skips template lookup and steps 0–4. It does not
 provide the Attune runtime's server-bound validation or receipt guarantees.
