@@ -54,6 +54,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   raises `ReviewTargetError`. An unknown host still resolves to `"api"`,
   preserving the zero-cap refusal. Pass `claude_auth="api"` to force the
   billable route.
+- The CI Ruff gate now runs `ruff check --no-fix .`. With `fix = true` in
+  `pyproject.toml`, the bare `ruff check .` rewrote the runner's checkout and
+  exited 0, so every auto-fixable violation passed the gate and merged
+  unfixed; CI now reports, matching the `black --check .` step beside it.
+- Spec artifact receipts are rejected when their path names a top-level
+  directory that does not exist in this repository. A sibling-repo prefix
+  such as `attune-rag/docs/...` is a valid `_portable_path` string (relative,
+  no `..`) that resolves to nothing here, so the executor wrote to a location
+  that never existed instead of failing.
+- `read_spec()` now warns when task-shaped content falls outside every
+  `<task>` block (a single-quoted attribute drops the whole task) or when a
+  `<file>`/`<risk>` tag is present but yields no value (missing `path=` or
+  `severity=`), instead of discarding the content in silence.
 
 ### Security
 
