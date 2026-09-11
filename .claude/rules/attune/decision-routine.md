@@ -70,8 +70,9 @@ canonical file instead.
 
 On a **core path** — spec execution (`read_spec`, the decomposer),
 gates and guards, persistence, security boundaries — or for any change
-expected to add **~50 or more net lines to `src/` across the PR**
-(estimated when the work is planned; when in doubt, write the note),
+expected to change **~50 or more lines in `src/` across the PR**
+(added plus removed, so a rewrite cannot net out under the bar;
+estimated when the work is planned — when in doubt, write the note),
 the first deliverable is a half-page **design note**, not a diff:
 
 1. the cases enumerated (must work / must fail / edge shapes);
