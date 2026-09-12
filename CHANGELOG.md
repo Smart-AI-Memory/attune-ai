@@ -31,6 +31,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   when a Python file cannot be parsed. The parse diagnostic remains in the
   output, and scanning continues for other files; an incomplete scan can
   no longer silently pass the register's scan-error check.
+- The worktree-add, dirty-switch and detached-head-push guards split
+  multi-line Bash commands on newlines, treat here-document bodies as
+  data, and match `git worktree add` by position after git's global
+  options (`-C`, `-c`, `--git-dir` …): a `git -C <main> worktree add`
+  on the line after `set -e` is now refused, while `git commit -m
+  worktree add` and heredoc bodies are not.
 - `/cross-review` no longer briefs the authoring seat on its own diff
   when the moderator is not Claude. `run_review()` resolves an omitted
   `seat` against the moderating host: Claude-hosted and host-less runs
