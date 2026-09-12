@@ -261,6 +261,7 @@ Output the COMPLETE test file, no TODOs remaining."""
             tier=ModelTier.CAPABLE,
             system="You are a test completion assistant. Output ONLY Python code.",
             user_message=prompt,
+            max_tokens=16384,
         )
 
         return content
