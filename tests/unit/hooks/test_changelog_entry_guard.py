@@ -216,6 +216,115 @@ class TestDecision:
         assert "and 4 more" in message
 
 
+class TestPushSources:
+    """Which local refs a push ships — the range is read per ref, not from HEAD."""
+
+    @pytest.mark.parametrize(
+        ("args", "expected"),
+        [
+            (["push"], ["HEAD"]),
+            (["push", "origin"], ["HEAD"]),
+            (["push", "origin", "HEAD"], ["HEAD"]),
+            (["push", "origin", "HEAD:refs/heads/x"], ["HEAD"]),
+            (["push", "-u", "origin", "feat/x"], ["feat/x"]),
+            (["push", "origin", "feat/y:feat/y"], ["feat/y"]),
+            (["push", "origin", "+feat/y"], ["feat/y"]),
+            (["push", "origin", "main", "feat/y"], ["main", "feat/y"]),
+            (["push", "origin", "feat/y", "feat/y"], ["feat/y"]),
+            (["push", "-o", "ci.skip", "origin", "feat/y"], ["feat/y"]),
+            (["push", "--force-with-lease=feat/y:abc", "origin", "feat/y"], ["feat/y"]),
+            (["-C", "/repo", "push", "origin", "feat/y"], ["feat/y"]),
+            (["push", "--tags", "origin"], ["HEAD"]),
+            (["push", "origin", "--", "feat/y"], ["feat/y"]),
+            (["push", "origin", ":feat/y"], []),
+            (["push", "--delete", "origin", "feat/y"], []),
+            (["push", "-d", "origin", "feat/y"], []),
+        ],
+    )
+    def test_sources(self, mod, args, expected):
+        assert mod.push_sources(args) == expected
+
+    def test_push_of_another_branch_is_judged_on_that_branch(self, mod, repo, capsys):
+        """2026-09-12 lane F1: HEAD on clean main, the pushed branch ships src."""
+        repo.commit("src/pkg/new.py", "Y = 2\n", "shipped, no entry")
+        repo.git("checkout", "-q", "main")
+        assert mod.main(_ctx("git push origin feat/x")) == 2
+        err = capsys.readouterr().err
+        assert "src/pkg/new.py" in err
+        assert "(ref feat/x)" in err
+        assert mod.main(_ctx("git push origin main")) == 0
+
+    def test_push_of_a_compliant_branch_from_an_offending_head(self, mod, repo):
+        repo.commit("src/pkg/new.py", "Y = 2\n", "shipped, no entry")
+        repo.git("checkout", "-q", "-b", "feat/ok", "main")
+        repo.commit("docs/x.md", "# x\n", "docs only")
+        assert mod.main(_ctx("git push origin feat/x")) == 2
+        assert mod.main(_ctx("git push origin feat/ok")) == 0
+        assert mod.main(_ctx("git push origin feat/ok feat/x")) == 2
+
+    def test_deletion_push_allows(self, mod, repo, metrics):
+        repo.commit("src/pkg/new.py", "Y = 2\n", "shipped, no entry")
+        assert mod.main(_ctx("git push origin :feat/x")) == 0
+        assert mod.main(_ctx("git push --delete origin feat/x")) == 0
+        assert "deletion only" in metrics.read_text(encoding="utf-8")
+
+    def test_unresolvable_ref_fails_open(self, mod, repo, metrics, capsys):
+        repo.commit("src/pkg/new.py", "Y = 2\n", "shipped, no entry")
+        assert mod.main(_ctx("git push origin nonexistent")) == 0
+        assert "skipping" in capsys.readouterr().err
+        assert "unreadable for nonexistent" in metrics.read_text(encoding="utf-8")
+
+
+class TestEscapeHatchInCommand:
+    """2026-09-12 lane F2: the advertised ``VAR=1 git push`` form must work.
+
+    The hook is a separate process, so a leading assignment on the push
+    command never reaches ``os.environ`` here; it is read from the text.
+    """
+
+    @pytest.mark.parametrize(
+        "command",
+        [
+            "ATTUNE_ALLOW_NO_CHANGELOG=1 git push origin feat/x",
+            "env ATTUNE_ALLOW_NO_CHANGELOG=1 git push origin feat/x",
+            "ATTUNE_ALLOW_NO_CHANGELOG=1 git -C . push -u origin feat/x",
+            "git status && ATTUNE_ALLOW_NO_CHANGELOG=1 git push origin feat/x",
+        ],
+    )
+    def test_leading_assignment_on_the_push_allows(self, mod, repo, metrics, command):
+        repo.commit("src/pkg/new.py", "Y = 2\n", "shipped, no entry")
+        assert mod.main(_ctx(command)) == 0
+        assert "escape hatch" in metrics.read_text(encoding="utf-8")
+
+    @pytest.mark.parametrize(
+        "command",
+        [
+            "ATTUNE_ALLOW_NO_CHANGELOG=1 git status; git push origin feat/x",
+            "ATTUNE_ALLOW_NO_CHANGELOG=0 git push origin feat/x",
+        ],
+    )
+    def test_assignment_elsewhere_does_not_cover_the_push(self, mod, repo, command):
+        repo.commit("src/pkg/new.py", "Y = 2\n", "shipped, no entry")
+        assert mod.main(_ctx(command)) == 2
+
+    def test_exported_variable_still_allows(self, mod, repo, monkeypatch):
+        repo.commit("src/pkg/new.py", "Y = 2\n", "shipped, no entry")
+        monkeypatch.setenv(mod.ALLOW_ENV, "1")
+        assert mod.main(_ctx("git push origin feat/x")) == 0
+
+    def test_script_round_trip_honors_the_advertised_exit(self, repo):
+        repo.commit("src/pkg/new.py", "Y = 2\n", "shipped, no entry")
+        run = TestStdinAndEntrypoint._run
+        blocked = run(repo, json.dumps(_ctx("git push origin feat/x")))
+        assert blocked.returncode == 2
+        advertised = "ATTUNE_ALLOW_NO_CHANGELOG=1 git push origin feat/x"
+        assert (
+            advertised.split(" git ")[0] + "=1" in blocked.stderr
+            or "ATTUNE_ALLOW_NO_CHANGELOG=1" in blocked.stderr
+        )
+        assert run(repo, json.dumps(_ctx(advertised))).returncode == 0
+
+
 class TestFailOpen:
     """Every path where the guard cannot know must ALLOW, and never raise."""
 

@@ -324,3 +324,33 @@ class TestScriptEntryPoint:
 def mod_allow_env() -> str:
     """The escape-hatch variable name, kept in one place."""
     return "ATTUNE_ALLOW_DIRTY_SWITCH"
+
+
+class TestShellInvocationsAndEnvPrefix:
+    """The raw split and the leading-assignment reader sibling guards share."""
+
+    def test_shell_invocations_keeps_the_prefix(self, mod):
+        assert mod.shell_invocations("X=1 git push; echo hi && env Y=2 git status") == [
+            ["X=1", "git", "push"],
+            ["echo", "hi"],
+            ["env", "Y=2", "git", "status"],
+        ]
+
+    def test_git_invocations_is_the_git_subset(self, mod):
+        assert mod.git_invocations("X=1 git push; echo hi && env Y=2 git status") == [
+            ["push"],
+            ["status"],
+        ]
+
+    @pytest.mark.parametrize(
+        ("argv", "expected"),
+        [
+            (["git", "push"], {}),
+            (["X=1", "git", "push"], {"X": "1"}),
+            (["env", "X=1", "Y=b=c", "git", "push"], {"X": "1", "Y": "b=c"}),
+            (["git", "-c", "k=v", "push"], {}),
+            (["git", "push", "X=1"], {}),
+        ],
+    )
+    def test_env_prefix(self, mod, argv, expected):
+        assert mod.env_prefix(argv) == expected

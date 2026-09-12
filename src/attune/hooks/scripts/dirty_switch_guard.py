@@ -133,8 +133,28 @@ def _git_args(argv: list[str]) -> list[str]:
     return []
 
 
-def git_invocations(command: str) -> list[list[str]]:
-    """Return the git arg-lists in ``command``, one per invocation.
+def env_prefix(argv: list[str]) -> dict[str, str]:
+    """The ``VAR=value`` assignments that precede the command word in ``argv``.
+
+    ``ATTUNE_ALLOW_X=1 git push`` sets the variable for git only: a
+    PreToolUse hook is a separate process and never sees it in its own
+    environment, so a guard that advertises that form as its escape hatch
+    must read it from the command text.
+    """
+    found: dict[str, str] = {}
+    for token in argv:
+        if token in ("env", "command", "sudo"):
+            continue
+        if "=" in token and not token.startswith("-"):
+            key, _, value = token.partition("=")
+            found[key] = value
+            continue
+        break
+    return found
+
+
+def shell_invocations(command: str) -> list[list[str]]:
+    """Split ``command`` into its simple commands, one token list each.
 
     A single Bash call may chain several commands, so each is inspected
     separately — a dangerous one must not hide behind a harmless leading
@@ -167,8 +187,12 @@ def git_invocations(command: str) -> list[list[str]]:
         current.append(token)
     if current:
         invocations.append(current)
+    return invocations
 
-    return [_git_args(inv) for inv in invocations if _is_git(inv)]
+
+def git_invocations(command: str) -> list[list[str]]:
+    """Return the git arg-lists in ``command``, one per git invocation."""
+    return [_git_args(inv) for inv in shell_invocations(command) if _is_git(inv)]
 
 
 def is_branch_switch(args: list[str]) -> bool:

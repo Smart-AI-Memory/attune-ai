@@ -7,24 +7,32 @@ written AFTER the PR was opened. The gate is right to fail them; this
 guard asks the same question at push time, in the agent session, where
 the fix is one more commit instead of a CI cycle.
 
-The check is mechanical and mirrors the CI gate. The commits about to be
-pushed are ``git merge-base origin/main HEAD`` .. ``HEAD``; if any path
-changed in that range starts with a shipped prefix and ``CHANGELOG.md``
-is not among the changed paths, the push is refused.
+The check is mechanical and mirrors the CI gate. For each local ref the
+push ships (``git push origin feat/y`` ships ``feat/y`` whatever HEAD is;
+``src:dst`` ships ``src``; a bare push or one with no refspec ships HEAD)
+the range is ``git merge-base origin/main <ref>`` .. ``<ref>``; if any
+path changed in that range starts with a shipped prefix and
+``CHANGELOG.md`` is not among the changed paths, the push is refused.
 
 What is NOT blocked, deliberately:
 - Any command that is not a ``git push``.
 - A range that touches nothing under the shipped prefixes (docs, tests,
   tooling, CI).
 - A range that already changes ``CHANGELOG.md``.
-- Anything when ``origin/main`` is unknown, HEAD has no commits, or git
-  cannot be read (fail open, one stderr line — a hook bug must never
-  block work). The range is read from the session's cwd; a ``-C <dir>``
-  on the push is not followed.
+- A deletion (``:dst`` refspec, ``--delete``): nothing is shipped.
+- Anything when ``origin/main`` is unknown, a pushed ref does not
+  resolve, or git cannot be read (fail open, one stderr line — a hook
+  bug must never block work). The range is read from the session's cwd;
+  a ``-C <dir>`` on the push is not followed, and ``--all`` / ``--tags``
+  with no refspec are judged as HEAD.
 
 Escape hatch: ``ATTUNE_ALLOW_NO_CHANGELOG=1`` for an internal-only
-change. Apply the ``no-changelog`` label after opening the PR — that
-label is the declaration the CI gate accepts.
+change — as a leading assignment on the push command itself
+(``ATTUNE_ALLOW_NO_CHANGELOG=1 git push ...``, read from the command
+text, since the hook process never inherits it) or exported in the
+session that launched Claude Code. Apply the ``no-changelog`` label
+after opening the PR — that label is the declaration the CI gate
+accepts.
 
 Claude Code Protocol:
     stdin: JSON with tool_name and tool_input
@@ -49,7 +57,13 @@ from pathlib import Path
 from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from dirty_switch_guard import git_invocations  # noqa: E402  (sibling hook script)
+from dirty_switch_guard import (  # noqa: E402  (sibling hook script, shared tokenizer)
+    _git_args,
+    _is_git,
+    env_prefix,
+    git_invocations,  # noqa: F401  (re-exported: the tests classify pushes through it)
+    shell_invocations,
+)
 
 ENFORCEMENT_NAME = "changelog-entry-guard"
 METRICS_LOG = Path.home() / ".attune" / "enforcement-metrics.jsonl"
@@ -66,6 +80,9 @@ OPT_OUT_LABEL = "no-changelog"
 
 #: Git global options that consume the next token as their value.
 _GLOBAL_OPTS_WITH_VALUE = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--config-env"}
+
+#: ``git push`` options that consume the next token (so it is not a refspec).
+_PUSH_OPTS_WITH_VALUE = {"-o", "--push-option", "--repo", "--receive-pack", "--exec"}
 
 
 def _log_metric(outcome: str, detail: str | None = None) -> None:
@@ -85,17 +102,72 @@ def _log_metric(outcome: str, detail: str | None = None) -> None:
         pass
 
 
-def is_push(args: list[str]) -> bool:
-    """True if the git arg-list is ``[global opts] push ...``.
-
-    Global options (``-C <dir>``, ``-c k=v``, ``--no-pager`` ...) are
-    skipped so the subcommand is matched by position — ``git commit -m
-    push`` is not a push.
-    """
+def _subcommand_index(args: list[str]) -> int:
+    """Index of the git subcommand, past ``-C <dir>``, ``-c k=v``, ``--no-pager`` ..."""
     i = 0
     while i < len(args) and args[i].startswith("-"):
         i += 2 if args[i] in _GLOBAL_OPTS_WITH_VALUE else 1
+    return i
+
+
+def is_push(args: list[str]) -> bool:
+    """True if the git arg-list is ``[global opts] push ...``.
+
+    Global options are skipped so the subcommand is matched by position —
+    ``git commit -m push`` is not a push.
+    """
+    i = _subcommand_index(args)
     return args[i : i + 1] == ["push"]
+
+
+def push_sources(args: list[str]) -> list[str]:
+    """The local refs a ``push`` arg-list ships, each judged on its own range.
+
+    ``git push origin feat/y`` ships ``feat/y`` whatever HEAD is (the
+    2026-09-12 lane finding: judging HEAD let a push of another branch
+    through unread); ``src:dst`` ships ``src``; ``+src`` is ``src``. A
+    bare push, ``HEAD``, or a push naming only the remote ships HEAD.
+    Deletions (``:dst``, ``--delete``) ship nothing and return ``[]``.
+    """
+    rest = args[_subcommand_index(args) + 1 :]
+    positionals: list[str] = []
+    delete = False
+    skip_value = False
+    for idx, token in enumerate(rest):
+        if skip_value:
+            skip_value = False
+            continue
+        if token == "--":
+            positionals.extend(rest[idx + 1 :])
+            break
+        if token in ("-d", "--delete"):
+            delete = True
+            continue
+        if token in _PUSH_OPTS_WITH_VALUE:
+            skip_value = True
+            continue
+        if token.startswith("-"):
+            continue
+        positionals.append(token)
+    if delete:
+        return []
+    refspecs = positionals[1:]  # the first positional is the remote
+    if not refspecs:
+        return ["HEAD"]
+    sources = [spec.lstrip("+").partition(":")[0] for spec in refspecs]
+    return list(dict.fromkeys(src for src in sources if src))
+
+
+def push_invocations(command: str) -> list[tuple[dict[str, str], list[str]]]:
+    """Every ``git push`` in ``command`` as (leading env assignments, git args)."""
+    found: list[tuple[dict[str, str], list[str]]] = []
+    for inv in shell_invocations(command):
+        if not _is_git(inv):
+            continue
+        args = _git_args(inv)
+        if is_push(args):
+            found.append((env_prefix(inv), args))
+    return found
 
 
 def _git(args: list[str], cwd: Path | None = None) -> str | None:
@@ -116,12 +188,12 @@ def _git(args: list[str], cwd: Path | None = None) -> str | None:
     return result.stdout
 
 
-def pushed_paths(cwd: Path | None = None) -> list[str] | None:
-    """Paths changed from the ``origin/main`` merge base to HEAD, or None if unknown."""
-    base = _git(["merge-base", "origin/main", "HEAD"], cwd)
+def pushed_paths(cwd: Path | None = None, ref: str = "HEAD") -> list[str] | None:
+    """Paths changed from the ``origin/main`` merge base to ``ref``, or None if unknown."""
+    base = _git(["merge-base", "origin/main", ref], cwd)
     if base is None:
         return None
-    diff = _git(["diff", "--name-only", base.strip(), "HEAD"], cwd)
+    diff = _git(["diff", "--name-only", base.strip(), ref], cwd)
     if diff is None:
         return None
     return [line for line in diff.splitlines() if line]
@@ -142,8 +214,9 @@ def block_message(shipped: list[str]) -> str:
         f"    1. Add an entry under `## [Unreleased]` in {CHANGELOG}, inside the "
         "EXISTING `### Added` / `### Changed` / `### Fixed` section for its "
         "kind (never a second one), commit, and push again.\n"
-        f"    2. Internal-only change: {ALLOW_ENV}=1 <push command> for this "
-        f"push, then apply the `{OPT_OUT_LABEL}` label after opening the PR."
+        f"    2. Internal-only change: {ALLOW_ENV}=1 <push command> (a leading "
+        "assignment on the push command itself) for this push, then apply the "
+        f"`{OPT_OUT_LABEL}` label after opening the PR."
     )
 
 
@@ -152,28 +225,41 @@ def main(context: dict[str, Any]) -> int:
     if context.get("tool_name") != "Bash":
         return 0
     command = (context.get("tool_input") or {}).get("command", "")
-    if not command or not any(is_push(args) for args in git_invocations(command)):
+    pushes = push_invocations(command) if command else []
+    if not pushes:
         return 0
-    if os.environ.get(ALLOW_ENV) == "1":
+    hatch_exported = os.environ.get(ALLOW_ENV) == "1"
+    judged = [
+        args for prefix, args in pushes if not (hatch_exported or prefix.get(ALLOW_ENV) == "1")
+    ]
+    if not judged:
         _log_metric("allowed", "escape hatch set")
         return 0
-
-    paths = pushed_paths()
-    if paths is None:
-        print(
-            f"[{ENFORCEMENT_NAME}] cannot read the push range "
-            "(no origin/main, no commits, or not a git tree) — skipping",
-            file=sys.stderr,
-        )
-        _log_metric("unknown", "push range unreadable")
-        return 0
-    shipped = [p for p in paths if p.startswith(SHIPPED_PREFIXES)]
-    if not shipped or CHANGELOG in paths:
-        _log_metric("allowed", f"{len(shipped)} shipped path(s)")
+    refs = list(dict.fromkeys(ref for args in judged for ref in push_sources(args)))
+    if not refs:
+        _log_metric("allowed", "deletion only")
         return 0
 
-    print(block_message(shipped), file=sys.stderr)
-    _log_metric("fired", f"{len(shipped)} shipped path(s), no {CHANGELOG}")
+    offending: list[str] = []
+    for ref in refs:
+        paths = pushed_paths(ref=ref)
+        if paths is None:
+            print(
+                f"[{ENFORCEMENT_NAME}] cannot read the push range for {ref} "
+                "(no origin/main, unknown ref, or not a git tree) — skipping",
+                file=sys.stderr,
+            )
+            _log_metric("unknown", f"push range unreadable for {ref}")
+            return 0
+        shipped = [p for p in paths if p.startswith(SHIPPED_PREFIXES)]
+        if shipped and CHANGELOG not in paths:
+            offending.extend(shipped if ref == "HEAD" else [f"{p}  (ref {ref})" for p in shipped])
+    if not offending:
+        _log_metric("allowed", f"{len(refs)} ref(s) judged")
+        return 0
+
+    print(block_message(offending), file=sys.stderr)
+    _log_metric("fired", f"{len(offending)} shipped path(s), no {CHANGELOG}")
     return 2
 
 
