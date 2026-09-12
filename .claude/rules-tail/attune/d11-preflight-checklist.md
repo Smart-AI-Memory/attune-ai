@@ -46,6 +46,16 @@ Walk the diff once per class. Each check names the concrete probe.
    that redirects `HOME` must also set `USERPROFILE` —
    `Path.home()` on Windows reads the latter, and the fixture
    silently stops isolating on the Windows lanes.
+7. **New-code ratchets, run locally before the push.** Any diff
+   that adds a function, an `except`, or a file write under `src/`
+   runs the three ratchets serially before `git push`:
+   `tests/unit/quality` (complexity — a grade-D block fails CI,
+   and a refactor that lands there after a lane is a post-lane
+   change), `tests/unit/gates/test_broad_except_ratchet.py`, and
+   `tests/unit/gates/test_path_validation_gate.py`. Hook and gate
+   suites alone do not cover them: #2525 went red twice on the
+   complexity ratchet and #2526 once on the path gate, each after
+   a green hooks+gates receipt (retro 2026-09-12 item 5).
 
 ## Measurement (the testability answer)
 
