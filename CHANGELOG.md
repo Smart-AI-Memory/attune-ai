@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Plugin metadata lookup now handles registered engine workflows without
   constructing them; bundled software workflow lookup no longer crashes on
   legacy analyzer-only fields.
+- `attune doctor` no longer crashes when an optional extra raises
+  something other than `ImportError` at import time (a missing native
+  library, a CUDA probe, an import-time metadata read); the package is
+  reported as `import failed`, distinct from `not installed`.
 
 - Class scans and class-register commands now return a non-zero exit code
   when a Python file cannot be parsed. The parse diagnostic remains in the
