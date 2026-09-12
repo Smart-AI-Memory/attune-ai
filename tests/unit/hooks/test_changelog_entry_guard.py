@@ -240,6 +240,8 @@ class TestPushSources:
             (["push", "--repo", "origin"], ["HEAD"]),
             (["push", "origin", "--", "feat/y"], ["feat/y"]),
             (["push", "origin", ":feat/y"], []),
+            (["push", "origin", ":"], ["HEAD"]),
+            (["push", "origin", ":", "feat/y"], ["HEAD", "feat/y"]),
             (["push", "--delete", "origin", "feat/y"], []),
             (["push", "-d", "origin", "feat/y"], []),
         ],

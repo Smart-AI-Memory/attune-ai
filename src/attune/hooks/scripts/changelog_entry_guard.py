@@ -158,7 +158,9 @@ def push_sources(args: list[str]) -> list[str]:
     refspecs = positionals if remote_named else positionals[1:]  # first positional = remote
     if not refspecs:
         return ["HEAD"]
-    sources = [spec.lstrip("+").partition(":")[0] for spec in refspecs]
+    # A bare ":" is "all matching branches" — ref-expanding, judged as HEAD
+    # like --all (third-lane finding, 2026-09-12); not a deletion.
+    sources = ["HEAD" if spec == ":" else spec.lstrip("+").partition(":")[0] for spec in refspecs]
     return list(dict.fromkeys(src for src in sources if src))
 
 
