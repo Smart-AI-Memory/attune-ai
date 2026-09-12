@@ -46,6 +46,22 @@ Walk the diff once per class. Each check names the concrete probe.
    that redirects `HOME` must also set `USERPROFILE` —
    `Path.home()` on Windows reads the latter, and the fixture
    silently stops isolating on the Windows lanes.
+7. **New-code ratchets, run locally before the push.** Any diff
+   that adds OR changes code under `src/` — a refactor that grows an
+   existing function trips the complexity ratchet just as a new one
+   does (#2525's own case) — runs the two ratchet directories
+   serially before `git push`: `tests/unit/quality` plus all of
+   `tests/unit/gates` (~45 s; complexity, broad-except,
+   path-validation, deserialize-subscript, surface parity and the
+   other shrink-only baselines live there). This is the cheap
+   floor, not a push-ready receipt: drift guards also live under
+   `tests/unit/lessons`, `tests/unit/plugins`, `tests/unit/help`
+   and elsewhere, and only a full `pytest tests` (~4 min with xdist)
+   is the complete local receipt — run it whenever the diff touches
+   a projected surface. Hook and per-module suites alone do not
+   cover the ratchets: #2525 went red twice on the complexity
+   ratchet and #2526 once on the path gate, each after a green
+   hooks receipt (retro 2026-09-12 item 5).
 
 ## Measurement (the testability answer)
 
