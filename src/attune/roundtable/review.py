@@ -19,6 +19,7 @@ import json
 import os
 import re
 import subprocess  # nosec B404 — fixed argv, read-only git, never shell=True
+import sys
 from collections.abc import Callable, Sequence
 from datetime import datetime, timezone
 from pathlib import Path, PurePath
@@ -675,3 +676,65 @@ def ledger_row(result: dict[str, Any], disposition: str = "not-triaged") -> str:
         f"{len(manifest['sent'])} sent / {len(manifest['omitted'])} omitted | "
         f"{len(result['findings'])} ({result['status']}) | {disposition} |"
     )
+
+
+def load_review_result(path: Path) -> dict[str, Any]:
+    """Parse a captured ``run_review`` stdout file.
+
+    The result is the LAST non-empty line: a capture made with the
+    pre-#2524 snippet carries structlog's digest line ahead of the JSON,
+    and the parse must not fail on it (retro 2026-09-11 item 1).
+    """
+    lines = [line for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    if not lines:
+        raise ValueError(f"{path}: no review result found (empty file)")
+    try:
+        result = json.loads(lines[-1])
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{path}: last line is not a JSON review result: {exc}") from exc
+    if not isinstance(result, dict) or "manifest" not in result or "findings" not in result:
+        raise ValueError(f"{path}: last line is not a run_review result")
+    return result
+
+
+def ledger_cli(argv: list[str] | None = None) -> int:
+    """``python -m attune.roundtable ledger`` — render (and append) an R5 ledger row.
+
+    The skill's step 4 used to be "append ``review.ledger_row(result)``",
+    and every session hand-wrote the same dozen lines to load the
+    capture, pass the disposition and validate it (retro 2026-09-12
+    item 1). Exit 1 with the gate problems on stderr when the
+    disposition would fail the ledger gates; nothing is appended then.
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="python -m attune.roundtable ledger",
+        description="Render the R5 dogfood-ledger row for a captured cross-review result.",
+    )
+    parser.add_argument("--result", required=True, type=Path, help="captured run_review stdout")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--disposition", help="disposition text (validated against the gates)")
+    group.add_argument("--disposition-file", type=Path, help="file holding the disposition text")
+    parser.add_argument(
+        "--append",
+        type=Path,
+        metavar="RECEIPTS_MD",
+        help="append the row to this ledger file after printing it",
+    )
+    args = parser.parse_args(argv)
+    disposition = "not-triaged"
+    if args.disposition is not None:
+        disposition = args.disposition.strip()
+    elif args.disposition_file is not None:
+        disposition = args.disposition_file.read_text(encoding="utf-8").strip()
+    try:
+        row = ledger_row(load_review_result(args.result), disposition)
+    except ValueError as exc:
+        print(f"ledger: {exc}", file=sys.stderr)
+        return 1
+    print(row)
+    if args.append is not None:
+        with args.append.open("a", encoding="utf-8") as handle:
+            handle.write(row + "\n")
+    return 0

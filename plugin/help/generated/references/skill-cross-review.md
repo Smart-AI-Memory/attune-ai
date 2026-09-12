@@ -69,10 +69,22 @@ print(json.dumps(run_review('.', mode=os.environ['MODE'], board=b), ensure_ascii
    file was omitted (a partial review must say so). ABSENT and
    `format_noncompliant` results render as-is; never fabricate or
    repair findings.
-4. **Ledger row** (R5): append `review.ledger_row(result)` to
-   `docs/specs/cross-review/receipts.md`, offering the user the
-   disposition edit (`real` / `noise` / `not-triaged`). Only real
-   runs — no synthetic rows.
+4. **Ledger row** (R5): with the run captured as `> review.json`,
+   render and append the row in one command — it validates the
+   disposition against both ledger gates and exits 1 (appending
+   nothing) if it would fail:
+
+```bash
+python -m attune.roundtable ledger --result review.json \
+  --disposition "2 real — accepted and fixed in-branch (<sha>): ..." \
+  --append docs/specs/cross-review/receipts.md
+```
+
+   `--disposition-file <path>` takes a longer disposition from a file;
+   omit both to render the `not-triaged` placeholder (a `clean` lane
+   fills its own). Offer the user the disposition edit (`real` /
+   `noise` / `rejected — claim: "..." — reason: ...`). Only real runs —
+   no synthetic rows.
 5. **Promotion**: findings worth keeping go through the roundtable
    Step 6 promotion flow (`/roundtable promote <thread>`); the
    board thread is TTL'd, the ledger row is durable.

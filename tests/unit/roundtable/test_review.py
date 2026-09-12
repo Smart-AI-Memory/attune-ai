@@ -3,8 +3,10 @@ advisory invariant, board degrade, ledger rendering."""
 
 from __future__ import annotations
 
+import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -742,3 +744,98 @@ def test_ambiguous_host_also_reports_unverified(repo, monkeypatch):
     invoke = _invoke_stub("NO FINDINGS")
     result = review.run_review(repo, base_ref="main", invoke_seat=invoke)
     assert result["host"] is None and result["self_review"] is None
+
+
+class TestLedgerCli:
+    """``python -m attune.roundtable ledger`` (retro 2026-09-12 item 1)."""
+
+    @staticmethod
+    def _result(status: str = "findings", findings: int = 1) -> dict[str, Any]:
+        return {
+            "seat": "codex",
+            "host": "claude",
+            "self_review": False,
+            "claude_auth": None,
+            "status": status,
+            "target": "branch vs merge-base abc1234 (origin/main)",
+            "manifest": {"sent": ["a.py"], "omitted": [], "chars": 10},
+            "findings": [{"file": "a.py", "line": 1, "severity": "low", "claim": "x"}] * findings,
+        }
+
+    def test_parses_the_last_line_behind_a_digest_line(self, tmp_path: Path) -> None:
+        capture = tmp_path / "review.json"
+        capture.write_text(
+            "2026-09-11 17:00:50 [info] cross_review board=posted findings=1\n"
+            + json.dumps(self._result())
+            + "\n",
+            encoding="utf-8",
+        )
+        assert review.load_review_result(capture)["seat"] == "codex"
+
+    @pytest.mark.parametrize("body", ["", "   \n", "not json\n", '{"seat": "codex"}\n'])
+    def test_rejects_captures_without_a_result(self, tmp_path: Path, body: str) -> None:
+        capture = tmp_path / "review.json"
+        capture.write_text(body, encoding="utf-8")
+        with pytest.raises(ValueError):
+            review.load_review_result(capture)
+
+    def test_prints_and_appends_a_validated_row(self, tmp_path: Path, capsys) -> None:
+        capture = tmp_path / "review.json"
+        capture.write_text(json.dumps(self._result()), encoding="utf-8")
+        ledger = tmp_path / "receipts.md"
+        ledger.write_text("| header |\n", encoding="utf-8")
+        rc = review.ledger_cli(
+            ["--result", str(capture), "--disposition", "1 real — fixed", "--append", str(ledger)]
+        )
+        assert rc == 0
+        out = capsys.readouterr().out.strip()
+        assert out.endswith("| 1 (findings) | 1 real — fixed |")
+        assert ledger.read_text(encoding="utf-8") == "| header |\n" + out + "\n"
+
+    def test_disposition_file_and_clean_default(self, tmp_path: Path, capsys) -> None:
+        capture = tmp_path / "review.json"
+        capture.write_text(json.dumps(self._result(status="clean", findings=0)), encoding="utf-8")
+        assert review.ledger_cli(["--result", str(capture)]) == 0
+        assert "clean — no findings; complete manifest" in capsys.readouterr().out
+        dfile = tmp_path / "d.txt"
+        dfile.write_text("clean — triaged by hand\n", encoding="utf-8")
+        assert review.ledger_cli(["--result", str(capture), "--disposition-file", str(dfile)]) == 0
+        assert capsys.readouterr().out.strip().endswith("| clean — triaged by hand |")
+
+    def test_gate_failing_disposition_exits_1_and_appends_nothing(
+        self, tmp_path: Path, capsys
+    ) -> None:
+        capture = tmp_path / "review.json"
+        capture.write_text(json.dumps(self._result()), encoding="utf-8")
+        ledger = tmp_path / "receipts.md"
+        rc = review.ledger_cli(
+            ["--result", str(capture), "--disposition", "5 real", "--append", str(ledger)]
+        )
+        assert rc == 1
+        assert "exceeds the findings count" in capsys.readouterr().err
+        assert not ledger.exists()
+
+    def test_module_entry_point_round_trip(self, tmp_path: Path) -> None:
+        capture = tmp_path / "review.json"
+        capture.write_text(json.dumps(self._result()), encoding="utf-8")
+        run = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "attune.roundtable",
+                "ledger",
+                "--result",
+                str(capture),
+                "--disposition",
+                "1 real — fixed",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+        assert run.returncode == 0, run.stderr
+        assert run.stdout.strip().endswith("| 1 real — fixed |")
+        usage = subprocess.run(
+            [sys.executable, "-m", "attune.roundtable"], capture_output=True, text=True, timeout=60
+        )
+        assert usage.returncode == 2 and "usage:" in usage.stderr

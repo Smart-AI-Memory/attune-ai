@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `python -m attune.roundtable ledger --result review.json [--disposition ... | --disposition-file ...] [--append docs/specs/cross-review/receipts.md]`: renders the R5 ledger row for a captured `/cross-review` run, validating the disposition against both ledger gates (exit 1, nothing appended, when it would fail); the skill's step 4 now points at it (retro 2026-09-12 item 1).
+
 - Added an internal host-question adapter boundary for presenting question
   batches and collecting responses in one call, with adapter identity checks,
   challenge-bound completions, and explicit presentation failure handling.
