@@ -29,6 +29,7 @@ import structlog
 
 from attune.roundtable.compiler import ROLE_REPLY_CHARS
 from attune.roundtable.routine import SEAT_RECIPES, default_invoke_seat
+from attune.security.path_validation import _validate_file_path
 
 logger = structlog.get_logger(__name__)
 
@@ -729,12 +730,16 @@ def ledger_cli(argv: list[str] | None = None) -> int:
     elif args.disposition_file is not None:
         disposition = args.disposition_file.read_text(encoding="utf-8").strip()
     try:
+        target = None
+        if args.append is not None:
+            # The ledger lives in the repo: refuse an append outside the cwd.
+            target = _validate_file_path(str(args.append), allowed_dir=str(Path.cwd()))
         row = ledger_row(load_review_result(args.result), disposition)
     except ValueError as exc:
         print(f"ledger: {exc}", file=sys.stderr)
         return 1
     print(row)
-    if args.append is not None:
-        with args.append.open("a", encoding="utf-8") as handle:
+    if target is not None:
+        with target.open("a", encoding="utf-8") as handle:
             handle.write(row + "\n")
     return 0
