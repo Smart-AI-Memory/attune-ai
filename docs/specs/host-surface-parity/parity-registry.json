@@ -492,6 +492,24 @@
       "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
     },
     {
+      "key": "delivery:src-changelog_entry_guard-module:c0b0046d68345b0b:content_schema",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:src-changelog_entry_guard-module:c0b0046d68345b0b:delivery",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
+      "key": "delivery:src-changelog_entry_guard-module:c0b0046d68345b0b:destination",
+      "next_increment": 3,
+      "owner": "host-surface-parity",
+      "reason": "No replayable production-subject receipt exists yet; inventory declaration is not evidence."
+    },
+    {
       "key": "delivery:src-worktree_add_guard-module:c0b0046d68345b0b:content_schema",
       "next_increment": 3,
       "owner": "host-surface-parity",
@@ -979,7 +997,7 @@
     }
   ],
   "producer_baseline": {
-    "digest": "edfcfa3656bc0b63019142c25b06a50c9113ae588edf826e569e9d8959abd308",
+    "digest": "91a202cb613753f811c20243c6b249be41aace9a297f075b59722e916a15204f",
     "path": "docs/specs/host-surface-parity/producer_baseline.json",
     "schema_version": "attune.surface-inventory.producer-baseline/1"
   },
@@ -2223,6 +2241,27 @@
         "src/attune/hooks/scripts/worktree_add_guard.py:main"
       ],
       "root_anchor": "src/attune/hooks/scripts/worktree_add_guard.py:<module>",
+      "subject_kind": "informational_delivery"
+    },
+    {
+      "delivery_routes": [
+        {
+          "destination": "model_context",
+          "event": "PreToolUse",
+          "id": "c0b0046d68345b0b",
+          "matcher": "Bash",
+          "signature": "exit2_stderr",
+          "sink": "print(file=sys.stderr)"
+        }
+      ],
+      "discovered": true,
+      "evidence_status": "pending-local-receipts",
+      "id": "src-changelog_entry_guard-module",
+      "normalization_paths": [],
+      "producer_anchors": [
+        "src/attune/hooks/scripts/changelog_entry_guard.py:main"
+      ],
+      "root_anchor": "src/attune/hooks/scripts/changelog_entry_guard.py:<module>",
       "subject_kind": "informational_delivery"
     },
     {

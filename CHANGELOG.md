@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   challenge-bound completions, and explicit presentation failure handling.
   Host-native routing is not enabled by this change. Preventing repeated
   presentation of consumed or closed challenges remains deferred.
+- Added a changelog-entry PreToolUse guard
+  (`src/attune/hooks/scripts/changelog_entry_guard.py`, registered for
+  Bash in `.claude/settings.json`): a `git push` whose range changes
+  `src/` or `attune_redis/` without touching `CHANGELOG.md` is refused
+  at push time, naming the shipped paths and the two exits (add the
+  entry under `[Unreleased]`, or `ATTUNE_ALLOW_NO_CHANGELOG=1` plus the
+  `no-changelog` label). It mirrors the CI `changelog-entry` gate's
+  prefixes and loads at the next session start.
 
 ### Changed
 
