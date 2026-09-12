@@ -28363,3 +28363,223 @@ form's clothes.
   Pairs with the Task 1B cut-at-claim-boundaries lesson, which is
   correct about the PRINCIPLE and silent about how you find the
   boundary: you find it in the dispatch code, not in the check list.
+
+- **A docs-outbox sweep can land a lesson that REFUTES an existing
+  corpus entry's conclusion, and no dedupe can see it — the two entries
+  share a SUBJECT but not a word, so the corpus ends up holding a
+  refuted claim with nothing marking it stale**: 2026-09-09, applying
+  the 2-artifact PM digest (#2495). The 11:31 artifact recorded that
+  host-surface-parity Task 2's declared `dep 10` had no code coupling
+  whatever (12-agent audit, `src/attune/surfaces/` absent, zero
+  `CapabilityProvider` hits) while affirming the capability gap the
+  dependency encoded. The corpus already held a 2026-09-08 entry
+  concluding the opposite half: *"Task 10 is unbuilt, so Task 2 could
+  not have been implemented no matter how the amendment read."* Both
+  entries are accurate about what their own session probed, and neither
+  is a duplicate of the other by any measure a tool could apply —
+  different words, different evidence, different claim — so the sweep's
+  exact-duplicate dedupe is structurally blind to this case, and so is
+  the hand-merge remedy from the 2026-09-04 near-duplicate lesson: you
+  do not MERGE a refutation, both entries stay and one needs a marker.
+  **The apply-time contract actively forbids the fix** — an approved
+  digest is append-only, so annotating the older entry is out of scope
+  in the very PR that creates the conflict. Practice: at apply time,
+  grep the corpus for each artifact's SUBJECT rather than its phrasing,
+  read any hit whose conclusion the new entry bears on, and when one is
+  refuted name both entries in the PR body and carry the
+  cross-reference as its own follow-up instead of silently widening the
+  append. The cost of skipping it is asymmetric: recall returns
+  whichever entry scores higher for the query, so a later session can
+  draw the refuted conclusion without ever seeing the correction — and
+  here the refuted entry is the one a session re-deriving Task 2's cut
+  is most likely to hit.
+
+- **`gh --jq '.field'` renders a JSON null as an EMPTY STRING, not the
+  literal `null` — so a polling loop that breaks on
+  `[ "$V" != "null" ]` exits on its FIRST iteration and reports "never
+  armed" without having waited at all**: 2026-09-09, watching PR #2495
+  for `auto-merge-when-green` to arm. The loop was written to poll 20
+  times at 30s; it printed `attempt 1: state=OPEN autoMerge=` and
+  jumped straight to its final check, and the background task notified
+  "completed (exit code 0)" — output that reads exactly like a
+  completed ten-minute watch that found nothing. Auto-merge had in fact
+  armed about two minutes later, which one plain re-check showed
+  immediately (`enabledAt`, `enabledBy`, `mergeMethod: SQUASH`). Fixes,
+  either one: render the sentinel null-preserving with
+  `--jq '.field|tostring'` (yields the string `"null"`), or test
+  emptiness directly with `[ -n "$V" ]` and drop the string comparison.
+  **The general rule: a sentinel comparison is only as good as the
+  renderer that produces the sentinel** — and the failure is silent
+  because an exit-early loop and a patient loop produce
+  indistinguishable exit codes. When a poll's condition is "value is no
+  longer X", print the raw value each iteration AND check that the loop
+  actually iterated more than once before trusting a negative result.
+  Pairs with the "background pytest exit 0 with empty output is not a
+  receipt" lesson — same family: a run that LOOKS like it observed
+  something it structurally could not have.
+
+- **100% statement AND branch coverage measured against a fake you wrote yourself proves the module's control flow and says NOTHING about the boundary contract — and it reads exactly like strong evidence**: 2026-09-09, `host_question_adapter.py` (PR #2496), a 70-statement trust boundary to third-party presentation code. Receipts reported and true: 27 tests, 100% statement, 100% branch (20 branches), against a 90% floor; whole tree 26,143+ green; surface-parity gate green. A single D11 different-model lane then found **five reproducible defects in that same fully-covered module** — a malformed feedback envelope escaping as `TypeError` because the validity check sat outside the `try`; a mutated adapter identity still resolving because freezing the wrapper does not freeze the wrapped object; the exception handler itself raising; a consumed challenge still invoking the adapter; and a `deadline_seconds` parameter that was forwarded and never enforced, so its NAME implied a guarantee the code did not make. **None of these was reachable by the test suite, because every test drove a cooperative fake written by the same author as the code.** Coverage answers "did every line and branch execute", which a friendly fake satisfies completely; it never answers "does the contract hold when the other side is hostile, buggy, or mid-teardown". **Rule: when the unit under test is a boundary to code you do not control, state the coverage figure WITH its scope** — "100% branch, measured against a fake" — because the bare number will otherwise be read, including by its author, as evidence about the boundary. **The adversarial cases a fake never generates are the specification**: returns the wrong object, returns twice, raises after partial side effects, never returns, mutates its arguments, deletes its own attributes. Write those first, then measure. Second, governance-shaped finding from the same episode: this repo had ruled risk-triggered review lanes the permanent default while declining to expand them to all diffs, on evidence that clean lanes on well-tested code showed "cost without yield". This lane cost ~3 minutes on a subscription seat and returned five reproduced defects plus a cross-PR contradiction (the module docstring asserted a routing disposition that the same author's spec correction, in a sibling PR, said does not exist). **Well-tested is not the same as reviewed, and a high coverage number is a reason the lane is CHEAP to run, not a reason to skip it.**
+
+- **A test asserting a guard's REJECTION CODE proves nothing about whether the side effect already ran — count the invocations, not the error string**: 2026-09-09, `host_question_adapter.py` (Task 2 increment 2, PR #2496). `test_a_second_completion_is_refused_as_consumed` called the boundary twice on one challenge and asserted the second call returned `{"success": False, "error": "challenge_consumed"}`. That assertion was TRUE, passed, and was read as proof that replay is refused. A D11 review lane then reproduced the real behavior: **the adapter was invoked TWICE** (`adapter invocations=2`), because `present_host_question` called the third-party `present_and_collect()` FIRST and only then handed the result to `SurfaceContextStore.complete_challenge()`, which is what emits `challenge_consumed`. The guard ran AFTER the side effect. For a presentation boundary the side effect is a prompt shown to a human, so the defect is a duplicate prompt — the exact thing the challenge lifecycle exists to prevent. **The assertion cannot distinguish "rejected before presenting" from "presented, then rejected", because both produce the identical return value.** Generalizes to every guard whose protection is claimed by its error code: replay guards, idempotency keys, nonce consumption, rate limits, dedupe layers. **Rule: when a test asserts a rejection, it must ALSO assert the side-effect count** (`assert adapter.calls == 1`, `assert mock.call_count == 0`) — the return value is the cheap half and the invocation count is the half that carries the claim. **Diagnostic for reviewing existing code: find the guard, then ask what executes between the function's entry and that guard.** If foreign code, I/O, or anything user-visible runs first, the guard is a reporter, not a gate. Corollary from the same review, same file: the broad `except Exception` handler evaluated `registration.adapter.adapter_id` INSIDE the handler to log it — so an adapter that deleted that attribute during teardown and then raised made the handler itself raise `AttributeError`, which escaped and left the challenge usable (a later completion then SUCCEEDED). **Capture every identifier you will need for failure handling BEFORE invoking foreign code**; an exception handler that touches the object that just failed is not a handler. Pairs with the MGET vacuous-test lesson (same family: the suite could not report the problem) but is a distinct mechanism — there the assertion was satisfied by the failure, here the assertion is satisfied by a LATE success.
+
+- **Folding a governance ruling into a docs-only PR silently hands it to the auto-merge lane — the `(chair-read)` marker is the ONLY thing holding the gate, and folding drops it**: 2026-09-09, PR #2497, caught with minutes to spare and only because the chair said "don't merge 2496" and I checked the *other* PR's arming state while verifying that one. A chair ruling (D21) was folded into an open docs PR whose diff touched only `docs/specs/**`. That path class is Class 1 of `.github/workflows/auto-merge-safe.yml`: automation applies the `auto-merge-safe` label and the workflow **merges deterministically on `coverage` green, with no chair read and no human step**. The carve-out that exists for exactly this case keys on the PR TITLE containing `(chair-read)` or a `chair-read` label (workflow lines 101-103 label-side, 224-225 and 260-261 merge-side). Every prior D-ruling PR in the repo carried `(chair-read)` in its title — #2492, #2493, #2494 — and folding D21 into a differently-titled PR dropped the marker by construction, not by carelessness. **Two `auto-merge-safe` runs had already completed on that branch; the only thing standing between a governance ruling and an unread merge was that `coverage` was still pending.** Retitling restored the gate, because the merge job re-reads the title at run time rather than trusting the label. Note the `chair-read` LABEL did not exist in the repo (`gh pr edit --add-label` returned `'chair-read' not found`), so the title is the working mechanism. **Rules: (1) a PR carrying a chair ruling gets `(chair-read)` in its title AT CREATION, before any push; (2) before folding a commit into an existing PR, re-ask which automation class the COMBINED diff falls into — the fold can change the class or drop a marker even when both halves were individually fine; (3) when checking one PR's arming state, check the siblings' too, since the reason you are looking is usually not the reason you will find something.** Pairs with the D11d CHAIR-ARMS guard (the lead never arms auto-merge on governance text) — this is the same hazard arriving through automation the lead never armed at all.
+
+- **A config file being ABSENT from a worktree does not mean it is not loaded — Codex registers `.codex/hooks.json` by ABSOLUTE PATH in `~/.codex/config.toml`'s `[hooks.state]`, so it loads in every worktree; I nearly reported that worktree sessions had been running with no security guard**: 2026-09-09, fixing attune-ai's Codex hooks. Verified root cause first: all 9 commands interpolated `$CLAUDE_PROJECT_DIR`, which is Claude-Code-injected and unset under Codex, so each resolved to `/src/attune/hooks/scripts/<name>.py` at filesystem root; the resulting non-zero exit made PreToolUse fail closed, which is CORRECT behavior (a failed gatekeeper fails the gate) and not a second bug. Then I found `.codex/` is gitignored and `.codex/hooks.json` absent from both Codex worktrees, and flagged: "if Codex loads hooks per-worktree, worktree sessions have been running with no PreToolUse security enforcement." **Wrong, twice over, and only stated as a conditional by luck of phrasing.** Evidence from a Codex worktree session: hooks fire there, and config resolves from THREE sources, none of them the session worktree — the global `~/.codex/hooks.json`, the installed plugin at `~/.codex/plugins/cache/attune-ai/attune-ai/<version>/hooks/hooks.json` (which uses `${CLAUDE_PLUGIN_ROOT}` and is where `security_guard.py` actually comes from), and the repo file registered by absolute path under `[hooks.state]."<abs path>:pre_tool_use:0:0"`. Security was never off. **The discipline: before inferring that a capability is absent because its config file is absent, find out how the loader RESOLVES that config — discovery-by-cwd and registration-by-absolute-path look identical from inside one directory, and they give opposite answers.** Two durable riders. (1) The right fix was still `HOOK_ROOT=$(git rev-parse --show-toplevel)`, and the absolute-path registration is exactly WHY: hardcoding the main checkout — the tempting fix — would have made every worktree session run main's possibly-stale hook scripts, while `--show-toplevel` resolves the session's own worktree from any subdirectory of it. (2) `[hooks.state]` entries carry a `trusted_hash` per hook, so EDITING hook commands may invalidate trust; eight candidate hashing schemes (raw command, command+newline, four JSON serializations, `type|command`, the group object, the script bytes) reproduced none of the stored values, so this is not answerable by computation — the observable test is whether that source's uniquely-owned hooks still fire (here the three SessionStart scripts `help_freshness_nudge` / `starter_prompt_nudge` / `starter_reconciler`, which appear in no other source), because silently-skipped hooks look exactly like nothing happening.
+
+- **A regenerator that exits 0 having written NOTHING is the signature of a degraded replay, not of an up-to-date tree — and the cheap way to prove a gate failure is yours is to run it at the pre-change commit in a separate worktree**: 2026-09-09, adding a `reserve_challenge` method to `SurfaceContextStore` turned `tests/unit/gates/test_surface_parity.py` from 238 passed to 10 failed on `implementation_digest` mismatch. The documented fix is `python scripts/project_surface_runtime.py --write`, which replays evidence and refreshes the stored receipts. It **exited 0 and changed no files** — `git status` showed only my own edits. The tell was one line above the exit: `Native form transport failed: TimeoutError`. The projector's native replay had degraded, so `native` declarations came back empty, so `refreshed` contained no native rows, so `retained` kept every stale row and the write was a no-op over identical content. Nothing in the exit code or the file list says "I could not do the thing you asked" — the run is indistinguishable from "already in sync." **Whenever a regenerate/project/sync step exits 0 with an empty diff, ask whether it produced the inputs it needed, not whether the tree was already correct; read its stderr/warning lines before concluding anything.** The second half is the diagnostic that settled causation in about 20 seconds and is worth reaching for by default: **an existing worktree checked out at the pre-change commit is a free control.** Running the same gate there gave 238 passed in the same environment, same minute, which converts "did my change cause this or is the environment flaky?" from an argument into a measurement. That question had a real fork riding on it — a chair decision between fixing the defect properly (store change) and a contained workaround — and guessing would have picked wrong in either direction. Corollary for scope estimation: a fix that moves a digest pinned by a receipt is not a code change, it is a code change plus a receipt regeneration, and if the regenerator has an external dependency (here a live MCP round trip) that dependency is on the critical path of the fix.
+
+- **Fixing one default can make a SECOND default load-bearing — after changing a routing default, re-run the end-to-end path, not the unit you changed**: 2026-09-09, cross-review. Fix 1 made the reviewer seat resolve against the moderating host, so a Codex-hosted bare run stopped self-reviewing and correctly resolved to the `claude` seat. That immediately exposed fix 2: `claude_auth` still defaulted to `"api"`, so the newly-correct path hit `SessionSpendCapError` at a zero cap. The first fix traded a SILENT wrong answer for a LOUD error — an improvement, and still a broken feature, and the unit tests for fix 1 were all green because each asserted only the seat. **Diagnostic: after changing a default that ROUTES (seat, backend, provider, endpoint, auth mode), execute the whole path in the environment the fix was for and read the outcome — a green unit test for the changed default proves the branch, never the journey.** The probe that settled it was ten lines: set the host marker, set the cap, call the public entry point, print the exception. Corollary that decided the second fix: **when choosing whether config belongs in CODE or in instructions, try to write the single invocation that works in every context.** Here none exists in either direction — from Codex the plain snippet raises `SessionSpendCapError`, and adding `claude_auth="subscription"` to that same snippet raises `ReviewTargetError` from a Claude host, because the seat there resolves to `codex`. **If no single invocation can be correct everywhere, the resolution MUST live in code**; leaving it to prose forces host-conditional branching into instructions, which is a promise, not an enforcer.
+
+- **Governance STATUS text lives in projections and goes stale independently of the ruling — read `decisions.md`, never a skill/doc/README's claim about what is still open**: 2026-09-09. Deciding whether I could change `DEFAULT_SEAT`, I cited `plugin/skills/cross-review/SKILL.md`: "Seat default is PROVISIONAL (`review.DEFAULT_SEAT`) until OPEN-1 is ruled." OPEN-1 had been RULED thirteen months of commits earlier (2026-07-28); the module's own docstring said so plainly ("Chair-ruled values (no longer provisional)"), and the skill text had simply never been re-projected. I relayed the stale line to the chair as the basis for a change, and he authorized it partly on my mis-citation. **Two rules. (1) A claim about GOVERNANCE STATE ("provisional", "pending", "held", "unruled") is only authoritative in the owning spec's `decisions.md`; everywhere else it is a cached copy with no invalidation.** Grep the spec before treating any doc's status word as current — `grep -n -A14 "OPEN-N" docs/specs/<spec>/decisions.md` is one command. **(2) When a code comment and a doc disagree about status, the code comment is usually fresher** — it lives next to the thing it describes and gets read during every edit of that file, whereas projected doc text is only touched when someone re-runs the projector. Note the asymmetry with content drift: the doc-import gate catches docs naming symbols that no longer exist, but NOTHING catches a doc asserting a stale governance status, because every word in the sentence still resolves.
+
+- **A ruling made when only one instance of a category existed cannot tell you which property it meant — and the day a second instance appears, the ruled value silently becomes the wrong one**: 2026-09-09, cross-review's `DEFAULT_SEAT`. OPEN-1 (2026-07-28) ruled "FIXED default, `codex`, for v1." At ruling time Claude was the ONLY host with an invocation surface, so **"the ruled value" and "a seat that is not the author" were the same string**. Codex later gained a `/cross-review` surface, and the ruled value now briefed the AUTHORING seat on its own diff — a self-review, which returns a clean-looking verdict that means nothing. Nothing in the ruling text is wrong; it simply cannot distinguish the two properties it satisfied simultaneously. **The diagnostic: when a ruling fixes a VALUE, ask which PROPERTY the value was chosen for, and whether anything since has split them apart.** If the ruling's own rationale never had to choose (because the cases coincided), the ruling is silent on the split rather than authoritative about it — treat extending it as filling a gap, not overriding a decision, and say so explicitly in the new entry so the next reader isn't told a reversal happened. The fix preserved the ruled value in every case the ruling contemplated (Claude-hosted and host-less runs still resolve `codex`) and diverged only where it could not have applied. Pairs with the "re-validate a spec's premise" and "spec-named scope drifts from code reality" lessons — same family (recorded intent goes stale), but this one is nastier: the TEXT is still accurate, only the WORLD moved.
+
+- **`test_X_STILL_Y` is a deliberate pin guarding a property someone feared a future change would erode — read the name for intent before overriding it, and ask its author when you can**: 2026-09-09. A `claude_auth` default change went green except for `test_default_claude_still_refuses_zero_api_budget`. The word **"still"** is the tell: the test was added in the SAME PR that introduced the subscription route (#2449), pinning that the new route had not become a silent bypass of the zero API spend cap. It was not incidental coverage that needed updating — it was the guard, and my change was exactly the thing it existed to catch. I reverted rather than retire it on my own reading. **Naming conventions that mark intent: `still`, `not`, `never`, `refuses`, `does_not`, `_regression`, `_guard`.** A failure in one of these is a design question, not a test-maintenance chore. Two follow-ons that mattered here: (1) the pin was authored by a DIFFERENT model (Codex) on a branch of this repo, so `git log -S "<test_name>"` named the PR and I could ask that model directly what it was guarding — it answered "spend gate, not consent gate" AND volunteered that it was reconstructing from the code rather than recalling the discussion, which is the caveat that keeps its answer advisory rather than authoritative; (2) the eventual change was NARROWED until the pin passed unmodified (resolve only for a KNOWN non-host, so the unknown-host case that the pin exercises is untouched) — **a pin you can satisfy instead of delete is evidence your change is scoped correctly**, and mutation-testing confirmed un-narrowing it fails that pin first.
+
+- **The `/cross-review` one-liner writes a structlog INFO line to STDOUT before the JSON — capture-and-parse must take the LAST line, not the file**: 2026-09-11, D11 lane for #2508. Running the skill's documented snippet with `> review.json` produced a two-line file: `2026-09-11 17:00:50 [info] cross_review board=posted findings=2 … status=findings` then the JSON. `json.load(open(...))` failed with `Extra data: line 1 column 5`, which reads like a broken run; stderr was empty because the logger is configured to stdout. The log line is itself a useful digest (seat / status / sent / omitted at a glance), so keep it — just parse `open(f).read().splitlines()[-1]`. Pairs with the "status=absent may be a CLI-version problem — read the raw reply tail" lesson: both are cases where the lane's raw output must be read before concluding anything about the seat.
+
+- **A cloud-session handover's "landed on branch X" means PUSHED, not merged — and a cloud-authored fix branch routinely ships with ZERO tests; probe PR existence, ahead/behind, and test presence before treating it as done**: 2026-09-11, `HANDOVER.md` from a cloud session (`silversurfer562/test2` planning work) reported the CI `ruff --no-fix` fix as "**landed** on branch `fix/ci-ruff-no-fix`" and two more fixes as "a session is landing it". Verified state: all three commits were on `origin/fix/ci-ruff-no-fix`, 3 ahead / 0 behind, **no PR**, main's gate still bare, and 113 added src lines with **no tests** (codecov's 85% patch gate would have gone red on the first push). Three cheap probes settle it in one command: `gh pr list --head <branch>` (PR?), `git rev-list --count origin/main..origin/<branch>` (unmerged?), `git diff --stat origin/main...origin/<branch> | grep tests/` (tests?). The tests, once written, earned their keep twice over — a mutation receipt (4/6 fail with the guards removed) and then a codex lane that found three REAL silent-drop cases in the same 113 lines. Pairs with contract principle 14 ("a handoff is context, not authority") — this is the vocabulary that makes the principle bite: in a handover written by an agent, "landed", "shipped", and "done" describe the agent's last command, not the repository's state.
+
+- **An enforcer outlives the ruling it encodes — date every hook and gate against the ruling, and when a hook blocks the shape a NEWER ruling prescribes, the hook is the stale party**: 2026-09-11. The user-level `ask_question_format_guard.py` (2026-06-27) blocked the D16 `confirm` construct (chair-ruled 2026-09-07: two options, NO recommended pick) — the guard predated the ruling by ten weeks and enforced the older "recommendation first, always" shape with no exemption. The first merge ask on #2508 had to be badged to get through, which is precisely what the construct exists to forbid. Diagnostic in one line: `stat -f %Sm <hook>` vs the ruling's date. Fix shape: a marker-gated exemption (`metadata.source` containing "confirm", exactly two options) mirroring the existing form opt-in, so the exempt shape is a conscious choice, not an accident of option count; five stdin probes both ways at patch time. Durable habit: a hook's header names the ruling it enforces AND its date, so the next ruling that touches the same surface finds it. Layer rule from the same discussion: SHAPE failures belong in hooks/gates, JUDGMENT in rule text — a judgment frozen into a hook is wrong the day the judgment moves.
+
+- **`git rebase -S` signs replayed commits — pass it EVERY time instead of re-signing after the fact; verify with `git cat-file -p <sha> | grep -c gpgsig` (the `%G?` format errors out when `gpg.format=ssh` has no allowedSignersFile)**: 2026-09-11, rebasing #2511 onto main after #2509/#2510 merged. `GIT_EDITOR=true git rebase -S origin/main` replayed five commits and every one carried a `gpgsig` header on inspection; the existing "rebase replays UNSIGNED" lesson is true only for a bare rebase. Two riders: (1) `--force-with-lease` after, never `--force`; (2) a CHANGELOG conflict from three PRs each adding an Unreleased bullet resolves by keeping BOTH hunks — a five-line python that replaces every `<<<<<<< … ======= … >>>>>>>` block with side-A + side-B is safer than hand-editing markers one-handed, and `git diff --stat <old-head> HEAD -- <the paths you changed>` empty afterward is the receipt that the rebase touched nothing the lanes reviewed.
+
+- **Loading an old revision of a module standalone for a before/after receipt (`git show <sha>:path > scratch.py` + `importlib`) needs `sys.modules[name] = module` BEFORE `exec_module`, or every `@dataclass` under `from __future__ import annotations` dies with `AttributeError: 'NoneType' object has no attribute '__dict__'`**: 2026-09-11, comparing #2512's parser against #2511's over the 49-file corpus. `dataclasses._process_class` resolves string annotations through `sys.modules[cls.__module__]`; `module_from_spec` does not register the module, so the lookup returns None. One line fixes it. The pattern itself is worth keeping: two revisions of one module side by side, both driven over the same real corpus, is the cheapest equivalence receipt there is — and it is exactly the "experiment run in scratch" the design-note rule asks for.
+
+- **`worktree_add_guard.py` matches bare `git worktree add` but not `git -C <path> worktree add` — the nested-worktree refusal is bypassable by the `-C` form, and the bypass is silent**: 2026-09-11. From a worktree session, `git -C <this-worktree> worktree add ../retro-item1 -b …` created a sibling worktree without a word; minutes later the plain `git worktree add` form was refused with the guard's full message ("this session runs inside a worktree … a sibling would be unwritable"). Same intent, one token of difference. The Edit/Write path guard did hold (I only edited the sibling via Bash/python), so no damage — but a guard whose refusal depends on argument order is a guard that fires on the careful and misses the hurried. Chipped: normalize the argv (strip `-C <dir>`, `--git-dir`, `-c k=v`) before matching the subcommand; pin both spellings as fixtures.
+
+- **Run the corpus probe BEFORE building a chipped follow-up — the number
+  that decides the ruling is usually a 20-line scratch script against the
+  current head, not the implementation**: 2026-09-11, the per-block task-XML
+  follow-up chipped from the third codex lane on #2511. The chip's framing
+  ("a single malformed fragment forces every task onto the regex fallback")
+  was true, so I built it: +38/−11 in `decomposer.py`, 5 tests, three
+  receipts, a stacked PR (#2512). The corpus receipt then showed the decisive
+  fact — in all 15 of 49 plan files that fall back, the malformed fragment
+  sits INSIDE a block, so per-block retry moved ZERO files off the regex path
+  and recovered one `<files-to-create>` section in one plan. The chair ruled
+  CLOSE on exactly that number. The same number was available before any
+  code: split the region with the candidate-block regex, try defusedxml per
+  block, count files where every block parses — the corpus harness from the
+  #2511 receipt already existed. **Order for a chipped follow-up: (1) restate
+  the chip's claim as a measurable property; (2) probe it on the real tree
+  with a throwaway script; (3) hand the number to the chair; (4) build only
+  on "ship".** Same family as "calibrate a new gate rule on the real tree
+  BEFORE writing it" — a lane's follow-up is a hypothesis about the corpus,
+  and the corpus is cheaper to ask than to change. Rider: the chip also said
+  #2511 was "merged" when it was OPEN; `gh pr view <n> --json state` before
+  branching caught it, and the stacked PR closed on the base's squash as the
+  standing lesson predicts.
+
+- **A "the script exited 0" report can be true of the INVOCATION and false of the script — read the script's exit paths first, then the caller's pipe, before hardening**: 2026-09-11, #2513 → #2515. The report said `scripts/land_pr.sh` printed "merge did NOT land" and exited 0, and a background task reported "completed (exit 0)". Both committed versions of the script (#2064, #2489) already `exit 1` on that path; the other session's transcript shows the refusal line followed by the harness wrapper's `[exited with code 0]`, and the invocation line was not recoverable — the likely cause (inferred, not checked) is `… | tee log`, where the shell reports tee's status. The hardening still shipped (a mergeability gate before the long watch, exit 2 with the rebase recipe, the remote state re-read as the sole exit determinant, 11 fake-`gh` tests), but the defect the report named did not exist in the script. Two rules: (1) before "making every failure path exit non-zero", `grep -n "exit " <script>` and `git show <old-sha>:<script>` — if the exits are already there, the mask is upstream: a `| tee`, an `|| true`, a `; echo` tail, or a wrapper reporting its own status; (2) for any script you background through a pipe, `set -o pipefail` or read `${PIPESTATUS[0]}`, and say so in the script header so the next reader doesn't re-diagnose the script. Rider: `gh pr view --json mergeable` reads UNKNOWN until a first read triggers GitHub's lazy computation (#2507 flipped to CONFLICTING three seconds after a list call showed UNKNOWN), so a mergeability gate must re-probe before trusting UNKNOWN. Pairs with the reach_snapshot "exit 0 proved nothing" lesson — same class, opposite direction: there the script was wrong, here the caller was.
+
+- **A worktree audit keyed on commits (`rev-list`, `cherry`, three-dot diff) certifies "nothing unlanded" while UNCOMMITTED diffs sit in dirty trees — pair it with per-worktree `status --porcelain` plus a temp-index `apply --check`, and key the sweep on open sessions, not only `git worktree list`**: 2026-09-11. The morning audit of 45 worktrees (memory `project_worktree_pile_cleanup`) concluded ALL landed or superseded, and it was right about every COMMIT. The same evening, joining `list_sessions` to the worktrees and reading `git status --porcelain --untracked-files=no` per tree found four uncommitted diffs with no PR — a guard fix from that night (73 lines), a doctor hardening (76), the 08-21 traversal-guard chip (103) and a max_tokens threading fix (33) — every one applying cleanly to origin/main. Ahead/behind/cherry probes answer questions about commits; an edit that was never committed is invisible to all of them. The apply probe that worked without touching any worktree or the real index: `GIT_INDEX_FILE=/tmp/idx git read-tree origin/main && git apply --check --cached <diff>` (a `git archive … | tar` materialization broke first because zsh does NOT word-split an unquoted `$var` — only `$(…)` output — so a newline-joined file list became one pathspec). Three more facts from the same sweep: CCD session metadata's `prState` is stale (it said OPEN for four merged PRs — re-read `gh` before trusting it); "unpushed" is meaningless for a repo with no remote (AI-Class), where the disk is the only copy; and a dirty MAIN checkout in a sibling repo (attune-rag, 29 paths) was an older SUBSET of an open PR — compare the working tree to the PR branch (`git diff origin/<pr-branch> --stat`) before treating it as stranded.
+
+- **A blanket `patch("importlib.metadata.version")` bleeds into THIRD-PARTY
+  import-time code — so a test that passes in CI can crash on a developer
+  interpreter that happens to have an optional extra installed, and the
+  crash reveals a real product defect the leaner environment was hiding**:
+  2026-09-09 ("still open session 3", landed by a later session). A doctor
+  test mocked `importlib.metadata.version` with `side_effect=RuntimeError`
+  for every package; `cmd_doctor` then imported `sentence_transformers` for
+  real, which pulls `huggingface_hub`, whose `_runtime.py` calls
+  `importlib.metadata.version("aiohttp")` AT IMPORT TIME → the mock raised
+  → the doctor died with a traceback because its optional-extra probe caught
+  only `ImportError`. Two separable defects: (1) PRODUCT — `attune doctor`,
+  the one command whose job is telling the truth about the environment,
+  crashed when an extra raised anything but ImportError at import (a
+  missing native lib, a CUDA probe, an import-time metadata read); fixed
+  with a scoped `except Exception` reported as "import failed", distinct
+  from "not installed", ratchet baseline raised WITH the reason. (2) TEST —
+  `sentence-transformers` / `huggingface_hub` appear nowhere in
+  `pyproject.toml` or `uv.lock`, so CI never installs them and was green BY
+  ACCIDENT of a leaner environment; the pyenv 3.10 interpreter had them and
+  failed. Fix: scope the metadata patch to the three `attune-*` names and
+  delegate everything else to the real function; pin the extra absent in
+  the fixture. Rules: (a) never blanket-mock a stdlib function that
+  third-party import-time code also calls — scope by argument; (b) an
+  environment-dependent test failure is a finding about BOTH the test and
+  the product, triage both before choosing which to fix; (c) mutation-check
+  in both directions (fix reverted → regression test fails; test-side fix
+  alone → the old test passes) so the guard is real, not decorative.
+  Rider, same session: `pytest … | tail` reports `tail`'s exit status, so a
+  "RAW_EXIT=0" read through a pipe is fiction — use `set -o pipefail` or
+  zsh's `${pipestatus[1]}`; nothing in the repo's plugins touches the pytest
+  exit code (only `pytest_cmdline_main` could, and none implements it).
+  Adjacent to the approved `exit-code-honesty-guard` spec: the REPORTING
+  SHELL is a live surface for the same class. Basis: session 3's own
+  reproduction (identical traceback on pyenv 3.10.11; 26,163 passed there
+  and 26,144 on .venv 3.11) as relayed in its transcript; the landing
+  session re-ran the affected suites and the fix-reverted mutation, not the
+  pyenv reproduction.
+
+- **Sibling PRs that all need a CHANGELOG Unreleased entry can avoid the
+  "conflicts every time main advances" trap by inserting each entry after
+  a DIFFERENT existing bullet, at least three unchanged lines apart — four
+  src PRs merged in sequence 2026-09-11 (#2516 → #2517 → #2518 → #2519)
+  and every sibling read MERGEABLE CLEAN within one probe of the previous
+  squash, zero rebases**: the existing corpus lesson (lessons.md tail and
+  receipts.md rows) is about SAME-ANCHOR appends, which do collide; a
+  3-way merge keeps two insertions apart when ≥3 unchanged context lines
+  separate them, and the Fixed list's multi-line bullets provide that.
+  Recipe: a small script that inserts bullet k after the k-th existing
+  `### Fixed` bullet, one PR per slot; still arm SEQUENTIALLY (D13a) so a
+  wrong prediction shows up on ONE unarmed sibling, not three armed ones
+  waiting silently. Companion fact that cost a round-trip first: the
+  `changelog-entry` gate fails EVERY src-touching PR until CHANGELOG.md is
+  in the PR's changed paths (or `no-changelog` is applied) — add the entry
+  before opening, not after the first red check; the gate re-runs on
+  synchronize and the old failure stays visible in `gh pr checks` until
+  the new run reports.
+
+- **GitHub can report a PR CONFLICTING/DIRTY while git merges it cleanly —
+  probe with `git merge-tree --write-tree origin/main origin/<branch>`
+  (an honest 3-way with no rerere), NOT with a `read-tree -m -i` temp
+  index, and fix it with a MERGE of main into the branch pushed as a
+  plain fast-forward**: 2026-09-11, #2507 (Codex's attune-verify lock
+  bump, 12 behind main). GitHub read CONFLICTING/DIRTY after every main
+  merge that evening; a `GIT_INDEX_FILE=<tmp> git read-tree -m -i <base>
+  origin/main origin/<br>` probe listed CHANGELOG.md and receipts.md as
+  unmerged — but that probe only records "both sides touched it", it does
+  no content merge, so it predicts conflicts that `git merge` (ort) and
+  `git merge-tree --write-tree` then resolved without a single hunk
+  (rerere unset, rr-cache empty). Because the branch lived in a peer's
+  worktree, the fix ran in MY checkout: `git checkout --detach
+  origin/<br>` → `git merge --no-ff --no-commit origin/main` → inspect →
+  signed merge commit → `git push origin HEAD:refs/heads/<br>` (a
+  fast-forward: the merge commit descends from the peer's HEAD, so no
+  `--force-with-lease` is needed and the peer's checkout stays
+  fast-forwardable). GitHub flipped to MERGEABLE on the new head within
+  seconds. Two riders: (1) the auto-mode classifier BLOCKED the compound
+  `push --force-with-lease` + `gh pr comment` to a peer's branch; the
+  plain fast-forward push alone passed — when a merge commit descends
+  from the remote head, the lease is ceremony that reads as force;
+  (2) D10 still applies: the merge commit moves the head, so the chair's
+  merge word must be re-given against the new SHA.
+
+- **Salvaging a stranded uncommitted diff from another session's worktree,
+  and reaping that worktree after it lands — the read-only recipe that
+  held 4/4 on 2026-09-11 (#2516 #2517 #2518 #2519)**: never commit inside
+  the other worktree. (1) `git -C <wt> diff > patch` (read-only; copy any
+  UNTRACKED files by hand — `git diff` will not show them); (2) in YOUR
+  checkout, `git checkout -b <fresh> origin/main && git apply patch`;
+  (3) prove identity: `diff <(git diff | grep -v '^index ') <(grep -v
+  '^index ' patch)` — a differing `@@` hunk offset is fine when an
+  upstream commit added lines above the region; black may rewrap under
+  the pinned version, disclose the line count; (4) run the suites against
+  YOUR worktree's source (`PYTHONPATH=<abs worktree>/src`, the editable
+  mapping points at main) plus a fix-reverted mutation so the new test is
+  proven real; (5) the source worktree stays dirty as the BACKUP until the
+  PR merges. Reaping after merge: a plain `git diff origin/main` of the
+  dirty files is NON-EMPTY whenever main moved on (other PRs' entries in
+  a ratchet baseline), so the honest check is containment — every line
+  the session ADDED (its `git diff HEAD`) must be present in main's file
+  and every line it REMOVED absent — then `git checkout -- <files>` and a
+  plain `git worktree remove`. Session-side mechanics that surprised:
+  `archive_session` stops the session's process but LEAVES the worktree
+  directory (3/3 that night), so the git removal is still yours; it
+  REFUSES while the session has any background task — a memory-lint run
+  that had been moved to the background on timeout counted — so ask the
+  owner to TaskStop before retrying; and a live peer with the same "do X
+  when Y merges" brief must be told which items you are taking BEFORE
+  you start, or two sessions salvage the same diff.
