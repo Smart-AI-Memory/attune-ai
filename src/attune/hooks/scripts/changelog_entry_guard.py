@@ -119,48 +119,58 @@ def is_push(args: list[str]) -> bool:
     return args[i : i + 1] == ["push"]
 
 
+def _push_operands(rest: list[str]) -> tuple[list[str], set[str]]:
+    """Positional operands of a ``push`` arg-list, and the option words seen.
+
+    Option values (``-o ci.skip``, ``--repo origin``) are skipped so they are
+    never mistaken for refspecs; ``--repo=origin`` is recorded as ``--repo``.
+    """
+    operands: list[str] = []
+    options: set[str] = set()
+    skip_value = False
+    for idx, token in enumerate(rest):
+        if skip_value:
+            skip_value = False
+        elif token == "--":
+            operands.extend(rest[idx + 1 :])
+            break
+        elif token.startswith("-"):
+            options.add(token.split("=", 1)[0])
+            skip_value = token in _PUSH_OPTS_WITH_VALUE
+        else:
+            operands.append(token)
+    return operands, options
+
+
+def _refspec_source(spec: str) -> str:
+    """The local side of a refspec: ``src:dst`` -> ``src``, ``+src`` -> ``src``.
+
+    A bare ``:`` is "all matching branches" — ref-expanding, judged as HEAD
+    like ``--all`` (third-lane finding, 2026-09-12); ``:dst`` is a deletion
+    and yields ``""``.
+    """
+    if spec == ":":
+        return "HEAD"
+    return spec.lstrip("+").partition(":")[0]
+
+
 def push_sources(args: list[str]) -> list[str]:
     """The local refs a ``push`` arg-list ships, each judged on its own range.
 
     ``git push origin feat/y`` ships ``feat/y`` whatever HEAD is (the
     2026-09-12 lane finding: judging HEAD let a push of another branch
-    through unread); ``src:dst`` ships ``src``; ``+src`` is ``src``. A
-    bare push, ``HEAD``, or a push naming only the remote ships HEAD.
-    Deletions (``:dst``, ``--delete``) ship nothing and return ``[]``.
-    With ``--repo <remote>`` every positional is a refspec.
+    through unread); ``src:dst`` ships ``src``. A bare push, ``HEAD``, or a
+    push naming only the remote ships HEAD. Deletions (``:dst``,
+    ``--delete``) ship nothing. With ``--repo <remote>`` every operand is a
+    refspec; otherwise the first operand is the remote.
     """
-    rest = args[_subcommand_index(args) + 1 :]
-    positionals: list[str] = []
-    delete = False
-    remote_named = False
-    skip_value = False
-    for idx, token in enumerate(rest):
-        if skip_value:
-            skip_value = False
-            continue
-        if token == "--":
-            positionals.extend(rest[idx + 1 :])
-            break
-        if token in ("-d", "--delete"):
-            delete = True
-            continue
-        if token == "--repo" or token.startswith("--repo="):
-            remote_named = True
-        if token in _PUSH_OPTS_WITH_VALUE:
-            skip_value = True
-            continue
-        if token.startswith("-"):
-            continue
-        positionals.append(token)
-    if delete:
+    operands, options = _push_operands(args[_subcommand_index(args) + 1 :])
+    if options & {"-d", "--delete"}:
         return []
-    refspecs = positionals if remote_named else positionals[1:]  # first positional = remote
+    refspecs = operands if "--repo" in options else operands[1:]
     if not refspecs:
         return ["HEAD"]
-    # A bare ":" is "all matching branches" — ref-expanding, judged as HEAD
-    # like --all (third-lane finding, 2026-09-12); not a deletion.
-    sources = ["HEAD" if spec == ":" else spec.lstrip("+").partition(":")[0] for spec in refspecs]
-    return list(dict.fromkeys(src for src in sources if src))
+    return list(dict.fromkeys(src for src in map(_refspec_source, refspecs) if src))
 
 
 def push_invocations(command: str) -> list[tuple[dict[str, str], list[str]]]:
