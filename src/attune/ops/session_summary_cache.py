@@ -29,6 +29,8 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
+from attune.security.path_validation import _validate_file_path
+
 logger = logging.getLogger(__name__)
 
 # Bytes hashed from the JSONL tail to form the cache-key digest.
@@ -110,8 +112,32 @@ def cache_path_for(attune_home: Path, session_id: str) -> Path:
     The directory is created on first ``save()``; this function does
     not create it (callers may want to test "is there a cache for X?"
     without forcing the dir into existence).
+
+    Every shipping caller derives ``session_id`` from ``Path.stem`` of
+    a locally-globbed ``*.jsonl``, which cannot carry a separator — so
+    the containment check below is defence in depth for future callers,
+    not a fix for a live traversal.
+
+    Raises:
+        ValueError: If ``session_id`` composes to anything but a direct
+            child of ``<attune_home>/ops/session_summaries/`` — a
+            separator, a ``..`` component, an absolute path, or a null
+            byte.
     """
-    return attune_home / "ops" / "session_summaries" / f"{session_id}.json"
+    cache_dir = attune_home / "ops" / "session_summaries"
+    path = cache_dir / f"{session_id}.json"
+    # The cache is a FLAT directory of ``<session-id>.json`` files, so
+    # anything that lands elsewhere — escaping or merely nesting — is a
+    # bad id. Checked before the containment validator because the
+    # parent test is the stricter of the two.
+    if path.parent != cache_dir:
+        raise ValueError(f"session_id must be a single path component, got {session_id!r}")
+    # Belt-and-braces containment (null bytes, symlinked components).
+    # The validator's resolved return value is discarded so callers keep
+    # the unresolved path they composed — a symlinked ``attune_home``
+    # must not be rewritten under them. Creates nothing.
+    _validate_file_path(str(path), allowed_dir=str(cache_dir))
+    return path
 
 
 def load(attune_home: Path, session_id: str, expected: CacheKey) -> CachedSummary | None:
@@ -127,6 +153,10 @@ def load(attune_home: Path, session_id: str, expected: CacheKey) -> CachedSummar
     A returned :class:`CachedSummary` always has ``source == "cached"``
     so the caller can distinguish hits from fresh writes (which use
     ``source == "haiku"``). The cached text itself is unchanged.
+
+    Raises :class:`ValueError` for a ``session_id`` that would escape
+    the cache directory — see :func:`cache_path_for`. A traversal
+    attempt is a caller bug, not a cache miss, so it is not swallowed.
     """
     path = cache_path_for(attune_home, session_id)
     if not path.is_file():
@@ -186,9 +216,12 @@ def save(
     record was written to. Atomic via temp-file + rename so a
     concurrent reader never observes a half-written JSON.
 
-    Raises :class:`OSError` on filesystem errors. Callers that want
-    silent best-effort caching should wrap the call in a try/except
-    rather than burying the failure here.
+    Raises :class:`OSError` on filesystem errors, and
+    :class:`ValueError` for a ``session_id`` that would escape the
+    cache directory (see :func:`cache_path_for`) — the guard runs
+    before the directory is created or any temp file is opened.
+    Callers that want silent best-effort caching should wrap the call
+    in a try/except rather than burying the failure here.
     """
     path = cache_path_for(attune_home, session_id)
     path.parent.mkdir(parents=True, exist_ok=True)
