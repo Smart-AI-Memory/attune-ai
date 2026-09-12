@@ -16,8 +16,9 @@ any task starts. Phases start at 1.
   for the ruled kind (D2); `--check` mode; generator added to
   `tests/unit/help/test_generated_help_drift.py`; corpus rebuild
   (`generate_all.py`, cross links, summaries) so `help_lookup("steering")`
-  resolves. Receipt: `help_lookup` returns the card; `/catalog` lists
-  the quickstart.
+  resolves. Receipts, one per R7 surface: `help_lookup` returns the
+  card; `/help steering` routes to it; `/catalog` lists the quickstart;
+  the attune-help site build renders the page (URL in the PR body).
 - **Task 1.3 — Launcher quickstart.** `quickstarts/steer-claude.md`:
   one goal, one command, one result. Receipt: rendered page + the
   drift test.
@@ -43,5 +44,6 @@ any task starts. Phases start at 1.
 ## Phase 4 — Close
 
 - **Task 4.1 — Status flip + retro row.** Spec status → shipped; the
-  card family recorded in the help system's own index; card 1's footer
-  links to card 2.
+  card family recorded in the help system's own index. (Card 1 is out
+  of scope and outside this repository; linking it to card 2 is the
+  chair's own optional edit, not a task here.)

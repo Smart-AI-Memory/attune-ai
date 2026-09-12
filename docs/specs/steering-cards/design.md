@@ -40,9 +40,11 @@ card 2 hide Codex-only notes.
 | Lesson (JIT recall on tool use) | yes — hook-driven | **no** (no hooks) — lessons reach Codex only as rule text | unverified |
 | Chat | dies with the session | same | same |
 
-The design consequence the card must state plainly: on Codex, "block
-it" is not available — the strongest layer there is the gate test, and
-a shape rule has to become a CI gate to be enforced at all.
+The design consequence the card must state plainly: on Codex there is
+no tool-call-time enforcement — "block it" is not available. A shape
+rule still reaches a Codex session as instruction text (`AGENTS.md`),
+which the seat is expected to follow; the only MECHANICAL enforcement
+of it is a CI gate. The card says both halves.
 
 ## The three projections
 
