@@ -9,6 +9,7 @@ Tests cover:
 Created: 2026-02-15
 """
 
+import logging
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -778,3 +779,260 @@ class TestDecomposeWithParams:
         call_args = mock_workflow._call_llm.call_args
         step_id_arg = call_args.kwargs["stage_name"]
         assert step_id_arg == "decompose"
+
+
+class TestTaskDecomposerDropWarnings:
+    """The regex parser drops what it cannot match; it must at least say so."""
+
+    def setup_method(self):
+        self.decomposer = TaskDecomposer(workflow=MagicMock())
+
+    def _parse(self, caplog, xml: str) -> tuple[list[DecomposedTask], list[str]]:
+        """Drive the REGEX path directly: these tests pin the fallback's
+        warnings, which the ElementTree path never needs for well-formed
+        input (see TestTaskDecomposerElementTreePath)."""
+        with caplog.at_level(logging.WARNING, logger="attune.wizards.decomposer"):
+            tasks = self.decomposer._parse_tasks_with_regex(xml)
+        return tasks, [record.getMessage() for record in caplog.records]
+
+    def test_well_formed_tasks_emit_no_warnings(self, caplog):
+        """Section wrappers must not be miscounted as their own children:
+        <files-to-modify> is not a <file>, <risks> is not a <risk>,
+        <dependencies> is not a <dep>."""
+        xml = """
+        <task id="1" name="ok">
+          <objective>All tags parsed</objective>
+          <files-to-create><file path="a.py">A</file></files-to-create>
+          <files-to-modify><file path="b.py">B</file></files-to-modify>
+          <validation><check>passes</check></validation>
+          <risks><risk severity="low">none</risk></risks>
+          <dependencies><dep>0</dep></dependencies>
+        </task>
+        """
+        tasks, messages = self._parse(caplog, xml)
+        assert len(tasks) == 1
+        assert messages == []
+
+    def test_warns_when_a_task_falls_outside_every_task_block(self, caplog):
+        """A single-quoted attribute fails the task regex and the whole task
+        vanishes; the caller could not tell a two-task plan from a broken
+        three-task plan before this warning."""
+        xml = """
+        <tasks>
+          <task id="1" name="kept"><objective>Parsed</objective></task>
+          <task id='2' name='dropped'>
+            <objective>Lost to single quotes</objective>
+            <files-to-create><file path="src/lost.py">never seen</file></files-to-create>
+          </task>
+        </tasks>
+        """
+        tasks, messages = self._parse(caplog, xml)
+        assert [task.task_id for task in tasks] == ["1"]
+        [message] = [m for m in messages if "outside any <task> block" in m]
+        assert "(<file>, <objective>)" in message
+        assert "1 task(s) parsed" in message
+
+    def test_warns_when_a_field_tag_yields_no_value(self, caplog):
+        """<file> without path= and <risk> without severity= match nothing
+        and used to disappear without a word."""
+        xml = """
+        <task id="1">
+          <objective>Attribute-less children</objective>
+          <files-to-create><file>src/no_path.py</file></files-to-create>
+          <validation><check>still parsed</check></validation>
+          <risks><risk>no severity</risk></risks>
+        </task>
+        """
+        tasks, messages = self._parse(caplog, xml)
+        [task] = tasks
+        assert task.files_to_create == []
+        assert task.risks == []
+        assert task.validation_checks == ["still parsed"]
+        assert any("Task 1: 1 <file tag(s) present but 0 parsed" in m for m in messages)
+        assert any("Task 1: 1 <risk tag(s) present but 0 parsed" in m for m in messages)
+        assert not any("<check" in m for m in messages)
+        assert not any("outside any <task> block" in m for m in messages)
+
+    def test_no_tasks_still_reports_orphaned_content(self, caplog):
+        """A response whose ONLY task is malformed must not collapse into the
+        generic 'No <task> elements' warning — that is the case the orphan
+        diagnostic exists for. Plain prose with no task-shaped tags keeps the
+        generic warning alone."""
+        tasks, messages = self._parse(caplog, "<task id='1'><objective >x</objective></task>")
+        assert tasks == []
+        assert messages[0] == "No <task> elements found in decomposition response"
+        assert "outside any <task> block (<objective>) - 0 task(s) parsed" in messages[1]
+        # The same input through the public entry point parses: it is
+        # well-formed XML, and quoting style is the regex path's problem only.
+        caplog.clear()
+        with caplog.at_level(logging.WARNING, logger="attune.wizards.decomposer"):
+            [task] = self.decomposer._parse_tasks_from_xml(
+                "<task id='1'><objective >x</objective></task>"
+            )
+        assert task.objective == "x"
+        assert [r.getMessage() for r in caplog.records] == []
+
+        caplog.clear()
+        tasks, messages = self._parse(caplog, "Sorry, I could not decompose this request.")
+        assert tasks == []
+        assert messages == ["No <task> elements found in decomposition response"]
+
+    def test_warns_when_a_missing_close_tag_swallows_the_next_task(self, caplog):
+        """Without </task> on the first task the non-greedy regex runs through
+        the second task's closing tag: one task parses, the other vanishes
+        INSIDE its body, out of reach of both other warnings."""
+        xml = """
+        <task id="1"><objective>First, never closed</objective>
+        <task id="2"><objective>Second</objective></task>
+        """
+        tasks, messages = self._parse(caplog, xml)
+        assert [task.task_id for task in tasks] == ["1"]
+        assert any("Task 1: body contains another <task> opening" in m for m in messages)
+        # Through the public entry point the unclosed tag is not well-formed,
+        # so the fallback runs and BOTH warnings reach the caller.
+        caplog.clear()
+        with caplog.at_level(logging.WARNING, logger="attune.wizards.decomposer"):
+            self.decomposer._parse_tasks_from_xml(xml)
+        messages = [r.getMessage() for r in caplog.records]
+        assert any("not well-formed" in m and "falling back" in m for m in messages)
+        assert any("Task 1: body contains another <task> opening" in m for m in messages)
+
+
+class TestTaskDecomposerElementTreePath:
+    """Well-formed XML goes through defusedxml; the regex parser's blind
+    spots (quoting style, attribute order, whitespace) stop being drops."""
+
+    def setup_method(self):
+        self.decomposer = TaskDecomposer(workflow=MagicMock())
+
+    def _parse(self, caplog, xml: str) -> tuple[list[DecomposedTask], list[str]]:
+        with caplog.at_level(logging.WARNING, logger="attune.wizards.decomposer"):
+            tasks = self.decomposer._parse_tasks_from_xml(xml)
+        return tasks, [record.getMessage() for record in caplog.records]
+
+    def test_single_quoted_and_reordered_attributes_parse(self, caplog):
+        """Both shapes dropped the task under the regex parser."""
+        xml = """
+        <tasks>
+          <task id='1' name='quoted'><objective>A</objective></task>
+          <task name="reordered" id="2" ><objective>B</objective></task>
+        </tasks>
+        """
+        tasks, messages = self._parse(caplog, xml)
+        assert [(t.task_id, t.name, t.objective) for t in tasks] == [
+            ("1", "quoted", "A"),
+            ("2", "reordered", "B"),
+        ]
+        assert messages == []
+
+    def test_full_task_matches_regex_parser_field_for_field(self, caplog):
+        xml = """
+        ```xml
+        <task id="3" name="full">
+          <objective>Add auth</objective>
+          <files-to-create><file path="src/auth.py">Auth module</file></files-to-create>
+          <files-to-modify><file path="src/app.py">Wire it</file></files-to-modify>
+          <validation><check>401 when anonymous</check><check>200 when signed in</check></validation>
+          <risks><risk severity="high">Session break</risk></risks>
+          <dependencies><dep>1</dep><dep>2</dep></dependencies>
+        </task>
+        ```
+        """
+        tasks, messages = self._parse(caplog, xml)
+        [task] = tasks
+        assert messages == []
+        assert task.to_dict() == self.decomposer._parse_tasks_with_regex(xml)[0].to_dict()
+
+    def test_inline_markup_inside_text_is_kept(self, caplog):
+        xml = '<task id="1"><objective>Use <code>x</code> here</objective></task>'
+        tasks, _ = self._parse(caplog, xml)
+        assert tasks[0].objective == "Use <code>x</code> here"
+
+    def test_text_inside_child_tags_is_decoded_once_never_re_escaped(self, caplog):
+        """The corpus case: ``->`` inside a <change> block came back as
+        ``-&gt;`` when children were re-serialized. Escaped markup in child
+        text reads as the text its author meant (lane finding on #2511 —
+        the result is prose, not XML)."""
+        xml = (
+            '<task id="1"><files-to-modify><file path="a.py">'
+            '<change location="f">def f(x) -> int: pass</change>'
+            " then <code>&lt;div&gt;</code>"
+            "</file></files-to-modify></task>"
+        )
+        tasks, _ = self._parse(caplog, xml)
+        assert tasks[0].files_to_modify[0]["description"] == (
+            '<change location="f">def f(x) -> int: pass</change> then <code><div></code>'
+        )
+
+    def test_double_quotes_inside_rebuilt_attributes_stay_quoted(self, caplog):
+        """Re-lane finding on #2511: a decoded quote inside an attribute
+        value must not break the rebuilt tag's own quoting."""
+        xml = (
+            '<task id="1"><objective>'
+            '<change location="say &quot;hi&quot; &amp; wave">x</change>'
+            "</objective></task>"
+        )
+        tasks, _ = self._parse(caplog, xml)
+        assert tasks[0].objective == '<change location="say &quot;hi&quot; & wave">x</change>'
+
+    def test_nested_task_inside_a_description_is_not_a_phantom_task(self, caplog):
+        """A well-formed example <task> inside a body is text, not a task
+        (lane finding on #2511: iter('task') minted one)."""
+        xml = (
+            '<task id="1"><objective>Emit blocks like '
+            '<task id="example"><objective>x</objective></task></objective></task>'
+            '<task id="2"><objective>real</objective></task>'
+        )
+        tasks, messages = self._parse(caplog, xml)
+        assert [t.task_id for t in tasks] == ["1", "2"]
+        assert tasks[0].objective.startswith('Emit blocks like <task id="example">')
+        assert any("Task 1: 1 nested <task> element(s) kept as body text" in m for m in messages)
+
+    def test_entities_decode_on_the_parser_path(self, caplog):
+        """The one deliberate divergence: ``&amp;`` reaches the caller as ``&``."""
+        xml = '<task id="1"><objective>A &amp; B</objective></task>'
+        tasks, _ = self._parse(caplog, xml)
+        assert tasks[0].objective == "A & B"
+        assert self.decomposer._parse_tasks_with_regex(xml)[0].objective == "A &amp; B"
+
+    def test_attribute_less_children_still_warn(self, caplog):
+        xml = """
+        <task id="1">
+          <objective>x</objective>
+          <files-to-create><file>src/no_path.py</file></files-to-create>
+          <risks><risk>no severity</risk></risks>
+        </task>
+        """
+        tasks, messages = self._parse(caplog, xml)
+        assert tasks[0].files_to_create == [] and tasks[0].risks == []
+        assert any("Task 1: 1 <file tag(s) present but 0 parsed" in m for m in messages)
+        assert any("Task 1: 1 <risk tag(s) present but 0 parsed" in m for m in messages)
+
+    def test_task_without_id_is_skipped_with_a_warning(self, caplog):
+        xml = '<task name="anon"><objective>x</objective></task><task id="2"></task>'
+        tasks, messages = self._parse(caplog, xml)
+        assert [t.task_id for t in tasks] == ["2"]
+        assert any("no id attribute" in m for m in messages)
+
+    def test_bare_ampersand_in_prose_falls_back_to_regex(self, caplog):
+        xml = """
+        <task id="1"><objective>A</objective></task>
+        Notes & caveats between the blocks.
+        <task id="2"><objective>B</objective></task>
+        """
+        tasks, messages = self._parse(caplog, xml)
+        assert [t.task_id for t in tasks] == ["1", "2"]
+        assert any("not well-formed" in m for m in messages)
+
+    def test_entity_declarations_are_refused_and_fall_back(self, caplog):
+        xml = (
+            '<!DOCTYPE r [<!ENTITY lol "lol">]>' '<task id="1"><objective>&lol;</objective></task>'
+        )
+        tasks, messages = self._parse(caplog, xml)
+        assert [t.task_id for t in tasks] == ["1"]
+        assert any("not well-formed" in m for m in messages)
+
+    def test_no_task_block_keeps_the_generic_warning(self, caplog):
+        tasks, messages = self._parse(caplog, "no xml at all")
+        assert tasks == []
+        assert messages == ["No <task> elements found in decomposition response"]

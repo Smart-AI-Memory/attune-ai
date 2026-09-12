@@ -216,6 +216,9 @@ class ExecutorMixin:
             task_type=step.task_type,
         )
 
+        if step.max_tokens is not None:
+            kwargs.setdefault("max_tokens", step.max_tokens)
+
         start_time = datetime.now()
         response = await executor.run(
             task_type=step.task_type,

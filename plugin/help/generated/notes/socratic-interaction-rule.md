@@ -40,10 +40,13 @@ likely to cause.
 
 When you do ask, gather every open dimension of the decision into ONE
 `AskUserQuestion` call, never N sequential turns: 1–4 questions, 2–4
-options each, the recommendation ordered first with " (Recommended)",
-free text through the built-in "Other" (do not add an Other option),
-and `metadata.source` set to `"elicit-form"` for a batch of more than
-one question (the format guard's opt-in). Beyond four open dimensions,
+options each, the recommendation ordered first with " (Recommended)"
+— except a `confirm` gate, which carries no recommended pick by
+construction — free text through the built-in "Other" (do not add an
+Other option), and `metadata.source` set to `"elicit-form"` for a
+batch of more than one question or `"confirm-gate"` for that
+two-option confirm (the format guard's two opt-ins; added 2026-09-11 —
+the guard predated D16). Beyond four open dimensions,
 split into successive calls of at most four, most consequential first,
 and drop none; when the overflow is in options rather than questions,
 use a two-tier picker (category, then item). No `FormSchema` is needed
@@ -67,16 +70,20 @@ The native control carries the decision-shaped constructs too:
 
 ### Constructs the native control cannot express
 
-`ranking` (no ordering control), `triage` over four items, and the
-`number` / `date` / `textarea` fields have no honest `AskUserQuestion`
-shape. For these, and only these, build the `FormSchema` via
-`attune.elicitation.form_from_dict` and render
-`form_to_widget_html(form)` on a widget-capable session. Where no
-widget exists, or the user is in keyboard mode, use the typed fallback
-(`form_to_markdown` skeleton, deterministic parse) and never silently
-drop the field. Otherwise the widget and Attune forms are experimental
-in this repository too: use them only when the user asks for a form or
-a trial.
+`ranking` (no ordering control), `triage` over four items, the
+`number` / `date` / `textarea` fields, and a library-routed
+`assumption_review` (its edit lane is a text question; an agent-composed
+card with accept / reject and one edit through "Other" stays legal) have
+no honest `AskUserQuestion` shape. For these, and only these, build the
+`FormSchema` via `attune.elicitation.form_from_dict` and render
+`form_to_widget_html(form)` through `show_widget` on a widget-capable
+session (D17; desktop acceptance observed 2026-09-07). Where no widget
+exists, or the user is in keyboard mode: one typed question for a single
+`number` / `date` / `textarea`; the `form_to_markdown` skeleton with a
+deterministic parse for a ranking, triage, assumption review, or any
+multi-field form. Never silently drop a field. Otherwise the widget and
+Attune forms are experimental in this repository too: use them only when
+the user asks for a form or a trial.
 
 ### Two grammars, two directions — not a ranking
 

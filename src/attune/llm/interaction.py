@@ -57,6 +57,7 @@ Follow the CLAUDE.md instructions above, then apply the Attune AI below.
         state: CollaborationState,
         context: dict[str, Any],
         model_override: str | None = None,
+        max_tokens: int | None = None,
     ) -> dict[str, Any]:
         """Level 1: Reactive - Simple Q&A
 
@@ -66,7 +67,7 @@ Follow the CLAUDE.md instructions above, then apply the Attune AI below.
             "messages": [{"role": "user", "content": user_input}],
             "system_prompt": self._build_system_prompt(1),
             "temperature": EmpathyLevel.get_temperature_recommendation(1),
-            "max_tokens": EmpathyLevel.get_max_tokens_recommendation(1),
+            "max_tokens": max_tokens or EmpathyLevel.get_max_tokens_recommendation(1),
         }
         if model_override:
             generate_kwargs["model"] = model_override
@@ -85,6 +86,7 @@ Follow the CLAUDE.md instructions above, then apply the Attune AI below.
         state: CollaborationState,
         context: dict[str, Any],
         model_override: str | None = None,
+        max_tokens: int | None = None,
     ) -> dict[str, Any]:
         """Level 2: Guided - Ask clarifying questions
 
@@ -98,7 +100,7 @@ Follow the CLAUDE.md instructions above, then apply the Attune AI below.
             "messages": messages,
             "system_prompt": self._build_system_prompt(2),
             "temperature": EmpathyLevel.get_temperature_recommendation(2),
-            "max_tokens": EmpathyLevel.get_max_tokens_recommendation(2),
+            "max_tokens": max_tokens or EmpathyLevel.get_max_tokens_recommendation(2),
         }
         if model_override:
             generate_kwargs["model"] = model_override
@@ -121,6 +123,7 @@ Follow the CLAUDE.md instructions above, then apply the Attune AI below.
         state: CollaborationState,
         context: dict[str, Any],
         model_override: str | None = None,
+        max_tokens: int | None = None,
     ) -> dict[str, Any]:
         """Level 3: Proactive - Act on detected patterns
 
@@ -165,7 +168,7 @@ Was this helpful? If not, I can adjust my pattern detection.
             "messages": messages,
             "system_prompt": self._build_system_prompt(3),
             "temperature": EmpathyLevel.get_temperature_recommendation(3),
-            "max_tokens": EmpathyLevel.get_max_tokens_recommendation(3),
+            "max_tokens": max_tokens or EmpathyLevel.get_max_tokens_recommendation(3),
         }
         if model_override:
             generate_kwargs["model"] = model_override
@@ -188,6 +191,7 @@ Was this helpful? If not, I can adjust my pattern detection.
         state: CollaborationState,
         context: dict[str, Any],
         model_override: str | None = None,
+        max_tokens: int | None = None,
     ) -> dict[str, Any]:
         """Level 4: Anticipatory - Predict future needs
 
@@ -224,7 +228,7 @@ Use anticipatory format:
             "messages": messages,
             "system_prompt": self._build_system_prompt(4),
             "temperature": EmpathyLevel.get_temperature_recommendation(4),
-            "max_tokens": EmpathyLevel.get_max_tokens_recommendation(4),
+            "max_tokens": max_tokens or EmpathyLevel.get_max_tokens_recommendation(4),
         }
         if model_override:
             generate_kwargs["model"] = model_override
@@ -248,6 +252,7 @@ Use anticipatory format:
         state: CollaborationState,
         context: dict[str, Any],
         model_override: str | None = None,
+        max_tokens: int | None = None,
     ) -> dict[str, Any]:
         """Level 5: Systems - Cross-domain pattern learning
 
@@ -277,7 +282,7 @@ TASK:
             "messages": messages,
             "system_prompt": self._build_system_prompt(5),
             "temperature": EmpathyLevel.get_temperature_recommendation(5),
-            "max_tokens": EmpathyLevel.get_max_tokens_recommendation(5),
+            "max_tokens": max_tokens or EmpathyLevel.get_max_tokens_recommendation(5),
         }
         if model_override:
             generate_kwargs["model"] = model_override

@@ -215,3 +215,86 @@ def test_save_persisted_record_has_haiku_source_on_disk(attune_home):
     path = cache.cache_path_for(attune_home, "sid")
     data = json.loads(path.read_text(encoding="utf-8"))
     assert data["source"] == "haiku"
+
+
+# --- traversal containment (regression) ------------------------------
+#
+# ``cache_path_for`` interpolates ``session_id`` straight into a
+# filesystem path. Every shipping caller derives the id from
+# ``Path.stem`` of a locally-globbed ``*.jsonl``, so no traversing id
+# reaches it today — these lock the containment guard so a future
+# caller (a route, an MCP tool, a CLI flag) cannot reintroduce one.
+
+#: Ids that escape the cache dir, plus one that merely nests inside
+#: it — the cache is a flat directory, so both are bad ids.
+BAD_IDS = [
+    "../escaped",
+    "../../../../etc/passwd",
+    "a/../../escaped",
+    "sub/dir/escaped",
+]
+
+
+@pytest.mark.parametrize("session_id", BAD_IDS)
+def test_cache_path_for_rejects_escaping_or_nesting_session_id(attune_home, session_id):
+    with pytest.raises(ValueError):
+        cache.cache_path_for(attune_home, session_id)
+
+
+def test_cache_path_for_rejects_absolute_session_id(attune_home, tmp_path):
+    """An absolute id would win the ``/`` join outright."""
+    with pytest.raises(ValueError):
+        cache.cache_path_for(attune_home, str(tmp_path / "outside"))
+
+
+@pytest.mark.parametrize("session_id", BAD_IDS)
+def test_save_writes_nothing_outside_the_cache_dir(attune_home, tmp_path, session_id):
+    """The guard fires before mkdir, mkstemp, and the rename."""
+    before = set(tmp_path.rglob("*"))
+
+    with pytest.raises(ValueError):
+        cache.save(
+            attune_home,
+            session_id,
+            key=_make_key(),
+            summary="pwned",
+            tokens_in=1,
+            tokens_out=1,
+            cost_usd=0.0,
+        )
+
+    assert set(tmp_path.rglob("*")) == before, "save() touched the filesystem"
+    assert not (attune_home / "ops" / "session_summaries").exists()
+    assert not (tmp_path / "escaped.json").exists()
+
+
+def test_load_rejects_traversing_session_id_instead_of_missing(attune_home):
+    """A traversal attempt is a caller bug, not a cache miss."""
+    with pytest.raises(ValueError):
+        cache.load(attune_home, "../escaped", expected=_make_key())
+
+
+def test_uuid_shaped_session_id_still_round_trips(attune_home):
+    """The guard must not reject the real id shape (Claude Code UUIDs)."""
+    session_id = "76caa7c4-fa37-4d5d-b122-b36bdd52ca72"
+    key = _make_key()
+    path = cache.save(
+        attune_home,
+        session_id,
+        key=key,
+        summary="ok",
+        tokens_in=1,
+        tokens_out=1,
+        cost_usd=0.0,
+    )
+    assert path.parent == attune_home / "ops" / "session_summaries"
+    loaded = cache.load(attune_home, session_id, expected=key)
+    assert loaded is not None and loaded.summary == "ok"
+
+
+def test_dot_dot_stem_composes_to_an_ordinary_filename(attune_home):
+    """``Path("...jsonl").stem`` is ``".."`` — the ``.json`` suffix
+    makes it an ordinary in-dir filename, so it must not be rejected."""
+    path = cache.cache_path_for(attune_home, "..")
+    assert path.name == "...json"
+    assert path.parent == attune_home / "ops" / "session_summaries"

@@ -32,11 +32,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Plugin metadata lookup now handles registered engine workflows without
   constructing them; bundled software workflow lookup no longer crashes on
   legacy analyzer-only fields.
+- `attune doctor` no longer crashes when an optional extra raises
+  something other than `ImportError` at import time (a missing native
+  library, a CUDA probe, an import-time metadata read); the package is
+  reported as `import failed`, distinct from `not installed`.
 
 - Class scans and class-register commands now return a non-zero exit code
   when a Python file cannot be parsed. The parse diagnostic remains in the
   output, and scanning continues for other files; an incomplete scan can
   no longer silently pass the register's scan-error check.
+- The worktree-add, dirty-switch and detached-head-push guards split
+  multi-line Bash commands on newlines, treat here-document bodies as
+  data, and match `git worktree add` by position after git's global
+  options (`-C`, `-c`, `--git-dir` …): a `git -C <main> worktree add`
+  on the line after `set -e` is now refused, while `git commit -m
+  worktree add` and heredoc bodies are not.
 - `/cross-review` no longer briefs the authoring seat on its own diff
   when the moderator is not Claude. `run_review()` resolves an omitted
   `seat` against the moderating host: Claude-hosted and host-less runs
@@ -50,6 +60,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   including the moderator's own; that run is stamped `self_review: True`
   rather than passed off as a cross-review. Saved board posts and ledger
   rows retain the host, self-review state, and resolved Claude auth route.
+- The ops session-summary cache validates its session id against the
+  flat cache directory before any write: an id that would escape or
+  nest raises `ValueError` and touches nothing. No shipping caller could
+  reach a traversal; this is defence in depth.
 - `claude_auth` defaults to `"auto"`, which selects the verified Pro/Max
   subscription route ONLY for a real `claude` seat briefed from a known
   non-Claude host. That cross-host case previously failed with
@@ -60,6 +74,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   raises `ReviewTargetError`. An unknown host still resolves to `"api"`,
   preserving the zero-cap refusal. Pass `claude_auth="api"` to force the
   billable route.
+- `EmpathyLLM.interact()` accepts `max_tokens`, threaded through all
+  five empathy levels; the workflow executor forwards a step's cap and
+  parallel test generation passes 16384, so long generated outputs are
+  no longer silently truncated at the level default.
+- The CI Ruff gate now runs `ruff check --no-fix .`. With `fix = true` in
+  `pyproject.toml`, the bare `ruff check .` rewrote the runner's checkout and
+  exited 0, so every auto-fixable violation passed the gate and merged
+  unfixed; CI now reports, matching the `black --check .` step beside it.
+- Spec artifact receipts are rejected when their path names a top-level
+  directory that does not exist in this repository. A sibling-repo prefix
+  such as `attune-rag/docs/...` is a valid `_portable_path` string (relative,
+  no `..`) that resolves to nothing here, so the executor wrote to a location
+  that never existed instead of failing.
+- `read_spec()` now warns when task-shaped content falls outside every
+  `<task>` block (a single-quoted attribute drops the whole task) or when a
+  `<file>`/`<risk>` tag is present but yields no value (missing `path=` or
+  `severity=`), instead of discarding the content in silence.
+- The session-start reconciler no longer reports a bare `exists` for a
+  handoff-named branch: an existing branch is qualified by its pull-request
+  state (`exists (PR #N MERGED|OPEN)`, `exists, NO PR — pushed, not landed`,
+  or `exists (PR unverified)` when `gh` cannot answer).
+- Task XML (`read_spec()`, `/spec` resume, the wizard decomposer) is now
+  parsed with defusedxml first and by regex only when the XML is not
+  well-formed. Single-quoted or reordered attributes, extra attributes such
+  as `depends-on=`, and self-closing `<file … />` entries no longer drop
+  tasks or files in silence; `docs/specs/cross-provider-memory-transport/
+  tasks.md` now yields its six tasks instead of one. `&lt;`/`&gt;` written
+  as escapes now decode in task text.
 
 ### Security
 

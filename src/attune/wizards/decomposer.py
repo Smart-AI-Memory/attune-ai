@@ -14,6 +14,9 @@ import re
 from dataclasses import dataclass, field
 from typing import Any
 
+import defusedxml.ElementTree as DET
+from defusedxml import DefusedXmlException
+
 from attune.workflows.compat import ModelTier
 
 logger = logging.getLogger(__name__)
@@ -242,11 +245,126 @@ class TaskDecomposer:
 
         return self._parse_tasks_from_xml(response_text)
 
-    def _parse_tasks_from_xml(self, xml_content: str) -> list[DecomposedTask]:
-        """Parse ``<task>`` elements from XML response.
+    #: From the first ``<task`` opening to the last ``</task>`` closing —
+    #: the span handed to the XML parser, so fences and prose around the
+    #: block never have to be well-formed themselves.
+    _TASK_REGION = re.compile(r"<task[\s>].*</task\s*>", re.DOTALL)
 
-        Uses regex extraction for robustness -- LLM responses may include
-        markdown fences or extra text around the XML.
+    def _parse_tasks_from_xml(self, xml_content: str) -> list[DecomposedTask]:
+        """Parse ``<task>`` elements from an LLM response or a plan file.
+
+        Well-formed XML goes through a real parser (defusedxml), so quoting
+        style, attribute order and whitespace cannot drop a task. Anything
+        the parser rejects — a bare ``&`` in prose, an unclosed tag, a ``<``
+        inside a description — falls back to the regex path, which warns
+        about what it cannot see.
+
+        Args:
+            xml_content: Raw LLM response text or plan-file content.
+
+        Returns:
+            List of ``DecomposedTask`` objects.
+
+        """
+        region = self._TASK_REGION.search(xml_content)
+        if region is None:
+            return self._parse_tasks_with_regex(xml_content)
+        try:
+            root = DET.fromstring(f"<r>{region.group(0)}</r>")
+        except (DET.ParseError, DefusedXmlException) as exc:
+            logger.warning(
+                "Task XML is not well-formed (%s) - falling back to regex extraction", exc
+            )
+            return self._parse_tasks_with_regex(xml_content)
+        # Direct children only: a <task> nested inside a description is an
+        # example, not a task — iter("task") would mint a phantom from it.
+        tasks = [self._task_from_element(element) for element in root.findall("task")]
+        return [task for task in tasks if task is not None]
+
+    def _task_from_element(self, element: DET.Element) -> DecomposedTask | None:
+        """Build one task from a parsed ``<task>`` element, or None without an id."""
+        task_id = (element.get("id") or "").strip()
+        if not task_id:
+            logger.warning("Skipping a <task> element with no id attribute")
+            return None
+        nested = sum(1 for _ in element.iter("task")) - 1
+        if nested:
+            logger.warning(
+                "Task %s: %d nested <task> element(s) kept as body text, not parsed "
+                "as tasks - check for a misplaced </task>",
+                task_id,
+                nested,
+            )
+        files_to_create = self._files_from_element(element, "files-to-create")
+        files_to_modify = self._files_from_element(element, "files-to-modify")
+        risks_seen = list(element.iterfind("risks/risk"))
+        risks = [
+            {"severity": risk.get("severity"), "description": self._inner_xml(risk)}
+            for risk in risks_seen
+            if risk.get("severity")
+        ]
+        files_seen = len(element.findall("files-to-create/file")) + len(
+            element.findall("files-to-modify/file")
+        )
+        self._warn_dropped(
+            task_id, "<file", files_seen, len(files_to_create) + len(files_to_modify)
+        )
+        self._warn_dropped(task_id, "<risk", len(risks_seen), len(risks))
+        objective = element.find("objective")
+        return DecomposedTask(
+            task_id=task_id,
+            name=(element.get("name") or "").strip() or task_id,
+            objective=self._inner_xml(objective) if objective is not None else "",
+            files_to_create=files_to_create,
+            files_to_modify=files_to_modify,
+            validation_checks=[self._inner_xml(c) for c in element.iterfind("validation/check")],
+            risks=risks,
+            dependencies=[self._inner_xml(d) for d in element.iterfind("dependencies/dep")],
+        )
+
+    def _files_from_element(self, element: DET.Element, section: str) -> list[dict[str, str]]:
+        """``{path, description}`` for each ``<file path=...>`` under ``section``."""
+        return [
+            {"path": node.get("path"), "description": self._inner_xml(node)}
+            for node in element.iterfind(f"{section}/file")
+            if node.get("path")
+        ]
+
+    @classmethod
+    def _inner_xml(cls, element: DET.Element) -> str:
+        """Text of an element with inline child tags kept, as plain text.
+
+        ``.text`` alone would drop ``<code>x</code>`` from "use <code>x</code>".
+        Child tags are rebuilt verbatim around their content; every text
+        node is what the parser decoded, once — no re-serializing, so
+        ``->`` never comes back as ``-&gt;`` and an escaped ``&lt;div&gt;``
+        reads as ``<div>``, the text its author meant. The result is prose
+        for a reader, not XML for a parser.
+        """
+        return cls._text_with_tags(element).strip()
+
+    @classmethod
+    def _text_with_tags(cls, element: DET.Element) -> str:
+        parts = [element.text or ""]
+        for child in element:
+            # Decoded values are quoted back; a double quote inside one is the
+            # only character that would break the rebuilt tag's own quoting.
+            attrs = "".join(
+                f' {key}="{value.replace(chr(34), "&quot;")}"'
+                for key, value in child.attrib.items()
+            )
+            inner = cls._text_with_tags(child)
+            parts.append(
+                f"<{child.tag}{attrs}>{inner}</{child.tag}>" if inner else f"<{child.tag}{attrs} />"
+            )
+            parts.append(child.tail or "")
+        return "".join(parts)
+
+    def _parse_tasks_with_regex(self, xml_content: str) -> list[DecomposedTask]:
+        """Regex fallback for task XML the real parser rejects.
+
+        Every extractor here is a regex, so anything it does not match is
+        discarded; the warnings below name what fell through.
 
         Args:
             xml_content: Raw LLM response text.
@@ -275,6 +393,24 @@ class TaskDecomposer:
             risks = self._extract_risks(body)
             dependencies = self._extract_list(body, "dependencies", "dep")
 
+            # A missing </task> lets the non-greedy span run through the NEXT
+            # task's closing tag; everything then sits "inside" this body, so
+            # neither orphan nor field warning can see the swallowed task.
+            if re.search(r"<task[\s>]", body):
+                logger.warning(
+                    "Task %s: body contains another <task> opening - a missing "
+                    "</task> merged the following task(s) into this one",
+                    task_id,
+                )
+            self._warn_on_dropped_fields(
+                task_id,
+                body,
+                len(files_to_create) + len(files_to_modify),
+                len(validation_checks),
+                len(risks),
+                len(dependencies),
+            )
+
             tasks.append(
                 DecomposedTask(
                     task_id=task_id,
@@ -290,8 +426,87 @@ class TaskDecomposer:
 
         if not tasks:
             logger.warning("No <task> elements found in decomposition response")
+        # Runs even when nothing parsed: a response whose only task carries a
+        # single-quoted attribute is exactly the case this warning exists for.
+        self._warn_on_dropped_task_content(xml_content, task_pattern)
 
         return tasks
+
+    #: Opening tags that only appear inside a <task> body. Finding one in the
+    #: text between task blocks means a task lost its wrapper and was dropped.
+    #: ``[\s>]`` after the name admits attributes and stray whitespace
+    #: (``<file path=``, ``<objective >``) without matching ``<files-to-…>``.
+    _ORPHAN_TAG = re.compile(r"<(objective|file|check|risk|dep)[\s>]")
+
+    def _warn_on_dropped_task_content(self, xml_content: str, task_pattern: re.Pattern) -> None:
+        """Warn when task-shaped content sits outside every ``<task>`` block.
+
+        The parser is regex-based, so anything it does not match is discarded
+        in silence. A single-quoted attribute, a missing ``path=``, or a
+        mistyped closing tag drops a whole task and still returns a plausible
+        list. The caller has no way to tell a two-task plan from a three-task
+        plan whose third task was malformed.
+        """
+        leftovers: list[str] = []
+        cursor = 0
+        for match in task_pattern.finditer(xml_content):
+            leftovers.append(xml_content[cursor : match.start()])
+            cursor = match.end()
+        leftovers.append(xml_content[cursor:])
+
+        orphaned = sorted(
+            {f"<{m.group(1)}>" for chunk in leftovers for m in self._ORPHAN_TAG.finditer(chunk)}
+        )
+        if orphaned:
+            logger.warning(
+                "Found task content outside any <task> block (%s) - "
+                "%d task(s) parsed; check for a malformed or unclosed <task> tag",
+                ", ".join(orphaned),
+                len(task_pattern.findall(xml_content)),
+            )
+
+    def _warn_on_dropped_fields(
+        self,
+        task_id: str,
+        body: str,
+        files: int,
+        checks: int,
+        risks: int,
+        deps: int,
+    ) -> None:
+        """Warn when a tag appears in a task body but no value came out of it.
+
+        The sub-extractors are regexes too. ``<file>`` without ``path=`` and
+        ``<risk>`` without ``severity=`` match nothing and are dropped without
+        a word, so a task can parse "successfully" while losing every file it
+        named. Counting raw opening tags against extracted values catches that
+        without re-parsing.
+        """
+        for tag, extracted in (
+            ("<file", files),
+            ("<check", checks),
+            ("<risk", risks),
+            ("<dep", deps),
+        ):
+            # Require a space or '>' after the tag name, so the section
+            # wrappers are not miscounted as their own children:
+            # '<files-to-modify>' is not a '<file>', '<risks>' is not a
+            # '<risk>', '<dependencies>' is not a '<dep>'.
+            seen = len(re.findall(re.escape(tag) + r"[\s>]", body))
+            self._warn_dropped(task_id, tag, seen, extracted)
+
+    @staticmethod
+    def _warn_dropped(task_id: str, tag: str, seen: int, extracted: int) -> None:
+        """One warning shape for both parser paths: tags present, values lost."""
+        if seen > extracted:
+            logger.warning(
+                "Task %s: %d %s tag(s) present but %d parsed - "
+                "check for a missing or malformed attribute",
+                task_id,
+                seen,
+                tag,
+                extracted,
+            )
 
     # -----------------------------------------------------------------
     # XML extraction helpers

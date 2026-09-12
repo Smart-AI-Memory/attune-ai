@@ -1133,6 +1133,11 @@ class TestCmdDoctor:
 # ---------------------------------------------------------------------------
 
 
+#: The packages cmd_doctor's related-package section reports on. Kept in
+#: step with ``utility_commands.cmd_doctor`` section 5.
+_RELATED_PACKAGES = ("attune-rag", "attune-verify", "attune-forms")
+
+
 @pytest.mark.usefixtures("doctor_file_backend")
 class TestCmdDoctorInstallDiagnostics:
     """Tests for the related-package and Claude plugin doctor checks."""
@@ -1158,6 +1163,19 @@ class TestCmdDoctorInstallDiagnostics:
         mock attribute instead of the real module — 3.11+ uses
         pkgutil.resolve_name and is unaffected, so the miss is invisible
         on newer interpreters.
+
+        ``importlib.metadata.version`` is patched SCOPED to the three
+        attune-* packages under test, and ``sentence_transformers`` is
+        pinned absent. Both are load-bearing. cmd_doctor imports its
+        optional extras for real, and ``sentence_transformers`` pulls in
+        ``huggingface_hub``, which reads its own dependency metadata at
+        import time — so a blanket patch of ``metadata.version`` hands the
+        mock's ``side_effect`` to a third-party import and this class
+        would pass or fail on whether that package happens to be installed
+        in the interpreter running it: green in CI, where neither package
+        is in ``uv.lock``, and red on a machine that has them. Unlike
+        redis and jinja2, ``sentence_transformers`` is not a project
+        dependency, so its presence is genuinely environmental.
         """
         import shutil as shutil_module
         import subprocess as subprocess_module
@@ -1165,6 +1183,10 @@ class TestCmdDoctorInstallDiagnostics:
 
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
         args = types.SimpleNamespace()
+
+        # Pinned absent so the extras probe cannot import a real package
+        # that reads its own metadata at import time (see docstring).
+        fake_module("sentence_transformers")
 
         mock_version = MagicMock()
         mock_version.__version__ = "5.0.0"
@@ -1185,11 +1207,16 @@ class TestCmdDoctorInstallDiagnostics:
         elif run_result is not None:
             run_mock.return_value = run_result
 
-        monkeypatch.setattr(
-            metadata,
-            "version",
-            pkg_version if pkg_version is not None else MagicMock(return_value="0.0.0"),
-        )
+        probe = pkg_version if pkg_version is not None else MagicMock(return_value="0.0.0")
+        real_version = metadata.version
+
+        def scoped_version(name: str, *a, **kw):
+            """Answer only for the packages cmd_doctor's section 5 probes."""
+            if name in _RELATED_PACKAGES:
+                return probe(name, *a, **kw)
+            return real_version(name, *a, **kw)
+
+        monkeypatch.setattr(metadata, "version", scoped_version)
         monkeypatch.setattr(shutil_module, "which", MagicMock(return_value=which))
         monkeypatch.setattr(subprocess_module, "run", run_mock)
 
@@ -1252,6 +1279,43 @@ class TestCmdDoctorInstallDiagnostics:
         assert result == 0
         out = capsys.readouterr().out
         assert "[--]   attune-rag version unknown (optional)" in out
+
+    def test_optional_extra_import_raises_non_import_error(
+        self,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        fake_module,
+    ) -> None:
+        """A broken optional extra degrades to a row, never crashes the doctor.
+
+        Regression guard. cmd_doctor's extras probe caught only
+        ``ImportError``, so anything else raised while EXECUTING an
+        extra's module body propagated out and killed the whole
+        diagnostic — reported as a hard traceback from the one command
+        whose entire job is telling the truth about the environment.
+        Real instances of this are ordinary: a missing native library, a
+        CUDA/driver probe, an import-time metadata read.
+        """
+        import builtins
+
+        real_import = builtins.__import__
+
+        def exploding_import(name: str, *a, **kw):
+            if name == "sentence_transformers":
+                raise RuntimeError("dlopen(libomp.dylib): image not found")
+            return real_import(name, *a, **kw)
+
+        monkeypatch.setattr(builtins, "__import__", exploding_import)
+
+        result = self._run_doctor(monkeypatch, fake_module)
+
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "[--]   sentence-transformers import failed" in out
+        assert "dlopen(libomp.dylib): image not found" in out
+        # Distinct from the absent case — the doctor must not collapse
+        # "installed but unimportable" into "not installed".
+        assert "sentence-transformers not installed" not in out
 
     def test_claude_cli_not_found(
         self,

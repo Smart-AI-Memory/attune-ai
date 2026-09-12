@@ -66,6 +66,34 @@ canonical file instead.
 
 ---
 
+## Design note before code on core paths (ratified 2026-09-11)
+
+On a **core path** — spec execution (`read_spec`, the decomposer),
+gates and guards, persistence, security boundaries — or for any change
+expected to change **~50 or more lines in `src/` across the PR**
+(added plus removed, so a rewrite cannot net out under the bar;
+estimated when the work is planned — when in doubt, write the note; if
+the change grows past the bar mid-implementation, stop and write it
+before continuing), the first deliverable is a half-page **design
+note**, presented before any `src/` edit:
+
+1. the cases enumerated (must work / must fail / edge shapes);
+2. the experiments actually run, in scratch, with results — code as a
+   question is welcome; code as the answer is what this step delays;
+3. the alternative rejected, one line each.
+
+The diff comes second. The note's durable home is the owning spec's
+`design.md` when the work has a spec; otherwise it is written in the
+session first and carried into the PR body's first section once the PR
+exists — reviewer-accessible either way. A note that never leaves chat
+or scratch does not satisfy the rule. Below the threshold, or off the
+core paths, the tiers above apply unchanged.
+Origin: #2511 went from a one-paragraph mental design to a 135-line
+parser, and three review lanes then found the cases an enumeration
+pass would have surfaced for free.
+
+---
+
 ## Concerns palette
 
 When recommending one or more XML-enhanced prompts, also propose

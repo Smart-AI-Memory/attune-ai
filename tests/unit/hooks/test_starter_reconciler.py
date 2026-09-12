@@ -134,12 +134,36 @@ class TestCheckPr:
         assert hook_module.check_pr(1, None, "github.com/owner/repo") == "unverified"
 
 
+def _branch_runner(pr_stdout, pr_rc=0):
+    """Fake ``_run``: ls-remote says the branch exists; ``gh`` answers as given."""
+
+    def run(cmd, cwd=None, **_):
+        if cmd[0] == "git":
+            return _FakeProc("abc123\trefs/heads/x", 0)
+        return _FakeProc(pr_stdout, pr_rc)
+
+    return run
+
+
 class TestCheckBranch:
-    def test_exists_when_ls_remote_has_output(self, hook_module, monkeypatch):
+    def test_exists_with_merged_pr_names_the_pr(self, hook_module, monkeypatch):
         monkeypatch.setattr(
-            hook_module, "_run", lambda *a, **k: _FakeProc("abc123\trefs/heads/x", 0)
+            hook_module, "_run", _branch_runner('[{"number": 2508, "state": "MERGED"}]')
         )
-        assert hook_module.check_branch("x", None) == "exists"
+        assert hook_module.check_branch("x", None) == "exists (PR #2508 MERGED)"
+
+    def test_exists_without_pr_says_not_landed(self, hook_module, monkeypatch):
+        """The handoff-misreport case: pushed, no PR — never a bare 'exists'."""
+        monkeypatch.setattr(hook_module, "_run", _branch_runner("[]"))
+        assert hook_module.check_branch("x", None) == "exists, NO PR — pushed, not landed"
+
+    def test_exists_when_gh_fails_stays_unverified_on_pr(self, hook_module, monkeypatch):
+        monkeypatch.setattr(hook_module, "_run", _branch_runner("", pr_rc=1))
+        assert hook_module.check_branch("x", None) == "exists (PR unverified)"
+
+    def test_exists_when_gh_output_is_not_json(self, hook_module, monkeypatch):
+        monkeypatch.setattr(hook_module, "_run", _branch_runner("not json"))
+        assert hook_module.check_branch("x", None) == "exists (PR unverified)"
 
     def test_gone_when_ls_remote_empty(self, hook_module, monkeypatch):
         monkeypatch.setattr(hook_module, "_run", lambda *a, **k: _FakeProc("", 0))

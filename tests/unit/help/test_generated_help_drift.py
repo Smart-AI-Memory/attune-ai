@@ -30,6 +30,9 @@ GENERATORS = [
     "generate_task_templates.py",
     "generate_quickstart_templates.py",
     "generate_troubleshooting_templates.py",
+    # Added 2026-09-11: the socratic note sat 14 lines stale on main because
+    # notes had no guard (#2509 re-lane, second-order finding).
+    "generate_note_templates.py",
 ]
 
 
