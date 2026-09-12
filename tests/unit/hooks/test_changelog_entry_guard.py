@@ -235,6 +235,9 @@ class TestPushSources:
             (["push", "--force-with-lease=feat/y:abc", "origin", "feat/y"], ["feat/y"]),
             (["-C", "/repo", "push", "origin", "feat/y"], ["feat/y"]),
             (["push", "--tags", "origin"], ["HEAD"]),
+            (["push", "--repo", "origin", "feat/y"], ["feat/y"]),
+            (["push", "--repo=origin", "feat/y"], ["feat/y"]),
+            (["push", "--repo", "origin"], ["HEAD"]),
             (["push", "origin", "--", "feat/y"], ["feat/y"]),
             (["push", "origin", ":feat/y"], []),
             (["push", "--delete", "origin", "feat/y"], []),
@@ -267,6 +270,17 @@ class TestPushSources:
         assert mod.main(_ctx("git push origin :feat/x")) == 0
         assert mod.main(_ctx("git push --delete origin feat/x")) == 0
         assert "deletion only" in metrics.read_text(encoding="utf-8")
+
+    def test_unreadable_ref_does_not_suppress_a_readable_offender(self, mod, repo, metrics, capsys):
+        """Second-lane F2: the judged refs decide; only the unknown one is skipped."""
+        repo.commit("src/pkg/new.py", "Y = 2\n", "shipped, no entry")
+        assert mod.main(_ctx("git push origin feat/x nonexistent")) == 2
+        err = capsys.readouterr().err
+        assert "skipping" in err
+        assert "src/pkg/new.py" in err
+        assert mod.main(_ctx("git push origin nonexistent main")) == 0
+        rows = [json.loads(line) for line in metrics.read_text(encoding="utf-8").splitlines()]
+        assert [r["outcome"] for r in rows[-4:]] == ["unknown", "fired", "unknown", "allowed"]
 
     def test_unresolvable_ref_fails_open(self, mod, repo, metrics, capsys):
         repo.commit("src/pkg/new.py", "Y = 2\n", "shipped, no entry")

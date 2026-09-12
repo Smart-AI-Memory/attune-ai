@@ -128,10 +128,12 @@ def push_sources(args: list[str]) -> list[str]:
     through unread); ``src:dst`` ships ``src``; ``+src`` is ``src``. A
     bare push, ``HEAD``, or a push naming only the remote ships HEAD.
     Deletions (``:dst``, ``--delete``) ship nothing and return ``[]``.
+    With ``--repo <remote>`` every positional is a refspec.
     """
     rest = args[_subcommand_index(args) + 1 :]
     positionals: list[str] = []
     delete = False
+    remote_named = False
     skip_value = False
     for idx, token in enumerate(rest):
         if skip_value:
@@ -143,6 +145,8 @@ def push_sources(args: list[str]) -> list[str]:
         if token in ("-d", "--delete"):
             delete = True
             continue
+        if token == "--repo" or token.startswith("--repo="):
+            remote_named = True
         if token in _PUSH_OPTS_WITH_VALUE:
             skip_value = True
             continue
@@ -151,7 +155,7 @@ def push_sources(args: list[str]) -> list[str]:
         positionals.append(token)
     if delete:
         return []
-    refspecs = positionals[1:]  # the first positional is the remote
+    refspecs = positionals if remote_named else positionals[1:]  # first positional = remote
     if not refspecs:
         return ["HEAD"]
     sources = [spec.lstrip("+").partition(":")[0] for spec in refspecs]
@@ -241,21 +245,25 @@ def main(context: dict[str, Any]) -> int:
         return 0
 
     offending: list[str] = []
+    unreadable: list[str] = []
     for ref in refs:
         paths = pushed_paths(ref=ref)
         if paths is None:
-            print(
-                f"[{ENFORCEMENT_NAME}] cannot read the push range for {ref} "
-                "(no origin/main, unknown ref, or not a git tree) — skipping",
-                file=sys.stderr,
-            )
-            _log_metric("unknown", f"push range unreadable for {ref}")
-            return 0
+            unreadable.append(ref)  # judged refs still decide; never fail open the rest
+            continue
         shipped = [p for p in paths if p.startswith(SHIPPED_PREFIXES)]
         if shipped and CHANGELOG not in paths:
             offending.extend(shipped if ref == "HEAD" else [f"{p}  (ref {ref})" for p in shipped])
+    if unreadable:
+        print(
+            f"[{ENFORCEMENT_NAME}] cannot read the push range for {', '.join(unreadable)} "
+            "(no origin/main, unknown ref, or not a git tree) — skipping that ref",
+            file=sys.stderr,
+        )
+        _log_metric("unknown", f"push range unreadable for {', '.join(unreadable)}")
     if not offending:
-        _log_metric("allowed", f"{len(refs)} ref(s) judged")
+        if len(unreadable) < len(refs):
+            _log_metric("allowed", f"{len(refs) - len(unreadable)} ref(s) judged")
         return 0
 
     print(block_message(offending), file=sys.stderr)
