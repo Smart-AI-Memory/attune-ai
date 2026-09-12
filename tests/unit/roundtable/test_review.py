@@ -779,7 +779,8 @@ class TestLedgerCli:
         with pytest.raises(ValueError):
             review.load_review_result(capture)
 
-    def test_prints_and_appends_a_validated_row(self, tmp_path: Path, capsys) -> None:
+    def test_prints_and_appends_a_validated_row(self, tmp_path: Path, capsys, monkeypatch) -> None:
+        monkeypatch.chdir(tmp_path)
         capture = tmp_path / "review.json"
         capture.write_text(json.dumps(self._result()), encoding="utf-8")
         ledger = tmp_path / "receipts.md"
@@ -802,9 +803,24 @@ class TestLedgerCli:
         assert review.ledger_cli(["--result", str(capture), "--disposition-file", str(dfile)]) == 0
         assert capsys.readouterr().out.strip().endswith("| clean — triaged by hand |")
 
+    def test_append_outside_the_cwd_is_refused(self, tmp_path: Path, capsys, monkeypatch) -> None:
+        inside = tmp_path / "repo"
+        inside.mkdir()
+        monkeypatch.chdir(inside)
+        capture = inside / "review.json"
+        capture.write_text(json.dumps(self._result()), encoding="utf-8")
+        outside = tmp_path / "elsewhere.md"
+        rc = review.ledger_cli(
+            ["--result", str(capture), "--disposition", "1 real — fixed", "--append", str(outside)]
+        )
+        assert rc == 1
+        assert "ledger:" in capsys.readouterr().err
+        assert not outside.exists()
+
     def test_gate_failing_disposition_exits_1_and_appends_nothing(
-        self, tmp_path: Path, capsys
+        self, tmp_path: Path, capsys, monkeypatch
     ) -> None:
+        monkeypatch.chdir(tmp_path)
         capture = tmp_path / "review.json"
         capture.write_text(json.dumps(self._result()), encoding="utf-8")
         ledger = tmp_path / "receipts.md"
