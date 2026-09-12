@@ -56,6 +56,12 @@
             "command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/worktree_add_guard.py\"",
             "timeout": 5,
             "statusMessage": "Worktree-add check..."
+          },
+          {
+            "type": "command",
+            "command": "PY=$(command -v python3 || command -v python) && \"$PY\" \"$CLAUDE_PROJECT_DIR/src/attune/hooks/scripts/changelog_entry_guard.py\"",
+            "timeout": 10,
+            "statusMessage": "Changelog-entry check..."
           }
         ]
       },

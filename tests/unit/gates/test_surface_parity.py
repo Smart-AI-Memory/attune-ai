@@ -1818,6 +1818,13 @@ def test_experiment_uses_resolved_shipped_roots_and_rejects_stale_pin(small_regi
             "exit2_stderr",
             "print(file=sys.stderr)",
         ),
+        (
+            "src/attune/hooks/scripts/changelog_entry_guard.py",
+            "PreToolUse",
+            "Bash",
+            "exit2_stderr",
+            "print(file=sys.stderr)",
+        ),
     ],
 )
 def test_new_hook_subjects_have_qualified_delivery_obligations(
