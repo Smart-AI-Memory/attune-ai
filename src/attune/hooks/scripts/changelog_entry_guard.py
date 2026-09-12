@@ -224,6 +224,32 @@ def block_message(shipped: list[str]) -> str:
     )
 
 
+def _unexcused_pushes(pushes: list[tuple[dict[str, str], list[str]]]) -> list[list[str]]:
+    """The pushes the escape hatch does not cover (exported, or on that push's own prefix)."""
+    exported = os.environ.get(ALLOW_ENV) == "1"
+    return [args for prefix, args in pushes if not (exported or prefix.get(ALLOW_ENV) == "1")]
+
+
+def judge_refs(refs: list[str]) -> tuple[list[str], list[str]]:
+    """Offending shipped paths and unreadable refs, each ref judged on its own range.
+
+    An unreadable ref is reported, not decisive: the refs that could be read
+    still decide (second-lane finding, 2026-09-12 — returning early on the
+    unknown ref let an already-found offender through).
+    """
+    offending: list[str] = []
+    unreadable: list[str] = []
+    for ref in refs:
+        paths = pushed_paths(ref=ref)
+        if paths is None:
+            unreadable.append(ref)
+            continue
+        shipped = [p for p in paths if p.startswith(SHIPPED_PREFIXES)]
+        if shipped and CHANGELOG not in paths:
+            offending.extend(shipped if ref == "HEAD" else [f"{p}  (ref {ref})" for p in shipped])
+    return offending, unreadable
+
+
 def main(context: dict[str, Any]) -> int:
     """Block a push of shipped code with no CHANGELOG entry; 0 allow, 2 block."""
     if context.get("tool_name") != "Bash":
@@ -232,10 +258,7 @@ def main(context: dict[str, Any]) -> int:
     pushes = push_invocations(command) if command else []
     if not pushes:
         return 0
-    hatch_exported = os.environ.get(ALLOW_ENV) == "1"
-    judged = [
-        args for prefix, args in pushes if not (hatch_exported or prefix.get(ALLOW_ENV) == "1")
-    ]
+    judged = _unexcused_pushes(pushes)
     if not judged:
         _log_metric("allowed", "escape hatch set")
         return 0
@@ -244,16 +267,7 @@ def main(context: dict[str, Any]) -> int:
         _log_metric("allowed", "deletion only")
         return 0
 
-    offending: list[str] = []
-    unreadable: list[str] = []
-    for ref in refs:
-        paths = pushed_paths(ref=ref)
-        if paths is None:
-            unreadable.append(ref)  # judged refs still decide; never fail open the rest
-            continue
-        shipped = [p for p in paths if p.startswith(SHIPPED_PREFIXES)]
-        if shipped and CHANGELOG not in paths:
-            offending.extend(shipped if ref == "HEAD" else [f"{p}  (ref {ref})" for p in shipped])
+    offending, unreadable = judge_refs(refs)
     if unreadable:
         print(
             f"[{ENFORCEMENT_NAME}] cannot read the push range for {', '.join(unreadable)} "
