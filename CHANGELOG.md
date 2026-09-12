@@ -37,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `/cross-review` snippet: the structlog digest line and the `board unavailable` notice now go to stderr, so `> review.json` captures pure JSON and `json.load` no longer fails with "Extra data" (retro 2026-09-11 queued item 1).
+
 - Plugin metadata lookup now handles registered engine workflows without
   constructing them; bundled software workflow lookup no longer crashes on
   legacy analyzer-only fields.
