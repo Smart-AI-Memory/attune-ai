@@ -47,8 +47,10 @@ Walk the diff once per class. Each check names the concrete probe.
    `Path.home()` on Windows reads the latter, and the fixture
    silently stops isolating on the Windows lanes.
 7. **New-code ratchets, run locally before the push.** Any diff
-   that adds a function, an `except`, or a file write under `src/`
-   runs the three ratchets serially before `git push`:
+   that adds OR changes code under `src/` — a refactor that grows an
+   existing function trips the complexity ratchet just as a new one
+   does (#2525's own case) — runs the three ratchets serially before
+   `git push`:
    `tests/unit/quality` (complexity — a grade-D block fails CI,
    and a refactor that lands there after a lane is a post-lane
    change), `tests/unit/gates/test_broad_except_ratchet.py`, and
