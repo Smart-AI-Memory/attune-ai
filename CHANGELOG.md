@@ -44,6 +44,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   including the moderator's own; that run is stamped `self_review: True`
   rather than passed off as a cross-review. Saved board posts and ledger
   rows retain the host, self-review state, and resolved Claude auth route.
+- The ops session-summary cache validates its session id against the
+  flat cache directory before any write: an id that would escape or
+  nest raises `ValueError` and touches nothing. No shipping caller could
+  reach a traversal; this is defence in depth.
 - `claude_auth` defaults to `"auto"`, which selects the verified Pro/Max
   subscription route ONLY for a real `claude` seat briefed from a known
   non-Claude host. That cross-host case previously failed with
