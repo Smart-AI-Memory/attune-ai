@@ -471,6 +471,14 @@ def cmd_doctor(args: Namespace) -> int:
             _ok(f"{pkg_name} installed")
         except ImportError:
             _warn(f"{pkg_name} not installed", "optional")
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: a diagnostic must never crash on a broken extra.
+            # Import-time failures that are NOT ImportError are routine for
+            # this class of package — a missing native library, a metadata
+            # read, a torch/CUDA probe — and "installed but unimportable" is
+            # a different fact from "absent". Report which one, never
+            # collapse them and never let it propagate out of the doctor.
+            _warn(f"{pkg_name} import failed: {e}", "optional")
 
     # 5. Related attune packages (installed versions)
     from importlib.metadata import PackageNotFoundError
