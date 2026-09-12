@@ -53,6 +53,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shlex
 import subprocess
 import sys
@@ -72,6 +73,23 @@ _FORCE_FLAGS = {"-f", "--force", "--discard-changes"}
 
 #: Shell operators that separate one command from the next.
 _SEPARATORS = {"&&", "||", ";", "|", "&"}
+
+#: ``<<EOF`` / ``<<-'EOF'`` — the start of a here-document.
+_HEREDOC = re.compile(r"<<-?\s*(['\"]?)([A-Za-z_][\w-]*)\1")
+
+
+def _strip_heredocs(command: str) -> str:
+    """Drop here-document bodies: they are data, not commands to inspect."""
+    kept: list[str] = []
+    pending: list[str] = []  # closing delimiters, in the order bash reads them
+    for line in command.split("\n"):
+        if pending:
+            if line.lstrip("\t") == pending[0]:
+                pending.pop(0)
+            continue
+        kept.append(line)
+        pending.extend(m.group(2) for m in _HEREDOC.finditer(line))
+    return "\n".join(kept)
 
 
 def _log_metric(outcome: str, detail: str | None = None) -> None:
@@ -125,9 +143,15 @@ def git_invocations(command: str) -> list[list[str]]:
     # punctuation_chars is required, not cosmetic: plain shlex.split
     # leaves "hi;" as one token, so `echo hi; git reset --hard` would
     # parse as a single harmless invocation and slip past the guard.
+    # A newline separates commands too: the 2026-09-11 escape was a
+    # `git -C … worktree add` on the line after `set -e`, merged into one
+    # non-git invocation. Here-document bodies are data, a backslash-newline
+    # is a continuation, and a trailing comment must not swallow the next line.
+    text = _strip_heredocs(command).replace("\\\n", " ").replace("\n", " ; ")
     try:
-        lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
+        lexer = shlex.shlex(text, posix=True, punctuation_chars=True)
         lexer.whitespace_split = True
+        lexer.commenters = ""
         tokens = list(lexer)
     except ValueError:
         return []  # unbalanced quotes: cannot parse, so cannot judge

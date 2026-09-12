@@ -111,6 +111,14 @@ class TestChainedCommands:
         invocations = mod.git_invocations("echo hi; git reset --hard HEAD~1")
         assert any(mod.is_hard_reset(a) for a in invocations)
 
+    def test_switch_on_the_next_line_is_still_seen(self, mod):
+        invocations = mod.git_invocations("set -e\ngit checkout main")
+        assert any(mod.is_branch_switch(a) for a in invocations)
+
+    def test_heredoc_body_is_data_not_commands(self, mod):
+        command = "cat > notes.md <<'EOF'\ngit checkout main\nEOF\ngit status"
+        assert [a[0] for a in mod.git_invocations(command)] == ["status"]
+
     def test_unparseable_command_degrades_to_no_invocations(self, mod):
         assert mod.git_invocations('git checkout "unbalanced') == []
 

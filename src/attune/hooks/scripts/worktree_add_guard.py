@@ -67,12 +67,21 @@ def _log_metric(outcome: str, detail: str | None = None) -> None:
         pass
 
 
+#: Git global options that consume the next token as their value.
+_GLOBAL_OPTS_WITH_VALUE = {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--config-env"}
+
+
 def is_worktree_add(args: list[str]) -> bool:
-    """True if the git arg-list is ``[global opts] worktree add ...``."""
-    if "worktree" not in args:
-        return False
-    idx = args.index("worktree")
-    return len(args) > idx + 1 and args[idx + 1] == "add"
+    """True if the git arg-list is ``[global opts] worktree add ...``.
+
+    Global options (``-C <dir>``, ``-c k=v``, ``--git-dir=<x>``,
+    ``--no-pager`` …) are skipped so the subcommand is matched by
+    position — ``git commit -m worktree add`` is not a worktree add.
+    """
+    i = 0
+    while i < len(args) and args[i].startswith("-"):
+        i += 2 if args[i] in _GLOBAL_OPTS_WITH_VALUE else 1
+    return args[i : i + 2] == ["worktree", "add"]
 
 
 def session_worktree_root(path: Path) -> Path | None:
