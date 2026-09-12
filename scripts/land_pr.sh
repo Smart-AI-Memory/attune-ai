@@ -6,6 +6,10 @@
 # Encodes the guarded-merge shape ratified from the 2026-08-12 retro
 # (#2059/#2061/#2063 were merged with this logic inline):
 #
+#   0. Probe mergeability FIRST. A PR that is CONFLICTING against main
+#      (or still a DRAFT) cannot merge no matter what the checks say, so
+#      it is refused with the rebase instruction BEFORE the long watch —
+#      #2513 (2026-09-11) watched a full matrix only to fail at merge time.
 #   1. Watch ALL checks to completion (full matrix — never --fail-fast,
 #      so non-required OS/version lanes are blocking too).
 #   2. Merge ONLY if zero checks failed AND the PR head still equals
@@ -13,11 +17,24 @@
 #      head the chair read; any later push invalidates it).
 #   3. Verify the merge REMOTELY (state/mergedAt) — the local
 #      --delete-branch step often errors harmlessly from a worktree.
+#      The remote state IS the exit status: anything but MERGED exits
+#      non-zero, so a background task's "exit 0" means the PR landed.
 #   4. --pull: fast-forward the main checkout afterward (autostash
 #      rebase; only when that checkout is on main).
 #
+# Exit status:   0  merged (remote state MERGED)
+#                1  refused — a red check, a moved head, or the merge
+#                   did not land
+#                2  refused — CONFLICTING (rebase first) or DRAFT
+#               64  usage
+#
+# Run it directly. Through `… | tee log` the shell reports tee's exit
+# status, not this script's — use `set -o pipefail` or read
+# `${PIPESTATUS[0]}`; that is how #2513's refusal surfaced as "exit 0".
+#
 # The script never uses --admin and never bypasses anything: a red
-# check, a moved head, or a blocked merge state all refuse loudly.
+# check, a moved head, a conflicting base, or a blocked merge state all
+# refuse loudly.
 set -euo pipefail
 
 REPO_MAIN="${LAND_PR_MAIN_CHECKOUT:-$HOME/attune-ai}"
@@ -29,6 +46,43 @@ fi
 PR="$1"
 AUTHORIZED_SHA="$2"
 DO_PULL="${3:-}"
+
+# Refuse (exit 2) when the PR cannot merge no matter what the checks
+# say — CONFLICTING against main, or still a DRAFT — and say what to do
+# instead. GitHub computes mergeability lazily, so right after a push
+# it reads UNKNOWN for a few seconds: re-probe before trusting that.
+# $1 names the moment for the message ("before watching"/"before merging").
+gate_mergeability() {
+    local probe tries=0
+    while :; do
+        probe=$(gh pr view "$PR" --json mergeable,mergeStateStatus \
+            --jq '"\(.mergeable) \(.mergeStateStatus)"')
+        tries=$((tries + 1))
+        if [ "${probe%% *}" != "UNKNOWN" ] || [ "$tries" -ge 3 ]; then
+            break
+        fi
+        sleep "${LAND_PR_PROBE_DELAY:-5}"
+    done
+    case "$probe" in
+        CONFLICTING*)
+            echo "[land_pr] REFUSING ($1): PR #$PR is CONFLICTING against main (mergeStateStatus: ${probe#* })" >&2
+            echo "  Rebase, then re-authorize at the NEW head (the merge word binds to the head the chair read):" >&2
+            echo "    git fetch origin main && git rebase -S origin/main" >&2
+            echo "    git log --format='%G? %h %s' origin/main..HEAD   # every row G — a rebase can replay unsigned" >&2
+            echo "    git push --force-with-lease" >&2
+            exit 2
+            ;;
+        *" DRAFT")
+            echo "[land_pr] REFUSING ($1): PR #$PR is a DRAFT — mark it ready first: gh pr ready $PR" >&2
+            exit 2
+            ;;
+        UNKNOWN*)
+            echo "[land_pr] note ($1): GitHub has not computed mergeability yet ($probe) — continuing"
+            ;;
+    esac
+}
+
+gate_mergeability "before watching"
 
 echo "[land_pr] watching PR #$PR checks (full matrix, no fail-fast)…"
 # --watch exit code is unreliable (cancelled-but-fail-tagged rows);
@@ -81,10 +135,17 @@ else
     echo "          claim-freshness window skipped, verify by hand." >&2
 fi
 
+# Main may have moved during the watch: re-probe so a conflict that
+# appeared mid-watch is reported as a rebase instruction, not as gh's
+# generic "the merge commit cannot be cleanly created".
+gate_mergeability "before merging"
+
 echo "[land_pr] all checks green at authorized head — merging…"
 # Local post-merge steps (branch delete, checkout refresh) often fail
 # from a worktree even when the REMOTE merge succeeded; the known
-# worktree case is reported calmly, anything else is surfaced.
+# worktree case is reported calmly, anything else is surfaced. The
+# merge command's own exit status is deliberately NOT the verdict —
+# the remote state re-read below is.
 MERGE_ERR=$(gh pr merge "$PR" --squash --delete-branch 2>&1 >/dev/null) || true
 if [ -n "$MERGE_ERR" ]; then
     case "$MERGE_ERR" in
@@ -95,9 +156,12 @@ if [ -n "$MERGE_ERR" ]; then
     esac
 fi
 
+# THE REMOTE STATE IS THE EXIT STATUS. Nothing after this check may
+# soften it: a caller judging by exit code (a background task, a CI
+# step, an && chain) must only ever see 0 when the PR is MERGED.
 STATE=$(gh pr view "$PR" --json state --jq '.state')
 if [ "$STATE" != "MERGED" ]; then
-    echo "[land_pr] merge did NOT land (state: $STATE) — investigate" >&2
+    echo "[land_pr] merge did NOT land (state: $STATE) — exit 1" >&2
     exit 1
 fi
 gh pr view "$PR" --json state,mergedAt,mergeCommit \
