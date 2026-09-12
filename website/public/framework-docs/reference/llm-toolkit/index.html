@@ -6052,7 +6052,7 @@ When enabled, uses ModelRouter to select appropriate model tier:
 
 
 <h4 id="attune.llm.core.EmpathyLLM.interact" class="doc doc-heading">
-            <code class="highlight language-python"><span class="n">interact</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">user_input</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force_level</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+            <code class="highlight language-python"><span class="n">interact</span><span class="p">(</span><span class="n">user_id</span><span class="p">,</span> <span class="n">user_input</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force_level</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">task_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">max_tokens</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
   <span class="doc doc-labels">
       <small class="doc doc-label doc-label-async"><code>async</code></small>
@@ -6163,6 +6163,25 @@ When enabled, uses ModelRouter to select appropriate model tier:
               <div class="doc-md-description">
                 <p>Type of task for model routing (e.g., "summarize", "fix_bug").
 If not provided with routing enabled, defaults to "capable" tier.</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>max_tokens</code>
+            </td>
+            <td>
+                  <code><span title="int">int</span> | None</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>Optional response-token cap. Overrides the
+empathy level's recommendation (1024-4096) when set —
+callers with long outputs (test/doc generation) MUST
+pass this or the level default silently truncates.</p>
               </div>
             </td>
             <td>
