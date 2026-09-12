@@ -45,12 +45,20 @@ appends a dogfood-ledger row. All mechanics live in
    lint, board post):
 
 ```bash
-MODE="branch" python -c "import os, json; from attune.roundtable import Board; from attune.roundtable.review import run_review; b=None
+MODE="branch" python -c "import os, sys, json, structlog; structlog.configure(logger_factory=structlog.PrintLoggerFactory(file=sys.stderr))
+from attune.roundtable import Board; from attune.roundtable.review import run_review; b=None
 try:
     b=Board(); b.ensure_functions()
-except Exception as e: print(f'board unavailable: {e}')
+except Exception as e: print(f'board unavailable: {e}', file=sys.stderr)
 print(json.dumps(run_review('.', mode=os.environ['MODE'], board=b), ensure_ascii=False))"
 ```
+
+   stdout carries ONLY the result JSON, so `> review.json` followed by
+   `json.load` works. The one-line `cross_review` digest (seat / status
+   / sent / omitted) and any `board unavailable` notice go to stderr —
+   the `structlog.configure(...)` prefix is what routes them there;
+   without it structlog's default PrintLogger writes the digest to
+   stdout ahead of the JSON and the parse fails with "Extra data".
 
    `MODE="staged"` reviews the staged diff. Pass `seat=` only to
    override; omitted, it resolves to a seat that is NOT the
