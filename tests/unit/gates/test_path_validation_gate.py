@@ -107,10 +107,6 @@ ALLOWLIST = frozenset(
         "src/attune/ops/routes/specs.py",
         # Re-seeded 2026-08-21 when the scanner learned the atomic-write
         # idiom (tempfile.mkstemp + os.fdopen), previously invisible.
-        # Reviewed: writes <attune_home>/ops/session_summaries/<id>.json.
-        # NOTE: the <id> component is interpolated unvalidated — tracked
-        # separately as a traversal question, not waved through here.
-        "src/attune/ops/session_summary_cache.py",
         "src/attune/ops/sweep_results.py",
         "src/attune/orchestration/ghosts/worktree.py",
         "src/attune/pipeline_learner/decisions.py",
