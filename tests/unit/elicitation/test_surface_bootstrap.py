@@ -32,7 +32,10 @@ async def test_packaged_evidence_enables_only_the_receipted_route(tmp_path):
     )
     assert route_evidence_missing(runtime._registry, runtime._report, native.SUBJECT_ID, "RICH")
     assert not runtime._report.complete
-    assert len(runtime._report.pending_keys) == 162
+    # Every pending_obligations row in the packaged registry; nothing beyond the
+    # eight receipts is verified. Each new hook delivery route adds three
+    # (content_schema, destination, delivery).
+    assert len(runtime._report.pending_keys) == 165
     assert (tmp_path / "surface-auth/receipt.key").is_file()
     assert not runtime.store._records  # Canonical fixture state never enters production.
 
