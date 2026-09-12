@@ -310,6 +310,7 @@ class EmpathyLLM(SecurityMixin, InteractionMixin):
         context: dict[str, Any] | None = None,
         force_level: int | None = None,
         task_type: str | None = None,
+        max_tokens: int | None = None,
     ) -> dict[str, Any]:
         """Main interaction method.
 
@@ -334,6 +335,10 @@ class EmpathyLLM(SecurityMixin, InteractionMixin):
             force_level: Force specific level (for testing/demos)
             task_type: Type of task for model routing (e.g., "summarize", "fix_bug").
                 If not provided with routing enabled, defaults to "capable" tier.
+            max_tokens: Optional response-token cap. Overrides the
+                empathy level's recommendation (1024-4096) when set —
+                callers with long outputs (test/doc generation) MUST
+                pass this or the level default silently truncates.
 
         Returns:
             Dictionary with:
@@ -388,15 +393,25 @@ class EmpathyLLM(SecurityMixin, InteractionMixin):
         # Route to appropriate level handler using sanitized input
         # Pass routed_model for cost-optimized model selection
         if level == 1:
-            result = await self._level_1_reactive(sanitized_input, state, context, routed_model)
+            result = await self._level_1_reactive(
+                sanitized_input, state, context, routed_model, max_tokens
+            )
         elif level == 2:
-            result = await self._level_2_guided(sanitized_input, state, context, routed_model)
+            result = await self._level_2_guided(
+                sanitized_input, state, context, routed_model, max_tokens
+            )
         elif level == 3:
-            result = await self._level_3_proactive(sanitized_input, state, context, routed_model)
+            result = await self._level_3_proactive(
+                sanitized_input, state, context, routed_model, max_tokens
+            )
         elif level == 4:
-            result = await self._level_4_anticipatory(sanitized_input, state, context, routed_model)
+            result = await self._level_4_anticipatory(
+                sanitized_input, state, context, routed_model, max_tokens
+            )
         elif level == 5:
-            result = await self._level_5_systems(sanitized_input, state, context, routed_model)
+            result = await self._level_5_systems(
+                sanitized_input, state, context, routed_model, max_tokens
+            )
         else:
             raise ValueError(f"Invalid level: {level}")
 
