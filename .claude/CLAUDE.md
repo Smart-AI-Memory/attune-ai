@@ -283,6 +283,10 @@ as pickable work.
   lanes on well-tested code and release diffs showed cost without
   yield there). Yield stays measured in the R5 ledger; a future
   chair ruling can revisit either direction.
+  Ruled 2026-09-12 (chair, retro pushback): diffs under
+  `src/attune/hooks/scripts/` or touching `tests/unit/gates/`
+  allowlists/baselines get the lane REGARDLESS OF SIZE — the
+  merge-on-receipts waiver does not cover them.
 
 ### Artifact selection
 

@@ -676,3 +676,39 @@ product gap).
 
 Register construction is a lead task; the ranked list and its
 scoring inputs land in this spec when built.
+
+## 2026-09-12 — D11 amendment — lane mandatory for hook-guard and gate-allowlist diffs (chair)
+
+Ruled by Patrick at the 2026-09-11 close-out retro, adopting the
+pushback card "make a different-model lane mandatory for hook-guard
+and gate-allowlist diffs regardless of size" (form response
+`resp-20260911-224927-0dd7c67b`; 2026-09-12 UTC): a lead-authored
+diff touching a hook-guard script under `src/attune/hooks/scripts/`
+or a gate allowlist or baseline under `tests/unit/gates/` requires
+the different-model review lane REGARDLESS OF SIZE, and the chair's
+merge-on-receipts waiver does not cover those paths.
+
+- **Origin:** that night #2517 (the dirty-switch and worktree-add
+  guard tokenizers) and #2518 (session-summary-cache path
+  validation plus the drop of its `test_path_validation_gate.py`
+  allowlist entry) merged on receipts under `auto-merge-when-green`
+  with no lane run and no R5 ledger row. Both sit inside risk
+  classes D11b already names — guards and gates — and both were
+  waived on size.
+- **Counter-case carried (D11d.2):** both diffs were small,
+  mutation-checked and live-probed, and the merge-on-receipts
+  waiver exists so that exactly that class of diff does not pay
+  for a lane. The pushback was adopted over it: size does not
+  bound what a guard admits or what a gate asserts about the
+  tree, so on these two path families the receipts table alone no
+  longer earns the merge word.
+- **In practice:** on those paths the lead runs the lane and
+  ledgers the row BEFORE asking for "merge N". Everywhere else
+  D11b's risk-triggered default and the merge-on-receipts waiver
+  stand unchanged; advisory posture, chair override in either
+  direction, and R8 are untouched.
+- **Encoded:** contract master D11 bullet
+  (`content/collaboration/contract.md`), projected to
+  `.claude/CLAUDE.md`, `AGENTS.md` and `.agents/AGENTS.md` via
+  `scripts/project_collaboration_contract.py` (the handoff
+  template does not carry the D11 bullet and was unchanged).
