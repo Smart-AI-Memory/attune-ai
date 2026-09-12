@@ -54,6 +54,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   raises `ReviewTargetError`. An unknown host still resolves to `"api"`,
   preserving the zero-cap refusal. Pass `claude_auth="api"` to force the
   billable route.
+- `EmpathyLLM.interact()` accepts `max_tokens`, threaded through all
+  five empathy levels; the workflow executor forwards a step's cap and
+  parallel test generation passes 16384, so long generated outputs are
+  no longer silently truncated at the level default.
 - The CI Ruff gate now runs `ruff check --no-fix .`. With `fix = true` in
   `pyproject.toml`, the bare `ruff check .` rewrote the runner's checkout and
   exited 0, so every auto-fixable violation passed the gate and merged
