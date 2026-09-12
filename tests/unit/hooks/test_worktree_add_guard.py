@@ -57,8 +57,15 @@ class TestClassification:
         [
             "git worktree add ../other -b feature",
             "git -C /repo worktree add /tmp/x main",
+            "git -c core.x=y -C /repo worktree add ../other",
+            "git --git-dir=/repo/.git --no-pager worktree add x",
+            "git --work-tree /repo worktree add x",
             "echo hi; git worktree add x",
             "cd /repo && git worktree add --detach x",
+            # the 2026-09-11 escape: global option AND a newline-separated script
+            'set -e\nW=/tmp/x\ngit -C /repo worktree add -q "$W" -b fix/y origin/main\ncd "$W"',
+            "git worktree \\\n  add x",
+            "echo start # note\ngit worktree add x",
         ],
     )
     def test_worktree_add_forms(self, mod, command):
@@ -71,6 +78,8 @@ class TestClassification:
             "git worktree remove ../other",
             "git worktree prune",
             "git add worktree.txt",
+            "git commit -m worktree add",
+            "cat > notes.md <<'EOF'\ngit worktree add ../other\nEOF",
             "git status",
             "ls .claude/worktrees",
         ],
@@ -103,6 +112,19 @@ class TestDecision:
         record = json.loads(metrics.read_text().splitlines()[-1])
         assert record["enforcement"] == "worktree-add-guard" and record["outcome"] == "fired"
 
+    @pytest.mark.parametrize(
+        "command",
+        [
+            "git -C /repo worktree add ../other -b feature",
+            "git -c core.x=y -C /repo worktree add ../other -b feature",
+            'set -e\nW=/tmp/x\ngit -C /repo worktree add -q "$W" -b fix/y origin/main',
+        ],
+    )
+    def test_blocks_global_option_forms(self, mod, metrics, tmp_path, monkeypatch, command):
+        monkeypatch.chdir(_worktree(tmp_path))
+        assert mod.main(_ctx(command)) == 2
+        assert json.loads(metrics.read_text())["outcome"] == "fired"
+
     def test_blocks_when_project_dir_env_is_a_worktree(self, mod, metrics, tmp_path, monkeypatch):
         root = _worktree(tmp_path)
         monkeypatch.chdir(tmp_path)
@@ -114,10 +136,11 @@ class TestDecision:
         assert mod.main(_ctx("git worktree add .claude/worktrees/new -b feature")) == 0
         assert json.loads(metrics.read_text())["outcome"] == "allowed"
 
-    def test_escape_hatch(self, mod, metrics, tmp_path, monkeypatch):
+    @pytest.mark.parametrize("command", ["git worktree add x", "git -C /repo worktree add x"])
+    def test_escape_hatch(self, mod, metrics, tmp_path, monkeypatch, command):
         monkeypatch.chdir(_worktree(tmp_path))
         monkeypatch.setenv(mod.ALLOW_ENV, "1")
-        assert mod.main(_ctx("git worktree add x")) == 0
+        assert mod.main(_ctx(command)) == 0
 
     @pytest.mark.parametrize(
         "ctx",
@@ -125,6 +148,8 @@ class TestDecision:
             _ctx("git worktree add x", tool="Edit"),
             _ctx(""),
             _ctx("git worktree list"),
+            _ctx("git worktree remove ../other"),
+            _ctx("git -C /repo worktree list"),
             _ctx("git checkout -b feature origin/main"),
             {"tool_name": "Bash"},
         ],
