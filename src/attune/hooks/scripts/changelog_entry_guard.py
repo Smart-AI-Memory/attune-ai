@@ -61,7 +61,6 @@ from dirty_switch_guard import (  # noqa: E402  (sibling hook script, shared tok
     _git_args,
     _is_git,
     env_prefix,
-    git_invocations,  # noqa: F401  (re-exported: the tests classify pushes through it)
     shell_invocations,
 )
 

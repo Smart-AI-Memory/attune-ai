@@ -134,7 +134,7 @@ class TestPushClassification:
         ],
     )
     def test_pushes_are_detected(self, mod, command):
-        assert any(mod.is_push(args) for args in mod.git_invocations(command))
+        assert mod.push_invocations(command)
 
     @pytest.mark.parametrize(
         "command",
@@ -147,7 +147,7 @@ class TestPushClassification:
         ],
     )
     def test_non_pushes_are_not_detected(self, mod, command):
-        assert not any(mod.is_push(args) for args in mod.git_invocations(command))
+        assert mod.push_invocations(command) == []
 
 
 class TestDecision:
