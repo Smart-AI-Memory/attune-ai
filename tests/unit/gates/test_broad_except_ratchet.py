@@ -116,7 +116,12 @@ _BASELINE: dict[str, int] = {
     "src/attune/cli_commands/telemetry_commands.py": 12,
     # utility_commands: 7th site is cmd_doctor's related-package version
     # probe — a diagnostic must never crash on broken package metadata.
-    "src/attune/cli_commands/utility_commands.py": 7,
+    # Raised 7 -> 8: cmd_doctor's optional-extras probe. `except ImportError`
+    # alone let a non-ImportError raised while IMPORTING an extra (a missing
+    # native library, an import-time metadata read) propagate out and crash
+    # the doctor — the same must-not-crash contract as the 7th site, one
+    # section earlier.
+    "src/attune/cli_commands/utility_commands.py": 8,
     "src/attune/cli_commands/workflow_commands.py": 1,
     "src/attune/cli_minimal.py": 3,
     "src/attune/cli_router.py": 1,
