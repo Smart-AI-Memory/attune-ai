@@ -21,7 +21,9 @@
 #      untracked file list. Nothing to salvage -> exit 2.
 #   3. Fetch the base's remote branch, then `git checkout -b <branch>
 #      <base>` here.
-#   4. `git apply --check`, then apply; copy each untracked file to the
+#   4. `git apply --check`, then `git apply --index` (applied changes
+#      arrive STAGED so new files and renames are visible to the
+#      receipt; `git reset` unstages); copy each untracked file to the
 #      same relative path (never over a file that already exists here).
 #   5. Identity receipt: the diff here must equal the captured patch
 #      with `index` lines and `@@` hunk headers ignored. Then a receipt
@@ -143,7 +145,10 @@ if [ -s "$PATCH" ]; then
     git apply --check "$PATCH" || refuse "the patch does not apply to" \
         "$BASE ($BRANCH is at $BASE, nothing applied); if the source" \
         "branch has commits ahead of $BASE, cherry-pick those first"
-    git apply "$PATCH"
+    # --index: new files and renames land STAGED, so the identity
+    # receipt (worktree vs HEAD) can see them; a plain apply leaves
+    # them untracked and the receipt reports DIFFERS for a good salvage.
+    git apply --index "$PATCH"
 fi
 for path in ${UNTRACKED[@]+"${UNTRACKED[@]}"}; do
     mkdir -p "$(dirname "$CUR_TOP/$path")"
@@ -160,6 +165,8 @@ if DELTA=$(diff <(normalize "$PATCH") <(normalize "$HERE")); then
 else
     echo "identity: DIFFERS — the diff here is not the captured patch:" >&2
     echo "$DELTA" >&2
+    echo "state: this checkout is now on $BRANCH with the applied files" \
+        "on disk (git status shows them); the source is untouched." >&2
     exit 1
 fi
 

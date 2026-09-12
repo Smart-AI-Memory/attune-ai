@@ -84,6 +84,8 @@ def repos(tmp_path: Path) -> Repos:
     _git(r, r.primary, "init", "-q", "-b", "main")
     (r.primary / "base.txt").write_text("one\ntwo\nthree\n", encoding="utf-8")
     (r.primary / "keep.txt").write_text("keep\n", encoding="utf-8")
+    (r.primary / "moveme.txt").write_text("to be renamed\n", encoding="utf-8")
+    (r.primary / "blob.bin").write_bytes(bytes(range(256)))
     _git(r, r.primary, "add", ".")
     _git(r, r.primary, "commit", "-q", "-m", "base")
     _git(r, r.primary, "remote", "add", "origin", str(origin))
@@ -97,6 +99,17 @@ def _dirty(source: Path) -> None:
     (source / "base.txt").write_text("one\ntwo-edited\nthree\nfour\n", encoding="utf-8")
     (source / "new_dir").mkdir()
     (source / "new_dir" / "new_file.txt").write_bytes(b"brand new\x00bytes\n")
+
+
+def _dirty_staged_and_binary(repos: Repos) -> None:
+    """The git-added class: a staged new file, a `git mv` rename, and a
+    tracked BINARY edit. Without `git apply --index` the first two land
+    untracked here and the identity receipt reports DIFFERS; without
+    `--binary` on both diffs the binary hunk cannot apply at all."""
+    (repos.source / "added.txt").write_text("staged new file\n", encoding="utf-8")
+    _git(repos, repos.source, "add", "added.txt")
+    _git(repos, repos.source, "mv", "moveme.txt", "renamed.txt")
+    (repos.source / "blob.bin").write_bytes(bytes(range(255, -1, -1)))
 
 
 def _run(repos: Repos, *args: str, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
@@ -126,16 +139,24 @@ def _source_snapshot(repos: Repos) -> tuple[str, str, dict[str, bytes]]:
 
 def test_happy_path_salvages_onto_fresh_branch_and_leaves_source_untouched(repos: Repos) -> None:
     _dirty(repos.source)
+    _dirty_staged_and_binary(repos)
     before = _source_snapshot(repos)
-    expected_patch = _git(repos, repos.source, "diff", "HEAD")
+    expected_patch = _git(repos, repos.source, "diff", "--binary", "HEAD")
 
     res = _run(repos, str(repos.source), "salvage/x")
 
     assert res.returncode == 0, res.stderr
     assert _git(repos, repos.primary, "branch", "--show-current").strip() == "salvage/x"
     # Tracked diff landed and is identical modulo index lines / hunk headers.
-    got_patch = _git(repos, repos.primary, "diff", "HEAD")
+    got_patch = _git(repos, repos.primary, "diff", "--binary", "HEAD")
     assert _normalize(got_patch) == _normalize(expected_patch)
+    # The git-added class arrived: staged new file, rename, binary edit.
+    assert (repos.primary / "added.txt").read_text(encoding="utf-8") == "staged new file\n"
+    assert (repos.primary / "renamed.txt").exists() and not (repos.primary / "moveme.txt").exists()
+    assert (repos.primary / "blob.bin").read_bytes() == bytes(range(255, -1, -1))
+    status_here = _git(repos, repos.primary, "status", "--porcelain")
+    assert "A  added.txt" in status_here
+    assert "R  moveme.txt -> renamed.txt" in status_here
     assert (repos.primary / "base.txt").read_text(encoding="utf-8") == (
         repos.source / "base.txt"
     ).read_text(encoding="utf-8")
