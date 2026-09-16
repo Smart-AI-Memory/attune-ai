@@ -1,28 +1,23 @@
 # Modules needing work
 
-**Generated:** 2026-09-07 13:07 UTC by `scripts/modules_needing_work.py` — regenerate in place, don't hand-edit (the dated 2026-07-30 report is the historical first edition).
+**Generated:** 2026-09-16 01:09 UTC by `scripts/modules_needing_work.py` — regenerate in place, don't hand-edit (the dated 2026-07-30 report is the historical first edition).
 
-**Source:** Codecov main — project total 95.84% across 742 files. Candidate list for coverage lanes (test-quality program #1569).
+**Source:** Codecov main — project total 95.95% across 753 files. Candidate list for coverage lanes (test-quality program #1569).
 
-## Tier 1 — measured below the 85% bar (6 modules)
+## Tier 1 — measured below the 85% bar (2 modules)
 
 ### Clusters by miss volume
 
 | Cluster | Modules | Missed lines |
 |---|---|---|
-| `classes` | 4 | 74 |
 | `workflows` | 1 | 14 |
-| `hooks` | 1 | 11 |
+| `roundtable` | 1 | 9 |
 
 ### Full list (ascending coverage)
 
 | Cover | Lines | Miss | Module |
 |---|---|---|---|
-| 75.96% | 104 | 22 | `src/attune/classes/teeth.py` |
-| 80.70% | 114 | 15 | `src/attune/classes/mock_worklist.py` |
-| 81.69% | 71 | 13 | `src/attune/classes/class_m.py` |
-| 82.58% | 155 | 24 | `src/attune/classes/register.py` |
-| 83.07% | 65 | 11 | `src/attune/hooks/scripts/worktree_add_guard.py` |
+| 0.00% | 9 | 9 | `src/attune/roundtable/__main__.py` |
 | 84.82% | 112 | 14 | `src/attune/workflows/__init__.py` |
 
 ## Tier 2 — omitted from measurement (un-omit-audit candidates)
