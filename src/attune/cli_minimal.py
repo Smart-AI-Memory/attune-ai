@@ -630,6 +630,10 @@ def _add_misc_subparsers(subparsers: argparse._SubParsersAction) -> None:
         help="Personal cross-session memory (decisions, patterns, troubleshooting)",
     )
     memory_sub = memory_parser.add_subparsers(dest="memory_command")
+    worker_p = memory_sub.add_parser(
+        "worker", help="Optional Harness memory reads and offline proposal replay"
+    )
+    worker_p.add_argument("worker_args", nargs=argparse.REMAINDER)
 
     capture_p = memory_sub.add_parser("capture", help="Save a topic to personal memory")
     capture_p.add_argument("topic", help="Topic slug (letters, digits, hyphens, max 50 chars)")
@@ -934,6 +938,13 @@ class _OneLineLogFormatter(logging.Formatter):
 
 def main(argv: list[str] | None = None) -> int:
     """Main entry point."""
+    invocation = list(sys.argv[1:] if argv is None else argv)
+    while invocation[:1] in (["--verbose"], ["-v"]):
+        invocation = invocation[1:]
+    if invocation[:2] == ["memory", "worker"]:
+        from attune.cli_commands.memory_worker import cmd_memory_worker
+
+        return cmd_memory_worker(invocation[2:])
     parser = create_parser()
     args = parser.parse_args(argv)
     first_run_memory_notice(getattr(args, "command", None))

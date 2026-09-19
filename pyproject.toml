@@ -112,6 +112,8 @@ dependencies = [
 # The "Crew" workflows use EmpathyLLMExecutor (Anthropic SDK) directly.
 
 [project.optional-dependencies]
+# Optional shared memory worker; verified local Harness wheel, no required cycle.
+harness = ["attune-harness>=0.1.0.dev13,<0.2"]
 
 # [author] extra REMOVED 2026-07-27 (author-consolidation T4, D12):
 # attune-author is archived on GitHub/PyPI (not yanked — pinned

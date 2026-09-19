@@ -244,6 +244,8 @@ class PersonalMemory:
         query: str,
         k: int = 3,
         kind_filter: str | None = None,
+        *,
+        strict: bool = False,
     ) -> list[dict[str, Any]]:
         """Retrieve the most relevant memory entries for a query.
 
@@ -254,6 +256,7 @@ class PersonalMemory:
             query: Natural-language retrieval query.
             k: Maximum number of results.
             kind_filter: If set, limit results to this kind.
+            strict: Propagate service failures instead of reporting an empty result.
 
         Returns:
             List of dicts with keys ``path``, ``summary``, ``excerpt``,
@@ -262,6 +265,8 @@ class PersonalMemory:
         rag = _load_rag()
         if rag is None:
             logger.warning("personal_memory_rag_unavailable")
+            if strict:
+                raise ImportError("Personal memory retrieval requires attune-rag")
             return []
 
         DirectoryCorpus, RagPipeline = rag
@@ -296,6 +301,8 @@ class PersonalMemory:
                     )
             except Exception:  # noqa: BLE001
                 logger.warning("personal_memory_query_failed root=%s", root)
+                if strict:
+                    raise
 
         # Dedup by path (keep best score) — two roots can surface the same
         # relative path, and returning it twice is useless to the caller.

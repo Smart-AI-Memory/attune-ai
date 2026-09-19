@@ -231,7 +231,11 @@ _BASELINE: dict[str, int] = {
     "src/attune/memory/redis_bootstrap.py": 6,  # 2026-08-23: direct spawn removed (#2197)
     "src/attune/memory/security/audit_logger.py": 4,
     "src/attune/memory/security/query.py": 1,
-    "src/attune/memory/session_stash.py": 14,
+    # 2026-09-17 shared-memory adoption: stash_content_strict accepts an
+    # explicitly supplied backend whose own exception type may follow a commit.
+    # Its single write boundary logs and returns uncertain, never retrying or
+    # diverting; a custom after-write exception regression binds this exception.
+    "src/attune/memory/session_stash.py": 15,
     # verdict_log.propagate_verdict is a P15 never-block path: redis
     # import/connect/delete failures of ANY shape must degrade to False —
     # the verdict loop is never blocked on the memory layer (P2 task 6).

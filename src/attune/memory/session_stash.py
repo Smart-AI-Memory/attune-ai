@@ -323,6 +323,60 @@ def _sanitize(content: str) -> str | None:
     return sanitized if isinstance(sanitized, str) else str(sanitized)
 
 
+def prepare_strict_content(
+    content: str, *, max_chars: int | None = MAX_CONTENT_CHARS
+) -> str | None:
+    """Sanitize without truncation for explicit governed callers; fail closed."""
+    if not isinstance(content, str) or not content.strip():
+        return None
+    if max_chars is not None and len(content) > max_chars:
+        return None
+    return _sanitize(content)
+
+
+def stash_content_strict(
+    content: str,
+    *,
+    backend: Any,
+    memory_id: str,
+    session_id: str,
+    cwd: str,
+    kind: str,
+    tags: list[str] | None = None,
+) -> dict[str, Any]:
+    """One explicit searchable write, no truncation, fallback or retry.
+
+    An acknowledgment is not a versioned or exactly-once commit. Callers needing
+    those guarantees must qualify the backend before enabling managed effects.
+    Raw content enters before SessionStashEntry's legacy truncation step.
+    """
+    if (
+        kind not in VALID_TYPES
+        or not all(isinstance(v, str) and v.strip() for v in (memory_id, session_id, cwd))
+        or (
+            tags is not None
+            and (
+                not isinstance(tags, list)
+                or any(not isinstance(t, str) or t.startswith(("type:", "cwd:")) for t in tags)
+            )
+        )
+    ):
+        return {"status": "refused", "reason": "invalid_metadata"}
+    safe_content = prepare_strict_content(content)
+    remember = getattr(backend, "remember", None)
+    if safe_content is None or not callable(remember):
+        return {"status": "refused", "reason": "sanitizer_or_capability_unavailable"}
+    topics = list(tags or []) + [f"type:{kind}", f"cwd:{cwd}"]
+    try:
+        acknowledged = remember(
+            safe_content, memory_id=memory_id, session_id=session_id, topics=topics
+        )
+    except Exception as exc:  # noqa: BLE001 -- uncertainty never authorizes a second write
+        logger.warning("strict stash write uncertain: %s", type(exc).__name__)
+        return {"status": "uncertain", "reason": type(exc).__name__}
+    return {"status": "acknowledged" if acknowledged is True else "uncertain", "id": memory_id}
+
+
 def stash_entry(
     entry: SessionStashEntry,
     backend: SearchableMemoryBackend | None = None,
