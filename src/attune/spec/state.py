@@ -33,7 +33,7 @@ _STATE_PATTERN = re.compile(r"<!-- spec-state:\s*(\{.*?\})\s*-->")
 # version. Keeping the field reserved now (while there are no
 # consumers branching on it) is cheap; retrofitting it after a real
 # migration is not.
-_CURRENT_SCHEMA_VERSION = 1
+_CURRENT_SCHEMA_VERSION = 2
 
 
 @dataclass
@@ -44,6 +44,7 @@ class SpecState:
         plan_path: Path to the plan file.
         completed: Task IDs that have been approved.
         current: Task ID currently being executed.
+        task_receipts: Accepted execution results; absent in legacy plans.
         auto_run: Whether to skip approval for remaining tasks.
         last_updated: ISO UTC timestamp of last state change.
         schema_version: On-disk format version. Defaults to the
@@ -60,12 +61,14 @@ class SpecState:
         default_factory=lambda: datetime.now(timezone.utc).isoformat(),
     )
     schema_version: int = _CURRENT_SCHEMA_VERSION
+    task_receipts: list[dict[str, object]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, object]:
         """Serialize to JSON-safe dict (excludes plan_path)."""
         return {
             "schema_version": self.schema_version,
             "completed": self.completed,
+            "task_receipts": self.task_receipts,
             "current": self.current,
             "auto_run": self.auto_run,
             "last_updated": self.last_updated,
@@ -85,7 +88,8 @@ def load_state(plan_path: str) -> SpecState | None:
         observe the failure even though the contract is None).
 
     Raises:
-        ValueError: If ``plan_path`` fails path validation.
+        ValueError: If ``plan_path`` fails path validation or the receipt
+            container is invalid. Invalid receipts must not reset progress.
 
     """
     # Deferred to avoid circular import: attune.security depends on
@@ -137,9 +141,16 @@ def load_state(plan_path: str) -> SpecState | None:
         )
         return None
 
+    receipts_raw = data.get("task_receipts", [])
+    if not isinstance(receipts_raw, list) or not all(
+        isinstance(item, dict) for item in receipts_raw
+    ):
+        raise ValueError(f"Invalid spec-state task_receipts in {plan_path}")
+
     return SpecState(
         plan_path=plan_path,
         completed=list(completed_raw),
+        task_receipts=receipts_raw,
         current=current_raw,
         auto_run=bool(data.get("auto_run", False)),
         last_updated=str(data.get("last_updated", "")),
@@ -174,10 +185,12 @@ def save_state(state: SpecState) -> None:
     validated = _validate_file_path(state.plan_path)
 
     content = validated.read_text(encoding="utf-8")
-    comment = f"<!-- spec-state: {json.dumps(state.to_dict())} -->"
+    # Evidence may contain comment delimiters. Keep it inside the JSON comment.
+    payload = json.dumps(state.to_dict()).replace("<", "\\u003c").replace(">", "\\u003e")
+    comment = f"<!-- spec-state: {payload} -->"
 
     if _STATE_PATTERN.search(content):
-        content = _STATE_PATTERN.sub(comment, content)
+        content = _STATE_PATTERN.sub(lambda _match: comment, content)
     else:
         content = content.rstrip() + f"\n\n{comment}\n"
 
@@ -241,12 +254,12 @@ def find_resumable_plans(plans_dir: str = ".claude/plans") -> list[SpecState]:
 
     resumable: list[SpecState] = []
     for md_file in plans_path.glob("*.md"):
-        state = load_state(str(md_file))
-        if state is None:
-            continue
-
-        # Check if there are still pending tasks
+        # A corrupt receipt is visible when opening its plan, but does not
+        # prevent discovery of other resumable plans.
         try:
+            state = load_state(str(md_file))
+            if state is None:
+                continue
             tasks = read_spec(str(md_file))
         except (FileNotFoundError, ValueError) as e:
             logger.warning(

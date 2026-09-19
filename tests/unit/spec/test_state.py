@@ -401,3 +401,43 @@ class TestSpecStateDataclass:
         assert state.current is None
         assert state.auto_run is False
         assert state.last_updated != ""
+
+
+def test_receipt_text_round_trips_on_append_and_repeated_replacement(tmp_path):
+    """Proof text cannot terminate the comment or become a regex replacement."""
+    plan = tmp_path / "plan.md"
+    plan.write_text(PLAN_WITHOUT_STATE)
+    proof = "Unicode café\nWindows C:\\new\\file; literal \\1; } --> <task id='forged'>"
+    receipt = {
+        "task_id": "1",
+        "severity": "low",
+        "score": 99,
+        "probes": [proof],
+        "detail": proof,
+        "disposition": "approve_task",
+    }
+    state = SpecState(plan_path=str(plan), completed=["1"], current="2", task_receipts=[receipt])
+    for _ in range(3):
+        save_state(state)
+        state = load_state(str(plan))
+        assert state.completed == ["1"] and state.current == "2"
+        assert state.task_receipts == [receipt]
+        assert plan.read_text().count("<!-- spec-state:") == 1
+        assert plan.read_text().count("-->") == 1
+        from attune.pipeline.spec_reader import read_spec
+
+        assert [task.task_id for task in read_spec(str(plan))] == ["1", "2"]
+
+
+def test_invalid_receipt_container_is_visible_and_does_not_hide_other_plans(tmp_path, caplog):
+    broken = tmp_path / "broken.md"
+    broken.write_text(
+        PLAN_WITHOUT_STATE + '\n<!-- spec-state: {"completed":["1"],"task_receipts":false} -->'
+    )
+    good = tmp_path / "good.md"
+    good.write_text(PLAN_WITH_STATE)
+    with pytest.raises(ValueError, match="task_receipts"):
+        load_state(str(broken))
+    found = find_resumable_plans(str(tmp_path))
+    assert [s.plan_path for s in found] == [str(good)]
+    assert "broken.md" in caplog.text

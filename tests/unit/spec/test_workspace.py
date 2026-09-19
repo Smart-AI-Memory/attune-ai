@@ -603,3 +603,253 @@ def test_publish_rejects_artifact_that_resolves_outside_the_repo(tmp_path: Path)
     ]
     with pytest.raises(CommandWorkspaceError, match="artifact escapes the repository"):
         adapter.publish(creating, event)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "decision,severity",
+    [("approve_task", "low"), ("auto_run_remaining", "medium"), ("acknowledge_risk", "high")],
+)
+async def test_completion_retains_execution_evidence_across_real_resume(
+    tmp_path, decision, severity
+):
+    """Persist the host's actual result and finish through a new host."""
+    from attune.spec.state import load_state
+
+    repo = _repo(tmp_path)
+    plan = repo / ".claude/plans/demo.md"
+    plan.write_text(_PLAN)
+    host = _host(repo)
+    view = await _to_execution(host)
+    view = await host.publish(view.record.workspace_id, {"kind": "task_started", "task_id": "1"})
+    event = {
+        "kind": "task_result",
+        "task_id": "1",
+        "severity": severity,
+        "score": 42,
+        "probes": ["Executed first proof"],
+        "detail": "First actual result",
+    }
+    view = await host.publish(view.record.workspace_id, event)
+    view = await host.collect(_payload(view, decision, confirmed=True))
+    payload = view.result["save_state"]
+    assert payload["task_receipts"][0] == {
+        k: v for k, v in {**event, "disposition": decision}.items() if k != "kind"
+    }
+    save_state(SpecState(**{**payload, "plan_path": str(plan)}))
+    saved = load_state(str(plan))
+    assert saved.completed == ["1"]
+    assert saved.task_receipts == payload["task_receipts"]
+    host = _host(repo)
+    view = await host.open("spec", {"route": "resume", "plan_path": ".claude/plans/demo.md"})
+    view = await host.publish(view.record.workspace_id, {"kind": "task_started", "task_id": "2"})
+    view = await host.publish(
+        view.record.workspace_id,
+        {
+            "kind": "task_result",
+            "task_id": "2",
+            "severity": "low",
+            "score": 100,
+            "probes": ["Executed second proof"],
+            "detail": "Second actual result",
+        },
+    )
+    if not view.record.terminal:
+        view = await host.collect(_payload(view, "approve_task"))
+    assert view.record.terminal
+    assert len(view.result["save_state"]["task_receipts"]) == 2
+    text = view.render.markdown
+    for proof in [
+        "2/2",
+        "Executed first proof",
+        "First actual result",
+        "Executed second proof",
+        "Second actual result",
+        "42",
+        "Historical planning",
+    ]:
+        assert proof in text
+    if severity == "high":
+        assert "Acknowledged risk" in text
+        assert "high" in text
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("severity,retry", [("low", "redo_task"), ("high", "fix_retry")])
+async def test_terminal_uses_accepted_retry_and_labels_planning_history(tmp_path, severity, retry):
+    host = _host(_repo(tmp_path))
+    view = await _to_execution(host)
+    view = await host.publish(view.record.workspace_id, {"kind": "task_started", "task_id": "1"})
+    view = await host.publish(
+        view.record.workspace_id,
+        {
+            "kind": "task_result",
+            "task_id": "1",
+            "severity": severity,
+            "score": 10,
+            "probes": ["Rejected proof"],
+            "detail": "Rejected attempt",
+        },
+    )
+    view = await host.collect(_payload(view, retry))
+    view = await host.publish(
+        view.record.workspace_id,
+        {
+            "kind": "task_result",
+            "task_id": "1",
+            "severity": "low",
+            "score": 90,
+            "probes": ["Accepted replacement proof"],
+            "detail": "Repaired result",
+        },
+    )
+    view = await host.collect(_payload(view, "auto_run_remaining", confirmed=True))
+    view = await host.publish(view.record.workspace_id, {"kind": "task_started", "task_id": "2"})
+    view = await host.publish(
+        view.record.workspace_id,
+        {
+            "kind": "task_result",
+            "task_id": "2",
+            "severity": "low",
+            "score": 100,
+            "probes": ["Final execution proof"],
+            "detail": "Final actual result",
+        },
+    )
+    text = view.render.markdown
+    assert "Rejected proof" not in text
+    assert "Rejected attempt" not in text
+    assert "Accepted replacement proof" in text
+    assert "Final execution proof" in text
+    assert "Historical planning" in text
+    assert text.index("Historical planning") < text.index("pytest tests/unit/spec/")
+    assert [r["disposition"] for r in view.result["save_state"]["task_receipts"]] == [
+        "auto_run_remaining",
+        "auto",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_legacy_completed_task_is_disclosed_without_invented_evidence(tmp_path):
+    repo = _repo(tmp_path)
+    plan = repo / ".claude/plans/demo.md"
+    plan.write_text(
+        _PLAN + '\n<!-- spec-state: {"completed":["1"],"current":"2","auto_run":true} -->'
+    )
+    host = _host(repo)
+    view = await host.open("spec", {"route": "resume", "plan_path": ".claude/plans/demo.md"})
+    view = await host.publish(
+        view.record.workspace_id,
+        {
+            "kind": "task_result",
+            "task_id": "2",
+            "severity": "low",
+            "score": 100,
+            "probes": ["Current execution proof"],
+            "detail": "Current result",
+        },
+    )
+    assert "Task 1" in view.render.markdown
+    assert "Execution evidence unavailable" in view.render.markdown
+    assert "Current execution proof" in view.render.markdown
+
+
+@pytest.mark.parametrize(
+    "corruption",
+    [
+        "container",
+        "element",
+        "missing",
+        "extra",
+        "wrong_text",
+        "wrong_probes",
+        "nan",
+        "duplicate",
+        "foreign",
+        "risk_auto",
+        "unknown_disposition",
+    ],
+)
+def test_invalid_persisted_receipts_cannot_be_accepted_or_reset_progress(tmp_path, corruption):
+    import json
+
+    repo = _repo(tmp_path)
+    receipt = {
+        "task_id": "1",
+        "severity": "low",
+        "score": 100,
+        "probes": ["prior proof"],
+        "detail": "prior result",
+        "disposition": "approve_task",
+    }
+    receipts = [receipt]
+    if corruption == "container":
+        receipts = "invalid"
+    elif corruption == "element":
+        receipts = [None]
+    elif corruption == "missing":
+        receipt.pop("detail")
+    elif corruption == "extra":
+        receipt["invented"] = True
+    elif corruption == "wrong_text":
+        receipt["task_id"] = 1
+    elif corruption == "wrong_probes":
+        receipt["probes"] = [1]
+    elif corruption == "nan":
+        receipt["score"] = float("nan")
+    elif corruption == "duplicate":
+        receipts.append(receipt.copy())
+    elif corruption == "foreign":
+        receipt["task_id"] = "2"
+    elif corruption == "risk_auto":
+        receipt.update(severity="high", disposition="auto")
+    else:
+        receipt["disposition"] = "invented"
+    plan = repo / ".claude/plans/demo.md"
+    original = (
+        _PLAN
+        + "\n<!-- spec-state: "
+        + json.dumps({"completed": ["1"], "current": "2", "task_receipts": receipts})
+        + " -->"
+    )
+    plan.write_text(original)
+    with pytest.raises(ValueError, match="receipt|disposition|score"):
+        SpecWorkspaceAdapter(repo).create({"route": "resume", "plan_path": ".claude/plans/demo.md"})
+    assert plan.read_text() == original
+
+
+@pytest.mark.asyncio
+async def test_legacy_progress_and_new_receipts_survive_a_second_resume(tmp_path):
+    """The shared state format also supports writers without workspace receipts."""
+    from attune.spec.state import load_state
+
+    repo = _repo(tmp_path)
+    plan = repo / ".claude/plans/demo.md"
+    plan.write_text(_PLAN + '<task id="3" name="third"><objective>Third</objective></task>')
+    # Existing runner.py writes this legitimate current-schema state too.
+    save_state(SpecState(plan_path=str(plan), completed=["1"], auto_run=True))
+    for task in ["2", "3"]:
+        host = _host(repo)
+        view = await host.open("spec", {"route": "resume", "plan_path": ".claude/plans/demo.md"})
+        view = await host.publish(
+            view.record.workspace_id, {"kind": "task_started", "task_id": task}
+        )
+        view = await host.publish(
+            view.record.workspace_id,
+            {
+                "kind": "task_result",
+                "task_id": task,
+                "severity": "low",
+                "score": 100,
+                "probes": ["Actual proof " + task],
+                "detail": "Actual result " + task,
+            },
+        )
+        save_state(SpecState(**{**view.result["save_state"], "plan_path": str(plan)}))
+    persisted = load_state(str(plan))
+    assert persisted.completed == ["1", "2", "3"]
+    assert [r["task_id"] for r in persisted.task_receipts] == ["2", "3"]
+    assert view.record.terminal
+    assert "Execution evidence unavailable" in view.render.markdown
+    assert "Actual proof 2" in view.render.markdown
+    assert "Actual proof 3" in view.render.markdown

@@ -6,7 +6,7 @@ import hashlib
 import json
 import re
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, replace
+from dataclasses import asdict, dataclass, replace
 from pathlib import Path, PurePosixPath
 
 from attune_forms import WorkspaceActionResponse, workspace_from_dict
@@ -99,6 +99,50 @@ class SpecLifecycleReceipt:
             raise CommandWorkspaceError(["Spec lifecycle detail must not be empty"])
 
 
+def _test_evidence(raw: object) -> dict[str, str] | None:
+    """Keep the fixed optional Harness reference readable without loading Harness."""
+    if raw is None:
+        return None
+    names = {"kind", "record_path", "task_id", "checkpoint_digest", "outcome"}
+    if (
+        not isinstance(raw, dict)
+        or set(raw) != names
+        or any(not isinstance(value, str) or not value for value in raw.values())
+    ):
+        raise CommandWorkspaceError(["Invalid Spec Harness test evidence fields"])
+    if (
+        raw["kind"] != "harness-test-v1"
+        or not Path(raw["record_path"]).is_absolute()
+        or Path(raw["record_path"]).name != "record.json"
+        or not re.fullmatch(r"[0-9a-f]{64}", raw["checkpoint_digest"])
+        or raw["outcome"] not in {"passed", "failed", "no_tests", "interrupted", "blocked"}
+    ):
+        raise CommandWorkspaceError(["Invalid Spec Harness test evidence identity"])
+    return dict(raw)
+
+
+def _check_test_evidence(receipt: SpecTaskGateReceipt) -> None:
+    """Ask the owning task policy; a stale receipt cannot advance Spec."""
+    if receipt.test_evidence is None:
+        return  # Legacy/general Spec probes do not claim Harness freshness.
+    if receipt.test_evidence["record_path"] not in receipt.probes:
+        raise CommandWorkspaceError(["Bound Harness test must be a displayed Spec probe"])
+    if receipt.test_evidence["outcome"] != "passed" and receipt.severity != "high":
+        raise CommandWorkspaceError(
+            ["Non-passing Harness evidence requires the high-severity gate"]
+        )
+    try:
+        from attune_harness.spec_handoff import check_test_evidence
+
+        check_test_evidence(receipt.test_evidence)
+    except (ImportError, OSError, ValueError, KeyError, TypeError) as error:
+        raise CommandWorkspaceError(
+            [
+                f"Spec test evidence is unavailable or stale; redo the task before acceptance: {error}"
+            ]
+        ) from error
+
+
 @dataclass(frozen=True)
 class SpecTaskGateReceipt:
     """The failure-sensitive quality receipt for one executed task."""
@@ -108,8 +152,10 @@ class SpecTaskGateReceipt:
     score: float
     probes: tuple[str, ...]
     detail: str
+    test_evidence: dict[str, str] | None = None
 
     def __post_init__(self) -> None:
+        object.__setattr__(self, "test_evidence", _test_evidence(self.test_evidence))
         object.__setattr__(self, "probes", tuple(self.probes))
         if not self.task_id.strip():
             raise CommandWorkspaceError(["Spec task receipt requires task_id"])
@@ -117,12 +163,74 @@ class SpecTaskGateReceipt:
             raise CommandWorkspaceError(["Spec task severity is invalid"])
         if isinstance(self.score, bool) or not isinstance(self.score, int | float):
             raise CommandWorkspaceError(["Spec task score must be numeric"])
-        if self.score < 0 or self.score > 100:
+        if not 0 <= self.score <= 100:
             raise CommandWorkspaceError(["Spec task score must be between 0 and 100"])
         if not self.probes or any(not probe.strip() for probe in self.probes):
             raise CommandWorkspaceError(["Spec task receipt requires exact probes"])
         if not self.detail.strip():
             raise CommandWorkspaceError(["Spec task receipt detail must not be empty"])
+
+
+@dataclass(frozen=True)
+class SpecTaskAcceptance:
+    """An accepted task result and the decision that advanced the plan."""
+
+    receipt: SpecTaskGateReceipt
+    disposition: str
+
+    def __post_init__(self) -> None:
+        legal = (
+            {"acknowledge_risk"}
+            if self.receipt.severity == "high"
+            else {"approve_task", "auto_run_remaining", "auto"}
+        )
+        if self.disposition not in legal:
+            raise CommandWorkspaceError(["Spec accepted receipt disposition is invalid"])
+
+    def to_dict(self) -> dict[str, object]:
+        """Return the persisted, JSON-compatible accepted result."""
+        return {
+            **{
+                key: value
+                for key, value in asdict(self.receipt).items()
+                if key != "test_evidence" or value is not None
+            },
+            "probes": list(self.receipt.probes),
+            "disposition": self.disposition,
+        }
+
+
+def _accepted_receipt(raw: Mapping[str, object]) -> SpecTaskAcceptance:
+    """Reject malformed persisted evidence before resuming its workspace."""
+    text_fields = {"task_id", "severity", "detail", "disposition"}
+    allowed = text_fields | {"score", "probes"}
+    if "test_evidence" in raw:
+        allowed.add("test_evidence")
+        if raw["test_evidence"] is None:
+            raise CommandWorkspaceError(["Bound Spec test evidence cannot be null"])
+    if set(raw) != allowed or any(not isinstance(raw[key], str) for key in text_fields):
+        raise CommandWorkspaceError(["Spec accepted receipt fields are invalid"])
+    probes = raw["probes"]
+    if not isinstance(probes, list) or any(not isinstance(probe, str) for probe in probes):
+        raise CommandWorkspaceError(["Spec accepted receipt probes must be a list of strings"])
+    receipt = SpecTaskGateReceipt(
+        task_id=raw["task_id"],
+        severity=raw["severity"],
+        score=raw["score"],
+        probes=tuple(probes),
+        detail=raw["detail"],
+        test_evidence=_test_evidence(raw.get("test_evidence")),
+    )
+    return SpecTaskAcceptance(receipt, raw["disposition"])
+
+
+def _validate_accepted_receipts(
+    receipts: tuple[SpecTaskAcceptance, ...], completed: tuple[str, ...]
+) -> None:
+    receipt_ids = tuple(item.receipt.task_id for item in receipts)
+    expected_ids = tuple(task_id for task_id in completed if task_id in receipt_ids)
+    if len(set(receipt_ids)) != len(receipt_ids) or receipt_ids != expected_ids:
+        raise CommandWorkspaceError(["Spec accepted receipts must match completed tasks in order"])
 
 
 @dataclass(frozen=True)
@@ -148,6 +256,7 @@ class SpecWorkspaceState:
     gate_next_stage: str = ""
     lifecycle_receipts: tuple[SpecLifecycleReceipt, ...] = ()
     task_receipt: SpecTaskGateReceipt | None = None
+    accepted_receipts: tuple[SpecTaskAcceptance, ...] = ()
     blocked_reason: str = ""
     progress_detail: str = ""
 
@@ -160,6 +269,7 @@ class SpecWorkspaceState:
             "artifacts",
             "probes",
             "lifecycle_receipts",
+            "accepted_receipts",
         ):
             object.__setattr__(self, field_name, tuple(getattr(self, field_name)))
         problems: list[str] = []
@@ -188,6 +298,7 @@ class SpecWorkspaceState:
             problems.append("Spec artifact paths must be unique")
         if problems:
             raise CommandWorkspaceError(problems)
+        _validate_accepted_receipts(self.accepted_receipts, self.completed)
 
     @property
     def pending(self) -> tuple[str, ...]:
@@ -213,7 +324,7 @@ class SpecWorkspaceAdapter:
     """Spec creation, review, lifecycle, task-gate, and resume semantics."""
 
     adapter_id = "spec"
-    schema_version = 1
+    schema_version = 2
 
     def __init__(self, repo_root: Path) -> None:
         self.repo_root = repo_root.resolve()
@@ -268,6 +379,7 @@ class SpecWorkspaceAdapter:
             "current": state.current,
             "gate": state.gate_boundary,
             "task_severity": state.task_receipt.severity if state.task_receipt else None,
+            "task_receipt": asdict(state.task_receipt) if state.task_receipt else None,
             "actions": [action.id for action in view.actions],
         }
         digest = hashlib.sha256(
@@ -405,6 +517,11 @@ class SpecWorkspaceAdapter:
             current=current,
             auto_run=persisted.auto_run if persisted else False,
             artifacts=(SpecArtifactReceipt(raw_path, "plan"),),
+            accepted_receipts=(
+                tuple(_accepted_receipt(raw) for raw in persisted.task_receipts)
+                if persisted
+                else ()
+            ),
         )
 
     def _resolved_repo_path(self, raw: str, label: str) -> Path:
@@ -553,7 +670,9 @@ class SpecWorkspaceAdapter:
             score=score,  # type: ignore[arg-type]
             probes=probes,
             detail=str(event.get("detail", "")),
+            test_evidence=_test_evidence(event.get("test_evidence")),
         )
+        _check_test_evidence(receipt)
         pending_gate = replace(state, stage="task_gate", task_receipt=receipt)
         if state.auto_run and receipt.severity != "high":
             return self._complete_task(pending_gate, disposition="auto")
@@ -592,12 +711,17 @@ class SpecWorkspaceAdapter:
         *,
         disposition: str,
     ) -> CommandWorkspaceTransition:
+        if state.task_receipt is None or state.task_receipt.task_id != state.current:
+            raise CommandWorkspaceError(["Spec completion requires the current task receipt"])
+        _check_test_evidence(state.task_receipt)
+        accepted = (*state.accepted_receipts, SpecTaskAcceptance(state.task_receipt, disposition))
         completed = (*state.completed, state.current)
         terminal = len(completed) == len(state.task_ids)
         successor = replace(
             state,
             stage="receipt" if terminal else "executing",
             completed=completed,
+            accepted_receipts=accepted,
             current="",
             task_receipt=None,
             progress_detail="",
@@ -612,6 +736,7 @@ class SpecWorkspaceAdapter:
                     "plan_path": state.plan_path,
                     "completed": list(completed),
                     "auto_run": successor.auto_run,
+                    "task_receipts": [item.to_dict() for item in accepted],
                 },
             },
         )
@@ -771,9 +896,62 @@ class SpecWorkspaceAdapter:
         return {
             "id": "receipt",
             "title": "Spec receipt",
-            "summary": "Terminal record of approved tasks, artifacts, and probes.",
-            "sections": [self._artifact_section(state)],
+            "summary": f"{len(state.completed)}/{len(state.task_ids)} tasks approved.",
+            "sections": [
+                *self._completion_sections(state),
+                {
+                    **self._artifact_section(state),
+                    "heading": "Historical planning artifacts and probes",
+                },
+            ],
         }
+
+    @staticmethod
+    def _completion_sections(state: SpecWorkspaceState) -> list[dict[str, object]]:
+        receipts = {item.receipt.task_id: item for item in state.accepted_receipts}
+        labels = {
+            "approve_task": "Approved",
+            "auto_run_remaining": "Approved; automatic continuation enabled",
+            "auto": "Automatically approved",
+            "acknowledge_risk": "Acknowledged risk",
+        }
+        sections: list[dict[str, object]] = []
+        for task_id in state.completed:
+            accepted = receipts.get(task_id)
+            if accepted is None:
+                sections.append(
+                    {
+                        "heading": f"Task {task_id}",
+                        "tone": "warning",
+                        "blocks": [
+                            {
+                                "kind": "disclosure",
+                                "title": "Execution evidence unavailable",
+                                "body": "Saved progress marks this task completed, but contains no accepted execution receipt.",
+                            }
+                        ],
+                    }
+                )
+                continue
+            receipt = accepted.receipt
+            sections.append(
+                {
+                    "heading": f"Task {task_id}: {labels[accepted.disposition]}",
+                    "tone": "danger" if receipt.severity == "high" else "success",
+                    "blocks": [
+                        {
+                            "kind": "disclosure",
+                            "title": f"{receipt.severity} severity; score {receipt.score:g}",
+                            "body": receipt.detail,
+                        },
+                        {
+                            "kind": "action_list",
+                            "items": [{"label": probe} for probe in receipt.probes],
+                        },
+                    ],
+                }
+            )
+        return sections
 
     @staticmethod
     def _artifact_section(state: SpecWorkspaceState) -> dict[str, object]:
@@ -788,7 +966,11 @@ class SpecWorkspaceAdapter:
                         for artifact in state.artifacts
                     ],
                 },
-                {"kind": "action_list", "items": [{"label": probe} for probe in state.probes]},
+                *(
+                    [{"kind": "action_list", "items": [{"label": probe} for probe in state.probes]}]
+                    if state.probes
+                    else []
+                ),
             ],
         }
 
