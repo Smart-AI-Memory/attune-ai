@@ -66,6 +66,9 @@
   --color-indigo-600:#285e42; --color-indigo-700:#285e42; --color-indigo-800:#263c30; --color-indigo-900:#18271e;
 }
 body {font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:17px;line-height:1.6}
+main {overflow-wrap:anywhere}
+.grid > * {min-width:0}
+@media(max-width:640px) {main .items-baseline {flex-wrap:wrap}}
 h1,h2,h3,h4,h5,h6 {font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-weight:700}
 /* Existing fixed-size page titles need a mobile scale with the system font.
    Homepage and Material headings keep their more specific sizing rules. */
