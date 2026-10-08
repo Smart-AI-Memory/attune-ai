@@ -6,9 +6,9 @@ import { generateMetadata as genMeta, generateStructuredData } from '@/lib/metad
 import { RELIABILITY_LOOP, PILLARS } from '@/lib/features';
 
 export const metadata: Metadata = genMeta({
-  title: 'How It Works',
+  title: 'Attune AI reference',
   description:
-    'How Attune AI gives your coding agent a memory and makes it show receipts: specify, ground, build, remember, verify — and a multi-model round table you chair.',
+    'Retained reference for Attune AI’s memory and workflow model. Attune Harness is the current project focus.',
   url: 'https://smartaimemory.com/how-it-works',
 });
 
@@ -41,10 +41,11 @@ export default function HowItWorksPage() {
         <section className="py-20 gradient-primary text-white">
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
-              <h1 className="text-5xl font-bold mb-4">How It Works</h1>
+              <h1 className="text-5xl font-bold mb-4">How Attune AI works</h1>
               <p className="text-xl opacity-90">
-                The loop that gives your agent a memory and makes it show
-                receipts — every session, every change.
+                Reference for the earlier project’s memory and workflow model.
+                Attune Harness is the current focus; these materials remain
+                available for existing users.
               </p>
             </div>
           </div>
@@ -358,26 +359,26 @@ export default function HowItWorksPage() {
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="text-3xl font-bold mb-4">
-                Ready to give your agent a memory?
+                Explore Attune Harness
               </h2>
               <p className="text-xl text-[var(--text-secondary)] mb-8">
-                Install from PyPI and run <code className="text-base">/spec</code>{' '}
-                on your next feature.
+                Work from a concrete goal, check the result, and retain
+                the context needed for the next step.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link
-                  href="/docs#quickstart"
+                  href="/docs#harness-docs"
                   className="btn btn-primary text-lg px-8 py-4"
                 >
-                  Get Started
+                  Harness docs
                 </Link>
                 <a
-                  href="https://github.com/Smart-AI-Memory/attune-ai"
+                  href="https://github.com/Smart-AI-Memory/attune-harness"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-outline text-lg px-8 py-4"
                 >
-                  Star on GitHub
+                  Harness on GitHub
                 </a>
               </div>
             </div>

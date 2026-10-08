@@ -13,9 +13,9 @@ export default function Home() {
 
     <section className={styles["hero"] + " " + styles["wrap"]} aria-labelledby="hero-title">
       <div>
-        <p className={styles["eyebrow"]}>Open-source tools for accountable AI work</p>
+        <p className={styles["eyebrow"]}>Open-source tools for AI-assisted engineering</p>
         <h1 id="hero-title">Delegate with clear scope.<br />Keep the evidence.</h1>
-        <p className={styles["intro"]}>Attune Harness runs agent tasks, checks results independently against criteria you supply, and keeps the output, check results and errors for review.</p>
+        <p className={styles["intro"]}>Work with clearer decisions, checkable changes and context you can return to. Attune Harness supports engineering workflows alongside your agents, from planning and building to repair, review and tests.</p>
         <Link className={styles["cta"] + " " + styles["primary"]} href="#collaborate">Collaborate <span aria-hidden="true">↗</span></Link>
         <p className={styles["secondary-paths"]}><Link href="#pilot">Discuss a pilot</Link><Link href="#sponsor">Sponsor open-source milestones</Link></p>
       </div>
@@ -62,10 +62,17 @@ export default function Home() {
       <div>
         <p className={styles["eyebrow"]}>The lead project · Attune Harness</p>
         <h2 id="harness-title">Make the work inspectable.</h2>
-        <p className={styles["harness-intro"]}>Plan, build, review, fix and test with an explicit scope and retained evidence.</p>
+        <p className={styles["harness-intro"]}>Move from a goal to scoped work, inspect the result, and understand what needs attention.</p>
       </div>
       <div className={styles["harness-copy"]}>
-        <p>Trustworthy delegation starts with knowing what was authorized, what happened and how the result was checked. Harness records these so you can judge the outcome.</p>
+        <p>Harness gives agent-assisted work a structure you can inspect. The goal is useful progress: an agreed next step, a change you can check, and enough context to continue.</p>
+        <div className={styles["principles"]}>
+          <div><h3>Define useful work.</h3><p>Make the goal, scope and acceptance criteria explicit before execution.</p></div>
+          <div><h3>Build and improve.</h3><p>Use scoped build and repair workflows alongside the agents you already use.</p></div>
+          <div><h3>See what the checks found.</h3><p>Review results and failures against the chosen criteria, with the evidence retained.</p></div>
+          <div><h3>Pick up the work again.</h3><p>Inspect saved task state and recover context from supported, configured sources.</p></div>
+        </div>
+        <p>In one documented exporter comparison, command-line checks exposed three defects that passed direct serializer checks. <Link href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/docs/plan-build-native-results.md">Read the example and its limits</Link>. This demonstrates that check; general model reliability remains separately qualified.</p>
         <div className={styles["principles"]}>
           <div><h3>Authorization has limits.</h3><p>Accepting intent and authorizing execution are separate decisions. Paid calls need their own authorization.</p></div>
           <div><h3>Evidence has limits too.</h3><p>A passing check establishes what it tested. It does not guarantee every output is correct.</p></div>
@@ -73,18 +80,31 @@ export default function Home() {
         <div className={styles["release"]}>
           <p><strong>Published: Attune Harness 1.3.0.</strong> <Link href="https://pypi.org/project/attune-harness/1.3.0/">Package and release guide</Link></p>
           <p className={styles["candidate"]}>Browser forms guide intake and intent approval. Each workflow retains its own execution permissions and checks.</p>
-          <details><summary>Read the evidence and limits</summary><p>A passing check establishes what it tested. Model adapters and platform support have qualification limits; native MCP panel delivery remains unverified. <Link href="https://pypi.org/project/attune-harness/1.3.0/#what-is-qualified-and-what-is-not">Review the qualification guide</Link>.</p></details>
+          <details><summary>Read the evidence and limits</summary><p>A passing check establishes what it tested. Native planning and building remain experimental. Claude Code and Codex have documented setup paths; Antigravity integration is unverified in this review. Native MCP panel delivery remains unverified. <Link href="https://pypi.org/project/attune-harness/1.3.0/#what-is-qualified-and-what-is-not">Review the qualification guide</Link>.</p></details>
         </div>
       </div>
     </section>
 
+    <section className={styles["section"] + " " + styles["wrap"]} id="context" aria-labelledby="context-title">
+      <div className={styles["section-heading"]}>
+        <div><p className={styles["eyebrow"]}>Context and useful next steps</p><h2 id="context-title">Find the next opportunity in work you already have.</h2></div>
+        <p>A bounded workflow with your agent: bring relevant context, review possible follow-up work, and decide what is worth pursuing.</p>
+      </div>
+      <div className={styles["paths"]}>
+        <article className={styles["path"]}><h3>Bring the relevant context.</h3><p>Use project evidence and supported memory sources you explicitly provide or configure.</p></article>
+        <article className={styles["path"]}><h3>Keep the next step visible.</h3><p>Retain an opportunity-review checkpoint with its goal, progress, evidence and unfinished review.</p></article>
+        <article className={styles["path"]}><h3>Choose what to pursue.</h3><p>Assess the proposed benefit and uncertainty. A saved suggestion grants no execution authority.</p></article>
+      </div>
+      <p className={styles["candidate"]}>Scoped recall and saved review checkpoints are supported. Automatic access to all chat history is not implied; the richer opportunity-ranking and selection journey remains proposed. <Link href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/docs/specs/task-opportunities/journey.md">Review the current boundary</Link>.</p>
+    </section>
+
     <section className={styles["section"] + " " + styles["wrap"]} id="portfolio" aria-labelledby="portfolio-title">
       <div className={styles["section-heading"]}>
-        <div><p className={styles["eyebrow"]}>The wider portfolio</p><h2 id="portfolio-title">Memory. Decisions. Sources.</h2></div>
-        <p>Related projects with distinct roles. Harness leads; the existing tools remain available.</p>
+        <div><p className={styles["eyebrow"]}>Supporting tools and earlier work</p><h2 id="portfolio-title">Project references.</h2></div>
+        <p>Harness is the current focus. Supporting libraries and earlier project references remain available.</p>
       </div>
       <div className={styles["portfolio"]}>
-        <article className={styles["product"]}><p className={styles["role"]}>Project memory and workflows</p><h3>Attune AI</h3><span className={styles["version"]}><span>v16.4.0</span></span><p>Keep project decisions and lessons available across sessions, with workflows for AI coding agents.</p><Link href="https://github.com/Smart-AI-Memory/attune-ai">Explore Attune AI <span aria-hidden="true">↗</span></Link></article>
+        <article className={styles["product"]}><p className={styles["role"]}>Earlier project · Memory and workflows</p><h3>Attune AI</h3><span className={styles["version"]}><span>v16.4.0</span></span><p>Reference for the earlier project’s memory and workflow tools. Existing code and documentation remain available.</p><Link href="https://github.com/Smart-AI-Memory/attune-ai">Attune AI reference <span aria-hidden="true">↗</span></Link></article>
         <article className={styles["product"]}><p className={styles["role"]}>Structured questions and decisions</p><h3>Attune Forms</h3><p>Make questions and choices easier to review, with structured answers validated on return.</p><Link href="https://github.com/Smart-AI-Memory/attune-forms">Explore Attune Forms <span aria-hidden="true">↗</span></Link></article>
         <article className={styles["product"]}><p className={styles["role"]}>Retrieval with citations</p><h3>Attune RAG</h3><p>Retrieve relevant project sources and return citation records for the next step.</p><Link href="https://github.com/Smart-AI-Memory/attune-rag">Explore Attune RAG <span aria-hidden="true">↗</span></Link></article>
       </div>

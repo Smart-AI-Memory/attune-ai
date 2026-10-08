@@ -7,14 +7,10 @@ import { HELP_VIDEOS } from '@/lib/videos';
 
 const navItems = [
   { label: 'Harness', href: '/#harness' },
+  { label: 'Docs', href: '/docs#harness-docs' },
   { label: 'Projects', href: '/#portfolio' },
-  { label: 'How It Works', href: '/how-it-works' },
-  { label: 'Docs', href: '/docs' },
   // The Learn link appears only once the video registry has entries.
   ...(HELP_VIDEOS.length > 0 ? [{ label: 'Learn', href: '/learn' }] : []),
-  // The /pricing route is kept (inbound links), but the product has no
-  // paid tiers — label it for what the page actually says.
-  { label: 'Open Source', href: '/pricing' },
   { label: 'Blog', href: '/blog' },
 ];
 
@@ -119,11 +115,11 @@ export default function Navigation() {
 
             {/* GitHub Link */}
             <a
-              href="https://github.com/Smart-AI-Memory/attune-ai"
+              href="https://github.com/Smart-AI-Memory/attune-harness"
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 rounded-lg hover:bg-[var(--border)] transition-colors"
-              aria-label="View Attune AI on GitHub"
+              aria-label="View Attune Harness on GitHub"
               title="View on GitHub"
             >
               <svg

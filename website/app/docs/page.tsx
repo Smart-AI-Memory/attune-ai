@@ -8,7 +8,7 @@ import { PLUGIN_SKILLS, CAPABILITIES } from '@/lib/features';
 export const metadata: Metadata = genMeta({
   title: 'Documentation',
   description:
-    'Get started with Attune-AI — the spec-driven development platform. Install in one command, then turn requirements into reliable software with AI workflows, project memory, retrieval grounding, and verification.',
+    'Start with Attune Harness for scoped engineering work, checked results and retained context. Attune AI and companion-package references remain available for existing users.',
   url: 'https://smartaimemory.com/docs',
 });
 
@@ -101,18 +101,19 @@ export default function DocsPage() {
         <section className="py-20 gradient-primary text-white">
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
-              <h1 className="text-5xl font-bold mb-6">Documentation</h1>
+              <h1 className="text-5xl font-bold mb-6">Harness docs and project references</h1>
               <p className="text-xl opacity-90 mb-8">
-                Everything you need to turn requirements into reliable
-                software — install in one command, then run the reliability
-                loop: specify, ground, build, remember, verify.
+                Start with Attune Harness. Find guidance for useful work,
+                execution permissions, checkable results and retained context.
+                Earlier Attune AI references follow for existing users.
               </p>
               <nav className="flex flex-wrap justify-center gap-3">
+                <a href="#harness-docs" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">Harness</a>
                 <a href="#quickstart" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">
-                  Quick Start
+                  Attune AI Quick Start
                 </a>
                 <a href="#attune-ai" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">
-                  Framework
+                  Attune AI
                 </a>
                 <a href="#attune-help" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">
                   Reader
@@ -131,15 +132,29 @@ export default function DocsPage() {
           </div>
         </section>
 
+        <section id="harness-docs" className="py-20">
+          <div className="container max-w-5xl">
+            <h2 className="text-4xl font-bold mb-4">Start with Attune Harness</h2>
+            <p className="text-xl text-[var(--text-secondary)] mb-6">Define a useful next step, build or repair within scope, check the result, and return with the context intact. Choose a workflow from the guide; command syntax is available when you need it.</p>
+            <div className="flex flex-wrap gap-4 mb-6">
+              <a className="btn btn-primary" href="https://pypi.org/project/attune-harness/1.3.0/#installation">Install Harness</a>
+              <a className="btn btn-outline" href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/docs/cli-guide.md">Read the Harness guide</a>
+              <a className="btn btn-outline" href="https://pypi.org/project/attune-harness/1.3.0/#what-is-qualified-and-what-is-not">Check the qualification limits</a>
+            </div>
+            <p className="text-sm text-[var(--text-secondary)]">Claude Code and Codex have documented setup paths. Native planning and building remain experimental; Antigravity integration is unverified here. Intent acceptance is separate from paid execution permission.</p>
+            <p className="text-sm text-[var(--text-secondary)] mt-4">Harness does not yet replace every Attune AI workflow. <a className="underline" href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/docs/migration-from-attune-ai.md">Review the migration boundaries</a> before changing an existing setup.</p>
+          </div>
+        </section>
+
         {/* Quick Start */}
         <section id="quickstart" className="py-20">
           <div className="container">
             <div className="max-w-5xl mx-auto">
-              <h2 className="text-4xl font-bold text-center mb-4">Quick Start</h2>
+              <h2 className="text-4xl font-bold text-center mb-4">Attune AI Quick Start</h2>
               <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
-                Install the platform, or pick the piece that fits the job.
-                Works on a Claude subscription or an API key. Everything is
-                open source under Apache 2.0.
+                These retained setup instructions cover Attune AI and its
+                companion packages. Use the Harness guide above for the
+                current project.
               </p>
 
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -147,7 +162,7 @@ export default function DocsPage() {
                     homepage and README ordering: works standalone. */}
                 <div className="bg-[var(--background)] border-2 border-[var(--primary)] rounded-lg p-6 flex flex-col relative">
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--primary)] text-white text-xs font-bold px-3 py-1 rounded-full">
-                    Recommended
+                    Attune AI
                   </div>
                   <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
                     Claude Code
@@ -167,7 +182,7 @@ export default function DocsPage() {
                 {/* attune-ai */}
                 <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-6 flex flex-col">
                   <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
-                    Full Platform
+                    Earlier Toolkit
                   </div>
                   <h3 className="text-lg font-bold mb-2">attune-ai</h3>
                   <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
@@ -615,25 +630,25 @@ export default function DocsPage() {
         <section className="py-20 gradient-primary text-white">
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
-              <h2 className="text-4xl font-bold mb-6">Ready to Get Started?</h2>
+              <h2 className="text-4xl font-bold mb-6">Choose a Harness workflow</h2>
               <p className="text-xl mb-8 opacity-90">
-                Install in one command, then run /spec on your next feature
-                and turn requirements into reliable software.
+                Start with a concrete goal and a result you can assess.
+                The guide explains the available workflows and their limits.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <a
-                  href="https://github.com/Smart-AI-Memory/attune-ai"
+                  href="https://github.com/Smart-AI-Memory/attune-harness"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-8 py-4 text-lg rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors"
                 >
-                  View on GitHub
+                  Harness on GitHub
                 </a>
                 <a
-                  href="#quickstart"
+                  href="#harness-docs"
                   className="px-8 py-4 text-lg rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors"
                 >
-                  Install Now
+                  Harness guide
                 </a>
               </div>
             </div>

@@ -17,7 +17,7 @@ const defaultMetadata = {
   siteName: 'Smart AI Memory',
   title: 'Delegate with clear scope. Keep the evidence. — Smart AI Memory',
   description:
-    'Attune Harness and the Attune portfolio: open-source tools for scoped AI work, independent checks and retained evidence. Collaborate, discuss a pilot or support an open-source milestone.',
+    'Attune Harness supports AI-assisted engineering with clearer decisions, checkable work and context you can revisit. Collaborate, discuss a pilot or support an open-source milestone.',
   url: 'https://smartaimemory.com',
   image: '/opengraph-image',
   twitterHandle: '@smartaimemory',
