@@ -84,7 +84,7 @@ export default function Home() {
         <p>Related projects with distinct roles. Harness leads; the existing tools remain available.</p>
       </div>
       <div className={styles["portfolio"]}>
-        <article className={styles["product"]}><p className={styles["role"]}>Project memory and workflows</p><h3>Attune AI</h3><span className={styles["version"]}>v16.4.0</span><p>Keep project decisions and lessons available across sessions, with workflows for AI coding agents.</p><Link href="https://github.com/Smart-AI-Memory/attune-ai">Explore Attune AI <span aria-hidden="true">↗</span></Link></article>
+        <article className={styles["product"]}><p className={styles["role"]}>Project memory and workflows</p><h3>Attune AI</h3><span className={styles["version"]}><span>v16.4.0</span></span><p>Keep project decisions and lessons available across sessions, with workflows for AI coding agents.</p><Link href="https://github.com/Smart-AI-Memory/attune-ai">Explore Attune AI <span aria-hidden="true">↗</span></Link></article>
         <article className={styles["product"]}><p className={styles["role"]}>Structured questions and decisions</p><h3>Attune Forms</h3><p>Make questions and choices easier to review, with structured answers validated on return.</p><Link href="https://github.com/Smart-AI-Memory/attune-forms">Explore Attune Forms <span aria-hidden="true">↗</span></Link></article>
         <article className={styles["product"]}><p className={styles["role"]}>Retrieval with citations</p><h3>Attune RAG</h3><p>Retrieve relevant project sources and return citation records for the next step.</p><Link href="https://github.com/Smart-AI-Memory/attune-rag">Explore Attune RAG <span aria-hidden="true">↗</span></Link></article>
       </div>
