@@ -9,14 +9,14 @@ export async function GET(request: NextRequest) {
 
     // Get parameters from query string
     const title = searchParams.get('title') || 'Smart AI Memory';
-    const subtitle = searchParams.get('subtitle') || 'Building the Future of AI-Human Collaboration';
+    const subtitle = searchParams.get('subtitle') || 'Delegate with clear scope. Keep the evidence.';
 
     return new ImageResponse(
       (
         <div
           style={{
             fontSize: 60,
-            background: 'linear-gradient(135deg, #1E40AF 0%, #06B6D4 50%, #8B5CF6 100%)',
+            background: 'linear-gradient(135deg, #285e42 0%, #263c30 100%)',
             width: '100%',
             height: '100%',
             display: 'flex',

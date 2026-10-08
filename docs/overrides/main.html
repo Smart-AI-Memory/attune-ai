@@ -4,3 +4,8 @@
   <!-- Plausible Analytics - Privacy-respecting, no cookies -->
   <script defer data-domain="smartaimemory.com" src="https://plausible.io/js/script.js"></script>
 {% endblock %}
+
+{% block styles %}
+  {{ super() }}
+  <link rel="stylesheet" href="/portfolio-theme.css">
+{% endblock %}

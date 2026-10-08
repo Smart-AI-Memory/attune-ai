@@ -99,9 +99,9 @@ export default function CostTrendChart({ data, className = '' }: CostTrendChartP
               type="monotone"
               dataKey="cost"
               name="Actual Cost"
-              stroke="#6366f1"
+              stroke="var(--semantic-action)"
               strokeWidth={2}
-              dot={{ fill: '#6366f1', strokeWidth: 0, r: 3 }}
+              dot={{ fill: 'var(--semantic-action)', strokeWidth: 0, r: 3 }}
               activeDot={{ r: 5 }}
             />
             <Line

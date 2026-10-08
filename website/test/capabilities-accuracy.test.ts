@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process';
 import { readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { CAPABILITIES } from '../lib/features';
+import { CAPABILITIES, PLUGIN_SKILLS } from '../lib/features';
 
 // Accuracy guard for the homepage stat band / pillar copy.
 //
@@ -102,4 +102,12 @@ describe('website CAPABILITIES accuracy', () => {
       }
     },
   );
+});
+
+// Count equality alone cannot detect a missing name replaced by a duplicate.
+it('publishes exactly the plugin skill inventory', () => {
+  const names = readdirSync(resolve(repoRoot, 'plugin/skills'), { withFileTypes: true })
+    .filter(entry => entry.isDirectory()).map(entry => entry.name).sort();
+  expect([...PLUGIN_SKILLS].sort()).toEqual(names);
+  expect(PLUGIN_SKILLS.length).toBe(CAPABILITIES.skills);
 });

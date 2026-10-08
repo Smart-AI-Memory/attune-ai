@@ -1,0 +1,116 @@
+/* Smart AI Memory portfolio adapter. Verified Harness light palette from
+   attune-harness 1acbd67 gui.py/gui_forms_intake.py; dark is a site adaptation.
+   Released Forms semantic-tokens.css remains an unchanged generated contract. */
+:root:root {
+  --semantic-action:#285e42; --semantic-action-hover:#263c30;
+  --semantic-success:#285e42; --semantic-recommendation:#285e42;
+  --semantic-text:#263c30; --semantic-muted:#4b6353;
+  --semantic-surface:#f5f6f2; --semantic-surface-raised:#e7efe5;
+  --semantic-border:#285e42; --semantic-focus:#285e42;
+  --semantic-radius-control:7px; --semantic-radius-card:12px; --semantic-target-min:2.75rem;
+  --primary-light:#285e42; --secondary-dark:#263c30; --secondary-light:#e7efe5;
+  --accent:#285e42; --accent-light:#4b6353; --success:#285e42;
+  --surface-container:#e7efe5; --surface-container-high:#dce4da;
+  --surface-container-highest:#b8cdbb; --surface-variant:#e7efe5;
+  --text-secondary:#4b6353; --action-foreground:#fff;
+  --portfolio-paper:#fff; --portfolio-soft:#e7efe5;
+  --portfolio-line:#dce4da; --portfolio-panel-line:#b8cdbb;
+  --border:var(--portfolio-panel-line);
+  --font-manrope:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-inter:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --font-geist-mono:ui-monospace,SFMono-Regular,Consolas,monospace;
+}
+:root:root.dark {
+  --semantic-action:#b8cdbb; --semantic-action-hover:#e7efe5;
+  --semantic-success:#b8cdbb; --semantic-recommendation:#b8cdbb;
+  --semantic-text:#f5f6f2; --semantic-muted:#b8cdbb;
+  --semantic-surface:#18271e; --semantic-surface-raised:#263c30;
+  --semantic-border:#b8cdbb; --semantic-focus:#e7efe5;
+  --primary-light:#b8cdbb; --secondary-dark:#e7efe5; --secondary-light:#b8cdbb;
+  --accent:#b8cdbb; --accent-light:#e7efe5; --success:#b8cdbb;
+  --surface-container:#263c30; --surface-container-high:#314b3b;
+  --surface-container-highest:#4b6353; --surface-variant:#314b3b;
+  --text-secondary:#b8cdbb; --action-foreground:#18271e;
+  --portfolio-paper:#263c30; --portfolio-soft:#263c30;
+  --portfolio-line:#4b6353; --portfolio-panel-line:#4b6353;
+  --border:#314b3b;
+}
+@media(prefers-color-scheme:dark) {
+  :root:root:not(.light) {
+    --semantic-action:#b8cdbb; --semantic-action-hover:#e7efe5;
+    --semantic-success:#b8cdbb; --semantic-recommendation:#b8cdbb;
+    --semantic-text:#f5f6f2; --semantic-muted:#b8cdbb;
+    --semantic-surface:#18271e; --semantic-surface-raised:#263c30;
+    --semantic-border:#b8cdbb; --semantic-focus:#e7efe5;
+    --primary-light:#b8cdbb; --secondary-dark:#e7efe5; --secondary-light:#b8cdbb;
+    --accent:#b8cdbb; --accent-light:#e7efe5; --success:#b8cdbb;
+    --surface-container:#263c30; --surface-container-high:#314b3b;
+    --surface-container-highest:#4b6353; --surface-variant:#314b3b;
+    --text-secondary:#b8cdbb; --action-foreground:#18271e;
+    --portfolio-paper:#263c30; --portfolio-soft:#263c30;
+    --portfolio-line:#4b6353; --portfolio-panel-line:#4b6353;
+    --border:#314b3b;
+  }
+}
+/* Existing brand-colored utilities now follow the green family. Semantic
+   warning/error colors and syntax/data distinctions retain their own roles. */
+:root {
+  --color-blue-50:#f5f6f2; --color-blue-100:#e7efe5; --color-blue-200:#dce4da;
+  --color-blue-300:#b8cdbb; --color-blue-400:#869a8a; --color-blue-500:#4b6353;
+  --color-blue-600:#285e42; --color-blue-700:#285e42; --color-blue-800:#263c30; --color-blue-900:#18271e;
+  --color-purple-50:#f5f6f2; --color-purple-100:#e7efe5; --color-purple-200:#dce4da;
+  --color-purple-300:#b8cdbb; --color-purple-400:#869a8a; --color-purple-500:#4b6353;
+  --color-purple-600:#285e42; --color-purple-700:#285e42; --color-purple-800:#263c30; --color-purple-900:#18271e;
+  --color-indigo-50:#f5f6f2; --color-indigo-100:#e7efe5; --color-indigo-200:#dce4da;
+  --color-indigo-300:#b8cdbb; --color-indigo-400:#869a8a; --color-indigo-500:#4b6353;
+  --color-indigo-600:#285e42; --color-indigo-700:#285e42; --color-indigo-800:#263c30; --color-indigo-900:#18271e;
+}
+body {font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:17px;line-height:1.6}
+h1,h2,h3,h4,h5,h6 {font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-weight:700}
+/* Existing fixed-size page titles need a mobile scale with the system font.
+   Homepage and Material headings keep their more specific sizing rules. */
+@media(max-width:640px) {h1 {font-size:clamp(2rem,8vw,2.75rem);overflow-wrap:anywhere}}
+.hero-gradient,.gradient-primary,.gradient-accent {background:linear-gradient(135deg,#285e42,#263c30);color:#fff}
+.text-gradient {background:none;-webkit-text-fill-color:currentColor;color:var(--semantic-action)}
+.glass-panel {background:var(--semantic-surface-raised)!important;border:1px solid var(--portfolio-panel-line)!important}
+.btn-primary:hover {box-shadow:0 4px 12px #263c3030}
+.bg-primary,.bg-accent,.bg-secondary {color:var(--action-foreground)}
+.bg-primary :is(h1,h2,h3,h4,h5,h6,p,span,div,li,a),.bg-accent :is(h1,h2,h3,h4,h5,h6,p,span,div,li,a) {color:var(--action-foreground)!important}
+:where(a,button,input,textarea,select,summary):focus-visible {outline:3px solid var(--semantic-focus);outline-offset:4px}
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,select) {border-color:var(--semantic-border);border-radius:7px}
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),textarea,select {border-color:var(--semantic-border)}
+code,code[class] {background:var(--portfolio-soft);color:var(--foreground)}
+pre code,pre code[class] {background:transparent;color:inherit}
+/* Keep preserved Markdown code/table content scrollable within its column. */
+.prose {overflow-wrap:anywhere}
+.prose pre {max-width:100%;overflow-x:auto;overflow-wrap:normal}
+.prose table {display:block;max-width:100%;overflow-x:auto}
+nav[aria-label="Main navigation"] a {min-height:44px;display:inline-flex;align-items:center}
+nav[aria-label="Main navigation"] button {min-height:44px}
+html {scroll-padding-top:88px}
+@media(prefers-reduced-motion:reduce) {*,*::before,*::after {animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+/* Static Material documentation uses the same authored adapter. Headings,
+   navigation, tables, controls and code retain document-specific density. */
+body[data-md-color-scheme] {
+  --md-text-font:system-ui!important; --md-code-font:ui-monospace!important;
+  --md-primary-fg-color:#285e42; --md-primary-fg-color--light:#4b6353;
+  --md-primary-fg-color--dark:#263c30; --md-primary-bg-color:#fff;
+}
+body[data-md-color-scheme="default"] {
+  --foreground:#263c30; --portfolio-soft:#e7efe5;
+  --semantic-focus:#285e42; --semantic-border:#285e42;
+  --md-default-fg-color:#263c30; --md-default-fg-color--light:#4b6353;
+  --md-default-fg-color--lighter:#4b6353; --md-default-bg-color:#f5f6f2;
+  --md-accent-fg-color:#285e42; --md-typeset-a-color:#285e42;
+  --md-code-bg-color:#e7efe5; --md-code-fg-color:#263c30;
+}
+body[data-md-color-scheme="slate"] {
+  --foreground:#f5f6f2; --portfolio-soft:#263c30;
+  --semantic-focus:#e7efe5; --semantic-border:#b8cdbb;
+  --md-default-fg-color:#f5f6f2; --md-default-fg-color--light:#b8cdbb;
+  --md-default-fg-color--lighter:#b8cdbb; --md-default-bg-color:#18271e;
+  --md-accent-fg-color:#e7efe5; --md-typeset-a-color:#b8cdbb;
+  --md-code-bg-color:#263c30; --md-code-fg-color:#f5f6f2;
+}
+.md-typeset a {text-decoration:underline;text-underline-offset:3px}
+.md-typeset table:not([class]) {border-color:#b8cdbb}

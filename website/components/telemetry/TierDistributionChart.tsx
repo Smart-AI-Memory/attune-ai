@@ -40,8 +40,8 @@ interface TierData {
 
 const TIER_COLORS = {
   cheap: '#73c991',
-  capable: '#4a9eff',
-  premium: '#b57edc',
+  capable: 'var(--semantic-action)',
+  premium: '#c18529',
 };
 
 export default function TierDistributionChart({

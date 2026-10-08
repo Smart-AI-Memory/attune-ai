@@ -1,32 +1,12 @@
 import type { Metadata } from "next";
-import { Manrope, Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "../public/portfolio-theme.css";
 import { ThemeProvider } from "@/lib/theme-provider";
 import { generateMetadata, generateStructuredData } from "@/lib/metadata";
 import PlausibleAnalytics from "@/components/PlausibleAnalytics";
 import WebVitals from "@/components/WebVitals";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
-
-const manrope = Manrope({
-  variable: "--font-manrope",
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["400", "600", "700", "800"],
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  display: "swap",
-  weight: ["400", "500", "600"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: "swap",
-});
 
 export const metadata: Metadata = generateMetadata();
 
@@ -48,13 +28,10 @@ export default function RootLayout({
             __html: JSON.stringify([organizationSchema, websiteSchema]),
           }}
         />
-        {/* Preconnect to external domains for performance */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <PlausibleAnalytics />
       </head>
       <body
-        className={`${manrope.variable} ${inter.variable} ${geistMono.variable} antialiased`}
+        className="antialiased"
       >
         <a
           href="#main-content"

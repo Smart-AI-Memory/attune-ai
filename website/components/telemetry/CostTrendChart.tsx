@@ -80,19 +80,19 @@ export default function CostTrendChart({ data, height = 300 }: CostTrendChartPro
           <Line
             type="monotone"
             dataKey="cost"
-            stroke="#4a9eff"
+            stroke="var(--semantic-action)"
             strokeWidth={2}
             name="Daily Cost"
-            dot={{ fill: '#4a9eff', r: 4 }}
+            dot={{ fill: 'var(--semantic-action)', r: 4 }}
           />
           <Line
             type="monotone"
             dataKey="cumulativeCost"
-            stroke="#b57edc"
+            stroke="#c18529"
             strokeWidth={2}
             strokeDasharray="5 5"
             name="Cumulative Cost"
-            dot={{ fill: '#b57edc', r: 4 }}
+            dot={{ fill: '#c18529', r: 4 }}
           />
         </LineChart>
       </ResponsiveContainer>

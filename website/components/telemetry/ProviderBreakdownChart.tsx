@@ -93,7 +93,7 @@ export default function ProviderBreakdownChart({
             }}
           />
           <Legend />
-          <Bar dataKey="cost" fill="#4a9eff" name="Total Cost" />
+          <Bar dataKey="cost" fill="var(--semantic-action)" name="Total Cost" />
         </BarChart>
       </ResponsiveContainer>
     </div>

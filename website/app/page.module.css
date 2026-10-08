@@ -1,0 +1,129 @@
+
+    /* Exact light palette from Harness 1acbd67 gui.py and gui_forms_intake.py.
+       Marketing scale and spacing are adaptations. Amber remains decorative;
+       green replaces amber for focus contrast on the warm page background. */
+    .site {
+      --page:var(--background); --paper:var(--portfolio-paper); --ink:var(--foreground); --muted:var(--semantic-muted);
+      --action:var(--semantic-action); --line:var(--portfolio-line); --panel-line:var(--portfolio-panel-line);
+      --soft:var(--portfolio-soft); --amber:#c18529;
+      --control-radius:7px; --card-radius:12px; --content:1184px;
+      margin-top:64px;
+    }
+    .site * {box-sizing:border-box}
+
+    .site {margin:64px 0 0;background:var(--page);color:var(--ink);font:17px/1.6 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .site h1,.site h2,.site h3,.site p {margin:0}
+    .site h1,.site h2,.site h3 {line-height:1.12;font-weight:700}
+    .site h1 {font-size:clamp(2.5rem,5.3vw,4.55rem);letter-spacing:-.045em;max-width:13ch}
+    .site h2 {font-size:clamp(1.8rem,3.2vw,2.8rem);letter-spacing:-.035em}
+    .site h3 {font-size:1.4rem;letter-spacing:-.02em}
+    .site a {color:var(--action);text-underline-offset:4px;text-decoration-thickness:1px}
+    .site a:hover {text-decoration-thickness:2px}
+    .site a:focus-visible,.site summary:focus-visible {outline:3px solid var(--action);outline-offset:4px;border-radius:3px}
+    .wrap {width:min(var(--content),calc(100% - 64px));margin-inline:auto}
+    .draft-bar {background:var(--soft);padding:10px 0;font-size:.8rem;color:var(--ink);border-bottom:1px solid var(--panel-line)}
+    .draft-bar strong {font-weight:650}
+    .skip {position:absolute;top:-100px;left:20px;padding:12px 20px;background:var(--paper);z-index:10}
+    .skip:focus {top:10px}
+    .site header .wrap {min-height:105px;display:flex;align-items:center;justify-content:space-between;gap:28px}
+    .brand {display:flex;min-height:44px;gap:12px;align-items:center;text-decoration:none;color:var(--ink);font-size:.96rem;font-weight:650;line-height:1.25}
+    .brand-mark {width:35px;height:35px;display:grid;place-items:center;background:var(--action);color:var(--action-foreground);border-radius:7px;font-size:1.3rem;font-weight:700}
+    .brand small {display:block;color:var(--muted);font-size:.73rem;font-weight:450;margin-top:3px}
+    .site nav {display:flex;gap:22px;align-items:center;font-size:.88rem}
+    .site nav a {display:inline-flex;align-items:center;min-height:44px;padding-block:11px;text-decoration:none}
+    .site nav a:hover {text-decoration:underline}
+    .eyebrow {font-size:.76rem;font-weight:650;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+    .hero {display:grid;grid-template-columns:1.17fr 1fr;align-items:center;gap:64px;padding-block:65px 88px}
+    .hero h1 {margin-top:20px}
+    .hero .intro {font-size:1.15rem;line-height:1.65;color:var(--muted);max-width:48ch;margin-top:28px}
+    .cta {display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 22px;border:1px solid var(--action);border-radius:var(--control-radius);font:650 .94rem/1.35 system-ui;text-decoration:none;gap:16px}
+    .cta.primary {background:var(--action);color:var(--action-foreground)}
+    .cta.primary:hover {background:var(--semantic-action-hover);border-color:var(--semantic-action-hover)}
+    .hero .cta {margin-top:28px}
+    .secondary-paths {margin-top:18px;font-size:.87rem;color:var(--muted)}
+    .secondary-paths a {display:inline-block;min-height:44px;padding-block:10px;margin-right:18px}
+    .evidence-card {margin:0;background:var(--paper);border:1px solid var(--panel-line);border-radius:var(--card-radius);padding:30px;position:relative}
+    .evidence-card:before {content:"";position:absolute;left:30px;top:-2px;width:50px;height:4px;background:var(--amber);border-radius:2px}
+    .evidence-card h2 {font-size:1.7rem;letter-spacing:-.02em;margin-top:10px;max-width:18ch}
+    .evidence-chain {list-style:none;margin:26px 0 0;padding:0}
+    .evidence-chain li {display:flex;gap:17px;padding-block:20px;border-top:1px solid var(--line)}
+    .step-number {font-size:1rem;font-weight:650;color:var(--action);width:27px;flex-shrink:0;padding-top:1px}
+    .evidence-chain strong {display:block;font-size:1.04rem;font-weight:650}
+    .evidence-chain span:last-child {font-size:.87rem;color:var(--muted)}
+    .evidence-card figcaption {border-top:1px solid var(--line);padding-top:18px;font-size:.75rem;color:var(--muted)}
+    .section {padding-block:74px;border-top:1px solid var(--line)}
+    .section-heading {display:flex;justify-content:space-between;align-items:end;gap:40px;margin-bottom:32px}
+    .section-heading h2 {margin-top:10px}
+    .section-heading>p {max-width:38ch;color:var(--muted);font-size:.95rem}
+    .paths {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+    .path {display:flex;flex-direction:column;background:var(--paper);border:1px solid var(--panel-line);border-radius:var(--card-radius);padding:27px}
+    .path:first-child {background:var(--soft);border-color:var(--action)}
+    .path .path-label {font-size:.77rem;color:var(--muted);margin-bottom:22px}
+    .path h3 {font-size:1.38rem;max-width:19ch}
+    .path>p {font-size:.93rem;color:var(--muted);margin-top:15px;margin-bottom:24px}
+    .path details {margin-top:auto;border-top:1px solid var(--panel-line);padding-top:15px}
+    .site summary {cursor:pointer;color:var(--action);font-size:.92rem;font-weight:650;min-height:44px;display:list-item;padding-block:10px;list-style-position:inside}
+    .site details p {font-size:.87rem;line-height:1.6;color:var(--muted);margin-top:14px}
+    .harness {display:grid;grid-template-columns:.85fr 1.2fr;gap:80px}
+    .harness h2 {margin-top:10px;max-width:13ch}
+    .harness-intro {color:var(--muted);font-size:1rem;margin-top:24px;max-width:36ch}
+    .harness-copy>p {font-size:1.13rem;line-height:1.7;max-width:54ch}
+    .principles {display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:28px}
+    .principles h3 {font-size:1rem}
+    .principles p {font-size:.9rem;color:var(--muted);margin-top:8px}
+    .release {padding:20px 22px;background:var(--paper);border:1px solid var(--panel-line);border-radius:10px;margin-top:28px;font-size:.9rem}
+    .release p+p {margin-top:10px}
+    .release .candidate {color:var(--muted);font-size:.83rem}
+    .release details {margin-top:10px}
+    .release summary {font-size:.83rem}
+    .portfolio {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px}
+    .product {border-top:2px solid var(--panel-line);padding-top:24px}
+    .product h3 {font-size:1.3rem}
+    .product .role {font-size:.75rem;color:var(--muted);margin-bottom:12px;letter-spacing:.08em;text-transform:uppercase}
+    .product p {font-size:.94rem;color:var(--muted);margin-top:13px;margin-bottom:16px}
+    .product a {font-size:.87rem;display:inline-block;padding-block:10px;min-height:44px}
+    .about {display:flex;justify-content:space-between;align-items:start;gap:50px}
+    .about h2 {font-size:1.8rem}
+    .about p {color:var(--muted);font-size:.96rem;max-width:55ch}
+    .site footer {border-top:1px solid var(--line);padding:26px 0 32px;font-size:.78rem;color:var(--muted)}
+    .site footer .wrap {display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+    @media(max-width:1000px) {
+      .hero {gap:32px}.harness {gap:45px}.path {padding:22px}.portfolio {gap:24px}
+      .site nav {gap:14px}.evidence-card {padding:24px}.evidence-card:before {left:24px}
+    }
+    @media(max-width:760px) {
+      .wrap {width:calc(100% - 40px)}
+      .site header .wrap {min-height:0;padding-block:24px;display:block}
+      .site nav {margin-top:18px;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:.8rem}
+      .hero {grid-template-columns:1fr;gap:42px;padding-block:30px 52px}
+      .hero h1 {font-size:clamp(2.55rem,8.2vw,4rem);max-width:15ch}
+      .hero .intro {font-size:1.06rem;max-width:54ch}
+      .evidence-card h2 {max-width:25ch}.evidence-chain {margin-top:20px}
+      .section {padding-block:48px}.section-heading {display:block;margin-bottom:26px}
+      .section-heading>p {margin-top:18px}.paths,.portfolio {grid-template-columns:1fr;gap:18px}
+      .path {padding:26px}.path h3 {max-width:none}.path .path-label {margin-bottom:16px}
+      .harness {grid-template-columns:1fr;gap:30px}.harness h2 {max-width:20ch}
+      .harness-intro {max-width:50ch;margin-top:16px}.harness-copy>p {font-size:1.03rem}
+      .principles {gap:22px}.product {padding-top:22px}.product p {max-width:52ch}
+      .about {display:block}.about p {margin-top:20px}.portfolio {gap:25px}
+    }
+    @media(max-width:370px) {
+      .wrap {width:calc(100% - 32px)}
+      .hero h1 {font-size:2.4rem}.hero .intro {font-size:1rem}
+      .path,.evidence-card {padding:22px}.principles {grid-template-columns:1fr}
+      .secondary-paths a {margin-right:10px}.release {padding:18px}
+      .site nav {column-gap:14px;justify-content:flex-start}
+    }
+    @media(forced-colors:active) {
+      .cta,.path,.evidence-card,.release {border:1px solid ButtonText}
+      .site a:focus-visible,.site summary:focus-visible {outline-color:Highlight}
+    }
+    @media print {
+      .skip {display:none}.hero {padding-block:24px}.section {padding-block:30px}
+      .wrap {width:100%}.evidence-card,.path,.release {break-inside:avoid}
+    }
+
+.version {display:inline-block;margin-top:8px;font-size:.75rem;color:var(--muted)}
+.about h2 {margin-top:10px}
+.site a {text-decoration:underline}
+.site .cta {text-decoration:none}
