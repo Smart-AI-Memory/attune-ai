@@ -13,7 +13,7 @@ export default function TestsBadge({
   coverage = METRICS.coverageFloorPct,
 }: TestsBadgeProps) {
   return (
-    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-[#10B981] text-white">
+    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-[#285e42] text-white">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="14"

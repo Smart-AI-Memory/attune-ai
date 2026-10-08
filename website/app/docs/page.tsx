@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { generateMetadata as genMeta, generateStructuredData } from '@/lib/metadata';
-import { CAPABILITIES } from '@/lib/features';
+import { PLUGIN_SKILLS, CAPABILITIES } from '@/lib/features';
 
 export const metadata: Metadata = genMeta({
   title: 'Documentation',
@@ -71,17 +71,7 @@ const workflows = [
   { name: 'Release Prep', description: 'Changelog, version bump, health checks' },
 ];
 
-// The 25 plugin skills — keep in sync with plugin/skills/
-// (test_skill_count asserts the directory count).
-const skills = [
-  'security-audit', 'smart-test', 'code-quality', 'bug-predict',
-  'doc-gen', 'refactor-plan', 'release-prep', 'planning',
-  'spec', 'fix-test', 'workflow-orchestration', 'rag-code-gen',
-  'verify', 'recall', 'memory-and-context', 'personal-memory',
-  'image-analysis', 'bulk', 'catalog', 'discovery-sweep',
-  'elicit', 'coach', 'attune-hub', 'author-feature',
-  'roundtable',
-];
+
 
 export default function DocsPage() {
   const breadcrumbSchema = generateStructuredData('breadcrumb', {
@@ -168,7 +158,7 @@ export default function DocsPage() {
                     on your Claude subscription. Type /spec or /coach to
                     start.
                   </p>
-                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3 break-all">
+                  <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-xs p-3 break-all">
                     <div><span className="text-white/50">$ </span>claude plugin marketplace add Smart-AI-Memory/attune-ai</div>
                     <div><span className="text-white/50">$ </span>claude plugin install attune-ai@attune-ai</div>
                   </div>
@@ -185,7 +175,7 @@ export default function DocsPage() {
                     memory, retrieval grounding, and verification.{' '}
                     {CAPABILITIES.workflows} workflows, {CAPABILITIES.skills} skills, {CAPABILITIES.mcpTools} MCP tools.
                   </p>
-                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3">
+                  <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-xs p-3">
                     <span className="text-white/50">$ </span>pip install attune-ai
                   </div>
                 </div>
@@ -201,7 +191,7 @@ export default function DocsPage() {
                     corpora. Grounds generated content in your actual
                     source. Also ships inside attune-ai.
                   </p>
-                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3">
+                  <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-xs p-3">
                     <span className="text-white/50">$ </span>pip install attune-rag
                   </div>
                 </div>
@@ -217,7 +207,7 @@ export default function DocsPage() {
                     the named entities in LLM output — imports, CLI flags,
                     links — so hallucinations fail before they ship.
                   </p>
-                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3">
+                  <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-xs p-3">
                     <span className="text-white/50">$ </span>pip install attune-verify
                   </div>
                 </div>
@@ -241,7 +231,7 @@ export default function DocsPage() {
                   standalone package is archived, and all released versions
                   stay installable.
                 </p>
-                <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-4 leading-relaxed">
+                <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-xs p-4 leading-relaxed">
                   <div className="text-white/50"># Install from PyPI</div>
                   <div>pip install attune-help</div>
                   <br />
@@ -275,7 +265,7 @@ export default function DocsPage() {
                     modules, classes, and functions, then proposes a
                     features.yaml manifest.
                   </p>
-                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-sm p-3">
+                  <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-3">
                     /coach init
                   </div>
                 </div>
@@ -287,7 +277,7 @@ export default function DocsPage() {
                     (what is it?), task (how to use it), and reference
                     (full API detail). Content comes from actual source code.
                   </p>
-                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-sm p-3">
+                  <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-3">
                     /coach maintain
                   </div>
                 </div>
@@ -299,7 +289,7 @@ export default function DocsPage() {
                     frontmatter. When code changes, stale templates are
                     flagged automatically.
                   </p>
-                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-sm p-3">
+                  <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-3">
                     /coach status
                   </div>
                 </div>
@@ -311,7 +301,7 @@ export default function DocsPage() {
                     Hand-written templates are preserved. Run on-demand
                     or via CI.
                   </p>
-                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-sm p-3">
+                  <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-3">
                     /coach maintain
                   </div>
                 </div>
@@ -381,7 +371,7 @@ export default function DocsPage() {
 
                 <div>
                   <h3 className="font-bold text-lg mb-4">Usage</h3>
-                  <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-sm p-5 leading-relaxed">
+                  <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-5 leading-relaxed">
                     <div className="text-white/50 mb-2"># Install</div>
                     <div className="mb-4">pip install attune-help</div>
                     <div className="text-white/50 mb-2"># Use</div>
@@ -438,7 +428,7 @@ export default function DocsPage() {
                   keeps generated templates in sync with your source.
                   attune-help remains the standalone reader.
                 </p>
-                <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-4 leading-relaxed">
+                <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-xs p-4 leading-relaxed">
                   <div className="text-white/50"># Authoring now ships with attune-ai</div>
                   <div>pip install attune-ai</div>
                 </div>
@@ -461,11 +451,11 @@ export default function DocsPage() {
 
               <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-8 mb-8">
                 <h3 className="font-bold text-lg mb-4">Install</h3>
-                <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-sm p-4 mb-2">
+                <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-4 mb-2">
                   <span className="text-white/50">$ </span>
                   claude plugin marketplace add Smart-AI-Memory/attune-ai
                 </div>
-                <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-sm p-4">
+                <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-4">
                   <span className="text-white/50">$ </span>
                   claude plugin install attune-ai@attune-ai
                 </div>
@@ -557,7 +547,7 @@ export default function DocsPage() {
                     and the right skill fires.
                   </p>
                   <div className="flex flex-wrap gap-2">
-                    {skills.map((skill) => (
+                    {PLUGIN_SKILLS.map((skill) => (
                       <span
                         key={skill}
                         className="inline-block bg-[var(--surface)] text-[var(--foreground)] border border-[var(--border)] rounded-full px-3 py-1 text-sm font-mono"
@@ -569,7 +559,7 @@ export default function DocsPage() {
 
                   <div className="mt-8">
                     <h4 className="font-bold text-sm mb-3">Run from CLI</h4>
-                    <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-sm p-4 leading-relaxed">
+                    <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-4 leading-relaxed">
                       <div className="text-white/50"># Run a workflow</div>
                       <div>attune workflow run security-audit \</div>
                       <div className="ml-4">--input &apos;{'{'}&#34;path&#34;:&#34;./src&#34;{'}'}&apos;</div>

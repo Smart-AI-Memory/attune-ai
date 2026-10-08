@@ -1,7 +1,7 @@
 import { ImageResponse } from 'next/og';
 
 // Image metadata
-export const alt = 'Smart AI Memory - Building the Future of AI-Human Collaboration';
+export const alt = 'Smart AI Memory - Delegate with clear scope. Keep the evidence.';
 export const size = {
   width: 1200,
   height: 630,
@@ -16,7 +16,7 @@ export default async function Image() {
       <div
         style={{
           fontSize: 60,
-          background: 'linear-gradient(135deg, #1E40AF 0%, #06B6D4 50%, #8B5CF6 100%)',
+          background: 'linear-gradient(135deg, #285e42 0%, #263c30 100%)',
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -32,7 +32,7 @@ export default async function Image() {
           Smart AI Memory
         </div>
         <div style={{ fontSize: 36, textAlign: 'center', opacity: 0.9 }}>
-          Building the Future of AI-Human Collaboration
+          Delegate with clear scope. Keep the evidence.
         </div>
       </div>
     ),

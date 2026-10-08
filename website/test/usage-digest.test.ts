@@ -16,7 +16,8 @@ import {
   type UsageDigest,
 } from '@/lib/usage/digest';
 import { sendEmail } from '@/lib/email';
-import { GET, POST, isAuthorized } from '@/app/api/cron/usage-digest/route';
+import { GET, POST } from '@/app/api/cron/usage-digest/route';
+import { isAuthorized } from '@/lib/usage/authorization';
 import { NextRequest } from 'next/server';
 
 const mockedCollect = vi.mocked(collectUsageDigest);

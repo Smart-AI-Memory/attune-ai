@@ -111,7 +111,7 @@ export default function SavingsBarChart({ data, className = '' }: SavingsBarChar
             <Bar
               dataKey="cost"
               name="Actual Cost"
-              fill="#6366f1"
+              fill="var(--semantic-action)"
               radius={[0, 4, 4, 0]}
             />
             <Bar

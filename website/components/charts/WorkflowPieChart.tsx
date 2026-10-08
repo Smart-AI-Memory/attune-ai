@@ -15,7 +15,7 @@ interface WorkflowPieChartProps {
   className?: string;
 }
 
-const COLORS = ['#6366f1', '#8b5cf6', '#a855f7', '#c084fc', '#d8b4fe'];
+const COLORS = ['var(--semantic-action)', '#8b5cf6', '#a855f7', '#c084fc', '#d8b4fe'];
 
 export default function WorkflowPieChart({
   data,

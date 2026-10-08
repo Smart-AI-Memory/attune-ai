@@ -40,7 +40,7 @@ export default function GitHubStarsBadge({
 
   if (loading) {
     return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-[#1E40AF] text-white">
+      <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-[#285e42] text-white">
         <svg
           className="animate-pulse"
           xmlns="http://www.w3.org/2000/svg"
@@ -66,7 +66,7 @@ export default function GitHubStarsBadge({
       href={`https://github.com/${repo}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-[#1E40AF] text-white hover:bg-[#1E3A8A] transition-colors"
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium bg-[#285e42] text-white hover:bg-[#263c30] transition-colors"
       aria-label={`${stars.toLocaleString()} GitHub stars`}
     >
       <svg

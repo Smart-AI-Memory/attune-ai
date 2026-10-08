@@ -3,7 +3,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 vi.mock('@/lib/db', () => ({ initializeDatabase: vi.fn(async () => undefined) }));
 
 import { initializeDatabase } from '@/lib/db';
-import { POST, isAuthorized } from '@/app/api/db/init/route';
+import { POST } from '@/app/api/db/init/route';
+import { isAuthorized } from '@/lib/db-authorization';
 import { NextRequest } from 'next/server';
 
 const mockedInit = vi.mocked(initializeDatabase);

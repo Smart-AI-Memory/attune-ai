@@ -14,12 +14,12 @@ export interface SEOConfig {
 }
 
 const defaultMetadata = {
-  siteName: 'Attune AI',
-  title: 'Persistent memory and receipt-verified workflows for Claude Code — Attune AI',
+  siteName: 'Smart AI Memory',
+  title: 'Delegate with clear scope. Keep the evidence. — Smart AI Memory',
   description:
-    'Persistent memory and receipt-verified workflows for Claude Code: cross-session memory, acceptance probes re-run independently, RAG grounding, and spec-driven development — open source.',
+    'Attune Harness and the Attune portfolio: open-source tools for scoped AI work, independent checks and retained evidence. Collaborate, discuss a pilot or support an open-source milestone.',
   url: 'https://smartaimemory.com',
-  image: '/og-image.png',
+  image: '/opengraph-image',
   twitterHandle: '@smartaimemory',
   keywords: [
     'help content generation',
@@ -29,6 +29,8 @@ const defaultMetadata = {
     'living documentation',
     'attune-help',
     'attune-ai',
+    'attune-harness',
+    'accountable AI delegation',
     'Claude Code plugin',
     'Claude Code memory',
     'persistent memory for Claude Code',
@@ -62,8 +64,8 @@ export function generateMetadata(config?: SEOConfig): Metadata {
       { name: 'Attune AI' },
       ...(config?.author ? [{ name: config.author }] : []),
     ],
-    creator: 'Attune AI',
-    publisher: 'Attune AI',
+    creator: 'Smart AI Memory',
+    publisher: 'Smart AI Memory',
     formatDetection: {
       email: false,
       address: false,
@@ -75,7 +77,7 @@ export function generateMetadata(config?: SEOConfig): Metadata {
       url,
       title,
       description,
-      siteName: 'Attune AI',
+      siteName: 'Smart AI Memory',
       images: [
         {
           url: image,
@@ -161,14 +163,15 @@ export function generateStructuredData(type: StructuredDataType, data?: Structur
       return {
         '@context': 'https://schema.org',
         '@type': 'Organization',
-        name: 'Attune AI',
-        alternateName: 'Smart AI Memory',
+        name: 'Smart AI Memory',
+        alternateName: 'The Attune portfolio',
         url: defaultMetadata.url,
         logo: `${defaultMetadata.url}/logo.png`,
         description: defaultMetadata.description,
         sameAs: [
           'https://github.com/Smart-AI-Memory',
           'https://github.com/Smart-AI-Memory/attune-ai',
+          'https://github.com/Smart-AI-Memory/attune-harness',
         ],
         contactPoint: {
           '@type': 'ContactPoint',

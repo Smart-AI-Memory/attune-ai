@@ -16,10 +16,10 @@ export default function Footer() {
               href="/"
               className="text-xl font-bold text-gradient hover:opacity-80 transition-opacity"
             >
-              Attune AI
+              Smart AI Memory
             </Link>
             <p className="mt-4 text-sm text-[var(--text-secondary)]">
-              Persistent memory and receipt-verified workflows for Claude Code.
+              Open-source tools for accountable AI work: scope, authorization and retained evidence.
             </p>
             <div className="flex gap-4 mt-4">
               <a
@@ -46,7 +46,7 @@ export default function Footer() {
           {/* Product Column */}
           <div>
             <h3 className="font-bold text-sm uppercase tracking-wide mb-4">Product</h3>
-            <ul className="space-y-2">
+            <ul className="space-y-2"><li><Link href="/#harness" className="text-sm text-[var(--text-secondary)]">Attune Harness</Link></li>
               <li>
                 <Link
                   href="/how-it-works"
@@ -158,7 +158,7 @@ export default function Footer() {
 
         <div className="pt-8 border-t border-[var(--border)] flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-sm text-[var(--muted)] text-center md:text-left">
-            &copy; {currentYear} Attune AI &middot; <a href="https://github.com/Smart-AI-Memory/attune-ai/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--primary)] transition-colors">Apache 2.0 License</a>
+            &copy; {currentYear} Smart AI Memory &middot; <a href="https://github.com/Smart-AI-Memory/attune-ai/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" className="hover:text-[var(--primary)] transition-colors">Apache 2.0 License</a>
           </div>
           <div className="flex gap-6 text-xs text-[var(--muted)]">
             <Link href="/privacy" className="hover:text-[var(--primary)] transition-colors">

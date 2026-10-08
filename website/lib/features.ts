@@ -395,3 +395,35 @@ export const ECOSYSTEM: EcosystemEngine[] = [
 export function getPricingSummary(): string {
   return "Everything open source — Apache 2.0";
 }
+
+/** Plugin skill names; verified against plugin/skills by the website test. */
+export const PLUGIN_SKILLS = [
+  "attune-hub",
+  "author-feature",
+  "bug-predict",
+  "bulk",
+  "catalog",
+  "coach",
+  "code-quality",
+  "cross-review",
+  "discovery-sweep",
+  "doc-gen",
+  "docs-outbox",
+  "elicit",
+  "fix",
+  "fix-test",
+  "image-analysis",
+  "memory-and-context",
+  "personal-memory",
+  "planning",
+  "rag-code-gen",
+  "recall",
+  "refactor-plan",
+  "release-prep",
+  "roundtable",
+  "security-audit",
+  "smart-test",
+  "spec",
+  "verify",
+  "workflow-orchestration"
+] as const;

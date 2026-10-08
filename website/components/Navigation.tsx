@@ -6,12 +6,12 @@ import { useTheme } from '@/lib/theme-provider';
 import { HELP_VIDEOS } from '@/lib/videos';
 
 const navItems = [
+  { label: 'Harness', href: '/#harness' },
+  { label: 'Projects', href: '/#portfolio' },
   { label: 'How It Works', href: '/how-it-works' },
-  { label: 'Fix Demo', href: '/fix-workspace' },
   { label: 'Docs', href: '/docs' },
   // The Learn link appears only once the video registry has entries.
   ...(HELP_VIDEOS.length > 0 ? [{ label: 'Learn', href: '/learn' }] : []),
-  { label: 'Benchmarks', href: '/benchmarks' },
   // The /pricing route is kept (inbound links), but the product has no
   // paid tiers — label it for what the page actually says.
   { label: 'Open Source', href: '/pricing' },
@@ -51,13 +51,13 @@ export default function Navigation() {
           <Link
             href="/"
             className="text-xl font-bold text-gradient hover:opacity-80 transition-opacity"
-            aria-label="Attune AI Home"
+            aria-label="Smart AI Memory home"
           >
-            Attune AI
+            Smart AI Memory
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden xl:flex items-center gap-5">
             {navItems.map((item) => (
               <Link
                 key={item.label}
@@ -139,8 +139,8 @@ export default function Navigation() {
             </a>
 
             {/* CTA Button */}
-            <Link href="/docs#quickstart" className="btn btn-primary text-sm">
-              Get Started
+            <Link href="/#collaborate" className="btn btn-primary text-sm">
+              Collaborate
             </Link>
           </div>
 
@@ -148,7 +148,7 @@ export default function Navigation() {
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg hover:bg-[var(--border)] transition-colors"
+            className="xl:hidden p-2 rounded-lg hover:bg-[var(--border)] transition-colors"
             aria-label="Toggle mobile menu"
             aria-expanded={isMobileMenuOpen ? 'true' : 'false'}
           >
@@ -191,7 +191,7 @@ export default function Navigation() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-[var(--border)]">
+          <div className="xl:hidden py-4 border-t border-[var(--border)]">
             <div className="flex flex-col space-y-4">
               {navItems.map((item) => (
                 <Link
@@ -215,11 +215,11 @@ export default function Navigation() {
                 </button>
               </div>
               <Link
-                href="/docs#quickstart"
+                href="/#collaborate"
                 className="btn btn-primary text-sm w-full"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Get Started
+                Collaborate
               </Link>
             </div>
           </div>
