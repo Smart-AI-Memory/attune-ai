@@ -23,6 +23,13 @@ comment expression did not match newlines, and this handoff lacked required
 section headings. The owned corrections require a normal push and fresh
 exact-head automatic checks before a final qualification claim.
 
+At subsequent head `f4dda8dc`, Windows found that the new regression test read
+the UTF-8 snapshot with the platform default encoding. Source inspection found
+the projector's file and Git decoding operations had the same dependency. The
+bounded correction specifies UTF-8 for both the projector and test, adds a
+read-only CLI check with Python UTF-8 mode disabled, and preserves all existing
+assertions and canonical content. Retain that failure and obtain fresh checks.
+
 ## Content provenance
 
 The released articles retain the published Harness 1.3.0 behavior boundary.

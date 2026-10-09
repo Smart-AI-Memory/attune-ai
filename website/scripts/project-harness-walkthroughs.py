@@ -92,11 +92,11 @@ def main() -> None:
             parser.error("updates require --repo and a full --commit; do not combine with --check")
         repo = args.repo.resolve(strict=True)
         source = subprocess.check_output(
-            ["git", "-C", str(repo), "show", f"{args.commit}:{SOURCE_PATH}"], text=True
+            ["git", "-C", str(repo), "show", f"{args.commit}:{SOURCE_PATH}"], encoding="utf-8"
         )
         if RELEASE not in source:
             parser.error("the source must retain its 1.3.0 release boundary")
-        SNAPSHOT.write_text(source)
+        SNAPSHOT.write_text(source, encoding="utf-8")
         MANIFEST.write_text(
             json.dumps(
                 {
@@ -111,21 +111,22 @@ def main() -> None:
                 },
                 indent=2,
             )
-            + "\n"
+            + "\n",
+            encoding="utf-8",
         )
-    source = SNAPSHOT.read_text()
-    manifest = json.loads(MANIFEST.read_text())
+    source = SNAPSHOT.read_text(encoding="utf-8")
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
     if hashlib.sha256(source.encode()).hexdigest() != manifest["source_sha256"]:
         raise SystemExit(
             "canonical snapshot hash changed: refresh from its committed upstream source"
         )
     expected = json.dumps(project(source), indent=2, ensure_ascii=False) + "\n"
     if args.check:
-        if OUTPUT.read_text() != expected:
+        if OUTPUT.read_text(encoding="utf-8") != expected:
             raise SystemExit("walkthrough projection drift: regenerate from the unchanged snapshot")
         print("Four walkthrough projections and canonical source hash match.")
     else:
-        OUTPUT.write_text(expected)
+        OUTPUT.write_text(expected, encoding="utf-8")
 
 
 if __name__ == "__main__":
