@@ -1,0 +1,10 @@
+{
+  "source_repository": "Smart-AI-Memory/attune-harness",
+  "source_path": "docs/tutorials-1.3.0.md",
+  "source_commit": "86e83c6e29a27f605128600ff011176265e4e431",
+  "source_sha256": "a31a785ce28a5b035cc202e06959f2832048f235e0724f753fd84f50102a2d97",
+  "source_publication": "local reviewed tutorial branch; unpublished",
+  "behavior_version": "1.3.0",
+  "behavior_commit": "0ecf8e6058cee9ed6f9b9510e043e3af3cbe1da0",
+  "maintenance": "Update upstream canonical instructions; refresh this snapshot and regenerate. Do not edit the snapshot or generated JSON."
+}
