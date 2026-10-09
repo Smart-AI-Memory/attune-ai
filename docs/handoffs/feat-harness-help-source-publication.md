@@ -1,6 +1,6 @@
 # Harness Help source publication handoff
 
-## Goal and scope
+## Goal
 
 Prepare the existing Help Center source for review against website main
 `5e11cb025b605d7a6c1725024baf517a9dc8369e`, on the owned branch
@@ -12,6 +12,16 @@ next-release preparation page under `/harness/help/`. Legacy AI docs, shared
 Navigation/Footer, themes, static framework docs, dependencies and deployment
 configuration are unchanged. Historical delivery plans, private coordination
 notes, raw receipts, captures and the review ZIP are not part of this delta.
+
+## Current state
+
+Draft PR #2552 publishes the initial signed source head
+`21d6853b135f869e3a028aa2f2614b457bf7f5be`. Its automatic review previews are
+ready, and Patrick's existing browser can open the Help Center. Production
+integration remains held. Initial CI failures are retained: the projection's
+comment expression did not match newlines, and this handoff lacked required
+section headings. The owned corrections require a normal push and fresh
+exact-head automatic checks before a final qualification claim.
 
 ## Content provenance
 
@@ -52,13 +62,14 @@ New source integration does not establish screen-reader, full AT/400% zoom,
 real-device, Safari/Firefox, native Windows walkthrough, provider quality,
 user comprehension or WCAG conformance. No paid provider call is authorized.
 
-## Publication boundary and next action
+## Publication boundary
 
 The existing Git integration creates hosted Vercel previews for branch/PR
 updates, including draft PRs. Main integration automatically deploys production.
 Primary deployment records demonstrate both consequences. Patrick authorized
-source preparation and the automatic hosted review preview. Push the reviewed
-source and open a draft PR; verify the preview's exact source and user access.
+source preparation and the automatic hosted review preview. Push reviewed
+corrections normally to existing draft PR #2552; verify the refreshed preview's
+exact source and user access.
 Keep merge/production held separately. Do not change hosting settings, grants
 or shared navigation to bypass the production boundary or preview protection.
 
@@ -66,6 +77,8 @@ The already merged Harness release-runbook PR #244 is a separate completed
 documentation change. It does not publish this website source or authorize a
 new Harness version. Central retains its sequential Harness merge queue; this
 website source preparation schedules no main merge.
+
+## Next action
 
 After independent review and signed commit, deliver the exact head, draft PR,
 preview URL and access requirements, focused patch and retained check evidence.
