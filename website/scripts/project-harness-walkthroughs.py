@@ -32,7 +32,7 @@ def project(source: str) -> dict[str, str]:
         # Only presentation changes: the action table becomes a numbered list.
         text = re.sub(r"^\| (\d+) \| (.*?) \|$", r"\1. \2", text, flags=re.M)
         text = re.sub(r"^\| (Step|---).*\n?", "", text, flags=re.M)
-        text = re.sub(r"<!--.*?-->\n?", "", text)
+        text = re.sub(r"<!--.*?-->\n?", "", text, flags=re.S)
         text = re.sub(r"^Title: (.*)$", r"## \1", text, flags=re.M)
         if slug in {"start-and-continue", "save-and-resume"}:
             text = (

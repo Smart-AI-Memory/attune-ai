@@ -41,6 +41,12 @@ static pages including all nine Help routes. Default docs regeneration and
 `build:vercel`/IndexNow scripts are not invoked. Preserve exact source/hash and
 independent-review evidence separately before the proposed commit is pushed.
 
+The first source head's CodeQL check found that editorial comment removal did
+not match newlines. The bounded projector correction enables multiline matching;
+single-line/multiline regression cases pass, and the canonical snapshot and
+generated walkthroughs remain unchanged. This is comment handling, not a claim
+that a regular expression provides general HTML sanitization.
+
 Prior browser/link receipts remain attributed to their original implementation.
 New source integration does not establish screen-reader, full AT/400% zoom,
 real-device, Safari/Firefox, native Windows walkthrough, provider quality,
