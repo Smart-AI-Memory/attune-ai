@@ -193,7 +193,7 @@ export const RELIABILITY_LOOP: LoopStage[] = [
     n: "02",
     name: "Ground",
     description:
-      "RAG retrieval cites your code so the agent doesn't invent APIs.",
+      "Retrieval supplies project sources and citations for checking an answer.",
   },
   {
     n: "03",
@@ -212,7 +212,7 @@ export const RELIABILITY_LOOP: LoopStage[] = [
     n: "05",
     name: "Verify",
     description:
-      "Fact-check generated content: imports, flags, links, counts — all real.",
+      "Check selected properties such as imports, flags, links and counts; inspect the results and limits.",
   },
 ];
 
@@ -240,17 +240,17 @@ export const PILLARS: Pillar[] = [
     tag: "Project memory",
     title: "Your agent stops starting from zero",
     description:
-      "Findings from each session are stashed and recalled in the next. " +
-      "A retrievable lessons corpus surfaces the right engineering lesson " +
-      "at the moment a prompt needs it.",
+      "Saved findings and a lessons corpus can supply context across sessions. " +
+      "Recall depends on the configured memory integration; check recalled " +
+      "material against current project evidence.",
     points: [
-      "Local-first by default — no cloud required",
-      "Redis semantic tier, client included (local Ollama embeddings)",
-      "Automatic recall, or on demand with /recall",
+      "Local memory storage and workflow data transfer are separate concerns",
+      "Redis and embedding destinations depend on the configured setup",
+      "Recall availability depends on the selected integration",
       // DEC-13/14: cross-provider portability is a property of the
       // memory, not a separate pillar — anti-lock-in framing, exactly
       // the three verified providers.
-      "Git-tracked files in your repo — served to Claude Code, Codex, or Antigravity alike. Switch agents; keep everything.",
+      "Git-tracked lessons and handoffs can carry context between agents; check the integration in use.",
     ],
     icon: "🧠",
     color: "secondary",
@@ -296,9 +296,9 @@ export const PILLARS: Pillar[] = [
     tag: "Retrieval grounding",
     title: "Answers anchored to your code",
     description:
-      "Keyword + semantic retrieval keeps generated content grounded in " +
-      "your actual source. Mean faithfulness 0.97, CI-gated — drift " +
-      "fails the build.",
+      "Keyword and semantic retrieval supply source context and citations " +
+      "for review. Check the retrieved material and resulting answer; " +
+      "a benchmark does not establish accuracy for every task.",
     points: [
       "Powered by attune-rag — built in, no extra install",
       "Citations back to source",
@@ -310,11 +310,11 @@ export const PILLARS: Pillar[] = [
   {
     id: "verification",
     tag: "Verification",
-    title: "Catch hallucinations before they ship",
+    title: "Check generated output before use",
     description:
-      "Fact-check LLM output against source-of-truth: confirm imports " +
-      "import, CLI flags are real, links resolve, and counts match — " +
-      "before the change reaches main.",
+      "Check properties such as imports, CLI flags, links and counts " +
+      "against project sources. Inspect which checks ran and what " +
+      "remains unchecked before accepting a change.",
     points: [
       // DEC-15: name the engine at the point of proof.
       "Powered by attune-verify — built in, no extra install",

@@ -6,16 +6,14 @@ import { useTheme } from '@/lib/theme-provider';
 import { HELP_VIDEOS } from '@/lib/videos';
 
 const navItems = [
-  { label: 'Harness', href: '/#harness' },
+  { label: 'What you can do', href: '/#harness' },
+  { label: 'Harness docs', href: '/docs#harness-docs' },
+  { label: 'Context & next steps', href: '/#context' },
   { label: 'Projects', href: '/#portfolio' },
-  { label: 'How It Works', href: '/how-it-works' },
-  { label: 'Docs', href: '/docs' },
   // The Learn link appears only once the video registry has entries.
   ...(HELP_VIDEOS.length > 0 ? [{ label: 'Learn', href: '/learn' }] : []),
-  // The /pricing route is kept (inbound links), but the product has no
-  // paid tiers — label it for what the page actually says.
-  { label: 'Open Source', href: '/pricing' },
   { label: 'Blog', href: '/blog' },
+  { label: 'Contact', href: '/contact' },
 ];
 
 export default function Navigation() {
@@ -62,7 +60,7 @@ export default function Navigation() {
               <Link
                 key={item.label}
                 href={item.href}
-                className="text-sm font-medium hover:text-[var(--primary)] transition-colors"
+                className="flex min-h-[var(--semantic-target-min)] items-center text-sm font-medium hover:text-[var(--primary)] transition-colors"
               >
                 {item.label}
               </Link>
@@ -119,11 +117,11 @@ export default function Navigation() {
 
             {/* GitHub Link */}
             <a
-              href="https://github.com/Smart-AI-Memory/attune-ai"
+              href="https://github.com/Smart-AI-Memory/attune-harness"
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 rounded-lg hover:bg-[var(--border)] transition-colors"
-              aria-label="View Attune AI on GitHub"
+              aria-label="View Attune Harness on GitHub"
               title="View on GitHub"
             >
               <svg
@@ -151,6 +149,7 @@ export default function Navigation() {
             className="xl:hidden p-2 rounded-lg hover:bg-[var(--border)] transition-colors"
             aria-label="Toggle mobile menu"
             aria-expanded={isMobileMenuOpen ? 'true' : 'false'}
+            aria-controls="site-mobile-menu"
           >
             {isMobileMenuOpen ? (
               <svg
@@ -191,13 +190,13 @@ export default function Navigation() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="xl:hidden py-4 border-t border-[var(--border)]">
+          <div id="site-mobile-menu" className="xl:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto py-4 border-t border-[var(--border)]">
             <div className="flex flex-col space-y-4">
               {navItems.map((item) => (
                 <Link
                   key={item.label}
                   href={item.href}
-                  className="text-sm font-medium hover:text-[var(--primary)] transition-colors"
+                  className="flex min-h-[var(--semantic-target-min)] items-center text-sm font-medium hover:text-[var(--primary)] transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {item.label}
