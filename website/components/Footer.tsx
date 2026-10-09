@@ -30,10 +30,10 @@ export default function Footer() {
             <ul className="space-y-2">
               <li><a href="https://pypi.org/project/attune-harness/1.3.0/" target="_blank" rel="noopener noreferrer" className={linkClass}>Harness package and release guide</a></li>
               <li><Link href="/#portfolio" className={linkClass}>Supporting tools and earlier work</Link></li>
-              <li><Link href="/docs#quickstart" className={linkClass}>Attune AI setup reference</Link></li>
+              <li><Link href="/framework-docs" className={linkClass}>Attune AI reference</Link></li>
               <li><Link href="/how-it-works" className={linkClass}>Attune AI workflow reference</Link></li>
               <li><Link href="/changelog" className={linkClass}>Attune AI changelog</Link></li>
-              <li><Link href="/pricing" className={linkClass}>Attune AI open-source terms</Link></li>
+              <li><Link href="/pricing" className={linkClass}>Harness open-source license</Link></li>
               <li><Link href="/discipline" className={linkClass}>The Discipline</Link></li>
             </ul>
           </div>

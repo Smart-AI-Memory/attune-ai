@@ -15,7 +15,7 @@ export default function Home() {
       <div>
         <p className={styles["eyebrow"]}>Open-source tools for AI-assisted engineering</p>
         <h1 id="hero-title">Delegate with clear scope.<br />Keep the evidence.</h1>
-        <p className={styles["intro"]}>Work with clearer decisions, checkable changes and context you can return to. Attune Harness supports engineering workflows alongside your agents, from planning and building to repair, review and tests.</p>
+        <p className={styles["intro"]}>Work with your agent to develop a specification, plan a change, and review build, repair and test results. Harness keeps the agreed scope and task evidence available so you can decide what happens next.</p>
         <Link className={styles["cta"] + " " + styles["primary"]} href="#collaborate">Collaborate <span aria-hidden="true">↗</span></Link>
         <p className={styles["secondary-paths"]}><Link href="#pilot">Discuss a pilot</Link><Link href="#sponsor">Sponsor open-source milestones</Link></p>
       </div>
@@ -31,48 +31,23 @@ export default function Home() {
       </figure>
     </section>
 
-    <section className={styles["section"] + " " + styles["wrap"]} aria-labelledby="paths-title">
-      <div className={styles["section-heading"]}>
-        <div><p className={styles["eyebrow"]}>Help shape what comes next</p><h2 id="paths-title">Three ways to take part.</h2></div>
-        <p>Proposed paths for contributors, potential pilot customers and open-source sponsors.</p>
-      </div>
-      <div className={styles["paths"]}>
-        <article className={styles["path"]} id="collaborate">
-          <p className={styles["path-label"]}>Start by building together</p>
-          <h3>Collaborate</h3>
-          <p>Help build and test tools for accountable agent work. Bring a reproducible problem, a design question or a contribution.</p>
-          <details><summary>Explore collaboration</summary><p>A starting conversation could identify a useful contribution, its scope and how to check it. Documentation, usability and real workflow evidence matter alongside code.</p><p><Link href="/contact/">Start a conversation <span aria-hidden="true">↗</span></Link></p></details>
-        </article>
-        <article className={styles["path"]} id="pilot">
-          <p className={styles["path-label"]}>Explore a possible customer engagement</p>
-          <h3>Discuss a pilot</h3>
-          <p>Start with one bounded workflow and a result we can check. Assess the fit and define what a possible pilot would need to demonstrate.</p>
-          <details><summary>Explore a pilot</summary><p>Possible starting points include reviewing a generated document against project evidence or checking a scoped agent-assisted change. Scope, responsibilities and commercial terms would need separate agreement.</p><p><Link href="/contact/">Start a conversation <span aria-hidden="true">↗</span></Link></p></details>
-        </article>
-        <article className={styles["path"]} id="sponsor">
-          <p className={styles["path-label"]}>Support work in the open</p>
-          <h3>Sponsor open-source milestones</h3>
-          <p>Discuss support for a clearly scoped open-source milestone, with its evidence and limits stated up front.</p>
-          <details><summary>Explore sponsorship</summary><p>A discussion could connect support with an agreed milestone in usability, documentation or verification. Milestones and any sponsorship terms remain to be defined.</p><p><Link href="/contact/">Start a conversation <span aria-hidden="true">↗</span></Link></p></details>
-        </article>
-      </div>
-    </section>
-
     <section className={styles["section"] + " " + styles["wrap"] + " " + styles["harness"]} id="harness" aria-labelledby="harness-title">
       <div>
         <p className={styles["eyebrow"]}>The lead project · Attune Harness</p>
         <h2 id="harness-title">Make the work inspectable.</h2>
-        <p className={styles["harness-intro"]}>Move from a goal to scoped work, inspect the result, and understand what needs attention.</p>
+        <p className={styles["harness-intro"]}>Develop the specification, agree with the scope, and inspect the evidence as work progresses.</p>
       </div>
       <div className={styles["harness-copy"]}>
-        <p>Harness gives agent-assisted work a structure you can inspect. The goal is useful progress: an agreed next step, a change you can check, and enough context to continue.</p>
+        <p>Complex work starts with a specification you can review: requirements, constraints and acceptance criteria. Harness supports the next steps with explicit scope, retained decisions and checks you can inspect.</p>
         <div className={styles["principles"]}>
-          <div><h3>Define useful work.</h3><p>Make the goal, scope and acceptance criteria explicit before execution.</p></div>
-          <div><h3>Build and improve.</h3><p>Use scoped build and repair workflows alongside the agents you already use.</p></div>
-          <div><h3>See what the checks found.</h3><p>Review results and failures against the chosen criteria, with the evidence retained.</p></div>
-          <div><h3>Pick up the work again.</h3><p>Inspect saved task state and recover context from supported, configured sources.</p></div>
+          <div><h3>Develop a reviewable specification.</h3><p>Work with your agent to record requirements, constraints and acceptance criteria before implementation.</p></div>
+          <div><h3>Agree to the plan and scope.</h3><p>Inspect the allowed files, proposed work and acceptance checkpoint before authorizing execution.</p></div>
+          <div><h3>Build and repair within limits.</h3><p>Use scoped workflows with permitted files and declared verification checks alongside your agents.</p></div>
+          <div><h3>Review independently against evidence.</h3><p>Assign a separate reviewer to assess a document against project sources. Keep unsupported claims and uncertainty visible.</p></div>
+          <div><h3>Test the change and keep the results.</h3><p>Run checks on captured changes. Inspect what ran, what passed and what failed before deciding the next step.</p></div>
+          <div><h3>Keep decisions and continue.</h3><p>Inspect saved task state and recover context from supported, configured sources before resuming work.</p></div>
         </div>
-        <p>In one documented exporter comparison, command-line checks exposed three defects that passed direct serializer checks. <Link href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/docs/plan-build-native-results.md">Read the example and its limits</Link>. This demonstrates that check; general model reliability remains separately qualified.</p>
+        <p>See what passed, what failed and what needs another look. Harness keeps the output and check results together so you can review the work before deciding what to do next.</p>
         <div className={styles["principles"]}>
           <div><h3>Authorization has limits.</h3><p>Accepting intent and authorizing execution are separate decisions. Paid calls need their own authorization.</p></div>
           <div><h3>Evidence has limits too.</h3><p>A passing check establishes what it tested. It does not guarantee every output is correct.</p></div>
@@ -80,7 +55,13 @@ export default function Home() {
         <div className={styles["release"]}>
           <p><strong>Published: Attune Harness 1.3.0.</strong> <Link href="https://pypi.org/project/attune-harness/1.3.0/">Package and release guide</Link></p>
           <p className={styles["candidate"]}>Browser forms guide intake and intent approval. Each workflow retains its own execution permissions and checks.</p>
-          <details><summary>Read the evidence and limits</summary><p>A passing check establishes what it tested. Native planning and building remain experimental. Claude Code and Codex have documented setup paths; Antigravity integration is unverified in this review. Native MCP panel delivery remains unverified. <Link href="https://pypi.org/project/attune-harness/1.3.0/#what-is-qualified-and-what-is-not">Review the qualification guide</Link>.</p></details>
+          <details>
+            <summary>Read the evidence and limits</summary>
+            <p>In one exporter comparison, command-line checks found three defects that direct serializer checks had missed.</p>
+            <p>The result applies to that example. General model reliability needs separate assessment.</p>
+            <p><Link href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/docs/plan-build-native-results.md">Read the comparison and its limits</Link></p>
+            <p>A passing check establishes what it tested. Native planning and building remain experimental. Claude Code and Codex have documented setup paths; Antigravity integration is unverified in this review. Native MCP panel delivery remains unverified. <Link href="https://pypi.org/project/attune-harness/1.3.0/#what-is-qualified-and-what-is-not">Review the qualification guide</Link>.</p>
+          </details>
         </div>
       </div>
     </section>
@@ -96,6 +77,33 @@ export default function Home() {
         <article className={styles["path"]}><h3>Choose what to pursue.</h3><p>Assess the proposed benefit and uncertainty. A saved suggestion grants no execution authority.</p></article>
       </div>
       <p className={styles["candidate"]}>Scoped recall and saved review checkpoints are supported. Automatic access to all chat history is not implied; the richer opportunity-ranking and selection journey remains proposed. <Link href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/docs/specs/task-opportunities/journey.md">Review the current boundary</Link>.</p>
+    </section>
+
+    <section className={styles["section"] + " " + styles["wrap"]} aria-labelledby="paths-title">
+      <div className={styles["section-heading"]}>
+        <div><p className={styles["eyebrow"]}>Help shape what comes next</p><h2 id="paths-title">Three ways to take part.</h2></div>
+        <p>Proposed paths for contributors, potential pilot customers and open-source sponsors.</p>
+      </div>
+      <div className={styles["paths"]}>
+        <article className={styles["path"]} id="collaborate">
+          <p className={styles["path-label"]}>Start by building together</p>
+          <h3>Collaborate</h3>
+          <p>Help improve specification development, planning, build and repair workflows, and independent checks. Bring a reproducible problem, a design question or a contribution.</p>
+          <details><summary>Explore collaboration</summary><p>A starting conversation could identify a useful contribution, its scope and how to check it. Documentation, usability and real workflow evidence matter alongside code.</p><p><Link href="/contact/">Start a conversation <span aria-hidden="true">↗</span></Link></p></details>
+        </article>
+        <article className={styles["path"]} id="pilot">
+          <p className={styles["path-label"]}>Explore a possible customer engagement</p>
+          <h3>Discuss a pilot</h3>
+          <p>Explore one workflow guided by a specification, from a clear goal and agreed scope to evidence you can review. Define what a possible pilot would need to demonstrate.</p>
+          <details><summary>Explore a pilot</summary><p>Possible starting points include developing a specification with explicit acceptance criteria, reviewing a generated document against project evidence, or checking a scoped agent-assisted change. Scope, responsibilities and commercial terms would need separate agreement.</p><p><Link href="/contact/">Start a conversation <span aria-hidden="true">↗</span></Link></p></details>
+        </article>
+        <article className={styles["path"]} id="sponsor">
+          <p className={styles["path-label"]}>Support work in the open</p>
+          <h3>Sponsor open-source milestones</h3>
+          <p>Discuss support for an open-source milestone in specification workflows, independent checks or usable documentation, with its scope, evidence and limits stated up front.</p>
+          <details><summary>Explore sponsorship</summary><p>A discussion could connect support with an agreed milestone in usability, documentation or verification. Milestones and any sponsorship terms remain to be defined.</p><p><Link href="/contact/">Start a conversation <span aria-hidden="true">↗</span></Link></p></details>
+        </article>
+      </div>
     </section>
 
     <section className={styles["section"] + " " + styles["wrap"]} id="portfolio" aria-labelledby="portfolio-title">

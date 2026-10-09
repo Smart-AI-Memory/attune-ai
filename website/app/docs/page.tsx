@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { generateMetadata as genMeta, generateStructuredData } from '@/lib/metadata';
-import { PLUGIN_SKILLS, CAPABILITIES } from '@/lib/features';
+import { HARNESS_FAQ_ITEMS } from '@/lib/harness-faq';
 
 export const metadata: Metadata = genMeta({
   title: 'Documentation',
@@ -16,41 +15,41 @@ const faqItems = [
   {
     question: 'What is attune-ai?',
     answer:
-      'A development platform built around project memory that turns requirements into reliable software. Memory leads; AI workflows, retrieval grounding, and verification support it in one reliability loop: specify with /spec, ground every change in your real code, build with a team of workflows, remember what worked across sessions, and verify the output before it ships.',
+      'Attune AI combines specification development, AI workflows, project memory, retrieval and verification tools. It is a separate project from Attune Harness. Use the retained references for your installed version, and inspect generated output and the checks that ran.',
   },
   {
-    question: 'How does it keep generated content from drifting?',
+    question: 'How can I check generated content for drift?',
     answer:
-      'Retrieval grounding (powered by attune-rag, a built-in dependency) keeps generated content anchored to your actual source — mean faithfulness is measured at 0.97 and CI-gated, so drift fails the build. For docs specifically, templates carry source file hashes; when code changes, staleness detection flags the affected templates so they can be regenerated automatically.',
+      'Retrieval through attune-rag supplies source context for review. Source hashes can flag tracked templates for maintenance when the corresponding code changes. These checks cover particular sources and properties; they do not establish the accuracy of every generated answer.',
   },
   {
     question: 'Do I need attune-ai to read templates?',
     answer:
-      'No. The standalone attune-help package (1 dependency) can read any .help/ directory without the full framework. Generate templates with attune-ai, then ship them alongside attune-help for a minimal runtime with no Anthropic API key required.',
+      'No. The standalone attune-help reader can read existing help templates without the full Attune AI framework or an API key. Point it at the template directory described in its package reference. Generating or updating templates is a separate task.',
   },
   {
     question: 'Can I write templates by hand?',
     answer:
-      'Yes. Hand-written templates are preserved during regeneration. Remove the auto-discovered tag from frontmatter and the maintenance system will skip the file.',
+      'Yes. Use maintenance: manual in template frontmatter to mark a page as human-maintained and have regeneration skip it. Review the maintenance instructions for your installed Attune AI version before updating templates.',
   },
   {
     question: 'How does staleness detection work?',
     answer:
-      'Each template stores SHA-256 hashes of the source files it was generated from. The maintenance workflow re-hashes those files and compares. If the hash changed, the template is flagged stale and queued for regeneration.',
+      'Generated templates can record source hashes. Maintenance compares the recorded and current hashes to identify affected templates. A stale flag identifies a review or regeneration task; it is not proof that the replacement content is correct.',
   },
   {
     question: 'Is it free? What do I need to run it?',
     answer:
-      'Released under the Apache License 2.0 — free for personal, commercial, and enterprise use, with full source access.',
+      'Attune AI is open source under Apache 2.0, subject to the license conditions. Runtime requirements depend on the workflow; model providers and other external services may require separate credentials and incur charges.',
   },
   {
     question: 'What Claude Code skills are included?',
-    answer: `${CAPABILITIES.skills} auto-invoking skills, including security audit, smart test, code quality, bug prediction, doc generation, refactor planning, release prep, spec-driven development, outcome-first fixing, RAG-grounded code generation, cross-session recall, image analysis, batch processing, cross-model diff review, and the multi-LLM round table. Run the catalog skill for the full, always-current list.`,
+    answer: 'The retained Attune AI skill reference covers development tasks such as review, testing, specifications and documentation. Skill availability depends on the installed plugin version and host. Inspect that installation rather than treating a website count as an environment check.',
   },
   {
     question: 'Where do I install attune-help from?',
     answer:
-      'PyPI: `pip install attune-help` — the standalone reader, no API key required. Its Claude Code plugin lives in the same Smart-AI-Memory/attune-ai marketplace as attune-ai itself: `claude plugin marketplace add Smart-AI-Memory/attune-ai`, then `claude plugin install attune-help@attune-ai`. (The old Smart-AI-Memory/attune-docs marketplace is retired.)',
+      'The standalone attune-help reader is available on PyPI. See its package reference for installation and template-directory setup. Installing a Python reader is separate from installing a host plugin.',
   },
   {
     question: 'What happened to attune-author?',
@@ -58,20 +57,6 @@ const faqItems = [
       'Its AI authoring capabilities were consolidated into attune-ai in July 2026, and the standalone package is archived. Already-released versions stay installable from PyPI, but no further releases are planned — for template authoring, install attune-ai and use the author-feature skill or /coach maintain.',
   },
 ];
-
-const workflows = [
-  { name: 'Security Audit', description: 'OWASP-focused vulnerability scan' },
-  { name: 'Code Review', description: 'Multi-tier analysis with architecture feedback' },
-  { name: 'Bug Prediction', description: 'Pattern-based risk scoring' },
-  { name: 'Test Generation', description: 'Parametrized pytest generation' },
-  { name: 'Deep Review', description: 'Multi-pass security, quality, and test gap analysis' },
-  { name: 'Documentation', description: 'Docstring and API reference generation' },
-  { name: 'Performance Audit', description: 'Profiling and optimization suggestions' },
-  { name: 'Refactoring', description: 'Code smell detection and roadmap' },
-  { name: 'Release Prep', description: 'Changelog, version bump, health checks' },
-];
-
-
 
 export default function DocsPage() {
   const breadcrumbSchema = generateStructuredData('breadcrumb', {
@@ -82,7 +67,7 @@ export default function DocsPage() {
   });
 
   const faqSchema = generateStructuredData('faq', {
-    questions: faqItems,
+    questions: [...HARNESS_FAQ_ITEMS],
   });
 
   return (
@@ -110,19 +95,7 @@ export default function DocsPage() {
               <nav className="flex flex-wrap justify-center gap-3">
                 <a href="#harness-docs" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">Harness</a>
                 <a href="#quickstart" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">
-                  Attune AI Quick Start
-                </a>
-                <a href="#attune-ai" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">
-                  Attune AI
-                </a>
-                <a href="#attune-help" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">
-                  Reader
-                </a>
-                <a href="#plugin" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">
-                  Plugin
-                </a>
-                <a href="#workflows" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">
-                  Workflows
+                  Harness Quick Start
                 </a>
                 <a href="#faq" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">
                   FAQ
@@ -146,268 +119,64 @@ export default function DocsPage() {
           </div>
         </section>
 
-        {/* Quick Start */}
-        <section id="quickstart" className="py-20">
-          <div className="container">
-            <div className="max-w-5xl mx-auto">
-              <h2 className="text-4xl font-bold text-center mb-4">Attune AI Quick Start</h2>
-              <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
-                These retained setup instructions cover Attune AI and its
-                companion packages. Use the Harness guide above for the
-                current project.
-              </p>
-
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Claude Code Plugin — marketplace-first, matching the
-                    homepage and README ordering: works standalone. */}
-                <div className="bg-[var(--background)] border-2 border-[var(--primary)] rounded-lg p-6 flex flex-col relative">
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--primary)] text-white text-xs font-bold px-3 py-1 rounded-full">
-                    Attune AI
-                  </div>
-                  <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
-                    Claude Code
-                  </div>
-                  <h3 className="text-lg font-bold mb-2">Plugin</h3>
-                  <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
-                    Works standalone — no Python environment required. Runs
-                    on your Claude subscription. Type /spec or /coach to
-                    start.
-                  </p>
-                  <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-xs p-3 break-all">
-                    <div><span className="text-white/50">$ </span>claude plugin marketplace add Smart-AI-Memory/attune-ai</div>
-                    <div><span className="text-white/50">$ </span>claude plugin install attune-ai@attune-ai</div>
-                  </div>
-                </div>
-
-                {/* attune-ai */}
-                <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-6 flex flex-col">
-                  <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
-                    Earlier Toolkit
-                  </div>
-                  <h3 className="text-lg font-bold mb-2">attune-ai</h3>
-                  <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
-                    The whole platform: spec engine, AI workflows, project
-                    memory, retrieval grounding, and verification.{' '}
-                    {CAPABILITIES.workflows} workflows, {CAPABILITIES.skills} skills, {CAPABILITIES.mcpTools} MCP tools.
-                  </p>
-                  <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-xs p-3">
-                    <span className="text-white/50">$ </span>pip install attune-ai
-                  </div>
-                </div>
-
-                {/* attune-rag */}
-                <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-6 flex flex-col">
-                  <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
-                    Retrieval Grounding
-                  </div>
-                  <h3 className="text-lg font-bold mb-2">attune-rag</h3>
-                  <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
-                    Lightweight, LLM-agnostic RAG pipeline with pluggable
-                    corpora. Grounds generated content in your actual
-                    source. Also ships inside attune-ai.
-                  </p>
-                  <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-xs p-3">
-                    <span className="text-white/50">$ </span>pip install attune-rag
-                  </div>
-                </div>
-
-                {/* attune-verify */}
-                <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-6 flex flex-col">
-                  <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
-                    Fact-Checking
-                  </div>
-                  <h3 className="text-lg font-bold mb-2">attune-verify</h3>
-                  <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
-                    Generation fact-checker for the attune family. Verifies
-                    the named entities in LLM output — imports, CLI flags,
-                    links — so hallucinations fail before they ship.
-                  </p>
-                  <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-xs p-3">
-                    <span className="text-white/50">$ </span>pip install attune-verify
-                  </div>
-                </div>
-
-              </div>
-
-              {/* Companion packages */}
-              <div className="mt-10 bg-[var(--surface-container-low)] border border-[var(--border)] rounded-lg p-6">
-                <h3 className="font-bold text-lg mb-2">
-                  Companion packages
-                </h3>
-                <p className="text-sm text-[var(--text-secondary)] mb-4">
-                  attune-help is the lightweight reader for .help/
-                  directories — 1 dependency, no AI key required. Its Claude
-                  Code plugin lives in the same{" "}
-                  <code className="text-xs bg-[var(--surface-container-high)] px-1 rounded">
-                    Smart-AI-Memory/attune-ai
-                  </code>{" "}
-                  marketplace as attune-ai itself. attune-author&apos;s AI
-                  authoring tools have been consolidated into attune-ai; the
-                  standalone package is archived, and all released versions
-                  stay installable.
+        {/* Harness Quick Start; earlier toolkit references remain below. */}
+        <section id="quickstart" className="py-20 bg-[var(--surface-container-low)]">
+          <div className="container max-w-5xl">
+            <h2 className="text-4xl font-bold mb-4">Harness Quick Start</h2>
+            <p className="text-xl text-[var(--text-secondary)] mb-6">
+              Install Harness and try a small local check before connecting an agent.
+              This setup uses the released 1.3.0 package.
+            </p>
+            <p className="text-[var(--text-secondary)] mb-8">
+              You need Python 3.10 or later. Start in a new working directory and
+              keep Harness in its own environment, separate from Attune AI.
+              The commands below are for macOS and Linux.
+            </p>
+            <ol className="space-y-6">
+              <li className="p-6">
+                <h3 className="text-xl font-bold mb-3">1. Create an environment</h3>
+                <pre className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-4 overflow-x-auto"><code>{'python3 -m venv .venv\nsource .venv/bin/activate'}</code></pre>
+                <details className="mt-4 text-sm text-[var(--text-secondary)]">
+                  <summary className="cursor-pointer font-medium">Windows PowerShell</summary>
+                  <p className="my-3">With Python 3.10 or later installed, use these commands instead:</p>
+                  <pre className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-4 overflow-x-auto"><code>{'py -3 -m venv .venv\n.venv\\Scripts\\Activate.ps1'}</code></pre>
+                </details>
+              </li>
+              <li className="p-6">
+                <h3 className="text-xl font-bold mb-3">2. Install and confirm the version</h3>
+                <pre className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-4 overflow-x-auto"><code>{"python -m pip install 'attune-harness[all]==1.3.0'\npython -c \"from importlib.metadata import version; print(version('attune-harness'))\""}</code></pre>
+                <p className="mt-3 text-sm text-[var(--text-secondary)]">
+                  The version check should print <code>1.3.0</code>. This
+                  recommended install adds Redis and Voyage support. The local
+                  example below needs no API key. Redis use needs a running
+                  Redis service; Voyage retrieval needs a Voyage API key and
+                  makes paid calls. Integration requirements are covered in the{' '}
+                  <a className="underline" href="https://pypi.org/project/attune-harness/1.3.0/#installation">released installation guide</a>.
                 </p>
-                <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-xs p-4 leading-relaxed">
-                  <div className="text-white/50"># Install from PyPI</div>
-                  <div>pip install attune-help</div>
-                  <br />
-                  <div className="text-white/50"># Or as a Claude Code plugin from the attune-ai marketplace</div>
-                  <div>claude plugin marketplace add Smart-AI-Memory/attune-ai</div>
-                  <div>claude plugin install attune-help@attune-ai</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Attune AI Framework */}
-        <section id="attune-ai" className="py-20 bg-[var(--border)] bg-opacity-30">
-          <div className="container">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-4xl font-bold text-center mb-4">
-                Attune AI Platform
-              </h2>
-              <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
-                Beyond AI workflows and verification, the platform keeps your
-                docs grounded too: scan your codebase, generate templates,
-                detect when code drifts, and regenerate stale content.
+              </li>
+              <li className="p-6">
+                <h3 className="text-xl font-bold mb-3">3. Run the local example</h3>
+                <pre className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-4 overflow-x-auto"><code>python -m attune_harness</code></pre>
+                <p className="mt-3 text-sm text-[var(--text-secondary)]">
+                  Expect a JSON receipt with a <code>verified</code> result.
+                  A deterministic worker supplies the answer and a separate
+                  arithmetic check assesses it. This example makes no model
+                  call and needs no API key; it demonstrates the check and receipt,
+                  rather than measuring an AI agent&apos;s reliability.
+                </p>
+              </li>
+            </ol>
+            <div className="mt-8">
+              <h3 className="text-xl font-bold mb-3">Continue with your agent</h3>
+              <p className="text-[var(--text-secondary)] mb-5">
+                Choose the Claude Code or Codex setup in the release guide.
+                Installing the Python package does not install an agent plugin
+                or skill. Develop the specification and agree with the scope
+                before authorizing execution.
               </p>
-
-              <div className="grid md:grid-cols-2 gap-8 mb-12">
-                <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-6">
-                  <h3 className="font-bold text-lg mb-2">1. Bootstrap</h3>
-                  <p className="text-sm text-[var(--text-secondary)] mb-3">
-                    Scan your project to discover features. The scanner reads
-                    modules, classes, and functions, then proposes a
-                    features.yaml manifest.
-                  </p>
-                  <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-3">
-                    /coach init
-                  </div>
-                </div>
-
-                <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-6">
-                  <h3 className="font-bold text-lg mb-2">2. Generate</h3>
-                  <p className="text-sm text-[var(--text-secondary)] mb-3">
-                    For each feature, three templates are created: concept
-                    (what is it?), task (how to use it), and reference
-                    (full API detail). Content comes from actual source code.
-                  </p>
-                  <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-3">
-                    /coach maintain
-                  </div>
-                </div>
-
-                <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-6">
-                  <h3 className="font-bold text-lg mb-2">3. Staleness Detection</h3>
-                  <p className="text-sm text-[var(--text-secondary)] mb-3">
-                    Source file SHA-256 hashes are stored in template
-                    frontmatter. When code changes, stale templates are
-                    flagged automatically.
-                  </p>
-                  <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-3">
-                    /coach status
-                  </div>
-                </div>
-
-                <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-6">
-                  <h3 className="font-bold text-lg mb-2">4. Maintenance</h3>
-                  <p className="text-sm text-[var(--text-secondary)] mb-3">
-                    Regenerate only the templates whose source changed.
-                    Hand-written templates are preserved. Run on-demand
-                    or via CI.
-                  </p>
-                  <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-3">
-                    /coach maintain
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-center">
-                <Link
-                  href="/framework-docs/"
-                  className="inline-flex items-center gap-2 text-[var(--primary)] hover:underline font-semibold"
-                >
-                  Deep API reference in framework docs
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Attune Help (Standalone Reader) */}
-        <section id="attune-help" className="py-20">
-          <div className="container">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-4xl font-bold text-center mb-4">
-                Attune Help (Standalone Reader)
-              </h2>
-              <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
-                A lightweight Python package that reads .help/ templates.
-                1 dependency, 6 files, embeddable anywhere.
-              </p>
-
-              <div className="grid md:grid-cols-2 gap-8 mb-10">
-                <div>
-                  <h3 className="font-bold text-lg mb-4">Features</h3>
-                  <ul className="space-y-3">
-                    <li className="flex items-start gap-2 text-[var(--text-secondary)]">
-                      <span className="text-[var(--primary)] mt-1 font-bold">1</span>
-                      <span>
-                        <strong className="text-[var(--foreground)]">1 dependency</strong> &mdash;
-                        python-frontmatter. No bloat.
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2 text-[var(--text-secondary)]">
-                      <span className="text-[var(--primary)] mt-1 font-bold">2</span>
-                      <span>
-                        <strong className="text-[var(--foreground)]">Progressive depth</strong> &mdash;
-                        concept on first ask, task on repeat, reference on third.
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2 text-[var(--text-secondary)]">
-                      <span className="text-[var(--primary)] mt-1 font-bold">3</span>
-                      <span>
-                        <strong className="text-[var(--foreground)]">Session storage</strong> &mdash;
-                        file-based or custom backend. Tracks depth per topic.
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2 text-[var(--text-secondary)]">
-                      <span className="text-[var(--primary)] mt-1 font-bold">4</span>
-                      <span>
-                        <strong className="text-[var(--foreground)]">Multiple renderers</strong> &mdash;
-                        plain text, CLI, Claude Code, marketplace.
-                      </span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h3 className="font-bold text-lg mb-4">Usage</h3>
-                  <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-5 leading-relaxed">
-                    <div className="text-white/50 mb-2"># Install</div>
-                    <div className="mb-4">pip install attune-help</div>
-                    <div className="text-white/50 mb-2"># Use</div>
-                    <div className="text-blue-300">from</div>{' '}
-                    attune_help{' '}
-                    <div className="text-blue-300 inline">import</div>{' '}
-                    HelpEngine
-                    <br />
-                    <br />
-                    engine = HelpEngine(
-                    <br />
-                    <span className="ml-4">template_dir=</span>
-                    <span className="text-green-300">&quot;.help/templates&quot;</span>
-                    <br />
-                    )
-                    <br />
-                    result = engine.lookup(
-                    <span className="text-green-300">&quot;security-audit&quot;</span>
-                    )
-                  </div>
-                </div>
+              <div className="flex flex-wrap gap-4">
+                <a className="btn btn-primary" href="https://pypi.org/project/attune-harness/1.3.0/#use-harness-with-codex-claude-or-other-models">Set up your agent</a>
+                <a className="btn btn-outline" href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/docs/cli-guide.md">Choose a Harness workflow</a>
               </div>
             </div>
           </div>
@@ -452,152 +221,15 @@ export default function DocsPage() {
           </div>
         </section>
 
-        {/* Claude Code Plugin */}
-        <section id="plugin" className="py-20">
-          <div className="container">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-4xl font-bold text-center mb-4">
-                Claude Code Plugin
-              </h2>
-              <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
-                Install as a Claude Code plugin. Progressive help, project
-                bootstrapping, and {CAPABILITIES.skills} skills right in your terminal.
-              </p>
-
-              <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-8 mb-8">
-                <h3 className="font-bold text-lg mb-4">Install</h3>
-                <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-4 mb-2">
-                  <span className="text-white/50">$ </span>
-                  claude plugin marketplace add Smart-AI-Memory/attune-ai
-                </div>
-                <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-4">
-                  <span className="text-white/50">$ </span>
-                  claude plugin install attune-ai@attune-ai
-                </div>
-              </div>
-
-              <h3 className="font-bold text-lg mb-4">/coach Commands</h3>
-              <div className="grid sm:grid-cols-2 gap-4">
-                <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-5">
-                  <code className="text-[var(--primary)] font-bold text-sm">
-                    /coach &lt;topic&gt;
-                  </code>
-                  <p className="text-sm text-[var(--text-secondary)] mt-2">
-                    Progressive lookup. First call returns concept, repeat
-                    returns task, third returns reference.
-                  </p>
-                </div>
-                <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-5">
-                  <code className="text-[var(--primary)] font-bold text-sm">
-                    /coach init
-                  </code>
-                  <p className="text-sm text-[var(--text-secondary)] mt-2">
-                    Bootstrap a .help/ directory for your project. Scans
-                    source code and generates features.yaml.
-                  </p>
-                </div>
-                <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-5">
-                  <code className="text-[var(--primary)] font-bold text-sm">
-                    /coach status
-                  </code>
-                  <p className="text-sm text-[var(--text-secondary)] mt-2">
-                    Check template freshness. Shows which features have
-                    drifted from their source files.
-                  </p>
-                </div>
-                <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-5">
-                  <code className="text-[var(--primary)] font-bold text-sm">
-                    /coach maintain
-                  </code>
-                  <p className="text-sm text-[var(--text-secondary)] mt-2">
-                    Regenerate stale templates. Only updates files whose
-                    source hashes changed.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Workflows & Skills */}
-        <section id="workflows" className="py-20">
-          <div className="container">
-            <div className="max-w-5xl mx-auto">
-              <h2 className="text-4xl font-bold text-center mb-4">
-                Workflows &amp; Skills
-              </h2>
-              <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
-                The build half of the loop: {CAPABILITIES.workflows} workflows,{' '}
-                {CAPABILITIES.skills} auto-triggering Claude Code skills,
-                and an MCP server with {CAPABILITIES.mcpTools} registered tools — review, tests,
-                bug prediction, refactor, and release prep.
-              </p>
-
-              <div className="grid md:grid-cols-2 gap-8 mb-12">
-                <div>
-                  <h3 className="font-bold text-lg mb-4">Key Workflows</h3>
-                  <div className="space-y-3">
-                    {workflows.map((wf) => (
-                      <div
-                        key={wf.name}
-                        className="flex items-start gap-3 bg-[var(--background)] border border-[var(--border)] rounded-lg p-3"
-                      >
-                        <div>
-                          <div className="font-semibold text-sm">{wf.name}</div>
-                          <div className="text-xs text-[var(--text-secondary)]">
-                            {wf.description}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-bold text-lg mb-4">
-                    25 Claude Code Skills
-                  </h3>
-                  <p className="text-sm text-[var(--text-secondary)] mb-4">
-                    Skills auto-invoke from natural language. Type the topic
-                    and the right skill fires.
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {PLUGIN_SKILLS.map((skill) => (
-                      <span
-                        key={skill}
-                        className="inline-block bg-[var(--surface)] text-[var(--foreground)] border border-[var(--border)] rounded-full px-3 py-1 text-sm font-mono"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="mt-8">
-                    <h4 className="font-bold text-sm mb-3">Run from CLI</h4>
-                    <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-4 leading-relaxed">
-                      <div className="text-white/50"># Run a workflow</div>
-                      <div>attune workflow run security-audit \</div>
-                      <div className="ml-4">--input &apos;{'{'}&#34;path&#34;:&#34;./src&#34;{'}'}&apos;</div>
-                      <br />
-                      <div className="text-white/50"># Or use Claude Code</div>
-                      <div>/security scan my auth module</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-center">
-                <Link
-                  href="/framework-docs/"
-                  className="inline-flex items-center gap-2 text-[var(--primary)] hover:underline font-semibold"
-                >
-                  Full workflow documentation
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                  </svg>
-                </Link>
-              </div>
-            </div>
+        {/* Standalone reader reference; retain the earlier link target. */}
+        <section id="attune-help" className="py-8">
+          <div className="container max-w-5xl">
+            <h2 className="!text-xl font-bold mb-3">Standalone help reader</h2>
+            <p className="text-sm text-[var(--text-secondary)]">
+              Attune Help reads existing <code>.help/</code> templates.
+              If you need the reader independently, see the{' '}
+              <a className="underline" href="https://pypi.org/project/attune-help/">standalone package reference</a>.
+            </p>
           </div>
         </section>
 
@@ -606,22 +238,43 @@ export default function DocsPage() {
           <div className="container">
             <div className="max-w-3xl mx-auto">
               <h2 className="text-4xl font-bold text-center mb-12">
-                Frequently Asked Questions
+                Attune Harness FAQ
               </h2>
 
-              <div className="space-y-6">
-                {faqItems.map((item) => (
-                  <div
-                    key={item.question}
-                    className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-6"
-                  >
-                    <h3 className="font-bold mb-2">{item.question}</h3>
-                    <p className="text-sm text-[var(--text-secondary)]">
-                      {item.answer}
-                    </p>
+              <div className="space-y-6 mb-8">
+                {HARNESS_FAQ_ITEMS.map((item) => (
+                  <div key={item.question} className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-6">
+                    <h3 className="!text-xl font-bold mb-2">{item.question}</h3>
+                    <p className="text-sm text-[var(--text-secondary)]">{item.answer}</p>
                   </div>
                 ))}
               </div>
+              <div className="flex flex-wrap gap-4 mb-12">
+                <a href="#quickstart" className="btn btn-primary">Open the Harness Quick Start</a>
+                <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/docs/cli-guide.md" className="btn btn-outline">Read the release guide</a>
+                <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/docs/migration-from-attune-ai.md" className="btn btn-outline">Check migration boundaries</a>
+                <a href="/faq" className="btn btn-outline">Full FAQ and project references</a>
+              </div>
+              <details id="attune-ai-reference-questions" className="border border-[var(--border)] rounded-lg p-6">
+                <summary className="min-h-11 flex items-center text-lg font-semibold cursor-pointer">Earlier Attune AI references</summary>
+                <p className="text-sm text-[var(--text-secondary)] my-6">
+                  The questions below describe earlier Attune AI tooling and companion packages.
+                  Their workflows and commands apply to those projects.
+                </p>
+                <div className="space-y-6">
+                  {faqItems.map((item) => (
+                    <div
+                      key={item.question}
+                      className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-6"
+                    >
+                      <h3 className="!text-lg font-bold mb-2">{item.question}</h3>
+                      <p className="text-sm text-[var(--text-secondary)]">
+                        {item.answer}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </details>
             </div>
           </div>
         </section>

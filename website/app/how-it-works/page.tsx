@@ -58,9 +58,10 @@ export default function HowItWorksPage() {
               <div className="text-center mb-16">
                 <h2 className="text-3xl font-bold mb-4">The reliability loop</h2>
                 <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
-                  Five stages keep the work honest from idea to merge.
-                  Nothing gets generated without a spec, grounded without
-                  your code, or shipped without verification.
+                  Five stages describe a way to organize development. Choose
+                  checks appropriate to the change and inspect their results.
+                  This practice does not enforce every step in every workflow
+                  or guarantee correct output.
                 </p>
               </div>
 
@@ -112,7 +113,7 @@ export default function HowItWorksPage() {
               <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold mb-4">What&apos;s working underneath</h2>
                 <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
-                  Memory powers every stage of the loop — with four
+                  Project memory can support the loop alongside four
                   supporting capabilities, each real and shipped.
                 </p>
               </div>
@@ -219,15 +220,14 @@ export default function HowItWorksPage() {
                   The round table
                 </span>
                 <h2 className="text-3xl font-bold mb-4">
-                  Three models. One project brain. You chair.
+                  Cross-model review, with you deciding.
                 </h2>
                 <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
-                  The final QA check before you ship:{' '}
-                  <code className="text-base">/roundtable</code> convenes
-                  Claude Code, OpenAI Codex, and Google Antigravity —
-                  three agents sharing one project memory — to deliberate
-                  the question on a shared board. Every seat is advisory.
-                  Nothing is adopted until you promote it.
+                  The earlier <code className="text-base">/roundtable</code>{' '}
+                  integration provides a shared board for discussion with
+                  configured model seats. Check each seat&apos;s availability,
+                  authentication and permissions before use. The advice
+                  informs your decision; you choose what to adopt.
                 </p>
               </div>
 
@@ -236,12 +236,11 @@ export default function HowItWorksPage() {
                   <div className="text-3xl mb-4" aria-hidden="true">&#x1f5e3;&#xfe0f;</div>
                   <h3 className="text-xl font-bold mb-3">Deliberate</h3>
                   <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
-                    Each model posts positions and critiques to a shared,
-                    Redis-backed board — three different frontier models
-                    reasoning about the same question, not one model
-                    agreeing with itself. Work crosses seats as
-                    git-verified handoff packets, re-verified against the
-                    actual tree on resume.
+                    Participants can post positions and critiques to a
+                    Redis-backed board. Check which reviewers actually
+                    participated and which source material they saw.
+                    Re-verify handoff context against the current project
+                    before continuing work.
                   </p>
                 </div>
                 <div className="glass-panel rounded-xl p-8">
@@ -257,22 +256,19 @@ export default function HowItWorksPage() {
                   <div className="text-3xl mb-4" aria-hidden="true">&#x1f9fe;</div>
                   <h3 className="text-xl font-bold mb-3">Receipts, still</h3>
                   <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
-                    A claim without a receipt doesn&apos;t ship — even
-                    between AIs. Promoted actions get an executed receipt
-                    posted back to the board, closing the loop between a
-                    ruling and its execution.
+                    For actions you approve, capture the executed result
+                    and relevant check evidence. A decision to act is
+                    separate from evidence that the action succeeded.
                   </p>
                 </div>
               </div>
 
               <p className="text-center text-[var(--text-secondary)] mt-10 max-w-2xl mx-auto">
-                For a lighter touch,{' '}
-                <code className="text-base">/cross-review</code> gets one
-                advisory second opinion on a real diff from a different
-                model than the one that wrote it. It earns its keep: one
-                release exists because a cross-provider receipt probe
-                caught a protocol bug the primary client silently
-                tolerated.
+                For a second opinion,{' '}
+                <code className="text-base">/cross-review</code> requests
+                an advisory review of a real diff. Check the reviewer&apos;s
+                identity, the files included and any omissions. Findings
+                need assessment and appropriate verification before adoption.
               </p>
             </div>
           </div>
@@ -284,39 +280,38 @@ export default function HowItWorksPage() {
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold mb-4">
-                  The Agent Drafts. You Approve. The Platform Verifies.
+                  Draft the specification, agree the work and inspect the checks.
                 </h2>
                 <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
-                  Reliability isn&apos;t a vibe — it&apos;s a gate at each end of
-                  the work.
+                  Use specifications and independent checks to make a change
+                  reviewable. Keep their tested scope and limits visible.
                 </p>
               </div>
 
               <div className="grid md:grid-cols-2 gap-8">
                 <div className="glass-panel rounded-xl p-8">
                   <div className="text-3xl mb-4">&#x1f4dd;</div>
-                  <h3 className="text-xl font-bold mb-3">The spec gate</h3>
+                  <h3 className="text-xl font-bold mb-3">Before implementation</h3>
                   <ul className="space-y-3 text-[var(--text-secondary)]">
                     <li className="flex items-start gap-2">
                       <span className="text-[var(--primary)] mt-1 shrink-0">&#x2022;</span>
                       <span>
-                        Requirements, design, and tasks are written and
-                        approved before a line of code
+                        Write requirements, design and tasks; agree to the plan
+                        and scope before implementation
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-[var(--primary)] mt-1 shrink-0">&#x2022;</span>
                       <span>
-                        Socratic discovery scopes the work with you, not
-                        around you
+                        Use structured questions to resolve unclear requirements
+                        and record the decisions
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-[var(--primary)] mt-1 shrink-0">&#x2022;</span>
                       <span>
-                        The spec is the contract the build is measured
-                        against &mdash; and the ladder the agent executes
-                        between your approvals
+                        Compare the result with the agreed specification and
+                        keep changes in scope visible for review
                       </span>
                     </li>
                   </ul>
@@ -324,27 +319,28 @@ export default function HowItWorksPage() {
 
                 <div className="glass-panel rounded-xl p-8">
                   <div className="text-3xl mb-4">&#x2705;</div>
-                  <h3 className="text-xl font-bold mb-3">The verification gate</h3>
+                  <h3 className="text-xl font-bold mb-3">Before accepting a change</h3>
                   <ul className="space-y-3 text-[var(--text-secondary)]">
                     <li className="flex items-start gap-2">
                       <span className="text-[var(--secondary)] mt-1 shrink-0">&#x2022;</span>
                       <span>
-                        Generated claims are fact-checked against your real
-                        source
+                        Check generated claims against the relevant project
+                        sources
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-[var(--secondary)] mt-1 shrink-0">&#x2022;</span>
                       <span>
-                        Imports import, CLI flags are real, links resolve,
-                        counts match
+                        Choose checks for imports, CLI flags, links, counts and
+                        other properties the change depends on
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-[var(--secondary)] mt-1 shrink-0">&#x2022;</span>
                       <span>
-                        Hallucinations are caught before the change reaches
-                        main
+                        Inspect what passed, what failed and what remains
+                        unchecked. Passing checks do not guarantee a correct
+                        change
                       </span>
                     </li>
                   </ul>
