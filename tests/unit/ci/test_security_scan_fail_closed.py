@@ -302,8 +302,17 @@ def test_existing_finding_policy_survives(steps, sandbox, severity, conclusion):
         "null",
         "[]",
         "{}",
-        '{"total_findings": 0, "critical_count": 0, "medium_count": 0, "low_count": 0, '
-        '"has_critical": false, "has_bypass": true, "scan_skipped": true}',
+        json.dumps(
+            {
+                "total_findings": 0,
+                "critical_count": 0,
+                "medium_count": 0,
+                "low_count": 0,
+                "has_critical": False,
+                "has_bypass": True,
+                "scan_skipped": True,
+            }
+        ),
     ],
 )
 def test_missing_or_invalid_analysis_fails_even_with_bypass(steps, sandbox, analysis):
