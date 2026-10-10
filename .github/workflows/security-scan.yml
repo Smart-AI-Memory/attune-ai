@@ -52,7 +52,7 @@ jobs:
 
       - name: Run security audit
         id: security_scan
-        continue-on-error: true  # Don't fail job, we'll control blocking in next step
+        continue-on-error: true  # Retain diagnostics; the always-run check fails incomplete scans
         env:
           # Non-interactive CI run — opt into the spend gate explicitly
           # (collaboration-gates D10). Without this the gate would block
@@ -62,46 +62,66 @@ jobs:
           # Run security audit and capture raw output
           # --json flag outputs JSON but CLI also prints rich text (progress, panels)
           # Capture everything, then extract JSON in post-processing
-          attune workflow run security-audit --json > security_results_raw.txt 2>security_scan_stderr.log
-          scan_exit=$?
+          # Capture failure under bash -e instead of losing the scanner's exit code.
+          scan_exit=0
+          attune workflow run security-audit --json > security_results_raw.txt 2>security_scan_stderr.log || scan_exit=$?
+          echo "scan_exit=$scan_exit" >> "$GITHUB_OUTPUT"
 
           # Extract JSON from mixed output (CLI prints rich text before JSON result)
-          # The JSON result is the last { ... } block in the output
-          python3 -c "
-          import json, sys
-          content = open('security_results_raw.txt').read()
-          # Try parsing whole file as JSON
+          # Only the findings-list contract consumed by the analyzer is supported.
+          # An SDK envelope or malformed output cannot establish zero findings.
+          results_exit=0
+          python3 - <<'PY' || results_exit=$?
+          import json
+          import sys
+          from pathlib import Path
+
+          content = Path('security_results_raw.txt').read_text(encoding='utf-8')
+          data = None
           try:
-              json.loads(content)
-              open('security_results.json', 'w').write(content)
-              sys.exit(0)
+              data = json.loads(content)
           except json.JSONDecodeError:
-              pass
-          # Find last JSON object in output
-          last_brace = content.rfind('}')
-          if last_brace == -1:
-              open('security_results.json', 'w').write(json.dumps({'findings': [], 'error': 'No JSON found in output'}))
-              sys.exit(0)
-          # Walk backwards to find matching opening brace
-          depth = 0
-          for i in range(last_brace, -1, -1):
-              if content[i] == '}': depth += 1
-              elif content[i] == '{': depth -= 1
-              if depth == 0:
+              # The CLI prints its JSON object at column 0. Do not recover a
+              # nested suffix from an invalid outer object or skip trailing data.
+              decoder = json.JSONDecoder()
+              for start, char in enumerate(content):
+                  if char != '{' or (start and content[start - 1] != '\n'):
+                      continue
                   try:
-                      data = json.loads(content[i:last_brace+1])
-                      open('security_results.json', 'w').write(json.dumps(data, indent=2))
-                      sys.exit(0)
+                      candidate, end = decoder.raw_decode(content, start)
                   except json.JSONDecodeError:
                       break
-          open('security_results.json', 'w').write(json.dumps({'findings': [], 'error': 'Could not extract JSON from CLI output'}))
-          "
+                  if not content[end:].strip():
+                      data = candidate
+                  break
+
+          valid = (
+              isinstance(data, dict)
+              and isinstance(data.get('findings'), list)
+              and all(
+                  isinstance(finding, dict)
+                  and isinstance(finding.get('severity', 'low'), str)
+                  and finding.get('severity', 'low').lower() in ('critical', 'medium', 'low')
+                  for finding in data['findings']
+              )
+              and 'error' not in data
+              and not data.get('scan_skipped')
+              and data.get('success', True) is True
+              and type(data.get('exit_code', 0)) is int
+              and data.get('exit_code', 0) == 0
+          )
+          if not valid:
+              data = {'findings': [], 'error': 'Could not extract JSON from CLI output'}
+          Path('security_results.json').write_text(json.dumps(data, indent=2), encoding='utf-8')
+          sys.exit(0 if valid else 1)
+          PY
 
           # Check if scan succeeded
-          if [ $scan_exit -eq 0 ]; then
-            echo "scan_status=success" >> $GITHUB_OUTPUT
+          if [ "$scan_exit" -eq 0 ] && [ "$results_exit" -eq 0 ]; then
+            echo "scan_status=success" >> "$GITHUB_OUTPUT"
           else
-            echo "scan_status=failed" >> $GITHUB_OUTPUT
+            echo "scan_status=failed" >> "$GITHUB_OUTPUT"
+            exit 1
           fi
 
       - name: Ensure results file exists
@@ -121,8 +141,8 @@ jobs:
 
       - name: Post results to PR
         # Skip when extraction failed (no pr_comment.md written) — see issue #560.
-        # The GH check stays green; workflow logs carry the real diagnostic.
-        if: github.event_name == 'pull_request' && hashFiles('pr_comment.md') != ''
+        # Incomplete scans fail the always-run check below, without a passed PR comment.
+        if: github.event_name == 'pull_request' && steps.security_scan.outcome == 'success' && steps.security_scan.outputs.scan_status == 'success' && hashFiles('pr_comment.md') != ''
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -214,15 +234,49 @@ jobs:
 
       - name: Create check run
         if: always()
+        env:
+          SCAN_OUTCOME: ${{ steps.security_scan.outcome }}
+          SCAN_STATUS: ${{ steps.security_scan.outputs.scan_status }}
+          SCAN_EXIT: ${{ steps.security_scan.outputs.scan_exit }}
+          ANALYSIS_OUTCOME: ${{ steps.analyze.outcome }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
-            const analysis = JSON.parse(fs.readFileSync('analysis.json', 'utf8'));
+            let analysis = {};
+            let analysisError = '';
+            try {
+              analysis = JSON.parse(fs.readFileSync('analysis.json', 'utf8'));
+              if (!analysis || typeof analysis !== 'object' || Array.isArray(analysis)) {
+                throw new Error('Analysis must be an object');
+              }
+            } catch (error) {
+              analysis = {};
+              analysisError = `Missing or invalid analysis.json: ${error.message}`;
+            }
 
-            const conclusion = analysis.has_critical && !analysis.has_bypass ? 'failure' : 'success';
-            const summary = `
+            const validCounts = ['total_findings', 'critical_count', 'medium_count', 'low_count']
+              .every(key => Number.isInteger(analysis[key]) && analysis[key] >= 0);
+            const scanComplete = process.env.SCAN_OUTCOME === 'success'
+              && process.env.SCAN_STATUS === 'success'
+              && process.env.SCAN_EXIT === '0'
+              && process.env.ANALYSIS_OUTCOME === 'success'
+              && validCounts
+              && analysis.total_findings === analysis.critical_count + analysis.medium_count + analysis.low_count
+              && typeof analysis.has_critical === 'boolean'
+              && typeof analysis.has_bypass === 'boolean'
+              && analysis.has_critical === (analysis.critical_count > 0)
+              && !analysisError && !('error' in analysis) && !analysis.scan_skipped;
+            const diagnostic = analysisError || analysis.error
+              || `Scanner exit: ${process.env.SCAN_EXIT || 'unavailable'}; scan: ${process.env.SCAN_OUTCOME || 'unavailable'}; analysis: ${process.env.ANALYSIS_OUTCOME || 'unavailable'}`;
+            if (!scanComplete) {
+              // Fail the job as well as its payload, even if publishing the check fails.
+              core.setFailed(`Security scan incomplete: ${diagnostic}`);
+            }
+
+            const conclusion = !scanComplete || (analysis.has_critical && !analysis.has_bypass) ? 'failure' : 'success';
+            const summary = scanComplete ? `
             ## Security Scan Summary
 
             - **Total Findings:** ${analysis.total_findings}
@@ -231,7 +285,7 @@ jobs:
             - **Low:** ${analysis.low_count}
 
             ${conclusion === 'failure' ? '❌ **BLOCKED:** Critical findings must be resolved' : '✅ No blocking issues'}
-            `;
+            ` : `## Security Scan Incomplete\n\nFindings are unavailable; this is not a zero-findings result.\n\n${diagnostic}`;
 
             await github.rest.checks.create({
               owner: context.repo.owner,
@@ -241,8 +295,8 @@ jobs:
               status: 'completed',
               conclusion: conclusion,
               output: {
-                title: conclusion === 'failure' ? 'Critical Security Issues Found' : 'Security Scan Passed',
+                title: !scanComplete ? 'Security Scan Incomplete' : conclusion === 'failure' ? 'Critical Security Issues Found' : analysis.total_findings === 0 ? 'Security Scan Completed — No Findings' : 'Security Scan Passed',
                 summary: summary,
-                text: analysis.detailed_text || 'See PR comment for details'
+                text: !scanComplete ? diagnostic : analysis.detailed_text || 'See PR comment for details'
               }
             });
