@@ -59,7 +59,7 @@ export default function Home() {
             <p>In one exporter comparison, command-line checks found three defects that direct serializer checks had missed.</p>
             <p>The result applies to that example. General model reliability needs separate assessment.</p>
             <p><Link href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/docs/plan-build-native-results.md">Read the comparison and its limits</Link></p>
-            <p>A passing check establishes what it tested. Native planning and building remain experimental. Claude Code and Codex have documented setup paths; Antigravity integration is unverified in this review. Native MCP panel delivery remains unverified. <Link href="https://pypi.org/project/attune-harness/1.3.0/#what-is-qualified-and-what-is-not">Review the qualification guide</Link>.</p>
+            <p>A passing check establishes what it tested. Native planning and building remain experimental. Claude Code and Codex have documented setup paths; Antigravity integration is unverified in this review. Native MCP panel delivery remains unverified. <Link href="https://pypi.org/project/attune-harness/1.3.0/#user-content-what-is-qualified-and-what-is-not">Review the qualification guide</Link>.</p>
           </details>
         </div>
       </div>

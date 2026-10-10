@@ -63,7 +63,7 @@ export default function PricingPage() {
               running Redis service; Voyage retrieval needs a Voyage API key
               and makes paid calls. Integration requirements are covered in
               the{' '}
-              <a className="underline" href="https://pypi.org/project/attune-harness/1.3.0/#installation">released installation guide</a>.
+              <a className="underline" href="https://pypi.org/project/attune-harness/1.3.0/#user-content-installation">released installation guide</a>.
             </p>
             <p className="text-[var(--text-secondary)] mt-4 mb-6">
               Installing the Python package does not install an agent plugin

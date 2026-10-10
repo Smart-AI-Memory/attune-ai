@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import styles from './Footer.module.css';
 
 const linkClass = 'text-sm text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors';
 
@@ -15,7 +16,7 @@ export default function Footer() {
             <a href="https://github.com/Smart-AI-Memory/attune-harness" target="_blank" rel="noopener noreferrer" className={linkClass + ' inline-block mt-4'}>Attune Harness on GitHub</a>
           </div>
           <div>
-            <h3 className="font-bold text-sm uppercase tracking-wide mb-4">Attune Harness</h3>
+            <h3 className={styles.heading}>Attune Harness</h3>
             <ul className="space-y-2">
               <li><Link href="/#harness" className={linkClass}>What you can do</Link></li>
               <li><Link href="/docs#harness-docs" className={linkClass}>Harness documentation</Link></li>
@@ -26,7 +27,7 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h3 className="font-bold text-sm uppercase tracking-wide mb-4">Resources and references</h3>
+            <h3 className={styles.heading}>Resources and References</h3>
             <ul className="space-y-2">
               <li><a href="https://pypi.org/project/attune-harness/1.3.0/" target="_blank" rel="noopener noreferrer" className={linkClass}>Harness package and release guide</a></li>
               <li><Link href="/#portfolio" className={linkClass}>Supporting tools and earlier work</Link></li>

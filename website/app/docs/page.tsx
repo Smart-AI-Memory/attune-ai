@@ -110,9 +110,9 @@ export default function DocsPage() {
             <h2 className="text-4xl font-bold mb-4">Start with Attune Harness</h2>
             <p className="text-xl text-[var(--text-secondary)] mb-6">Define a useful next step, build or repair within scope, check the result, and return with the context intact. Choose a workflow from the guide; command syntax is available when you need it.</p>
             <div className="flex flex-wrap gap-4 mb-6">
-              <a className="btn btn-primary" href="https://pypi.org/project/attune-harness/1.3.0/#installation">Install Harness</a>
+              <a className="btn btn-primary" href="https://pypi.org/project/attune-harness/1.3.0/#user-content-installation">Install Harness</a>
               <a className="btn btn-outline" href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/docs/cli-guide.md">Read the Harness guide</a>
-              <a className="btn btn-outline" href="https://pypi.org/project/attune-harness/1.3.0/#what-is-qualified-and-what-is-not">Check the qualification limits</a>
+              <a className="btn btn-outline" href="https://pypi.org/project/attune-harness/1.3.0/#user-content-what-is-qualified-and-what-is-not">Check the qualification limits</a>
             </div>
             <p className="text-sm text-[var(--text-secondary)]">Claude Code and Codex have documented setup paths. Native planning and building remain experimental; Antigravity integration is unverified here. Intent acceptance is separate from paid execution permission.</p>
             <p className="text-sm text-[var(--text-secondary)] mt-4">Harness does not yet replace every Attune AI workflow. <a className="underline" href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/docs/migration-from-attune-ai.md">Review the migration boundaries</a> before changing an existing setup.</p>
@@ -151,7 +151,7 @@ export default function DocsPage() {
                   example below needs no API key. Redis use needs a running
                   Redis service; Voyage retrieval needs a Voyage API key and
                   makes paid calls. Integration requirements are covered in the{' '}
-                  <a className="underline" href="https://pypi.org/project/attune-harness/1.3.0/#installation">released installation guide</a>.
+                  <a className="underline" href="https://pypi.org/project/attune-harness/1.3.0/#user-content-installation">released installation guide</a>.
                 </p>
               </li>
               <li className="p-6">
@@ -175,7 +175,7 @@ export default function DocsPage() {
                 before authorizing execution.
               </p>
               <div className="flex flex-wrap gap-4">
-                <a className="btn btn-primary" href="https://pypi.org/project/attune-harness/1.3.0/#use-harness-with-codex-claude-or-other-models">Set up your agent</a>
+                <a className="btn btn-primary" href="https://pypi.org/project/attune-harness/1.3.0/#user-content-use-harness-with-codex-claude-or-other-models">Set up your agent</a>
                 <a className="btn btn-outline" href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/docs/cli-guide.md">Choose a Harness workflow</a>
               </div>
             </div>
