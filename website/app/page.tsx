@@ -19,16 +19,15 @@ export default function Home() {
         <Link className={styles["cta"] + " " + styles["primary"]} href="#collaborate">Collaborate <span aria-hidden="true">↗</span></Link>
         <p className={styles["secondary-paths"]}><Link href="#pilot">Discuss a pilot</Link><Link href="#sponsor">Sponsor open-source milestones</Link></p>
       </div>
-      <figure className={styles["evidence-card"]} aria-labelledby="chain-title">
+      <aside className={styles["evidence-card"]} aria-labelledby="chain-title">
         <p className={styles["eyebrow"]}>Attune Harness</p>
-        <h2 id="chain-title">A task you can inspect.</h2>
-        <ol className={styles["evidence-chain"]}>
-          <li><span className={styles["step-number"]} aria-hidden="true">01</span><div><strong>Agree the scope</strong><span>Goal, limits and acceptance criteria</span></div></li>
-          <li><span className={styles["step-number"]} aria-hidden="true">02</span><div><strong>Authorize the work</strong><span>Permitted actions and recorded output</span></div></li>
-          <li><span className={styles["step-number"]} aria-hidden="true">03</span><div><strong>Check the result</strong><span>Independent checks, outcome and errors</span></div></li>
+        <h2 id="chain-title">From idea to a result you can review</h2>
+        <ol className={styles["evidence-chain"]} role="list">
+          <li><span className={styles["step-number"]} aria-hidden="true">01</span><div><strong>Define what done means</strong><span>Turn your idea into a clear goal, scope, and plan with your agent.</span></div></li>
+          <li><span className={styles["step-number"]} aria-hidden="true">02</span><div><strong>Keep the context with the work</strong><span>Build, review, and repair with the task’s scope and evidence alongside it.</span></div></li>
+          <li><span className={styles["step-number"]} aria-hidden="true">03</span><div><strong>Know where you stand</strong><span>See what changed, what the checks established, and what still needs attention. Decide what happens next.</span></div></li>
         </ol>
-        <figcaption>Illustrative workflow. A real receipt records what ran and what the checks established.</figcaption>
-      </figure>
+      </aside>
     </section>
 
     <section className={styles["section"] + " " + styles["wrap"] + " " + styles["harness"]} id="harness" aria-labelledby="harness-title">
