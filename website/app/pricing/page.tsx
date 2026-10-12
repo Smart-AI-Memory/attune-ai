@@ -38,11 +38,11 @@ export default function PricingPage() {
               </p>
               <div className="flex flex-wrap gap-4 justify-center">
                 <a
-                  href="https://github.com/Smart-AI-Memory/attune-harness/tree/v1.3.0"
+                  href="https://github.com/Smart-AI-Memory/attune-harness/tree/v1.4.0"
                   className="px-6 py-3 rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors"
                 >Read the source</a>
                 <a
-                  href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/LICENSE"
+                  href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.4.0/LICENSE"
                   className="px-6 py-3 rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors"
                 >Read the license</a>
               </div>
@@ -55,15 +55,15 @@ export default function PricingPage() {
             <h2 className="text-4xl font-bold mb-4">Start with Harness</h2>
             <p className="text-xl text-[var(--text-secondary)] mb-6">
               Use Python 3.10 or later in a separate environment from Attune AI.
-              Install the recommended 1.3.0 package:
+              Install the recommended 1.4.0 package:
             </p>
-            <pre className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-4 overflow-x-auto"><code>python -m pip install &apos;attune-harness[all]==1.3.0&apos;</code></pre>
+            <pre className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-4 overflow-x-auto"><code>python -m pip install &apos;attune-harness[all]==1.4.0&apos;</code></pre>
             <p className="text-[var(--text-secondary)] mt-6">
               This install adds Redis and Voyage support. Redis use needs a
               running Redis service; Voyage retrieval needs a Voyage API key
               and makes paid calls. Integration requirements are covered in
               the{' '}
-              <a className="underline" href="https://pypi.org/project/attune-harness/1.3.0/#user-content-installation">released installation guide</a>.
+              <a className="underline" href="https://pypi.org/project/attune-harness/1.4.0/#user-content-installation">released installation guide</a>.
             </p>
             <p className="text-[var(--text-secondary)] mt-4 mb-6">
               Installing the Python package does not install an agent plugin

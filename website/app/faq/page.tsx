@@ -243,7 +243,7 @@ export default function FAQPage() {
               </p>
               <div className="flex flex-wrap justify-center gap-4 mt-8">
                 <Link href="/docs#quickstart" className="btn btn-primary">Harness Quick Start</Link>
-                <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/docs/cli-guide.md" className="btn btn-outline !text-white !border-white/60 hover:!bg-white/15">Read the release guide</a>
+                <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.4.0/docs/cli-guide.md" className="btn btn-outline !text-white !border-white/60 hover:!bg-white/15">Read the release guide</a>
               </div>
             </div>
           </div>
