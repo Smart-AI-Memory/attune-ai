@@ -8,6 +8,8 @@ const postsDirectory = path.join(process.cwd(), 'content/blog');
 export interface BlogPost {
   slug: string;
   title: string;
+  seoTitle?: string;
+  companionSlug?: string;
   date: string;
   author: string;
   excerpt: string;
@@ -90,6 +92,11 @@ export function getPostBySlug(slug: string): BlogPost | null {
     return {
       slug,
       title: data.title || 'Untitled',
+      seoTitle: typeof data.seoTitle === 'string' ? data.seoTitle : undefined,
+      companionSlug:
+        typeof data.companionSlug === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(data.companionSlug)
+          ? data.companionSlug
+          : undefined,
       date: data.date || new Date().toISOString(),
       author: data.author || 'Smart AI Memory Team',
       excerpt: data.excerpt || '',
