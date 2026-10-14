@@ -1,0 +1,64 @@
+{
+  "target_version": null,
+  "publication_date": null,
+  "current_release": "1.3.0",
+  "status": "Preparation only; no release or publication approved",
+  "candidates": [
+    {
+      "id": "persistent-form-guidance",
+      "title": "Keep question instructions available while answering",
+      "status": "Verified candidate source; unreleased",
+      "pull_request": "https://github.com/Smart-AI-Memory/attune-harness/pull/242",
+      "source_commit": "149d8725f7636bec1a9201124e798cf8641c01ac",
+      "candidate_head": "39f502afaa6401c074ed293bbb7f9e005579c5f0",
+      "source_path": "src/attune_harness/gui_forms_intake.py",
+      "affected_topics": [
+        "start-and-continue",
+        "save-and-resume",
+        "troubleshooting"
+      ],
+      "behavior": "Overall partial-save guidance precedes the form. Each input describes that guidance and its persistent hint through aria-describedby. A question marked required by its owner displays the required-before-acceptance hint; optional questions retain the partial-save hint.",
+      "required_hint": "Required before intent acceptance. You can leave this blank when saving partial answers.",
+      "unchanged": "The named controls and the distinction between saving partial answers, accepting intent and executing work are unchanged.",
+      "evidence": "Help owner inspected the pinned candidate source. Form owner supplied independent source review, 98 focused checks, 15 client tests and default/320px synthetic browser evidence. These bounded observations are not a release or WCAG conformance claim.",
+      "remaining": "Reconcile the final selected release commit and qualification, review affected canonical walkthroughs with their owner, and update help/deck projections before publication. Screen-reader, real-device and full interaction coverage are not established here.",
+      "controls": [
+        "Continue form",
+        "Save answers",
+        "Review your answers",
+        "Accept this intent"
+      ]
+    },
+    {
+      "id": "first-gui-journey",
+      "title": "Inspect the saved or accepted request",
+      "status": "Verified candidate source and supplied captures; integration and instructions pending",
+      "pull_request": "https://github.com/Smart-AI-Memory/attune-harness/pull/243",
+      "source_commit": "a51460dfcd15701b36955d74a5e1324adc1a4f80",
+      "candidate_head": "af34fe4a26361599fda24a86a1959e84ed6e4fe1",
+      "source_path": "src/attune_harness/gui_forms_intake.py",
+      "affected_topics": [
+        "start-and-continue",
+        "save-and-resume"
+      ],
+      "behavior": "The candidate provides closed-by-default disclosures showing retained saved or accepted intent. An optional prompt explanation describes prompt sections with illustrative XML. Returning to the accepted request remains read-only; accepting intent does not authorize planning, building or paid dispatch.",
+      "required_hint": null,
+      "unchanged": "The existing intake, save, review and acceptance controls remain. The separately owned PR242 question hints are absent from these captures.",
+      "evidence": "Help owner inspected the pinned source and supplied provenance manifest, verified all ten synthetic capture hashes and inspected the accepted-request and prompt-explanation images. The GUI owner reports keyboard and 320px observations, matching canonical tutorial literals and 103 installed modules matching source. These are candidate observations, not released1.3.0 or user-comprehension/WCAG claims.",
+      "remaining": "Integrate and qualify the selected forms/GUI source, reconcile source-consistent captures, and review canonical next-version walkthroughs with their owner before writing Help steps or expected results. Final full/platform evidence, release version/date and publication decisions remain separate.",
+      "capture_provenance": {
+        "manifest_sha256": "110b358caa4b3cafa85af611e0ead2e83d9b96314de6f3c3b8c2a5928b7386a8",
+        "wheel_sha256": "b38c302de95cce80e528fe0d60f6b5e63bbbfbf7bd34369ba99598468671942e",
+        "published_release_claim": false,
+        "forms_pr242_included": false,
+        "canonical_tutorial_source": "86e83c6e29a27f605128600ff011176265e4e431",
+        "capture_count": 10
+      },
+      "controls": [
+        "View saved request",
+        "View accepted request",
+        "How this becomes a prompt"
+      ]
+    }
+  ]
+}
