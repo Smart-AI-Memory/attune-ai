@@ -10,6 +10,7 @@ import { getPostBySlug, getAllPosts, getRelatedPosts } from '@/lib/blog';
 import { generateMetadata as generateSEOMetadata, generateStructuredData } from '@/lib/metadata';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import './publication.css';
 
 interface PageProps {
   params: Promise<{
@@ -35,7 +36,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   return generateSEOMetadata({
-    title: post.title,
+    title: post.seoTitle || post.title,
     description: post.excerpt,
     type: 'article',
     url: `https://smartaimemory.com/blog/${post.slug}`,
@@ -72,6 +73,7 @@ export default async function BlogPostPage({ params }: PageProps) {
   const isTutorial = post.tags.includes('tutorial');
 
   const relatedPosts = getRelatedPosts(post.slug, post.tags);
+  const companionPost = post.companionSlug ? getPostBySlug(post.companionSlug) : null;
 
   return (
     <>
@@ -102,7 +104,7 @@ export default async function BlogPostPage({ params }: PageProps) {
       )}
       <Navigation />
       <main id="main-content" className="min-h-screen pt-16">
-        <article className="py-20">
+        <article className={`py-20${post.companionSlug ? ' article-publication' : ''}`}>
           <div className="container">
             <div className="max-w-4xl mx-auto">
               <Breadcrumbs
@@ -168,7 +170,7 @@ export default async function BlogPostPage({ params }: PageProps) {
               )}
 
               {/* Content */}
-              <div className="prose prose-lg max-w-none prose-headings:font-bold prose-a:text-[var(--primary)] prose-a:no-underline hover:prose-a:underline prose-code:bg-[var(--border)] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-[var(--border)] prose-pre:border prose-pre:border-[var(--border)]">
+              <div className={`prose prose-lg max-w-none prose-headings:font-bold prose-a:text-[var(--primary)] prose-a:no-underline hover:prose-a:underline prose-code:bg-[var(--border)] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-[var(--border)] prose-pre:border prose-pre:border-[var(--border)]${post.companionSlug ? ' article-publication-body' : ''}`}>
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {post.content}
                 </ReactMarkdown>
@@ -209,6 +211,16 @@ export default async function BlogPostPage({ params }: PageProps) {
 
               {/* Footer */}
               <footer className="mt-12 pt-12 border-t border-[var(--border)]">
+                {companionPost?.published && (
+                  <nav aria-label="Companion article" className="mb-6">
+                    <Link
+                      href={`/blog/${companionPost.slug}/`}
+                      className="text-[var(--primary)] hover:underline"
+                    >
+                      {companionPost.title}
+                    </Link>
+                  </nav>
+                )}
                 <div className="flex justify-between items-center">
                   <Link
                     href="/blog"

@@ -1,0 +1,58 @@
+/* Retain the reviewed presentation for posts with explicit companion navigation. */
+.article-publication-body {
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+
+.article-publication-body p { margin: 0 0 1.25rem; }
+.article-publication-body h2 { margin: 2.25rem 0 1rem; }
+.article-publication-body > h3 {
+  font-size: 1.25rem;
+  line-height: 1.35;
+  font-weight: 700;
+  margin: 2rem 0 1rem;
+}
+.article-publication-body > :first-child { margin-top: 0; }
+.article-publication-body ul,
+.article-publication-body ol {
+  padding-left: 1.5rem;
+  margin: 1rem 0 1.5rem;
+}
+.article-publication-body ul { list-style: disc; }
+.article-publication-body ol { list-style: decimal; }
+.article-publication-body li { margin: .5rem 0; }
+.article-publication-body a { text-decoration: underline; text-underline-offset: .15em; }
+.article-publication-body img { max-width: 100%; height: auto; }
+.article-publication-body > blockquote {
+  border-left: 2px solid var(--border);
+  padding-left: 1rem;
+  margin: 1.25rem 0;
+}
+.article-publication-body pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  tab-size: 2;
+  font-size: .875rem;
+  line-height: 1.65;
+  padding: 1rem;
+  margin: 1.25rem 0 1.5rem;
+  background: var(--surface-container-low);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+  border-radius: .5rem;
+}
+.article-publication-body pre code {
+  display: block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: inherit;
+  line-height: inherit;
+  white-space: inherit;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+@media (max-width: 640px) {
+  .article-publication h1 { font-size: 2rem; }
+  .article-publication-body pre { padding: .75rem; font-size: .8125rem; }
+}
