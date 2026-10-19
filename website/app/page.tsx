@@ -19,16 +19,15 @@ export default function Home() {
         <Link className={styles["cta"] + " " + styles["primary"]} href="#collaborate">Collaborate <span aria-hidden="true">↗</span></Link>
         <p className={styles["secondary-paths"]}><Link href="#pilot">Discuss a pilot</Link><Link href="#sponsor">Sponsor open-source milestones</Link></p>
       </div>
-      <figure className={styles["evidence-card"]} aria-labelledby="chain-title">
+      <aside className={styles["evidence-card"]} aria-labelledby="chain-title">
         <p className={styles["eyebrow"]}>Attune Harness</p>
-        <h2 id="chain-title">A task you can inspect.</h2>
-        <ol className={styles["evidence-chain"]}>
-          <li><span className={styles["step-number"]} aria-hidden="true">01</span><div><strong>Agree the scope</strong><span>Goal, limits and acceptance criteria</span></div></li>
-          <li><span className={styles["step-number"]} aria-hidden="true">02</span><div><strong>Authorize the work</strong><span>Permitted actions and recorded output</span></div></li>
-          <li><span className={styles["step-number"]} aria-hidden="true">03</span><div><strong>Check the result</strong><span>Independent checks, outcome and errors</span></div></li>
+        <h2 id="chain-title">From idea to a result you can review</h2>
+        <ol className={styles["evidence-chain"]} role="list">
+          <li><span className={styles["step-number"]} aria-hidden="true">01</span><div><strong>Define what done means</strong><span>Turn your idea into a clear goal, scope, and plan with your agent.</span></div></li>
+          <li><span className={styles["step-number"]} aria-hidden="true">02</span><div><strong>Keep the context with the work</strong><span>Build, review, and repair with the task’s scope and evidence alongside it.</span></div></li>
+          <li><span className={styles["step-number"]} aria-hidden="true">03</span><div><strong>Know where you stand</strong><span>See what changed, what the checks established, and what still needs attention. Decide what happens next.</span></div></li>
         </ol>
-        <figcaption>Illustrative workflow. A real receipt records what ran and what the checks established.</figcaption>
-      </figure>
+      </aside>
     </section>
 
     <section className={styles["section"] + " " + styles["wrap"] + " " + styles["harness"]} id="harness" aria-labelledby="harness-title">
@@ -53,14 +52,14 @@ export default function Home() {
           <div><h3>Evidence has limits too.</h3><p>A passing check establishes what it tested. It does not guarantee every output is correct.</p></div>
         </div>
         <div className={styles["release"]}>
-          <p><strong>Published: Attune Harness 1.3.0.</strong> <Link href="https://pypi.org/project/attune-harness/1.3.0/">Package and release guide</Link></p>
+          <p><strong>Published: Attune Harness 1.4.0.</strong> <Link href="https://pypi.org/project/attune-harness/1.4.0/">Package and release guide</Link></p>
           <p className={styles["candidate"]}>Browser forms guide intake and intent approval. Each workflow retains its own execution permissions and checks.</p>
           <details>
             <summary>Read the evidence and limits</summary>
             <p>In one exporter comparison, command-line checks found three defects that direct serializer checks had missed.</p>
             <p>The result applies to that example. General model reliability needs separate assessment.</p>
             <p><Link href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/docs/plan-build-native-results.md">Read the comparison and its limits</Link></p>
-            <p>A passing check establishes what it tested. Native planning and building remain experimental. Claude Code and Codex have documented setup paths; Antigravity integration is unverified in this review. Native MCP panel delivery remains unverified. <Link href="https://pypi.org/project/attune-harness/1.3.0/#what-is-qualified-and-what-is-not">Review the qualification guide</Link>.</p>
+            <p>A passing check establishes what it tested. Native planning and building remain experimental. Claude Code and Codex have documented setup paths; Antigravity integration is unverified in this review. Native MCP panel delivery remains unverified. <Link href="https://pypi.org/project/attune-harness/1.4.0/#user-content-what-is-qualified-and-what-is-not">Review the qualification guide</Link>.</p>
           </details>
         </div>
       </div>
@@ -76,7 +75,7 @@ export default function Home() {
         <article className={styles["path"]}><h3>Keep the next step visible.</h3><p>Retain an opportunity-review checkpoint with its goal, progress, evidence and unfinished review.</p></article>
         <article className={styles["path"]}><h3>Choose what to pursue.</h3><p>Assess the proposed benefit and uncertainty. A saved suggestion grants no execution authority.</p></article>
       </div>
-      <p className={styles["candidate"]}>Scoped recall and saved review checkpoints are supported. Automatic access to all chat history is not implied; the richer opportunity-ranking and selection journey remains proposed. <Link href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/docs/specs/task-opportunities/journey.md">Review the current boundary</Link>.</p>
+      <p className={styles["candidate"]}>Scoped recall and saved review checkpoints are supported. Automatic access to all chat history is not implied; the richer opportunity-ranking and selection journey remains proposed. <Link href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.4.0/docs/specs/task-opportunities/journey.md">Review the current boundary</Link>.</p>
     </section>
 
     <section className={styles["section"] + " " + styles["wrap"]} aria-labelledby="paths-title">
