@@ -1,5 +1,18 @@
 # Harness Help Center content maintenance
 
+The current published-release entry is `/harness/help/1-5-0/`, authored in
+`lib/harness-help/topics.ts`. Its installation uses PyPI 1.5.0 rather than a
+candidate wheel. The base install, version, CLI help and deterministic demo
+were checked on macOS/Python 3.12.2 on October 19, 2026. No Windows desktop,
+paid-provider or candidate walkthrough execution is newly claimed.
+
+The other seven guides retain 1.3.0 instructions and source identity. The
+`next-release` route is now a noindex historical record, with its original
+JSON unchanged. Neither that record nor the separately prepared 1.5.0 candidate
+walkthrough overlay is relabeled as published-wheel evidence. Publication is
+authorized for the scoped 1.5.0 Help page through the normal repository gates;
+this does not authorize dependency changes or bypasses of failed checks.
+
 `lib/harness-help/topics.ts` is the single authored source for Help Center
 framing, topic IDs and release-reference guidance. One ordinary Markdown
 renderer handles task, explanation, reference and troubleshooting content.
@@ -58,8 +71,8 @@ local links and browser journeys after relevant changes. Link/build success
 does not replace explicit walkthrough review on the candidate. Keep old release
 guidance useful and visibly versioned; current main and prototypes are separate.
 
-Review routes carry noindex metadata and currently have no shared navigation
-link or sitemap addition. The existing website Git integration creates hosted
+The public Help overview and current release page are linked from `/docs/`
+and the sitemap. Historical preparation remains noindex. The website Git integration creates hosted
 previews from branch/PR updates and deploys main to production. Source
 publication and production deployment require their applicable approval; do not
 change hosting settings to bypass those boundaries.

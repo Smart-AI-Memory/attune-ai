@@ -4,6 +4,8 @@ import provenance from '@/content/harness-help/walkthrough-provenance.json';
 export const HELP_ROOT = '/harness/help/';
 export const RELEASE_COMMIT = '0ecf8e6058cee9ed6f9b9510e043e3af3cbe1da0';
 export const RELEASE_ROOT = `https://github.com/Smart-AI-Memory/attune-harness/blob/${RELEASE_COMMIT}`;
+export const CURRENT_RELEASE = '1.5.0';
+export const CURRENT_RELEASE_ROOT = 'https://github.com/Smart-AI-Memory/attune-harness/blob/v1.5.0';
 export { provenance };
 
 export interface HelpTopic {
@@ -13,9 +15,125 @@ export interface HelpTopic {
   kind: 'task' | 'explanation' | 'troubleshooting' | 'reference';
   sourcePaths: string[];
   content: string;
+  version?: string;
 }
 
 export const topics: HelpTopic[] = [
+  {
+    slug: '1-5-0', title: 'Get started with Harness 1.5.0', kind: 'task',
+    version: CURRENT_RELEASE,
+    goal: 'Install the published release, check a local result, and choose your next workflow.',
+    sourcePaths: ['README.md', 'pyproject.toml', 'docs/release-notes-1.5.0.md'],
+    content: `## What you can do
+
+Attune Harness runs agent tasks, checks their results against criteria you supply,
+and keeps the output and check evidence in a receipt. Use it to plan work,
+build an accepted task, review a document against evidence, repair scoped files,
+or test a captured change. Inspect a saved task before continuing it.
+
+Version **1.5.0**, published October 19, 2026, includes merged Windows components
+for captured tests, file-memory readers, saved-memory storage and experimental
+native-memory transport. **Full Windows parity remains deferred.** Hosted
+Windows Server checks do not qualify Windows 11 desktop or PowerShell journeys,
+all storage/recovery cases, or live native-memory providers. Read the
+[release notes](${CURRENT_RELEASE_ROOT}/docs/release-notes-1.5.0.md) for the
+component evidence and outstanding requirements.
+
+## Install the published release
+
+Use Python 3.10 or later. Keep Harness and Attune AI in separate environments:
+they pin different MCP SDK versions. You do not need Attune AI for this example.
+Create a fresh environment instead of upgrading a retained evidence environment.
+
+On macOS or Linux, in a new working directory:
+
+\`\`\`sh
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install 'attune-harness==1.5.0'
+\`\`\`
+
+For a Windows installation, the equivalent PowerShell setup is:
+
+\`\`\`powershell
+py -3 -m venv .venv
+.\\.venv\\Scripts\\Activate.ps1
+python -m pip install 'attune-harness==1.5.0'
+\`\`\`
+
+The Windows commands are installation syntax, not a qualified PowerShell
+walkthrough. If activation is restricted, use
+\`.\\.venv\\Scripts\\python.exe\` directly for the Python commands below.
+
+In the environment you selected, check the version and run the local example:
+
+\`\`\`sh
+python -c "from importlib.metadata import version; print(version('attune-harness'))"
+python -m attune_harness
+attune-harness --help
+\`\`\`
+
+**Expected result:** The version is \`1.5.0\`. The example returns a JSON
+receipt with \`status: verified\`, output \`4\` and an accepted arithmetic
+check. This deterministic example makes no model call; it establishes only
+that example's result. The published base install and these checks were run
+on macOS with Python 3.12.2 for this page.
+
+If you use uv instead, install the isolated tool with
+\`uv tool install 'attune-harness==1.5.0'\`, inspect
+\`uv tool list --show-paths\`, then run \`attune-harness --help\`.
+The Python commands above belong to the virtual-environment setup, not uv's
+separate tool environment. Installing the Python package does not install a
+Claude Code plugin or Codex skill; follow the
+[host integration instructions](${CURRENT_RELEASE_ROOT}/README.md#use-harness-with-codex-claude-or-other-models)
+for your chosen host.
+
+## Choose a workflow
+
+| Goal | Command | Before continuing |
+| --- | --- | --- |
+| Define work and review its scope | \`attune-harness plan --help\` | Inspect the goal, allowed files and acceptance criteria. |
+| Execute an accepted task | \`attune-harness build --help\` | Check the saved checkpoint and configured participants. |
+| Review a document against evidence | \`attune-harness review --help\` | Supply the document, corpus and review criteria. |
+| Repair scoped files | \`attune-harness fix --help\` | Review the frozen probe and permitted file effects. |
+| Test a captured change | \`attune-harness test --help\` | Inspect and accept the proposed tests. |
+| Inspect saved work | \`attune-harness status --help\` | Read the state, evidence and next action before resuming. |
+
+Run a route's help in the same selected environment. The
+[CLI guide](${CURRENT_RELEASE_ROOT}/docs/cli-guide.md) describes configuration,
+checkpoints and recovery. Opening a form, saving answers, accepting intent and
+authorizing execution are separate actions. Browser forms do not dispatch
+builds. External and native participants require their applicable explicit
+grants; approving a plan does not authorize paid calls.
+
+## Choose retrieval deliberately
+
+**Voyage AI is the service Patrick uses and recommends.** Its optional
+integration requires a Voyage API key and makes paid retrieval calls. Install
+\`'attune-harness[voyage]==1.5.0'\` in the isolated environment only when you
+choose that integration, then follow the
+[Voyage setup and configuration](${CURRENT_RELEASE_ROOT}/docs/cli-guide.md).
+Installation itself does not authorize execution or spending.
+
+**attune-rag is the explicitly selected local alternative.** Harness 1.5.0
+pins \`attune-rag==1.2.0\` in its base dependencies; standalone attune-rag
+1.2.1 is a separate release. Keep the Harness pin when following this page.
+Automatic fallback during a Voyage outage is planned; it is not available in
+1.5.0. Select and configure the intended retrieval path explicitly.
+
+Redis is optional. The \`all\` extra includes Redis and Voyage; experimental
+\`memory-native\` is separate. See the
+[1.5.0 dependency metadata](${CURRENT_RELEASE_ROOT}/pyproject.toml) for exact pins.
+
+## Continue with versioned guidance
+
+- [Published 1.5.0 release](https://github.com/Smart-AI-Memory/attune-harness/releases/tag/v1.5.0) and [PyPI package](https://pypi.org/project/attune-harness/1.5.0/).
+- [1.5.0 release notes](${CURRENT_RELEASE_ROOT}/docs/release-notes-1.5.0.md): merged components, evidence and deferred Windows requirements.
+- [Preparation walkthroughs](${CURRENT_RELEASE_ROOT}/docs/tutorials-1.5.0-candidate.md): retained candidate-wheel procedures and observed limits. These require their recorded artifacts and POSIX setup; they are not published-wheel first-use instructions. Use the installation above to start with published 1.5.0.
+- [Historical 1.3.0 task guides](/harness/help/get-started/): earlier behavior, explicitly versioned and retained for existing users.
+- [Report a problem](https://github.com/Smart-AI-Memory/attune-harness/issues): include the installed version, route and redacted diagnostic. Keep credentials, private form links and project data out of reports.
+`,
+  },
   {
     slug: 'get-started', title: 'Get started', kind: 'task',
     goal: 'Check your installation and see a local result before starting real work.',

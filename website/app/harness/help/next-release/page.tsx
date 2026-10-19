@@ -4,17 +4,18 @@ import readiness from '@/content/harness-help/next-release.json';
 import { topicHref } from '@/lib/harness-help/topics';
 
 export const metadata: Metadata = {
-  title: 'Next release — staged guidance',
-  description: 'Verified candidate guidance and documentation readiness for the next Harness release. Unreleased, with version and date undecided.',
+  title: 'Historical release preparation',
+  description: 'Retained prepublication candidate observations, separate from published Harness 1.5.0 guidance.',
+  robots: { index: false, follow: true },
 };
 
 export default function NextReleaseHelp() {
   return (
     <>
-      <p className="help-eyebrow">Next release · unreleased</p>
-      <h1>Preparing the next release</h1>
-      <p className="help-lead">Review candidate guidance alongside the code it describes. The release version and publication date have not been set.</p>
-      <p className="help-callout">The seven current task guides describe <strong>released 1.3.0</strong>. This page stages candidate changes separately; it grants no release, execution or publication authority.</p>
+      <p className="help-eyebrow">Historical preparation</p>
+      <h1>Retained candidate observations</h1>
+      <p className="help-lead">This record preserves earlier preparation evidence and its original pending items. It does not describe current release readiness. <Link href={topicHref('1-5-0')}>Use the published 1.5.0 guide</Link> for current installation and scope.</p>
+      <p className="help-callout">The seven historical task guides describe <strong>released 1.3.0</strong>. Candidate observations below retain their original source and capture boundaries; they are not newly verified 1.5.0 walkthroughs.</p>
       {readiness.candidates.map((candidate) => (
         <section key={candidate.id} className="help-learning">
           <p className="help-eyebrow">{candidate.status}</p>
@@ -26,7 +27,7 @@ export default function NextReleaseHelp() {
             <span key={label}>{index > 0 && ' · '}<strong>{label}</strong></span>
           ))}</p>
           <p>{candidate.evidence}</p>
-          <p><strong>Before release:</strong> {candidate.remaining}</p>
+          <p><strong>Recorded pending work:</strong> {candidate.remaining}</p>
           <p>Affected guidance: {candidate.affected_topics.map((slug, index) => (
             <span key={slug}>{index > 0 && ' · '}<Link href={topicHref(slug)}>{slug.replaceAll('-', ' ')}</Link></span>
           ))}</p>
@@ -39,8 +40,8 @@ export default function NextReleaseHelp() {
         <h2>Documentation is part of release preparation</h2>
         <p>For every new version, review affected official topics and their actual help, tutorial and deck derivatives. Record changed or unchanged-but-reviewed content, the tested version, examples, expected results, limits and checked links. Retain or explicitly supersede relevant old-version guidance.</p>
         <p>Versioned code and reproducible tests ground behavior. Approved policies and style requirements govern content, with approved project exceptions ahead of general Google guidance. Resolve conflicts explicitly; build and link checks support the walkthrough review.</p>
-        <p>The existing release runbook addition and this readiness record are prepared locally. Release and website publication remain separate decisions.</p>
-        <Link href={topicHref('get-started')}>Use the current 1.3.0 guide →</Link>
+        <p>This historical readiness record is retained without relabeling its observations as published-wheel acceptance.</p>
+        <Link href={topicHref('1-5-0')}>Use the current 1.5.0 guide →</Link>
       </section>
     </>
   );

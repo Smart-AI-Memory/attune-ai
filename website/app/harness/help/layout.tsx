@@ -5,9 +5,8 @@ import './help.css';
 
 export const metadata: Metadata = {
   title: { default: 'Attune Harness Help Center', template: '%s | Harness Help' },
-  description: 'Task walkthroughs, recovery guidance and release reference for Attune Harness 1.3.0.',
-  // This first increment is a review draft. Publication and indexing need approval.
-  robots: { index: false, follow: false },
+  description: 'Install Attune Harness 1.5.0, check a local result and explore versioned workflow guidance.',
+  robots: { index: true, follow: true },
 };
 
 export default function HelpLayout({ children }: { children: React.ReactNode }) {
@@ -17,7 +16,7 @@ export default function HelpLayout({ children }: { children: React.ReactNode }) 
         <Link href={HELP_ROOT} className="help-brand">Attune Harness <span>Help Center</span></Link>
         <nav aria-label="Help Center context">
           <Link href="/">Smart AI Memory</Link>
-          <Link href="/docs/">Attune-AI docs</Link>
+          <Link href="/docs/">Documentation</Link>
         </nav>
       </header>
       <div className="help-shell">
@@ -27,14 +26,13 @@ export default function HelpLayout({ children }: { children: React.ReactNode }) 
             <ol>{topics.map((topic) => (
               <li key={topic.slug}><Link href={topicHref(topic.slug)}>{topic.title}</Link></li>
             ))}</ol>
-            <Link href="/harness/help/next-release/">Next release — staged guidance</Link>
           </nav>
-          <p className="help-version">Guide version <strong>1.3.0</strong><br />Released behavior · review draft</p>
+          <p className="help-version">Current release <strong>1.5.0</strong><br />Older guides retain their stated versions.</p>
         </aside>
         <main id="main-content" tabIndex={-1} className="help-main">{children}</main>
       </div>
       <footer className="help-footer">
-        <p>Current release baseline: Harness 1.3.0. Staged guidance is labeled separately.</p>
+        <p>Current release: Harness 1.5.0. Historical guides describe their named release.</p>
         <Link href={topicHref('dependencies')}>Versions, integrations and reference</Link>
       </footer>
     </div>

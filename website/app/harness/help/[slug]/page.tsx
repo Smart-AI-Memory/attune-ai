@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { getTopic, HELP_ROOT, provenance, RELEASE_ROOT, topics, topicHref } from '@/lib/harness-help/topics';
+import { CURRENT_RELEASE_ROOT, getTopic, HELP_ROOT, provenance, RELEASE_ROOT, topics, topicHref } from '@/lib/harness-help/topics';
 
 export function generateStaticParams() {
   return topics.map(({ slug }) => ({ slug }));
@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const topic = getTopic(slug);
   if (!topic) return { title: 'Help topic unavailable' };
-  return { title: topic.title, description: topic.goal };
+  return { title: topic.title, description: topic.goal, alternates: { canonical: `https://smartaimemory.com${topicHref(slug)}` } };
 }
 
 export default async function HelpArticle({ params }: { params: Promise<{ slug: string }> }) {
@@ -22,16 +22,18 @@ export default async function HelpArticle({ params }: { params: Promise<{ slug: 
   if (!topic) notFound();
   const index = topics.indexOf(topic);
   const next = topics[index + 1];
+  const version = topic.version ?? '1.3.0';
+  const sourceRoot = topic.version ? CURRENT_RELEASE_ROOT : RELEASE_ROOT;
 
   return (
     <>
       <nav aria-label="Breadcrumb" className="help-breadcrumb">
         <Link href={HELP_ROOT}>Help Center</Link><span aria-hidden="true"> / </span><span aria-current="page">{topic.title}</span>
       </nav>
-      <p className="help-eyebrow">{topic.kind} · Harness 1.3.0</p>
+      <p className="help-eyebrow">{topic.kind} · Harness {version}</p>
       <h1>{topic.title}</h1>
       <p className="help-lead">{topic.goal}</p>
-      <p className="help-version-note">Version: <strong>released 1.3.0</strong>. The instructions describe this release; newer main and prototypes have separate labels in <Link href={topicHref('dependencies')}>version guidance</Link>.</p>
+      <p className="help-version-note">Version: <strong>released {version}</strong>. {topic.version ? 'Published-release installation and scope.' : <>Historical instructions for this release. <Link href={topicHref('1-5-0')}>Start with current 1.5.0 guidance</Link>.</>}</p>
       <div className="help-prose">
         <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
           h2: ({ children }) => <h2 id={String(children).toLowerCase().replace(/[^a-z0-9 -]/g, '').replace(/ /g, '-')}>{children}</h2>,
@@ -43,9 +45,9 @@ export default async function HelpArticle({ params }: { params: Promise<{ slug: 
       </div>
       <details className="help-sources">
         <summary>Sources and verification boundary</summary>
-        <p>Behavior baseline: Harness 1.3.0. Follow the installed route help when your version differs. Tests ground behavior; approved project policy and style requirements govern presentation. Resolve source conflicts before revising instructions.</p>
+        <p>Behavior baseline: Harness {version}. Follow the installed route help when your version differs. Tests ground behavior; approved project policy and style requirements govern presentation. Resolve source conflicts before revising instructions.</p>
         <ul>{topic.sourcePaths.filter((path) => path !== 'docs/tutorials-1.3.0.md').map((path) => (
-          <li key={path}><a href={`${RELEASE_ROOT}/${path}`}>1.3.0: {path}</a>{path === 'docs/local-workflow.md' && ' — historical setup; use this Help Center’s release installation guidance'}</li>
+          <li key={path}><a href={`${sourceRoot}/${path}`}>{version}: {path}</a>{path === 'docs/local-workflow.md' && ' — historical setup; use this Help Center’s release installation guidance'}</li>
         ))}</ul>
         {topic.sourcePaths.includes('docs/tutorials-1.3.0.md') && <p>Shared canonical walkthrough: <code>{provenance.source_path}</code>, source commit <code>{provenance.source_commit}</code>. This reviewed tutorial source is unpublished; the website renders a pinned projection with its expected results and limits. Its instructions remain owned by the tutorial source.</p>}
       </details>

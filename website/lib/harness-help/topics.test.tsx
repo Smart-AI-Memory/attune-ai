@@ -17,13 +17,13 @@ vi.mock('@/app/harness/help/help.css', () => ({}));
 describe('Harness Help Center', () => {
   it('renders every registered topic with one title and valid help links', async () => {
     const routes = new Set([HELP_ROOT, '/harness/help/next-release/', ...topics.map((topic) => topicHref(topic.slug))]);
-    expect(generateStaticParams()).toHaveLength(7);
+    expect(generateStaticParams()).toHaveLength(8);
     for (const topic of topics) {
       const page = await HelpArticle({ params: Promise.resolve({ slug: topic.slug }) });
       const html = renderToStaticMarkup(<HelpLayout>{page}</HelpLayout>);
       expect((html.match(/<h1[ >]/g) || []).length).toBe(1);
       expect(html).toContain('id="main-content"');
-      expect(html).toContain('released 1.3.0');
+      expect(html).toContain(`released ${topic.version ?? '1.3.0'}`);
       expect(await generateMetadata({ params: Promise.resolve({ slug: topic.slug }) })).toMatchObject({ title: topic.title });
       for (const match of html.matchAll(/href="(\/harness\/help\/[^"#]*)"/g)) {
         expect(routes.has(`${match[1].replace(/\/$/, '')}/`), `missing route ${match[1]}`).toBe(true);
@@ -65,7 +65,7 @@ describe('Harness Help Center', () => {
     const html = renderToStaticMarkup(<NextReleaseHelp />);
     expect(readiness.target_version).toBeNull();
     expect(readiness.publication_date).toBeNull();
-    expect(html).toContain('Next release · unreleased');
+    expect(html).toContain('Historical preparation');
     expect(html).toContain('released 1.3.0');
     expect(html).toContain('149d8725f7636bec1a9201124e798cf8641c01ac');
     const journey = readiness.candidates.find((candidate) => candidate.id === 'first-gui-journey')!;
@@ -75,5 +75,19 @@ describe('Harness Help Center', () => {
     expect(html).toContain('read-only');
     expect(html).toContain('<strong>View accepted request</strong>');
     expect(html).not.toContain('WCAG compliant');
+  });
+
+  it('gives the current release its own canonical URL and preserves older guide versions', async () => {
+    const html = renderToStaticMarkup(await HelpArticle({ params: Promise.resolve({ slug: '1-5-0' }) }));
+    expect(html).toContain('released 1.5.0');
+    expect(html).toContain('attune-harness==1.5.0');
+    expect(html).toContain('Full Windows parity remains deferred');
+    expect(html).toContain('Automatic fallback during a Voyage outage is planned');
+    expect(html).toContain('attune-rag==1.2.0');
+    expect(html).not.toContain('pip install --no-deps');
+    expect(await generateMetadata({ params: Promise.resolve({ slug: '1-5-0' }) })).toMatchObject({
+      alternates: { canonical: 'https://smartaimemory.com/harness/help/1-5-0/' },
+    });
+    expect(getTopic('get-started')!.content).toContain('attune-harness==1.3.0');
   });
 });
