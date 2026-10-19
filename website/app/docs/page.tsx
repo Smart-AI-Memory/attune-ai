@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { generateMetadata as genMeta, generateStructuredData } from '@/lib/metadata';
@@ -108,11 +109,12 @@ export default function DocsPage() {
         <section id="harness-docs" className="py-20">
           <div className="container max-w-5xl">
             <h2 className="text-4xl font-bold mb-4">Start with Attune Harness</h2>
+            <p className="text-xl text-[var(--text-secondary)] mb-6"><Link className="underline" href="/harness/help/1-5-0/">Harness 1.5.0 Help Center: install the published release and check a local result.</Link> Full Windows parity remains deferred.</p>
             <p className="text-xl text-[var(--text-secondary)] mb-6">Define a useful next step, build or repair within scope, check the result, and return with the context intact. Choose a workflow from the guide; command syntax is available when you need it.</p>
             <div className="flex flex-wrap gap-4 mb-6">
-              <a className="btn btn-primary" href="https://pypi.org/project/attune-harness/1.4.0/#user-content-installation">Install Harness</a>
+              <Link className="btn btn-primary" href="/harness/help/1-5-0/#install-the-published-release">Install Harness 1.5.0</Link>
               <a className="btn btn-outline" href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.4.0/docs/cli-guide.md">Read the Harness guide</a>
-              <a className="btn btn-outline" href="https://pypi.org/project/attune-harness/1.4.0/#user-content-what-is-qualified-and-what-is-not">Check the qualification limits</a>
+              <a className="btn btn-outline" href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.5.0/docs/release-notes-1.5.0.md">Check the 1.5.0 qualification limits</a>
             </div>
             <p className="text-sm text-[var(--text-secondary)]">Claude Code and Codex have documented setup paths. Native planning and building remain experimental; Antigravity integration is unverified here. Intent acceptance is separate from paid execution permission.</p>
             <p className="text-sm text-[var(--text-secondary)] mt-4">Harness does not yet replace every Attune AI workflow. <a className="underline" href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.4.0/docs/migration-from-attune-ai.md">Review the migration boundaries</a> before changing an existing setup.</p>
@@ -122,10 +124,10 @@ export default function DocsPage() {
         {/* Harness Quick Start; earlier toolkit references remain below. */}
         <section id="quickstart" className="py-20 bg-[var(--surface-container-low)]">
           <div className="container max-w-5xl">
-            <h2 className="text-4xl font-bold mb-4">Harness Quick Start</h2>
+            <h2 className="text-4xl font-bold mb-4">Historical Harness 1.4.0 Quick Start</h2>
             <p className="text-xl text-[var(--text-secondary)] mb-6">
               Install Harness and try a small local check before connecting an agent.
-              This setup uses the released 1.4.0 package.
+              This retained setup uses the released 1.4.0 package. <Link className="underline" href="/harness/help/1-5-0/">Use the Help Center for current 1.5.0 instructions.</Link>
             </p>
             <p className="text-[var(--text-secondary)] mb-8">
               You need Python 3.10 or later. Start in a new working directory and
