@@ -17,7 +17,7 @@ vi.mock('@/app/harness/help/help.css', () => ({}));
 describe('Harness Help Center', () => {
   it('renders every registered topic with one title and valid help links', async () => {
     const routes = new Set([HELP_ROOT, '/harness/help/next-release/', ...topics.map((topic) => topicHref(topic.slug))]);
-    expect(generateStaticParams()).toHaveLength(8);
+    expect(generateStaticParams()).toHaveLength(9);
     for (const topic of topics) {
       const page = await HelpArticle({ params: Promise.resolve({ slug: topic.slug }) });
       const html = renderToStaticMarkup(<HelpLayout>{page}</HelpLayout>);
@@ -89,5 +89,15 @@ describe('Harness Help Center', () => {
       alternates: { canonical: 'https://smartaimemory.com/harness/help/1-5-0/' },
     });
     expect(getTopic('get-started')!.content).toContain('attune-harness==1.3.0');
+  });
+
+  it('continues within the same guide version', async () => {
+    const starter = renderToStaticMarkup(await HelpArticle({ params: Promise.resolve({ slug: '1-5-0' }) }));
+    expect(starter).toContain('Next: AI tools and integrations');
+    expect(starter).not.toContain('Next: Get started');
+    const reference = renderToStaticMarkup(await HelpArticle({ params: Promise.resolve({ slug: 'ai-tools-and-integrations' }) }));
+    expect(reference).not.toContain('Next: Get started');
+    const historical = renderToStaticMarkup(await HelpArticle({ params: Promise.resolve({ slug: 'get-started' }) }));
+    expect(historical).toContain('Next: Start and continue work');
   });
 });

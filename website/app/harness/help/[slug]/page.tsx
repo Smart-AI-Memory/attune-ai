@@ -21,8 +21,8 @@ export default async function HelpArticle({ params }: { params: Promise<{ slug: 
   const topic = getTopic(slug);
   if (!topic) notFound();
   const index = topics.indexOf(topic);
-  const next = topics[index + 1];
   const version = topic.version ?? '1.3.0';
+  const next = topics.slice(index + 1).find((candidate) => (candidate.version ?? '1.3.0') === version);
   const sourceRoot = topic.version ? CURRENT_RELEASE_ROOT : RELEASE_ROOT;
 
   return (

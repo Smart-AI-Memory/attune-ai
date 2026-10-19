@@ -1,5 +1,6 @@
 import walkthroughs from '@/content/harness-help/walkthroughs.generated.json';
 import provenance from '@/content/harness-help/walkthrough-provenance.json';
+import { COMMAND_REFERENCE } from './commands';
 
 export const HELP_ROOT = '/harness/help/';
 export const RELEASE_COMMIT = '0ecf8e6058cee9ed6f9b9510e043e3af3cbe1da0';
@@ -106,6 +107,10 @@ authorizing execution are separate actions. Browser forms do not dispatch
 builds. External and native participants require their applicable explicit
 grants; approving a plan does not authorize paid calls.
 
+Read [AI tools and integrations](/harness/help/ai-tools-and-integrations/) for a
+Typical use index, primary verbs, actual subcommands, ordered handoffs, sample
+prompts and expected evidence.
+
 ## Choose retrieval deliberately
 
 **Voyage AI is the service Patrick uses and recommends.** Its optional
@@ -133,6 +138,13 @@ Redis is optional. The \`all\` extra includes Redis and Voyage; experimental
 - [Historical 1.3.0 task guides](/harness/help/get-started/): earlier behavior, explicitly versioned and retained for existing users.
 - [Report a problem](https://github.com/Smart-AI-Memory/attune-harness/issues): include the installed version, route and redacted diagnostic. Keep credentials, private form links and project data out of reports.
 `,
+  },
+  {
+    slug: 'ai-tools-and-integrations', title: 'AI tools and integrations', kind: 'reference',
+    version: CURRENT_RELEASE,
+    goal: 'Find commands by typical use, understand their order and know where judgment and approval enter.',
+    sourcePaths: ['docs/cli-guide.md', 'src/attune_harness/cli.py', 'src/attune_harness/work_cli.py', 'src/attune_harness/task_cli.py'],
+    content: COMMAND_REFERENCE,
   },
   {
     slug: 'get-started', title: 'Get started', kind: 'task',

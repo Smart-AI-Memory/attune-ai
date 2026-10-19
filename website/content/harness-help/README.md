@@ -6,6 +6,17 @@ candidate wheel. The base install, version, CLI help and deterministic demo
 were checked on macOS/Python 3.12.2 on October 19, 2026. No Windows desktop,
 paid-provider or candidate walkthrough execution is newly claimed.
 
+The 1.5.0 `/harness/help/ai-tools-and-integrations/` reference uses the same topic
+registry and renderer. `lib/harness-help/commands.ts` owns its command map;
+complete fixtures/procedures remain in the linked existing versioned CLI guide
+and canonical walkthroughs. The Typical use groups describe usual initiators,
+not exclusive roles or permission grants. Keep actual subcommands separate from
+action flags, numbered prerequisite/output handoffs separate from alternatives,
+and acceptance separate from execution authority. The installed published 1.5.0
+catalog was inspected through 32 top-level and 63 nested help selections without
+executing the documented mutation or model commands. Next links stay within a
+guide version so 1.5.0 readers do not enter historical 1.3.0 procedures by default.
+
 The other seven guides retain 1.3.0 instructions and source identity. The
 `next-release` route is now a noindex historical record, with its original
 JSON unchanged. Neither that record nor the separately prepared 1.5.0 candidate

@@ -33,7 +33,8 @@ export default function HelpLayout({ children }: { children: React.ReactNode }) 
       </div>
       <footer className="help-footer">
         <p>Current release: Harness 1.5.0. Historical guides describe their named release.</p>
-        <Link href={topicHref('dependencies')}>Versions, integrations and reference</Link>
+        <Link href={topicHref('ai-tools-and-integrations')}>1.5.0 commands and integrations</Link>
+        <p><Link href={topicHref('dependencies')}>Historical 1.3.0 dependency reference</Link></p>
       </footer>
     </div>
   );
