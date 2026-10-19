@@ -1,9 +1,17 @@
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
+import { DEFAULT_SCHEMA, load } from 'js-yaml';
 import { readingTime } from 'reading-time-estimator';
 
 const postsDirectory = path.join(process.cwd(), 'content/blog');
+
+// js-yaml 4 load uses the safe schema; gray-matter's default still calls safeLoad.
+const frontmatterOptions = {
+  engines: {
+    yaml: (source: string) => load(source, { schema: DEFAULT_SCHEMA }) as object,
+  },
+};
 
 export interface BlogPost {
   slug: string;
@@ -48,7 +56,7 @@ export function getAllPosts(): BlogPostMetadata[] {
       const slug = fileName.replace(/\.(mdx|md)$/, '');
       const fullPath = path.join(postsDirectory, fileName);
       const fileContents = fs.readFileSync(fullPath, 'utf8');
-      const { data, content } = matter(fileContents);
+      const { data, content } = matter(fileContents, frontmatterOptions);
 
       const stats = readingTime(content, 200); // 200 words per minute
 
@@ -86,7 +94,7 @@ export function getPostBySlug(slug: string): BlogPost | null {
       }
     }
 
-    const { data, content } = matter(fileContents);
+    const { data, content } = matter(fileContents, frontmatterOptions);
     const stats = readingTime(content, 200);
 
     return {
