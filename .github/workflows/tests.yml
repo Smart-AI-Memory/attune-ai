@@ -248,7 +248,7 @@ jobs:
 
     - name: Upload hang-watchdog dumps
       if: always()
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: hang-dumps-test-${{ matrix.os }}-${{ matrix.python-version }}
         path: hang-dumps/
@@ -484,7 +484,7 @@ jobs:
 
     - name: Upload file test tracking data
       if: needs.changes.outputs.website_only != 'true'
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: file-test-tracking
         path: .empathy/file_tests.jsonl
@@ -527,7 +527,7 @@ jobs:
 
     - name: Upload hang-watchdog dumps
       if: always()
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: hang-dumps-coverage
         path: hang-dumps/
@@ -641,7 +641,7 @@ jobs:
 
     - name: Upload compatibility report
       if: always()
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: platform-compat-report
         path: compat-report.json
@@ -744,7 +744,7 @@ jobs:
         fi
 
     - name: Upload debt report
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: tech-debt-report
         path: |
@@ -774,7 +774,7 @@ jobs:
       run: twine check dist/*
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: dist-packages
         path: dist/
