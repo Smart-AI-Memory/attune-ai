@@ -27,6 +27,8 @@ jobs:
     permissions:
       security-events: write
       contents: read
+    env:
+      ANTHROPIC_API_KEY: ""
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -42,24 +44,108 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install bandit[toml] safety
+        pip install 'uv==0.9.22' 'bandit[toml]==1.9.4' 'safety==3.8.1'
 
     - name: Run Bandit security scan
+      if: always()
+      shell: bash
       run: |
-        bandit -c .bandit -r src/ attune_llm/ coach_wizards/ attune_software/ --format json --output bandit-report.json --severity-level medium --confidence-level medium || true
+        set +e
+        bandit -c .bandit -r src/ attune_software/ --format json --output bandit-report.json --severity-level medium --confidence-level medium > bandit-stdout.log 2> bandit-stderr.log
+        scan_status=$?
+        set -e
+        printf '%s\n' "$scan_status" > bandit-exit-code.txt
+        cat bandit-stdout.log
+        cat bandit-stderr.log >&2
+        if [ "$scan_status" -ne 0 ]; then
+          exit "$scan_status"
+        fi
+        python - <<'PY' > bandit-validation.log 2>&1
+        import json
+        from pathlib import Path
+
+        report = json.loads(Path("bandit-report.json").read_text(encoding="utf-8"))
+        if not isinstance(report, dict) or report.get("errors") != []:
+            raise SystemExit("Bandit did not produce an error-free report")
+        if not isinstance(report.get("results"), list):
+            raise SystemExit("Bandit results are missing or malformed")
+        PY
 
     - name: Upload Bandit results
+      if: always()
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: bandit-results
-        path: bandit-report.json
+        if-no-files-found: error
+        path: |
+          bandit-report.json
+          bandit-stdout.log
+          bandit-stderr.log
+          bandit-exit-code.txt
+          bandit-validation.log
 
     - name: Check dependencies for vulnerabilities
+      if: always()
+      shell: bash
       run: |
-        safety check --json --output safety-report.json || true
+        scan_input=$(mktemp -d "$RUNNER_TEMP/safety-scan-XXXXXX")
+        set +e
+        uv export --locked --all-extras --no-emit-project --no-hashes \
+          -o "$scan_input/requirements.txt" > safety-export-stdout.log 2> safety-export-stderr.log
+        export_status=$?
+        set -e
+        printf '%s\n' "$export_status" > safety-export-exit-code.txt
+        cat safety-export-stdout.log
+        cat safety-export-stderr.log >&2
+        if [ "$export_status" -ne 0 ]; then
+          exit "$export_status"
+        fi
+        if [ ! -s "$scan_input/requirements.txt" ]; then
+          echo "Locked project dependency export is missing or empty" >&2
+          exit 1
+        fi
+        cp "$scan_input/requirements.txt" safety-requirements.txt
+        set +e
+        # Keep the existing check policy; modern scan defaults have different severity rules.
+        safety --stage cicd check --file "$scan_input/requirements.txt" --output json --save-json safety-report.json --exit-code < /dev/null > safety-stdout.log 2> safety-stderr.log
+        scan_status=$?
+        set -e
+        printf '%s\n' "$scan_status" > safety-exit-code.txt
+        cat safety-stdout.log
+        cat safety-stderr.log >&2
+        if [ "$scan_status" -ne 0 ]; then
+          exit "$scan_status"
+        fi
+        python - <<'PY' > safety-validation.log 2>&1
+        import json
+        from pathlib import Path
+
+        report = json.loads(Path("safety-report.json").read_text(encoding="utf-8"))
+        if not isinstance(report, dict) or not isinstance(report.get("report_meta"), dict):
+            raise SystemExit("Safety report metadata is missing or malformed")
+        packages = report.get("scanned_packages")
+        if not isinstance(packages, dict) or not packages:
+            raise SystemExit("Safety did not report any scanned project dependencies")
+        vulnerabilities = report.get("vulnerabilities")
+        if not isinstance(vulnerabilities, list):
+            raise SystemExit("Safety vulnerability results are missing or malformed")
+        if vulnerabilities:
+            raise SystemExit("Safety reported vulnerabilities despite a successful process exit")
+        PY
 
     - name: Upload Safety results
+      if: always()
       uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
       with:
         name: safety-results
-        path: safety-report.json
+        if-no-files-found: error
+        path: |
+          safety-report.json
+          safety-stdout.log
+          safety-stderr.log
+          safety-exit-code.txt
+          safety-validation.log
+          safety-requirements.txt
+          safety-export-stdout.log
+          safety-export-stderr.log
+          safety-export-exit-code.txt
