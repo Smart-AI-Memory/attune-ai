@@ -39,6 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Raised dependency security floors for PyJWT, urllib3, aiohttp, multidict,
+  and virtualenv, and updated the pinned MCP SDK to 1.30.0. Replayed the
+  existing local MCP receipt checks with unchanged tested behavior.
+
 - Static security CI now scans current Bandit paths, exports locked project
   dependencies for Safety, and fails on scanner errors or missing reports while
   retaining diagnostic logs. Added in-process security JSON contract tests so
