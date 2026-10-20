@@ -17,7 +17,8 @@
   },
   "overrides": {
     "tar": "^7.5.22",
-    "esbuild": "^0.28.1"
+    "esbuild": "^0.28.1",
+    "js-yaml": "$js-yaml"
   },
   "dependencies": {
     "@mdx-js/loader": "^3.1.1",
@@ -28,8 +29,8 @@
     "bcryptjs": "^3.0.2",
     "gray-matter": "^4.0.3",
     "ioredis": "^5.8.2",
+    "js-yaml": "4.3.2",
     "next": "^16.3.8",
-    "nodemailer": "^9.1.1",
     "pg": "^8.16.3",
     "react": "19.1.4",
     "react-dom": "19.1.4",
@@ -46,6 +47,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
+    "@types/js-yaml": "4.0.9",
     "@types/node": "^20",
     "@types/pg": "^8.15.6",
     "@types/react": "^19",
