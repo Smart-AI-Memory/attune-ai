@@ -7,6 +7,7 @@ retained; these controls do not claim native Windows Bash or a real scan.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -32,6 +33,7 @@ from pathlib import Path
 
 kind, *args = sys.argv[1:]
 Path(kind + "-invocation.json").write_text(json.dumps(args))
+Path(kind + "-key-present.json").write_text(json.dumps(bool(os.environ.get("SAFETY_API_KEY"))))
 print(kind + " fixture stdout")
 print(kind + " fixture stderr", file=sys.stderr)
 if kind == "uv":
@@ -116,7 +118,21 @@ def test_static_scans_preserve_policy_and_always_upload(static_steps):
         for leaf in ("report.json", "stdout.log", "stderr.log", "exit-code.txt", "validation.log"):
             assert prefix + "-" + leaf in step["with"]["path"].splitlines()
     text = (ROOT / ".github/workflows/security.yml").read_text(encoding="utf-8")
-    assert "secrets." not in text
+    assert static_steps["Check dependencies for vulnerabilities"]["env"] == {
+        "SAFETY_API_KEY": "${{ secrets.SAFETY_API_KEY }}"
+    }
+    assert len(re.findall(r"\bsecrets\b", text, flags=re.IGNORECASE)) == 1
+    assert "SAFETY_API_KEY" not in job["env"]
+    assert all(
+        "SAFETY_API_KEY" not in step.get("env", {})
+        for step in job["steps"]
+        if step.get("name") != "Check dependencies for vulnerabilities"
+    )
+    safety_run = static_steps["Check dependencies for vulnerabilities"]["run"]
+    assert "env -u SAFETY_API_KEY uv export" in safety_run
+    assert safety_run.count("SAFETY_API_KEY") == 1
+    assert "printenv" not in safety_run and "set -x" not in safety_run
+    assert not re.search(r"(?m)^\s*env\s*(?:$|[|>&;])", safety_run)
     assert "attune_llm/" not in text and "coach_wizards/" not in text
 
 
@@ -170,11 +186,14 @@ def test_bandit_errors_and_missing_reports_fail_with_evidence(
 
 
 def test_safety_positive_scans_only_the_locked_project_export(static_steps, static_tools):
-    directory, _ = static_tools
+    directory, env = static_tools
+    env["SAFETY_API_KEY"] = "offline-safety-fixture"
     result = fail_closed._bash(
         static_steps["Check dependencies for vulnerabilities"]["run"], static_tools
     )
     assert result.returncode == 0, result.stderr
+    assert json.loads((directory / "uv-key-present.json").read_text()) is False
+    assert json.loads((directory / "safety-key-present.json").read_text()) is True
     export = json.loads((directory / "uv-invocation.json").read_text())
     assert export[:6] == [
         "export",

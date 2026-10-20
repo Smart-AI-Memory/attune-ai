@@ -42,7 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Static security CI now scans current Bandit paths, exports locked project
   dependencies for Safety, and fails on scanner errors or missing reports while
   retaining diagnostic logs. Added in-process security JSON contract tests so
-  the audit implementation is included in coverage measurements.
+  the audit implementation is included in coverage measurements. Safety reads its
+  API key in the dependency-scan step; the export subprocess does not receive it.
 
 - Security audit JSON now requires a complete, validated SDK result and preserves
   HIGH findings. Failed, missing or incomplete scans fail the security gate;

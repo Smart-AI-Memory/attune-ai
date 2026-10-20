@@ -86,11 +86,13 @@ jobs:
 
     - name: Check dependencies for vulnerabilities
       if: always()
+      env:
+        SAFETY_API_KEY: ${{ secrets.SAFETY_API_KEY }}
       shell: bash
       run: |
         scan_input=$(mktemp -d "$RUNNER_TEMP/safety-scan-XXXXXX")
         set +e
-        uv export --locked --all-extras --no-emit-project --no-hashes \
+        env -u SAFETY_API_KEY uv export --locked --all-extras --no-emit-project --no-hashes \
           -o "$scan_input/requirements.txt" > safety-export-stdout.log 2> safety-export-stderr.log
         export_status=$?
         set -e
