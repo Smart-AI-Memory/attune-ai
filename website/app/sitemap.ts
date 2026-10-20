@@ -17,6 +17,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/how-it-works',
     '/fix-workspace',
     '/docs',
+    '/harness/help/',
+    '/harness/help/1-5-0/',
+    '/harness/help/ai-tools-and-integrations/',
     '/pricing',
   ].map((route) => ({
     url: `${baseUrl}${route}`,
