@@ -43,6 +43,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Replaced automatic SDK audit execution with keyless verification of an approved
+  manual audit for the exact PR commit. Missing or incomplete evidence remains
+  failed. Unlabeled synchronization events now avoid unnecessary merge-helper
+  authentication. See [manual security audit CI](docs/ci/manual-security-audit.md).
+
+- Raised dependency security floors for PyJWT, urllib3, aiohttp, multidict,
+  and virtualenv, and updated the pinned MCP SDK to 1.30.0. Replayed the
+  existing local MCP receipt checks with unchanged tested behavior.
+
+- Static security CI now scans current Bandit paths, exports locked project
+  dependencies for Safety, and fails on scanner errors or missing reports while
+  retaining diagnostic logs. Added in-process security JSON contract tests so
+  the audit implementation is included in coverage measurements. Safety reads its
+  API key in the dependency-scan step; the export subprocess does not receive it.
+
+- Security audit JSON now requires a complete, validated SDK result and preserves
+  HIGH findings. Failed, missing or incomplete scans fail the security gate;
+  successful workflow execution alone no longer implies a completed audit.
+
 - `/cross-review` snippet: the structlog digest line and the `board unavailable` notice now go to stderr, so `> review.json` captures pure JSON and `json.load` no longer fails with "Extra data" (retro 2026-09-11 queued item 1).
 - `changelog_entry_guard` hook: judges the range of the ref the push actually names (`git push origin feat/y` from any HEAD; `src:dst`, multiple refspecs; deletions ship nothing) instead of always HEAD, and honors the advertised `ATTUNE_ALLOW_NO_CHANGELOG=1 git push ...` exit by reading the leading assignment from the command text (the hook process never inherits it). Both from the 2026-09-12 codex lane on #2523.
 
