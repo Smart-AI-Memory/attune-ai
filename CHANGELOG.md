@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Updated the exact MCP SDK pin to 1.30.0 and replayed the packaged native
+  form receipts against it, so SDK-version verification accepts the upgrade
+  while preserving the tested accept, abort, timeout and validation-feedback behavior.
+
 - Updated the locked `attune-verify` dependency from 0.5.0 to 0.6.1.
   The existing `<1.0` compatibility range is unchanged, and the installed
   `/verify` integration contract passes against the published 0.6.1 wheel.
