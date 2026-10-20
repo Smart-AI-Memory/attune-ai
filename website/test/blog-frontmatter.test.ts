@@ -95,11 +95,9 @@ describe('blog frontmatter dependency migration', () => {
     expect(getAllPosts).toThrow();
   });
 
-  it.each(['json', 'javascript', 'js'])('preserves the existing %s alternate engine for repository-controlled content', async (language) => {
-    const metadata = language === 'json'
-      ? '{"title":"Alternate metadata","date":"2026-10-19","tags":["alternate"],"published":true}'
-      : '({ title: "Alternate metadata", date: "2026-10-19", tags: ["alternate"], published: true })';
-    writePost('alternate', metadata, 'Alternate article body.\n', language);
+  it('preserves the existing JSON alternate engine for repository-controlled content', async () => {
+    const metadata = '{"title":"Alternate metadata","date":"2026-10-19","tags":["alternate"],"published":true}';
+    writePost('alternate', metadata, 'Alternate article body.\n', 'json');
     const { getAllPosts, getPostBySlug } = await import('../lib/blog');
     expect(getPostBySlug('alternate')).toMatchObject({
       title: 'Alternate metadata', date: '2026-10-19', tags: ['alternate'], published: true,

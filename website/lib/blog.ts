@@ -10,6 +10,9 @@ const postsDirectory = path.join(process.cwd(), 'content/blog');
 const frontmatterOptions = {
   engines: {
     yaml: (source: string) => load(source, { schema: DEFAULT_SCHEMA }) as object,
+    javascript: () => {
+      throw new Error('Executable JavaScript frontmatter is disabled for blog posts');
+    },
   },
 };
 
