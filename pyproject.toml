@@ -81,6 +81,9 @@ dependencies = [
     "anthropic>=0.40.0,<2.0.0",  # Core LLM provider (direct SDK usage). Ceiling widened to <2 deliberately 2026-08-24 (#2243): core code is 1.x-compatible (sampling params route via extra_body — SDK 1.0 removed them from messages.create; no completions/with_raw_response/Stream-isinstance usage; our httpx uses are SDK-independent), verified live on BOTH a 0.125 lock env and a scratch 1.0.0 env. NOTE the dev lockfile stays on 0.x: langchain-anthropic (dev/test extra, even at latest) pins anthropic<1.0.0, so the dev resolver cannot reach 1.x until upstream widens.
     "claude-agent-sdk>=0.2.152,<0.3.0",  # Agents SDK for workflow execution. Floor >=0.2.152 keeps the control stream open while Agent tasks remain in flight, preventing programmatic hook callbacks from racing a closed stream (#2389; live release-notes receipt 2026-09-02). 0.2.x adopted deliberately 2026-06-16 (docs/specs/claude-agent-sdk-0-2-migration); workflows set setting_sources=[] everywhere and carry the Bash security guard programmatically. Ceiling <0.3.0 holds back the next major's breaking changes. Remove the cap deliberately when adopting 0.3.x.
     "mcp==1.30.0",  # Native packaged receipts bind the exact SDK version. Upgrade only with replayed receipts and the full matrix; see test_native_receipt_sdk_is_exactly_pinned.
+    "PyJWT[crypto]>=2.15.1,<3.0.0",  # MCP JWT security floor: GHSA-42vr-xj54-vc7v, GHSA-x33g-cr3x-6449, GHSA-gvp8-978c-rx2q.
+    "urllib3>=2.8.0,<3.0.0",  # langsmith -> requests security floor: GHSA-vxq7-64xx-v4gw, GHSA-gh4c-6fx4-qh6g, GHSA-8988-9cw3-xx77.
+    "certifi>=2026.10.18",  # GHSA-6q48-6c7w-9gw2: remove compromised emSign trust roots.
     "python-multipart>=0.0.26",  # Pin above GHSA-59g5-xgcq-4qw3 / GHSA-wp53-j4wj-2cfg / CVE-2026-40347 (transitive via mcp)
     "cryptography>=50.0.0",  # GHSA floor: >=44,<50 vulnerable (2026-08 advisory); was CVE-2026-39892
     "langsmith>=0.7.31,<2.0.0",  # GHSA-rr7j-v2q5-chgv (transitive via langchain-core)
@@ -153,7 +156,7 @@ backend = [
     "uvicorn>=0.20.0,<1.0.0",
     "starlette>=0.40.0,<2.0.0",  # CVE fix: GHSA-f96h, GHSA-2c2j
     "bcrypt>=4.0.0,<6.0.0",  # Password hashing (cost factor 12)
-    "PyJWT[crypto]>=2.12.0,<3.0.0",  # JWT auth - uses cryptography (no ecdsa CVE); >=2.12.0 fixes GHSA-752w-5fwx-jx9f
+    "PyJWT[crypto]>=2.15.1,<3.0.0",  # JWT security floor; retain cryptography for asymmetric verification
 ]
 
 # LSP server for editor integration (optional)
@@ -187,7 +190,9 @@ docs = [
     "mkdocs>=1.5.0,<2.0.0",
     "mkdocs-material>=9.4.0,<10.0.0",
     "mkdocstrings[python]>=0.24.0,<2.0.0",
-    "mkdocs-with-pdf>=0.9.3,<1.0.0",  # PDF/ePub generation
+    # Patched Pillow requires Python 3.11; normal docs retain Python 3.10.
+    "mkdocs-with-pdf>=0.9.3,<1.0.0; python_version >= '3.11'",
+    "pillow>=13.0.0,<14.0.0; python_version >= '3.11'",
     # pymdown-extensions 10.20.x passes title=None through as the
     # filename kwarg, which crashes pygments 2.20+'s stricter
     # html.escape() (AttributeError on .replace). 10.21.0 fixes
@@ -213,6 +218,7 @@ dev = [
     "bandit>=1.7,<2.0",
     "radon>=6.0,<7.0",  # Complexity ratchet (tests/unit/quality/)
     "pre-commit>=3.0,<5.0",  # Updated for pre-commit 4.x
+    "virtualenv>=21.7.13",  # GHSA-p58f-9548-mpm2, GHSA-9h9j-4vrj-gf7g, GHSA-x78j-v8h9-3j2q, GHSA-94p9-xgh2-xp45.
     # Test dependencies for API and integration tests
     "httpx>=0.27.0,<1.0.0",  # For API testing
     "fastapi>=0.110.0,<1.0.0",  # attune.ops dashboard + its API tests
@@ -248,7 +254,8 @@ dev = [
     # (redis entry removed 2026-07-04 — core dep now)
     "langchain-anthropic>=0.3.0,<2.0.0",
     "tiktoken>=0.7.0,<1.0.0",
-    "aiohttp>=3.14.3,<4.0.0",  # webhook hooks + their SSRF/DNS-pinning tests; CVE floor per [all]
+    "aiohttp>=3.14.4,<4.0.0",  # webhook hooks + their SSRF/DNS-pinning tests; CVE floor per [all]
+    "multidict>=6.9.1,<7.0.0",  # aiohttp/yarl dependency security floor: GHSA-54p9-h82j-f925.
 ]
 
 # Individual developers - lightweight, software development focused
@@ -290,7 +297,7 @@ enterprise = [
     "uvicorn>=0.20.0,<1.0.0",
     "starlette>=0.40.0,<2.0.0",
     "bcrypt>=4.0.0,<6.0.0",  # Secure password hashing
-    "PyJWT[crypto]>=2.12.0",  # JWT authentication; >=2.12.0 fixes GHSA-752w-5fwx-jx9f
+    "PyJWT[crypto]>=2.15.1",  # JWT security floor, including the options-preservation fix
     # OpenTelemetry for enterprise telemetry
     "opentelemetry-api>=1.20.0,<2.0.0",
     "opentelemetry-sdk>=1.20.0,<2.0.0",
@@ -336,7 +343,7 @@ all = [
     "uvicorn>=0.20.0,<1.0.0",
     "starlette>=0.40.0,<2.0.0",  # CVE fix
     "bcrypt>=4.0.0,<6.0.0",  # Secure password hashing
-    "PyJWT[crypto]>=2.12.0",  # JWT authentication; >=2.12.0 fixes GHSA-752w-5fwx-jx9f
+    "PyJWT[crypto]>=2.15.1",  # JWT security floor, including the options-preservation fix
     # LSP
     "pygls>=1.0.0,<3.0.0",
     "lsprotocol>=2023.0.0,<2026.0.0",
@@ -350,7 +357,8 @@ all = [
     "mkdocs>=1.5.0,<2.0.0",
     "mkdocs-material>=9.4.0,<10.0.0",
     "mkdocstrings[python]>=0.24.0,<2.0.0",
-    "mkdocs-with-pdf>=0.9.3,<1.0.0",
+    "mkdocs-with-pdf>=0.9.3,<1.0.0; python_version >= '3.11'",
+    "pillow>=13.0.0,<14.0.0; python_version >= '3.11'",
     # pymdown-extensions 10.20.x passes title=None through as the
     # filename kwarg, which crashes pygments 2.20+'s stricter
     # html.escape() (AttributeError on .replace). 10.21.0 fixes
@@ -366,10 +374,12 @@ all = [
     "coverage>=7.0,<8.0",
     "bandit>=1.7,<2.0",
     "pre-commit>=3.0,<5.0",
+    "virtualenv>=21.7.13",  # GHSA-p58f-9548-mpm2, GHSA-9h9j-4vrj-gf7g, GHSA-x78j-v8h9-3j2q, GHSA-94p9-xgh2-xp45.
     "httpx>=0.27.0,<1.0.0",  # For API testing
     # Security constraint overrides for transitive dependencies
-    "urllib3>=2.3.0,<3.0.0",  # CVE fix: GHSA-gm62, GHSA-2xpw
-    "aiohttp>=3.14.3,<4.0.0",  # CVE fix: clears all GHSA advisories through 3.14.3
+    "urllib3>=2.8.0,<3.0.0",  # Security floor: GHSA-vxq7-64xx-v4gw, GHSA-gh4c-6fx4-qh6g, GHSA-8988-9cw3-xx77.
+    "aiohttp>=3.14.4,<4.0.0",  # Security floor: GHSA-494j-54xm-rwp3, GHSA-5wr8-gcqf-gqf3.
+    "multidict>=6.9.1,<7.0.0",  # aiohttp/yarl dependency security floor: GHSA-54p9-h82j-f925.
     "filelock>=3.16.0,<4.0.0",  # CVE fix: GHSA-w853
 ]
 
@@ -398,6 +408,7 @@ dev = [
     "bandit>=1.7,<2.0",
     "radon>=6.0,<7.0",  # Complexity ratchet (tests/unit/quality/)
     "pre-commit>=3.0,<5.0",  # Updated for pre-commit 4.x
+    "virtualenv>=21.7.13",  # GHSA-p58f-9548-mpm2, GHSA-9h9j-4vrj-gf7g, GHSA-x78j-v8h9-3j2q, GHSA-94p9-xgh2-xp45.
     # Test dependencies for API and integration tests
     "httpx>=0.27.0,<1.0.0",  # For API testing
     "fastapi>=0.110.0,<1.0.0",  # attune.ops dashboard + its API tests
@@ -433,7 +444,8 @@ dev = [
     # (redis entry removed 2026-07-04 — core dep now)
     "langchain-anthropic>=0.3.0,<2.0.0",
     "tiktoken>=0.7.0,<1.0.0",
-    "aiohttp>=3.14.3,<4.0.0",  # webhook hooks + their SSRF/DNS-pinning tests; CVE floor per [all]
+    "aiohttp>=3.14.4,<4.0.0",  # webhook hooks + their SSRF/DNS-pinning tests; CVE floor per [all]
+    "multidict>=6.9.1,<7.0.0",  # aiohttp/yarl dependency security floor: GHSA-54p9-h82j-f925.
 ]
 
 [project.scripts]
