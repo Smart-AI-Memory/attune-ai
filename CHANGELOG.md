@@ -27,6 +27,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- PDF export requires Python 3.11 or later. The core package and normal website
+  documentation retain Python 3.10 support. On Python 3.10, the default `all`
+  documentation target builds the web outputs, then reports PDF unavailability
+  and exits with status 1; use the `website` target for normal documentation.
+
 - Updated the exact MCP SDK pin to 1.30.0 and replayed the packaged native
   form receipts against it, so SDK-version verification accepts the upgrade
   while preserving the tested accept, abort, timeout and validation-feedback behavior.
@@ -42,6 +47,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   engine workflows use `attune.workflows.base.BaseWorkflow.execute()` instead.
 
 ### Fixed
+
+- Raised the certifi security floor to 2026.10.18 to remove compromised
+  emSign trust roots, and updated the optional PDF dependency to Pillow 13.0.0.
 
 - Replaced automatic SDK audit execution with keyless verification of an approved
   manual audit for the exact PR commit. Missing or incomplete evidence remains

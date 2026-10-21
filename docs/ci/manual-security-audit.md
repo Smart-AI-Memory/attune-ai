@@ -1,7 +1,7 @@
 # Manual security audit CI
 
 Automatic PR CI verifies audit evidence without making model calls. The separate
-[manual workflow](../../.github/workflows/security-audit-manual.yml) runs an
+manual workflow, `.github/workflows/security-audit-manual.yml`, runs an
 authenticated SDK audit only after explicit spending approval. Both workflows
 must be present on trusted `main` before this route can operate.
 

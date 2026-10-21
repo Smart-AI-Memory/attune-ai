@@ -193,7 +193,7 @@ def report_counts(report):
         "score" not in summary or (type(summary["score"]) is int and 0 <= summary["score"] <= 100),
         "Malformed SDK score",
     )
-    counts = {name: 0 for name in ("critical", "high", "medium", "low")}
+    counts = dict.fromkeys(("critical", "high", "medium", "low"), 0)
     require(isinstance(report["findings"], list), "Missing SDK findings list")
     for finding in report["findings"]:
         require(

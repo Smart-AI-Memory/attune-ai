@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -137,6 +138,7 @@ def test_exact_identity_script(tmp_path, change, approved):
     values.update(change)
     script = step("Validate approval and reviewed head")["with"]["script"]
     harness = """
+console.error(`identity:start pid=${process.pid} node=${process.version}`);
 const v = JSON.parse(process.argv[2]);
 const context = {eventName:v.event, ref:v.ref, repo:{owner:'owner',repo:'repo'}};
 process.env.PR_NUMBER=v.number;process.env.REVIEWED_SHA=v.sha;
@@ -149,21 +151,27 @@ const github={rest:{pulls:{get:async(args)=>{
  return {data:{state:v.state,head:{sha:v.head,repo:v.null_repo?null:{full_name:v.repo}},
  base:{ref:v.base}}};
 }}}};
-(async()=>{ SCRIPT })().catch(e=>{console.error(e.message);process.exitCode=1;})
- .finally(()=>console.log(JSON.stringify({outputs,calls})));
+(async()=>{ console.error("identity:validate"); SCRIPT })().catch(e=>{console.error(e.message);process.exitCode=1;})
+ .finally(()=>{console.error("identity:complete");console.log(JSON.stringify({outputs,calls}));});
 """.replace(
         "SCRIPT", script
     )
     test = tmp_path / "identity.js"
     test.write_text(harness, encoding="utf-8")
-    result = subprocess.run(
-        [node, str(test), json.dumps(values)],
-        capture_output=True,
-        text=True,
-        check=False,
-        timeout=10,
-        env=_node_env(),
-    )
+    try:
+        result = subprocess.run(
+            [node, str(test), json.dumps(values)],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
+            env=_node_env(),
+        )
+    except subprocess.TimeoutExpired as error:
+        pytest.fail(
+            "Node identity control exceeded its original 10-second limit; "
+            f"stdout={error.stdout!r}; stderr={error.stderr!r}"
+        )
     assert (result.returncode == 0) is approved, result.stderr
     evidence = json.loads(result.stdout)
     assert evidence["outputs"] == ([["sha", values["sha"]]] if approved else [])
@@ -269,10 +277,14 @@ def test_actual_audit_shell_fails_closed(tmp_path, case):
     timeout.chmod(0o700)
     (binary / "python3").symlink_to(sys.executable)
     script = tmp_path / "scan.sh"
-    script.write_text(step("Run one authenticated audit")["run"], encoding="utf-8")
+    # The suite guard clears Popen credentials. This owned stub receives only
+    # a literal synthetic value inside the child; no real inference is invoked.
+    script.write_text(
+        "export ANTHROPIC_API_KEY=fixture-only\n" + step("Run one authenticated audit")["run"],
+        encoding="utf-8",
+    )
     env = {
         "PATH": str(binary) + ":/usr/bin:/bin",
-        "ANTHROPIC_API_KEY": "fixture-only",
         "GITHUB_WORKSPACE": str(workspace),
         "GITHUB_OUTPUT": str(tmp_path / "outputs"),
         "FIXTURE": str(fixture),
@@ -325,7 +337,9 @@ def test_actual_audit_shell_fails_closed(tmp_path, case):
         assert stderr.read_text() == "fixture-only"
         sanitizer = tmp_path / "sanitize.sh"
         sanitizer.write_text(
-            step("Redact credential bytes before artifact upload")["run"], encoding="utf-8"
+            "export ANTHROPIC_API_KEY=fixture-only\n"
+            + step("Redact credential bytes before artifact upload")["run"],
+            encoding="utf-8",
         )
         scrub = subprocess.run(
             ["/bin/bash", "--noprofile", "--norc", "-eo", "pipefail", str(sanitizer)],
@@ -387,11 +401,15 @@ def test_final_verdict_uses_actual_scanner_outcome(tmp_path, outcome, critical, 
 def test_missing_credential_does_not_start_child(tmp_path, key):
     _posix_shell()
     script = tmp_path / "scan.sh"
-    script.write_text(step("Run one authenticated audit")["run"], encoding="utf-8")
+    script.write_text(
+        f"export ANTHROPIC_API_KEY={shlex.quote(key)}\n"
+        + step("Run one authenticated audit")["run"],
+        encoding="utf-8",
+    )
     result = subprocess.run(
         ["/bin/bash", "--noprofile", "--norc", "-eo", "pipefail", str(script)],
         cwd=tmp_path,
-        env={"PATH": "/usr/bin:/bin", "ANTHROPIC_API_KEY": key},
+        env={"PATH": "/usr/bin:/bin"},
         capture_output=True,
         text=True,
         check=False,
@@ -422,7 +440,9 @@ def test_sanitation_gates_artifact_upload(tmp_path, case):
         )
     script = tmp_path / "sanitize.sh"
     script.write_text(
-        step("Redact credential bytes before artifact upload")["run"], encoding="utf-8"
+        f"export ANTHROPIC_API_KEY={shlex.quote('' if case == 'missing' else fake_key)}\n"
+        + step("Redact credential bytes before artifact upload")["run"],
+        encoding="utf-8",
     )
     result = subprocess.run(
         ["/bin/bash", "--noprofile", "--norc", "-eo", "pipefail", str(script)],
@@ -430,7 +450,6 @@ def test_sanitation_gates_artifact_upload(tmp_path, case):
         env={
             "PATH": str(binary) + ":/usr/bin:/bin",
             "RUNNER_TEMP": str(tmp_path),
-            "ANTHROPIC_API_KEY": "" if case == "missing" else fake_key,
         },
         capture_output=True,
         text=True,

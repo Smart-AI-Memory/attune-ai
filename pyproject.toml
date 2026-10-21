@@ -83,6 +83,7 @@ dependencies = [
     "mcp==1.30.0",  # Native packaged receipts bind the exact SDK version. Upgrade only with replayed receipts and the full matrix; see test_native_receipt_sdk_is_exactly_pinned.
     "PyJWT[crypto]>=2.15.1,<3.0.0",  # MCP JWT security floor: GHSA-42vr-xj54-vc7v, GHSA-x33g-cr3x-6449, GHSA-gvp8-978c-rx2q.
     "urllib3>=2.8.0,<3.0.0",  # langsmith -> requests security floor: GHSA-vxq7-64xx-v4gw, GHSA-gh4c-6fx4-qh6g, GHSA-8988-9cw3-xx77.
+    "certifi>=2026.10.18",  # GHSA-6q48-6c7w-9gw2: remove compromised emSign trust roots.
     "python-multipart>=0.0.26",  # Pin above GHSA-59g5-xgcq-4qw3 / GHSA-wp53-j4wj-2cfg / CVE-2026-40347 (transitive via mcp)
     "cryptography>=50.0.0",  # GHSA floor: >=44,<50 vulnerable (2026-08 advisory); was CVE-2026-39892
     "langsmith>=0.7.31,<2.0.0",  # GHSA-rr7j-v2q5-chgv (transitive via langchain-core)
@@ -189,7 +190,9 @@ docs = [
     "mkdocs>=1.5.0,<2.0.0",
     "mkdocs-material>=9.4.0,<10.0.0",
     "mkdocstrings[python]>=0.24.0,<2.0.0",
-    "mkdocs-with-pdf>=0.9.3,<1.0.0",  # PDF/ePub generation
+    # Patched Pillow requires Python 3.11; normal docs retain Python 3.10.
+    "mkdocs-with-pdf>=0.9.3,<1.0.0; python_version >= '3.11'",
+    "pillow>=13.0.0,<14.0.0; python_version >= '3.11'",
     # pymdown-extensions 10.20.x passes title=None through as the
     # filename kwarg, which crashes pygments 2.20+'s stricter
     # html.escape() (AttributeError on .replace). 10.21.0 fixes
@@ -354,7 +357,8 @@ all = [
     "mkdocs>=1.5.0,<2.0.0",
     "mkdocs-material>=9.4.0,<10.0.0",
     "mkdocstrings[python]>=0.24.0,<2.0.0",
-    "mkdocs-with-pdf>=0.9.3,<1.0.0",
+    "mkdocs-with-pdf>=0.9.3,<1.0.0; python_version >= '3.11'",
+    "pillow>=13.0.0,<14.0.0; python_version >= '3.11'",
     # pymdown-extensions 10.20.x passes title=None through as the
     # filename kwarg, which crashes pygments 2.20+'s stricter
     # html.escape() (AttributeError on .replace). 10.21.0 fixes

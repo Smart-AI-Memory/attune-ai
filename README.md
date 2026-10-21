@@ -459,9 +459,16 @@ with guidance when not. Add extras only for the surfaces you use:
 | Everything most users need, incl. Redis memory | `pip install attune-ai` |
 | Claude API mode + optional LangChain/LangGraph interop adapters | `pip install 'attune-ai[developer]'` |
 | The ops dashboard (`attune ops`) | `pip install 'attune-ai[ops]'` |
+| Documentation tools | `pip install 'attune-ai[docs]'` |
 
 Extras combine — `pip install 'attune-ai[developer,ops]'`. Keep the
 quotes: zsh and bash treat square brackets as glob characters.
+
+The core package and normal website documentation support Python 3.10 or later.
+PDF export requires Python 3.11 or later and the `docs` extra, which includes
+Pillow 13. On Python 3.10, the `docs` and `all` extras omit
+the PDF toolchain. See [Build the documentation](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/contributing.md#build-the-documentation)
+for the source-checkout commands.
 
 Contributing? Clone and install the dev toolchain instead:
 
