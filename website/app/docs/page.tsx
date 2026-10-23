@@ -1,4 +1,4 @@
-import { ATTUNE_AI_DEPRECATION_NOTICE, HARNESS_INSTALL_COMMAND, HARNESS_PUBLISHED, HARNESS_RELEASE_NOTICE, HARNESS_RELEASE_SLUG, HARNESS_SOURCE_ROOT, HARNESS_VERSION } from '@/lib/harness-release';
+import { HARNESS_INSTALL_COMMAND, HARNESS_PUBLISHED, HARNESS_RELEASE_NOTICE, HARNESS_RELEASE_SLUG, HARNESS_SOURCE_ROOT, HARNESS_VERSION } from '@/lib/harness-release';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
@@ -9,56 +9,9 @@ import { HARNESS_FAQ_ITEMS } from '@/lib/harness-faq';
 export const metadata: Metadata = genMeta({
   title: 'Documentation',
   description:
-    'Start with Attune Harness for scoped engineering work, checked results and retained context. Attune AI and companion-package references remain available for existing users.',
+    'Attune Harness documentation for scoped engineering work, setup, checked results and retained context.',
   url: 'https://smartaimemory.com/docs',
 });
-
-const faqItems = [
-  {
-    question: 'What is attune-ai?',
-    answer:
-      'Attune AI was the earlier specification, workflow, memory and retrieval project. It is deprecated and is no longer maintained. Use the retained references for an existing installation; new work should follow the current Harness installation guide.',
-  },
-  {
-    question: 'How can I check generated content for drift?',
-    answer:
-      'Retrieval through attune-rag supplies source context for review. Source hashes can flag tracked templates for maintenance when the corresponding code changes. These checks cover particular sources and properties; they do not establish the accuracy of every generated answer.',
-  },
-  {
-    question: 'Do I need attune-ai to read templates?',
-    answer:
-      'No. The standalone attune-help reader can read existing help templates without the full Attune AI framework or an API key. Point it at the template directory described in its package reference. Generating or updating templates is a separate task.',
-  },
-  {
-    question: 'Can I write templates by hand?',
-    answer:
-      'Yes. Use maintenance: manual in template frontmatter to mark a page as human-maintained and have regeneration skip it. Review the maintenance instructions for your installed Attune AI version before updating templates.',
-  },
-  {
-    question: 'How does staleness detection work?',
-    answer:
-      'Generated templates can record source hashes. Maintenance compares the recorded and current hashes to identify affected templates. A stale flag identifies a review or regeneration task; it is not proof that the replacement content is correct.',
-  },
-  {
-    question: 'Is it free? What do I need to run it?',
-    answer:
-      'Attune AI is open source under Apache 2.0, subject to the license conditions. Runtime requirements depend on the workflow; model providers and other external services may require separate credentials and incur charges.',
-  },
-  {
-    question: 'What Claude Code skills are included?',
-    answer: 'The retained Attune AI skill reference covers development tasks such as review, testing, specifications and documentation. Skill availability depends on the installed plugin version and host. Inspect that installation rather than treating a website count as an environment check.',
-  },
-  {
-    question: 'Where do I install attune-help from?',
-    answer:
-      'The standalone attune-help reader is available on PyPI. See its package reference for installation and template-directory setup. Installing a Python reader is separate from installing a host plugin.',
-  },
-  {
-    question: 'What happened to attune-author?',
-    answer:
-      'The standalone Attune Author package was archived after its authoring capabilities moved into Attune AI in July 2026. Attune AI is now deprecated too. Use the retained references for existing installations; new work should follow the current Harness installation guide.',
-  },
-];
 
 export default function DocsPage() {
   const breadcrumbSchema = generateStructuredData('breadcrumb', {
@@ -88,11 +41,10 @@ export default function DocsPage() {
         <section className="py-20 gradient-primary text-white">
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
-              <h1 className="text-5xl font-bold mb-6">Harness docs and project references</h1>
+              <h1 className="text-5xl font-bold mb-6">Attune Harness documentation</h1>
               <p className="text-xl opacity-90 mb-8">
                 Start with Attune Harness. Find guidance for useful work,
                 execution permissions, checkable results and retained context.
-                Earlier Attune AI references follow for existing users.
               </p>
               <nav className="flex flex-wrap justify-center gap-3">
                 <a href="#harness-docs" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">Harness</a>
@@ -119,7 +71,7 @@ export default function DocsPage() {
               <a className="btn btn-outline" href={`${HARNESS_SOURCE_ROOT}/docs/release-readiness-${HARNESS_VERSION}.md`}>Check the {HARNESS_VERSION} qualification limits</a>
             </div>
             <p className="text-sm text-[var(--text-secondary)]">Claude Code and Codex have documented setup paths. Native planning and building remain experimental; Antigravity integration is unverified here. Intent acceptance is separate from paid execution permission.</p>
-            <p className="text-sm text-[var(--text-secondary)] mt-4">{ATTUNE_AI_DEPRECATION_NOTICE}{' '}<a className="underline" href={`${HARNESS_SOURCE_ROOT}/docs/migration.md`}>Review the migration boundaries</a> before changing an existing setup.</p>
+            <p className="text-sm text-[var(--text-secondary)] mt-4">Bringing existing work? <a className="underline" href={`${HARNESS_SOURCE_ROOT}/docs/migration.md`}>Review the migration boundaries</a> before changing an existing setup.</p>
           </div>
         </section>
 
@@ -179,31 +131,17 @@ export default function DocsPage() {
                 <Link href="/harness/help/goals/" className="btn btn-primary">Browse all goals</Link>
                 <Link href={`/harness/help/${HARNESS_RELEASE_SLUG}/`} className="btn btn-outline">Read the {HARNESS_VERSION} guide</Link>
                 <a href={`${HARNESS_SOURCE_ROOT}/docs/migration.md`} className="btn btn-outline">Check migration boundaries</a>
-                <a href="/faq" className="btn btn-outline">Full FAQ and project references</a>
+                <a href="/faq" className="btn btn-outline">Harness FAQ</a>
               </div>
-              <p id="attune-author" className="text-sm text-[var(--text-secondary)] mb-6 scroll-mt-24">
-                Earlier project: <Link className="underline" href="/attune-author/#attune-author">Attune Author reference</Link>.
-              </p>
-              <details id="attune-ai-reference-questions" className="border border-[var(--border)] rounded-lg p-6">
-                <summary className="min-h-11 flex items-center text-lg font-semibold cursor-pointer">Earlier Attune AI references</summary>
-                <p className="text-sm text-[var(--text-secondary)] my-6">
-                  Attune AI is deprecated. The questions below retain references for existing installations.
-                  Their workflows and commands apply to those historical projects.
+              <div id="attune-ai-reference-questions" className="border border-[var(--border)] rounded-lg p-6 scroll-mt-24">
+                <h3 className="!text-xl font-bold mb-3">Historical references</h3>
+                <p className="text-sm text-[var(--text-secondary)]">
+                  For an earlier installation, <Link className="underline" href="/faq/#attune-ai-reference-questions">open the historical project references</Link>.
                 </p>
-                <div className="space-y-6">
-                  {faqItems.map((item) => (
-                    <div
-                      key={item.question}
-                      className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-6"
-                    >
-                      <h3 className="!text-lg font-bold mb-2">{item.question}</h3>
-                      <p className="text-sm text-[var(--text-secondary)]">
-                        {item.answer}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </details>
+                <p id="attune-author" className="text-sm text-[var(--text-secondary)] mt-4 scroll-mt-24">
+                  <Link className="underline" href="/attune-author/#attune-author">Attune Author reference</Link>.
+                </p>
+              </div>
             </div>
           </div>
         </section>

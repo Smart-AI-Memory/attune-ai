@@ -1,4 +1,4 @@
-import { HARNESS_RELEASE_NOTICE, HARNESS_RELEASE_SLUG, HARNESS_VERSION } from '@/lib/harness-release';
+import { ATTUNE_AI_DEPRECATION_NOTICE, HARNESS_RELEASE_NOTICE, HARNESS_RELEASE_SLUG, HARNESS_VERSION } from '@/lib/harness-release';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
@@ -17,6 +17,53 @@ interface FAQCategory {
   category: string;
   questions: FAQItem[];
 }
+
+const historicalDocsQuestions: FAQItem[] = [
+  {
+    question: 'What is attune-ai?',
+    answer:
+      'Attune AI was the earlier specification, workflow, memory and retrieval project. It is deprecated and is no longer maintained. Use the retained references for an existing installation; new work should follow the current Harness installation guide.',
+  },
+  {
+    question: 'How can I check generated content for drift?',
+    answer:
+      'Retrieval through attune-rag supplies source context for review. Source hashes can flag tracked templates for maintenance when the corresponding code changes. These checks cover particular sources and properties; they do not establish the accuracy of every generated answer.',
+  },
+  {
+    question: 'Do I need attune-ai to read templates?',
+    answer:
+      'No. The standalone attune-help reader can read existing help templates without the full Attune AI framework or an API key. Point it at the template directory described in its package reference. Generating or updating templates is a separate task.',
+  },
+  {
+    question: 'Can I write templates by hand?',
+    answer:
+      'Yes. Use maintenance: manual in template frontmatter to mark a page as human-maintained and have regeneration skip it. Review the maintenance instructions for your installed Attune AI version before updating templates.',
+  },
+  {
+    question: 'How does staleness detection work?',
+    answer:
+      'Generated templates can record source hashes. Maintenance compares the recorded and current hashes to identify affected templates. A stale flag identifies a review or regeneration task; it is not proof that the replacement content is correct.',
+  },
+  {
+    question: 'Is it free? What do I need to run it?',
+    answer:
+      'Attune AI is open source under Apache 2.0, subject to the license conditions. Runtime requirements depend on the workflow; model providers and other external services may require separate credentials and incur charges.',
+  },
+  {
+    question: 'What Claude Code skills are included?',
+    answer: 'The retained Attune AI skill reference covers development tasks such as review, testing, specifications and documentation. Skill availability depends on the installed plugin version and host. Inspect that installation rather than treating a website count as an environment check.',
+  },
+  {
+    question: 'Where do I install attune-help from?',
+    answer:
+      'The standalone attune-help reader is available on PyPI. See its package reference for installation and template-directory setup. Installing a Python reader is separate from installing a host plugin.',
+  },
+  {
+    question: 'What happened to attune-author?',
+    answer:
+      'The standalone Attune Author package was archived after its authoring capabilities moved into Attune AI in July 2026. Attune AI is now deprecated too. Use the retained references for existing installations; new work should follow the current Harness installation guide.',
+  },
+];
 
 const faqData: FAQCategory[] = [
   {
@@ -192,7 +239,7 @@ function CategoryQuestions({ category }: { category: FAQCategory }) {
 export const metadata: Metadata = generateMetadata({
   title: 'Attune Harness FAQ',
   description:
-    'Answers about Attune Harness: specifications, scoped work, setup, receipts and qualification limits. Earlier Attune AI reference questions remain available for existing users.',
+    'Answers about Attune Harness: specifications, scoped work, setup, receipts and qualification limits.',
   url: 'https://smartaimemory.com/faq',
   keywords: [
     'Attune Harness FAQ',
@@ -240,7 +287,7 @@ export default function FAQPage() {
                 Specifications, scoped work and checkable results.
               </p>
               <p className="text-sm opacity-90">
-                {HARNESS_RELEASE_NOTICE} Earlier project references are available separately below.
+                {HARNESS_RELEASE_NOTICE}
               </p>
               <div className="flex flex-wrap justify-center gap-4 mt-8">
                 <Link href="/harness/help/goals/" className="btn btn-primary">Browse all goals</Link>
@@ -256,9 +303,15 @@ export default function FAQPage() {
             <div className="max-w-4xl mx-auto">
               <CategoryQuestions category={faqData[0]} />
               <details id="attune-ai-reference-questions" className="border border-[var(--border)] rounded-lg p-6">
-                <summary className="min-h-11 flex items-center text-lg font-semibold cursor-pointer">Earlier Attune AI references</summary>
-                <p className="my-6 text-sm text-[var(--text-secondary)]">Attune AI is deprecated and is no longer maintained. These historical references remain available for existing installations.</p>
+                <summary className="min-h-11 flex items-center text-lg font-semibold cursor-pointer">Historical project references</summary>
+                <p className="my-6 text-sm text-[var(--text-secondary)]">{ATTUNE_AI_DEPRECATION_NOTICE} The references below describe earlier installations.</p>
+                <div className="flex flex-wrap gap-4 mb-8 text-sm">
+                  <Link className="underline" href="/framework-docs/">Earlier workflow reference</Link>
+                  <Link className="underline" href="/changelog/">Earlier release history</Link>
+                  <Link className="underline" href="/attune-author/#attune-author">Attune Author reference</Link>
+                </div>
                 {faqData.slice(1).map((category) => <CategoryQuestions key={category.category} category={category} />)}
+                <CategoryQuestions category={{ category: 'Template and authoring reference', questions: historicalDocsQuestions }} />
               </details>
             </div>
           </div>

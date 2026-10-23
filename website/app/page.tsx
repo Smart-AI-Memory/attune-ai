@@ -1,4 +1,4 @@
-import { ATTUNE_AI_DEPRECATION_NOTICE, HARNESS_PACKAGE_URL, HARNESS_RELEASE_NOTICE, HARNESS_SOURCE_ROOT } from '@/lib/harness-release';
+import { HARNESS_PACKAGE_URL, HARNESS_RELEASE_NOTICE, HARNESS_SOURCE_ROOT } from '@/lib/harness-release';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -112,9 +112,9 @@ export default function Home() {
         <p>Harness is the current focus. Supporting libraries and earlier project references remain available.</p>
       </div>
       <div className={styles["portfolio"]}>
-        <article className={styles["product"]}><p className={styles["role"]}>Deprecated project · Memory and workflows</p><h3>Attune AI</h3><span className={styles["version"]}><span>v16.4.0</span></span><p>{ATTUNE_AI_DEPRECATION_NOTICE}</p><Link href="/harness/help/get-started/">Harness installation guide <span aria-hidden="true">↗</span></Link></article>
         <article className={styles["product"]}><p className={styles["role"]}>Structured questions and decisions</p><h3>Attune Forms</h3><p>Make questions and choices easier to review, with structured answers validated on return.</p><Link href="https://github.com/Smart-AI-Memory/attune-forms">Explore Attune Forms <span aria-hidden="true">↗</span></Link></article>
         <article className={styles["product"]}><p className={styles["role"]}>Retrieval with citations</p><h3>Attune RAG</h3><p>Retrieve relevant project sources and return citation records for the next step.</p><Link href="https://github.com/Smart-AI-Memory/attune-rag">Explore Attune RAG <span aria-hidden="true">↗</span></Link></article>
+        <article className={styles["product"]}><p className={styles["role"]}>Historical references</p><h3>Earlier projects</h3><p>Documentation for existing installations, including release history and older tools.</p><Link href="/faq/#attune-ai-reference-questions">Open historical references <span aria-hidden="true">↗</span></Link></article>
       </div>
     </section>
 

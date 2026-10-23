@@ -15,5 +15,5 @@ export const HARNESS_RELEASE_NOTICE = HARNESS_PUBLISHED
   : `Preparation for Harness ${HARNESS_VERSION}; not yet released. Use published ${release.published_version} until publication.`;
 export const HARNESS_INSTALL_COMMAND = `uv tool install attune-harness==${HARNESS_VERSION}`;
 export const ATTUNE_AI_DEPRECATION_NOTICE = HARNESS_PUBLISHED
-  ? `Attune AI is deprecated and is no longer maintained. For new work, install Attune Harness ${HARNESS_VERSION}.`
-  : `Attune AI is deprecated and is no longer maintained. Attune Harness ${HARNESS_VERSION} is the replacement target; install it after publication.`;
+  ? `Attune AI is archived on PyPI and is no longer maintained. For new work, install Attune Harness ${HARNESS_VERSION}.`
+  : `Attune AI is archived on PyPI and is no longer maintained. Attune Harness ${HARNESS_VERSION} is the replacement target; install it after publication.`;

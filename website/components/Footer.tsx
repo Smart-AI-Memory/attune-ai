@@ -29,13 +29,11 @@ export default function Footer() {
             </ul>
           </div>
           <div>
-            <h3 className={styles.heading}>Resources and References</h3>
+            <h3 className={styles.heading}>Resources</h3>
             <ul className="space-y-2">
               <li><a href={HARNESS_PACKAGE_URL} target="_blank" rel="noopener noreferrer" className={linkClass}>Harness package and release guide</a></li>
               <li><Link href="/#portfolio" className={linkClass}>Supporting tools and earlier work</Link></li>
-              <li><Link href="/framework-docs" className={linkClass}>Attune AI reference (deprecated)</Link></li>
-              <li><Link href="/how-it-works" className={linkClass}>Attune AI workflow reference</Link></li>
-              <li><Link href="/changelog" className={linkClass}>Attune AI changelog</Link></li>
+              <li><Link href="/faq/#attune-ai-reference-questions" className={linkClass}>Historical project references</Link></li>
               <li><Link href="/pricing" className={linkClass}>Harness open-source license</Link></li>
               <li><Link href="/discipline" className={linkClass}>The Discipline</Link></li>
             </ul>

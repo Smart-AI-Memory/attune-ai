@@ -42,8 +42,9 @@ and require fresh checks on the final integrated source.
 ## Current migration guidance
 
 Both active Docs migration links use `docs/migration.md` at the documentation
-revision supplied by the canonical export. Publisher #2574 pins the reviewed
-guide at `93f161b8e65bf86b4a7670e899ff96ff260644f1` during preparation. The guide
+revision supplied by the canonical export. The earlier migration checkpoint used
+`93f161b8e65bf86b4a7670e899ff96ff260644f1`; subsequent canonical imports use the
+reviewed retirement correction at `0dc82db327af9eae41f7bf812480cc76d2cd7fc7`. The guide
 distinguishes unpublished 1.5.1 from the published 1.5.0 baseline, describes
 current Windows limits and retains the original 1.0.0 migration as historical
 reference. The existing release adapter supplies this source; no separate
@@ -64,15 +65,19 @@ migration receipt retains its original source identity.
 Attune AI is deprecated and is no longer maintained. New work targets Harness
 1.5.1. The existing canonical publication flag controls whether Docs shows the
 version-specific install command; preparation pages name the replacement target
-and retain the published fallback until publication is verified. Docs, FAQ,
-the homepage and footer label the older project and retain historical references.
-This change does not establish migration parity or convert saved data.
+and retain the published fallback until publication is verified. The retirement
+notice lives inside the collapsed historical FAQ. Current Docs, homepage and
+footer use concise historical-reference links rather than repeated product
+promotion. The nine former Docs reference questions are preserved in that same
+FAQ archive, and existing Docs/Author anchors remain available. This change does
+not establish migration parity or convert saved data.
 
 The separate README notice PR records product retirement without changing
-Attune AI runtime, dependencies, version metadata or published artifacts. PyPI
-archival remains a separate project-owner action; no additional Attune AI
-package release or repository archival is performed here. Current Harness
-migration guidance and canonical Help remain with their existing owners.
+Attune AI runtime, dependencies, version metadata or published artifacts. Patrick
+separately authorized PyPI archival on October 23, 2026. All 358 existing release
+files are preserved; the repository remains active for this website. No new
+package release accompanies that action. Current Harness migration guidance and
+canonical Help remain with their existing owners.
 
 ## Release and cutover checks
 

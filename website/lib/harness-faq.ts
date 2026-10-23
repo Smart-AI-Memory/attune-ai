@@ -1,4 +1,4 @@
-import { ATTUNE_AI_DEPRECATION_NOTICE, HARNESS_PUBLISHED, HARNESS_RELEASE_NOTICE, HARNESS_VERSION } from '@/lib/harness-release';
+import { HARNESS_PUBLISHED, HARNESS_RELEASE_NOTICE, HARNESS_VERSION } from '@/lib/harness-release';
 
 // Shared by Docs and FAQ; release identity is maintained with the Help Center.
 export const HARNESS_FAQ_ITEMS = [
@@ -28,9 +28,9 @@ export const HARNESS_FAQ_ITEMS = [
       'Harness has documented setup paths for Claude Code and Codex. Models and authentication depend on the host and participants configured for the task. Installing the Python package does not install agent plugins or skills. Native planning and building remain experimental. Browser forms support draft intake, preview and intent approval; browser build dispatch is not available. Intent approval is separate from permission to execute paid work.',
   },
   {
-    question: 'Is Attune AI deprecated?',
+    question: 'How do I move existing work to Harness?',
     answer:
-      `${ATTUNE_AI_DEPRECATION_NOTICE} Follow the current installation guide. Keep existing environments and saved work while validating the Harness workflows you need; deprecation does not establish feature parity or convert saved data. The earlier Attune AI references remain available for existing users.`,
+      'Keep existing environments and saved work while validating the Harness workflows you need. Follow the current installation guide and review migration boundaries before changing a working setup. Installing Harness does not establish feature parity or convert saved data.',
   },
   {
     question: 'Does Harness keep all my data local?',
