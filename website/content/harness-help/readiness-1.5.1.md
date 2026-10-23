@@ -22,22 +22,40 @@ consultation or human acceptance of those journeys.
 | Four canonical training walkthroughs | Retained | Existing source snapshot, provenance and projector are unchanged. Candidate walkthrough links identify their original artifact; no final 1.5.1 walkthrough acceptance is claimed. |
 | Older preparation page | Retained | `/next-release/` remains a noindex historical record with its original JSON. |
 
-## Publication gate
+## Before package publication
 
-1. Verify the Harness 1.5.1 GitHub release and PyPI package, including final
-   version, source commit and artifact identity. Reconcile changes after the
-   reviewed source above. Check the final release notes and readiness record.
-2. Replay the installation, version/help and deterministic example against the
-   published wheel in a new environment. Check completed-assessment Markdown
-   and HTML presentation with a retained completed task; keep source tests and
-   actual walkthrough evidence distinct. Coordinate remaining walkthrough and
-   derivative dispositions with their existing owners.
-3. Set `release.json` status to `published`, set `published_version` to `1.5.1`
+Documentation readiness is a prerequisite to the 1.5.1 release. Do not defer
+instruction and walkthrough validation until PyPI publication.
+
+1. Review all current documentation for the selected final source: canonical
+   instructions, Help, installation, command reference, examples and actual
+   tutorial/class derivatives. Reconcile changes after the source above and
+   record each topic as changed or unchanged but reviewed. Coordinate canonical
+   walkthroughs and derivatives with their existing owners. Historical guides
+   retain their original versions and evidence; they are not relabeled as 1.5.1.
+2. Test installation, version/help and the deterministic example against the
+   exact versioned candidate wheel in a new environment, using the local wheel
+   before it is available from PyPI. Check completed-assessment Markdown and
+   HTML presentation with a retained completed task and reproduce affected
+   walkthroughs. Keep source tests, actual walkthrough outcomes, human
+   acceptance and untested boundaries distinct.
+3. Record candidate source, artifact identity, content dispositions and results
+   in the release readiness record and this PR. Run projection, link, website
+   and required package qualification checks. Resolve documentation blockers
+   before requesting the separately gated package publication approval.
+
+## After package publication
+
+1. Verify the published 1.5.1 package bytes and release/source identity. Perform
+   an index-install smoke check to confirm users receive the reviewed package.
+   If identity or behavior differs, stop website publication and reconcile it.
+   These distribution checks do not replace the candidate validation above.
+2. Set `release.json` status to `published`, set `published_version` to `1.5.1`
    and pin `source_ref` to the verified release commit. Regenerate the goal guide
-   and repeat projection, website, link and browser checks. This also enables
+   and check the final version links, projection and website. This also enables
    current-page indexing and sitemap entries.
-4. Record the evidence in the PR, obtain the applicable merge approval, and
-   publish through the existing main-branch deployment. Check the production
+3. Record the final evidence in the PR, obtain the applicable merge approval,
+   and publish through the existing main-branch deployment. Check the production
    Help landing-to-goals journey after deployment. Do not change hosting gates.
 
 Website build and interaction checks establish the delivered website behavior.
