@@ -20,16 +20,18 @@ Check exact exported bytes and the real Next.js routes before cutover.
 ## Current state
 
 The generated receipt imports signed Harness commit
-`d98b31d06b3a3fadbbf2066b874a69df9f325139`, which includes current Harness
+`3073eb4a7fde625649b05f19007599b837d2e282`, which includes current Harness
 main `e9c4262ed549ea39b2b9e0f1ca0c1046e0ec7cb1`.
 Help remains explicit 1.5.1 preparation; published 1.5.0 evidence is retained.
 The current migration, release-notes and readiness links use documentation
 revision `0dc82db327af9eae41f7bf812480cc76d2cd7fc7`. The original runtime
 source, validation artifact, tutorial source and published verification records
-keep their separate identities. The five-file generated delta changes the overview, preparation page and
-metadata. It reflects the approved Attune AI deprecation direction while keeping
-1.5.1 unpublished and 1.5.0 available. Importer and renderer implementations are
-unchanged.
+keep their separate identities. The latest six-file generated delta aligns four current walkthrough introductions
+with the retained preparation source selected in Get started. Research setup
+terminology also says preparation. Commands, UI behavior, historical evidence,
+manifest and preparation identities remain unchanged. The deprecation notice,
+unpublished 1.5.1 boundary and available 1.5.0 fallback remain explicit.
+Importer and renderer implementations are unchanged.
 
 The entry-point owner must use this refreshed export before changing the two
 active migration links in PR #2575 to `docs/migration.md`. The historical 1.0
@@ -44,10 +46,10 @@ migration record is preserved. Keep all branches separate and based on main.
 | Production compilation | `npx next build` | Pass; 123 pages |
 
 Independent GPT-6 Astra review found no actionable findings in the generated
-five-file delta. All source/output hashes match. The original validation,
+six-file delta. All source/output hashes match. The original validation,
 tutorial and historical verification identities are unchanged. A local HTTP
-round trip verified all 24 exported files byte for byte, including the new
-migration link. Combined entry-point validation remains with the PR #2575 owner.
+round trip verified all 24 exported files byte for byte, including the current
+migration link and all four corrected source-revision introductions. Combined entry-point validation remains with the PR #2575 owner.
 
 ## Next action
 
