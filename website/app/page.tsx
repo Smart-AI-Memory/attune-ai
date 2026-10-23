@@ -1,3 +1,4 @@
+import { HARNESS_PACKAGE_URL, HARNESS_RELEASE_NOTICE, HARNESS_SOURCE_ROOT } from '@/lib/harness-help/release';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -52,14 +53,14 @@ export default function Home() {
           <div><h3>Evidence has limits too.</h3><p>A passing check establishes what it tested. It does not guarantee every output is correct.</p></div>
         </div>
         <div className={styles["release"]}>
-          <p><strong>Published: Attune Harness 1.4.0.</strong> <Link href="https://pypi.org/project/attune-harness/1.4.0/">Package and release guide</Link></p>
+          <p><strong>{HARNESS_RELEASE_NOTICE}</strong> <Link href="/harness/help/">Harness Help Center</Link> · <Link href="/harness/help/goals/">Browse all goals</Link></p>
           <p className={styles["candidate"]}>Browser forms guide intake and intent approval. Each workflow retains its own execution permissions and checks.</p>
           <details>
             <summary>Read the evidence and limits</summary>
             <p>In one exporter comparison, command-line checks found three defects that direct serializer checks had missed.</p>
             <p>The result applies to that example. General model reliability needs separate assessment.</p>
             <p><Link href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/docs/plan-build-native-results.md">Read the comparison and its limits</Link></p>
-            <p>A passing check establishes what it tested. Native planning and building remain experimental. Claude Code and Codex have documented setup paths; Antigravity integration is unverified in this review. Native MCP panel delivery remains unverified. <Link href="https://pypi.org/project/attune-harness/1.4.0/#user-content-what-is-qualified-and-what-is-not">Review the qualification guide</Link>.</p>
+            <p>A passing check establishes what it tested. Native planning and building remain experimental. Claude Code and Codex have documented setup paths; Antigravity integration is unverified in this review. Native MCP panel delivery remains unverified. <Link href={`${HARNESS_PACKAGE_URL}#user-content-what-is-qualified-and-what-is-not`}>Review the qualification guide</Link>.</p>
           </details>
         </div>
       </div>
@@ -75,7 +76,7 @@ export default function Home() {
         <article className={styles["path"]}><h3>Keep the next step visible.</h3><p>Retain an opportunity-review checkpoint with its goal, progress, evidence and unfinished review.</p></article>
         <article className={styles["path"]}><h3>Choose what to pursue.</h3><p>Assess the proposed benefit and uncertainty. A saved suggestion grants no execution authority.</p></article>
       </div>
-      <p className={styles["candidate"]}>Scoped recall and saved review checkpoints are supported. Automatic access to all chat history is not implied; the richer opportunity-ranking and selection journey remains proposed. <Link href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.4.0/docs/specs/task-opportunities/journey.md">Review the current boundary</Link>.</p>
+      <p className={styles["candidate"]}>Scoped recall and saved review checkpoints are supported. Automatic access to all chat history is not implied; the richer opportunity-ranking and selection journey remains proposed. <Link href={`${HARNESS_SOURCE_ROOT}/docs/specs/task-opportunities/journey.md`}>Review the current boundary</Link>.</p>
     </section>
 
     <section className={styles["section"] + " " + styles["wrap"]} aria-labelledby="paths-title">

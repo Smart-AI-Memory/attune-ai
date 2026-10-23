@@ -1,3 +1,4 @@
+import { HARNESS_PUBLISHED, HARNESS_RELEASE_NOTICE, HARNESS_RELEASE_SLUG, HARNESS_SOURCE_ROOT, HARNESS_VERSION } from '@/lib/harness-help/release';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
@@ -109,15 +110,16 @@ export default function DocsPage() {
         <section id="harness-docs" className="py-20">
           <div className="container max-w-5xl">
             <h2 className="text-4xl font-bold mb-4">Start with Attune Harness</h2>
-            <p className="text-xl text-[var(--text-secondary)] mb-6"><Link className="underline" href="/harness/help/1-5-0/">Harness 1.5.0 Help Center: install the published release and check a local result.</Link> Full Windows parity remains deferred.</p>
+            <p className="text-xl text-[var(--text-secondary)] mb-6"><Link className="underline" href="/harness/help/">Open the Harness Help Center.</Link> {HARNESS_RELEASE_NOTICE} Full Windows parity remains deferred.</p>
             <p className="text-xl text-[var(--text-secondary)] mb-6">Define a useful next step, build or repair within scope, check the result, and return with the context intact. Choose a workflow from the guide; command syntax is available when you need it.</p>
             <div className="flex flex-wrap gap-4 mb-6">
-              <Link className="btn btn-primary" href="/harness/help/1-5-0/#install-the-published-release">Install Harness 1.5.0</Link>
-              <a className="btn btn-outline" href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.4.0/docs/cli-guide.md">Read the Harness guide</a>
-              <a className="btn btn-outline" href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.5.0/docs/release-notes-1.5.0.md">Check the 1.5.0 qualification limits</a>
+              <Link className="btn btn-primary" href="/harness/help/goals/">What do you want to accomplish?</Link>
+              <Link className="btn btn-outline" href={`/harness/help/${HARNESS_RELEASE_SLUG}/`}>{HARNESS_PUBLISHED ? `Install Harness ${HARNESS_VERSION}` : `Prepare for Harness ${HARNESS_VERSION}`}</Link>
+              <a className="btn btn-outline" href={`${HARNESS_SOURCE_ROOT}/docs/cli-guide.md`}>Read the Harness guide</a>
+              <a className="btn btn-outline" href={`${HARNESS_SOURCE_ROOT}/docs/release-readiness-${HARNESS_VERSION}.md`}>Check the {HARNESS_VERSION} qualification limits</a>
             </div>
             <p className="text-sm text-[var(--text-secondary)]">Claude Code and Codex have documented setup paths. Native planning and building remain experimental; Antigravity integration is unverified here. Intent acceptance is separate from paid execution permission.</p>
-            <p className="text-sm text-[var(--text-secondary)] mt-4">Harness does not yet replace every Attune AI workflow. <a className="underline" href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.4.0/docs/migration-from-attune-ai.md">Review the migration boundaries</a> before changing an existing setup.</p>
+            <p className="text-sm text-[var(--text-secondary)] mt-4">Harness does not yet replace every Attune AI workflow. <a className="underline" href={`${HARNESS_SOURCE_ROOT}/docs/migration-from-attune-ai.md`}>Review the migration boundaries</a> before changing an existing setup.</p>
           </div>
         </section>
 
@@ -127,7 +129,7 @@ export default function DocsPage() {
             <h2 className="text-4xl font-bold mb-4">Historical Harness 1.4.0 Quick Start</h2>
             <p className="text-xl text-[var(--text-secondary)] mb-6">
               Install Harness and try a small local check before connecting an agent.
-              This retained setup uses the released 1.4.0 package. <Link className="underline" href="/harness/help/1-5-0/">Use the Help Center for current 1.5.0 instructions.</Link>
+              This retained setup uses the released 1.4.0 package. <Link className="underline" href="/harness/help/">Use the Help Center for current guidance.</Link>
             </p>
             <p className="text-[var(--text-secondary)] mb-8">
               You need Python 3.10 or later. Start in a new working directory and
@@ -252,9 +254,9 @@ export default function DocsPage() {
                 ))}
               </div>
               <div className="flex flex-wrap gap-4 mb-12">
-                <a href="#quickstart" className="btn btn-primary">Open the Harness Quick Start</a>
-                <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.4.0/docs/cli-guide.md" className="btn btn-outline">Read the release guide</a>
-                <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.4.0/docs/migration-from-attune-ai.md" className="btn btn-outline">Check migration boundaries</a>
+                <Link href="/harness/help/goals/" className="btn btn-primary">Browse all goals</Link>
+                <Link href={`/harness/help/${HARNESS_RELEASE_SLUG}/`} className="btn btn-outline">Read the {HARNESS_VERSION} guide</Link>
+                <a href={`${HARNESS_SOURCE_ROOT}/docs/migration-from-attune-ai.md`} className="btn btn-outline">Check migration boundaries</a>
                 <a href="/faq" className="btn btn-outline">Full FAQ and project references</a>
               </div>
               <details id="attune-ai-reference-questions" className="border border-[var(--border)] rounded-lg p-6">

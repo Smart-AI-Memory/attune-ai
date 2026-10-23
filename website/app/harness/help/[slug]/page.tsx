@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { CURRENT_RELEASE_ROOT, getTopic, HELP_ROOT, provenance, RELEASE_ROOT, topics, topicHref } from '@/lib/harness-help/topics';
+import { HARNESS_PUBLISHED, HARNESS_RELEASE_SLUG, HARNESS_VERSION } from '@/lib/harness-help/release';
 
 export function generateStaticParams() {
   return topics.map(({ slug }) => ({ slug }));
@@ -13,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const topic = getTopic(slug);
   if (!topic) return { title: 'Help topic unavailable' };
-  return { title: topic.title, description: topic.goal, alternates: { canonical: `https://smartaimemory.com${topicHref(slug)}` } };
+  return { title: topic.title, description: topic.goal, alternates: { canonical: `https://smartaimemory.com${topicHref(slug)}` }, robots: { index: HARNESS_PUBLISHED || topic.version !== HARNESS_VERSION, follow: true } };
 }
 
 export default async function HelpArticle({ params }: { params: Promise<{ slug: string }> }) {
@@ -23,7 +24,9 @@ export default async function HelpArticle({ params }: { params: Promise<{ slug: 
   const index = topics.indexOf(topic);
   const version = topic.version ?? '1.3.0';
   const next = topics.slice(index + 1).find((candidate) => (candidate.version ?? '1.3.0') === version);
-  const sourceRoot = topic.version ? CURRENT_RELEASE_ROOT : RELEASE_ROOT;
+  const isCurrent = version === HARNESS_VERSION;
+  const preparation = isCurrent && !HARNESS_PUBLISHED;
+  const sourceRoot = isCurrent ? CURRENT_RELEASE_ROOT : topic.version ? `https://github.com/Smart-AI-Memory/attune-harness/blob/v${version}` : RELEASE_ROOT;
 
   return (
     <>
@@ -33,10 +36,11 @@ export default async function HelpArticle({ params }: { params: Promise<{ slug: 
       <p className="help-eyebrow">{topic.kind} · Harness {version}</p>
       <h1>{topic.title}</h1>
       <p className="help-lead">{topic.goal}</p>
-      <p className="help-version-note">Version: <strong>released {version}</strong>. {topic.version ? 'Published-release installation and scope.' : <>Historical instructions for this release. <Link href={topicHref('1-5-0')}>Start with current 1.5.0 guidance</Link>.</>}</p>
+      <p className="help-version-note">Version: <strong>{preparation ? 'preparation for' : 'released'} {version}</strong>. {isCurrent ? 'Installation, workflow guidance and scope for this version.' : <>Historical instructions for this release. <Link href={topicHref(HARNESS_RELEASE_SLUG)}>Read the {HARNESS_VERSION} guide</Link>.</>}</p>
       <div className="help-prose">
         <ReactMarkdown remarkPlugins={[remarkGfm]} components={{
           h2: ({ children }) => <h2 id={String(children).toLowerCase().replace(/[^a-z0-9 -]/g, '').replace(/ /g, '-')}>{children}</h2>,
+          h3: ({ children }) => <h3 id={String(children).toLowerCase().replace(/[^a-z0-9 -]/g, '').replace(/ /g, '-')}>{children}</h3>,
           a: ({ href, children }) => href?.startsWith('/')
             ? <Link href={href}>{children}</Link>
             : <a href={href}>{children}</a>,

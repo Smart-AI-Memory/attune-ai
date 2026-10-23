@@ -1,12 +1,15 @@
 import walkthroughs from '@/content/harness-help/walkthroughs.generated.json';
 import provenance from '@/content/harness-help/walkthrough-provenance.json';
 import { COMMAND_REFERENCE } from './commands';
+import { RELEASE_GUIDE } from './release-guide';
+import { HARNESS_RELEASE_SLUG, HARNESS_SOURCE_ROOT, HARNESS_VERSION } from './release';
 
 export const HELP_ROOT = '/harness/help/';
 export const RELEASE_COMMIT = '0ecf8e6058cee9ed6f9b9510e043e3af3cbe1da0';
 export const RELEASE_ROOT = `https://github.com/Smart-AI-Memory/attune-harness/blob/${RELEASE_COMMIT}`;
-export const CURRENT_RELEASE = '1.5.0';
-export const CURRENT_RELEASE_ROOT = 'https://github.com/Smart-AI-Memory/attune-harness/blob/v1.5.0';
+export const CURRENT_RELEASE = HARNESS_VERSION;
+export const CURRENT_RELEASE_ROOT = HARNESS_SOURCE_ROOT;
+const RELEASE_150_ROOT = 'https://github.com/Smart-AI-Memory/attune-harness/blob/v1.5.0';
 export { provenance };
 
 export interface HelpTopic {
@@ -21,8 +24,15 @@ export interface HelpTopic {
 
 export const topics: HelpTopic[] = [
   {
+    slug: HARNESS_RELEASE_SLUG, title: `Get started with Harness ${HARNESS_VERSION}`, kind: 'task',
+    version: HARNESS_VERSION,
+    goal: 'Install the selected version, choose a goal and inspect evidence before continuing work.',
+    sourcePaths: ['README.md', 'pyproject.toml', 'docs/release-notes-1.5.1.md', 'docs/release-readiness-1.5.1.md'],
+    content: RELEASE_GUIDE,
+  },
+  {
     slug: '1-5-0', title: 'Get started with Harness 1.5.0', kind: 'task',
-    version: CURRENT_RELEASE,
+    version: '1.5.0',
     goal: 'Install the published release, check a local result, and choose your next workflow.',
     sourcePaths: ['README.md', 'pyproject.toml', 'docs/release-notes-1.5.0.md'],
     content: `## What you can do
@@ -37,7 +47,7 @@ for captured tests, file-memory readers, saved-memory storage and experimental
 native-memory transport. **Full Windows parity remains deferred.** Hosted
 Windows Server checks do not qualify Windows 11 desktop or PowerShell journeys,
 all storage/recovery cases, or live native-memory providers. Read the
-[release notes](${CURRENT_RELEASE_ROOT}/docs/release-notes-1.5.0.md) for the
+[release notes](${RELEASE_150_ROOT}/docs/release-notes-1.5.0.md) for the
 component evidence and outstanding requirements.
 
 ## Install the published release
@@ -86,7 +96,7 @@ If you use uv instead, install the isolated tool with
 The Python commands above belong to the virtual-environment setup, not uv's
 separate tool environment. Installing the Python package does not install a
 Claude Code plugin or Codex skill; follow the
-[host integration instructions](${CURRENT_RELEASE_ROOT}/README.md#use-harness-with-codex-claude-or-other-models)
+[host integration instructions](${RELEASE_150_ROOT}/README.md#use-harness-with-codex-claude-or-other-models)
 for your chosen host.
 
 ## Choose a workflow
@@ -101,7 +111,7 @@ for your chosen host.
 | Inspect saved work | \`attune-harness status --help\` | Read the state, evidence and next action before resuming. |
 
 Run a route's help in the same selected environment. The
-[CLI guide](${CURRENT_RELEASE_ROOT}/docs/cli-guide.md) describes configuration,
+[CLI guide](${RELEASE_150_ROOT}/docs/cli-guide.md) describes configuration,
 checkpoints and recovery. Opening a form, saving answers, accepting intent and
 authorizing execution are separate actions. Browser forms do not dispatch
 builds. External and native participants require their applicable explicit
@@ -117,7 +127,7 @@ prompts and expected evidence.
 integration requires a Voyage API key and makes paid retrieval calls. Install
 \`'attune-harness[voyage]==1.5.0'\` in the isolated environment only when you
 choose that integration, then follow the
-[Voyage setup and configuration](${CURRENT_RELEASE_ROOT}/docs/cli-guide.md).
+[Voyage setup and configuration](${RELEASE_150_ROOT}/docs/cli-guide.md).
 Installation itself does not authorize execution or spending.
 
 **attune-rag is the explicitly selected local alternative.** Harness 1.5.0
@@ -128,13 +138,13 @@ Automatic fallback during a Voyage outage is planned; it is not available in
 
 Redis is optional. The \`all\` extra includes Redis and Voyage; experimental
 \`memory-native\` is separate. See the
-[1.5.0 dependency metadata](${CURRENT_RELEASE_ROOT}/pyproject.toml) for exact pins.
+[1.5.0 dependency metadata](${RELEASE_150_ROOT}/pyproject.toml) for exact pins.
 
 ## Continue with versioned guidance
 
 - [Published 1.5.0 release](https://github.com/Smart-AI-Memory/attune-harness/releases/tag/v1.5.0) and [PyPI package](https://pypi.org/project/attune-harness/1.5.0/).
-- [1.5.0 release notes](${CURRENT_RELEASE_ROOT}/docs/release-notes-1.5.0.md): merged components, evidence and deferred Windows requirements.
-- [Preparation walkthroughs](${CURRENT_RELEASE_ROOT}/docs/tutorials-1.5.0-candidate.md): retained candidate-wheel procedures and observed limits. These require their recorded artifacts and POSIX setup; they are not published-wheel first-use instructions. Use the installation above to start with published 1.5.0.
+- [1.5.0 release notes](${RELEASE_150_ROOT}/docs/release-notes-1.5.0.md): merged components, evidence and deferred Windows requirements.
+- [Preparation walkthroughs](${RELEASE_150_ROOT}/docs/tutorials-1.5.0-candidate.md): retained candidate-wheel procedures and observed limits. These require their recorded artifacts and POSIX setup; they are not published-wheel first-use instructions. Use the installation above to start with published 1.5.0.
 - [Historical 1.3.0 task guides](/harness/help/get-started/): earlier behavior, explicitly versioned and retained for existing users.
 - [Report a problem](https://github.com/Smart-AI-Memory/attune-harness/issues): include the installed version, route and redacted diagnostic. Keep credentials, private form links and project data out of reports.
 `,

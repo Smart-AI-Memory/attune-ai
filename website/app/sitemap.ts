@@ -1,3 +1,4 @@
+import { HARNESS_PUBLISHED, HARNESS_RELEASE_SLUG } from '@/lib/harness-help/release';
 import { MetadataRoute } from 'next';
 import { getAllPosts, getAllTags } from '@/lib/blog';
 
@@ -19,7 +20,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/docs',
     '/harness/help/',
     '/harness/help/1-5-0/',
-    '/harness/help/ai-tools-and-integrations/',
+    ...(HARNESS_PUBLISHED ? ['/harness/help/goals/', `/harness/help/${HARNESS_RELEASE_SLUG}/`, '/harness/help/ai-tools-and-integrations/'] : []),
     '/pricing',
   ].map((route) => ({
     url: `${baseUrl}${route}`,

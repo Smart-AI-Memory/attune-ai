@@ -1,3 +1,4 @@
+import { HARNESS_RELEASE_NOTICE, HARNESS_RELEASE_SLUG, HARNESS_VERSION } from '@/lib/harness-help/release';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
@@ -239,11 +240,11 @@ export default function FAQPage() {
                 Specifications, scoped work and checkable results.
               </p>
               <p className="text-sm opacity-90">
-                Start with Harness. Earlier project references are available separately below.
+                {HARNESS_RELEASE_NOTICE} Earlier project references are available separately below.
               </p>
               <div className="flex flex-wrap justify-center gap-4 mt-8">
-                <Link href="/docs#quickstart" className="btn btn-primary">Harness Quick Start</Link>
-                <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.4.0/docs/cli-guide.md" className="btn btn-outline !text-white !border-white/60 hover:!bg-white/15">Read the release guide</a>
+                <Link href="/harness/help/goals/" className="btn btn-primary">Browse all goals</Link>
+                <Link href={`/harness/help/${HARNESS_RELEASE_SLUG}/`} className="btn btn-outline !text-white !border-white/60 hover:!bg-white/15">Read the {HARNESS_VERSION} guide</Link>
               </div>
             </div>
           </div>
