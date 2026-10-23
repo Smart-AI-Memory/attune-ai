@@ -4,11 +4,12 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { generateMetadata as genMeta, generateStructuredData } from '@/lib/metadata';
 import { RELIABILITY_LOOP, PILLARS } from '@/lib/features';
+import { HARNESS_RELEASE_NOTICE, HARNESS_VERSION } from '@/lib/harness-release';
 
 export const metadata: Metadata = genMeta({
   title: 'Attune AI reference',
   description:
-    'Retained reference for Attune AI’s memory and workflow model. Attune Harness is the current project focus.',
+    'Historical reference for deprecated Attune AI. Start new work with Attune Harness; check the current Quick Start for release availability.',
   url: 'https://smartaimemory.com/how-it-works',
 });
 
@@ -43,11 +44,24 @@ export default function HowItWorksPage() {
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-5xl font-bold mb-4">How Attune AI works</h1>
               <p className="text-xl opacity-90">
-                Reference for the earlier project’s memory and workflow model.
-                Attune Harness is the current focus; these materials remain
-                available for existing users.
+                Attune AI is deprecated. This memory and workflow reference
+                remains available for existing users.
               </p>
             </div>
+          </div>
+        </section>
+
+        <section aria-labelledby="harness-direction" className="py-12">
+          <div className="container max-w-3xl">
+            <h2 id="harness-direction" className="text-3xl font-bold mb-4">Start new work with Attune Harness {HARNESS_VERSION}</h2>
+            <p className="text-[var(--text-secondary)] mb-4">{HARNESS_RELEASE_NOTICE}</p>
+            <p className="text-[var(--text-secondary)] mb-6">
+              Keep existing Attune AI environments intact. Deprecation does not
+              establish feature parity or migrate saved work; use a separate
+              environment for Harness. The standalone attune-help reader is a
+              separate project.
+            </p>
+            <Link className="btn btn-primary" href="/harness/help/get-started/">Read the Harness Quick Start</Link>
           </div>
         </section>
 

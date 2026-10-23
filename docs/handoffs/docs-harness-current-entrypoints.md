@@ -23,6 +23,15 @@ start in an explicit archive.
 
 ## Current state
 
+Patrick subsequently directed deprecation of Attune AI in favor of Harness
+1.5.1, rather than further routine dependency or feature maintenance. The
+Pricing and How it works notices now state that direction, retain existing
+environments and saved work, and make no feature-parity or automatic-migration
+claim. How it works and Pricing consume the existing canonical release notice;
+no publication flag changes here. Navigation already points to canonical Help.
+The standalone attune-help reader is a separate project. The new copy is a
+separate validation phase; the historical receipts below retain their inputs.
+
 - Three website files changed: Navigation, pricing and how-it-works. This
   handoff is the fourth tracked change. The archive now belongs to a separate
   main-based prerequisite so #2575 can link it before this adapter-dependent PR.

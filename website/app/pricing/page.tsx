@@ -54,6 +54,11 @@ export default function PricingPage() {
         <section id="harness-install" className="py-20">
           <div className="container max-w-3xl">
             <h2 className="text-4xl font-bold mb-4">Start with Harness</h2>
+            <p className="text-[var(--text-secondary)] mb-6">
+              Attune AI is deprecated. Choose Attune Harness for new installations;
+              keep existing Attune AI environments and saved work intact.
+              Deprecation does not establish feature parity or automatic migration.
+            </p>
             <p className="text-xl text-[var(--text-secondary)] mb-6">
               {HARNESS_RELEASE_NOTICE}
             </p>
