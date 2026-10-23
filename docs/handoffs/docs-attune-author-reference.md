@@ -22,6 +22,15 @@ flow without losing its content.
 
 ## Current state
 
+Following Patrick's later Attune AI deprecation direction, the wrapper now
+labels the retained installation command historical and directs new work to
+Harness 1.5.1 preparation and current package availability in canonical Help.
+It preserves existing environments and saved work, makes no migration-parity
+claim and keeps the standalone attune-help reader distinct. The notice links
+canonical Help without importing #2575's adapter, preserving this destination's
+independent prerequisite build. The original section bytes remain unchanged.
+This copy is a new validation phase; earlier receipts below remain historical.
+
 The new page retains the exact original Author section from main's Docs page,
 including `#attune-author`. A small wrapper adds reference context, one primary
 heading, a documentation link and noindex metadata. The Docs owner will remove

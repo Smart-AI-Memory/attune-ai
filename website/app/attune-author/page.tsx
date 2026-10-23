@@ -7,7 +7,7 @@ import { generateMetadata as genMeta } from '@/lib/metadata';
 export const metadata: Metadata = {
   ...genMeta({
     title: 'Attune Author reference',
-    description: 'Retained reference for the archived standalone Attune Author package and authoring capabilities consolidated into Attune AI.',
+    description: 'Historical Attune Author reference. Attune AI is deprecated; use the current Attune Harness Quick Start for new work.',
     url: 'https://smartaimemory.com/attune-author/',
   }),
   robots: { index: false, follow: true },
@@ -25,6 +25,18 @@ export default function AttuneAuthorReference() {
           <p className="text-[var(--text-secondary)] mb-6">
             The original authoring reference is retained below.{' '}
             <Link className="underline" href="/docs/">Return to documentation</Link> for Harness guidance and other project references.
+          </p>
+          <p className="text-[var(--text-secondary)] mb-6">
+            Attune AI is deprecated. For new work, use Attune Harness. The{' '}
+            <Link className="underline" href="/harness/help/get-started/">current Harness Quick Start</Link>{' '}
+            covers 1.5.1 preparation, candidate validation and available published
+            packages. Confirm release availability there before choosing an artifact.
+          </p>
+          <p className="text-[var(--text-secondary)] mb-6">
+            The original instructions below, including the Attune AI installation
+            command, are historical. Keep existing environments and saved work
+            intact; deprecation does not establish migration parity. The standalone
+            attune-help reader is a separate project.
           </p>
         </header>
         <section id="attune-author" className="py-20 bg-[var(--border)] bg-opacity-30">
