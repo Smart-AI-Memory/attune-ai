@@ -1,0 +1,58 @@
+{
+  "status": "bounded_checks_passed",
+  "checked_at_utc": "2026-10-23T00:02:53.684748+00:00",
+  "behavior_version": "1.5.0",
+  "behavior_commit": "7caa86ab6d476e9599b08ff75a81bc816e60c382",
+  "artifact": {
+    "distribution_version": "1.5.0",
+    "python": "3.10.11",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "module_count": 107,
+    "all_modules_match_release": true,
+    "noneditable": true
+  },
+  "checks": {
+    "planning": {
+      "created": "created",
+      "preview": "draft",
+      "accepted": "accepted",
+      "source_unchanged": true
+    },
+    "research": {
+      "source_count": 2,
+      "verified": true,
+      "verified_link_claims": 1,
+      "semantic_ran": false
+    },
+    "navigation": {
+      "saved_goal_after_reload": true,
+      "approval_label": "Approve this work request",
+      "alternative_label": "Keep as draft",
+      "accepted_answers_after_reload": true,
+      "accepted_editable_fields": 0
+    },
+    "continuity": {
+      "saved_goal_after_reload": true,
+      "saved_goal_after_listener_restart": true,
+      "unsaved_text_restored": false,
+      "request_remains_draft": true
+    },
+    "retrieval_session_guard": {
+      "missing_session": "Coding retrieval requires --session-dir for durable provider receipts",
+      "with_session": "Review MCP intake requires --config",
+      "provider_execution": "not run; deliberately invalid request"
+    },
+    "help_catalog": {
+      "top_level": 32,
+      "nested": 59
+    }
+  },
+  "model_calls": 0,
+  "limits": [
+    "Synthetic maintainer walkthroughs on macOS arm64/Python 3.10.11 using the Codex in-app browser",
+    "No live Voyage or native-memory provider execution",
+    "No Windows desktop or shell qualification, assistive-technology review, upgrade qualification or independent user acceptance",
+    "Historical 1.3.0 and candidate evidence retains its original identity",
+    "No production deployment or website cutover"
+  ]
+}

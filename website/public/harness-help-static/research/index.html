@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Research a question | Harness Help</title>
+  <meta name="description" content="Find local evidence and recognize what the verification actually checked.">
+  <link rel="canonical" href="https://smartaimemory.com/harness/help/research/">
+  <link rel="stylesheet" href="/harness/help/help.css">
+</head>
+<body class="harness-help">
+  <a class="help-skip" href="#main-content">Skip to main content</a>
+  <header class="help-header">
+    <a class="help-brand" href="/harness/help/">Attune Harness <span>Help Center</span></a>
+    <nav aria-label="Help Center context"><a href="https://smartaimemory.com/">Smart AI Memory</a><a href="https://github.com/Smart-AI-Memory/attune-harness">Harness repository</a></nav>
+  </header>
+  <div class="help-shell">
+    <aside class="help-sidebar">
+      <nav aria-label="Help topics"><a href="/harness/help/">Help Center overview</a><ol><li><a href="/harness/help/1-5-0/">Harness 1.5.0 overview</a></li><li><a href="/harness/help/ai-tools-and-integrations/">AI tools and integrations</a></li><li><a href="/harness/help/get-started/">Get started</a></li><li><a href="/harness/help/start-and-continue/">Start and continue work</a></li><li><a href="/harness/help/plan-and-accept/">Plan and accept work</a></li><li><a href="/harness/help/research/" aria-current="page">Research a question</a></li><li><a href="/harness/help/save-and-resume/">Save and resume</a></li><li><a href="/harness/help/troubleshooting/">Troubleshooting</a></li><li><a href="/harness/help/dependencies/">Dependencies and reference</a></li></ol></nav>
+      <p class="help-version">Guides for <strong>Harness 1.5.0</strong></p>
+    </aside>
+    <main id="main-content" tabindex="-1" class="help-main">
+      <nav aria-label="Breadcrumb" class="help-breadcrumb"><a href="/harness/help/">Help Center</a> / <span aria-current="page">Research a question</span></nav>
+      <p class="help-eyebrow">Attune Harness · 1.5.0</p>
+      <h1>Research a question</h1><p class="help-lead">Find local evidence and recognize what the verification actually checked.</p>
+      <p class="help-version-note">These instructions describe published <strong>Harness 1.5.0</strong>. Check each walkthrough's verification limits.</p>
+      <nav class="help-contents" aria-label="On this page"><h2>On this page</h2><div class="toc">
+<ul>
+<li><a href="#before-you-begin">Before you begin</a></li>
+<li><a href="#prepare-the-local-corpus">Prepare the local corpus</a></li>
+<li><a href="#retrieve-sources-and-verify-a-link">Retrieve sources and verify a link</a><ul>
+<li><a href="#1-retrieve-local-evidence">1. Retrieve local evidence</a></li>
+<li><a href="#2-inspect-the-sources">2. Inspect the sources</a></li>
+<li><a href="#3-check-the-supported-link-claim">3. Check the supported link claim</a></li>
+<li><a href="#4-inspect-verification">4. Inspect verification</a></li>
+</ul>
+</li>
+<li><a href="#verification-and-sources">Verification and sources</a></li>
+</ul>
+</div>
+</nav>
+      <article class="help-prose"><h2 id="before-you-begin">Before you begin<a class="headerlink" href="#before-you-begin" title="Permanent link">&para;</a></h2>
+<p>Complete <a href="/harness/help/get-started/">Get started</a> in a fresh working directory.
+Keep its published 1.5.0 environment active. <code>R</code> is the absolute release checkout
+at commit <code>7caa86ab6d476e9599b08ff75a81bc816e60c382</code>; its example files are not in the wheel.
+These examples use a POSIX shell and canonical paths. On macOS, use
+<code>/private/tmp</code> instead of the <code>/tmp</code> symlink. Choose unused practice directories.
+Windows desktop and shell journeys remain unqualified.</p>
+<h2 id="prepare-the-local-corpus">Prepare the local corpus<a class="headerlink" href="#prepare-the-local-corpus" title="Permanent link">&para;</a></h2>
+<p>Copy the released example before retrieving or writing reports:</p>
+<pre><code class="language-sh">E=&quot;$PWD/training-research&quot;
+cp -R &quot;$R/examples/local-workflow&quot; &quot;$E&quot;
+</code></pre>
+<p>Choose an unused <code>E</code> directory outside the release checkout. The base install
+includes local retrieval and verification. A fresh copy protects prior reports.</p>
+<span class="help-anchor" id="what-can-you-check-in-a-local-source" aria-hidden="true"></span><h2 id="retrieve-sources-and-verify-a-link">Retrieve sources and verify a link<a class="headerlink" href="#retrieve-sources-and-verify-a-link" title="Permanent link">&para;</a></h2>
+<h3 id="1-retrieve-local-evidence">1. Retrieve local evidence<a class="headerlink" href="#1-retrieve-local-evidence" title="Permanent link">&para;</a></h3>
+<pre><code class="language-sh">attune-harness retrieve &quot;quartz retention policy&quot; --corpus &quot;$E/project&quot; --output &quot;$E/retrieval-report.json&quot;
+</code></pre>
+<h3 id="2-inspect-the-sources">2. Inspect the sources<a class="headerlink" href="#2-inspect-the-sources" title="Permanent link">&para;</a></h3>
+<p>Read <code>retrieval-report.json</code>, then <code>project/reference.md</code>. Inspect both
+returned sources, <code>guide.md</code> and <code>reference.md</code>, including excerpts and hashes.</p>
+<h3 id="3-check-the-supported-link-claim">3. Check the supported link claim<a class="headerlink" href="#3-check-the-supported-link-claim" title="Permanent link">&para;</a></h3>
+<pre><code class="language-sh">attune-harness verify &quot;$E/project/guide.md&quot; --context &quot;$E/context.json&quot; --output &quot;$E/verification-report.json&quot;
+</code></pre>
+<h3 id="4-inspect-verification">4. Inspect verification<a class="headerlink" href="#4-inspect-verification" title="Permanent link">&para;</a></h3>
+<p>Read <code>verification-report.json</code>. Check <code>status</code>, <code>passed</code>, <code>result.coverage</code>
+and <code>result.semantic_ran</code>.</p>
+<p><strong>Expected result:</strong> Retrieval returns two Markdown sources. Verification returns
+<code>verified</code>, <code>passed: true</code>, <code>result.coverage.total: 1</code> and
+<code>result.coverage.verified: 1</code>. The <code>links</code> claim refers to <code>reference.md</code> at line
+3 of the sample guide.</p>
+<p><strong>Limit:</strong> <code>result.semantic_ran</code> is false. This checks link validity; it does not
+establish policy correctness. The example is local and makes no model or Voyage
+call. Choose and authorize paid retrieval separately when a real task needs it.</p>
+<span class="help-anchor" id="verification-scope" aria-hidden="true"></span><h2 id="verification-and-sources">Verification and sources<a class="headerlink" href="#verification-and-sources" title="Permanent link">&para;</a></h2>
+<p>The <a href="/harness/help/verification.json">current verification record</a> distinguishes fresh published-1.5.0 observations
+from the retained <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/7caa86ab6d476e9599b08ff75a81bc816e60c382/docs/tutorials-1.5.0-candidate.md">candidate walkthrough evidence</a>.
+The <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/7caa86ab6d476e9599b08ff75a81bc816e60c382/CHANGELOG.md">changelog</a> supplies the change sequence;
+<a href="https://github.com/Smart-AI-Memory/attune-harness/blob/7caa86ab6d476e9599b08ff75a81bc816e60c382/docs/cli-guide.md">released CLI guidance</a> and released UI source
+supply the command and label baseline. Historical 1.3.0 observations remain
+historical. These synthetic examples do not qualify Windows, all browser
+ownership transitions, assistive technology, real participant quality or paid
+providers. Approval and execution require separate decisions.</p></article>
+      <nav class="help-next" aria-label="Continue learning"><a href="/harness/help/">All help topics</a><a href="#main-content">Back to top</a></nav>
+    </main>
+  </div>
+  <footer class="help-footer">Harness 1.5.0 · <a href="/harness/help/dependencies/">Dependencies and reference</a> · <a href="/harness/help/verification.json">Verification record</a> · <a href="https://github.com/Smart-AI-Memory/attune-harness/issues">Report a problem</a></footer>
+</body>
+</html>

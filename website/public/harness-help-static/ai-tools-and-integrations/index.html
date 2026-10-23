@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI tools and integrations | Harness Help</title>
+  <meta name="description" content="Find commands by typical use, understand their order and know where judgment and approval enter.">
+  <link rel="canonical" href="https://smartaimemory.com/harness/help/ai-tools-and-integrations/">
+  <link rel="stylesheet" href="/harness/help/help.css">
+</head>
+<body class="harness-help">
+  <a class="help-skip" href="#main-content">Skip to main content</a>
+  <header class="help-header">
+    <a class="help-brand" href="/harness/help/">Attune Harness <span>Help Center</span></a>
+    <nav aria-label="Help Center context"><a href="https://smartaimemory.com/">Smart AI Memory</a><a href="https://github.com/Smart-AI-Memory/attune-harness">Harness repository</a></nav>
+  </header>
+  <div class="help-shell">
+    <aside class="help-sidebar">
+      <nav aria-label="Help topics"><a href="/harness/help/">Help Center overview</a><ol><li><a href="/harness/help/1-5-0/">Harness 1.5.0 overview</a></li><li><a href="/harness/help/ai-tools-and-integrations/" aria-current="page">AI tools and integrations</a></li><li><a href="/harness/help/get-started/">Get started</a></li><li><a href="/harness/help/start-and-continue/">Start and continue work</a></li><li><a href="/harness/help/plan-and-accept/">Plan and accept work</a></li><li><a href="/harness/help/research/">Research a question</a></li><li><a href="/harness/help/save-and-resume/">Save and resume</a></li><li><a href="/harness/help/troubleshooting/">Troubleshooting</a></li><li><a href="/harness/help/dependencies/">Dependencies and reference</a></li></ol></nav>
+      <p class="help-version">Guides for <strong>Harness 1.5.0</strong></p>
+    </aside>
+    <main id="main-content" tabindex="-1" class="help-main">
+      <nav aria-label="Breadcrumb" class="help-breadcrumb"><a href="/harness/help/">Help Center</a> / <span aria-current="page">AI tools and integrations</span></nav>
+      <p class="help-eyebrow">Attune Harness · 1.5.0</p>
+      <h1>AI tools and integrations</h1><p class="help-lead">Find commands by typical use, understand their order and know where judgment and approval enter.</p>
+      <p class="help-version-note">These instructions describe published <strong>Harness 1.5.0</strong>. Check each walkthrough's verification limits.</p>
+      <nav class="help-contents" aria-label="On this page"><h2>On this page</h2><div class="toc">
+<ul>
+<li><a href="#typical-use">Typical use</a><ul>
+<li><a href="#ai">AI</a></li>
+<li><a href="#aihuman">AI/Human</a></li>
+<li><a href="#human">Human</a></li>
+</ul>
+</li>
+<li><a href="#read-the-command-shapes">Read the command shapes</a><ul>
+<li><a href="#primary-action-verbs">Primary action verbs</a></li>
+</ul>
+</li>
+<li><a href="#follow-the-order-for-your-goal">Follow the order for your goal</a><ul>
+<li><a href="#plan-accept-then-build">Plan, accept, then build</a></li>
+<li><a href="#preview-approve-then-test">Preview, approve, then test</a></li>
+<li><a href="#review-or-repair-through-intake">Review or repair through intake</a></li>
+<li><a href="#inspect-first-then-choose-a-recovery-branch">Inspect first, then choose a recovery branch</a></li>
+</ul>
+</li>
+<li><a href="#ai-tools-and-integrations-reference">AI tools and integrations reference</a><ul>
+<li><a href="#build-an-index-then-retrieve-from-its-selected-generation">Build an index, then retrieve from its selected generation</a></li>
+<li><a href="#memory-subcommands">Memory subcommands</a></li>
+<li><a href="#consultation-and-accounting">Consultation and accounting</a></li>
+<li><a href="#check-prepare-approve-then-consult">Check, prepare, approve, then consult</a></li>
+</ul>
+</li>
+<li><a href="#human-decisions-and-integration-management">Human decisions and integration management</a><ul>
+<li><a href="#discover-install-inspect-then-enable-a-bundle">Discover, install, inspect, then enable a bundle</a></li>
+</ul>
+</li>
+<li><a href="#compatibility-commands">Compatibility commands</a></li>
+<li><a href="#verification-boundary">Verification boundary</a></li>
+<li><a href="#sources-and-verification-limits">Sources and verification limits</a></li>
+</ul>
+</div>
+</nav>
+      <article class="help-prose"><h2 id="typical-use">Typical use<a class="headerlink" href="#typical-use" title="Permanent link">&para;</a></h2>
+<p>These groups describe who usually initiates work. People and AI can use the CLI;
+this grouping grants no permissions and imposes no exclusive operator roles.
+AI still needs accepted scope and the applicable execution authorization. Human
+judgment enters when selecting evidence, accepting scope, granting file/provider
+access and resolving uncertain effects.</p>
+<p>The index lists command names. It is not a script to run from top to bottom.
+Read <code>attune-harness COMMAND --help</code> for required inputs before invoking a command.</p>
+<h3 id="ai">AI<a class="headerlink" href="#ai" title="Permanent link">&para;</a></h3>
+<ul>
+<li><a href="#ai-tools-and-integrations-reference"><code>attune-harness code-config</code></a></li>
+<li><a href="#ai-tools-and-integrations-reference"><code>attune-harness github-checks</code></a></li>
+<li><a href="#ai-tools-and-integrations-reference"><code>attune-harness index</code></a></li>
+<li><a href="#ai-tools-and-integrations-reference"><code>attune-harness mcp-inspect</code></a></li>
+<li><a href="#ai-tools-and-integrations-reference"><code>attune-harness mcp-serve</code></a></li>
+<li><a href="#memory-subcommands"><code>attune-harness memory</code></a></li>
+<li><a href="#ai-tools-and-integrations-reference"><code>attune-harness retrieval-task</code></a></li>
+<li><a href="#ai-tools-and-integrations-reference"><code>attune-harness retrieve</code></a></li>
+<li><a href="#ai-tools-and-integrations-reference"><code>attune-harness spec</code></a></li>
+<li><a href="#ai-tools-and-integrations-reference"><code>attune-harness triage-check</code></a></li>
+<li><a href="#ai-tools-and-integrations-reference"><code>attune-harness verify</code></a></li>
+</ul>
+<h3 id="aihuman">AI/Human<a class="headerlink" href="#aihuman" title="Permanent link">&para;</a></h3>
+<ul>
+<li><a href="#primary-action-verbs"><code>attune-harness init</code></a></li>
+<li><a href="#plan-accept-then-build"><code>attune-harness plan</code></a></li>
+<li><a href="#plan-accept-then-build"><code>attune-harness build</code></a></li>
+<li><a href="#review-or-repair-through-intake"><code>attune-harness review</code></a></li>
+<li><a href="#review-or-repair-through-intake"><code>attune-harness fix</code></a></li>
+<li><a href="#preview-approve-then-test"><code>attune-harness test</code></a></li>
+<li><a href="#inspect-first-then-choose-a-recovery-branch"><code>attune-harness status</code></a></li>
+<li><a href="#inspect-first-then-choose-a-recovery-branch"><code>attune-harness resume</code></a></li>
+<li><a href="#consultation-and-accounting"><code>attune-harness repair-economics</code></a></li>
+<li><a href="#check-prepare-approve-then-consult"><code>attune-harness roundtable</code></a></li>
+<li><a href="#check-prepare-approve-then-consult"><code>attune-harness source-review</code></a></li>
+</ul>
+<h3 id="human">Human<a class="headerlink" href="#human" title="Permanent link">&para;</a></h3>
+<ul>
+<li><a href="#discover-install-inspect-then-enable-a-bundle"><code>attune-harness extension</code></a></li>
+<li><a href="#human-decisions-and-integration-management"><code>attune-harness cancel-task</code></a></li>
+<li><a href="#human-decisions-and-integration-management"><code>attune-harness reconcile-task</code></a></li>
+<li><a href="#human-decisions-and-integration-management"><code>attune-harness transfer-task</code></a></li>
+</ul>
+<h2 id="read-the-command-shapes">Read the command shapes<a class="headerlink" href="#read-the-command-shapes" title="Permanent link">&para;</a></h2>
+<p>The first word after <code>attune-harness</code> selects a command. Some commands have
+subcommands: <code>index plan</code> and <code>index build</code> are two different index actions.
+<code>plan --accept</code> instead selects an action flag on <code>plan</code>; <code>accept</code> is not a
+separate command or subcommand. Options such as <code>--config</code> supply values.</p>
+<p>The reference below reuses the release-pinned CLI guide and existing Help topic structure. It maps command order; complete project fixtures remain in the linked canonical procedures. It shows selected forms, not every option. Uppercase names
+such as <code>TASK</code>, <code>CHECKPOINT</code>, <code>PROJECT</code> and <code>REQUEST.json</code> stand for your actual
+paths or returned values. Read the installed help before adapting a shape.
+Sample prompts are requests you can give your agent, not CLI arguments.</p>
+<h3 id="primary-action-verbs">Primary action verbs<a class="headerlink" href="#primary-action-verbs" title="Permanent link">&para;</a></h3>
+<p>Typical initiator: <strong>AI/Human</strong>. Read each row's human decision before executing.
+These are alternative starting points for different goals, not one universal chain.</p>
+<div class="help-table-scroll" tabindex="0" role="region" aria-label="Reference table, scroll horizontally if needed"><table>
+<thead>
+<tr>
+<th>Command and action</th>
+<th>Forms in 1.5.0</th>
+<th>Prerequisite and human judgment</th>
+<th>Sample prompt</th>
+<th>Expected result or evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>init</code> — prepare starter files</td>
+<td><code>--profile demo</code>, <code>claude</code> or <code>codex</code>; <code>--for fix</code>, <code>plan</code> or <code>roundtable</code> are options, not subcommands</td>
+<td>Choose the project, scope and participants. Inspect generated files. The default is a deterministic demo; a starter registry is not automatically build-capable.</td>
+<td><code>Prepare a plan request for this file and its tests. Show me the generated scope before proceeding.</code></td>
+<td>Starter configuration/request files; no task acceptance or model execution.</td>
+</tr>
+<tr>
+<td><code>plan</code> — define and accept work</td>
+<td>Actions include <code>--request</code>, <code>--answers</code>, <code>--decision</code>, <code>--revise</code>, <code>--run</code>, <code>--stage</code>, <code>--accept</code>, <code>--reimport</code></td>
+<td>A new request needs <code>--project</code>, <code>--config</code> and <code>--task-dir</code>. A person reviews intent, effects and checks before accepting the exact current checkpoint.</td>
+<td><code>Prepare a plan for this change. Show the scope and checks, and stop for my acceptance.</code></td>
+<td>Saved draft/questions or proposal, checkpoint and next action; acceptance records a scope decision.</td>
+</tr>
+<tr>
+<td><code>build</code> — execute accepted work</td>
+<td><code>build TASK</code>; checkpoint and dispatch grants are options</td>
+<td>First accept a build-ready plan with frozen effects and protected checks. Authorize the configured external/native execution separately.</td>
+<td><code>Build the accepted task within its approved scope and report the protected check evidence.</code></td>
+<td>Durable build journal, effects and verification evidence, or a stated pause/refusal.</td>
+</tr>
+<tr>
+<td><code>review</code> — assess a document against evidence</td>
+<td>Task intake uses <code>--goal</code>, <code>--task-response</code>, <code>--intake-only</code>, <code>--accept</code>; <code>--plan solo</code> or <code>independent-review</code> selects a review plan</td>
+<td>Select the document, corpus, context, criteria and assessor. Inspect intake before acceptance; provider/command work needs its grants.</td>
+<td><code>Check this guide against these sources. Preserve unsupported and uncertain claims in the report.</code></td>
+<td>Assessment receipt and claim/check evidence; a completed assessment may refute claims. This is documentary review, not a general code security audit.</td>
+</tr>
+<tr>
+<td><code>fix</code> — repair scoped files</td>
+<td>Intake/acceptance options; <code>--review none</code>, <code>requested</code> or <code>required</code>; optional <code>--from-assessment</code></td>
+<td>Use a dedicated supported checkout, explicit scope, trusted frozen probe and selected worker/reviewer. Human approval covers the actual replacement and execution.</td>
+<td><code>Repair this defect using the frozen probe. Keep the failure before the change and the result after it.</code></td>
+<td>Replacement/probe receipts with failed-before and passed-after evidence, or a refusal/pause.</td>
+</tr>
+<tr>
+<td><code>test</code> — check a captured change</td>
+<td><code>--project</code> with <code>--scope</code>, or <code>--from-task</code>; then checkpoint-bound <code>--accept</code></td>
+<td>Select an interpreter containing pytest and a task directory outside the repository. Inspect proposed tests and exclusions before acceptance.</td>
+<td><code>Preview tests for this change. Wait for approval, then run the captured inputs and retain output.</code></td>
+<td>Test preview/checkpoint, then retained stdout/stderr and pytest evidence. Collection-only or all-skipped execution is not a pass.</td>
+</tr>
+<tr>
+<td><code>status</code> — inspect saved work</td>
+<td><code>status TASK</code>; <code>--format json</code>, <code>markdown</code> or <code>html</code>; optional <code>--include-task</code></td>
+<td>Supply the saved directory. A person assesses the outcome, checks and next action; successful inspection does not mean the task passed.</td>
+<td><code>Show this task's current scope, outcome, evidence and next action without executing it.</code></td>
+<td>Saved-state presentation. No work dispatch.</td>
+</tr>
+<tr>
+<td><code>resume</code> — continue eligible saved work</td>
+<td><code>resume TASK</code>; checkpoint, operation limit and dispatch grants are options</td>
+<td>Inspect status first. Resolve stale scope or uncertain effects. Carry forward only the execution authority that still applies.</td>
+<td><code>Inspect the saved task and continue only if its checkpoint and execution permissions remain valid.</code></td>
+<td>Continued task evidence or a precise refusal. It does not repair every failed check or blindly repeat settled work.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="follow-the-order-for-your-goal">Follow the order for your goal<a class="headerlink" href="#follow-the-order-for-your-goal" title="Permanent link">&para;</a></h2>
+<p>Choose one relevant sequence. A review or a test does not require an unrelated
+build, retrieval job or model consultation. The numbered steps below describe
+required handoffs within each selected path. Optional work and alternatives are
+labeled separately. They are command shapes, not ready-made project fixtures.</p>
+<h3 id="plan-accept-then-build">Plan, accept, then build<a class="headerlink" href="#plan-accept-then-build" title="Permanent link">&para;</a></h3>
+<p>See the existing <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.5.0/docs/cli-guide.md#plan-and-build">plan/build procedure</a> for its complete fixture and participant requirements. The <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.5.0/docs/tutorials-1.5.0-candidate.md#specification-workflow-preview-and-acceptance">retained preparation walkthrough</a> keeps its candidate-artifact boundary.</p>
+<p><strong>Prerequisites:</strong> a real request, trusted participant registry, supported project
+checkout, frozen file effects and protected verification. Put task state outside
+the checkout. Participants must support the intended build; the default demo
+registry is not a production build configuration.</p>
+<ol>
+<li>Create the preview with <code>attune-harness plan --request REQUEST.json --project PROJECT --config REGISTRY.json --task-dir TASK</code>. Keep the returned task path, questions and current checkpoint. Optional setup: <code>init --for plan</code> can prepare a starter request before this step; inspect its contents and participant choices.</li>
+<li>Inspect the decision with <code>attune-harness plan --task-dir TASK --decision</code>. <strong>Human judgment:</strong> review the goal, exact file scope, effects, constraints and protected checks. If questions remain, use the returned bound answer format with <code>--answers ANSWERS.json</code>; inspect the refreshed decision and checkpoint before proceeding.</li>
+<li>Accept only the reviewed revision with <code>attune-harness plan --task-dir TASK --accept --checkpoint CHECKPOINT</code>. Pass the current displayed checkpoint, not a digest from an earlier preview. The result records accepted scope; it grants no separate paid/external execution authority.</li>
+<li>Run <code>attune-harness build TASK --checkpoint CHECKPOINT</code> with only the separately authorized dispatch flags. Pass the accepted task and current checkpoint from step 3. Required external participants need <code>--allow-external</code>; native participants also need <code>--allow-native</code>. Read any readiness refusal before continuing.</li>
+<li>Run <code>attune-harness status TASK</code>. Inspect the resulting journal and check evidence. <strong>Optional continuation:</strong> use <code>resume</code> only when status identifies eligible paused work and the required authority remains current.</li>
+</ol>
+<p><strong>Optional planning-participant branch, before step 3:</strong> if a configured planner
+must propose the work, run <code>plan --task-dir TASK --run</code> with its required explicit
+grants, then inspect the completed proposal. Run
+<code>plan --task-dir TASK --stage --checkpoint CHECKPOINT</code> to stage that proposal as
+a new unaccepted draft. Carry the newly displayed checkpoint back to step 2.
+<code>--run</code>, <code>--stage</code> and <code>--accept</code> are distinct actions; staging is not acceptance.</p>
+<h3 id="preview-approve-then-test">Preview, approve, then test<a class="headerlink" href="#preview-approve-then-test" title="Permanent link">&para;</a></h3>
+<p>The existing <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.5.0/docs/cli-guide.md#test-this-change">test-this-change procedure</a> provides the complete example and tested profile.</p>
+<p><strong>Prerequisites:</strong> supported Git working-tree changes, explicit scope, an
+interpreter with pytest and an unused task directory outside the repository.</p>
+<ol>
+<li>Run <code>attune-harness test --project PROJECT --scope PATH --interpreter PYTHON --task-dir TASK</code>. The result is a saved test preview and checkpoint, not completed tests.</li>
+<li><strong>Human judgment:</strong> inspect selected tests, broader fallbacks and excluded checks. Keep the preview's task directory and exact checkpoint. Change the proposed selection before accepting if it does not cover the goal.</li>
+<li>Run <code>attune-harness test --task-dir TASK --checkpoint CHECKPOINT --accept</code>. This accepts the saved plan and executes its captured inputs. The output names saved records and test evidence.</li>
+<li>Run <code>attune-harness status TASK</code> and inspect actual test execution and retained output. <strong>Optional continuation:</strong> if execution was interrupted, inspect the stated recovery action before using <code>resume TASK</code>.</li>
+</ol>
+<p><strong>Alternative input:</strong> after a completed repair, use <code>test --from-task REPAIR_TASK</code>
+instead of project/scope in step 1. This derives the changed paths and binds repair
+completion evidence. It still needs its own test preview acceptance; repair
+approval does not approve that later test run.</p>
+<h3 id="review-or-repair-through-intake">Review or repair through intake<a class="headerlink" href="#review-or-repair-through-intake" title="Permanent link">&para;</a></h3>
+<p>These are separate paths: choose <code>review</code> for document evidence or <code>fix</code> for a
+scoped repair. Neither requires running both commands in sequence. The existing
+<a href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.5.0/docs/cli-guide.md#task-oriented-evidence-review">CLI guide's review procedure</a>
+and <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.5.0/docs/cli-guide.md#scoped-repair">repair procedure</a>
+provide the complete inputs and examples.</p>
+<ol>
+<li>Prepare the selected command's goal and inputs with <code>--intake-only</code>. <code>review</code> needs its document, context, corpus and assessor; <code>fix</code> needs its checkout, scope, frozen probe and worker/reviewer choices. Retain the returned task directory and bound submission template.</li>
+<li><strong>Human judgment:</strong> inspect and complete that submission's answers, request identity and permitted effects. Only when approved, set its <code>accepted</code> field to <code>true</code> and retain its explicit <code>permissions</code>. Save the current bound submission as <code>ANSWERS.json</code>; do not create an unrelated approval object.</li>
+<li>Submit with <code>attune-harness review --task-dir TASK --task-response ANSWERS.json --intake-only</code>, or use <code>fix</code> in the same command shape for a repair. The response carries its own acceptance and permissions; do not add <code>--accept</code>, <code>--goal</code>, <code>--config</code> or dispatch-grant overrides to this response submission. The result is accepted intake without execution.</li>
+<li>Run <code>attune-harness status TASK</code> and inspect the accepted request and next action. Pass this same task identity and current checkpoint onward.</li>
+<li>When status permits execution and the saved grants remain authorized, use <code>attune-harness resume TASK</code> with any required current checkpoint/grants. Review returns assessment evidence; repair returns effect/probe evidence. Inspect status again afterward.</li>
+</ol>
+<p><strong>Alternative acceptance path:</strong> a complete initial invocation can use <code>--accept</code>
+instead of the bound-response path. Without <code>--intake-only</code>, accepted intake can
+execute immediately. Choose that path only when all supplied inputs and effects
+are already approved; it is not an extra acceptance step after response submission.</p>
+<p><strong>Optional later handoff:</strong> a completed structured assessment can supply selected
+findings to <code>fix --from-assessment</code>; a completed repair can supply
+<code>test --from-task</code>. Each new task has its own intake and approval.</p>
+<h3 id="inspect-first-then-choose-a-recovery-branch">Inspect first, then choose a recovery branch<a class="headerlink" href="#inspect-first-then-choose-a-recovery-branch" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Run <code>status TASK</code>; retain its current checkpoint, last event and explicit next action. Establish whether effects are known before taking another action.</li>
+<li><strong>Choose one applicable branch:</strong> <code>resume TASK</code> for eligible continuation; <code>reconcile-task</code> for the specific unresolved event; <code>transfer-task</code> for a permitted accepted assessor; or <code>cancel-task</code> to stop work. These are alternatives, not four mandatory steps.</li>
+<li>After an authorized reconciliation or transfer, inspect status again. Resume only if the new saved state permits it. Cancellation preserves evidence and does not prove that external effects were reversed.</li>
+</ol>
+<p><strong>Human judgment:</strong> recovery/retry can repeat external effects or usage. Choose a
+specific supported reconciliation option from <code>reconcile-task --help</code>; never
+run all retry options or treat cancellation as a rollback.</p>
+<h2 id="ai-tools-and-integrations-reference">AI tools and integrations reference<a class="headerlink" href="#ai-tools-and-integrations-reference" title="Permanent link">&para;</a></h2>
+<p>Typical initiator: <strong>AI</strong>. The person still selects roots, sources, participants
+and allowed provider/file effects. Read-only helpers do not approve later work.</p>
+<div class="help-table-scroll" tabindex="0" role="region" aria-label="Reference table, scroll horizontally if needed"><table>
+<thead>
+<tr>
+<th>Command and action</th>
+<th>Actual subcommands or selected form</th>
+<th>Prerequisite and human judgment</th>
+<th>Sample prompt</th>
+<th>Expected result or evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>code-config</code> — prepare coding-retrieval configuration</td>
+<td><code>--repo</code>, <code>--index-dir</code>; optional <code>--include-docs</code>, <code>--structured-path</code></td>
+<td>Choose the repository, index destination and source inclusion. Configuration is not an executed index.</td>
+<td><code>Prepare repository-first retrieval configuration and show which sources it includes.</code></td>
+<td>Configuration/selection data for the chosen application index.</td>
+</tr>
+<tr>
+<td><code>index</code> — manage an application index</td>
+<td><code>plan</code>, <code>build</code>, <code>update</code>, <code>inspect</code></td>
+<td>Inspect the plan before provider work. Voyage build/update needs explicit upload/call authorization; update uses <code>--base-generation</code>, inspect uses <code>--generation</code>.</td>
+<td><code>Preview this index, show the source/upload scope and wait for my decision before building it.</code></td>
+<td>Index plan or generation/build evidence; inspection reports a selected generation.</td>
+</tr>
+<tr>
+<td><code>retrieval-task</code> — prepare coding-agent retrieval intake</td>
+<td><code>--config</code>, <code>--generation</code>, <code>--objective</code>; optional participant/call limit</td>
+<td>Select an existing generation and objective. Review the emitted request before explicitly setting <code>accepted=true</code>.</td>
+<td><code>Prepare a retrieval request for this question against that exact generation, then show it for approval.</code></td>
+<td>Intake/request data; preparation does not grant a provider call.</td>
+</tr>
+<tr>
+<td><code>retrieve</code> — obtain source evidence</td>
+<td>Choose <code>--corpus</code> or <code>--request</code>; supply a query</td>
+<td>Local keyword retrieval and an explicitly accepted Voyage request are alternative paths. Voyage additionally needs <code>--allow-provider</code> and its setup.</td>
+<td><code>Retrieve evidence for this claim using the explicitly selected source path and show source identities.</code></td>
+<td>Retrieved evidence and source references, or a diagnostic. No automatic Voyage-outage fallback is provided.</td>
+</tr>
+<tr>
+<td><code>verify</code> — check supported document claims</td>
+<td><code>verify DOCUMENT --context CONTEXT</code></td>
+<td>Supply declared trusted context. Human judgment still assesses claims outside the supported check.</td>
+<td><code>Verify the supported claims in this Markdown file against this context and identify limits.</code></td>
+<td>Verification report/check evidence, not a guarantee of every statement.</td>
+</tr>
+<tr>
+<td><code>github-checks</code> — inspect exported check runs</td>
+<td><code>github-checks INPUT --repository OWNER/REPO --revision SHA</code></td>
+<td>Supply a complete GitHub REST check-run export bound to the intended repository/revision.</td>
+<td><code>Inspect this exported check-run JSON for this commit without dispatching anything.</code></td>
+<td>Bound check suggestions/diagnostics from local input; this command does not fetch GitHub or dispatch fixes.</td>
+</tr>
+<tr>
+<td><code>triage-check</code> — suggest a bounded response</td>
+<td><code>triage-check INPUT</code></td>
+<td>Supply a trusted check event and attempt history. A person decides any later repair authority.</td>
+<td><code>Suggest a bounded response to this trusted failure event and retain the attempt limits.</code></td>
+<td>A triage suggestion; no repair dispatch.</td>
+</tr>
+<tr>
+<td><code>spec</code> — prepare or present specification material</td>
+<td><code>intake</code>; <code>present</code> with selection <code>tasks</code>, <code>task</code>, <code>result</code> or <code>progress</code></td>
+<td>Select project/plan and any test evidence. Human judgment supplies intent and assesses the presentation.</td>
+<td><code>Prepare Spec intake, then present the existing plan's tasks and available evidence.</code></td>
+<td>Intake form/composed answers or a presentation of existing evidence; no implicit build.</td>
+</tr>
+<tr>
+<td><code>mcp-serve</code> — serve a selected local MCP profile</td>
+<td>Retrieval options, or separate <code>--workspace</code> profile</td>
+<td>Configure the host and accepted request/grants. Choose the profile deliberately; provider grants stay explicit.</td>
+<td><code>Prepare the selected MCP integration and show its accepted sources and grants before serving it.</code></td>
+<td>Local MCP stdio service/session receipts. Starting a service is not new task acceptance.</td>
+</tr>
+<tr>
+<td><code>mcp-inspect</code> — inspect MCP receipts</td>
+<td><code>mcp-inspect SESSION_DIR</code></td>
+<td>Use an existing local session directory. Assess the recorded outcome rather than inferring success from inspection alone.</td>
+<td><code>Show this MCP session's retained call receipts without dispatching another call.</code></td>
+<td>Local receipt inspection; no new dispatch.</td>
+</tr>
+<tr>
+<td><code>memory</code> — use scoped memory</td>
+<td>See the nested catalog below; parent options include <code>--config</code>, <code>--jobs</code>, <code>--native-config</code></td>
+<td>Supply authorized memory roots. Reads, saved-store writes and native proposals have different effects/grants.</td>
+<td><code>Recall evidence from these approved roots, preserve provenance and show any separate write or provider action before executing it.</code></td>
+<td>Scoped packets, saved history, scratch data or proposal-job receipts for the selected action.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="build-an-index-then-retrieve-from-its-selected-generation">Build an index, then retrieve from its selected generation<a class="headerlink" href="#build-an-index-then-retrieve-from-its-selected-generation" title="Permanent link">&para;</a></h3>
+<p>This path is for explicitly selected Voyage coding retrieval. <strong>Prerequisites:</strong>
+the Voyage integration, authorized source selection, provider configuration and
+accepted source/upload/usage limits. Configuration and sources must still match
+the reviewed plan; repeat planning and review if they change.</p>
+<ol>
+<li><strong>Optional setup:</strong> use <code>attune-harness code-config --repo PROJECT --index-dir INDEX_DIR</code> and save its emitted configuration as <code>INDEX.json</code>. Alternatively supply an existing reviewed index configuration. This prepares configuration; it does not build an index.</li>
+<li>Run <code>attune-harness index plan --config INDEX.json</code>. Inspect its source manifest, proposed generation, estimated input and planned calls. <strong>Human judgment:</strong> authorize the selected source uploads and bounded provider work before building; the estimate is not a guaranteed bill or a new permission grant.</li>
+<li>When that provider work is explicitly authorized, run <code>attune-harness index build --config INDEX.json --allow-provider</code>. Retain the returned published <code>generation</code> and build receipts; do not use a failed or incomplete generation for retrieval.</li>
+<li>Run <code>attune-harness index inspect --config INDEX.json --generation GENERATION</code>, passing the generation from step 3. Inspect its manifest, publication/receipt evidence and any stale-source refusal.</li>
+<li>Run <code>attune-harness retrieval-task --config INDEX.json --generation GENERATION --objective OBJECTIVE</code>. Pass the inspected generation. The output is a retrieval request template with its selected source scope and call limits.</li>
+<li><strong>Human judgment:</strong> review that exact request and its permissions. Only when approved, set its <code>accepted</code> field to <code>true</code> and save the approved request as <code>REQUEST.json</code>. Preparing the template does not approve it.</li>
+<li>Run <code>attune-harness retrieve QUERY --request REQUEST.json --allow-provider --session-dir SESSION_DIR</code> only with the applicable provider execution authorization. Pass the accepted request from step 6 and an unused canonical <code>SESSION_DIR</code> for durable provider receipts. Without <code>--session-dir</code>, the CLI refuses before reading the request. Inspect the returned source evidence and the retained session receipts.</li>
+</ol>
+<p><strong>Alternative local path:</strong> <code>attune-harness retrieve QUERY --corpus CORPUS</code>
+performs local keyword retrieval and does not require this Voyage index sequence.
+Select the path deliberately; an outage does not automatically select the other.</p>
+<p><strong>Optional update branch:</strong> after source changes, review the new plan and use
+<code>index update --config INDEX.json --base-generation GENERATION --allow-provider</code>
+only with authorized provider work. Inspect the newly returned generation, then
+prepare and approve a new retrieval request bound to it. Updating is not a
+mandatory step between every build and query.</p>
+<h3 id="memory-subcommands">Memory subcommands<a class="headerlink" href="#memory-subcommands" title="Permanent link">&para;</a></h3>
+<p>Use parent options before the selected memory subcommand, for example
+<code>attune-harness memory --config MEMORY.json recall QUERY</code>.</p>
+<ul>
+<li>Read/source operations: <code>capabilities</code>, <code>recall</code>, <code>resolve</code>, <code>refresh</code>, <code>serve</code>.</li>
+<li>Proposal/job operations: <code>create</code>, <code>replay</code>, <code>inspect</code>, <code>execute</code>. Creating a proposal is distinct from separately authorized native execution.</li>
+<li><code>saved</code>: <code>save</code>, <code>revise</code>, <code>forget</code>, <code>complete</code>, <code>show</code>, <code>list</code>, <code>search</code>, <code>reindex</code>. This is a retained store, not the browser's form-answer state.</li>
+<li><code>scratch</code>: <code>capabilities</code>, <code>stash</code>, <code>retrieve</code>, <code>forget</code>, <code>keys</code>. Writes/deletions need their applicable scope; scratch is distinct from retained saved memory.</li>
+<li><code>redis</code>: <code>status</code>, <code>digest</code>, <code>related</code>, <code>node</code>, <code>search</code>. This optional integration needs its Redis setup.</li>
+</ul>
+<p>These are alternatives by purpose. There is no required <code>save</code> → <code>forget</code> chain,
+and reading memory does not authorize a write or a provider call. Inspect
+<code>memory --config MEMORY.json SUBCOMMAND --help</code> for that action's actual inputs.</p>
+<h3 id="consultation-and-accounting">Consultation and accounting<a class="headerlink" href="#consultation-and-accounting" title="Permanent link">&para;</a></h3>
+<p>Typical initiator: <strong>AI/Human</strong>. Consultation may use configured model participants;
+it requires the accepted contract and applicable dispatch authority.</p>
+<div class="help-table-scroll" tabindex="0" role="region" aria-label="Reference table, scroll horizontally if needed"><table>
+<thead>
+<tr>
+<th>Command and action</th>
+<th>Actual subcommands or form</th>
+<th>Prerequisite and human judgment</th>
+<th>Sample prompt</th>
+<th>Expected result or evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>roundtable</code> — consult selected participants about frozen sources</td>
+<td><code>check</code>, <code>prepare</code>, <code>run</code>, <code>status</code>, <code>evidence</code>, <code>reconcile</code>, <code>assess-citation</code>, <code>abandon</code></td>
+<td>Select sources/models, inspect the frozen contract, then accept its digest before dispatch. Consultation output still needs human assessment.</td>
+<td><code>Prepare a bounded consultation over these files. Show the contract and stop before any participant call.</code></td>
+<td>Contract/digest, then participant, citation and assessment evidence if authorized execution completes.</td>
+</tr>
+<tr>
+<td><code>source-review</code> — consult about selected sources</td>
+<td>Same subcommands as <code>roundtable</code></td>
+<td>Follows the same frozen-source contract and grants; it is not a second required stage after roundtable.</td>
+<td><code>Prepare a source review for these files and this question, with explicit participant identities and limits.</code></td>
+<td>The source-consultation contract and retained results/limits.</td>
+</tr>
+<tr>
+<td><code>repair-economics</code> — account for repair attempts</td>
+<td><code>repair-economics INPUT</code></td>
+<td>Supply all attempts, costs and quality outcomes. Human judgment determines whether the evidence supports comparison.</td>
+<td><code>Account for all repair attempts and their quality before comparing cost.</code></td>
+<td>Accounting/quality-aware comparison, not automatic permission to choose a cheaper repair.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="check-prepare-approve-then-consult">Check, prepare, approve, then consult<a class="headerlink" href="#check-prepare-approve-then-consult" title="Permanent link">&para;</a></h3>
+<p><strong>Prerequisites:</strong> explicit participant/model configuration, selected source paths
+and a new run directory outside the project. Use either <code>roundtable</code> or
+<code>source-review</code>; they expose the same sequence.</p>
+<ol>
+<li>Run <code>roundtable check --config CONFIG.json</code> to inspect configuration/local seat readiness. It makes no model call.</li>
+<li>Run <code>roundtable prepare --project PROJECT --path PATH --config CONFIG.json --run-dir RUN</code>. This freezes the selected source scope and returns the contract and its digest. It makes no provider call.</li>
+<li><strong>Human judgment:</strong> inspect the question, files, participants, limits and requested execution. Keep the accepted contract digest; configuration presence is not approval.</li>
+<li>Run <code>roundtable run RUN --accept DIGEST</code> with only separately authorized <code>--allow-external</code> and, where needed, <code>--allow-native</code>. Pass the digest from the reviewed preparation. Execution can invoke configured models and consume usage.</li>
+<li>Inspect <code>roundtable status RUN</code> and <code>roundtable evidence RUN</code>. <strong>Alternative recovery:</strong> use the stated <code>reconcile</code> or <code>abandon</code> action only when applicable. <code>assess-citation</code> is a separate evidence-assessment action, not a required execution stage.</li>
+</ol>
+<h2 id="human-decisions-and-integration-management">Human decisions and integration management<a class="headerlink" href="#human-decisions-and-integration-management" title="Permanent link">&para;</a></h2>
+<p>Typical initiator: <strong>Human</strong>, often with an agent preparing the inputs and
+performing an explicitly authorized action. This does not reserve the CLI to a
+person or allow an agent to invent approval.</p>
+<div class="help-table-scroll" tabindex="0" role="region" aria-label="Reference table, scroll horizontally if needed"><table>
+<thead>
+<tr>
+<th>Command and action</th>
+<th>Actual subcommands or form</th>
+<th>Prerequisite and human judgment</th>
+<th>Sample prompt</th>
+<th>Expected result or evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>extension</code> — manage a local bundle</td>
+<td><code>discover</code>, <code>install</code>, <code>inspect</code>, <code>enable</code>, <code>disable</code>, <code>remove</code>, <code>replace</code></td>
+<td>Inspect manifest/artifact, signature and effective grants where required. Installation creates a disabled registration; enabling is a separate checkpoint-bound decision.</td>
+<td><code>Inspect this bundle and its grants, then wait for my decision before enabling it.</code></td>
+<td>Manifest inspection or registration/state receipts; installation alone does not activate it.</td>
+</tr>
+<tr>
+<td><code>reconcile-task</code> — resolve one recorded uncertain event</td>
+<td>Select one of <code>--reply</code>, <code>--retry-read-only</code>, <code>--retry-native</code>, <code>--retry-refused</code>, <code>--observe-file</code>, <code>--retry-before</code> as supported for that task</td>
+<td>Inspect current checkpoint/event and independent effect observations. Human judgment accepts any specific retry risk; the options are alternatives.</td>
+<td><code>Inspect this unresolved event and show the one supported reconciliation action and its risks. Do not retry yet.</code></td>
+<td>Correlated reply/observation or a bounded retry authorization; no claim that unknown effects never occurred.</td>
+</tr>
+<tr>
+<td><code>transfer-task</code> — transfer an assessor</td>
+<td><code>--assessor</code>, <code>--reason</code>; checkpoint where required</td>
+<td>Choose an already accepted identity and inspect the saved state.</td>
+<td><code>Show the permitted assessor transfer for this checkpoint, including the reason and accepted identity.</code></td>
+<td>Retained transfer decision or refusal; no new participant grant.</td>
+</tr>
+<tr>
+<td><code>cancel-task</code> — stop saved work</td>
+<td><code>--reason</code>; checkpoint where required</td>
+<td>Inspect stopped work and preserve uncertain effects. Human judgment distinguishes stopping from undoing.</td>
+<td><code>Cancel this stopped task with the stated reason while preserving its evidence and unresolved effects.</code></td>
+<td>Cancellation record; no automatic rollback of external effects.</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="discover-install-inspect-then-enable-a-bundle">Discover, install, inspect, then enable a bundle<a class="headerlink" href="#discover-install-inspect-then-enable-a-bundle" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Run <code>extension discover MANIFEST</code> and review the manifest before registration.</li>
+<li>If registration is authorized, run <code>extension install MANIFEST --state-dir STATE</code>. The new registration is disabled.</li>
+<li>Run <code>extension inspect --state-dir STATE</code>. Retain its <code>state_digest</code>; review the artifact and effective grants. Plugin bundles also require the accepted registry/signature configuration.</li>
+<li>If enabling that exact state is authorized, run <code>extension enable --state-dir STATE --checkpoint STATE_DIGEST</code> and supply <code>--registry REGISTRY.json</code> where required. Carry the digest from step 3. Inspect the enable receipt.</li>
+</ol>
+<p><strong>Alternative maintenance actions:</strong> <code>disable</code>, <code>remove</code> and <code>replace</code> are chosen
+for their own purpose and current state. They are not additional mandatory steps
+after enable. Read each action's help before using it.</p>
+<h2 id="compatibility-commands">Compatibility commands<a class="headerlink" href="#compatibility-commands" title="Permanent link">&para;</a></h2>
+<p>These preserve existing scripts' invocation contracts. For new tasks, start with
+<code>plan</code>, <code>build</code>, <code>review</code>, <code>fix</code>, <code>test</code>, <code>status</code> and <code>resume</code>.</p>
+<ul>
+<li><a href="#ai-tools-and-integrations-reference"><code>attune-harness review-form</code></a></li>
+<li><a href="#ai-tools-and-integrations-reference"><code>attune-harness inspect-review</code></a></li>
+<li><a href="#ai-tools-and-integrations-reference"><code>attune-harness resume-review</code></a></li>
+<li><a href="#ai-tools-and-integrations-reference"><code>attune-harness reconcile-review</code></a></li>
+<li><a href="#ai-tools-and-integrations-reference"><code>attune-harness transfer-review</code></a></li>
+<li><a href="#ai-tools-and-integrations-reference"><code>attune-harness cancel-review</code></a></li>
+</ul>
+<p><code>review-form</code> prepares the legacy request form. <code>inspect-review</code> reads a saved
+legacy review; the remaining controls resume, reconcile, transfer or cancel that
+legacy run under their original arguments. They are not extra steps required
+after every new task. Use each command's own <code>--help</code> when maintaining an
+existing script.</p>
+<h2 id="verification-boundary">Verification boundary<a class="headerlink" href="#verification-boundary" title="Permanent link">&para;</a></h2>
+<p>This catalog was checked against the published <strong>1.5.0</strong> installation: top-level
+<code>--help</code>, <code>--help-all</code>, all 32 command help pages and 59 nested help selections,
+plus the installed CLI dispatch/workflow source and release-pinned CLI guide.
+The session-directory refusal and the local practice walkthroughs have separate
+offline checks in the verification record. Live integrations, retry effects and
+model dispatch were not exercised for this catalog. Examples need
+your actual paths, configuration and acceptance values. Release/platform limits
+from the <a href="/harness/help/1-5-0/">1.5.0 getting-started guide</a> still apply.</p>
+<h2 id="sources-and-verification-limits">Sources and verification limits<a class="headerlink" href="#sources-and-verification-limits" title="Permanent link">&para;</a></h2>
+<p>Read the <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/7caa86ab6d476e9599b08ff75a81bc816e60c382/CHANGELOG.md">released changelog</a>, <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/7caa86ab6d476e9599b08ff75a81bc816e60c382/docs/cli-guide.md">CLI guide</a>, <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/7caa86ab6d476e9599b08ff75a81bc816e60c382/pyproject.toml">dependency metadata</a> and <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/7caa86ab6d476e9599b08ff75a81bc816e60c382/docs/release-notes-1.5.0.md">1.5.0 release notes</a>. Published-release command checks and their limits are recorded in the <a href="/harness/help/verification.json">verification record</a>. Historical candidate observations retain their original artifact identity.</p></article>
+      <nav class="help-next" aria-label="Continue learning"><a href="/harness/help/">All help topics</a><a href="#main-content">Back to top</a></nav>
+    </main>
+  </div>
+  <footer class="help-footer">Harness 1.5.0 · <a href="/harness/help/dependencies/">Dependencies and reference</a> · <a href="/harness/help/verification.json">Verification record</a> · <a href="https://github.com/Smart-AI-Memory/attune-harness/issues">Report a problem</a></footer>
+</body>
+</html>

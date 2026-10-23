@@ -1,0 +1,37 @@
+{
+  "version": "1.5.0",
+  "behavior_commit": "7caa86ab6d476e9599b08ff75a81bc816e60c382",
+  "source_repository": "Smart-AI-Memory/attune-harness",
+  "pages": 10,
+  "renderer_sha256": "e6366d0153f0a666800f8619e713723f38339f8b2d30434785fe613c510a6a8e",
+  "sources": {
+    "manifest.json": "2e5f76c43009fd1f7c48840f0d898cfc960ea7f894c54e9395dbf7ac2309d413",
+    "template.html": "9dc00bb853c849d2d27ade002e8990959ff183cb3e38f124bf824fb2862a456f",
+    "help.css": "043e624e3de38cfd4a10921198628099865a8464b6337784cefba2a87c443b38",
+    "verification.json": "0288023eb559e4cc35bb5e0e1eae14455bf7f3b48debd7e7b8c542b9ff5240df",
+    "overview.md": "63b2a95f5373a88e770cbb04f5f0b365806200f7b6517488ad84e8d503ac9866",
+    "1-5-0.md": "059f0a66179860d78e6b2534aa45bfdca285d5f82ffda3d931f0325c755ba0e0",
+    "ai-tools-and-integrations.md": "5e421250728890948dcaffff4206268d275b2e1edbaa66c429b93289ffeaf7f3",
+    "get-started.md": "a6cee22d7c5dc0411613b9db5cdb5238646d74ce8a40f497c722d2ea37702b5b",
+    "start-and-continue.md": "37dcc151c4c0abb56abf3928b3c98b398772bcb0dfc772aa3f819799d2a221ff",
+    "plan-and-accept.md": "248588cbdf85f3993b0c2cd91f5d822bdf85422263d2697cefee467fb407939f",
+    "research.md": "68253cdd09a91cc921a7b9c2a9c7aeec47cf01ac554be2fad33a0d1aae6c9421",
+    "save-and-resume.md": "a5b286c1c35bcc8e8fd71d0ceca37cbf2cc36b5e09235d1317dbf5644310ed08",
+    "troubleshooting.md": "39549087cd336d9cd46fcf81bf3f4fa42074e9e3df0348dea24f7d0bab9e4877",
+    "dependencies.md": "5a4a5191527277283120fed9e6981a3e38dc5c5ccf3f2ec54f3b737637ed7404"
+  },
+  "files": {
+    "harness/help/1-5-0/index.html": "43b075d9e68f646aef378a21fa5b0301b2e7b76de644ad4717d34ca3279d22e7",
+    "harness/help/ai-tools-and-integrations/index.html": "51cbfcdcb4e3afc80fe3bffca183b57c326b847c244150435dea338b5186d709",
+    "harness/help/dependencies/index.html": "0d1f318eb8426e3311872de9d05122896073af3ad61fe8d93215eb10f9a827de",
+    "harness/help/get-started/index.html": "9a454ffb8aaec47f3b069efdbcce433d774f114527951b696c2ed628b5cbd3c4",
+    "harness/help/help.css": "043e624e3de38cfd4a10921198628099865a8464b6337784cefba2a87c443b38",
+    "harness/help/index.html": "bc6e2feff3ece29e6543c70924bbb1719ce99d8be000fb80b25ba6378651ee66",
+    "harness/help/plan-and-accept/index.html": "0094865e478f45dd53fabacd7cf66cce62bd91d7dbc7d713a5a0c776ebe772d1",
+    "harness/help/research/index.html": "ceef1e93de448190f09175efd84b3ec9852d32549427eba6a645f9876f6fc6a4",
+    "harness/help/save-and-resume/index.html": "7536cd97ac3d80351e8cd0e6f0fc48b36d3b580281e9213ebd5f4b0cbad26578",
+    "harness/help/start-and-continue/index.html": "58f298830b99b720e7a440fd86d6e4f73b6a124b9ac732a3fc806226c66b4938",
+    "harness/help/troubleshooting/index.html": "3199b7f1c2846b90e87c50a74393aeaa7e4f24868c99587c93bff0b7157c5afe",
+    "harness/help/verification.json": "0288023eb559e4cc35bb5e0e1eae14455bf7f3b48debd7e7b8c542b9ff5240df"
+  }
+}

@@ -46,6 +46,12 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return [
+      // Harness owns this static export; keep the established public URLs.
+      { source: '/harness/help/', destination: '/harness-help-static/index.html' },
+      { source: '/harness/help/help.css', destination: '/harness-help-static/help.css' },
+      { source: '/harness/help/verification.json', destination: '/harness-help-static/verification.json' },
+      { source: '/harness/help/build.json', destination: '/harness-help-static/build.json' },
+      { source: '/harness/help/:topic([a-z0-9-]+)/', destination: '/harness-help-static/:topic/index.html' },
       // Serve index.html for framework-docs directory paths
       {
         source: '/framework-docs/:path*/',
@@ -55,6 +61,7 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      { source: '/harness/help/next-release/', destination: 'https://github.com/Smart-AI-Memory/attune-ai/blob/6695106f8a185e310b7b8f9d463395cb0752c22a/website/content/harness-help/next-release.json', permanent: true },
       { source: '/workflows/', destination: '/docs/#workflows', permanent: true },
       { source: '/wizards/', destination: '/docs/#workflows', permanent: true },
       { source: '/wizards/:name/', destination: '/docs/#workflows', permanent: true },

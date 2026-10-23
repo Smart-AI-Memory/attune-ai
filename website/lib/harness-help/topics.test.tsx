@@ -1,103 +1,87 @@
-import { describe, expect, it, vi } from 'vitest';
-import { renderToStaticMarkup } from 'react-dom/server';
-import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
 import { createHash } from 'node:crypto';
-import HelpArticle, { generateMetadata, generateStaticParams } from '@/app/harness/help/[slug]/page';
-import HelpHome from '@/app/harness/help/page';
-import HelpLayout from '@/app/harness/help/layout';
-import NextReleaseHelp from '@/app/harness/help/next-release/page';
-import readiness from '@/content/harness-help/next-release.json';
-import { getTopic, HELP_ROOT, provenance, RELEASE_COMMIT, topics, topicHref } from './topics';
+import { execFileSync } from 'node:child_process';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import config from '@/next.config';
+import { checkExport, defaultOutput, importExport } from '../../scripts/harness-help-export.mjs';
 
-// CSS layout/contrast is exercised in Chromium; keep the server-render unit
-// probe independent of Vite's different PostCSS config format.
-vi.mock('@/app/harness/help/help.css', () => ({}));
+const digest = (bytes: string | Buffer) => createHash('sha256').update(bytes).digest('hex');
+function copyExport() {
+  const directory = mkdtempSync(path.join(realpathSync(tmpdir()), 'harness-help-test-'));
+  const output = path.join(directory, 'export');
+  cpSync(defaultOutput, output, { recursive: true });
+  return output;
+}
 
-describe('Harness Help Center', () => {
-  it('renders every registered topic with one title and valid help links', async () => {
-    const routes = new Set([HELP_ROOT, '/harness/help/next-release/', ...topics.map((topic) => topicHref(topic.slug))]);
-    expect(generateStaticParams()).toHaveLength(9);
-    for (const topic of topics) {
-      const page = await HelpArticle({ params: Promise.resolve({ slug: topic.slug }) });
-      const html = renderToStaticMarkup(<HelpLayout>{page}</HelpLayout>);
-      expect((html.match(/<h1[ >]/g) || []).length).toBe(1);
-      expect(html).toContain('id="main-content"');
-      expect(html).toContain(`released ${topic.version ?? '1.3.0'}`);
-      expect(await generateMetadata({ params: Promise.resolve({ slug: topic.slug }) })).toMatchObject({ title: topic.title });
-      for (const match of html.matchAll(/href="(\/harness\/help\/[^"#]*)"/g)) {
-        expect(routes.has(`${match[1].replace(/\/$/, '')}/`), `missing route ${match[1]}`).toBe(true);
-      }
-    }
-    const home = renderToStaticMarkup(<HelpHome />);
-    for (const route of routes) {
-      if (route !== HELP_ROOT && route !== '/harness/help/next-release/') expect(home).toMatch(new RegExp(`href="${route.replace(/\/$/, '')}/?"`));
+describe('Harness-owned Help Center export', () => {
+  it('checks the committed export and all ten current routes', () => {
+    expect(checkExport()).toMatchObject({ version: '1.5.0', pages: 10, files: 14 });
+    const build = JSON.parse(readFileSync(path.join(defaultOutput, 'build.json'), 'utf8'));
+    for (const name of Object.keys(build.files).filter((name) => name.endsWith('index.html'))) {
+      const html = readFileSync(path.join(defaultOutput, name.replace('harness/help/', '')), 'utf8');
+      expect(html).toContain('published <strong>Harness 1.5.0</strong>');
+      expect(html).toContain('aria-label="On this page"');
     }
   });
 
-  it('returns the actual not-found boundary for unregistered input', async () => {
-    expect(getTopic('../docs')).toBeUndefined();
-    await expect(HelpArticle({ params: Promise.resolve({ slug: 'missing-topic' }) })).rejects.toThrow('NEXT_HTTP_ERROR_FALLBACK;404');
-    expect(await generateMetadata({ params: Promise.resolve({ slug: 'missing-topic' }) })).toMatchObject({ title: 'Help topic unavailable' });
+  it('refuses edited bytes, unknown files and paths outside the export', () => {
+    const changed = copyExport();
+    writeFileSync(path.join(changed, 'index.html'), 'changed');
+    expect(() => checkExport(changed)).toThrow('Export byte drift');
+    const extra = copyExport();
+    writeFileSync(path.join(extra, 'unknown.html'), 'extra');
+    expect(() => checkExport(extra)).toThrow('Export file set drift');
+    const escaped = copyExport();
+    const build = JSON.parse(readFileSync(path.join(escaped, 'build.json'), 'utf8'));
+    build.files['harness/help/../outside.html'] = '0'.repeat(64);
+    const bytes = JSON.stringify(build);
+    writeFileSync(path.join(escaped, 'build.json'), bytes);
+    const receipt = JSON.parse(readFileSync(path.join(escaped, 'import.json'), 'utf8'));
+    receipt.build_sha256 = digest(bytes);
+    writeFileSync(path.join(escaped, 'import.json'), JSON.stringify(receipt));
+    expect(() => checkExport(escaped)).toThrow('Invalid export path');
   });
 
-  it('preserves canonical provenance, projection and release boundaries', () => {
-    const source = readFileSync('content/harness-help/tutorials-1.3.0.source.md', 'utf8');
-    expect(createHash('sha256').update(source).digest('hex')).toBe(provenance.source_sha256);
-    expect(provenance.behavior_commit).toBe(RELEASE_COMMIT);
+  it('retains the 1.3.0 snapshot and original projection', () => {
+    const provenance = JSON.parse(readFileSync('content/harness-help/walkthrough-provenance.json', 'utf8'));
+    expect(digest(readFileSync('content/harness-help/tutorials-1.3.0.source.md'))).toBe(provenance.source_sha256);
     expect(execFileSync('python3', ['scripts/project-harness-walkthroughs.py', '--check'], { encoding: 'utf8' })).toContain('Four walkthrough projections');
-    for (const slug of ['start-and-continue', 'plan-and-accept', 'research', 'save-and-resume']) {
-      const topic = getTopic(slug)!;
-      expect(topic.content).toContain('1. ');
-      expect(topic.content).toContain('Expected:');
-      expect(topic.content).toContain('Limit:');
-      expect(topic.content).not.toMatch(/\]\((cli-guide|local-workflow|memory-saving)\.md/);
-    }
-    expect(getTopic('research')!.content).toContain('semantic_ran is false');
-    expect(getTopic('start-and-continue')!.content).toContain('Execution requires separate authority');
-    expect(getTopic('save-and-resume')!.content).toContain("TASK='/absolute/path/to/training-form/saved-task'");
-    expect(getTopic('research')!.content).toContain('older optional-extra installation instructions');
-    expect(getTopic('dependencies')!.content).toContain('Current main documentation — development');
-    expect(getTopic('dependencies')!.content).toContain('Prototypes — unreleased');
+    const history = JSON.parse(readFileSync('content/harness-help/next-release.json', 'utf8'));
+    expect(history.target_version).toBeNull();
+    expect(history.publication_date).toBeNull();
   });
 
-  it('stages the next release separately without inventing version or unverified steps', () => {
-    const html = renderToStaticMarkup(<NextReleaseHelp />);
-    expect(readiness.target_version).toBeNull();
-    expect(readiness.publication_date).toBeNull();
-    expect(html).toContain('Historical preparation');
-    expect(html).toContain('released 1.3.0');
-    expect(html).toContain('149d8725f7636bec1a9201124e798cf8641c01ac');
-    const journey = readiness.candidates.find((candidate) => candidate.id === 'first-gui-journey')!;
-    expect(journey.source_commit).toBe('a51460dfcd15701b36955d74a5e1324adc1a4f80');
-    expect(journey.capture_provenance).toMatchObject({ published_release_claim: false, forms_pr242_included: false, capture_count: 10 });
-    expect(html).toContain('integration and instructions pending');
-    expect(html).toContain('read-only');
-    expect(html).toContain('<strong>View accepted request</strong>');
-    expect(html).not.toContain('WCAG compliant');
+  it('refuses a lookalike remote before building any committed code', () => {
+    const repo = mkdtempSync(path.join(realpathSync(tmpdir()), 'harness-help-origin-'));
+    execFileSync('git', ['init', '--initial-branch=main', repo]);
+    execFileSync('git', ['-C', repo, 'remote', 'add', 'origin', 'https://example.invalid/Smart-AI-Memory/attune-harness.git']);
+    expect(() => importExport({ repo, commit: '1'.repeat(40), output: path.join(repo, 'export') })).toThrow('not Harness on GitHub');
   });
 
-  it('gives the current release its own canonical URL and preserves older guide versions', async () => {
-    const html = renderToStaticMarkup(await HelpArticle({ params: Promise.resolve({ slug: '1-5-0' }) }));
-    expect(html).toContain('released 1.5.0');
-    expect(html).toContain('attune-harness==1.5.0');
-    expect(html).toContain('Full Windows parity remains deferred');
-    expect(html).toContain('Automatic fallback during a Voyage outage is planned');
-    expect(html).toContain('attune-rag==1.2.0');
-    expect(html).not.toContain('pip install --no-deps');
-    expect(await generateMetadata({ params: Promise.resolve({ slug: '1-5-0' }) })).toMatchObject({
-      alternates: { canonical: 'https://smartaimemory.com/harness/help/1-5-0/' },
-    });
-    expect(getTopic('get-started')!.content).toContain('attune-harness==1.3.0');
+  it('refuses symlink roots, nested files and output parents', () => {
+    const directory = mkdtempSync(path.join(realpathSync(tmpdir()), 'harness-help-links-'));
+    const copied = copyExport();
+    const linked = path.join(directory, 'linked');
+    symlinkSync(copied, linked, 'dir');
+    expect(() => checkExport(linked)).toThrow('symlinks');
+    expect(() => checkExport(path.join(linked, 'plan-and-accept'))).toThrow('symlinks');
+    symlinkSync(path.join(copied, 'index.html'), path.join(copied, 'extra.html'));
+    expect(() => checkExport(copied)).toThrow('symlinks');
+    const repo = path.join(directory, 'repo');
+    mkdirSync(repo);
+    expect(() => importExport({ repo, commit: '1'.repeat(40), output: path.join(linked, 'fresh') })).toThrow('symlinks');
   });
 
-  it('continues within the same guide version', async () => {
-    const starter = renderToStaticMarkup(await HelpArticle({ params: Promise.resolve({ slug: '1-5-0' }) }));
-    expect(starter).toContain('Next: AI tools and integrations');
-    expect(starter).not.toContain('Next: Get started');
-    const reference = renderToStaticMarkup(await HelpArticle({ params: Promise.resolve({ slug: 'ai-tools-and-integrations' }) }));
-    expect(reference).not.toContain('Next: Get started');
-    const historical = renderToStaticMarkup(await HelpArticle({ params: Promise.resolve({ slug: 'get-started' }) }));
-    expect(historical).toContain('Next: Start and continue work');
+  it('keeps public routes and serves generated files through rewrites', async () => {
+    const rewrites = await config.rewrites!();
+    expect(rewrites).toEqual(expect.arrayContaining([
+      { source: '/harness/help/', destination: '/harness-help-static/index.html' },
+      { source: '/harness/help/:topic([a-z0-9-]+)/', destination: '/harness-help-static/:topic/index.html' },
+      { source: '/harness/help/help.css', destination: '/harness-help-static/help.css' },
+    ]));
+    const redirects = await config.redirects!();
+    expect(redirects.find((item) => item.source === '/harness/help/next-release/')?.destination).toContain('6695106f8a185e310b7b8f9d463395cb0752c22a');
   });
 });
