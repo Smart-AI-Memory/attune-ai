@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AI tools and integrations | Harness Help</title>
   <meta name="description" content="Find commands by typical use, understand their order and know where judgment and approval enter.">
+  <meta name="robots" content="noindex,follow">
   <link rel="canonical" href="https://smartaimemory.com/harness/help/ai-tools-and-integrations/">
   <link rel="stylesheet" href="/harness/help/help.css">
+
 </head>
 <body class="harness-help">
   <a class="help-skip" href="#main-content">Skip to main content</a>
@@ -16,15 +18,12 @@
   </header>
   <div class="help-shell">
     <aside class="help-sidebar">
-      <nav aria-label="Help topics"><a href="/harness/help/">Help Center overview</a><ol><li><a href="/harness/help/1-5-0/">Harness 1.5.0 overview</a></li><li><a href="/harness/help/ai-tools-and-integrations/" aria-current="page">AI tools and integrations</a></li><li><a href="/harness/help/get-started/">Get started</a></li><li><a href="/harness/help/start-and-continue/">Start and continue work</a></li><li><a href="/harness/help/plan-and-accept/">Plan and accept work</a></li><li><a href="/harness/help/research/">Research a question</a></li><li><a href="/harness/help/save-and-resume/">Save and resume</a></li><li><a href="/harness/help/troubleshooting/">Troubleshooting</a></li><li><a href="/harness/help/dependencies/">Dependencies and reference</a></li></ol></nav>
-      <p class="help-version">Guides for <strong>Harness 1.5.0</strong></p>
+      <nav aria-label="Help topics"><a href="/harness/help/">Help Center overview</a><a class="help-featured-nav" href="/harness/help/goals/">Browse all goals</a><ol><li><a href="/harness/help/goals/">What do you want to accomplish?</a></li><li><a href="/harness/help/1-5-1/">Prepare for Harness 1.5.1</a></li><li><a href="/harness/help/1-5-0/">Harness 1.5.0 overview</a></li><li><a href="/harness/help/ai-tools-and-integrations/" aria-current="page">AI tools and integrations</a></li><li><a href="/harness/help/get-started/">Get started</a></li><li><a href="/harness/help/start-and-continue/">Start and continue work</a></li><li><a href="/harness/help/plan-and-accept/">Plan and accept work</a></li><li><a href="/harness/help/research/">Research a question</a></li><li><a href="/harness/help/save-and-resume/">Save and resume</a></li><li><a href="/harness/help/troubleshooting/">Troubleshooting</a></li><li><a href="/harness/help/dependencies/">Dependencies and reference</a></li></ol></nav>
+      <p class="help-version">Guidance target <strong>Harness 1.5.1</strong><br>Preparation; publication pending.<br>Published 1.5.0 remains available.</p>
     </aside>
     <main id="main-content" tabindex="-1" class="help-main">
-      <nav aria-label="Breadcrumb" class="help-breadcrumb"><a href="/harness/help/">Help Center</a> / <span aria-current="page">AI tools and integrations</span></nav>
-      <p class="help-eyebrow">Attune Harness · 1.5.0</p>
-      <h1>AI tools and integrations</h1><p class="help-lead">Find commands by typical use, understand their order and know where judgment and approval enter.</p>
-      <p class="help-version-note">These instructions describe published <strong>Harness 1.5.0</strong>. Check each walkthrough's verification limits.</p>
-      <nav class="help-contents" aria-label="On this page"><h2>On this page</h2><div class="toc">
+<nav aria-label="Breadcrumb" class="help-breadcrumb"><a href="/harness/help/">Help Center</a> / <span aria-current="page">AI tools and integrations</span></nav><p class="help-eyebrow">Attune Harness · 1.5.1</p><h1>AI tools and integrations</h1><p class="help-lead">Find commands by typical use, understand their order and know where judgment and approval enter.</p><p class="help-version-note">Guidance target: <strong>Harness 1.5.1</strong> preparation. Unpublished; use published 1.5.0 until release.</p>
+<nav class="help-contents" aria-label="On this page"><h2>On this page</h2><div class="toc">
 <ul>
 <li><a href="#typical-use">Typical use</a><ul>
 <li><a href="#ai">AI</a></li>
@@ -55,6 +54,7 @@
 </ul>
 </li>
 <li><a href="#compatibility-commands">Compatibility commands</a></li>
+<li><a href="#completed-assessment-evidence-in-151-preparation">Completed assessment evidence in 1.5.1 preparation</a></li>
 <li><a href="#verification-boundary">Verification boundary</a></li>
 <li><a href="#sources-and-verification-limits">Sources and verification limits</a></li>
 </ul>
@@ -119,7 +119,7 @@ These are alternative starting points for different goals, not one universal cha
 <thead>
 <tr>
 <th>Command and action</th>
-<th>Forms in 1.5.0</th>
+<th>Forms in 1.5.1 preparation</th>
 <th>Prerequisite and human judgment</th>
 <th>Sample prompt</th>
 <th>Expected result or evidence</th>
@@ -498,8 +498,10 @@ legacy review; the remaining controls resume, reconcile, transfer or cancel that
 legacy run under their original arguments. They are not extra steps required
 after every new task. Use each command's own <code>--help</code> when maintaining an
 existing script.</p>
+<h2 id="completed-assessment-evidence-in-151-preparation">Completed assessment evidence in 1.5.1 preparation<a class="headerlink" href="#completed-assessment-evidence-in-151-preparation" title="Permanent link">&para;</a></h2>
+<p>For an existing completed document assessment, run <code>attune-harness status TASK --format markdown</code> or <code>attune-harness status TASK --format html</code>. These presentations now show the accepted goal and criteria, checker outcomes, source identities and separately attributed participant judgments. Default JSON and saved records are unchanged. Inspection neither reruns checks nor establishes semantic acceptance or source freshness. Other profiles and incomplete assessments retain their existing presentation. Read the <a href="/harness/help/1-5-1/#inspect-completed-assessment-evidence">1.5.1 inspection procedure</a>.</p>
 <h2 id="verification-boundary">Verification boundary<a class="headerlink" href="#verification-boundary" title="Permanent link">&para;</a></h2>
-<p>This catalog was checked against the published <strong>1.5.0</strong> installation: top-level
+<p>The original catalog was checked against the published <strong>1.5.0</strong> installation: top-level
 <code>--help</code>, <code>--help-all</code>, all 32 command help pages and 59 nested help selections,
 plus the installed CLI dispatch/workflow source and release-pinned CLI guide.
 The session-directory refusal and the local practice walkthroughs have separate
@@ -508,10 +510,12 @@ model dispatch were not exercised for this catalog. Examples need
 your actual paths, configuration and acceptance values. Release/platform limits
 from the <a href="/harness/help/1-5-0/">1.5.0 getting-started guide</a> still apply.</p>
 <h2 id="sources-and-verification-limits">Sources and verification limits<a class="headerlink" href="#sources-and-verification-limits" title="Permanent link">&para;</a></h2>
+<p>The 1.5.1 preparation baseline is the <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/0f2711b4c88ee4f231f61d71cd70a0c840be6357/CHANGELOG.md">reviewed changelog</a>, <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/0f2711b4c88ee4f231f61d71cd70a0c840be6357/docs/cli-guide.md">CLI guide</a> and <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/0f2711b4c88ee4f231f61d71cd70a0c840be6357/pyproject.toml">metadata</a>. The <a href="/harness/help/preparation.json">preparation record</a> keeps the final-source/artifact gate open. The sources and observations below describe published 1.5.0, not a final 1.5.1 qualification.</p>
 <p>Read the <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/7caa86ab6d476e9599b08ff75a81bc816e60c382/CHANGELOG.md">released changelog</a>, <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/7caa86ab6d476e9599b08ff75a81bc816e60c382/docs/cli-guide.md">CLI guide</a>, <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/7caa86ab6d476e9599b08ff75a81bc816e60c382/pyproject.toml">dependency metadata</a> and <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/7caa86ab6d476e9599b08ff75a81bc816e60c382/docs/release-notes-1.5.0.md">1.5.0 release notes</a>. Published-release command checks and their limits are recorded in the <a href="/harness/help/verification.json">verification record</a>. Historical candidate observations retain their original artifact identity.</p></article>
       <nav class="help-next" aria-label="Continue learning"><a href="/harness/help/">All help topics</a><a href="#main-content">Back to top</a></nav>
     </main>
   </div>
-  <footer class="help-footer">Harness 1.5.0 · <a href="/harness/help/dependencies/">Dependencies and reference</a> · <a href="/harness/help/verification.json">Verification record</a> · <a href="https://github.com/Smart-AI-Memory/attune-harness/issues">Report a problem</a></footer>
+  <footer class="help-footer">Guidance target Harness 1.5.1 · Preparation; publication pending. <a href="/harness/help/goals/">Browse all goals</a> · <a href="/harness/help/dependencies/">Dependencies and reference</a> · <a href="/harness/help/verification.json">Published 1.5.0 verification</a> · <a href="/harness/help/preparation.json">Preparation record</a></footer>
+
 </body>
 </html>

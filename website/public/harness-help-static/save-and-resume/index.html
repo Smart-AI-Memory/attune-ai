@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Save and resume | Harness Help</title>
   <meta name="description" content="Keep saved answers across sessions and inspect work before continuing execution.">
+  <meta name="robots" content="noindex,follow">
   <link rel="canonical" href="https://smartaimemory.com/harness/help/save-and-resume/">
   <link rel="stylesheet" href="/harness/help/help.css">
+
 </head>
 <body class="harness-help">
   <a class="help-skip" href="#main-content">Skip to main content</a>
@@ -16,15 +18,12 @@
   </header>
   <div class="help-shell">
     <aside class="help-sidebar">
-      <nav aria-label="Help topics"><a href="/harness/help/">Help Center overview</a><ol><li><a href="/harness/help/1-5-0/">Harness 1.5.0 overview</a></li><li><a href="/harness/help/ai-tools-and-integrations/">AI tools and integrations</a></li><li><a href="/harness/help/get-started/">Get started</a></li><li><a href="/harness/help/start-and-continue/">Start and continue work</a></li><li><a href="/harness/help/plan-and-accept/">Plan and accept work</a></li><li><a href="/harness/help/research/">Research a question</a></li><li><a href="/harness/help/save-and-resume/" aria-current="page">Save and resume</a></li><li><a href="/harness/help/troubleshooting/">Troubleshooting</a></li><li><a href="/harness/help/dependencies/">Dependencies and reference</a></li></ol></nav>
-      <p class="help-version">Guides for <strong>Harness 1.5.0</strong></p>
+      <nav aria-label="Help topics"><a href="/harness/help/">Help Center overview</a><a class="help-featured-nav" href="/harness/help/goals/">Browse all goals</a><ol><li><a href="/harness/help/goals/">What do you want to accomplish?</a></li><li><a href="/harness/help/1-5-1/">Prepare for Harness 1.5.1</a></li><li><a href="/harness/help/1-5-0/">Harness 1.5.0 overview</a></li><li><a href="/harness/help/ai-tools-and-integrations/">AI tools and integrations</a></li><li><a href="/harness/help/get-started/">Get started</a></li><li><a href="/harness/help/start-and-continue/">Start and continue work</a></li><li><a href="/harness/help/plan-and-accept/">Plan and accept work</a></li><li><a href="/harness/help/research/">Research a question</a></li><li><a href="/harness/help/save-and-resume/" aria-current="page">Save and resume</a></li><li><a href="/harness/help/troubleshooting/">Troubleshooting</a></li><li><a href="/harness/help/dependencies/">Dependencies and reference</a></li></ol></nav>
+      <p class="help-version">Guidance target <strong>Harness 1.5.1</strong><br>Preparation; publication pending.<br>Published 1.5.0 remains available.</p>
     </aside>
     <main id="main-content" tabindex="-1" class="help-main">
-      <nav aria-label="Breadcrumb" class="help-breadcrumb"><a href="/harness/help/">Help Center</a> / <span aria-current="page">Save and resume</span></nav>
-      <p class="help-eyebrow">Attune Harness · 1.5.0</p>
-      <h1>Save and resume</h1><p class="help-lead">Keep saved answers across sessions and inspect work before continuing execution.</p>
-      <p class="help-version-note">These instructions describe published <strong>Harness 1.5.0</strong>. Check each walkthrough's verification limits.</p>
-      <nav class="help-contents" aria-label="On this page"><h2>On this page</h2><div class="toc">
+<nav aria-label="Breadcrumb" class="help-breadcrumb"><a href="/harness/help/">Help Center</a> / <span aria-current="page">Save and resume</span></nav><p class="help-eyebrow">Attune Harness · 1.5.1</p><h1>Save and resume</h1><p class="help-lead">Keep saved answers across sessions and inspect work before continuing execution.</p><p class="help-version-note">Guidance target: <strong>Harness 1.5.1</strong> preparation. Unpublished; use published 1.5.0 until release.</p>
+<nav class="help-contents" aria-label="On this page"><h2>On this page</h2><div class="toc">
 <ul>
 <li><a href="#before-you-begin">Before you begin</a></li>
 <li><a href="#prepare-and-open-the-practice-form">Prepare and open the practice form</a></li>
@@ -36,7 +35,7 @@
 </nav>
       <article class="help-prose"><h2 id="before-you-begin">Before you begin<a class="headerlink" href="#before-you-begin" title="Permanent link">&para;</a></h2>
 <p>Complete <a href="/harness/help/get-started/">Get started</a> in a fresh working directory.
-Keep its published 1.5.0 environment active. <code>R</code> is the absolute release checkout
+Keep the selected 1.5.1 validation environment active. <code>R</code> is the absolute preparation checkout
 at commit <code>7caa86ab6d476e9599b08ff75a81bc816e60c382</code>; its example files are not in the wheel.
 These examples use a POSIX shell and canonical paths. On macOS, use
 <code>/private/tmp</code> instead of the <code>/tmp</code> symlink. Choose unused practice directories.
@@ -87,6 +86,7 @@ Neither starts work. Browser forms cannot dispatch builds or resume execution.</
 <strong>Limit:</strong> Restarting a form listener reopens intake; it is different from execution resume. External/native execution can have effects and consume usage.</p>
 <p>Explicit <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/7caa86ab6d476e9599b08ff75a81bc816e60c382/docs/memory-saving.md">CLI saved memory</a> is a separate store from browser form answers.</p>
 <span class="help-anchor" id="verification-scope" aria-hidden="true"></span><h2 id="verification-and-sources">Verification and sources<a class="headerlink" href="#verification-and-sources" title="Permanent link">&para;</a></h2>
+<p>For 1.5.1 preparation, compare the procedure with the <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/0f2711b4c88ee4f231f61d71cd70a0c840be6357/docs/cli-guide.md">reviewed source</a> and <a href="/harness/help/preparation.json">preparation record</a>. The final selected artifact still requires replay; the older observations below retain their original identity.</p>
 <p>The <a href="/harness/help/verification.json">current verification record</a> distinguishes fresh published-1.5.0 observations
 from the retained <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/7caa86ab6d476e9599b08ff75a81bc816e60c382/docs/tutorials-1.5.0-candidate.md">candidate walkthrough evidence</a>.
 The <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/7caa86ab6d476e9599b08ff75a81bc816e60c382/CHANGELOG.md">changelog</a> supplies the change sequence;
@@ -98,6 +98,7 @@ providers. Approval and execution require separate decisions.</p></article>
       <nav class="help-next" aria-label="Continue learning"><a href="/harness/help/">All help topics</a><a href="#main-content">Back to top</a></nav>
     </main>
   </div>
-  <footer class="help-footer">Harness 1.5.0 · <a href="/harness/help/dependencies/">Dependencies and reference</a> · <a href="/harness/help/verification.json">Verification record</a> · <a href="https://github.com/Smart-AI-Memory/attune-harness/issues">Report a problem</a></footer>
+  <footer class="help-footer">Guidance target Harness 1.5.1 · Preparation; publication pending. <a href="/harness/help/goals/">Browse all goals</a> · <a href="/harness/help/dependencies/">Dependencies and reference</a> · <a href="/harness/help/verification.json">Published 1.5.0 verification</a> · <a href="/harness/help/preparation.json">Preparation record</a></footer>
+
 </body>
 </html>

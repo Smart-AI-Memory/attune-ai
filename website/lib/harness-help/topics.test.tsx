@@ -16,13 +16,15 @@ function copyExport() {
 }
 
 describe('Harness-owned Help Center export', () => {
-  it('checks the committed export and all ten current routes', () => {
-    expect(checkExport()).toMatchObject({ version: '1.5.0', pages: 10, files: 14 });
+  it('checks the committed export and all twelve current routes', () => {
+    expect(checkExport()).toMatchObject({ version: '1.5.1', pages: 12, files: 24 });
     const build = JSON.parse(readFileSync(path.join(defaultOutput, 'build.json'), 'utf8'));
     for (const name of Object.keys(build.files).filter((name) => name.endsWith('index.html'))) {
       const html = readFileSync(path.join(defaultOutput, name.replace('harness/help/', '')), 'utf8');
-      expect(html).toContain('published <strong>Harness 1.5.0</strong>');
-      expect(html).toContain('aria-label="On this page"');
+      if (name.includes('/1-5-0/')) expect(html).toContain('published <strong>Harness 1.5.0</strong>');
+      else if (name.includes('/goals/')) expect(html).toContain('Preparation only; this version is not yet released');
+      else expect(html).toContain('Guidance target: <strong>Harness 1.5.1</strong> preparation');
+      expect(html).toContain(name.includes('/goals/') ? 'class="goal-index"' : 'aria-label="On this page"');
     }
   });
 

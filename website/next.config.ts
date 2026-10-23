@@ -51,6 +51,10 @@ const nextConfig: NextConfig = {
       { source: '/harness/help/help.css', destination: '/harness-help-static/help.css' },
       { source: '/harness/help/verification.json', destination: '/harness-help-static/verification.json' },
       { source: '/harness/help/build.json', destination: '/harness-help-static/build.json' },
+      { source: '/harness/help/preparation.json', destination: '/harness-help-static/preparation.json' },
+      { source: '/harness/help/goals/goals.css', destination: '/harness-help-static/goals/goals.css' },
+      { source: '/harness/help/goals/controls.js', destination: '/harness-help-static/goals/controls.js' },
+      { source: '/harness/help/assets/:asset', destination: '/harness-help-static/assets/:asset' },
       { source: '/harness/help/:topic([a-z0-9-]+)/', destination: '/harness-help-static/:topic/index.html' },
       // Serve index.html for framework-docs directory paths
       {

@@ -1,9 +1,10 @@
 # Harness Help Center publishing bridge
 
-The canonical guides, release manifest, renderer and walkthrough verification
+The canonical guides, goals master and controls, release manifest, renderer and walkthrough verification
 belong to [attune-harness](https://github.com/Smart-AI-Memory/attune-harness/tree/main/help).
 This website publishes a generated static export at `/harness/help/` and keeps
-existing topic URLs and heading fragments. Do not edit exported HTML or maintain
+existing topic URLs and heading fragments, including `/harness/help/goals/`.
+Do not edit exported HTML or maintain
 a second command reference here.
 
 ## Cutover design
@@ -14,19 +15,21 @@ website build checks that receipt using Node's standard library. Python-Markdown
 is needed only when refreshing the export, not when Vercel builds this website.
 
 Next.js rewrites keep the established public URLs while serving the static files.
-The nine current topics, overview, stylesheet and evidence records must resolve.
+The eleven registered topics, overview, scripts, styles, images and evidence records must resolve.
 Unknown topic paths must stay 404; changed exported bytes or path escapes must
 fail the receipt check. The old noindex preparation URL redirects to its immutable
 historical record. Source snapshots and their original provenance remain below.
 
-The Harness renderer's ten-page build, internal-link checks, refusal controls,
+The Harness renderer's twelve-page build, internal-link checks, refusal controls,
 reproducibility and published-1.5.0 walkthroughs were checked before this cutover
-was prepared. The Next 16.3.8 production build and local HTTP checks served all
-ten pages, the stylesheet and both evidence records with byte-identical output.
+was prepared. The Next 16.3.8 standalone production build and local HTTP checks served all
+twelve pages and their ten supporting payload files, plus the build record, with byte-identical output.
 Unknown topics returned 404, and the historical preparation URL returned 308.
 All 37 original topic-heading bookmarks remain valid. Browser checks followed
-the website's documentation link and the reference's workflow contents link
-while preserving the public URL. These are local integration observations;
+the prominent landing link to the goals page while preserving the public URL.
+Learning comes first in its compact navigation. The local worksheet remains
+unapproved; its controls and six testing FAQs stay within their owning
+disclosures. These are local integration observations;
 production deployment, mobile layout and assistive technology remain unchecked.
 
 Rejected alternative: keeping React copies of the guides here would retain two

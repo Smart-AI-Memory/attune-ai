@@ -61,3 +61,4 @@ body{margin:0}
 .help-skip{position:absolute;left:16px;top:-100px;padding:10px;background:var(--help-bg);z-index:1}
 .help-skip:focus{top:10px}
 .help-anchor{display:block;height:0;scroll-margin-top:24px}
+.help-featured-nav{border:1px solid var(--help-green);border-radius:6px;background:var(--help-panel);margin:16px 0;font-weight:700;padding:12px!important}

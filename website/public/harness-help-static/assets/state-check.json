@@ -1,0 +1,8 @@
+{
+  "status": "draft",
+  "acceptance": null,
+  "revision": 2,
+  "checkpoint_digest": "8d340ecfeb64c26ff1cd8e0262d974f010160861a234ca681a1b1071c428ad38",
+  "planning_or_build_present": false,
+  "readiness_claim": "intake only; no frozen effects manifest or build-ready plan"
+}
