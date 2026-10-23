@@ -62,8 +62,19 @@ The first scratch `git archive` omitted required export-ignored repository
 inputs and failed before useful validation. The complete committed-checkout
 rerun above passes. No source, deadline or assertion was changed to clear that
 setup failure. The full Attune AI Python suite, Vercel deployment, production,
-mobile and accessibility certification were not run for this bounded copy/link
+full accessibility certification were not run for this bounded copy/link
 change. The standalone draft needs its unmerged adapter/export dependencies.
+
+Follow-up on the same four runtime inputs: at 390 and 320 CSS pixels, Docs and
+the archive have no page-wide overflow; historical code scrolls locally. The
+mobile menu opens/closes with Enter, exposes expanded state and reaches Help by
+keyboard, with a visible three-pixel focus outline. Archive skip-link tab order,
+PowerShell disclosure and local fragments pass bounded checks. This does not
+establish full accessibility, screen-reader or independent-user acceptance.
+The receipt is `live-audit/mobile-accessibility-preview.json` beside this clone.
+No unchanged full suite was rerun. Chrome's visible Harness preview tab and a
+fresh visible in-app tab both render `/docs/#quickstart`; the server is healthy.
+The original parent-link blank-page cause is unproven.
 
 ## Next action
 
