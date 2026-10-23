@@ -96,9 +96,9 @@ export default function DocsPage() {
               </p>
               <nav className="flex flex-wrap justify-center gap-3">
                 <a href="#harness-docs" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">Harness</a>
-                <a href="#quickstart" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">
+                <Link href="/harness/help/get-started/" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">
                   Harness Quick Start
-                </a>
+                </Link>
                 <a href="#faq" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">
                   FAQ
                 </a>
@@ -123,66 +123,24 @@ export default function DocsPage() {
           </div>
         </section>
 
-        {/* Harness Quick Start; earlier toolkit references remain below. */}
+        {/* Retain the current quick-start anchor for existing links. */}
         <section id="quickstart" className="py-20 bg-[var(--surface-container-low)]">
           <div className="container max-w-5xl">
-            <h2 className="text-4xl font-bold mb-4">Historical Harness 1.4.0 Quick Start</h2>
+            <h2 className="text-4xl font-bold mb-4">Harness {HARNESS_VERSION} quick start</h2>
             <p className="text-xl text-[var(--text-secondary)] mb-6">
-              Install Harness and try a small local check before connecting an agent.
-              This retained setup uses the released 1.4.0 package. <Link className="underline" href="/harness/help/">Use the Help Center for current guidance.</Link>
+              {HARNESS_RELEASE_NOTICE}
             </p>
-            <p className="text-[var(--text-secondary)] mb-8">
-              You need Python 3.10 or later. Start in a new working directory and
-              keep Harness in its own environment, separate from Attune AI.
-              The commands below are for macOS and Linux.
+            <p className="text-[var(--text-secondary)] mb-6">
+              Follow the current guide for installation, a version check and a
+              first local result. Continue with the setup for your agent.
             </p>
-            <ol className="space-y-6">
-              <li className="p-6">
-                <h3 className="text-xl font-bold mb-3">1. Create an environment</h3>
-                <pre className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-4 overflow-x-auto"><code>{'python3 -m venv .venv\nsource .venv/bin/activate'}</code></pre>
-                <details className="mt-4 text-sm text-[var(--text-secondary)]">
-                  <summary className="cursor-pointer font-medium">Windows PowerShell</summary>
-                  <p className="my-3">With Python 3.10 or later installed, use these commands instead:</p>
-                  <pre className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-4 overflow-x-auto"><code>{'py -3 -m venv .venv\n.venv\\Scripts\\Activate.ps1'}</code></pre>
-                </details>
-              </li>
-              <li className="p-6">
-                <h3 className="text-xl font-bold mb-3">2. Install and confirm the version</h3>
-                <pre className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-4 overflow-x-auto"><code>{"python -m pip install 'attune-harness[all]==1.4.0'\npython -c \"from importlib.metadata import version; print(version('attune-harness'))\""}</code></pre>
-                <p className="mt-3 text-sm text-[var(--text-secondary)]">
-                  The version check should print <code>1.4.0</code>. This
-                  recommended install adds Redis and Voyage support. The local
-                  example below needs no API key. Redis use needs a running
-                  Redis service; Voyage retrieval needs a Voyage API key and
-                  makes paid calls. Integration requirements are covered in the{' '}
-                  <a className="underline" href="https://pypi.org/project/attune-harness/1.4.0/#user-content-installation">released installation guide</a>.
-                </p>
-              </li>
-              <li className="p-6">
-                <h3 className="text-xl font-bold mb-3">3. Run the local example</h3>
-                <pre className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-4 overflow-x-auto"><code>python -m attune_harness</code></pre>
-                <p className="mt-3 text-sm text-[var(--text-secondary)]">
-                  Expect a JSON receipt with a <code>verified</code> result.
-                  A deterministic worker supplies the answer and a separate
-                  arithmetic check assesses it. This example makes no model
-                  call and needs no API key; it demonstrates the check and receipt,
-                  rather than measuring an AI agent&apos;s reliability.
-                </p>
-              </li>
-            </ol>
-            <div className="mt-8">
-              <h3 className="text-xl font-bold mb-3">Continue with your agent</h3>
-              <p className="text-[var(--text-secondary)] mb-5">
-                Choose the Claude Code or Codex setup in the release guide.
-                Installing the Python package does not install an agent plugin
-                or skill. Develop the specification and agree with the scope
-                before authorizing execution.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <a className="btn btn-primary" href="https://pypi.org/project/attune-harness/1.4.0/#user-content-use-harness-with-codex-claude-or-other-models">Set up your agent</a>
-                <a className="btn btn-outline" href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.4.0/docs/cli-guide.md">Choose a Harness workflow</a>
-              </div>
+            <div className="flex flex-wrap gap-4 mb-6">
+              <Link className="btn btn-primary" href="/harness/help/get-started/">Open the current quick start</Link>
+              <Link className="btn btn-outline" href={`/harness/help/${HARNESS_RELEASE_SLUG}/`}>Review Harness {HARNESS_VERSION}</Link>
             </div>
+            <p className="text-sm text-[var(--text-secondary)]">
+              For the older setup, <Link className="underline" href="/harness/archive/1-4-0/#quickstart">read the archived Harness 1.4.0 quick start</Link>.
+            </p>
           </div>
         </section>
 

@@ -21,8 +21,23 @@ The original signed implementation and review evidence remain at website commit
 guide, 21 goals, six testing FAQs, worksheet, compact learning-first navigation
 and historical 1.5.0 captures. An independent browser review found a table-wrapper
 containment regression; source `295230ac53d601c9a2539020a3f5be7044cc7559`
-corrects it and checks disclosure ownership. Existing versioned training and
-the 1.4.0 Quick Start retain their labels.
+corrects it and checks disclosure ownership. Existing versioned training retains
+its historical labels.
+
+## Current quick start and historical setup
+
+The Docs page's top **Harness Quick Start** action opens the canonical
+`/harness/help/get-started/` guide. The existing `/docs#quickstart` anchor remains
+a short current-version entry, using the imported release notice and linking to
+the guide, dynamic version overview and `/harness/archive/1-4-0/#quickstart`.
+The `/docs#harness-docs` entry remains available. Active Docs content no longer
+duplicates runnable 1.4.0 installation steps or the current guide's commands.
+
+The separately owned current/archive website change supplies the historical
+archive page and preserves the original 1.4.0 instructions. It also owns
+Navigation, pricing and how-it-works corrections. Validate these dependencies
+together before integrating this entry-point change; retain each PR's ownership
+and require fresh checks on the final integrated source.
 
 ## Release and cutover checks
 
@@ -65,3 +80,25 @@ This local combination is not a branch merge or final release qualification.
 The standalone PR depends on #2574 supplying the imported metadata through main;
 its build cannot resolve those imports before that dependency lands. Keep the
 draft dependency explicit and check the final integrated head before release.
+
+## Current quick-start follow-up validation
+
+The October 23 Docs correction was checked in a fresh disposable tree combining
+publisher `dcaa5f05f54dc9470783a15613730b85fa4f350b` with this PR's seven page/runtime
+inputs. The readiness record is prose only. All 78 website tests, 87 collaboration
+preflight checks, targeted ESLint and pinned pre-commit checks passed. Initial
+Python dependency failures were resolved in a temporary environment using the
+repository's pinned SDK and MCP versions; no test assertion or source changed.
+
+The Next.js 16.3.8 production build passed TypeScript and generated 123 pages.
+All 29 local HTTP checks passed, including exported page/asset hashes, current
+guide and overview links, both retained Docs anchors, preparation notices,
+published package fallback, sitemap exclusions and historical redirect behavior.
+Docs contains no 1.4.0 install commands. Actual browser clicks opened the canonical
+**Get started** and **Prepare for Harness 1.5.1** pages with their preparation
+notices; returning to `/docs#quickstart` showed the current entry.
+
+The new archive page is a separate dependency. Its committed content and the full
+Docs-to-archive browser journey remain to be checked with the archive owner's
+change. These local checks establish neither a standalone #2575 deployment nor
+final integrated source, release publication or production acceptance.
