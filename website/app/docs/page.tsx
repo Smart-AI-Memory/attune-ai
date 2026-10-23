@@ -144,45 +144,6 @@ export default function DocsPage() {
           </div>
         </section>
 
-        {/* Attune Author — consolidated into attune-ai */}
-        <section id="attune-author" className="py-20 bg-[var(--border)] bg-opacity-30">
-          <div className="container">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-4xl font-bold text-center mb-4">
-                Attune Author
-              </h2>
-              <p className="text-center text-[var(--text-secondary)] mb-8 max-w-2xl mx-auto">
-                Consolidated into attune-ai as of July 2026. The
-                standalone package is archived on PyPI &mdash; released
-                versions stay installable, but no further releases are
-                planned.
-              </p>
-
-              <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-6 max-w-2xl mx-auto">
-                <p className="text-sm text-[var(--text-secondary)] mb-4">
-                  Its authoring capabilities now ship with the attune-ai
-                  platform: the{" "}
-                  <code className="text-xs bg-[var(--surface-container-high)] px-1 rounded">
-                    author-feature
-                  </code>{" "}
-                  skill writes a single code-verified master per feature
-                  and projects it to the .help template kinds and docs
-                  pages, and{" "}
-                  <code className="text-xs bg-[var(--surface-container-high)] px-1 rounded">
-                    /coach maintain
-                  </code>{" "}
-                  keeps generated templates in sync with your source.
-                  attune-help remains the standalone reader.
-                </p>
-                <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-xs p-4 leading-relaxed">
-                  <div className="text-white/50"># Authoring now ships with attune-ai</div>
-                  <div>pip install attune-ai</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Standalone reader reference; retain the earlier link target. */}
         <section id="attune-help" className="py-8">
           <div className="container max-w-5xl">
@@ -217,6 +178,9 @@ export default function DocsPage() {
                 <a href={`${HARNESS_SOURCE_ROOT}/docs/migration.md`} className="btn btn-outline">Check migration boundaries</a>
                 <a href="/faq" className="btn btn-outline">Full FAQ and project references</a>
               </div>
+              <p id="attune-author" className="text-sm text-[var(--text-secondary)] mb-6 scroll-mt-24">
+                Earlier project: <Link className="underline" href="/attune-author/#attune-author">Attune Author reference</Link>.
+              </p>
               <details id="attune-ai-reference-questions" className="border border-[var(--border)] rounded-lg p-6">
                 <summary className="min-h-11 flex items-center text-lg font-semibold cursor-pointer">Earlier Attune AI references</summary>
                 <p className="text-sm text-[var(--text-secondary)] my-6">

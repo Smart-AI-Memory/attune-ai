@@ -35,8 +35,8 @@ duplicates runnable 1.4.0 installation steps or the current guide's commands.
 
 Website #2580 supplies the historical archive page and preserves the original
 1.4.0 instructions. Website #2579 owns Navigation, pricing and how-it-works
-corrections. Integrate #2580 and the canonical publisher #2574 before #2575,
-then #2579. Validate these dependencies together, retain each PR's ownership
+corrections. Integrate #2580, the canonical publisher #2574 and the Author
+reference page #2581 before #2575, then #2579. Validate these dependencies together, retain each PR's ownership
 and require fresh checks on the final integrated source.
 
 ## Current migration guidance
@@ -48,6 +48,16 @@ distinguishes unpublished 1.5.1 from the published 1.5.0 baseline, describes
 current Windows limits and retains the original 1.0.0 migration as historical
 reference. The existing release adapter supplies this source; no separate
 migration pin or publication switch is introduced here.
+
+## Earlier authoring reference
+
+The full Attune Author section is preserved on `/attune-author/`, supplied by
+the independently owned website #2581. Docs keeps a concise reference beside
+the earlier Attune AI references; `/docs#attune-author` still reaches that link.
+The original 1,940-byte section is unchanged in its destination. This placement
+change follows the migration correction in a separate commit and requires its
+own five-input layout validation, including #2581. The earlier four-input
+migration receipt retains its original source identity.
 
 ## Release and cutover checks
 
