@@ -19,12 +19,19 @@ Check exact exported bytes and the real Next.js routes before cutover.
 
 ## Current state
 
-The generated receipt imports Harness commit
-`d668d02a1cc3618696dc97ad26bd9c99077686f3`, which includes current Harness
-main `5fca534972ac3904c6aa92a0a0fd89e7cf9ba4a9`.
+The generated receipt imports signed Harness commit
+`fd42e9cb202fd3dbd3ea1fe87b6e9bd6ba814815`, which includes current Harness
+main `e78576eda9b99369472f3f58f768230a4a2656c9`.
 Help remains explicit 1.5.1 preparation; published 1.5.0 evidence is retained.
-The refreshed export changes only the source commit receipt; rendered bytes
-and the importer's reviewed implementation are unchanged.
+The current migration, release-notes and readiness links use documentation
+revision `93f161b8e65bf86b4a7670e899ff96ff260644f1`. The original runtime
+source, validation artifact, tutorial source and published verification records
+keep their separate identities. The generated delta changes the preparation
+page and metadata; importer and renderer implementations are unchanged.
+
+The entry-point owner must use this refreshed export before changing the two
+active migration links in PR #2575 to `docs/migration.md`. The historical 1.0
+migration record is preserved. Keep all branches separate and based on main.
 
 ## Verification
 
@@ -33,6 +40,12 @@ and the importer's reviewed implementation are unchanged.
 | Committed source and exact export | Import full SHA, then `node scripts/harness-help-export.mjs check` | 12 pages, 24 files; pass |
 | Website integration | All website tests, TypeScript and changed-file ESLint | 78 tests; pass |
 | Production compilation | `npx next build` | Pass; 123 pages |
+
+Independent GPT-6 Astra review found no actionable findings in the generated
+four-file delta. All source/output hashes match. The original validation,
+tutorial and historical verification identities are unchanged. A local HTTP
+round trip verified all 24 exported files byte for byte, including the new
+migration link. Combined entry-point validation remains with the PR #2575 owner.
 
 ## Next action
 
