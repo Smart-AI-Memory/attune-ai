@@ -23,6 +23,24 @@ start in an explicit archive.
 
 ## Current state
 
+Later reference cleanup keeps Pricing focused on current Harness setup: remove
+the repeated retirement paragraph and older-project name while retaining fresh
+isolation and saved-work guidance. How it works keeps one named historical
+heading and one retirement sentence; its lower setup notice no longer repeats
+the project name or deprecation explanation. Navigation and all routes/anchors
+are unchanged. The historical workflow body is retained. A new combined receipt
+is pending the Docs owner's separate eight-file cleanup.
+
+The Docs owner confirmed adding Contact and the metadata helper to this lane
+(six net files including this handoff). Contact display/navigation/community
+links now identify the company and Harness; form state, topic options, API,
+database and email handlers are unchanged. Harness discussions are disabled,
+so the source link uses the repository rather than inventing a discussion route.
+Non-article metadata fallbacks omit the predecessor keyword/author; the current
+organization schema omits its repository alias. Article metadata/frontmatter,
+Article schema and the dormant product schema remain unchanged, verified with
+compiled before/after fixtures and byte comparisons.
+
 Patrick subsequently directed deprecation of Attune AI in favor of Harness
 1.5.1, rather than further routine dependency or feature maintenance. The
 Pricing and How it works notices now state that direction, retain existing

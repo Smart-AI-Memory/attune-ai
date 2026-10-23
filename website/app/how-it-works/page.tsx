@@ -42,10 +42,10 @@ export default function HowItWorksPage() {
         <section className="py-20 gradient-primary text-white">
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
-              <h1 className="text-5xl font-bold mb-4">How Attune AI works</h1>
+              <h1 className="text-5xl font-bold mb-4">Attune AI workflow reference</h1>
               <p className="text-xl opacity-90">
-                Attune AI is deprecated. This memory and workflow reference
-                remains available for existing users.
+                This project is deprecated. The original memory and workflow
+                reference remains available for existing users.
               </p>
             </div>
           </div>
@@ -56,10 +56,9 @@ export default function HowItWorksPage() {
             <h2 id="harness-direction" className="text-3xl font-bold mb-4">Start new work with Attune Harness {HARNESS_VERSION}</h2>
             <p className="text-[var(--text-secondary)] mb-4">{HARNESS_RELEASE_NOTICE}</p>
             <p className="text-[var(--text-secondary)] mb-6">
-              Keep existing Attune AI environments intact. Deprecation does not
-              establish feature parity or migrate saved work; use a separate
-              environment for Harness. The standalone attune-help reader is a
-              separate project.
+              Use a separate environment and retain saved work until the needed
+              replacement workflows are validated. The standalone attune-help
+              reader remains a separate project.
             </p>
             <Link className="btn btn-primary" href="/harness/help/get-started/">Read the Harness Quick Start</Link>
           </div>

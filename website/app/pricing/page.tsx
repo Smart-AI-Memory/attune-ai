@@ -54,16 +54,12 @@ export default function PricingPage() {
         <section id="harness-install" className="py-20">
           <div className="container max-w-3xl">
             <h2 className="text-4xl font-bold mb-4">Start with Harness</h2>
-            <p className="text-[var(--text-secondary)] mb-6">
-              Attune AI is deprecated. Choose Attune Harness for new installations;
-              keep existing Attune AI environments and saved work intact.
-              Deprecation does not establish feature parity or automatic migration.
-            </p>
             <p className="text-xl text-[var(--text-secondary)] mb-6">
               {HARNESS_RELEASE_NOTICE}
             </p>
             <p className="text-[var(--text-secondary)] mb-6">
-              Use Python 3.10 or later in a separate environment from Attune AI.
+              Use Python 3.10 or later in a fresh, isolated environment.
+              Retain existing environments and saved work; installation does not migrate them.
               The Quick Start explains candidate validation and installation of
               the published package. Add Redis or Voyage only when your workflow needs them;
               their services, credentials and paid-call permissions are separate.
