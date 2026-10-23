@@ -45,6 +45,16 @@ replayed all 31 HTTP checks and that browser journey. Later handoff-only edits
 do not change the validated runtime/page bytes. Hosted checks and production
 remain separate.
 
+Bounded follow-up on the same runtime inputs at 390 and 320 CSS pixels confirms
+no page-wide archive overflow; wide original code remains in local scrollers.
+The labelled menu and PowerShell disclosure operate with Enter. The skip link
+makes the next tab stop the current-guide link within main; focus is visibly
+outlined, one main/primary heading exists, and local fragments resolve. This
+does not establish full accessibility, screen-reader or independent-user
+acceptance. The sibling `live-audit/mobile-accessibility-preview.json` records
+these observations and the verified Chrome/in-app preview access. No unchanged
+full suite was rerun.
+
 ## Next action
 
 Keep the verified final disposable preview at `http://127.0.0.1:8871/docs/`
