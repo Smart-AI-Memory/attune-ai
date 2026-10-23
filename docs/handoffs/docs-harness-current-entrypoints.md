@@ -40,8 +40,12 @@ start in an explicit archive.
 Validation uses a disposable complete checkout of publisher `dcaa5f05f`, the
 eight committed #2575 inputs from `948ba1522`, and the original four website files
 from `cb1955c16`. After review exposed the delivery order, the archive was
-extracted unchanged into its own prerequisite. Final four-input validation is
-recorded in the draft PR.
+extracted unchanged into its own prerequisite. Final four-input validation passed with archive #2580 `59ddfa95`, publisher
+#2574 `dcaa5f05`, Docs #2575 `948ba152` and this PR runtime/page inputs
+`d21e1c6e`: 78 tests, TypeScript/124-page production build, targeted lint,
+12-page/24-file export check and 31 HTTP checks. The Help owner independently
+replayed the 31 HTTP checks and actual current/archive browser journey. Later
+handoff-only edits do not change the validated runtime/page bytes.
 This is a test combination, not a branch integration or production deployment.
 
 | Claim | Failure-sensitive probe | Result |
@@ -63,7 +67,12 @@ change. The standalone draft needs its unmerged adapter/export dependencies.
 
 ## Next action
 
-Integrate the separate archive-only prerequisite and #2574 independently, then
+Final combined source is retained in the local `website-four-input-validation`
+checkout beside this checkout and served at `http://127.0.0.1:8871/docs/`.
+The receipt is in the sibling `live-audit/four-input-validation.json`. Keep that
+preview available for Patrick; it is a disposable local combination.
+
+Integrate the separate archive-only prerequisite #2580 and #2574 independently, then
 #2575, then update this draft normally and rerun the real link journey on the
 resulting head. This avoids #2575 linking an archive supplied only by a later
 adapter-dependent PR. Separate merge and publication approvals remain
