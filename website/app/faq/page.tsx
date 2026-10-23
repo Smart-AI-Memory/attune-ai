@@ -28,7 +28,7 @@ const faqData: FAQCategory[] = [
     questions: [
       {
         question: 'What is Attune AI?',
-        answer: 'Attune AI combines specification development, AI workflows, project memory, retrieval and verification tools. It is a separate project from Attune Harness, released under Apache 2.0. Provider access and setup depend on the workflow you choose.',
+        answer: 'Attune AI is the deprecated, unmaintained predecessor to Attune Harness. These retained references describe existing Attune AI installations, released under Apache 2.0. For new work, follow the current Harness installation guide.',
       },
       {
         question: 'What is the reliability loop?',
@@ -257,7 +257,7 @@ export default function FAQPage() {
               <CategoryQuestions category={faqData[0]} />
               <details id="attune-ai-reference-questions" className="border border-[var(--border)] rounded-lg p-6">
                 <summary className="min-h-11 flex items-center text-lg font-semibold cursor-pointer">Earlier Attune AI references</summary>
-                <p className="my-6 text-sm text-[var(--text-secondary)]">These references apply to the earlier project. Open them if you maintain an existing Attune AI installation.</p>
+                <p className="my-6 text-sm text-[var(--text-secondary)]">Attune AI is deprecated and is no longer maintained. These historical references remain available for existing installations.</p>
                 {faqData.slice(1).map((category) => <CategoryQuestions key={category.category} category={category} />)}
               </details>
             </div>

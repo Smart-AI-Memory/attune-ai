@@ -59,6 +59,21 @@ change follows the migration correction in a separate commit and requires its
 own five-input layout validation, including #2581. The earlier four-input
 migration receipt retains its original source identity.
 
+## Attune AI deprecation
+
+Attune AI is deprecated and is no longer maintained. New work targets Harness
+1.5.1. The existing canonical publication flag controls whether Docs shows the
+version-specific install command; preparation pages name the replacement target
+and retain the published fallback until publication is verified. Docs, FAQ,
+the homepage and footer label the older project and retain historical references.
+This change does not establish migration parity or convert saved data.
+
+The separate README notice PR records product retirement without changing
+Attune AI runtime, dependencies, version metadata or published artifacts. PyPI
+archival remains a separate project-owner action; no additional Attune AI
+package release or repository archival is performed here. Current Harness
+migration guidance and canonical Help remain with their existing owners.
+
 ## Release and cutover checks
 
 Before package publication, integrate canonical Help #299, documentation #300

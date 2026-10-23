@@ -1,4 +1,4 @@
-import { HARNESS_PUBLISHED, HARNESS_RELEASE_NOTICE, HARNESS_RELEASE_SLUG, HARNESS_SOURCE_ROOT, HARNESS_VERSION } from '@/lib/harness-release';
+import { ATTUNE_AI_DEPRECATION_NOTICE, HARNESS_INSTALL_COMMAND, HARNESS_PUBLISHED, HARNESS_RELEASE_NOTICE, HARNESS_RELEASE_SLUG, HARNESS_SOURCE_ROOT, HARNESS_VERSION } from '@/lib/harness-release';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
@@ -17,7 +17,7 @@ const faqItems = [
   {
     question: 'What is attune-ai?',
     answer:
-      'Attune AI combines specification development, AI workflows, project memory, retrieval and verification tools. It is a separate project from Attune Harness. Use the retained references for your installed version, and inspect generated output and the checks that ran.',
+      'Attune AI was the earlier specification, workflow, memory and retrieval project. It is deprecated and is no longer maintained. Use the retained references for an existing installation; new work should follow the current Harness installation guide.',
   },
   {
     question: 'How can I check generated content for drift?',
@@ -56,7 +56,7 @@ const faqItems = [
   {
     question: 'What happened to attune-author?',
     answer:
-      'Its AI authoring capabilities were consolidated into attune-ai in July 2026, and the standalone package is archived. Already-released versions stay installable from PyPI, but no further releases are planned — for template authoring, install attune-ai and use the author-feature skill or /coach maintain.',
+      'The standalone Attune Author package was archived after its authoring capabilities moved into Attune AI in July 2026. Attune AI is now deprecated too. Use the retained references for existing installations; new work should follow the current Harness installation guide.',
   },
 ];
 
@@ -119,7 +119,7 @@ export default function DocsPage() {
               <a className="btn btn-outline" href={`${HARNESS_SOURCE_ROOT}/docs/release-readiness-${HARNESS_VERSION}.md`}>Check the {HARNESS_VERSION} qualification limits</a>
             </div>
             <p className="text-sm text-[var(--text-secondary)]">Claude Code and Codex have documented setup paths. Native planning and building remain experimental; Antigravity integration is unverified here. Intent acceptance is separate from paid execution permission.</p>
-            <p className="text-sm text-[var(--text-secondary)] mt-4">Harness does not yet replace every Attune AI workflow. <a className="underline" href={`${HARNESS_SOURCE_ROOT}/docs/migration.md`}>Review the migration boundaries</a> before changing an existing setup.</p>
+            <p className="text-sm text-[var(--text-secondary)] mt-4">{ATTUNE_AI_DEPRECATION_NOTICE}{' '}<a className="underline" href={`${HARNESS_SOURCE_ROOT}/docs/migration.md`}>Review the migration boundaries</a> before changing an existing setup.</p>
           </div>
         </section>
 
@@ -134,6 +134,9 @@ export default function DocsPage() {
               Follow the current guide for installation, a version check and a
               first local result. Continue with the setup for your agent.
             </p>
+            {HARNESS_PUBLISHED ? (
+              <pre className="overflow-x-auto rounded-lg bg-[var(--surface-container-high)] p-4 mb-6"><code>{HARNESS_INSTALL_COMMAND}</code></pre>
+            ) : null}
             <div className="flex flex-wrap gap-4 mb-6">
               <Link className="btn btn-primary" href="/harness/help/get-started/">Open the current quick start</Link>
               <Link className="btn btn-outline" href={`/harness/help/${HARNESS_RELEASE_SLUG}/`}>Review Harness {HARNESS_VERSION}</Link>
@@ -184,8 +187,8 @@ export default function DocsPage() {
               <details id="attune-ai-reference-questions" className="border border-[var(--border)] rounded-lg p-6">
                 <summary className="min-h-11 flex items-center text-lg font-semibold cursor-pointer">Earlier Attune AI references</summary>
                 <p className="text-sm text-[var(--text-secondary)] my-6">
-                  The questions below describe earlier Attune AI tooling and companion packages.
-                  Their workflows and commands apply to those projects.
+                  Attune AI is deprecated. The questions below retain references for existing installations.
+                  Their workflows and commands apply to those historical projects.
                 </p>
                 <div className="space-y-6">
                   {faqItems.map((item) => (
