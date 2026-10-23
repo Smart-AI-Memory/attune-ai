@@ -1,4 +1,4 @@
-import { HARNESS_PACKAGE_URL } from '@/lib/harness-help/release';
+import { HARNESS_PACKAGE_URL } from '@/lib/harness-release';
 import Link from 'next/link';
 import styles from './Footer.module.css';
 

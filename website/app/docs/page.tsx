@@ -1,4 +1,4 @@
-import { HARNESS_PUBLISHED, HARNESS_RELEASE_NOTICE, HARNESS_RELEASE_SLUG, HARNESS_SOURCE_ROOT, HARNESS_VERSION } from '@/lib/harness-help/release';
+import { HARNESS_PUBLISHED, HARNESS_RELEASE_NOTICE, HARNESS_RELEASE_SLUG, HARNESS_SOURCE_ROOT, HARNESS_VERSION } from '@/lib/harness-release';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';

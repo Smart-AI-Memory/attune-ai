@@ -1,34 +1,6 @@
 # Harness Help Center content maintenance
 
-## Harness 1.5.1 preparation
-
-`release.json` owns the target version, publication status, reviewed source
-and currently published package. The 1.5.1 page is preparation, with noindex
-metadata, until the package release is verified. Keep this website PR in draft
-and do not merge or deploy it before that release. See
-`readiness-1.5.1.md` for reviewed content and the remaining publication checks.
-
-The goal guide at `/harness/help/goals/` is authored in
-`goal-guide.source.html`; its synthetic worksheet data is `goal-guide.data.json`.
-Run `python3 scripts/project-goal-help.py` from `website/` after editing these
-sources or release metadata. Commit the generated JSON, never edit it directly.
-The projector checks the 21 main goals, six testing FAQs, duplicate IDs,
-copy/hash bindings and local assets. Browser checks cover interactions and layout.
-
-The Help Center overview, Docs, FAQ, homepage and footer link to the guide.
-Its left navigation puts **Learn before you build** first and uses compact,
-fully clickable rows with underlined titles, arrows and hover/focus feedback.
-The guide uses native disclosure elements; the worksheet is local and records
-no approval or model execution. Historical 1.5.0 screenshots retain their labels.
-
-`lib/harness-help/release-guide.ts` owns 1.5.1 guidance. The command reference
-uses the same version metadata. Retain 1.5.0 and 1.3.0 procedures and their
-original evidence as historical guides. The following records preserve their
-original verification boundaries.
-
-## Published 1.5.0 record
-
-The retained 1.5.0 published-release entry is `/harness/help/1-5-0/`, authored in
+The current published-release entry is `/harness/help/1-5-0/`, authored in
 `lib/harness-help/topics.ts`. Its installation uses PyPI 1.5.0 rather than a
 candidate wheel. The base install, version, CLI help and deterministic demo
 were checked on macOS/Python 3.12.2 on October 19, 2026. No Windows desktop,

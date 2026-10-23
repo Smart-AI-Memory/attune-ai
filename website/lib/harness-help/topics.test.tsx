@@ -8,26 +8,22 @@ import HelpHome from '@/app/harness/help/page';
 import HelpLayout from '@/app/harness/help/layout';
 import NextReleaseHelp from '@/app/harness/help/next-release/page';
 import readiness from '@/content/harness-help/next-release.json';
-import GoalsPage from '@/app/harness/help/goals/page';
-import guide from '@/content/harness-help/goal-guide.generated.json';
-import { HARNESS_PUBLISHED, HARNESS_VERSION } from './release';
 import { getTopic, HELP_ROOT, provenance, RELEASE_COMMIT, topics, topicHref } from './topics';
 
 // CSS layout/contrast is exercised in Chromium; keep the server-render unit
 // probe independent of Vite's different PostCSS config format.
 vi.mock('@/app/harness/help/help.css', () => ({}));
-vi.mock('@/app/harness/help/goals/goals.css', () => ({}));
 
 describe('Harness Help Center', () => {
   it('renders every registered topic with one title and valid help links', async () => {
-    const routes = new Set([HELP_ROOT, '/harness/help/goals/', '/harness/help/next-release/', ...topics.map((topic) => topicHref(topic.slug))]);
-    expect(generateStaticParams()).toHaveLength(10);
+    const routes = new Set([HELP_ROOT, '/harness/help/next-release/', ...topics.map((topic) => topicHref(topic.slug))]);
+    expect(generateStaticParams()).toHaveLength(9);
     for (const topic of topics) {
       const page = await HelpArticle({ params: Promise.resolve({ slug: topic.slug }) });
       const html = renderToStaticMarkup(<HelpLayout>{page}</HelpLayout>);
       expect((html.match(/<h1[ >]/g) || []).length).toBe(1);
       expect(html).toContain('id="main-content"');
-      expect(html).toContain(topic.version === HARNESS_VERSION && !HARNESS_PUBLISHED ? `preparation for ${HARNESS_VERSION}` : `released ${topic.version ?? '1.3.0'}`);
+      expect(html).toContain(`released ${topic.version ?? '1.3.0'}`);
       expect(await generateMetadata({ params: Promise.resolve({ slug: topic.slug }) })).toMatchObject({ title: topic.title });
       for (const match of html.matchAll(/href="(\/harness\/help\/[^"#]*)"/g)) {
         expect(routes.has(`${match[1].replace(/\/$/, '')}/`), `missing route ${match[1]}`).toBe(true);
@@ -96,39 +92,12 @@ describe('Harness Help Center', () => {
   });
 
   it('continues within the same guide version', async () => {
-    const starter = renderToStaticMarkup(await HelpArticle({ params: Promise.resolve({ slug: '1-5-1' }) }));
+    const starter = renderToStaticMarkup(await HelpArticle({ params: Promise.resolve({ slug: '1-5-0' }) }));
     expect(starter).toContain('Next: AI tools and integrations');
     expect(starter).not.toContain('Next: Get started');
     const reference = renderToStaticMarkup(await HelpArticle({ params: Promise.resolve({ slug: 'ai-tools-and-integrations' }) }));
     expect(reference).not.toContain('Next: Get started');
-    expect(reference).toContain('id="check-prepare-approve-then-consult"');
     const historical = renderToStaticMarkup(await HelpArticle({ params: Promise.resolve({ slug: 'get-started' }) }));
     expect(historical).toContain('Next: Start and continue work');
-  });
-
-  it('links the full goal guide prominently and retains its usable source projection', () => {
-    const home = renderToStaticMarkup(<HelpHome />);
-    expect(home).toContain('What do you want to accomplish?');
-    expect(home).toContain('Browse all goals');
-    const html = renderToStaticMarkup(<HelpLayout><GoalsPage /></HelpLayout>);
-    expect((html.match(/<h1[ >]/g) || []).length).toBe(1);
-    expect((guide.html.match(/class="goal-item"/g) || []).length).toBe(21);
-    expect((guide.html.match(/class="testing-goal"/g) || []).length).toBe(6);
-    expect(guide.html.indexOf('class="nav-group">Learn before you build')).toBeLessThan(guide.html.indexOf('class="nav-group">Plan, build and verify'));
-    expect(html).toContain('captured with Harness 1.5.0');
-    expect(html).not.toContain('{{HARNESS_');
-    expect(execFileSync('python3', ['scripts/project-goal-help.py', '--check'], { encoding: 'utf8' })).toContain('all local bindings/assets available');
-  });
-
-  it('distinguishes prepared assessment reporting from final release verification', async () => {
-    const html = renderToStaticMarkup(await HelpArticle({ params: Promise.resolve({ slug: '1-5-1' }) }));
-    expect(html).toContain('attune-harness==1.5.1');
-    expect(html).toContain('does not rerun checks');
-    expect(html).toContain('participant judgments');
-    if (!HARNESS_PUBLISHED) {
-      expect(html).toContain('not yet released');
-      expect(html).toContain('final published-wheel check');
-      expect(await generateMetadata({ params: Promise.resolve({ slug: '1-5-1' }) })).toMatchObject({ robots: { index: false } });
-    }
   });
 });

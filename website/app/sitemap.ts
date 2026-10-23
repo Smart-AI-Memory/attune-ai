@@ -1,4 +1,4 @@
-import { HARNESS_PUBLISHED, HARNESS_RELEASE_SLUG } from '@/lib/harness-help/release';
+import { HARNESS_PUBLISHED, HARNESS_RELEASE_SLUG } from '@/lib/harness-release';
 import { MetadataRoute } from 'next';
 import { getAllPosts, getAllTags } from '@/lib/blog';
 

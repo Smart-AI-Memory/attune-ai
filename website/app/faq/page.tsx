@@ -1,4 +1,4 @@
-import { HARNESS_RELEASE_NOTICE, HARNESS_RELEASE_SLUG, HARNESS_VERSION } from '@/lib/harness-help/release';
+import { HARNESS_RELEASE_NOTICE, HARNESS_RELEASE_SLUG, HARNESS_VERSION } from '@/lib/harness-release';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import Link from 'next/link';

@@ -1,4 +1,4 @@
-import { HARNESS_PUBLISHED, HARNESS_RELEASE_NOTICE, HARNESS_VERSION } from '@/lib/harness-help/release';
+import { HARNESS_PUBLISHED, HARNESS_RELEASE_NOTICE, HARNESS_VERSION } from '@/lib/harness-release';
 
 // Shared by Docs and FAQ; release identity is maintained with the Help Center.
 export const HARNESS_FAQ_ITEMS = [

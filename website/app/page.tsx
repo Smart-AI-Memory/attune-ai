@@ -1,4 +1,4 @@
-import { HARNESS_PACKAGE_URL, HARNESS_RELEASE_NOTICE, HARNESS_SOURCE_ROOT } from '@/lib/harness-help/release';
+import { HARNESS_PACKAGE_URL, HARNESS_RELEASE_NOTICE, HARNESS_SOURCE_ROOT } from '@/lib/harness-release';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
