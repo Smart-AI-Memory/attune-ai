@@ -7,7 +7,7 @@ import { generateMetadata as genMeta } from '@/lib/metadata';
 export const metadata: Metadata = {
   ...genMeta({
     title: 'Attune Author reference',
-    description: 'Historical Attune Author reference. Attune AI is deprecated; use the current Attune Harness Quick Start for new work.',
+    description: 'Historical Attune Author setup. Use the current Harness Quick Start for release availability and new work.',
     url: 'https://smartaimemory.com/attune-author/',
   }),
   robots: { index: false, follow: true },
@@ -20,23 +20,18 @@ export default function AttuneAuthorReference() {
       <Navigation />
       <main id="main-content" className="min-h-screen pt-16">
         <header className="container max-w-5xl pt-12">
-          <p className="text-sm font-bold uppercase tracking-wider mb-4">Earlier project reference</p>
+          <p className="text-sm font-bold uppercase tracking-wider mb-4">Historical project reference</p>
           <h1 className="text-4xl font-bold mb-4">Attune Author reference</h1>
           <p className="text-[var(--text-secondary)] mb-6">
-            The original authoring reference is retained below.{' '}
-            <Link className="underline" href="/docs/">Return to documentation</Link> for Harness guidance and other project references.
-          </p>
-          <p className="text-[var(--text-secondary)] mb-6">
-            Attune AI is deprecated. For new work, use Attune Harness. The{' '}
+            The original instructions below, including the installation command,
+            are historical. Use the{' '}
             <Link className="underline" href="/harness/help/get-started/">current Harness Quick Start</Link>{' '}
-            covers 1.5.1 preparation, candidate validation and available published
-            packages. Confirm release availability there before choosing an artifact.
+            for release availability and setup.
           </p>
           <p className="text-[var(--text-secondary)] mb-6">
-            The original instructions below, including the Attune AI installation
-            command, are historical. Keep existing environments and saved work
-            intact; deprecation does not establish migration parity. The standalone
-            attune-help reader is a separate project.
+            Keep existing environments and saved work intact while validating
+            replacements. The standalone attune-help reader remains separate.{' '}
+            <Link className="underline" href="/docs/">Return to documentation</Link>.
           </p>
         </header>
         <section id="attune-author" className="py-20 bg-[var(--border)] bg-opacity-30">

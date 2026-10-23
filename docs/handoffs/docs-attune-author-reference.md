@@ -22,6 +22,13 @@ flow without losing its content.
 
 ## Current state
 
+Later reference cleanup shortens the wrapper to two paragraphs: identify the
+original command as historical, link current setup and Docs, and retain
+environment/saved-work and standalone-reader context. Repeated predecessor names
+and copied version prose are removed from the wrapper/metadata. The exact
+1,940-byte original section and route/anchor remain unchanged. A new combined
+receipt will follow the Docs owner's independent current-page cleanup.
+
 Following Patrick's later Attune AI deprecation direction, the wrapper now
 labels the retained installation command historical and directs new work to
 Harness 1.5.1 preparation and current package availability in canonical Help.
