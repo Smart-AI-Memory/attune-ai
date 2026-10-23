@@ -33,17 +33,27 @@ the guide, dynamic version overview and `/harness/archive/1-4-0/#quickstart`.
 The `/docs#harness-docs` entry remains available. Active Docs content no longer
 duplicates runnable 1.4.0 installation steps or the current guide's commands.
 
-The separately owned current/archive website change supplies the historical
-archive page and preserves the original 1.4.0 instructions. It also owns
-Navigation, pricing and how-it-works corrections. Validate these dependencies
-together before integrating this entry-point change; retain each PR's ownership
+Website #2580 supplies the historical archive page and preserves the original
+1.4.0 instructions. Website #2579 owns Navigation, pricing and how-it-works
+corrections. Integrate #2580 and the canonical publisher #2574 before #2575,
+then #2579. Validate these dependencies together, retain each PR's ownership
 and require fresh checks on the final integrated source.
+
+## Current migration guidance
+
+Both active Docs migration links use `docs/migration.md` at the documentation
+revision supplied by the canonical export. Publisher #2574 pins the reviewed
+guide at `93f161b8e65bf86b4a7670e899ff96ff260644f1` during preparation. The guide
+distinguishes unpublished 1.5.1 from the published 1.5.0 baseline, describes
+current Windows limits and retains the original 1.0.0 migration as historical
+reference. The existing release adapter supplies this source; no separate
+migration pin or publication switch is introduced here.
 
 ## Release and cutover checks
 
-Before package publication, complete the canonical documentation audit in
-Harness #300 and reconcile the selected final source, metadata, exact candidate
-artifact and required qualification. Run Help projection/link checks and the
+Before package publication, integrate canonical Help #299, documentation #300
+and the audit in #305, then reconcile the selected final source, metadata, exact
+candidate artifact and required qualification in #301. Run Help projection/link checks and the
 real website rewrite journey, preserving observed results and untested limits.
 The metadata-only validation wheel is not the accepted release artifact.
 
@@ -55,8 +65,8 @@ goals journey. Package publication does not deploy the website.
 
 The earlier #2575 build/tests/preview passed. Its when-green run39880319742
 failed with HTTP401 at the metadata API call; credential/settings repair remains
-Patrick's. This website automation failure is separate from the passing Harness
-main qualification.
+Patrick's. This website automation failure is separate from Harness package
+qualification.
 
 ## Combined preparation validation
 
@@ -98,7 +108,10 @@ Docs contains no 1.4.0 install commands. Actual browser clicks opened the canoni
 **Get started** and **Prepare for Harness 1.5.1** pages with their preparation
 notices; returning to `/docs#quickstart` showed the current entry.
 
-The new archive page is a separate dependency. Its committed content and the full
-Docs-to-archive browser journey remain to be checked with the archive owner's
-change. These local checks establish neither a standalone #2575 deployment nor
-final integrated source, release publication or production acceptance.
+The archive page is a separate dependency. A later four-input combination with
+publisher `dcaa5f05`, this PR's `948ba152` runtime files, archive `59ddfa95`
+and current entry points `d21e1c6e` passed 78 tests, a 124-page production build,
+31 HTTP checks and the actual Docs-to-archive-to-Help browser journey. The Help
+owner independently replayed that journey and checked 23 exact exported payloads.
+These historical local checks establish neither a standalone #2575 deployment
+nor final integrated source, release publication or production acceptance.

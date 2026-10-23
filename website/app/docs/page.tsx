@@ -119,7 +119,7 @@ export default function DocsPage() {
               <a className="btn btn-outline" href={`${HARNESS_SOURCE_ROOT}/docs/release-readiness-${HARNESS_VERSION}.md`}>Check the {HARNESS_VERSION} qualification limits</a>
             </div>
             <p className="text-sm text-[var(--text-secondary)]">Claude Code and Codex have documented setup paths. Native planning and building remain experimental; Antigravity integration is unverified here. Intent acceptance is separate from paid execution permission.</p>
-            <p className="text-sm text-[var(--text-secondary)] mt-4">Harness does not yet replace every Attune AI workflow. <a className="underline" href={`${HARNESS_SOURCE_ROOT}/docs/migration-from-attune-ai.md`}>Review the migration boundaries</a> before changing an existing setup.</p>
+            <p className="text-sm text-[var(--text-secondary)] mt-4">Harness does not yet replace every Attune AI workflow. <a className="underline" href={`${HARNESS_SOURCE_ROOT}/docs/migration.md`}>Review the migration boundaries</a> before changing an existing setup.</p>
           </div>
         </section>
 
@@ -214,7 +214,7 @@ export default function DocsPage() {
               <div className="flex flex-wrap gap-4 mb-12">
                 <Link href="/harness/help/goals/" className="btn btn-primary">Browse all goals</Link>
                 <Link href={`/harness/help/${HARNESS_RELEASE_SLUG}/`} className="btn btn-outline">Read the {HARNESS_VERSION} guide</Link>
-                <a href={`${HARNESS_SOURCE_ROOT}/docs/migration-from-attune-ai.md`} className="btn btn-outline">Check migration boundaries</a>
+                <a href={`${HARNESS_SOURCE_ROOT}/docs/migration.md`} className="btn btn-outline">Check migration boundaries</a>
                 <a href="/faq" className="btn btn-outline">Full FAQ and project references</a>
               </div>
               <details id="attune-ai-reference-questions" className="border border-[var(--border)] rounded-lg p-6">
