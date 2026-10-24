@@ -1,0 +1,46 @@
+{
+  "target_version": "1.5.1",
+  "status": "preparation",
+  "source_ref": "0f2711b4c88ee4f231f61d71cd70a0c840be6357",
+  "published_version": "1.5.0",
+  "final_release_source": null,
+  "final_artifact": null,
+  "historical_observations": "Published 1.5.0 verification.json and goal captures retain their original artifact identity.",
+  "goals_origin": "Smart-AI-Memory/attune-ai@569b15d2d1a49c6c5d465032ec365c0e0527e59a",
+  "validation": {
+    "boundary": "Local documentation-validation wheel; package version metadata only. Final release source, metadata and artifact remain unselected.",
+    "source_ref": "0f2711b4c88ee4f231f61d71cd70a0c840be6357",
+    "wheel_sha256": "def6ab630dd677a346cc5ed728ee880a38927bf2e3142272071f96b168decc71",
+    "runtime_modules": 108,
+    "modules_byte_match_reviewed_source": true,
+    "python": "3.10.11",
+    "platform": "macOS arm64",
+    "checks": {
+      "version": "1.5.1",
+      "deterministic_demo": "verified",
+      "planning": "created -> draft -> accepted; source unchanged; no build",
+      "research": "two retrieved sources; one verified link; semantic checking off",
+      "help_catalog": {
+        "top_level": 32,
+        "nested": 59
+      },
+      "retrieval_session_guard": "passes required-directory guard, then refuses deliberately invalid request before provider execution",
+      "goal_controls": "21 open/close; both wording choices; prepare/copy/reset/reload; deep-link restoration; draft stays unapproved"
+    },
+    "coordinated_form_observations": "PR #300 records 1.5.1 local navigation/continuity walkthroughs. Published 1.5.0 form source bytes and historical observations are retained separately.",
+    "model_calls": 0,
+    "limits": [
+      "No selected final release artifact or publication qualification",
+      "No Windows desktop/shell or independent-user acceptance claim",
+      "No live Voyage or native-memory provider execution",
+      "Goal screenshots and state record remain original 1.5.0 observations",
+      "Website production cutover remains separate"
+    ]
+  },
+  "canonical_tutorials": {
+    "commit": "0fe14b47659dacfb9e8c19dba9864f4558005fbe",
+    "path": "docs/tutorials-1.5.1.md",
+    "pr": 300
+  },
+  "documentation_commit": "0dc82db327af9eae41f7bf812480cc76d2cd7fc7"
+}

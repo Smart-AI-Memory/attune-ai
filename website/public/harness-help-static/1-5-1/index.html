@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Get started with Harness 1.5.1 | Harness Help</title>
+  <meta name="description" content="Install the published release, check a local result and choose your next workflow.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://smartaimemory.com/harness/help/1-5-1/">
+  <link rel="stylesheet" href="/harness/help/help.css">
+
+</head>
+<body class="harness-help">
+  <a class="help-skip" href="#main-content">Skip to main content</a>
+  <header class="help-header">
+    <a class="help-brand" href="/harness/help/">Attune Harness <span>Help Center</span></a>
+    <nav aria-label="Help Center context"><a href="https://smartaimemory.com/">Smart AI Memory</a><a href="https://github.com/Smart-AI-Memory/attune-harness">Harness repository</a></nav>
+  </header>
+  <div class="help-shell">
+    <aside class="help-sidebar">
+      <nav aria-label="Help topics"><a href="/harness/help/">Help Center overview</a><a class="help-featured-nav" href="/harness/help/goals/">Browse all goals</a><ol><li><a href="/harness/help/goals/">What do you want to accomplish?</a></li><li><a href="/harness/help/1-5-1/" aria-current="page">Get started with Harness 1.5.1</a></li><li><a href="/harness/help/ai-tools-and-integrations/">AI tools and integrations</a></li><li><a href="/harness/help/get-started/">Get started</a></li><li><a href="/harness/help/start-and-continue/">Start and continue work</a></li><li><a href="/harness/help/plan-and-accept/">Plan and accept work</a></li><li><a href="/harness/help/research/">Research a question</a></li><li><a href="/harness/help/save-and-resume/">Save and resume</a></li><li><a href="/harness/help/troubleshooting/">Troubleshooting</a></li><li><a href="/harness/help/dependencies/">Dependencies and reference</a></li><li><a href="/harness/help/archive/">Documentation archive</a></li></ol></nav>
+      <p class="help-version">Harness <strong>1.5.1</strong><br>Published release.<br>Historical guides retain their stated versions.</p>
+    </aside>
+    <main id="main-content" tabindex="-1" class="help-main">
+<nav aria-label="Breadcrumb" class="help-breadcrumb"><a href="/harness/help/">Help Center</a> / <span aria-current="page">Get started with Harness 1.5.1</span></nav><p class="help-eyebrow">Attune Harness · 1.5.1</p><h1>Get started with Harness 1.5.1</h1><p class="help-lead">Install the published release, check a local result and choose your next workflow.</p><p class="help-version-note">These instructions describe published <strong>Harness 1.5.1</strong>. Check each walkthrough's verification limits.</p>
+<nav class="help-contents" aria-label="On this page"><h2>On this page</h2><div class="toc">
+<ul>
+<li><a href="#install-harness-151">Install Harness 1.5.1</a></li>
+<li><a href="#choose-a-useful-next-step">Choose a useful next step</a></li>
+<li><a href="#work-on-windows-within-the-documented-limits">Work on Windows within the documented limits</a></li>
+<li><a href="#inspect-completed-assessment-evidence">Inspect completed assessment evidence</a></li>
+<li><a href="#check-the-release-and-its-evidence">Check the release and its evidence</a></li>
+<li><a href="#keep-older-evidence-in-context">Keep older evidence in context</a></li>
+</ul>
+</div>
+</nav>
+      <article class="help-prose"><span class="help-anchor" id="version-and-scope" aria-hidden="true"></span><span class="help-anchor" id="prepare-installation-and-candidate-validation" aria-hidden="true"></span><h2 id="install-harness-151">Install Harness 1.5.1<a class="headerlink" href="#install-harness-151" title="Permanent link">&para;</a></h2>
+<p>Harness 1.5.1 is published on <a href="https://pypi.org/project/attune-harness/1.5.1/">PyPI</a>.
+Use it to plan work, inspect evidence and return to saved progress. The browser
+companion helps you save and review requests; the CLI handles execution under
+its separate scope and approval rules.</p>
+<p>Use Python 3.10 or later and a fresh environment. Keep Harness separate from
+Attune AI, which pins a different MCP SDK version:</p>
+<pre><code class="language-sh">python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install &quot;attune-harness==1.5.1&quot;
+python -c &quot;from importlib.metadata import version; print(version('attune-harness'))&quot;
+python -m attune_harness
+attune-harness --help
+</code></pre>
+<p><strong>Expected result:</strong> Version <code>1.5.1</code>, a verified deterministic arithmetic receipt,
+and the command catalog. The example makes no model call and measures no model
+quality. For a managed CLI, you can instead use
+<code>uv tool install 'attune-harness==1.5.1'</code>, then inspect <code>uv tool list --show-paths</code>.</p>
+<p>On Windows, use <code>py -3 -m venv .venv</code>, then run Python commands with
+<code>.\.venv\Scripts\python.exe</code>. For example:</p>
+<pre><code class="language-powershell">.\.venv\Scripts\python.exe -m pip install &quot;attune-harness==1.5.1&quot;
+.\.venv\Scripts\python.exe -m attune_harness
+</code></pre>
+<p>This is reference syntax, not a new Windows shell qualification. Keep task
+records outside checkouts used for file effects and use canonical absolute paths.</p>
+<h2 id="choose-a-useful-next-step">Choose a useful next step<a class="headerlink" href="#choose-a-useful-next-step" title="Permanent link">&para;</a></h2>
+<ul>
+<li><a href="/harness/help/get-started/">Get started</a>: check your installation and obtain the release examples.</li>
+<li><a href="/harness/help/goals/">Browse all goals</a>: choose from 21 goals and six testing FAQs, with prompts and review points.</li>
+<li><a href="/harness/help/start-and-continue/">Start and continue work</a>: save answers and review the request in a browser form.</li>
+<li><a href="/harness/help/plan-and-accept/">Plan and accept work</a>: inspect scope and acceptance criteria before execution.</li>
+<li><a href="/harness/help/research/">Research a question</a>: retrieve local sources and check a supported link claim.</li>
+<li><a href="/harness/help/save-and-resume/">Save and resume</a>: return to saved answers and inspect work before continuing.</li>
+</ul>
+<p>Preparing a request, saving answers, accepting intent and authorizing execution
+are separate decisions. The goals worksheet records proposed wording; it does
+not accept a spec, dispatch a model or implement the example app. Installing the
+runtime does not install a host plugin or skill. Follow the selected host's
+<a href="/harness/help/dependencies/#integrate-with-a-host">setup instructions</a> separately.</p>
+<p>Attune AI is deprecated. Use Harness for new work. Before changing an existing
+setup, read the <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/ebb5b03b8a4398325df7ddabd28c08186451452e/docs/migration.md">migration guide</a>.
+Preserve working environments while validating the journeys you need. Deprecation
+does not establish saved-work migration or complete host or Windows parity.</p>
+<h2 id="work-on-windows-within-the-documented-limits">Work on Windows within the documented limits<a class="headerlink" href="#work-on-windows-within-the-documented-limits" title="Permanent link">&para;</a></h2>
+<p>Windows users can install Harness and use its documented CLI workflows and
+browser forms. Release qualification passed the hosted Windows Server source
+and installed-wheel checks. Forms save and review intent; they do not build.
+Native planning and building remain experimental.</p>
+<p>Full Windows parity remains deferred. Hosted Server checks do not qualify
+Windows 11 desktop, all shell journeys, complete storage/recovery acceptance or
+live native-memory reliability. The saved-store contract still uses a two-second
+acquisition limit, eight writers and one save per caller; durability barriers and
+qualification assertions remain intact. A passing software check does not close
+those broader acceptance gaps. Read the <a href="https://github.com/Smart-AI-Memory/attune-harness/releases/tag/v1.5.1">release notes</a>
+for the supported components and remaining limits.</p>
+<h2 id="inspect-completed-assessment-evidence">Inspect completed assessment evidence<a class="headerlink" href="#inspect-completed-assessment-evidence" title="Permanent link">&para;</a></h2>
+<p>For an existing completed document assessment, replace <code>TASK</code> with its saved
+task directory and inspect:</p>
+<pre><code class="language-sh">attune-harness status TASK --format markdown
+attune-harness status TASK --format html &gt; assessment-report.html
+</code></pre>
+<p>Open the generated HTML report. Both formats present the accepted goal and
+criteria, checker outcomes, retrieved-source identities and separately attributed
+participant judgments. A successful status command does not mean the assessment
+passed. Inspection does not rerun checks, refresh evidence or establish semantic
+acceptance. Other profiles and incomplete assessments keep their existing
+presentation. This addition is absent from published 1.5.0.</p>
+<p>Read the <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/ebb5b03b8a4398325df7ddabd28c08186451452e/docs/cli-guide.md#inspect-completed-assessment-evidence-151-candidate">inspection procedure</a>.</p>
+<h2 id="check-the-release-and-its-evidence">Check the release and its evidence<a class="headerlink" href="#check-the-release-and-its-evidence" title="Permanent link">&para;</a></h2>
+<p>Published 1.5.1 uses source commit
+<code>ebb5b03b8a4398325df7ddabd28c08186451452e</code>. The <a href="/harness/help/release-1.5.1.json">release record</a>
+names the public wheel and sdist hashes, qualification and publishing runs, and
+the scope of the post-publication installation checks. The <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/ebb5b03b8a4398325df7ddabd28c08186451452e/CHANGELOG.md">released changelog</a>
+records the maintenance changes. Software and installed-artifact checks do not
+establish model quality, independent user acceptance or full platform parity.</p>
+<span class="help-anchor" id="evidence-and-older-versions" aria-hidden="true"></span><h2 id="keep-older-evidence-in-context">Keep older evidence in context<a class="headerlink" href="#keep-older-evidence-in-context" title="Permanent link">&para;</a></h2>
+<p>The <a href="/harness/help/1-5-0/">1.5.0 guide</a> and <a href="/harness/help/verification.json">verification record</a>
+retain their original environment, walkthrough outcomes and limits. Goal
+screenshots remain explicitly 1.5.0 observations. Illustrative outputs remain
+labeled, and saved example wording is unchanged.</p>
+<p>The <a href="/harness/help/preparation.json">historical preparation record</a> and
+<a href="https://github.com/Smart-AI-Memory/attune-harness/blob/ebb5b03b8a4398325df7ddabd28c08186451452e/help/1-5-1.md">preparation guide</a>
+retain the candidate artifact and its open gates at that time. They are historical
+records, not the current installation procedure. Historical 1.3.0 and candidate
+tutorials remain available in the repository under their original identities.</p></article>
+      <nav class="help-next" aria-label="Continue learning"><a href="/harness/help/">Current help topics</a><a href="/harness/help/archive/">Archive</a><a href="#main-content">Back to top</a></nav>
+    </main>
+  </div>
+  <footer class="help-footer">Harness 1.5.1 · Published release. <a href="/harness/help/goals/">Browse all goals</a> · <a href="/harness/help/dependencies/">Dependencies and reference</a> · <a href="/harness/help/release-1.5.1.json">1.5.1 release record</a> · <a href="/harness/help/verification.json">Historical 1.5.0 verification</a> · <a href="/harness/help/preparation.json">Historical preparation record</a></footer>
+
+</body>
+</html>

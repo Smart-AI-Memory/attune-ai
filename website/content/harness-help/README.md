@@ -1,89 +1,88 @@
-# Harness Help Center content maintenance
+# Harness Help Center publishing bridge
 
-The current published-release entry is `/harness/help/1-5-0/`, authored in
-`lib/harness-help/topics.ts`. Its installation uses PyPI 1.5.0 rather than a
-candidate wheel. The base install, version, CLI help and deterministic demo
-were checked on macOS/Python 3.12.2 on October 19, 2026. No Windows desktop,
-paid-provider or candidate walkthrough execution is newly claimed.
+The canonical guides, goals master and controls, release manifest, renderer and walkthrough verification
+belong to [attune-harness](https://github.com/Smart-AI-Memory/attune-harness/tree/main/help).
+This website publishes a generated static export at `/harness/help/` and keeps
+existing topic URLs and heading fragments, including `/harness/help/goals/`.
+Do not edit exported HTML or maintain
+a second command reference here.
 
-The 1.5.0 `/harness/help/ai-tools-and-integrations/` reference uses the same topic
-registry and renderer. `lib/harness-help/commands.ts` owns its command map;
-complete fixtures/procedures remain in the linked existing versioned CLI guide
-and canonical walkthroughs. The Typical use groups describe usual initiators,
-not exclusive roles or permission grants. Keep actual subcommands separate from
-action flags, numbered prerequisite/output handoffs separate from alternatives,
-and acceptance separate from execution authority. The installed published 1.5.0
-catalog was inspected through 32 top-level and 63 nested help selections without
-executing the documented mutation or model commands. Next links stay within a
-guide version so 1.5.0 readers do not enter historical 1.3.0 procedures by default.
+## Published 1.5.1 update
 
-The other seven guides retain 1.3.0 instructions and source identity. The
-`next-release` route is now a noindex historical record, with its original
-JSON unchanged. Neither that record nor the separately prepared 1.5.0 candidate
-walkthrough overlay is relabeled as published-wheel evidence. Publication is
-authorized for the scoped 1.5.0 Help page through the normal repository gates;
-this does not authorize dependency changes or bypasses of failed checks.
+The current proposed export has fourteen pages: current 1.5.1 guidance and an
+archive grouped by version and release state. Historical 1.5.0 and preparation
+guides keep their content and evidence identities. The separate release record
+names the actual published files and software-check boundaries. Its route is
+covered by the same rewrite and exact-file/hash checks as the other payloads.
 
-`lib/harness-help/topics.ts` is the single authored source for Help Center
-framing, topic IDs and release-reference guidance. One ordinary Markdown
-renderer handles task, explanation, reference and troubleshooting content.
-The first increment includes no separate class, editorial or book derivative.
+The import names verified merged canonical Help commit `5929c18c542a667a8a175a06b67ca5f2f571b73a`.
+Its tree equals the tested branch source; all 26 generated files and the build
+hash remain byte-identical. The earlier twelve-page results below remain
+historical; current checks are recorded in the pull request. Public deployment
+requires its separate current-head gates and post-deployment verification.
 
-`next-release.json` is a small readiness record for the new release candidate.
-Its version and date remain unset. The separate `/harness/help/next-release/`
-page stages only source-verified behavior and supplied capture observations,
-labels them unreleased, and leaves next-version instructions pending coordinated
-canonical source and integrated capture review.
-Central owns the combined release checklist; this record covers the Help topics.
+## Cutover design
 
-The four canonical walkthroughs remain owned in the Harness repository's
-`docs/tutorials-1.3.0.md`. The `.source.md` here is a pinned input snapshot;
-`walkthroughs.generated.json` is its generated presentation. Never hand-edit
-either. `walkthrough-provenance.json` records the upstream commit, content hash
-and distinct behavior release. It also states when the tutorial source is not
-yet published. No link to an unpublished upstream commit is claimed to work.
+Import an exact committed Harness source, build it without network access, and
+retain the source revision, source-file hashes and exported-file hashes. The
+website build checks that receipt using Node's standard library. Python-Markdown
+is needed only when refreshing the export, not when Vercel builds this website.
 
-Refresh from the owner's committed source after its review:
+Next.js rewrites keep the established public URLs while serving the static files.
+The eleven registered topics, overview, scripts, styles, images and evidence records must resolve.
+Unknown topic paths must stay 404; changed exported bytes or path escapes must
+fail the receipt check. The old noindex preparation URL redirects to its immutable
+historical record. Source snapshots and their original provenance remain below.
+
+The Harness renderer's twelve-page build, internal-link checks, refusal controls,
+reproducibility and published-1.5.0 walkthroughs were checked before this cutover
+was prepared. The Next 16.3.8 standalone production build and local HTTP checks served all
+twelve pages and their ten supporting payload files, plus the build record, with byte-identical output.
+Unknown topics returned 404, and the historical preparation URL returned 308.
+All 37 original topic-heading bookmarks remain valid. Browser checks followed
+the prominent landing link to the goals page while preserving the public URL.
+Learning comes first in its compact navigation. The local worksheet remains
+unapproved; its controls and six testing FAQs stay within their owning
+disclosures. These are local integration observations;
+production deployment, mobile layout and assistive technology remain unchecked.
+
+Rejected alternative: keeping React copies of the guides here would retain two
+owners for release-sensitive instructions. A static export leaves a small,
+inspectable publishing boundary. Independent hosting can replace that boundary
+later without changing who owns the content.
+
+## Refresh the export
+
+From `website/`, with `help/requirements.txt` installed in the Python interpreter
+you select:
 
 ```sh
-python3 scripts/project-harness-walkthroughs.py --repo /absolute/path/to/harness --commit FULL_SOURCE_COMMIT
+node scripts/harness-help-export.mjs import --repo /absolute/path/to/attune-harness --commit FULL_COMMIT_SHA --python /absolute/path/to/python
+node scripts/harness-help-export.mjs check
+```
+
+The importer reads committed files only. It refuses to replace an existing
+export; prepare a fresh destination with `--output` for a subsequent review,
+then review the replacement explicitly. No source checkout or retained snapshot
+is changed. Before merging the cutover, import from the reviewed **merged Harness
+commit**, not an unmerged branch. The receipt names its exact source.
+
+Import only from a trusted local Harness checkout and reviewed commit. The
+importer checks the configured GitHub origin, then executes that commit's
+renderer. Origin configuration is not source authentication. The offline build
+check detects drift against the committed receipt; review of the receipt and
+source revision establishes the trust boundary.
+
+## Retained historical evidence
+
+The existing `tutorials-1.3.0.source.md`, `walkthroughs.generated.json`,
+`walkthrough-provenance.json` and `next-release.json` retain their original bytes
+and evidence boundaries. They are historical inputs, not the current Help Center
+source or new 1.5.0 observations. The historical projector remains usable:
+
+```sh
 python3 scripts/project-harness-walkthroughs.py --check
 ```
 
-These commands run from `website/`. The projector preserves instruction text,
-setup, expected results and limits, while converting the action table to a
-numbered list and pinning guide links. Source questions and typed examples retain
-their distinct formatting. New helper framing does not invent released controls.
-
-Known source discrepancy: the release-pinned `docs/local-workflow.md` contains
-older optional `[verify,rag]` installation instructions and treats forms intake
-as future work. Released 1.3.0 package metadata places rag/verify in the base,
-and its GUI supplies forms intake. The Help framing explicitly labels that
-older reference and points to the verified release setup. Its retained upstream
-bytes are unchanged; the discrepancy is sent to the canonical content owner for
-the next documentation-readiness review.
-
-## Every package version publication
-
-Use the existing Harness release runbook's documentation readiness item and
-its **Documentation readiness** record. For each of the seven topic IDs in
-`topics.ts`, record changed or unchanged-but-reviewed, the candidate version and
-code/test evidence, actual derivative owners, semantic walkthrough results and
-limits, checked links, and retained/superseded older guidance. Coordinate the
-snapshot refresh with the tutorial owner; do not fork the canonical procedures.
-
-Versioned code and reproducible tests ground behavior; approved policy and style
-requirements govern content. Approved project exceptions precede general Google
-guidance. Flag conflicts for resolution instead of silently changing policy or
-claiming code automatically grants approval.
-
-Run projection drift, website tests, lint, TypeScript, direct Next compilation,
-local links and browser journeys after relevant changes. Link/build success
-does not replace explicit walkthrough review on the candidate. Keep old release
-guidance useful and visibly versioned; current main and prototypes are separate.
-
-The public Help overview and current release page are linked from `/docs/`
-and the sitemap. Historical preparation remains noindex. The website Git integration creates hosted
-previews from branch/PR updates and deploys main to production. Source
-publication and production deployment require their applicable approval; do not
-change hosting settings to bypass those boundaries.
+This source change proposes a website cutover. It does not grant merge,
+production publication, account-setting or routing-setting authority.

@@ -1,4 +1,6 @@
-.harness-help{--help-bg:var(--semantic-surface);--help-panel:var(--semantic-surface-raised);--help-ink:var(--semantic-text);--help-green:var(--semantic-action);--help-border:var(--semantic-border);--help-focus:var(--semantic-focus);background:var(--help-bg);color:var(--help-ink);min-height:100vh;font-family:var(--font-inter),Arial,sans-serif;line-height:1.65}
+:root{--semantic-surface:#f5f6f0;--semantic-surface-raised:#e5eddf;--semantic-text:#203b2b;--semantic-action:#28503a;--semantic-border:#66806d;--semantic-focus:#126dca}
+body{margin:0}
+.harness-help{--help-bg:var(--semantic-surface);--help-panel:var(--semantic-surface-raised);--help-ink:var(--semantic-text);--help-green:var(--semantic-action);--help-border:var(--semantic-border);--help-focus:var(--semantic-focus);background:var(--help-bg);color:var(--help-ink);min-height:100vh;font-family:var(--font-inter,Arial),Arial,sans-serif;line-height:1.65}
 .harness-help a{color:var(--help-green);text-decoration:underline;text-underline-offset:3px}
 .harness-help :where(a,summary,[tabindex]):focus-visible{outline:3px solid var(--help-focus);outline-offset:4px;border-radius:3px}
 .help-header{max-width:1440px;margin:auto;padding:22px 32px;border-bottom:1px solid var(--help-border);display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap}
@@ -12,7 +14,7 @@
 .help-sidebar li+li{border-top:1px solid var(--help-border)}
 .help-version{padding:18px 4px;border-top:1px solid var(--help-border);font-size:.82rem}
 .help-main{min-width:0;max-width:850px;scroll-margin-top:24px}
-.harness-help h1{font-family:var(--font-manrope),Arial,sans-serif;font-size:clamp(2rem,4.4vw,3rem);line-height:1.12;font-weight:700;letter-spacing:-.03em;margin:14px 0 24px}
+.harness-help h1{font-family:var(--font-manrope,Arial),Arial,sans-serif;font-size:clamp(2rem,4.4vw,3rem);line-height:1.12;font-weight:700;letter-spacing:-.03em;margin:14px 0 24px}
 .harness-help h2{font-size:1.45rem;line-height:1.3;font-weight:700;margin:34px 0 16px}
 .harness-help h3{font-size:1.16rem;font-weight:700;margin:24px 0 14px}
 .help-eyebrow{font-size:.78rem;text-transform:uppercase;letter-spacing:.09em;font-weight:600;color:var(--help-green)}
@@ -31,7 +33,7 @@
 .help-prose ol{list-style:decimal}
 .help-prose ul{list-style:disc}
 .help-prose li{padding-left:6px;margin:12px 0;overflow-wrap:anywhere}
-.harness-help code{font-family:var(--font-geist-mono),monospace;font-size:.88em;overflow-wrap:anywhere}
+.harness-help code{font-family:var(--font-geist-mono,monospace),monospace;font-size:.88em;overflow-wrap:anywhere}
 .help-prose :not(pre)>code{background:var(--help-panel);padding:2px 4px;border-radius:3px}
 .help-prose pre{background:var(--help-panel);padding:20px;border:1px solid var(--help-border);border-radius:8px;overflow-x:auto;font-size:.9rem;line-height:1.6;margin:24px 0}
 .help-prose pre code{overflow-wrap:normal;white-space:pre}
@@ -48,3 +50,15 @@
 .help-breadcrumb{font-size:.85rem;margin-bottom:28px;overflow-wrap:anywhere}
 @media(max-width:800px){.help-shell{grid-template-columns:minmax(0,1fr);gap:30px;padding:24px 20px 45px}.help-sidebar{position:static}.help-sidebar ol{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 20px}.help-sidebar nav>a{font-weight:700}.help-version{padding:8px 4px}.help-header{padding:18px 20px}.help-header nav{gap:18px}.help-main{max-width:none}.help-footer{padding:24px 20px}}
 @media(max-width:430px){.help-cards{grid-template-columns:minmax(0,1fr)}.help-sidebar ol{grid-template-columns:minmax(0,1fr)}.help-brand span{display:block;margin-left:0;font-size:.9rem}.help-header{gap:14px}.help-callout,.help-version-note{padding:14px}.help-prose pre{padding:14px}.help-sources{padding:14px}}
+
+.help-contents{border:1px solid var(--help-border);border-radius:8px;padding:16px 22px;margin:24px 0 32px;background:var(--help-panel)}
+.help-contents h2{margin:0 0 10px;font-size:1rem}
+.help-contents ul{padding-left:22px;margin:8px 0}
+.help-contents li{margin:5px 0}
+.help-prose h2,.help-prose h3{scroll-margin-top:24px}
+.help-sidebar [aria-current="page"]{font-weight:700;border-left:3px solid var(--help-green)}
+.headerlink{margin-left:.4em;font-size:.8em}
+.help-skip{position:absolute;left:16px;top:-100px;padding:10px;background:var(--help-bg);z-index:1}
+.help-skip:focus{top:10px}
+.help-anchor{display:block;height:0;scroll-margin-top:24px}
+.help-featured-nav{border:1px solid var(--help-green);border-radius:6px;background:var(--help-panel);margin:16px 0;font-weight:700;padding:12px!important}
