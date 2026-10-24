@@ -53,7 +53,11 @@ export function generateMetadata(config?: SEOConfig): Metadata {
   const description = config?.description || defaultMetadata.description;
   const image = config?.image || defaultMetadata.image;
   const url = config?.url || defaultMetadata.url;
-  const keywords = config?.keywords || defaultMetadata.keywords;
+  // Historical article attribution and keywords retain their original defaults.
+  const isArticle = config?.type === 'article';
+  const keywords = config?.keywords || (isArticle
+    ? defaultMetadata.keywords
+    : defaultMetadata.keywords.filter((keyword) => keyword !== 'attune-ai'));
 
   return {
     metadataBase: new URL(defaultMetadata.url),
@@ -61,7 +65,7 @@ export function generateMetadata(config?: SEOConfig): Metadata {
     description,
     keywords,
     authors: [
-      { name: 'Attune AI' },
+      { name: isArticle ? 'Attune AI' : defaultMetadata.siteName },
       ...(config?.author ? [{ name: config.author }] : []),
     ],
     creator: 'Smart AI Memory',
@@ -170,7 +174,6 @@ export function generateStructuredData(type: StructuredDataType, data?: Structur
         description: defaultMetadata.description,
         sameAs: [
           'https://github.com/Smart-AI-Memory',
-          'https://github.com/Smart-AI-Memory/attune-ai',
           'https://github.com/Smart-AI-Memory/attune-harness',
         ],
         contactPoint: {

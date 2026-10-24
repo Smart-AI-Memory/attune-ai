@@ -137,14 +137,14 @@ export default function ContactPage() {
     <div className="min-h-screen">
       {/* Header */}
       <nav className="border-b border-[var(--border)] py-4">
-        <div className="container flex justify-between items-center">
+        <div className="container flex flex-wrap gap-4 justify-between items-center">
           <Link href="/" className="text-xl font-bold text-gradient">
-            Attune AI
+            Smart AI Memory
           </Link>
           <div className="flex gap-6">
-            <Link href="/framework" className="text-sm hover:text-[var(--primary)]">Framework</Link>
+            <Link href="/harness/help/" className="text-sm hover:text-[var(--primary)]">Harness Help</Link>
             <Link href="/docs" className="text-sm hover:text-[var(--primary)]">Docs</Link>
-            <Link href="/plugins" className="text-sm hover:text-[var(--primary)]">Plugins</Link>
+            <Link href="/harness/help/get-started/" className="text-sm hover:text-[var(--primary)]">Quick Start</Link>
           </div>
         </div>
       </nav>
@@ -320,16 +320,16 @@ export default function ContactPage() {
 
               <div className="text-center p-6 bg-[var(--border)] bg-opacity-30 rounded-lg">
                 <div className="text-3xl mb-3">💬</div>
-                <h3 className="font-bold mb-2">GitHub Discussions</h3>
-                <a href="https://github.com/Smart-AI-Memory/attune-ai/discussions" className="text-sm text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">
-                  Community Support
+                <h3 className="font-bold mb-2">Harness Source</h3>
+                <a href="https://github.com/Smart-AI-Memory/attune-harness" className="text-sm text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">
+                  GitHub Repository
                 </a>
               </div>
 
               <div className="text-center p-6 bg-[var(--border)] bg-opacity-30 rounded-lg">
                 <div className="text-3xl mb-3">🐛</div>
                 <h3 className="font-bold mb-2">Bug Reports</h3>
-                <a href="https://github.com/Smart-AI-Memory/attune-ai/issues" className="text-sm text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">
+                <a href="https://github.com/Smart-AI-Memory/attune-harness/issues" className="text-sm text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">
                   GitHub Issues
                 </a>
               </div>
