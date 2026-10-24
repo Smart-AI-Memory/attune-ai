@@ -7,6 +7,20 @@ existing topic URLs and heading fragments, including `/harness/help/goals/`.
 Do not edit exported HTML or maintain
 a second command reference here.
 
+## Published 1.5.1 update
+
+The current proposed export has fourteen pages: current 1.5.1 guidance and an
+archive grouped by version and release state. Historical 1.5.0 and preparation
+guides keep their content and evidence identities. The separate release record
+names the actual published files and software-check boundaries. Its route is
+covered by the same rewrite and exact-file/hash checks as the other payloads.
+
+The import names verified merged canonical Help commit `5929c18c542a667a8a175a06b67ca5f2f571b73a`.
+Its tree equals the tested branch source; all 26 generated files and the build
+hash remain byte-identical. The earlier twelve-page results below remain
+historical; current checks are recorded in the pull request. Public deployment
+requires its separate current-head gates and post-deployment verification.
+
 ## Cutover design
 
 Import an exact committed Harness source, build it without network access, and

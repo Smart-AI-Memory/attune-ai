@@ -16,14 +16,15 @@ function copyExport() {
 }
 
 describe('Harness-owned Help Center export', () => {
-  it('checks the committed export and all twelve current routes', () => {
-    expect(checkExport()).toMatchObject({ version: '1.5.1', pages: 12, files: 24 });
+  it('checks the committed export and all fourteen current and archived routes', () => {
+    expect(checkExport()).toMatchObject({ version: '1.5.1', pages: 14, files: 27 });
     const build = JSON.parse(readFileSync(path.join(defaultOutput, 'build.json'), 'utf8'));
     for (const name of Object.keys(build.files).filter((name) => name.endsWith('index.html'))) {
       const html = readFileSync(path.join(defaultOutput, name.replace('harness/help/', '')), 'utf8');
       if (name.includes('/1-5-0/')) expect(html).toContain('published <strong>Harness 1.5.0</strong>');
-      else if (name.includes('/goals/')) expect(html).toContain('Preparation only; this version is not yet released');
-      else expect(html).toContain('Guidance target: <strong>Harness 1.5.1</strong> preparation');
+      else if (name.includes('/1-5-1-preparation/')) expect(html).toContain('Archived guide:');
+      else if (name.includes('/goals/')) expect(html).toContain('Published guidance.');
+      else expect(html).toContain('published <strong>Harness 1.5.1</strong>');
       expect(html).toContain(name.includes('/goals/') ? 'class="goal-index"' : 'aria-label="On this page"');
     }
   });
@@ -44,6 +45,26 @@ describe('Harness-owned Help Center export', () => {
     receipt.build_sha256 = digest(bytes);
     writeFileSync(path.join(escaped, 'import.json'), JSON.stringify(receipt));
     expect(() => checkExport(escaped)).toThrow('Invalid export path');
+  });
+
+  it('retains historical guides and refuses stale current release metadata', () => {
+    const release = JSON.parse(readFileSync(path.join(defaultOutput, 'release-1.5.1.json'), 'utf8'));
+    expect(release.status).toBe('published');
+    expect(release.source_commit).toBe('ebb5b03b8a4398325df7ddabd28c08186451452e');
+    const archive = readFileSync(path.join(defaultOutput, 'archive/index.html'), 'utf8');
+    expect(archive).toContain('/harness/help/1-5-0/');
+    expect(archive).toContain('/harness/help/1-5-1-preparation/');
+    for (const status of ['preparation', 'unknown']) {
+      const output = copyExport();
+      const build = JSON.parse(readFileSync(path.join(output, 'build.json'), 'utf8'));
+      build.status = status;
+      const bytes = JSON.stringify(build);
+      writeFileSync(path.join(output, 'build.json'), bytes);
+      const receipt = JSON.parse(readFileSync(path.join(output, 'import.json'), 'utf8'));
+      receipt.build_sha256 = digest(bytes);
+      writeFileSync(path.join(output, 'import.json'), JSON.stringify(receipt));
+      expect(() => checkExport(output)).toThrow('Unexpected Harness published release');
+    }
   });
 
   it('retains the 1.3.0 snapshot and original projection', () => {
@@ -82,6 +103,7 @@ describe('Harness-owned Help Center export', () => {
       { source: '/harness/help/', destination: '/harness-help-static/index.html' },
       { source: '/harness/help/:topic([a-z0-9-]+)/', destination: '/harness-help-static/:topic/index.html' },
       { source: '/harness/help/help.css', destination: '/harness-help-static/help.css' },
+      { source: '/harness/help/release-1.5.1.json', destination: '/harness-help-static/release-1.5.1.json' },
     ]));
     const redirects = await config.redirects!();
     expect(redirects.find((item) => item.source === '/harness/help/next-release/')?.destination).toContain('6695106f8a185e310b7b8f9d463395cb0752c22a');

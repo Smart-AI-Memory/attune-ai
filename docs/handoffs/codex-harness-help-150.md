@@ -1,63 +1,36 @@
-# Harness Help publisher handoff
+# Agent work handoff
 
 ## Goal
 
-Serve the Harness-owned Help export at the existing public URLs with one
-canonical content owner and an inspectable source receipt.
+Serve current Harness 1.5.1 Help and an organized historical archive through the existing website URLs.
 
 ## Acceptance criteria
 
-Preserve the twelve Help pages, goals controls, assets and historical bookmarks.
-Check exact exported bytes and the real Next.js routes before cutover.
+Current guides name published 1.5.1; historical guides, screenshots and receipts retain their identities. Exact merged-source import, all current-head checks, protected integration and public route/browser verification must pass. Windows limits and qualification assertions remain unchanged.
 
 ## Scope and assumptions
 
-- Branch: `codex/harness-help-150`, PR #2574.
-- Canonical Help: merged attune-harness PR #299. This branch publishes its export.
-- Website entry points and current copy remain with their original owners.
-  Release metadata and package preparation are separate.
+- Branch: codex/harness-help-150; isolated publishing checkout.
+- Canonical Help source: signed merged `5929c18c542a667a8a175a06b67ca5f2f571b73a`, tree `9f9d0dbb8c271934c1f66568d785a7efc44df91f`; equal to tested `84f70c86d5de13a4b82962268c81c50611cde775`.
+- Runtime release: `ebb5b03b8a4398325df7ddabd28c08186451452e` / `v1.5.1`.
+- Only Help publication is in scope. Other website changes remain separate.
 
 ## Current state
 
-The generated receipt imports signed canonical merge
-`013b84a6d1984f388df41452299ddacc90bb5f5b`. GitHub confirms its tree
-`6e048e0dacc3a718533ce0255a265d04eedb39fe` exactly matches reviewed and
-tested Help head `3073eb4a7fde625649b05f19007599b837d2e282`.
-
-The latest generated update changes only the source commit and URL in
-`import.json`. The other 23 files, including build metadata, pages, commands,
-controls, preparation data and historical evidence, are byte-identical.
-Documentation still pins reviewed `0dc82db327af9eae41f7bf812480cc76d2cd7fc7`;
-behavior, validation and tutorial identities remain distinct. Help remains
-explicit 1.5.1 preparation with published 1.5.0 available.
-
-The earlier six-file correction aligns four walkthrough introductions with
-Get started's preparation source. Its resolved review and independent approval
-remain bound to that correction. Historical 1.0 migration and 1.5.0 observations
-remain unchanged.
+The export has 14 pages and 27 files, including an archive grouped by version and release state. All 26 generated files match the CI-verified candidate; only import source commit/URL changed for final merged provenance. The build and all payload hashes are unchanged. Original historical inputs and saved example wording remain intact.
 
 ## Verification
 
 | Claim | Failure-sensitive probe | Result |
 | --- | --- | --- |
-| Merged canonical source | GitHub PR/commit signatures and tree comparison | Merged; verified signatures; exact tested-tree match |
-| Current export | Fresh exact-commit import and exporter check | 12 pages, 24 files; only import receipt changes |
-| Delivered receipt | HTTP comparison with regenerated file | 200; exact source commit, build hash and bytes |
-| Unchanged content | Compare all other generated files with parent | 23 byte-identical files |
-| Prior website checks | Publisher `4feebc0a` tests/types/lint/build/HTTP | 78 tests; 123-page build; all 24 files served exactly |
-
-The prior GPT-6 Astra review verifies all source/output/renderer hashes for the
-unchanged content. No test suite or build was repeated for this receipt-only
-update; current hosted CI remains its own gate. Later combined website copy
-changes need their owners' exact-input delivery checks.
+| Exact canonical projection | Node importer/check, CI ZIP digest and all output-byte comparisons | Pass; 27 files/14 pages |
+| Current site and refusal guards | Full website tests | 79 passed |
+| Repository process consistency | Read-only governance preflight | 87 passed; prepared-tree warnings retained |
+| Build compatibility | TypeScript, scoped lint, actual Vercel build command | Pass |
+| Existing public routes remain usable | Local Next production server, all file hashes, IDs, unknown route and historical redirect | 27 files match; 245 IDs preserved; 404/308 correct |
+| Independent review | GPT-6 Astra review of original boundary and current publication/archive delta | Approved; no actionable findings; final provenance delta recorded before push |
+| Hosted/deployed result | Current-head workflows and final production inspection | Pending |
 
 ## Next action
 
-Read the PR body for current CI, dependency and combined-delivery evidence.
-Canonical #299 is merged; keep publisher #2574 before entry-point #2575.
-Preserve the separate archive, navigation and Author wrapper lanes.
-
-The merged-source import gate is closed for canonical Help. Final release
-source/artifact reconciliation and cutover qualification remain open. Package
-publication and website deployment need their separate approvals. This handoff
-authorizes no merge, publication, credential/settings change or manual workflow.
+Wait all fresh current-head checks and review, then perform protected pinned integration. Verify signed main tree against the tested head and public Help/archive/goals delivery. Earlier heads, local success and historical walkthroughs do not qualify public deployment, model quality or full Windows parity.

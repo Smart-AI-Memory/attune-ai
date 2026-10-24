@@ -1,0 +1,58 @@
+{
+  "version": "1.5.1",
+  "status": "published",
+  "source_commit": "ebb5b03b8a4398325df7ddabd28c08186451452e",
+  "release_url": "https://github.com/Smart-AI-Memory/attune-harness/releases/tag/v1.5.1",
+  "pypi_url": "https://pypi.org/project/attune-harness/1.5.1/",
+  "artifacts": {
+    "attune_harness-1.5.1-py3-none-any.whl": "1d61b8d337227a293516f42eac304e954fd44f10fd9fd0ec35d416a18661d6e9",
+    "attune_harness-1.5.1.tar.gz": "cd6870e0c0efdda45c9fbcdc054ab54ef3d0c288f96182f6bfe86fd004ba5b28"
+  },
+  "qualification": {
+    "library_run": "https://github.com/Smart-AI-Memory/attune-harness/actions/runs/40053715825",
+    "supplemental_coverage_run": "https://github.com/Smart-AI-Memory/attune-harness/actions/runs/40053715838",
+    "publish_false_rehearsal": "https://github.com/Smart-AI-Memory/attune-harness/actions/runs/40055763300",
+    "production_publish_run": "https://github.com/Smart-AI-Memory/attune-harness/actions/runs/40057233496",
+    "boundary": "Exact release source and installed-artifact software checks; hosted Windows Server source/installed cells passed, not complete Windows parity"
+  },
+  "post_publication_install": {
+    "platform": "macOS arm64",
+    "python": "3.12.2",
+    "profiles": [
+      "base",
+      "core --no-deps"
+    ],
+    "packaged_python_files_matched": 115,
+    "base_journey": [
+      "plan",
+      "accept",
+      "build",
+      "review",
+      "status"
+    ],
+    "adapters": [
+      "command",
+      "deterministic"
+    ],
+    "model_calls": 0,
+    "boundary": "Fresh public-index installs outside the source checkout; not every optional integration or a fresh browser/desktop/user acceptance observation"
+  },
+  "historical_records": {
+    "published_1_5_0": "verification.json",
+    "preparation": "preparation.json",
+    "policy": "Preserved byte-identical; not relabeled as1.5.1 observations",
+    "archived_preparation_guide": {
+      "path": "1-5-1-preparation.md",
+      "source_commit": "ebb5b03b8a4398325df7ddabd28c08186451452e",
+      "source_path": "help/1-5-1.md",
+      "sha256": "23bf30cc5b30796a376997c69859c5b9e237536f0582ead8d0242f7ddb5ee013",
+      "byte_identical": true
+    }
+  },
+  "limits": [
+    "Full Windows desktop/shell/storage-recovery/native-memory parity remains deferred",
+    "Native planning/building remain experimental; forms save/review intent and do not build",
+    "No live-provider model-quality, paid-integration or independent-user acceptance claim",
+    "Two-second saved-store acquisition, eight writers, one save per caller, assertions and durability barriers unchanged"
+  ]
+}

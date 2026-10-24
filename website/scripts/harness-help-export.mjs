@@ -20,7 +20,8 @@ function rejectSymlinkParents(output) {
 }
 
 function relativeFile(name) {
-  if (!/^[A-Za-z0-9_/-]+\.(html|css|json|js|jpg|md)$/.test(name) || name.split('/').some((part) => part === '..' || !part)) {
+  const permittedName = name === 'release-1.5.1.json' || /^[A-Za-z0-9_/-]+\.(html|css|json|js|jpg|md)$/.test(name);
+  if (!permittedName || name.split('/').some((part) => part === '..' || !part)) {
     throw new Error(`Invalid export path: ${name}`);
   }
   return name;
@@ -45,7 +46,7 @@ export function checkExport(output = defaultOutput) {
   const buildBytes = readFileSync(path.join(output, 'build.json'));
   if (hash(buildBytes) !== receipt.build_sha256) throw new Error('Build record drift');
   const build = JSON.parse(buildBytes);
-  if (build.version !== '1.5.1' || build.status !== 'preparation' || build.published_version !== '1.5.0' || build.source_repository !== receipt.source_repository) throw new Error('Unexpected Harness release preparation');
+  if (build.version !== '1.5.1' || build.status !== 'published' || build.published_version !== '1.5.1' || build.source_repository !== receipt.source_repository) throw new Error('Unexpected Harness published release');
   const files = Object.fromEntries(Object.entries(build.files).map(([name, digest]) => {
     if (!name.startsWith('harness/help/')) throw new Error('Export leaves its public root');
     return [relativeFile(name.slice('harness/help/'.length)), digest];

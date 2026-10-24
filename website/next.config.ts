@@ -52,6 +52,7 @@ const nextConfig: NextConfig = {
       { source: '/harness/help/verification.json', destination: '/harness-help-static/verification.json' },
       { source: '/harness/help/build.json', destination: '/harness-help-static/build.json' },
       { source: '/harness/help/preparation.json', destination: '/harness-help-static/preparation.json' },
+      { source: '/harness/help/release-1.5.1.json', destination: '/harness-help-static/release-1.5.1.json' },
       { source: '/harness/help/goals/goals.css', destination: '/harness-help-static/goals/goals.css' },
       { source: '/harness/help/goals/controls.js', destination: '/harness-help-static/goals/controls.js' },
       { source: '/harness/help/assets/:asset', destination: '/harness-help-static/assets/:asset' },
