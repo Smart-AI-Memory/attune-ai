@@ -7,7 +7,32 @@ existing topic URLs and heading fragments, including `/harness/help/goals/`.
 Do not edit exported HTML or maintain
 a second command reference here.
 
-## Published 1.5.1 update
+## Published 1.6.0 onboarding promotion
+
+This update promotes the existing `/harness/help/get-started/` page for published
+Harness 1.6.0 and delivers its command and starter-prompt copy controls. The
+runtime release source is `af2159516a67172cc8f2a1ff62213296b1b67112`. The new
+`release-1.6.0.json` records that release; `release-1.5.1.json` and older evidence
+retain their original bytes and identities.
+
+The Help build keeps reference version `1.5.1` and behavior source
+`ebb5b03b8a4398325df7ddabd28c08186451452e`, with current `published_version`
+`1.6.0`. Get started explicitly identifies published 1.6.0; other topics keep
+their stated versions. The importer checks this combination instead of
+relabeling every guide. Public rewrites also serve `code-copy.js` and the new
+release record.
+
+This branch imports merged Harness source
+`069b9f010cabcefa076ec292b4a287c49a85d219` from
+[Harness #326](https://github.com/Smart-AI-Memory/attune-harness/pull/326).
+Its tree matches reviewed candidate `fd690080076dad45dea3e4b2f190e4ecf8c0fbf6`.
+A fresh committed-source import reproduced all 27 payloads and the build record
+byte-for-byte; only `import.json` changed to identify the actual merge commit.
+The earlier source `5929c18c542a667a8a175a06b67ca5f2f571b73a` remains the prior
+published website snapshot. Current-head checks and served-route verification
+remain required before production delivery.
+
+## Historical 1.5.1 update
 
 The current proposed export has fourteen pages: current 1.5.1 guidance and an
 archive grouped by version and release state. Historical 1.5.0 and preparation
