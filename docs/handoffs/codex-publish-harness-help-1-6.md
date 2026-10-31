@@ -28,7 +28,7 @@ Help publishing bridge, with older guides and evidence retaining their versions.
   infrastructure, settings, personal hooks, provider calls and deployment.
 - No push until the lead directs it. No merge or deployment authority.
 
-## Design and current state
+## Current state
 
 Keep the existing importer and Next.js rewrite pattern. Add only the fixed
 `release-1.6.0.json` filename to the existing exception; `code-copy.js` already
@@ -58,6 +58,7 @@ and the original website export remain under `.codex/validation/help-1-6/`.
 | Repository preflight | `python3 scripts/collaboration_preflight.py`, then the existing Python 3.10.11 interpreter | Initial default interpreter lacks xdist (`-n` rejected). Existing interpreter passes all 87 governance tests; zero failures, one expected no-linked-main-checkout warning; source status unchanged. |
 | Export-independent route and origin checks | `vitest run lib/harness-help/topics.test.tsx -t 'keeps public routes\|refuses a lookalike remote'` | Two pass; six payload-dependent cases intentionally excluded pending export. |
 | Static type and lint checks | `tsc --noEmit --incremental false`; scoped ESLint on the three changed website files; `git diff --check` | All pass using the exact locked website dependencies. |
+| Handoff template contract | Existing Python 3.10.11: `python -m pytest tests/unit/docs/test_handoff_corpus.py -q -n 0 -p no:cacheprovider` | All 5 tests pass in 9.74s. The old head `9c76063e9fd38f5774513455b94284a788814a36` failed the exact required `## Current state` heading in three CI jobs; this heading-only correction follows the unchanged template and test. |
 | Importer and mixed versions | Actual import from candidate `fd69008`, followed by `checkExport` | Pass: 14 pages, exact 29-file inventory and 27 payload hashes; candidate identity remains explicit. |
 | Website regressions | `ATTUNE_PYTHON=/Users/patrickroebuck/.pyenv/versions/3.10.11/bin/python npm test` | All 80 tests pass. Initial default-interpreter run passed 79 and failed only the capability test because `claude_agent_sdk` was unavailable; both logs are retained. No assertions or dependencies changed for the retry. |
 | Historical preservation | Byte comparison against the retained original export | All 10 original release/preparation/verification records, assets and goals JS/CSS match. |
