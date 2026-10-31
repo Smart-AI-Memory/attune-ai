@@ -62,16 +62,28 @@ and the original website export remain under `.codex/validation/help-1-6/`.
 | Website regressions | `ATTUNE_PYTHON=/Users/patrickroebuck/.pyenv/versions/3.10.11/bin/python npm test` | All 80 tests pass. Initial default-interpreter run passed 79 and failed only the capability test because `claude_agent_sdk` was unavailable; both logs are retained. No assertions or dependencies changed for the retry. |
 | Historical preservation | Byte comparison against the retained original export | All 10 original release/preparation/verification records, assets and goals JS/CSS match. |
 | Independent external-boundary and artifact review | GPT-6 Astra, separate read-only source and artifact passes | No material findings. It verified 33 source/renderer hashes against candidate `fd69008`, 27 payloads, the exact 29-file inventory and historical preservation. |
-| Production build | `VERCEL_ENV=preview NEXT_TELEMETRY_DISABLED=1 npm run build:vercel` | One attempt started at 2026-10-31 07:38:50 UTC; pending, capped at 07:53:50 UTC. IndexNow's production ping is disabled by the existing preview guard. No retry or configuration/dependency change is authorized to obtain a pass. |
-| Production serving and public acceptance | Bounded loopback checks after a successful build; deployment separately gated | Pending build; no production delivery claimed. |
+| Production build | `VERCEL_ENV=preview NEXT_TELEMETRY_DISABLED=1 npm run build:vercel` | Initial attempt exited 1 before its 15-minute cap: Turbopack's CSS worker could not bind a port (`Operation not permitted`, unchanged `Footer.module.css`). The lead authorized one unchanged retry through normal sandbox permission review; it also exited 1 with the same error. Both logs are retained. No further build or diagnostic work is authorized; configuration, dependencies and deadlines remain unchanged. |
+| Production serving and public acceptance | Bounded loopback checks after a successful build; deployment separately gated | Unverified because the production build did not complete. No server or deployment was started. |
 
 ## Next action
 
-Prepare the signed commit and own draft PR under the lead's visibility
-authorization, explicitly retaining the pending build and #326 dependency.
-Observe the existing build until exit or its 15-minute cap; retain failure or
-timeout as unverified without retry or infrastructure diagnosis. After a
-successful build, perform bounded loopback checks. Before website delivery,
-reconcile the import receipt to #326's actual merge commit and verify the
-merged-source import. No synthetic receipt or source identity was created. This
-branch touches none of #2575's eight surrounding entry-point files.
+Draft PR: https://github.com/Smart-AI-Memory/attune-ai/pull/2590 . Initial commit
+`904162074368c7a8d9da3304e9ee144bffe5aa46` is pushed and its GPG signature
+verifies locally. This ordinary documentation follow-up records the two build
+results without rewriting that commit or changing tested implementation.
+
+Keep the draft at the build/serving gate. The delivery lead owns the next
+verification decision; no further retry or infrastructure diagnosis is
+authorized here. Before website delivery, reconcile the import receipt to
+#326's actual merge commit and verify the merged-source import. No synthetic
+receipt or source identity was created. This branch touches none of #2575's
+eight surrounding entry-point files. No merge, deployment or settings action
+occurred.
+
+Retained local evidence: `.codex/validation/help-1-6/website-tests.log` (initial
+interpreter failure), `website-tests-pinned-python.log` (80 passed),
+`website-build.log` and `website-build-permitted.log` (both failed at the worker
+port boundary), candidate comparison JSON, both exact candidate imports and the
+original website export. Completion-review synthesis remains with the delivery
+lead; the current evidence adds no distinct opportunity beyond this bounded
+delivery and its existing gates.
