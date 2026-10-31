@@ -22,13 +22,15 @@ their stated versions. The importer checks this combination instead of
 relabeling every guide. Public rewrites also serve `code-copy.js` and the new
 release record.
 
-This branch imports reviewed Harness candidate
-`fd690080076dad45dea3e4b2f190e4ecf8c0fbf6` from
+This branch imports merged Harness source
+`069b9f010cabcefa076ec292b4a287c49a85d219` from
 [Harness #326](https://github.com/Smart-AI-Memory/attune-harness/pull/326).
-`import.json` records that exact candidate; the 27 payloads and build record
-match the supplied export. The earlier source `5929c18c542a667a8a175a06b67ca5f2f571b73a`
-remains the prior published website snapshot. Reconcile the receipt to #326's
-actual merge commit and verify the merged-source import before website delivery.
+Its tree matches reviewed candidate `fd690080076dad45dea3e4b2f190e4ecf8c0fbf6`.
+A fresh committed-source import reproduced all 27 payloads and the build record
+byte-for-byte; only `import.json` changed to identify the actual merge commit.
+The earlier source `5929c18c542a667a8a175a06b67ca5f2f571b73a` remains the prior
+published website snapshot. Current-head checks and served-route verification
+remain required before production delivery.
 
 ## Historical 1.5.1 update
 

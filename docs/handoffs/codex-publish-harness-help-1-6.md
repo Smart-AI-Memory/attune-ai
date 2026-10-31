@@ -25,10 +25,25 @@ Help publishing bridge, with older guides and evidence retaining their versions.
   handoff, the existing publishing-bridge maintainer note and the later explicitly
   supplied generated export.
 - Excluded: #2575's surrounding entry points, runtime/package changes, new
-  infrastructure, settings, personal hooks, provider calls and deployment.
-- No push until the lead directs it. No merge or deployment authority.
+  infrastructure, settings, personal hooks, provider calls and package publication.
+- The original handoff held push/merge/deployment. The current rollout go permits final verification, normal integration and established production delivery after the remaining gates pass.
 
 ## Current state
+
+Harness #326 is merged as `069b9f010cabcefa076ec292b4a287c49a85d219`.
+Its tree equals the reviewed candidate. A fresh import from the actual merge
+reproduced the exact 29-file inventory: all 27 payloads and the build record are
+byte-identical, with only the source commit/URL in `import.json` updated.
+The original candidate imports and evidence remain retained.
+
+The existing hosted Vercel Next.js 16.3.8 production build for website head
+`cd95a624bb3681bec29881e0801f4bca1c1bdf14` compiled, type-checked and generated
+123 routes successfully, then deployed Ready. This supplies actual Next.js
+build evidence; the two local sandbox build failures remain historical.
+Authenticated preview HTTP/browser verification remains pending. Do not change
+protection settings or create credentials. The current rollout authorization
+covers final validation, normal merge and established production delivery after
+the remaining checks pass; it does not authorize package publication.
 
 Keep the existing importer and Next.js rewrite pattern. Add only the fixed
 `release-1.6.0.json` filename to the existing exception; `code-copy.js` already
@@ -42,9 +57,9 @@ release filenames, symlinked paths and a lookalike source origin. Reject a broad
 filename relaxation or global relabeling of old guides.
 
 The bridge and focused tests are authored. The replacement export was imported
-from exact pushed Harness candidate `fd690080076dad45dea3e4b2f190e4ecf8c0fbf6`
-in Harness #326, which remains a dependency pending merge. The importer archived
-that commit and used the existing Python 3.12.2 / Markdown 3.10 interpreter.
+initially from exact pushed Harness candidate `fd690080076dad45dea3e4b2f190e4ecf8c0fbf6`
+in Harness #326; the merged-source refresh above supersedes that dependency
+state. The importer archived that commit and used the existing Python 3.12.2 / Markdown 3.10 interpreter.
 All 27 payloads and the build record match the supplied export and the earlier
 real candidate `55d61fe2770337e7723f64fa7320ecfd0f7ea386`. Both candidate cohorts
 and the original website export remain under `.codex/validation/help-1-6/`.
@@ -63,8 +78,8 @@ and the original website export remain under `.codex/validation/help-1-6/`.
 | Website regressions | `ATTUNE_PYTHON=/Users/patrickroebuck/.pyenv/versions/3.10.11/bin/python npm test` | All 80 tests pass. Initial default-interpreter run passed 79 and failed only the capability test because `claude_agent_sdk` was unavailable; both logs are retained. No assertions or dependencies changed for the retry. |
 | Historical preservation | Byte comparison against the retained original export | All 10 original release/preparation/verification records, assets and goals JS/CSS match. |
 | Independent external-boundary and artifact review | GPT-6 Astra, separate read-only source and artifact passes | No material findings. It verified 33 source/renderer hashes against candidate `fd69008`, 27 payloads, the exact 29-file inventory and historical preservation. |
-| Production build | `VERCEL_ENV=preview NEXT_TELEMETRY_DISABLED=1 npm run build:vercel` | Initial attempt exited 1 before its 15-minute cap: Turbopack's CSS worker could not bind a port (`Operation not permitted`, unchanged `Footer.module.css`). The lead authorized one unchanged retry through normal sandbox permission review; it also exited 1 with the same error. Both logs are retained. No further build or diagnostic work is authorized; configuration, dependencies and deadlines remain unchanged. |
-| Production serving and public acceptance | Bounded loopback checks after a successful build; deployment separately gated | Unverified because the production build did not complete. No server or deployment was started. |
+| Historical local production builds | `VERCEL_ENV=preview NEXT_TELEMETRY_DISABLED=1 npm run build:vercel` | Both original local attempts exited 1 at the CSS-worker port boundary (`Operation not permitted`, unchanged `Footer.module.css`); original logs remain retained. No third local build was run. The later hosted Next.js preview build at cd95a624 succeeded as recorded above; final-head hosted checks remain required after this rebind. |
+| Served-route and production acceptance | Observe exact-head hosted routes after the successful Next.js build | Local loopback serving was not run after the historical local build failures. The existing hosted preview deployed Ready; authenticated preview HTTP/browser verification remains pending. No production deployment has occurred. |
 
 ## Next action
 
@@ -73,13 +88,13 @@ Draft PR: https://github.com/Smart-AI-Memory/attune-ai/pull/2590 . Initial commi
 verifies locally. This ordinary documentation follow-up records the two build
 results without rewriting that commit or changing tested implementation.
 
-Keep the draft at the build/serving gate. The delivery lead owns the next
-verification decision; no further retry or infrastructure diagnosis is
-authorized here. Before website delivery, reconcile the import receipt to
-#326's actual merge commit and verify the merged-source import. No synthetic
-receipt or source identity was created. This branch touches none of #2575's
-eight surrounding entry-point files. No merge, deployment or settings action
-occurred.
+Keep the draft at the final-head and authenticated serving gate. The hosted
+Next.js build closes the earlier production-build evidence gap. The original
+failed local attempts remain retained; no third local build was run. The import
+receipt now binds #326's actual merge commit. Before website delivery, finish
+the remaining final-head and served-route checks. No synthetic receipt or source
+identity was created. This branch touches none of #2575's eight surrounding
+entry-point files. No website merge, production deployment or settings action occurred. The existing automatic preview deployment is recorded separately above.
 
 Retained local evidence: `.codex/validation/help-1-6/website-tests.log` (initial
 interpreter failure), `website-tests-pinned-python.log` (80 passed),
