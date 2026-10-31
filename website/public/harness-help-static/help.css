@@ -37,6 +37,16 @@ body{margin:0}
 .help-prose :not(pre)>code{background:var(--help-panel);padding:2px 4px;border-radius:3px}
 .help-prose pre{background:var(--help-panel);padding:20px;border:1px solid var(--help-border);border-radius:8px;overflow-x:auto;font-size:.9rem;line-height:1.6;margin:24px 0}
 .help-prose pre code{overflow-wrap:normal;white-space:pre}
+.help-code-controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;margin:24px 0 8px}
+.help-code-controls button{font:inherit;font-weight:600;cursor:pointer;background:var(--help-panel);color:var(--help-green);border:1px solid var(--help-green);border-radius:6px;min-height:44px;min-width:90px;padding:8px 16px}
+.help-code-controls button[aria-busy="true"]{cursor:wait}
+.help-code-controls button:focus-visible{outline:3px solid var(--help-focus);outline-offset:4px}
+.help-code-status{font-size:.9rem;overflow-wrap:anywhere}
+.help-code-controls+pre{margin-top:0}
+.help-prompt{margin:28px 0;padding:20px;border-left:4px solid var(--help-green);border-radius:8px;background:var(--help-panel)}
+.help-prompt .help-eyebrow{margin:0 0 12px}
+.help-prompt .help-code-controls{margin:12px 0}
+.help-prompt [data-copy-prompt]{font:inherit;font-size:1.08rem;line-height:1.65;margin:14px 0 0}
 .help-table-scroll{overflow-x:auto;margin:24px 0;padding:4px}
 .help-prose table{border-collapse:collapse;min-width:100%;font-size:.9rem}
 .help-prose :where(th,td){border:1px solid var(--help-border);padding:12px;text-align:left;vertical-align:top;min-width:110px}
