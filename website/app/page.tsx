@@ -1,3 +1,4 @@
+import { HARNESS_PACKAGE_URL, HARNESS_RELEASE_NOTICE, HARNESS_PREPARATION_NOTICE, HARNESS_GET_STARTED, HARNESS_PREPARATION, HARNESS_SOURCE_ROOT } from '@/lib/harness-release';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -14,10 +15,10 @@ export default function Home() {
     <section className={styles["hero"] + " " + styles["wrap"]} aria-labelledby="hero-title">
       <div>
         <p className={styles["eyebrow"]}>Open-source tools for AI-assisted engineering</p>
-        <h1 id="hero-title">Delegate with clear scope.<br />Keep the evidence.</h1>
-        <p className={styles["intro"]}>Work with your agent to develop a specification, plan a change, and review build, repair and test results. Harness keeps the agreed scope and task evidence available so you can decide what happens next.</p>
-        <Link className={styles["cta"] + " " + styles["primary"]} href="#collaborate">Collaborate <span aria-hidden="true">↗</span></Link>
-        <p className={styles["secondary-paths"]}><Link href="#pilot">Discuss a pilot</Link><Link href="#sponsor">Sponsor open-source milestones</Link></p>
+        <h1 id="hero-title">Turn a goal into a plan.<br />Put agents to work.<br />Check the results.</h1>
+        <p className={styles["intro"]}>Plan a change, review a document, repair files, run tests or return to saved work with your assistant in Codex or Claude Code. Harness keeps the output and check results so you can see what happened and decide what to do next.</p>
+        <Link className={styles["cta"] + " " + styles["primary"]} href="/harness/help/goals/">Choose your next task <span aria-hidden="true">↗</span></Link>
+        <p className={styles["secondary-paths"]}><Link href={HARNESS_GET_STARTED}>Get started</Link><Link href="#collaborate">Work with us</Link></p>
       </div>
       <aside className={styles["evidence-card"]} aria-labelledby="chain-title">
         <p className={styles["eyebrow"]}>Attune Harness</p>
@@ -33,33 +34,34 @@ export default function Home() {
     <section className={styles["section"] + " " + styles["wrap"] + " " + styles["harness"]} id="harness" aria-labelledby="harness-title">
       <div>
         <p className={styles["eyebrow"]}>The lead project · Attune Harness</p>
-        <h2 id="harness-title">Make the work inspectable.</h2>
-        <p className={styles["harness-intro"]}>Develop the specification, agree with the scope, and inspect the evidence as work progresses.</p>
+        <h2 id="harness-title">Make progress you can review.</h2>
+        <p className={styles["harness-intro"]}>Choose a useful goal, agree on the work and checks, and review the result.</p>
       </div>
       <div className={styles["harness-copy"]}>
-        <p>Complex work starts with a specification you can review: requirements, constraints and acceptance criteria. Harness supports the next steps with explicit scope, retained decisions and checks you can inspect.</p>
+        <p>Start with the problem you want to solve. Your assistant helps prepare the work, presents what needs your review and uses Harness to carry out the steps you authorize.</p>
         <div className={styles["principles"]}>
-          <div><h3>Develop a reviewable specification.</h3><p>Work with your agent to record requirements, constraints and acceptance criteria before implementation.</p></div>
-          <div><h3>Agree to the plan and scope.</h3><p>Inspect the allowed files, proposed work and acceptance checkpoint before authorizing execution.</p></div>
-          <div><h3>Build and repair within limits.</h3><p>Use scoped workflows with permitted files and declared verification checks alongside your agents.</p></div>
-          <div><h3>Review independently against evidence.</h3><p>Assign a separate reviewer to assess a document against project sources. Keep unsupported claims and uncertainty visible.</p></div>
-          <div><h3>Test the change and keep the results.</h3><p>Run checks on captured changes. Inspect what ran, what passed and what failed before deciding the next step.</p></div>
-          <div><h3>Keep decisions and continue.</h3><p>Inspect saved task state and recover context from supported, configured sources before resuming work.</p></div>
+          <div><h3>Turn an idea into a plan.</h3><p>Develop the goal, affected files, tasks and checks with your assistant before implementation.</p></div>
+          <div><h3>Build in reviewable steps.</h3><p>Give configured agents the accepted tasks, then inspect their work against the agreed checks.</p></div>
+          <div><h3>Check a document’s claims.</h3><p>Compare a document with your criteria and supporting sources. Inspect findings and unresolved questions.</p></div>
+          <div><h3>Repair a problem and test the fix.</h3><p>Check a proposed repair against a test fixed before the repair begins.</p></div>
+          <div><h3>See which tests ran.</h3><p>Preview the tests selected for a code change, then inspect their output and results.</p></div>
+          <div><h3>Pick up saved work.</h3><p>Read the saved decisions and results before choosing the next action with your assistant.</p></div>
         </div>
         <p>See what passed, what failed and what needs another look. Harness keeps the output and check results together so you can review the work before deciding what to do next.</p>
         <div className={styles["principles"]}>
-          <div><h3>Authorization has limits.</h3><p>Accepting intent and authorizing execution are separate decisions. Paid calls need their own authorization.</p></div>
-          <div><h3>Evidence has limits too.</h3><p>A passing check establishes what it tested. It does not guarantee every output is correct.</p></div>
+          <div><h3>Decide what runs.</h3><p>Accepting intent and authorizing execution are separate decisions. Paid calls need their own authorization.</p></div>
+          <div><h3>Understand the checks.</h3><p>A passing check establishes what it tested. It does not guarantee every output is correct.</p></div>
         </div>
         <div className={styles["release"]}>
-          <p><strong>Published: Attune Harness 1.4.0.</strong> <Link href="https://pypi.org/project/attune-harness/1.4.0/">Package and release guide</Link></p>
+          <p><strong>{HARNESS_RELEASE_NOTICE}</strong> <Link href={HARNESS_GET_STARTED}>Get started</Link> · <Link href={HARNESS_PACKAGE_URL}>Published package</Link></p>
+          <p className={styles["candidate"]}>{HARNESS_PREPARATION_NOTICE} <Link href={HARNESS_PREPARATION}>Explore the 1.7.0 preparation guide</Link>.</p>
           <p className={styles["candidate"]}>Browser forms guide intake and intent approval. Each workflow retains its own execution permissions and checks.</p>
           <details>
             <summary>Read the evidence and limits</summary>
             <p>In one exporter comparison, command-line checks found three defects that direct serializer checks had missed.</p>
             <p>The result applies to that example. General model reliability needs separate assessment.</p>
             <p><Link href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/docs/plan-build-native-results.md">Read the comparison and its limits</Link></p>
-            <p>A passing check establishes what it tested. Native planning and building remain experimental. Claude Code and Codex have documented setup paths; Antigravity integration is unverified in this review. Native MCP panel delivery remains unverified. <Link href="https://pypi.org/project/attune-harness/1.4.0/#user-content-what-is-qualified-and-what-is-not">Review the qualification guide</Link>.</p>
+            <p>A passing check establishes what it tested. Native planning and building remain experimental. Claude Code and Codex have documented setup paths; Antigravity integration is unverified in this review. Native MCP panel delivery remains unverified. <Link href={`${HARNESS_PACKAGE_URL}#user-content-what-is-qualified-and-what-is-not`}>Review the qualification guide</Link>.</p>
           </details>
         </div>
       </div>
@@ -75,7 +77,7 @@ export default function Home() {
         <article className={styles["path"]}><h3>Keep the next step visible.</h3><p>Retain an opportunity-review checkpoint with its goal, progress, evidence and unfinished review.</p></article>
         <article className={styles["path"]}><h3>Choose what to pursue.</h3><p>Assess the proposed benefit and uncertainty. A saved suggestion grants no execution authority.</p></article>
       </div>
-      <p className={styles["candidate"]}>Scoped recall and saved review checkpoints are supported. Automatic access to all chat history is not implied; the richer opportunity-ranking and selection journey remains proposed. <Link href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.4.0/docs/specs/task-opportunities/journey.md">Review the current boundary</Link>.</p>
+      <p className={styles["candidate"]}>Scoped recall and saved review checkpoints are supported. Automatic access to all chat history is not implied; the richer opportunity-ranking and selection journey remains proposed. <Link href={`${HARNESS_SOURCE_ROOT}/docs/specs/task-opportunities/journey.md`}>Review the current boundary</Link>.</p>
     </section>
 
     <section className={styles["section"] + " " + styles["wrap"]} aria-labelledby="paths-title">

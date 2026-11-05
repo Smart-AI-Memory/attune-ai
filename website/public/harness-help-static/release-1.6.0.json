@@ -1,0 +1,65 @@
+{
+  "version": "1.6.0",
+  "status": "published",
+  "source_commit": "af2159516a67172cc8f2a1ff62213296b1b67112",
+  "release_url": "https://github.com/Smart-AI-Memory/attune-harness/releases/tag/v1.6.0",
+  "pypi_url": "https://pypi.org/project/attune-harness/1.6.0/",
+  "artifacts": {
+    "attune_harness-1.6.0-py3-none-any.whl": "e25341c1372f56b23bc843bda25559fdd2d2b95d27beb026173e6dd22236322a",
+    "attune_harness-1.6.0.tar.gz": "7290128ce499d4ce28aef6fe7b4c045f37d0534dff7c26b074bbc139cba5c6ae"
+  },
+  "qualification": {
+    "library_run": "https://github.com/Smart-AI-Memory/attune-harness/actions/runs/41165032497/attempts/2",
+    "publish_false_rehearsal": "https://github.com/Smart-AI-Memory/attune-harness/actions/runs/41177908245",
+    "production_publish_run": "https://github.com/Smart-AI-Memory/attune-harness/actions/runs/41178228727",
+    "boundary": "Exact-main software qualification and installed artifacts; GitHub assets matched published PyPI bytes. The first Windows Server 2025 installed attempt timed out; one unchanged approved rerun passed. This is not complete Windows parity."
+  },
+  "post_publication_install": {
+    "platform": "macOS arm64",
+    "python": "3.12.2",
+    "profile": "base",
+    "installed_runtime_payloads_matched": 119,
+    "base_journey": [
+      "plan",
+      "accept",
+      "build",
+      "review",
+      "status"
+    ],
+    "model_calls": 0,
+    "boundary": "Fresh public-index install outside the source checkout with dependency check; not actual assistant-host or independent-user acceptance."
+  },
+  "redis": {
+    "profile": {
+      "platform": "macOS arm64",
+      "python": "3.12.2",
+      "redis_py": "5.3.1",
+      "redis_server": "7.4.7",
+      "search": "2.10.20"
+    },
+    "assertions_passed": 77,
+    "artifact_binding": "Rehearsal and publication wheels have the same SHA-256; the exact-wheel disposable-service evidence applies to the published wheel.",
+    "verified": [
+      "Existing legacy and generation readers against compatible supplied records",
+      "Unavailable-service behavior",
+      "Clean-restart persistence using retained mirror and AOF state"
+    ],
+    "limits": [
+      "Installing the redis extra installs the client, not a Redis service or compatible records",
+      "No new writer, generation publisher or automatic cross-agent recall",
+      "No Windows Redis service, successful TLS/ACL configuration or abrupt-crash recovery qualification"
+    ]
+  },
+  "historical_records": {
+    "release_1_5_1": "release-1.5.1.json",
+    "published_1_5_0": "verification.json",
+    "preparation": "preparation.json",
+    "policy": "Original records, versioned guides and goal assets preserved; not relabeled as 1.6.0 observations"
+  },
+  "limits": [
+    "Software qualification does not establish model quality or consistent fresh, resumed or delegated-agent recall",
+    "Host plugins are separate installations; a catalog pin does not prove an existing host updated or invoked its skills",
+    "Native memory and paid provider acceptance retain their stated experimental or unverified boundaries",
+    "New writer, RedisVL and cross-agent/backend experiments remain separately approval-gated"
+  ]
+}

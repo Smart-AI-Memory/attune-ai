@@ -7,19 +7,27 @@ existing topic URLs and heading fragments, including `/harness/help/goals/`.
 Do not edit exported HTML or maintain
 a second command reference here.
 
-## Published 1.5.1 update
+## Published guidance and 1.7.0 preparation
 
-The current proposed export has fourteen pages: current 1.5.1 guidance and an
-archive grouped by version and release state. Historical 1.5.0 and preparation
-guides keep their content and evidence identities. The separate release record
-names the actual published files and software-check boundaries. Its route is
-covered by the same rewrite and exact-file/hash checks as the other payloads.
+The export contains fifteen pages and thirty files, imported from merged
+Harness commit `5159e7a79fbdb84d2982937716043b142534e6e9`.
+The current installation guide at `/harness/help/get-started/` describes
+published 1.6.0. The separate `/harness/help/1-7-0-preparation/` page describes an
+unpublished candidate and retains its selected source and wheel evidence.
 
-The import names verified merged canonical Help commit `5929c18c542a667a8a175a06b67ca5f2f571b73a`.
-Its tree equals the tested branch source; all 26 generated files and the build
-hash remain byte-identical. The earlier twelve-page results below remain
-historical; current checks are recorded in the pull request. Public deployment
-requires its separate current-head gates and post-deployment verification.
+The reference version remains 1.5.1 with its original behavior commit; it is not
+the current package version. Website installation and package links read
+`published_version` and `release-1.6.0.json`, while preparation source links read
+the exact import receipt. Historical guides, assets, original commands and the
+`next-release` redirect retain their identities. Generated HTML is refreshed
+only through the canonical importer.
+
+Before changing the published installation to 1.7.0, verify package publication
+and its source/artifact record with the release owner, update the canonical
+Help source, and import that exact merged source again. Do not promote this
+preparation export by relabeling its historical reference version. The Windows
+walkthrough and its scope remain release-owner evidence. The website is still
+a local candidate; hosted preview, merge and production delivery are separate.
 
 ## Cutover design
 
