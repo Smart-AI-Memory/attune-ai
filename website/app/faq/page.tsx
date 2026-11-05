@@ -1,3 +1,4 @@
+import { HARNESS_GET_STARTED, HARNESS_SOURCE_ROOT } from '@/lib/harness-release';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
@@ -242,8 +243,8 @@ export default function FAQPage() {
                 Start with Harness. Earlier project references are available separately below.
               </p>
               <div className="flex flex-wrap justify-center gap-4 mt-8">
-                <Link href="/docs#quickstart" className="btn btn-primary">Harness Quick Start</Link>
-                <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.4.0/docs/cli-guide.md" className="btn btn-outline !text-white !border-white/60 hover:!bg-white/15">Read the release guide</a>
+                <Link href={HARNESS_GET_STARTED} className="btn btn-primary">Get started with Harness</Link>
+                <a href={`${HARNESS_SOURCE_ROOT}/docs/cli-guide.md`} className="btn btn-outline !text-white !border-white/60 hover:!bg-white/15">Read the release guide</a>
               </div>
             </div>
           </div>

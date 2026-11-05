@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Harness 1.7.0 preparation walkthroughs | Harness Help</title>
+  <meta name="description" content="Practice request approval, planning, local research and saved drafts against a recorded unpublished wheel.">
+  <meta name="robots" content="noindex,follow">
+  <link rel="canonical" href="https://smartaimemory.com/harness/help/1-7-0-preparation/">
+  <link rel="stylesheet" href="/harness/help/help.css">
+
+</head>
+<body class="harness-help">
+  <a class="help-skip" href="#main-content">Skip to main content</a>
+  <header class="help-header">
+    <a class="help-brand" href="/harness/help/">Attune Harness <span>Help Center</span></a>
+    <nav aria-label="Help Center context"><a href="https://smartaimemory.com/">Smart AI Memory</a><a href="https://github.com/Smart-AI-Memory/attune-harness">Harness repository</a></nav>
+  </header>
+  <div class="help-shell">
+    <aside class="help-sidebar">
+      <nav aria-label="Help topics"><a href="/harness/help/">Help Center overview</a><a class="help-featured-nav" href="/harness/help/get-started/">Get started with Harness 1.6.0</a><a class="help-featured-nav" href="/harness/help/goals/">Browse all goals</a><ol><li><a href="/harness/help/goals/">What do you want to accomplish?</a></li><li><a href="/harness/help/1-5-1/">Harness 1.5.1 — published guide</a></li><li><a href="/harness/help/ai-tools-and-integrations/">AI tools and integrations</a></li><li><a href="/harness/help/1-7-0-preparation/" aria-current="page">Harness 1.7.0 preparation walkthroughs</a></li><li><a href="/harness/help/start-and-continue/">Start and continue work</a></li><li><a href="/harness/help/plan-and-accept/">Plan and accept work</a></li><li><a href="/harness/help/research/">Research a question</a></li><li><a href="/harness/help/save-and-resume/">Save and resume</a></li><li><a href="/harness/help/troubleshooting/">Troubleshooting</a></li><li><a href="/harness/help/dependencies/">Dependencies and reference</a></li><li><a href="/harness/help/archive/">Documentation archive</a></li></ol></nav>
+      <p class="help-version">Current release: Harness <strong>1.6.0</strong><br>Help Center reference: Harness <strong>1.5.1</strong><br>Published release.<br>Each guide states its version and publication status.</p>
+    </aside>
+    <main id="main-content" tabindex="-1" class="help-main">
+<nav aria-label="Breadcrumb" class="help-breadcrumb"><a href="/harness/help/">Help Center</a> / <span aria-current="page">Harness 1.7.0 preparation walkthroughs</span></nav><p class="help-eyebrow">Attune Harness · 1.7.0</p><h1>Harness 1.7.0 preparation walkthroughs</h1><p class="help-lead">Practice request approval, planning, local research and saved drafts against a recorded unpublished wheel.</p><p class="help-version-note">Guidance target: <strong>Harness 1.7.0</strong> preparation. Unpublished; use published 1.6.0 until release.</p>
+<nav class="help-contents" aria-label="On this page"><h2>On this page</h2><div class="toc">
+<ul>
+<li><a href="#match-the-practice-environment-to-its-evidence">Match the practice environment to its evidence</a></li>
+<li><a href="#start-and-continue-work">Start and continue work</a><ul>
+<li><a href="#prepare-and-open-the-practice-form">Prepare and open the practice form</a></li>
+<li><a href="#save-review-and-approve-the-request">Save, review and approve the request</a></li>
+</ul>
+</li>
+<li><a href="#preview-and-accept-a-plan">Preview and accept a plan</a><ul>
+<li><a href="#prepare-the-sample-checkout">Prepare the sample checkout</a></li>
+<li><a href="#preview-and-accept-the-plan">Preview and accept the plan</a></li>
+</ul>
+</li>
+<li><a href="#research-a-local-question">Research a local question</a><ul>
+<li><a href="#prepare-the-local-corpus">Prepare the local corpus</a></li>
+<li><a href="#retrieve-sources-and-verify-a-link">Retrieve sources and verify a link</a></li>
+</ul>
+</li>
+<li><a href="#save-and-return-to-a-draft">Save and return to a draft</a><ul>
+<li><a href="#prepare-and-open-the-practice-form_1">Prepare and open the practice form</a></li>
+<li><a href="#continue-a-saved-draft">Continue a saved draft</a></li>
+<li><a href="#inspect-before-continuing-execution">Inspect before continuing execution</a></li>
+</ul>
+</li>
+<li><a href="#read-the-results-and-remaining-limits">Read the results and remaining limits</a></li>
+</ul>
+</div>
+</nav>
+      <article class="help-prose"><h2 id="match-the-practice-environment-to-its-evidence">Match the practice environment to its evidence<a class="headerlink" href="#match-the-practice-environment-to-its-evidence" title="Permanent link">&para;</a></h2>
+<p>This is a draft written walkthrough for <strong>unpublished Harness 1.7.0</strong>. Published
+onboarding remains <a href="/harness/help/get-started/">1.6.0</a>. The four older practice
+pages retain their <a href="/harness/help/get-started/#prepare-the-151-practice-examples">isolated 1.5.1 setup</a>
+and original observations. Do not mix those environments or relabel their evidence.</p>
+<p>This preparation uses the reviewed software checkpoint
+<code>9ecefe8a0fded05b1bb55b2f81d8579725666666</code> and the wheel from
+<a href="https://github.com/Smart-AI-Memory/attune-harness/actions/runs/41961339343">build-only rehearsal 41961339343</a>.
+Its wheel SHA-256 is
+<code>57223f23037014a0c134956375aa8088ca586e9816e0c7a1c7b8161c5eb3916a</code>.
+The rehearsal did not publish a package. New documentation changes and later
+rebuilt artifacts need their own qualification.</p>
+<p>Use a fresh POSIX shell and unused practice directory. Select the absolute path
+to that downloaded wheel below. You need Git and Python 3.12 or later; the
+recorded local checks use macOS arm64 / CPython 3.12.2. That observation does not
+qualify every desktop, shell or browser. On macOS, use canonical paths such as
+<code>/private/tmp</code>, rather than the <code>/tmp</code> symlink.</p>
+<pre><code class="language-sh">WHEEL='/absolute/path/to/attune_harness-1.7.0-py3-none-any.whl'
+python3.12 -c &quot;import hashlib, pathlib, sys; assert hashlib.sha256(pathlib.Path(sys.argv[1]).read_bytes()).hexdigest() == '57223f23037014a0c134956375aa8088ca586e9816e0c7a1c7b8161c5eb3916a'&quot; &quot;$WHEEL&quot;
+PRACTICE=&quot;$PWD/harness-1.7.0-practice&quot;
+mkdir &quot;$PRACTICE&quot;
+cd &quot;$PRACTICE&quot;
+python3.12 -m venv .venv
+. .venv/bin/activate
+python -m pip install &quot;$WHEEL&quot;
+git clone --no-checkout https://github.com/Smart-AI-Memory/attune-harness.git release-source
+R=&quot;$(cd release-source &amp;&amp; pwd -P)&quot;
+git -C &quot;$R&quot; checkout --detach 9ecefe8a0fded05b1bb55b2f81d8579725666666
+python -c &quot;from importlib.metadata import version; assert version('attune-harness') == '1.7.0'; print(version('attune-harness'))&quot;
+python -m attune_harness
+</code></pre>
+<p><strong>Expected result:</strong> Version <code>1.7.0</code> and a verified deterministic demonstration.
+<code>R</code> is the matching source checkout, which supplies examples absent from the
+wheel. Keep this shell open. Tasks and sample projects belong beside
+<code>release-source</code>, outside that checkout. Choose each workflow below in its own
+unused directory; no workflow here starts implementation or a model call.</p>
+<h2 id="start-and-continue-work">Start and continue work<a class="headerlink" href="#start-and-continue-work" title="Permanent link">&para;</a></h2>
+<p>This synthetic form practices saving and accepting a request. Its constraint
+is <code>No implementation or model calls</code>. Acceptance records only the reviewed
+request; it does not grant execution.</p>
+<h3 id="prepare-and-open-the-practice-form">Prepare and open the practice form<a class="headerlink" href="#prepare-and-open-the-practice-form" title="Permanent link">&para;</a></h3>
+<p>Run this setup before the browser steps. The helper refuses an existing directory,
+creates a synthetic draft and makes no model calls:</p>
+<pre><code class="language-sh">PY=&quot;$(python -c 'import sys; print(sys.executable)')&quot;
+FORM=&quot;$PWD/training-navigation&quot;
+&quot;$PY&quot; &quot;$R/examples/browser-intake/prepare.py&quot; &quot;$FORM&quot;
+TASK=&quot;$FORM/saved-task&quot;
+&quot;$PY&quot; -m attune_harness.gui --task &quot;$TASK&quot; --edit --launch-json
+</code></pre>
+<p>Keep the listener running. Open its complete private <code>launch_url</code> in one tab.
+The launch reports <code>editable: true</code> and <code>execution_enabled: false</code>. Keep the URL
+out of public reports. The sample contains <code>source.py</code>, <code>Training example</code> and
+<code>No implementation or model calls</code>; its goal and success criterion start empty.
+The helper prepares a practice task rather than accepting intent or executing work.</p>
+<h3 id="save-review-and-approve-the-request">Save, review and approve the request<a class="headerlink" href="#save-review-and-approve-the-request" title="Permanent link">&para;</a></h3>
+<p>Use the practice form opened above. If it already shows <strong>Intent accepted</strong>, go to step 8.</p>
+<ol>
+<li>
+<p>Open your practice link.
+   You’ll see <strong>Saved work</strong> and the questions. If they’re hidden, click
+   <strong>Continue form</strong>.</p>
+</li>
+<li>
+<p>Enter your goal.
+   In <strong>What should this work accomplish?</strong>, enter:
+   <code>Check that my saved request survives a reload.</code>
+   Leave the success question empty for now.</p>
+</li>
+<li>
+<p>Click <strong>Save answers</strong>.
+   Wait for the saved confirmation. <strong>Saved answers</strong> shows your goal;
+   <strong>Still needed</strong> identifies the unanswered success question. Your request
+   is saved as a draft.</p>
+</li>
+<li>
+<p>Reload the tab.
+   Your saved goal should remain visible. If necessary, click <strong>Continue form</strong>
+   to reach the remaining question.</p>
+</li>
+<li>
+<p>Define success and save again.
+   In <strong>What observable result establishes success? Enter one item per line.</strong>,
+   enter: <code>After reloading, the saved goal remains unchanged.</code>
+   Click <strong>Save answers</strong>. <strong>Review your answers</strong> should show both answers.
+   If the review is hidden, click <strong>Review your answers</strong> on the saved-work card.</p>
+</li>
+<li>
+<p>Check the whole request.
+   Confirm your goal and success criterion, the sample file <code>source.py</code>, the
+   context <code>Training example</code>, and the constraint <code>No implementation or model calls</code>.
+   These are all part of what you’ll approve.</p>
+</li>
+<li>
+<p>Record your decision.
+   If everything is correct, click <strong>Approve this work request</strong>. Your answers
+   are already saved; this records acceptance of the whole request.
+   <strong>Intent accepted</strong> appears. Approval does not start implementation or
+   authorize execution.
+   To leave the request unapproved, choose <strong>Keep as draft</strong> and stop this
+   practice with an unapproved draft. Continue to step 8 only after approval.</p>
+</li>
+<li>
+<p>Verify the accepted request.
+   Reload the tab and inspect <strong>View accepted request</strong>, which opens expanded.
+   If you have collapsed it, expand it again. Both answers should remain visible,
+   with no editable answer fields. This completes the practice.</p>
+</li>
+</ol>
+<p><strong>Expected result:</strong> The request is accepted; <strong>View accepted request</strong> preserves the two answers after reload and contains no editable answer fields.</p>
+<p><strong>Limit:</strong> No build or execution is started. For real work, prepare a new draft with your actual scope and checks.</p>
+<h2 id="preview-and-accept-a-plan">Preview and accept a plan<a class="headerlink" href="#preview-and-accept-a-plan" title="Permanent link">&para;</a></h2>
+<p>This workflow ends at acceptance. Git must be able to create a local fixture
+commit with your configured author identity.</p>
+<h3 id="prepare-the-sample-checkout">Prepare the sample checkout<a class="headerlink" href="#prepare-the-sample-checkout" title="Permanent link">&para;</a></h3>
+<p>Use a disposable Git checkout with a deliberately incorrect <code>add</code> function. The
+following setup defines all variables before the planning commands use them:</p>
+<pre><code class="language-sh">P=&quot;$PWD/training-plan-project&quot;
+T=&quot;$PWD/training-plan-task&quot;
+PY=&quot;$(python -c 'import sys; print(sys.executable)')&quot;
+mkdir -p &quot;$P/tests&quot;
+printf 'def add(a, b):\n    return a - b\n' &gt; &quot;$P/calc.py&quot;
+printf 'from calc import add\n\ndef test_add():\n    assert add(2, 2) == 4\n' &gt; &quot;$P/tests/test_calc.py&quot;
+git init &quot;$P&quot;
+git -C &quot;$P&quot; add calc.py tests/test_calc.py
+git -C &quot;$P&quot; commit -m &quot;Training fixture&quot;
+</code></pre>
+<p><code>P</code> is the sample project; <code>T</code> is the unused task directory outside it. Do not
+put new files inside <code>P</code> after the next step freezes its inputs.</p>
+<h3 id="preview-and-accept-the-plan">Preview and accept the plan<a class="headerlink" href="#preview-and-accept-the-plan" title="Permanent link">&para;</a></h3>
+<h4 id="1-create-the-request">1. Create the request<a class="headerlink" href="#1-create-the-request" title="Permanent link">&para;</a></h4>
+<pre><code class="language-sh">attune-harness init --for plan --goal &quot;Repair addition&quot; --project &quot;$P&quot; --scope calc.py --interpreter &quot;$PY&quot; --tests tests/test_calc.py --task-dir &quot;$T&quot;
+</code></pre>
+<p>Expected: <code>created</code>; the request is written as <code>$T.work.json</code> beside the task directory.</p>
+<h4 id="2-preview-that-request">2. Preview that request<a class="headerlink" href="#2-preview-that-request" title="Permanent link">&para;</a></h4>
+<pre><code class="language-sh">attune-harness plan --request &quot;$T.work.json&quot; --project &quot;$P&quot; --config &quot;$R/examples/starter/participants.json&quot; --task-dir &quot;$T&quot;
+</code></pre>
+<p>Expected: <code>draft</code> with no missing questions. Inspect its goal, allowed file,
+effects and acceptance criteria. Set <code>C</code> to its full <code>checkpoint_digest</code>, for
+example <code>C='the-full-returned-digest'</code>; replace that literal with this preview's value.</p>
+<h4 id="3-if-that-exact-scope-is-correct-accept-its-current-checkpoint">3. If that exact scope is correct, accept its current checkpoint<a class="headerlink" href="#3-if-that-exact-scope-is-correct-accept-its-current-checkpoint" title="Permanent link">&para;</a></h4>
+<pre><code class="language-sh">attune-harness plan --task-dir &quot;$T&quot; --accept --checkpoint &quot;$C&quot;
+attune-harness status &quot;$T&quot;
+</code></pre>
+<p><strong>Expected result:</strong> Status is <code>accepted</code>. <code>calc.py</code> still contains <code>a - b</code> and
+there is no build run. Acceptance records the reviewed scope only.</p>
+<p><strong>Limit:</strong> This example stops before <strong><code>build</code></strong>. The starter reviewer approves
+without substantive judgment. A real build needs appropriate participants,
+frozen effects, protected checks and separately authorized execution. See
+<a href="https://github.com/Smart-AI-Memory/attune-harness/blob/9ecefe8a0fded05b1bb55b2f81d8579725666666/docs/cli-guide.md#plan-and-build">Plan and build</a>.</p>
+<h2 id="research-a-local-question">Research a local question<a class="headerlink" href="#research-a-local-question" title="Permanent link">&para;</a></h2>
+<h3 id="prepare-the-local-corpus">Prepare the local corpus<a class="headerlink" href="#prepare-the-local-corpus" title="Permanent link">&para;</a></h3>
+<p>Copy the example from the release checkout before retrieving or writing reports:</p>
+<pre><code class="language-sh">E=&quot;$PWD/training-research&quot;
+cp -R &quot;$R/examples/local-workflow&quot; &quot;$E&quot;
+</code></pre>
+<p>Choose an unused <code>E</code> directory outside the release checkout. The base install
+includes local retrieval and verification. A fresh copy protects prior reports.</p>
+<h3 id="retrieve-sources-and-verify-a-link">Retrieve sources and verify a link<a class="headerlink" href="#retrieve-sources-and-verify-a-link" title="Permanent link">&para;</a></h3>
+<h4 id="1-retrieve-local-evidence">1. Retrieve local evidence<a class="headerlink" href="#1-retrieve-local-evidence" title="Permanent link">&para;</a></h4>
+<pre><code class="language-sh">attune-harness retrieve &quot;quartz retention policy&quot; --corpus &quot;$E/project&quot; --output &quot;$E/retrieval-report.json&quot;
+</code></pre>
+<h4 id="2-inspect-the-sources">2. Inspect the sources<a class="headerlink" href="#2-inspect-the-sources" title="Permanent link">&para;</a></h4>
+<p>Read <code>retrieval-report.json</code>, then <code>project/reference.md</code>. Inspect both
+returned sources, <code>guide.md</code> and <code>reference.md</code>, including excerpts and hashes.</p>
+<h4 id="3-check-the-supported-link-claim">3. Check the supported link claim<a class="headerlink" href="#3-check-the-supported-link-claim" title="Permanent link">&para;</a></h4>
+<pre><code class="language-sh">attune-harness verify &quot;$E/project/guide.md&quot; --context &quot;$E/context.json&quot; --output &quot;$E/verification-report.json&quot;
+</code></pre>
+<h4 id="4-inspect-verification">4. Inspect verification<a class="headerlink" href="#4-inspect-verification" title="Permanent link">&para;</a></h4>
+<p>Read <code>verification-report.json</code>. Check <code>status</code>, <code>passed</code>, <code>result.coverage</code>
+and <code>result.semantic_ran</code>.</p>
+<p><strong>Expected result:</strong> Retrieval returns two Markdown sources. Verification returns
+<code>verified</code>, <code>passed: true</code>, <code>result.coverage.total: 1</code> and
+<code>result.coverage.verified: 1</code>. The <code>links</code> claim refers to <code>reference.md</code> at line
+3 of the sample guide.</p>
+<p><strong>Limit:</strong> <code>result.semantic_ran</code> is false. This checks link validity; it does not
+establish policy correctness. The example is local and makes no model or Voyage
+call. Choose and authorize paid retrieval separately when a real task needs it.</p>
+<h2 id="save-and-return-to-a-draft">Save and return to a draft<a class="headerlink" href="#save-and-return-to-a-draft" title="Permanent link">&para;</a></h2>
+<p>Use a new fixture for this workflow, even if you completed the acceptance
+practice above.</p>
+<h3 id="prepare-and-open-the-practice-form_1">Prepare and open the practice form<a class="headerlink" href="#prepare-and-open-the-practice-form_1" title="Permanent link">&para;</a></h3>
+<p>Run this setup before the browser steps. The helper refuses an existing directory,
+creates a synthetic draft and makes no model calls:</p>
+<pre><code class="language-sh">PY=&quot;$(python -c 'import sys; print(sys.executable)')&quot;
+FORM=&quot;$PWD/training-continuity&quot;
+&quot;$PY&quot; &quot;$R/examples/browser-intake/prepare.py&quot; &quot;$FORM&quot;
+TASK=&quot;$FORM/saved-task&quot;
+&quot;$PY&quot; -m attune_harness.gui --task &quot;$TASK&quot; --edit --launch-json
+</code></pre>
+<p>Keep the listener running. Open its complete private <code>launch_url</code> in one tab.
+The launch reports <code>editable: true</code> and <code>execution_enabled: false</code>. Keep the URL
+out of public reports. The sample contains <code>source.py</code>, <code>Training example</code> and
+<code>No implementation or model calls</code>; its goal and success criterion start empty.
+The helper prepares a practice task rather than accepting intent or executing work.</p>
+<h3 id="continue-a-saved-draft">Continue a saved draft<a class="headerlink" href="#continue-a-saved-draft" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Open the new private <code>launch_url</code>. If the current form is not displayed, inspect saved state, then click <strong>Continue form</strong>.</li>
+<li>In “<strong>What should this work accomplish?</strong>”, enter <code>Group saved work by the decision it needs</code>.</li>
+<li>Click <strong>Save answers</strong>. Leave the success question empty and wait for the “Answers saved” confirmation and the remaining question.</li>
+<li>Reload this same page. When its listener, task checkpoint, collector and browser view ownership remain current, <strong>Saved goal:</strong> and the blank remaining success question reappear without clicking <strong>Continue form</strong>. Check that <strong>Still needed</strong> separates the instructions from the saved answer, then type in the remaining field.</li>
+<li>Stop the listener with <code>Ctrl-C</code>. Run <code>python -m attune_harness.gui --task "$TASK" --edit --launch-json</code> with the same <code>TASK</code>.</li>
+<li>Open the new private <code>launch_url</code>. Inspect the saved goal and remaining blank success question. If the current form is not displayed, expand <strong>View saved request</strong>, then click <strong>Continue form</strong> to reopen deliberately.</li>
+</ol>
+<p><strong>Expected result:</strong> The saved goal retains its exact wording and the task remains a draft.
+Saved answers persist; unsaved typing is not restored. A listener restart opens
+a fresh collector rather than restoring the old one. The shared sample retains
+<code>source.py</code>, <code>Training example</code> and <code>No implementation or model calls</code>.</p>
+<p>Same-page restoration requires usable session storage, reload navigation timing
+and an exclusive Web Lock. It inspects the current collector without replacing
+it, replaying a response, approving a request or starting work. If another view
+owns the form, the checkpoint changed, or a submission was unconfirmed, inspect
+saved answers and click the displayed <strong>Continue form</strong> or <strong>Review your answers</strong>
+to reopen deliberately. Inspect saved state before repeating any unconfirmed
+answer; Harness does not replay that submission for you.</p>
+<h3 id="inspect-before-continuing-execution">Inspect before continuing execution<a class="headerlink" href="#inspect-before-continuing-execution" title="Permanent link">&para;</a></h3>
+<p>Saving answers records intake; approving intent records a scope decision.
+Neither starts work. Browser forms cannot dispatch builds or resume execution.</p>
+<ol>
+<li>In another terminal, activate the same environment and set <code>TASK</code> to the same absolute saved-task directory.</li>
+<li>Run <code>attune-harness status "$TASK" --format markdown</code> and read its state, evidence and next action.</li>
+<li>If an execution task is eligible and you have its current authority, follow the stated CLI <strong><code>resume</code></strong> route with its required checkpoint and grants. This practice draft is still incomplete; do not execute it.</li>
+</ol>
+<p><strong>Expected result:</strong> Inspection describes the saved draft without running work.
+<strong>Limit:</strong> Restarting a form listener reopens intake; it is different from execution resume. External/native execution can have effects and consume usage.</p>
+<p>For a <code>feature-work-v1</code> task, the <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/9ecefe8a0fded05b1bb55b2f81d8579725666666/docs/cli-guide.md#pause-and-return-to-work">pause-and-return procedure</a> shows how to inspect the current task and write a read-only HTML briefing with a caller-owned continuation note. It does not resume execution or restore an old browser form. Read its task/revision and path requirements before using it.</p>
+<p>Explicit <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/9ecefe8a0fded05b1bb55b2f81d8579725666666/docs/memory-saving.md">CLI saved memory</a> is a separate store from browser form answers.</p>
+<h2 id="read-the-results-and-remaining-limits">Read the results and remaining limits<a class="headerlink" href="#read-the-results-and-remaining-limits" title="Permanent link">&para;</a></h2>
+<p>These are synthetic software walkthroughs with local evidence. Successful link
+verification is not semantic policy approval, and a browser automation pass is
+not an independent-user comprehension or accessibility observation. Keep actual
+runtime, browser, commands, actions and outcomes with each receipt. An
+interrupted or unconfirmed action stays uncertain until its saved state can be
+inspected; do not submit it again blindly.</p>
+<p>The original 1.5.1 and older walkthroughs, goal screenshots and delivered decks
+retain their original source/version labels. This draft is proposed written
+material for the four training topics, not an approved replacement for those
+decks or proof of their visual accuracy. Website import, release-record updates
+and deployment remain separate review decisions; the live website has not been
+verified by this walkthrough.</p>
+<p>Read the <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/main/docs/release-readiness-1.7.0.md">1.7.0 readiness record</a>
+for the exact-main qualification, retained failed native-memory combination,
+Windows payload and incomplete-coverage limits, and publication gates. The
+<a href="https://github.com/Smart-AI-Memory/attune-harness/blob/main/docs/release-notes-1.7.0.md">release notes</a>
+retain legacy command environments through 1.7.0, with removal no earlier than
+1.8.0. API/plan funding has offline software evidence; account eligibility,
+native Keychain interoperability, quota and billing remain unestablished.
+Hydration is groundwork; keep existing writers and host hooks. No step here
+authorizes a paid provider call, build, execution resume or publication.</p></article>
+      <nav class="help-next" aria-label="Continue learning"><a href="/harness/help/">Current help topics</a><a href="/harness/help/archive/">Archive</a><a href="#main-content">Back to top</a></nav>
+    </main>
+  </div>
+  <footer class="help-footer">Help Center reference: Harness 1.5.1 · Published release. <a href="/harness/help/get-started/">Get started</a> · <a href="/harness/help/goals/">Browse all goals</a> · <a href="/harness/help/dependencies/">Dependencies and reference</a> · <a href="/harness/help/release-1.6.0.json">1.6.0 release record</a> · <a href="/harness/help/release-1.5.1.json">1.5.1 release record</a> · <a href="/harness/help/verification.json">Historical 1.5.0 verification</a> · <a href="/harness/help/preparation.json">Historical preparation record</a></footer>
+<script type="module" src="/harness/help/code-copy.js"></script>
+</body>
+</html>

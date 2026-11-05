@@ -1,4 +1,6 @@
-// Shared by Docs and the FAQ page; grounded in the released 1.4.0 guides.
+import { HARNESS_PUBLISHED_VERSION, HARNESS_INSTALL_COMMAND } from '@/lib/harness-release';
+
+// Shared current FAQ; historical setup remains in the versioned guides.
 export const HARNESS_FAQ_ITEMS = [
   {
     question: 'What is Attune Harness?',
@@ -8,12 +10,12 @@ export const HARNESS_FAQ_ITEMS = [
   {
     question: 'Can I use it for specification development?',
     answer:
-      'Work with your agent to develop requirements, constraints and acceptance criteria, then agree with the scope before authorizing execution. Harness supports planning, building, repair and test journeys. Native planning and building are experimental in 1.4.0; use the documented agent paths and review their limits.',
+      'Work with your agent to develop requirements, constraints and acceptance criteria, then agree with the scope before authorizing execution. Harness supports planning, building, repair and test journeys. Use the documented participant paths and review each workflow’s requirements and qualification limits.',
   },
   {
     question: 'How do I get started with Harness?',
     answer:
-      "Follow the Harness Quick Start: create a separate Python 3.10+ environment, install attune-harness[all]==1.4.0, confirm the version and run the local example. Redis use needs a running service; Voyage retrieval needs an API key and makes paid calls.",
+      `Use the Get started guide for published Harness ${HARNESS_PUBLISHED_VERSION}. With Python 3.12 or later, install it in a managed environment using ${HARNESS_INSTALL_COMMAND}, then confirm the version and run a local example. Redis and Voyage are optional integrations; Voyage calls need an API key and spending permission. Harness 1.7.0 remains in preparation.`,
   },
   {
     question: 'What does a receipt tell me?',
@@ -23,7 +25,7 @@ export const HARNESS_FAQ_ITEMS = [
   {
     question: 'Which agents and models can I use with Attune Harness?',
     answer:
-      'Harness has documented setup paths for Claude Code and Codex. Models and authentication depend on the host and participants configured for the task. Installing the Python package does not install agent plugins or skills. Native planning and building are experimental in 1.4.0. Browser forms in that release support draft intake, preview and intent approval; browser build dispatch is not available. Intent approval is separate from permission to execute paid work.',
+      'Harness has documented setup paths for Claude Code and Codex. Models and authentication depend on the host and participants configured for the task. Installing the Python package does not install agent plugins or skills. Native planning and building retain their documented qualification limits. Browser forms support draft intake, preview and intent approval; browser build dispatch is not available. Intent approval is separate from permission to execute paid work.',
   },
   {
     question: 'Does Harness replace Attune AI?',

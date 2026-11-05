@@ -15,9 +15,9 @@ export interface SEOConfig {
 
 const defaultMetadata = {
   siteName: 'Smart AI Memory',
-  title: 'Delegate with clear scope. Keep the evidence. — Smart AI Memory',
+  title: 'Turn a goal into a plan. Check the results. — Smart AI Memory',
   description:
-    'Attune Harness supports AI-assisted engineering with clearer decisions, checkable work and context you can revisit. Collaborate, discuss a pilot or support an open-source milestone.',
+    'Plan a change, review a document, repair files, run tests or return to saved work with your assistant. Attune Harness keeps the output and check results for you to inspect.',
   url: 'https://smartaimemory.com',
   image: '/opengraph-image',
   twitterHandle: '@smartaimemory',
