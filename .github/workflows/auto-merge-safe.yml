@@ -348,8 +348,18 @@ jobs:
           PR: ${{ github.event.pull_request.number }}
           REPO: ${{ github.repository }}
           ACTION: ${{ github.event.action }}
+          PR_HAS_WHEN_GREEN_LABEL: >-
+            ${{ contains(github.event.pull_request.labels.*.name,
+            'auto-merge-when-green') }}
         run: |
           set -euo pipefail
+          # An unlabeled synchronize event has no merge action to manage.
+          # Use the trusted event before touching the shared admin credential.
+          if [ "$ACTION" = "synchronize" ] && \
+               [ "$PR_HAS_WHEN_GREEN_LABEL" = "false" ]; then
+            echo "skip: no auto-merge-when-green label"
+            exit 0
+          fi
           if [ -z "${GH_TOKEN:-}" ]; then
             echo "ADMIN_MERGE_TOKEN not set; when-green job inert (fail-closed)."
             exit 0

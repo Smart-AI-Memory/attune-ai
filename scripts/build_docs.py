@@ -4,7 +4,7 @@
 Builds documentation for multiple output targets:
 1. PyPI/GitHub - Minimal docs for package distribution
 2. Website - Full documentation for ReadTheDocs
-3. eBook - PDF/ePub book format
+3. eBook - PDF book format (Python 3.11 or later)
 
 Usage:
     python scripts/build_docs.py [target]
@@ -13,7 +13,7 @@ Targets:
     all      - Build all outputs (default)
     pypi     - Build PyPI/GitHub minimal docs
     website  - Build full website docs
-    ebook    - Build PDF/ePub book
+    ebook    - Build PDF book (Python 3.11 or later)
     clean    - Remove all build artifacts
     serve    - Serve website docs locally
 """
@@ -142,7 +142,12 @@ def build_website() -> bool:
 
 
 def build_ebook() -> bool:
-    """Build PDF/ePub book."""
+    """Build the PDF book with the supported optional toolchain."""
+    if sys.version_info < (3, 11):
+        log_error("PDF export requires Python 3.11 or later; core and website docs support 3.10.")
+        log("Use Python 3.11+ and install the docs extra: python -m pip install -e '.[docs]'")
+        return False
+
     log("Building eBook (PDF)...", Colors.HEADER)
 
     DIST_DIR.mkdir(parents=True, exist_ok=True)
@@ -162,7 +167,7 @@ def build_ebook() -> bool:
         else:
             log_success(f"eBook HTML built: {output_dir.relative_to(PROJECT_ROOT)}")
             log("Note: PDF generation requires mkdocs-with-pdf plugin")
-            log("Install with: pip install mkdocs-with-pdf")
+            log("Install with Python 3.11+: python -m pip install -e '.[docs]'")
     return success
 
 
