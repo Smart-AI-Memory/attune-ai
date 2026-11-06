@@ -41,8 +41,8 @@ new evidence rather than regenerating old receipts.
 
 Check the committed export, too: the repository ignores `data/` directories.
 Explicitly include the reviewed synthetic CSV and run both export checks from
-a clean Git archive before pushing. A complete working directory alone does
-not establish that the committed payload is complete.
+a fresh clean Git checkout before pushing. A complete working directory alone
+does not establish that the committed payload is complete.
 
 ## Verification boundary
 

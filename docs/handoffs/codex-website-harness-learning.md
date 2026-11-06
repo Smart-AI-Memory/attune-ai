@@ -16,7 +16,8 @@ Completion review: pending for the production cutover.
 
 - Owned branch: `codex/website-harness-learning`, based on attune-ai main
   `98c881be8f98432b2df713889ae9e98b5f007b23` (merged PR #2592).
-- Structured one-shot integration: website files and this required handoff.
+- Structured one-shot integration: website files, this required handoff and a
+  narrow Black exclusion for the byte-preserved generated training export.
 - Patrick explicitly assigned this chat ownership of the website PR and
   publication. Existing merge gates remain applicable.
 - Keep the earlier tester preview checkout unchanged while it is in use.
@@ -55,9 +56,22 @@ the six-lesson course is labeled 1.7.0 preparation.
 
 The first hosted preview at website commit `7e71e15` failed the training file
 inventory check: the root `data/` ignore rule excluded the synthetic activity
-CSV from that commit. The integrity guard correctly refused delivery. Include
-that exact reviewed file and verify a clean Git archive before the next push;
-retain the failed preview record. Do not relax the inventory check.
+CSV from that commit. Commit `8a30dc1` includes that exact reviewed file; both
+strict export checks pass from a fresh clean Git checkout. Its hosted preview
+is Ready. The preview requires Vercel sign-in; hosted response hashes have not
+been verified. Retain the failed preview record and the fresh checkout receipt.
+
+CI Black tried to reformat four Python files in the canonical static export.
+The narrow exclusion preserves their exact source bytes; authored Python
+outside that directory remains subject to Black. No imported file or integrity
+guard is changed by this formatting configuration.
+Pinned Black 24.10 leaves 2,392 files unchanged; outside-export good/bad
+formatting controls return the expected 0/1. Ruff 0.15.21 and Bandit 1.9.4
+medium/high gates pass. Independent agent review found the exclusion matches
+only the four imported Python files, leaving scripts and sibling paths checked.
+This is a formatting-enforcement delta. The absent-Lead fallback remains
+advisory-to-Patrick; same-family review is not a different-model approval or
+permission to promote the change.
 
 Local evidence: `/private/tmp/harness-website-publish-tests-final-20261105.log`,
 `/private/tmp/harness-website-publish-build-reviewed-20261105.log`,
