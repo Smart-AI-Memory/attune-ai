@@ -53,6 +53,12 @@ the six-lesson course is labeled 1.7.0 preparation.
   and an inaccurate merged-source word in the Help publishing guide.
 - Production delivery: pending.
 
+The first hosted preview at website commit `7e71e15` failed the training file
+inventory check: the root `data/` ignore rule excluded the synthetic activity
+CSV from that commit. The integrity guard correctly refused delivery. Include
+that exact reviewed file and verify a clean Git archive before the next push;
+retain the failed preview record. Do not relax the inventory check.
+
 Local evidence: `/private/tmp/harness-website-publish-tests-final-20261105.log`,
 `/private/tmp/harness-website-publish-build-reviewed-20261105.log`,
 `/private/tmp/harness-website-publish-types-20261105.log`,
