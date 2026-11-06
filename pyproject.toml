@@ -370,7 +370,7 @@ all = [
     # Security constraint overrides for transitive dependencies
     "urllib3>=2.3.0,<3.0.0",  # CVE fix: GHSA-gm62, GHSA-2xpw
     "aiohttp>=3.14.3,<4.0.0",  # CVE fix: clears all GHSA advisories through 3.14.3
-    "filelock>=3.16.0,<4.0.0",  # CVE fix: GHSA-w853
+    "filelock>=3.16.0,<5.0.0",  # CVE fix: GHSA-w853
 ]
 
 
