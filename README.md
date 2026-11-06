@@ -2,6 +2,23 @@
 
 <!-- mcp-name: io.github.Smart-AI-Memory/attune-ai -->
 
+> **Attune AI is deprecated and is no longer maintained.** Development has moved
+> to [Attune Harness](https://github.com/Smart-AI-Memory/attune-harness).
+>
+> For new work, the replacement target is **attune-harness 1.5.1**. After that
+> version is published, install the managed CLI in its own environment:
+>
+> ```bash
+> uv tool install attune-harness==1.5.1
+> ```
+>
+> Check the [available releases](https://pypi.org/project/attune-harness/#history)
+> and [installation guide](https://github.com/Smart-AI-Memory/attune-harness/blob/main/docs/installation.md)
+> before installing. Preserve existing Attune AI environments and saved work
+> while validating the Harness workflows you need; deprecation does not establish
+> feature parity or convert saved data. Earlier Attune AI instructions below are
+> retained as historical reference for existing installations.
+
 **Persistent memory and receipt-verified workflows for Claude Code.**
 
 🌐 **Docs & guides: [attune-ai.dev](https://attune-ai.dev)**
