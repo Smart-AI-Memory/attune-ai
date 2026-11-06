@@ -72,3 +72,7 @@ body{margin:0}
 .help-skip:focus{top:10px}
 .help-anchor{display:block;height:0;scroll-margin-top:24px}
 .help-featured-nav{border:1px solid var(--help-green);border-radius:6px;background:var(--help-panel);margin:16px 0;font-weight:700;padding:12px!important}
+
+.help-course p+p{margin-top:16px}
+.help-course .help-course-action{margin-top:24px}
+.help-course .help-featured-nav{display:inline-block;margin:0}

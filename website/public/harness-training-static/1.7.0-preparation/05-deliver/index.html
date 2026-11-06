@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex,follow">
+  <title>Attune Harness learning program</title>
+  <link rel="icon" href="../assets/media/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../assets/styles.css">
+  <script src="../assets/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to lesson</a>
+  <div class="lesson-layout">
+    <aside class="sidebar" aria-label="Lesson navigation and progress">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">a</span><span>Attune Harness<span class="brand-subtitle">Learning program</span></span></div>
+      <p class="course-label" id="course-label">Local lesson</p>
+      <p class="sidebar-title" id="sidebar-title">Harness in practice</p>
+      <button class="nav-toggle" id="nav-toggle" type="button" aria-expanded="false" aria-controls="navigation-panel" disabled>Show lesson navigation</button>
+      <div class="navigation-panel" id="navigation-panel">
+        <div class="progress-summary">
+          <p id="progress-label">Loading lesson…</p>
+          <progress id="lesson-progress" value="0" max="10" aria-labelledby="progress-label"></progress>
+        </div>
+        <nav aria-label="Lesson sections"><ol class="section-nav" id="section-nav"></ol></nav>
+        <details class="course-path" id="course-path" hidden>
+          <summary>Course lessons</summary>
+          <p>Choose another lesson in this current course.</p>
+          <ol id="course-path-list"></ol>
+        </details>
+        <button class="reset-button" id="reset-progress" type="button" disabled>Reset lesson progress</button>
+      </div>
+      <p><a href="https://smartaimemory.com/harness/help/" style="color:inherit">Help Center</a> · <a href="../" style="color:inherit">Course overview</a> · <a href="read.html" style="color:inherit">Read full lesson</a></p>
+      <p class="sidebar-note">Read, try, and reflect at your own pace.</p>
+    </aside>
+
+    <main id="main-content" tabindex="-1">
+      <header class="lesson-header">
+        <div class="lesson-meta"><span class="eyebrow">Guided walkthrough</span><span class="revision-label" id="revision-label">Course draft · Harness 1.7.0 preparation</span></div>
+        <h1 id="lesson-title">Harness in practice</h1>
+        <p class="lesson-subtitle" id="lesson-subtitle">Loading the lesson…</p>
+        <div class="lesson-tools" role="group" aria-label="Lesson views">
+          <button id="presenter-toggle" type="button" aria-pressed="false" aria-describedby="presenter-hint" disabled>Presenter notes</button>
+          <button id="print-lesson" type="button" disabled>Print lesson</button>
+        </div>
+        <p class="sr-only" id="presenter-hint">Show or hide presenter notes for the current section. This setting also controls whether notes appear when printing.</p>
+      </header>
+
+      <p class="storage-notice" id="storage-notice" role="status" hidden></p>
+      <div class="loading-message" id="loading-message" role="status">Loading lesson content…</div>
+      <noscript><p><a href="read.html">Read the full lesson without JavaScript</a>.</p></noscript>
+      <div id="lesson-sections"></div>
+      <div class="load-error" id="load-error" role="alert" hidden>
+        <h2>The lesson could not load</h2>
+        <p>Reload this page from the local lesson preview. If the problem continues, check that <code>lesson.json</code> is available beside this page.</p>
+        <button id="reload-lesson" type="button">Reload lesson</button>
+      </div>
+      <noscript><p class="load-error">Enable JavaScript to use this local lesson, including its navigation and saved practice notes.</p></noscript>
+
+      <nav class="section-pagination" id="section-pagination" aria-label="Move between sections" hidden>
+        <button id="previous-section" type="button">Previous section</button>
+        <span id="section-position" aria-live="polite" aria-atomic="true"></span>
+        <button class="primary-button" id="next-section" type="button">Next section</button>
+      </nav>
+      <footer>Course draft · Harness 1.7.0 preparation. Lesson progress stays in this browser; it does not approve or run Harness work.</footer>
+    </main>
+  </div>
+  <p class="sr-only" id="lesson-status" role="status" aria-live="polite" aria-atomic="true"></p>
+</body>
+</html>

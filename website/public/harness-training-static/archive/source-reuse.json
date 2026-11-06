@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "guidance_version": "1.7.0",
+  "status": "preparation",
+  "reviewed_runtime_commit": "5159e7a79fbdb84d2982937716043b142534e6e9",
+  "source_lesson": {
+    "title": "Build your first report",
+    "revision": "r5, folder step clarified",
+    "date": "2026-10-29",
+    "lesson_json_sha256": "a6a74042dbb2e62d343244de1e2bff8010911dec9f2c7a54566197bcbec4e0b4"
+  },
+  "historical_runtime": "1.5.1",
+  "historical_checks": {
+    "native_probes_each": 49,
+    "host_repair": 57,
+    "html_example": 77
+  },
+  "new_model_calls": 0,
+  "limits": [
+    "The original Your first task with Harness HTML was not recovered; new lessons are newly authored derivatives.",
+    "Historical media and checks are not 1.7.0 model-build evidence.",
+    "No newcomer learning-effectiveness result or platform-wide browser claim.",
+    "Publication, deployment and model execution remain separate."
+  ],
+  "reference_file_sha256": {
+    "app.js": "cc7d50571e77ced65611170987209333ce39fee4b679708177112b864d0bf609",
+    "styles.css": "0ea7ada8a684d16d3c3344d9b341b6bbc436a4ba9d321eb40f2bdad3a2b0a711",
+    "reporting-example.zip": "3437ad6e14902e62b3524284cb59725c1271ff7911503dec12c63a761051117c",
+    "evidence-summary.json": "e6da8a0e8ce3ef949188bcf4347ea6f4ca2ef02ff580ad6d9e0f70d84cbee268",
+    "example/README.md": "44c00f1b65824f347e6301ea3300c53e35257a709cc6856bf162d32c778e5598",
+    "example/data/activity.csv": "5ed238e1e9f0e8e665254170773c7cf24cddaef074c8c32770535cf6d27f3437",
+    "example/expected/activity-report.html": "ae59332ac013d0ec220484b723457d4ac06a179e350218b769dc2d3425678124",
+    "example/expected/activity-report.txt": "95218eea94da8675ce4716254d73a447754ae7b9613729d7bf51c21ccce6ef0d",
+    "example/pytest.ini": "a27f53f4a293be115c153b1b74c9312d3b0b40df75fac0b05c17d0ad7a469e16",
+    "example/report.py": "c2fccde863be533dfdd7c35fe093bf109debeef28c4761375899e3dec93c9e9b",
+    "example/tests/test_html_report.py": "1fa9fd8587a0351a6215e092c07e239c8969bdc99a02f015182bf19ad188f1c3",
+    "example/tests/test_report.py": "ead736737bbac0ea42d1e6f8079c45548ed0f59876312e207dc0d189060df46e",
+    "example/verification-summary.json": "ae47e07337298402ef6da92af48fc27d7ef637db344fcfaf4ac40e5ed3a4c767",
+    "media/favicon.svg": "dd3d6cdd88f1ab002ee6956a28e7c5d64910e38dce7cd5bc8b93c97656f5b6af",
+    "media/formatted-report-r5.png": "0147016606a388a8643cec5e841caac9e021ced87af2f6e6ff3c1cf1f2519d99",
+    "media/browser-tour.vtt": "42c09c6b2feaf85643e2957aa6570a98aaaa1ca13f3fcb02f54d1af3d95a1eb1",
+    "media/browser-tour.webm": "7afb6bbd160b02a14b14956198fdbb52ddbf71b7dcbc01ad6c5ec48b5cad796c",
+    "media/report-cli.mp4": "aba1c1b5c424aa24b50e674185116fa963c1d6cf8078defea79f7167ec9a9502",
+    "media/report-cli.vtt": "2c0c6e432347f5b46ebd481f67d1f2fd7bbe894ff64dc2a0f45d3833c82c30ac",
+    "media/report-overview.svg": "9cf60948cea22285235846294056abbeab82d3d9c8dec6bd0136aed5b99c6a22",
+    "media/saved-position.png": "d87c04bc3f3fc7811304206ee84c260f35056d0491d9ee5a9f18476cc1fbed20",
+    "media/terminal-poster.png": "3f03e9637a841a1c66fc3414a64835b0ab8e85795318ec5497234add04bdbf71",
+    "media/workflow.svg": "56832a49ddf63176be97d0fb02b7c5d563623c84b4306f3b0030593a166c1e96"
+  }
+}

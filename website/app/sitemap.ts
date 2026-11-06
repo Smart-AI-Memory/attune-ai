@@ -18,6 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/fix-workspace',
     '/docs',
     '/harness/help/',
+    '/harness/learn/1.7.0-preparation/',
     '/harness/help/1-5-0/',
     '/harness/help/get-started/',
     '/harness/help/1-7-0-preparation/',

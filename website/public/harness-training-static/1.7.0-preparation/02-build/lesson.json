@@ -1,0 +1,175 @@
+{
+  "title": "Build your first report",
+  "subtitle": "A useful result. Clear boundaries. Evidence you can inspect.",
+  "courseLabel": "Harness in practice · Tutorial 2 of 6 · Plan → Build",
+  "revisionLabel": "Course draft · Harness 1.7.0 preparation · November 5, 2026",
+  "storageKey": "harness-170-course-02-build-20261105",
+  "sections": [
+    {
+      "id": "section-1",
+      "navTitle": "See the result",
+      "phase": "Plan → Build",
+      "title": "Build a report you can explain",
+      "intro": "Turn six synthetic activity entries into a formatted report, while keeping the input and checks protected.",
+      "html": "<p>Open the <a href=\"../assets/example/expected/activity-report.html\" target=\"_blank\" rel=\"noopener\">formatted report</a>. It accounts for <strong>6 entries and 270 minutes</strong>. Orion has 180 minutes and Lumen has 90.</p><p>This lesson practices the current Harness 1.7.0 workflow with fixed local command participants. The worker supplies known reference code; the protocol reviewer does not judge its quality. The protected tests check the actual program. No model or provider is called.</p><p>For real implementation, your assistant needs participants suited to the task and the execution authority you choose. Start with the offline practice to understand the decisions.</p><p><strong>Choose your starting path:</strong> this bounded reporting exercise starts from a clear goal. If your real project has several workflows or unresolved requirements, use <a href=\"../development-paths.html\">the goal-driven and spec-driven reference</a> to choose the preparation it needs before accepting a plan.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Ask the learner to explain the useful result and next decision in their own words.",
+        "Keep this offline practice distinct from authorizing real project or model work."
+      ]
+    },
+    {
+      "id": "section-2",
+      "navTitle": "Prepare the project",
+      "phase": "Plan → Build",
+      "title": "Start in an isolated practice folder",
+      "intro": "Use your selected Python 3.12 environment containing the noneditable Harness 1.7.0 wheel.",
+      "html": "<p>These practice commands use Bash or another POSIX shell on macOS/Linux. They use shell variables and line continuations. For another shell, have your assistant translate the commands and check the selected runtime before execution.</p><p>Follow the <a href=\"../setup.html#select-a-practice-runtime\">course setup</a> first. In the folder containing <code>practice.py</code>, choose a new absolute directory. On macOS, use a canonical parent such as <code>/private/tmp</code>.</p><p>Read the command, replace the placeholder, then run it. The helper creates an unfinished <code>report.py</code>, two test files, the CSV, expected output, a local participant registry and a work request. It initializes a disposable Git checkout. It accepts nothing and starts no build.</p>",
+      "copies": [
+        {
+          "label": "practice setup",
+          "text": "PRACTICE=\"/absolute/path/to/new-practice\"\npython practice.py \"$PRACTICE\""
+        }
+      ],
+      "presenterNotes": [
+        "Ask the learner to explain the useful result and next decision in their own words.",
+        "Keep this offline practice distinct from authorizing real project or model work."
+      ]
+    },
+    {
+      "id": "section-3",
+      "navTitle": "Review the plan",
+      "phase": "Plan → Build",
+      "title": "Ask what may change and how it will be checked",
+      "intro": "Prepare the draft, then inspect its complete scope before deciding.",
+      "html": "<p>Keep the same terminal and <code>PRACTICE</code> value. The task and request live beside the project, outside the checkout whose inputs Harness freezes.</p><p>Expect <code>draft</code>, no missing questions and a <code>checkpoint_digest</code>. Read the goal and both test criteria. Only <code>report.py</code> may change. The tests, input, expected outputs, registry and pytest configuration are protected.</p><p>If anything is wrong, stop and revise through the supported workflow. Editing the original request after preview does not update the saved task.</p>",
+      "copies": [
+        {
+          "label": "plan preview",
+          "text": "python -m attune_harness plan --request \"$PRACTICE/task.work.json\" \\\n  --project \"$PRACTICE/project\" --config \"$PRACTICE/project/participants.json\" \\\n  --task-dir \"$PRACTICE/task\""
+        }
+      ],
+      "presenterNotes": [
+        "Ask the learner to explain the useful result and next decision in their own words.",
+        "Keep this offline practice distinct from authorizing real project or model work."
+      ]
+    },
+    {
+      "id": "section-4",
+      "navTitle": "Accept the scope",
+      "phase": "Plan → Build",
+      "title": "Agree to the exact request",
+      "intro": "Acceptance records the scope you reviewed; execution is another decision.",
+      "html": "<p>Copy the full <code>checkpoint_digest</code> from your own preview into <code>PREVIEW_CHECKPOINT</code>. If the displayed request is correct, accept that checkpoint. Expect <code>accepted</code> and a new current checkpoint.</p><p>You have not completed the implementation by accepting its scope. In a browser intake, <strong>Approve this work request</strong> and <strong>Keep as draft</strong> record the corresponding intent decision; this command practice uses the CLI.</p>",
+      "copies": [
+        {
+          "label": "scope acceptance",
+          "text": "PREVIEW_CHECKPOINT=\"replace-with-your-full-preview-digest\"\npython -m attune_harness plan --task-dir \"$PRACTICE/task\" \\\n  --accept --checkpoint \"$PREVIEW_CHECKPOINT\""
+        }
+      ],
+      "presenterNotes": [
+        "Ask the learner to explain the useful result and next decision in their own words.",
+        "Keep this offline practice distinct from authorizing real project or model work."
+      ],
+      "check": {
+        "question": "What has acceptance established?",
+        "options": [
+          {
+            "text": "Agreement to the displayed scope; execution is still separate.",
+            "correct": true,
+            "feedback": "The saved request is accepted. Starting the local command workers is the next decision."
+          },
+          {
+            "text": "The report has already been implemented and checked.",
+            "correct": false,
+            "feedback": "Acceptance records intent, not implementation or test evidence."
+          }
+        ]
+      }
+    },
+    {
+      "id": "section-5",
+      "navTitle": "Start the practice",
+      "phase": "Plan → Build",
+      "title": "Give the local commands a bounded go",
+      "intro": "Inspect the registry before authorizing the prepared offline build.",
+      "html": "<p>The practice registry uses two fixed local commands. They make no API or native-model request. Read their configuration and the permitted effects before running the build command.</p><p><code>--allow-external</code> permits these local subprocess participants. It is not a funding grant or a security sandbox. For real model work, review the <a href=\"https://github.com/Smart-AI-Memory/attune-harness/blob/5159e7a79fbdb84d2982937716043b142534e6e9/docs/participant-funding.md\">current participant setup and funding guide</a>; do not infer your route from this fixture.</p><p>Expect <code>completed</code> only after the configured checks actually pass. If the command fails, inspect its saved error and journal before choosing a next action.</p>",
+      "copies": [
+        {
+          "label": "offline build",
+          "text": "python -m attune_harness build \"$PRACTICE/task\" --allow-external"
+        }
+      ],
+      "presenterNotes": [
+        "Ask the learner to explain the useful result and next decision in their own words.",
+        "Keep this offline practice distinct from authorizing real project or model work."
+      ]
+    },
+    {
+      "id": "section-6",
+      "navTitle": "Inspect the evidence",
+      "phase": "Plan → Build",
+      "title": "Separate a completed task from a trustworthy claim",
+      "intro": "Read the saved outcome and the tests that support it.",
+      "html": "<p>Inspect the saved task. Find the permitted file change, task probe and final probe. In the <a href=\"../assets/current-checks.json\">current course validation</a>, the two reporting test files contain 77 cases. The fixed reviewer only exercises the review protocol; independent assessment of a real implementation remains your responsibility.</p><p>Compare the source hash of the input and protected files before and after the build. A passing result supports the cases that ran, rather than every possible input or model.</p>",
+      "copies": [
+        {
+          "label": "saved task inspection",
+          "text": "python -m attune_harness status \"$PRACTICE/task\" --format markdown"
+        }
+      ],
+      "presenterNotes": [
+        "Ask the learner to explain the useful result and next decision in their own words.",
+        "Keep this offline practice distinct from authorizing real project or model work."
+      ]
+    },
+    {
+      "id": "section-7",
+      "navTitle": "Generate the report",
+      "phase": "Plan → Build",
+      "title": "Take the checked result into your browser",
+      "intro": "Run the completed program against the unchanged six-row CSV.",
+      "html": "<p>Move into the practice project. Choose an output path outside that project so the saved work’s input snapshot stays unchanged. Replace the path below with a new filename.</p><p>Expect <code>Saved report to …</code>. Open that exact file and check 6 entries, 270 minutes, the project totals and the date range against the CSV. The program refuses to overwrite an existing destination.</p>",
+      "copies": [
+        {
+          "label": "report command",
+          "text": "cd \"$PRACTICE/project\"\npython report.py data/activity.csv --format html --output /absolute/path/to/new-report.html"
+        }
+      ],
+      "presenterNotes": [
+        "Ask the learner to explain the useful result and next decision in their own words.",
+        "Keep this offline practice distinct from authorizing real project or model work."
+      ]
+    },
+    {
+      "id": "section-8",
+      "navTitle": "Choose the next step",
+      "phase": "Plan → Build",
+      "title": "Leave the work ready to inspect tomorrow",
+      "intro": "Explain one result, one boundary and the next decision.",
+      "html": "<label for=\"build-review-note\">Your result and next decision</label><textarea id=\"build-review-note\" data-save=\"build-review-note\" rows=\"5\" placeholder=\"What did the checks establish, and what still needs your review?\"></textarea><p>These notes stay in this browser. They do not change or approve the Harness task.</p><p>Continue with <a href=\"../03-return/\">Come back tomorrow</a> to inspect saved work before continuing. Use <a href=\"../04-review/\">Decide whether to trust the report</a> to connect a claim to independent evidence.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Ask the learner to explain the useful result and next decision in their own words.",
+        "Keep this offline practice distinct from authorizing real project or model work."
+      ]
+    }
+  ],
+  "coursePosition": 2,
+  "coursePath": [
+    "Turn an idea into a useful result",
+    "Build your first report",
+    "Come back tomorrow",
+    "Decide whether to trust the report",
+    "Make the tool usable",
+    "Make it work for your needs"
+  ],
+  "courseRoutes": [
+    "../01-define/",
+    "../02-build/",
+    "../03-return/",
+    "../04-review/",
+    "../05-deliver/",
+    "../06-improve/"
+  ]
+}

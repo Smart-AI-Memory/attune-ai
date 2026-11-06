@@ -21,13 +21,15 @@ describe('Harness-owned Help Center export', () => {
     const build = JSON.parse(readFileSync(path.join(defaultOutput, 'build.json'), 'utf8'));
     for (const name of Object.keys(build.files).filter((name) => name.endsWith('index.html'))) {
       const html = readFileSync(path.join(defaultOutput, name.replace('harness/help/', '')), 'utf8');
-      if (name.includes('/get-started/')) expect(html).toContain('published <strong>Harness 1.6.0</strong>');
+      if (name === 'harness/help/index.html') expect(html).toContain('Current published setup: <strong>Harness 1.6.0</strong>');
+      else if (name.includes('/get-started/')) expect(html).toContain('published <strong>Harness 1.6.0</strong>');
       else if (name.includes('/1-7-0-preparation/')) expect(html).toContain('preparation. Unpublished; use published 1.6.0 until release.');
       else if (name.includes('/1-5-0/')) expect(html).toContain('published <strong>Harness 1.5.0</strong>');
       else if (name.includes('/1-5-1-preparation/')) expect(html).toContain('Archived guide:');
       else if (name.includes('/goals/')) expect(html).toContain('Published guidance.');
       else expect(html).toContain('published <strong>Harness 1.5.1</strong>');
-      expect(html).toContain(name.includes('/goals/') ? 'class="goal-index"' : 'aria-label="On this page"');
+      if (name === 'harness/help/index.html') expect(html).not.toContain('aria-label="On this page"');
+      else expect(html).toContain(name.includes('/goals/') ? 'class="goal-index"' : 'aria-label="On this page"');
       expect(html).toContain('src="/harness/help/code-copy.js"');
     }
   });

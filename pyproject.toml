@@ -498,6 +498,8 @@ extend-exclude = '''
   | \.venv
   | build
   | dist
+  # Byte-preserved projection; formatting belongs to the Harness source.
+  | website/public/harness-training-static
 )/
 '''
 

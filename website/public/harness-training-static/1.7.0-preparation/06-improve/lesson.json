@@ -1,0 +1,144 @@
+{
+  "title": "Make it work for your needs",
+  "subtitle": "Choose one variation and prepare the next bounded change.",
+  "courseLabel": "Harness in practice · Tutorial 6 of 6 · Improve",
+  "revisionLabel": "Course draft · Harness 1.7.0 preparation · November 5, 2026",
+  "storageKey": "attune-reporting-wbt-1-7-preparation-06-improve-r1",
+  "coursePath": [
+    "Turn an idea into a useful result",
+    "Build your first report",
+    "Come back tomorrow",
+    "Decide whether to trust the report",
+    "Make the tool usable",
+    "Make it work for your needs"
+  ],
+  "sections": [
+    {
+      "id": "section-1",
+      "navTitle": "Make one useful change",
+      "phase": "Improve · Benefit",
+      "title": "Ask the next question the report does not answer",
+      "intro": "The report summarizes both projects. A person responsible for Orion may want to see only Orion without manually editing the input.",
+      "html": "<p>That is a useful next request: select one project while keeping the original data and unfiltered reporting behavior intact.</p><p>The supplied program currently accepts a CSV file, a text or HTML format and a new output path. It has <strong>no project-filter option</strong>. This lesson prepares and reviews the change; it does not claim that filtering has been implemented.</p><p>You will define the behavior, calculate independent acceptance examples and leave a clear stopping note. Use fewer hints where you can, and reopen earlier lessons when useful.</p><p>Read the <a href=\"../setup.html\">course setup instructions</a> for the current Harness preparation environment. Use the accompanying current software-check record for the supplied baseline.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Start with the user benefit: a project owner wants a focused report.",
+        "Do not invent or run --project on the unmodified supplied application."
+      ]
+    },
+    {
+      "id": "section-2",
+      "navTitle": "Keep a baseline",
+      "phase": "Improve · Inspect",
+      "title": "Know what must stay unchanged",
+      "intro": "Inspect the existing result before proposing a new option.",
+      "html": "<p>From the extracted example folder, inspect <a href=\"../assets/example/README.md\">the actual usage guide</a>, the input and expected report. Read this baseline command before running it; it prints a report locally without a model call.</p><div data-copy-slot=\"improve-baseline-command\"></div><p><strong>Expected baseline:</strong> 6 entries and 270 minutes; Orion 180, Lumen 90; Development 150, Documentation 75 and Testing 45.</p><p>Keep <code>data/activity.csv</code> and the existing expected outputs intact. Preserve the current source revision and test evidence before creating a separately scoped working copy.</p><p>Ask your assistant to identify the parser, aggregation and formatting paths in the actual source. An improvement brief should name real affected files after inspection rather than treating a desired option as an existing capability.</p>",
+      "copies": [
+        {
+          "label": "baseline command",
+          "text": "python3.12 report.py data/activity.csv\n",
+          "slot": "improve-baseline-command"
+        }
+      ],
+      "presenterNotes": [
+        "This command is supported by the supplied parser; a project-filter command is not.",
+        "Keep current source and input identity with any new local result."
+      ]
+    },
+    {
+      "id": "section-3",
+      "navTitle": "Write the change brief",
+      "phase": "Improve → Define",
+      "title": "Make the scope small enough to review",
+      "intro": "A bounded change states what should differ and which existing promises must survive.",
+      "html": "<div class=\"callout\"><h3>Filled change brief: select one project</h3><p><strong>User outcome:</strong> generate an Orion-only report from the complete activity CSV.</p><p><strong>Proposed behavior:</strong> an explicitly selected project limits the rows before entry counting, totals and project/category grouping. Text and HTML use the same selected rows.</p><p><strong>Keep unchanged:</strong> omitting selection preserves the existing full report. Keep input validation, output escaping, whole-number minutes, no overwrite and all original fixture bytes.</p><p><strong>Candidate file boundary:</strong> inspect <code>report.py</code> for implementation and prepare independent new acceptance coverage separately from the worker. Existing checks remain protected during the build.</p><p><strong>Outside scope:</strong> date filters, editing records, remote data, new dependencies and deployment.</p><p><strong>Decision still needed:</strong> settle the public option name, matching rules and behavior for an unknown project before implementing them.</p></div><p>This is a proposed project change, not a saved accepted Harness plan. Ask for the supported plan and current checkpoint before execution.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Allow the learner to challenge the proposed scope or matching rule. Product choices are not answered by the old tests.",
+        "New acceptance coverage must be authorized and prepared deliberately; do not silently change protected baseline expectations."
+      ]
+    },
+    {
+      "id": "section-4",
+      "navTitle": "Derive the acceptance examples",
+      "phase": "Improve → Verify",
+      "title": "Choose answers the implementation cannot invent",
+      "intro": "Calculate expected project results directly from the original six rows.",
+      "html": "<table><caption>Proposed project-selection acceptance examples</caption><thead><tr><th scope=\"col\">Selection</th><th scope=\"col\">Entries</th><th scope=\"col\">Minutes</th><th scope=\"col\">Category totals</th></tr></thead><tbody><tr><td>No project selected</td><td>6</td><td>270</td><td>Development 150; Documentation 75; Testing 45</td></tr><tr><td>Orion</td><td>4</td><td>180</td><td>Development 90; Documentation 45; Testing 45</td></tr><tr><td>Lumen</td><td>2</td><td>90</td><td>Development 60; Documentation 30</td></tr></tbody></table><p>Orion is <strong>90 + 30 + 45 + 15 = 180</strong>. Lumen is <strong>60 + 30 = 90</strong>. These are independently derived expectations for a proposed change, not results from an implemented filter.</p><ol><li>Require the same selected rows and totals in text and HTML.</li><li>Retain the no-selection baseline and existing validation and file-output cases.</li><li>Settle unknown-project and name-matching behavior before freezing expected outcomes.</li><li>Keep any additional tests separate from a claim that the baseline checks already cover the new feature.</li></ol><p>An HTML bar should be interpreted within the filtered result. Decide how an absent category is presented rather than silently turning a missing row into zero in the product contract.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Have the learner calculate Lumen with fewer hints, then compare with the table.",
+        "Do not assert a project-filter result exists or add proposed expectations to current execution results."
+      ]
+    },
+    {
+      "id": "section-5",
+      "navTitle": "Prepare before authorizing",
+      "phase": "Improve → Plan",
+      "title": "Carry the brief into the supported workflow",
+      "intro": "Use Harness to retain reviewed scope and checks after the product decisions are clear.",
+      "html": "<p>Read this prompt before sending it. It requests preparation and inspection, not implementation or a provider call.</p><div data-copy-slot=\"improve-planning-prompt\"></div><ol><li>Inspect the actual project, existing changes and current evidence.</li><li>Settle open selection decisions and prepare independent checks from the acceptance examples.</li><li>Prepare the supported request with exact file effects, protected checks, configured participants and budgets. Inspect its checkpoint before accepting scope.</li><li>Authorize execution separately only when the current request and its execution route are understood.</li></ol><p>Use the <a href=\"../setup.html\">current 1.7.0 course setup and practice guidance</a> for the selected runtime and supported preparation route. A prose change brief is not an accepted executable task.</p><p>Preserve the six-row fixture and baseline outputs. Current software checks use deterministic local work; a future model-assisted implementation needs its own reviewed participant configuration and applicable authority.</p>",
+      "copies": [
+        {
+          "label": "change planning prompt",
+          "text": "Help me prepare a bounded project-selection improvement to the supplied reporting program. Inspect the actual source and existing changes first. Preserve the six-row fixture, unfiltered expected reports, baseline tests and current evidence. Use the filled change brief and independently derived Orion/Lumen totals. Ask me to settle the option name, matching and unknown-project behavior before freezing checks. Prepare a supported Harness request with exact file effects, protected checks, participants, budgets and its current checkpoint. Keep preparation read-only; stop before acceptance, implementation or provider work. Do not assume that the program already has a project-filter flag.",
+          "slot": "improve-planning-prompt"
+        }
+      ],
+      "presenterNotes": [
+        "A concrete next request is not an accepted task merely because it is written in a lesson.",
+        "Use the selected 1.7.0 preparation runtime and inspect the current checkpoint."
+      ]
+    },
+    {
+      "id": "section-6",
+      "navTitle": "Try a variation with less help",
+      "phase": "Improve · Transfer",
+      "title": "Explain your own next decision",
+      "intro": "Suppose the intended reader manages Lumen, not Orion. Prepare the smallest revision to the request before asking for implementation.",
+      "html": "<p>In your own words, state the useful result, one independent expected answer, what stays protected and the next decision. You can use the Lumen totals from the original rows to check your answer.</p><label for=\"improve-variation\"><strong>Your Lumen variation</strong></label><textarea id=\"improve-variation\" data-save=\"improveVariation\" rows=\"5\" placeholder=\"Describe the outcome, expected result, protected inputs and decision needed.\"></textarea><p>This optional note stays in local browser storage when available. It accepts your wording and does not save or approve a Harness task.</p><details><summary>Optional hint</summary><p>A focused request could ask for two Lumen entries totaling 90 minutes, with Development 60 and Documentation 30. Preserve the full-data baseline and decide how unknown or differently capitalized project names should behave.</p></details><p>Explain why changing the original CSV to remove Orion would be a weaker test of a reusable filter: it loses the full-data input that the new behavior is supposed to select from.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Use this as a transfer activity: offer the hint only if wanted.",
+        "Ask for an explanation of the next decision; do not measure confidence or infer capability from a section visit."
+      ],
+      "check": {
+        "question": "Which evidence would support the proposed Orion filter most directly?",
+        "options": [
+          {
+            "text": "An unchanged six-row fixture yields four Orion rows and 180 minutes through the new option, while no selection still yields six rows and 270 minutes.",
+            "correct": true,
+            "feedback": "Correct. Those independent outcomes exercise the new selection and preserve the existing baseline. They still need actual execution after implementation."
+          },
+          {
+            "text": "The baseline checks prove that a project-filter option already works.",
+            "correct": false,
+            "feedback": "The supplied parser has no project-filter option. Baseline checks cannot establish behavior that was not implemented or exercised."
+          }
+        ]
+      }
+    },
+    {
+      "id": "section-7",
+      "navTitle": "Leave a stopping note",
+      "phase": "Improve · Continue",
+      "title": "Make the next session easy to start",
+      "intro": "Finish with a clear account of what is proposed, what is established and what needs a decision.",
+      "html": "<div class=\"callout\"><h3>Filled stopping note</h3><p><strong>Goal:</strong> add reusable project selection while preserving the complete CSV and existing report behavior.</p><p><strong>Established:</strong> the supplied parser supports CSV input, text/HTML format and a new output path. The six-row baseline totals 270 minutes.</p><p><strong>Prepared:</strong> a proposed change brief and independently calculated examples: Orion four entries/180 minutes; Lumen two entries/90 minutes.</p><p><strong>Not yet established:</strong> a selected option name, accepted plan, implemented filter, new execution or new passing checks.</p><p><strong>Next decision:</strong> agree on matching and unknown-project behavior, then inspect the supported plan and its current checkpoint.</p></div><p>Keep this note with the project guide when you choose to continue. Preserve the baseline and correct an inaccurate claim rather than changing an expected answer to match the new implementation.</p><details><summary>Current version and verification limits</summary><p>This lesson targets <strong>Harness 1.7.0 preparation</strong> at source <code>5159e7a79fbdb84d2982937716043b142534e6e9</code>. Version 1.7.0 is unpublished. Follow the <a href=\"../setup.html\">course setup instructions</a> for the selected runtime.</p><p>Read the <a href=\"../assets/current-checks.json\">current software-check record</a> for the exact checked files, commands, environment and results. These local checks make no model call. They do not establish every input, platform, model outcome or learner experience.</p></details><p><strong>Next:</strong> Open <strong><a href=\"../01-define/\">Tutorial 1: Turn an idea into a useful result</a></strong> when you want to frame a different outcome, or return to the lesson matching your current decision.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Close with what the learner can now do: define, inspect evidence, preserve context and prepare a bounded next step.",
+        "No speed, learning-effectiveness or independent-user acceptance result is claimed by completing these lessons."
+      ]
+    }
+  ],
+  "coursePosition": 6,
+  "courseRoutes": [
+    "../01-define/",
+    "../02-build/",
+    "../03-return/",
+    "../04-review/",
+    "../05-deliver/",
+    "../06-improve/"
+  ]
+}

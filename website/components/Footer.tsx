@@ -20,6 +20,8 @@ export default function Footer() {
             <h3 className={styles.heading}>Attune Harness</h3>
             <ul className="space-y-2">
               <li><Link href="/#harness" className={linkClass}>What you can do</Link></li>
+              <li><Link href="/harness/help/" className={linkClass}>Help Center</Link></li>
+              <li><Link href="/harness/learn/" className={linkClass}>Learn Harness</Link></li>
               <li><Link href="/docs#harness-docs" className={linkClass}>Harness documentation</Link></li>
               <li><Link href="/#context" className={linkClass}>Context and next steps</Link></li>
               <li><Link href="/#collaborate" className={linkClass}>Collaborate</Link></li>
