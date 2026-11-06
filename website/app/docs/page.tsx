@@ -96,6 +96,7 @@ export default function DocsPage() {
               </p>
               <nav className="flex flex-wrap justify-center gap-3">
                 <a href="#harness-docs" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">Harness</a>
+                <Link href="/harness/learn/" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">Learn Harness</Link>
                 <a href="#quickstart" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">
                   Historical 1.4.0 Quick Start
                 </a>
@@ -103,6 +104,19 @@ export default function DocsPage() {
                   FAQ
                 </a>
               </nav>
+            </div>
+          </div>
+        </section>
+
+        <section id="harness-learning" className="py-12 bg-[var(--surface-container-low)]" aria-labelledby="harness-learning-title">
+          <div className="container max-w-5xl">
+            <p className="text-sm font-semibold text-[var(--text-secondary)] mb-3">Draft course · Harness 1.7.0 preparation</p>
+            <h2 id="harness-learning-title" className="text-3xl font-bold mb-4">Harness in practice</h2>
+            <p className="text-xl text-[var(--text-secondary)] mb-4">Build a useful reporting tool through six guided lessons. Define the result, plan and build, return to saved work, review the evidence, prepare a local handoff and make a scoped improvement.</p>
+            <p className="text-[var(--text-secondary)] mb-6">Harness 1.7.0 is unpublished. For optional command practice, follow the <Link className="underline" href="/harness/learn/1.7.0-preparation/setup.html">course setup for a separate 1.7.0 environment</Link>. Published installation instructions remain in the Help Center.</p>
+            <div className="flex flex-wrap gap-4">
+              <Link className="btn btn-primary" href="/harness/learn/">Learn Harness</Link>
+              <Link className="btn btn-outline" href="/harness/help/">Open Help Center</Link>
             </div>
           </div>
         </section>

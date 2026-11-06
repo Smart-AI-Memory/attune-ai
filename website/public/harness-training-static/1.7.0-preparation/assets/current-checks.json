@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "checked_on": "2026-11-05",
+  "runtime": {
+    "harness": "1.7.0",
+    "python": "3.12.2",
+    "platform": "macOS arm64",
+    "source_commit": "5159e7a79fbdb84d2982937716043b142534e6e9",
+    "wheel_sha256": "bde6087e9b2d504f56f2de0527e5983f238e914d5abcd35f832ed4a3dd452b66",
+    "install_kind": "noneditable wheel"
+  },
+  "report_tests": {
+    "passed": 77,
+    "failed": 0,
+    "skipped": 0,
+    "command": "python -m pytest -q assets/example/tests"
+  },
+  "sample": {
+    "entries": 6,
+    "total_minutes": 270,
+    "projects": {
+      "Orion": 180,
+      "Lumen": 90
+    },
+    "categories": {
+      "Development": 150,
+      "Documentation": 75,
+      "Testing": 45
+    },
+    "html_sha256": "ae59332ac013d0ec220484b723457d4ac06a179e350218b769dc2d3425678124",
+    "matches_expected_bytes": true
+  },
+  "harness_journey": {
+    "profile": "feature-work-v1",
+    "status": "completed",
+    "commands": [
+      "init --for plan",
+      "plan --request",
+      "plan --accept --checkpoint <current-preview>",
+      "build --allow-external",
+      "status --format markdown"
+    ],
+    "model_calls": 0,
+    "participant_kind": "deterministic local commands",
+    "reviewer_limit": "Protocol acknowledgment only; no substantive independent review",
+    "checks": [
+      {
+        "operation": "probe:change",
+        "passed": true,
+        "exit_code": 0,
+        "passed_cases": 77,
+        "failed_cases": 0,
+        "skipped_cases": 0,
+        "output_summary": "77 passed in 3.60s"
+      },
+      {
+        "operation": "probe:final",
+        "passed": true,
+        "exit_code": 0,
+        "passed_cases": 77,
+        "failed_cases": 0,
+        "skipped_cases": 0,
+        "output_summary": "77 passed in 3.56s"
+      }
+    ],
+    "allowed": [
+      "report.py"
+    ],
+    "protected_inputs_unchanged": true,
+    "protected_file_count": 7
+  },
+  "sources_sha256": {
+    "pytest.ini": "a27f53f4a293be115c153b1b74c9312d3b0b40df75fac0b05c17d0ad7a469e16",
+    "report.py": "c2fccde863be533dfdd7c35fe093bf109debeef28c4761375899e3dec93c9e9b",
+    "expected/activity-report.html": "ae59332ac013d0ec220484b723457d4ac06a179e350218b769dc2d3425678124",
+    "expected/activity-report.txt": "95218eea94da8675ce4716254d73a447754ae7b9613729d7bf51c21ccce6ef0d",
+    "tests/test_html_report.py": "1fa9fd8587a0351a6215e092c07e239c8969bdc99a02f015182bf19ad188f1c3",
+    "tests/test_report.py": "ead736737bbac0ea42d1e6f8079c45548ed0f59876312e207dc0d189060df46e",
+    "data/activity.csv": "5ed238e1e9f0e8e665254170773c7cf24cddaef074c8c32770535cf6d27f3437"
+  },
+  "limits": [
+    "Offline software checks on the stated macOS/Python environment.",
+    "No fresh AI implementation or provider-account qualification.",
+    "No newcomer comprehension or learning-effectiveness observation.",
+    "Project filtering remains a proposed exercise, not an implemented feature."
+  ]
+}

@@ -9,8 +9,11 @@ a second command reference here.
 
 ## Published guidance and 1.7.0 preparation
 
-The export contains fifteen pages and thirty files, imported from merged
-Harness commit `5159e7a79fbdb84d2982937716043b142534e6e9`.
+The export contains fifteen pages and thirty files, imported from
+Harness candidate commit `1ad347d7b4a87d93f08df99e5c1efb4ee748632a` (draft PR #340).
+The landing page features the six-lesson Harness in practice course at
+`/harness/learn/`; superseded installation guides remain in the archive.
+Before production, reimport the reviewed, merged Harness source as described below.
 The current installation guide at `/harness/help/get-started/` describes
 published 1.6.0. The separate `/harness/help/1-7-0-preparation/` page describes an
 unpublished candidate and retains its selected source and wheel evidence.

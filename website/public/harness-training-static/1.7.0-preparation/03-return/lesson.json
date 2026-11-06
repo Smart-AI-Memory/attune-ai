@@ -1,0 +1,155 @@
+{
+  "title": "Come back tomorrow",
+  "subtitle": "Recover the goal, read what happened and choose a justified next action.",
+  "courseLabel": "Harness in practice · Tutorial 3 of 6 · Continue across phases",
+  "revisionLabel": "Course draft · Harness 1.7.0 preparation · November 5, 2026",
+  "storageKey": "attune-reporting-course-170-03-return-20261105-v1",
+  "coursePath": [
+    "Turn an idea into a useful result",
+    "Build your first report",
+    "Come back tomorrow",
+    "Decide whether to trust the report",
+    "Make the tool usable",
+    "Make it work for your needs"
+  ],
+  "sections": [
+    {
+      "id": "section-1",
+      "navTitle": "Recover the decision",
+      "phase": "Continue",
+      "title": "Pick up the decision, not just the conversation",
+      "intro": "When you return, establish what the report should do, what actually happened and whether anything needs action.",
+      "html": "<p>Open the <a href=\"../assets/example/expected/activity-report.html\" target=\"_blank\" rel=\"noopener\">supplied formatted report</a>. Its useful result is easy to recognize: six synthetic entries account for 270 minutes, with totals by project and category.</p><p>Imagine returning tomorrow. “Continue” could mean finishing a draft, inspecting a completed result or handling a concern. Those actions have different effects.</p><p>Ask your assistant to locate the actual saved reporting task and inspect it before proposing more work. The report file alone cannot establish which task produced it, what checks ran or what a reviewer found.</p><p>In this lesson, you will recover the goal, inspect current evidence and write a short continuation brief. Reading the lesson or reopening a report does not start a build.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Ask what the learner would want to know first after a break. Connect the answer to the report and current decision.",
+        "Use only the current course artifacts and fresh local checks. Opening a supplied example does not establish a new task in the learner’s own project."
+      ]
+    },
+    {
+      "id": "section-2",
+      "navTitle": "Know what was saved",
+      "phase": "Continue · Records",
+      "title": "Separate three kinds of saved state",
+      "intro": "A lesson bookmark, a project file and a Harness record answer different questions.",
+      "html": "<table><caption>What each saved item establishes</caption><thead><tr><th scope=\"col\">Saved item</th><th scope=\"col\">What it tells you</th><th scope=\"col\">What it does not establish</th></tr></thead><tbody><tr><td>This lesson's section and practice notes</td><td>Where you were reading in this browser.</td><td>Harness task acceptance or execution.</td></tr><tr><td>The CSV and report files</td><td>The actual input and output you can inspect.</td><td>Which participant ran or which checks passed.</td></tr><tr><td>The actual Harness task and evidence</td><td>Its recorded intent, state, decisions and supported outcomes.</td><td>Unrecorded work or permission for a new action.</td></tr></tbody></table><p>A draft can have saved answers without acceptance. An accepted request can exist before execution. A completed workflow can still retain a concern. Read the record rather than inferring state from a familiar filename.</p><p>Copy important browser notes into your project handoff. Another browser or a cleared storage area may not contain them.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Ask which item the learner would inspect to establish an execution result. The output and checks must be considered together.",
+        "Browser progress is separate from task continuity and cross-agent memory."
+      ]
+    },
+    {
+      "id": "section-3",
+      "navTitle": "Inspect the actual task",
+      "phase": "Continue · Status",
+      "title": "Ask for a read-only inspection",
+      "intro": "Use the saved path from your earlier work. If it is missing, locate it before running a task command.",
+      "html": "<ol><li>Find the actual task directory retained by the earlier workflow.</li><li>Have the assistant confirm its identity, goal and current state.</li><li>Read the accepted scope, recorded execution, checks, findings and next action together.</li><li>Keep missing evidence visible. Successful inspection does not mean the work is complete.</li></ol><details><summary>Optional CLI reference: inspect saved status</summary><p>Use the selected installed Harness environment. Replace the entire absolute path with an existing saved task directory; do not paste the placeholder unchanged.</p><pre><code>attune-harness status /absolute/path/to/saved-reporting-task --format markdown</code></pre><p><strong><code>status</code></strong> reads the saved task. It does not dispatch a participant or continue execution. If the path is refused or no record exists, inspect the error and locate the original task. Do not invent a replacement record.</p></details><p>If you have no saved task of your own, use the supplied <a href=\"../assets/current-checks.json\">current check summary</a> for the evidence exercise. Treat that summary as a reference, not as an active task in your project.</p>",
+      "copies": [
+        {
+          "label": "saved-task inspection prompt",
+          "text": "Help me return to the actual saved reporting task from our earlier work. Locate and verify its saved task directory rather than guessing. Inspect the goal, task identity and revision, accepted scope, recorded execution, checks, review findings and current next action. Separate established facts from missing context. Keep this inspection read-only and do not retry or start work."
+        }
+      ],
+      "presenterNotes": [
+        "The prompt is the main route; terminal syntax is optional. No prior task path is assumed.",
+        "Use an actual saved task or the supplied fresh check summary. Do not treat a reference artifact as the learner’s own accepted task."
+      ]
+    },
+    {
+      "id": "section-4",
+      "navTitle": "Read the evidence",
+      "phase": "Continue · Checks",
+      "title": "Ask what each result establishes",
+      "intro": "The current checks summary tells you what was exercised. Its limits matter as much as its outcome.",
+      "html": "<p>Read <a href=\"../assets/current-checks.json\">Current local checks</a>. Ask your assistant to explain the actual source/runtime, commands or actions, outcomes and any exclusions it records.</p><table><caption>Questions for the current evidence</caption><thead><tr><th scope=\"col\">Question</th><th scope=\"col\">What to inspect</th></tr></thead><tbody><tr><td>Did the report include the whole sample?</td><td>Six entries; 270 minutes; the project and category totals match the supplied rows.</td></tr><tr><td>Which behaviors were checked?</td><td>The actual selected checks and their outcomes, including failures, skips or unexecuted work.</td></tr><tr><td>What did the Harness witness establish?</td><td>Its stated scope, task and runtime; distinguish deterministic software checks from model or human judgment.</td></tr><tr><td>What remains unknown?</td><td>Any limits recorded with the evidence and any intended user journey that was not exercised.</td></tr></tbody></table><p>Use the actual counts and statuses in the current summary. Do not assume that a successful status command, completed workflow or attractive report establishes every behavior you care about.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Read values from the actual current summary rather than reciting a count from an older record.",
+        "The optional check should prompt an explanation. It never blocks progression."
+      ],
+      "check": {
+        "question": "A saved task is completed and its chosen checks passed. What should your return brief say?",
+        "options": [
+          {
+            "text": "State which checks passed, inspect remaining findings and retain the limits of that evidence.",
+            "correct": true,
+            "feedback": "A completed workflow and passing selected checks are useful evidence. They do not erase findings or establish untested behavior."
+          },
+          {
+            "text": "State that all possible report behavior is correct, because completed means no further concern is possible.",
+            "correct": false,
+            "feedback": "Completed describes the recorded workflow. Read its checks, findings and limits before deciding whether any further action is needed."
+          }
+        ]
+      }
+    },
+    {
+      "id": "section-5",
+      "navTitle": "Recover the context",
+      "phase": "Continue · Briefing",
+      "title": "Leave a stopping note you can use",
+      "intro": "The saved record shows workflow state. A short note explains the human decision you would otherwise have to reconstruct.",
+      "html": "<div class=\"callout\"><h3>Example continuation brief</h3><dl><dt>Goal</dt><dd>Produce a readable report of the six synthetic entries and their project/category totals.</dd><dt>Current focus</dt><dd>Read the supplied report and its current local check summary.</dd><dt>Evidence to inspect</dt><dd>The source CSV, actual report, current checks and the real saved task when available.</dd><dt>Uncertainty</dt><dd>Any task identity, result or observation that has not been established.</dd><dt>Next decision</dt><dd>Decide whether the report is sufficiently supported for its intended reader or whether a specific concern needs work.</dd></dl></div><p>This is a lesson example, not a new saved Harness record. Your own note should name the actual task and revision, where work stopped, evidence locations, uncertainty and a justified next action.</p><details><summary>Current Harness continuation briefing</summary><p>For an eligible <code>feature-work-v1</code> task, Harness can include a caller-owned continuation note in a read-only Markdown or HTML status briefing. Have the assistant check the actual task ID/revision, note contract and output paths first. A note records attributed context; it does not revise accepted scope or verify its own claims.</p><p><a href=\"https://github.com/Smart-AI-Memory/attune-harness/blob/5159e7a79fbdb84d2982937716043b142534e6e9/docs/cli-guide.md#pause-and-return-to-work\">Read the source-bound 1.7.0 pause-and-return procedure</a>.</p></details>",
+      "copies": [
+        {
+          "label": "stopping-note prompt",
+          "text": "Prepare a short stopping note for the actual reporting task we just inspected. Use its verified task identity and revision. State the goal, where we stopped, evidence locations, unresolved concerns and the next decision with its reason. Distinguish recorded Harness results from work performed outside that task. Preserve prior notes, and show me this new note before saving it. Do not revise accepted scope or resume execution."
+        }
+      ],
+      "presenterNotes": [
+        "Keep the note short enough to read tomorrow. Missing observations remain missing.",
+        "Only eligible task profiles accept the continuation format. Verify the task owner’s supported route before creating the note."
+      ]
+    },
+    {
+      "id": "section-6",
+      "navTitle": "Try a changed request",
+      "phase": "Continue · Your decision",
+      "title": "Notice when the next step changes scope",
+      "intro": "Suppose you return and now want the report to show only Orion. That is a requirement to inspect, not just a reminder.",
+      "html": "<p>First establish whether the current tool already supports that selection. If it does not, describe project filtering as a proposed change. Preserve the original all-project report and its existing checks.</p><p>Ask for a separate change brief or the supported task-revision route. Changing a stopping note does not change accepted scope. Reopening a briefing does not authorize execution, and an old checkpoint is not approval for a changed requirement.</p><p>Explain which next action is justified: read the existing project total, review a concern, prepare a new scoped change or stop. You do not need a new build when the current report already answers the question.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Give fewer hints. Ask why reading Orion’s existing total differs from changing which rows the report includes.",
+        "No resume invocation belongs in this lesson. Explain the next decision without reusing a grant."
+      ]
+    },
+    {
+      "id": "section-7",
+      "navTitle": "Write your return decision",
+      "phase": "Continue · Practice",
+      "title": "Summarize the state in your own words",
+      "intro": "A useful return brief tells the next person what is established and why the next action makes sense.",
+      "html": "<label for=\"return-decision-note\">Your current position, evidence and next decision</label><textarea id=\"return-decision-note\" data-save=\"return-decision-note\" rows=\"6\" placeholder=\"Which actual task or supplied evidence am I inspecting? What does it establish? What remains unknown? What should happen next, and why?\"></textarea><p class=\"caption\">These are browser-only practice notes when storage is available. They are separate from a Harness task, continuation note and acceptance record. Copy important text into your project handoff.</p><p>Read your note once as if you were returning tomorrow. Can you locate the evidence without reconstructing the conversation? Have you distinguished inspection from any action that could change files or run participants?</p><p>You can leave a decision open if the evidence is missing. State the gap and the smallest action that could resolve it, rather than inventing a successful result.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Preserve the learner’s wording. Offer one specific hint only if needed, then ask them to explain their decision.",
+        "Do not score the length of the note. The goal is a supported next action and enough context to find the right evidence."
+      ]
+    },
+    {
+      "id": "section-8",
+      "navTitle": "Choose what comes next",
+      "phase": "Continue → Review",
+      "title": "Return with a decision you can explain",
+      "intro": "You can now say what the work was for, which evidence you inspected and why the next action is warranted.",
+      "html": "<ul><li>Name the actual task or supplied evidence you inspected.</li><li>Distinguish a saved draft, accepted scope and recorded execution.</li><li>Explain one result and one remaining limit.</li><li>Choose inspection, review, a proposed scoped change or no further work.</li></ul><p>For this course, the next useful action is to assess the report's evidence. You do not need another build to read what the current result supports.</p><p><strong>Next:</strong> Open <strong><a href=\"../04-review/\">Decide whether to trust the report</a></strong>.</p><p>If you missed planning and the first result, return to <a href=\"../02-build/\">Build your first report</a>. Keep your actual task path and stopping note in the project handoff so the next session can locate them.</p><details><summary>Current version and observation limits</summary><p>This lesson targets unpublished Harness 1.7.0 preparation at source <code>5159e7a</code>. The <a href=\"../assets/current-checks.json\">current check summary</a> records fresh local software verification and its limits. A deterministic witness is not a model-quality measurement, a human learning result or general cross-agent memory.</p><p><a href=\"https://github.com/Smart-AI-Memory/attune-harness/blob/5159e7a79fbdb84d2982937716043b142534e6e9/docs/cli-guide.md#pause-and-return-to-work\">Current source-bound continuation guidance</a> · <a href=\"../setup.html\">Course guide</a></p></details>",
+      "copies": [],
+      "presenterNotes": [
+        "Ask for a short return summary in the learner’s own words. The goal is a justified decision, not a green progress counter.",
+        "Use current course materials only; local browser notes do not substitute for the actual saved task."
+      ]
+    }
+  ],
+  "coursePosition": 3,
+  "courseRoutes": [
+    "../01-define/",
+    "../02-build/",
+    "../03-return/",
+    "../04-review/",
+    "../05-deliver/",
+    "../06-improve/"
+  ]
+}

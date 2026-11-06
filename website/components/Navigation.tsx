@@ -7,7 +7,8 @@ import { HELP_VIDEOS } from '@/lib/videos';
 
 const navItems = [
   { label: 'What you can do', href: '/#harness' },
-  { label: 'Harness Help', href: '/harness/help/' },
+  { label: 'Help Center', href: '/harness/help/' },
+  { label: 'Learn Harness', href: '/harness/learn/' },
   { label: 'Context & next steps', href: '/#context' },
   { label: 'Projects', href: '/#portfolio' },
   // The Learn link appears only once the video registry has entries.
