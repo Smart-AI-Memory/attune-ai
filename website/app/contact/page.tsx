@@ -102,7 +102,7 @@ export default function ContactPage() {
 
       const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && data.success === true) {
         setSubmitStatus('success');
         // Reset form after 3 seconds
         setTimeout(() => {
@@ -118,18 +118,10 @@ export default function ContactPage() {
       } else {
         setSubmitStatus('error');
         console.error('Form submission error:', data.error);
-        // Reset error state after 3 seconds
-        setTimeout(() => {
-          setSubmitStatus('idle');
-        }, 3000);
       }
     } catch (error) {
       setSubmitStatus('error');
       console.error('Network error:', error);
-      // Reset error state after 3 seconds
-      setTimeout(() => {
-        setSubmitStatus('idle');
-      }, 3000);
     }
   };
 
@@ -297,6 +289,12 @@ export default function ContactPage() {
                     {submitStatus === 'error' && 'Try Again'}
                   </button>
                 </div>
+
+                {submitStatus === 'error' && (
+                  <p role="alert" className="text-[var(--error)] text-center">
+                    We couldn’t send your message. Your entries are still here. Click <strong>Try Again</strong>.
+                  </p>
+                )}
 
                 {submitStatus === 'success' && (
                   <div className="bg-[var(--success)] bg-opacity-10 border-2 border-[var(--success)] rounded-lg p-4 text-center">

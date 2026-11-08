@@ -49,8 +49,8 @@ export async function POST(request: NextRequest) {
           ip: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
         },
       });
-      dbSuccess = true;
       contactId = contact.id;
+      dbSuccess = true;
       console.log('Contact saved to database:', contact.id);
     } catch (dbError) {
       console.error('Database error (continuing anyway):', dbError);
@@ -66,9 +66,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!emailSent) {
-      // The visitor still gets a 200 (their submission is stored); the
-      // maintainer must be able to see the miss — at error level, and
-      // in the body so a production probe can read it.
+      // Report email failure even when the database saved the submission.
       console.error('contact form email NOT sent', { contactId, resendKeyPresent: Boolean(process.env.RESEND_API_KEY) });
     }
 
@@ -78,6 +76,13 @@ export async function POST(request: NextRequest) {
       database: dbSuccess,
       emailNotification: emailSent,
     });
+
+    if (!dbSuccess && !emailSent) {
+      return NextResponse.json(
+        { success: false, error: 'Unable to accept the message', emailSent },
+        { status: 503 }
+      );
+    }
 
     return NextResponse.json(
       {
