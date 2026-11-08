@@ -49,7 +49,7 @@ const nextConfig: NextConfig = {
     return {
       // Resolve the committed course files before Vercel checks the filesystem.
       beforeFiles: [...Object.keys(trainingReceipt.files), 'import.json'].map((file) => ({
-        source: `/harness/learn/${file.replace(/\./g, '\\.')}`,
+        source: `/harness/learn/${file.replace(/[.*+?^:${}()|[\]\\]/g, '\\$&')}`,
         destination: `/harness-training-static/${file}`,
       })),
       afterFiles: [
