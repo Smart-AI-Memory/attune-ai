@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "source_repository": "Smart-AI-Memory/attune-harness",
-  "source_commit": "e889c0c1625b51d9d401469b09b362ceeb955bc6",
-  "source_url": "https://github.com/Smart-AI-Memory/attune-harness/tree/e889c0c1625b51d9d401469b09b362ceeb955bc6",
+  "source_commit": "a50ccc0beca9916a585c33cf76f01cdda1c511ae",
+  "source_url": "https://github.com/Smart-AI-Memory/attune-harness/tree/a50ccc0beca9916a585c33cf76f01cdda1c511ae",
   "course": "1.7.0-preparation",
   "status": "published",
   "files": {
@@ -47,7 +47,7 @@
     "1.7.0-preparation/assets/styles.css": "fadf8d0f7f0b2707608d83d424634d09f4803af63db50095803a5a943ab3237f",
     "1.7.0-preparation/development-paths.html": "e7d7e4645637cecffafc4932f82ad6b1996c0ce5cd79ce30dc41de7e6dd00182",
     "1.7.0-preparation/index.html": "bbc950f8b2c40f55cf1bf154ab5f27a633986500b8bb683f192ea6b0029522cf",
-    "1.7.0-preparation/practice.py": "bbccfdb26fa67c726c25d0deafe07392a3fb8f47df070f47730704ac2b3dc951",
+    "1.7.0-preparation/practice.py": "cc6cd17e7975a12507a510a8d0918b850d11ea6d5524b4b2c44ec61bf544e8cc",
     "1.7.0-preparation/setup.html": "dc310f4a73cc14cc4ec033f7cef45c518fb41f14988c86eabcab23cdffc77b28",
     "archive/README.md": "254e30c67396c1b6a448bd571576f3ae5a05bf27c13a068e774fba0cadecc9ae",
     "archive/build-your-first-report-1.5.1-r5.zip": "28ab27377aba81223af098c7557227336e5adaea316822d4c6eaaee15c42f333",

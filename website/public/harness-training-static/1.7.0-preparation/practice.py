@@ -67,7 +67,7 @@ print(json.dumps({{"schema_version": 1,
         "git", "-C", str(project), "-c", "commit.gpgsign=false",
         "-c", "user.name=Offline practice", "-c", "user.email=practice@example.invalid",
         "commit", "-qm", "Prepare the offline reporting fixture\n\n"
-        "Co-Authored-By: GPT-6 (Codex) <codex@openai.com>",
+        + "Co-Authored-By: GPT-6 (Codex) <codex@openai.com>",
     ], check=True)
     task = destination / "task"
     result = subprocess.run([
