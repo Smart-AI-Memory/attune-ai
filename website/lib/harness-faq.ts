@@ -15,7 +15,7 @@ export const HARNESS_FAQ_ITEMS = [
   {
     question: 'How do I get started with Harness?',
     answer:
-      `Use the Get started guide for published Harness ${HARNESS_PUBLISHED_VERSION}. With Python 3.12 or later, install it in a managed environment using ${HARNESS_INSTALL_COMMAND}, then confirm the version and run a local example. Redis and Voyage are optional integrations; Voyage calls need an API key and spending permission. Harness 1.7.0 remains in preparation.`,
+      `Use the Get started guide for published Harness ${HARNESS_PUBLISHED_VERSION}. With Python 3.12 or later, install it in a managed environment using ${HARNESS_INSTALL_COMMAND}, then confirm the version and run a local example. Redis and Voyage are optional integrations; Voyage calls need an API key and spending permission.`,
   },
   {
     question: 'What does a receipt tell me?',

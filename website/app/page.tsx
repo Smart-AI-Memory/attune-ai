@@ -18,7 +18,7 @@ export default function Home() {
         <h1 id="hero-title">Turn a goal into a plan.<br />Put agents to work.<br />Check the results.</h1>
         <p className={styles["intro"]}>Plan a change, review a document, repair files, run tests or return to saved work with your assistant in Codex or Claude Code. Harness keeps the output and check results so you can see what happened and decide what to do next.</p>
         <Link className={styles["cta"] + " " + styles["primary"]} href="/harness/help/goals/">Choose your next task <span aria-hidden="true">↗</span></Link>
-        <p className={styles["secondary-paths"]}><Link href={HARNESS_GET_STARTED}>Get started</Link><Link href="#collaborate">Work with us</Link></p>
+        <p className={styles["secondary-paths"]}><Link href={HARNESS_GET_STARTED}>Get started</Link><Link href="/harness/learn/">Learn Harness</Link><Link href="#collaborate">Work with us</Link></p>
       </div>
       <aside className={styles["evidence-card"]} aria-labelledby="chain-title">
         <p className={styles["eyebrow"]}>Attune Harness</p>
@@ -54,7 +54,7 @@ export default function Home() {
         </div>
         <div className={styles["release"]}>
           <p><strong>{HARNESS_RELEASE_NOTICE}</strong> <Link href={HARNESS_GET_STARTED}>Get started</Link> · <Link href={HARNESS_PACKAGE_URL}>Published package</Link></p>
-          <p className={styles["candidate"]}>{HARNESS_PREPARATION_NOTICE} <Link href={HARNESS_PREPARATION}>Explore the 1.7.0 preparation guide</Link>.</p>
+          <p className={styles["candidate"]}>{HARNESS_PREPARATION_NOTICE} <Link href={HARNESS_PREPARATION}>Explore the archived 1.7.0 preparation guide</Link>.</p>
           <p className={styles["candidate"]}>Browser forms guide intake and intent approval. Each workflow retains its own execution permissions and checks.</p>
           <details>
             <summary>Read the evidence and limits</summary>

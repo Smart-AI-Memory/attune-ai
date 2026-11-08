@@ -1,0 +1,137 @@
+{
+  "title": "Decide whether to trust the report",
+  "subtitle": "Check the answer. Read the evidence. Make a reasoned decision.",
+  "courseLabel": "Harness in practice · Tutorial 4 of 6 · Verify → Review",
+  "revisionLabel": "Harness 1.7.0 · November 7, 2026",
+  "storageKey": "attune-reporting-wbt-1-7-preparation-04-review-r1",
+  "coursePath": [
+    "Turn an idea into a useful result",
+    "Build your first report",
+    "Come back tomorrow",
+    "Decide whether to trust the report",
+    "Make the tool usable",
+    "Make it work for your needs"
+  ],
+  "sections": [
+    {
+      "id": "section-1",
+      "navTitle": "A report you can explain",
+      "phase": "Verify → Review",
+      "title": "Decide what makes this report trustworthy",
+      "intro": "A useful report gives you an answer you can explain, together with evidence for the parts you cannot check by eye.",
+      "html": "<p>Click <strong><a href=\"../assets/example/expected/activity-report.html\" target=\"_blank\" rel=\"noopener\">Open formatted report</a></strong>. Find its date range, entry count and total. This is the six-row example used by the current course.</p><p>Then ask: what supports those numbers, and what remains uncertain?</p><p>By the end of this lesson, you will compare the report with its input, distinguish a software-check result from your judgment and write a bounded review decision. Reading these files makes no model call.</p><p>Keep the current <a href=\"../assets/current-checks.json\">software-check record</a> beside the report so its commands, source and environment can be inspected.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Open the actual current-course report. Inspect its numbers rather than relying on a screenshot.",
+        "The benefit is explaining why a result is supported and naming its limits."
+      ]
+    },
+    {
+      "id": "section-2",
+      "navTitle": "Check the arithmetic",
+      "phase": "Verify · Independent expectation",
+      "title": "Check one answer yourself",
+      "intro": "The six-row fixture is small enough to audit without reading the implementation.",
+      "html": "<p>Read <a href=\"../assets/example/data/activity.csv\">the supplied CSV</a>. Add its minutes: <strong>90 + 30 + 45 + 60 + 30 + 15 = 270</strong>.</p><table><caption>Independent totals from the six supplied rows</caption><thead><tr><th scope=\"col\">Grouping</th><th scope=\"col\">Expected totals</th></tr></thead><tbody><tr><td>Project</td><td>Orion 180; Lumen 90</td></tr><tr><td>Category</td><td>Development 150; Documentation 75; Testing 45</td></tr><tr><td>Whole report</td><td>6 entries; 270 minutes; 19–21 October 2026</td></tr></tbody></table><p>The project totals and category totals each add to 270. They describe the same work grouped in two ways; adding both tables together would count every minute twice.</p><p>Choose one group and explain how its rows produce the expected subtotal. Compare it with <a href=\"../assets/example/expected/activity-report.txt\">the expected text report</a> and the formatted report.</p><label for=\"review-arithmetic\"><strong>Your arithmetic check</strong></label><textarea id=\"review-arithmetic\" data-save=\"reviewArithmetic\" rows=\"4\" placeholder=\"Which rows did you add, and what did you compare?\"></textarea><p>This optional note is saved in local browser storage when available. It is not a Harness result or approval.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Let the learner calculate one subtotal. Do not replace the activity with a recital of the answer.",
+        "The CSV and expected report are primary artifacts; the table is derived from their six rows."
+      ]
+    },
+    {
+      "id": "section-3",
+      "navTitle": "Read the current checks",
+      "phase": "Verify · Evidence",
+      "title": "Read the recorded result within its scope",
+      "intro": "A check is useful when you can identify the input, expected answer, command and actual result.",
+      "html": "<p>Read the <a href=\"../assets/current-checks.json\">Current software-check record</a>. Find the selected runtime/source, reporting files, actual commands, environment and recorded outcome. Check what ran and whether anything failed, skipped or remained unexecuted.</p><table><caption>Connect each claim with evidence</caption><thead><tr><th scope=\"col\">Claim to assess</th><th scope=\"col\">Evidence to inspect</th></tr></thead><tbody><tr><td>The sample total is 270 minutes.</td><td>The six CSV rows, independent arithmetic and actual report output.</td></tr><tr><td>The text and HTML agree.</td><td>The current generated outputs and the checks comparing their entries and totals.</td></tr><tr><td>An existing report is preserved.</td><td>The output-file check and its actual result for an existing destination.</td></tr><tr><td>The implementation meets the selected checks.</td><td>The executed test command and recorded pass, failure and skip outcomes.</td></tr></tbody></table><p>The current bundled-report test run passed <strong>77 checks, with no failures or skips</strong>. Read <a href=\"../assets/example/tests/test_report.py\">Text checks</a> and <a href=\"../assets/example/tests/test_html_report.py\">HTML checks</a> when you want to understand an expectation. That result supports the cases it exercised; it does not prove every possible input.</p><p><strong>Read this prompt before sending it.</strong> It requests inspection only.</p>",
+      "copies": [
+        {
+          "label": "evidence inspection prompt",
+          "text": "Inspect the current reporting source, six-row CSV, expected report and current-checks.json. Explain which commands actually ran, what their results establish, what failed or skipped and which claims remain unverified. Separate independent arithmetic, executed checks and your interpretation. Keep the inspection read-only. Do not start a model, change files, approve work or rerun anything merely because a result is uncertain."
+        }
+      ],
+      "presenterNotes": [
+        "Use the fresh current-checks.json that accompanies this course. Do not import a result from another runtime or source.",
+        "The current record reports 77 reporting tests in a fresh Python 3.12 environment. Keep its exact source, environment and result with the course."
+      ]
+    },
+    {
+      "id": "section-4",
+      "navTitle": "Inspect a concern",
+      "phase": "Review · Reasoning",
+      "title": "Turn a concern into a checkable question",
+      "intro": "A plausible concern deserves a concrete input and expected result before you decide whether it is a defect.",
+      "html": "<div class=\"callout\"><h3>Illustrative concern: a missing row</h3><p>Suppose a report omitted the final 15-minute Orion testing entry. This is a proposed counterexample for learning, not an observed finding in the current software.</p></div><ol><li>Identify the exact input: the unchanged six-row CSV.</li><li>State the independent expectation: 6 entries, 270 minutes and Orion at 180.</li><li>Describe the supposed failure: 5 entries, 255 minutes and Orion at 165.</li><li>Ask whether current output or a suitable test actually shows that mismatch. Keep the concern unconfirmed until the evidence exists.</li></ol><p>If a mismatch is observed, retain the failing input/output and choose a bounded investigation or correction. If it is not observed, report that outcome. A suggestion does not become a bug because it sounds reasonable.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Label the missing-row case as illustrative. Do not attribute it to a reviewer or an actual run.",
+        "Ask what evidence would change the learner’s decision."
+      ]
+    },
+    {
+      "id": "section-5",
+      "navTitle": "Choose a bounded response",
+      "phase": "Review → Plan",
+      "title": "Handle a real finding without changing the answer",
+      "intro": "When evidence establishes a defect, preserve the expectation and make the correction inspectable.",
+      "html": "<p>Use the missing-row concern as a paper exercise. Decide what a repair task would need before authorizing it:</p><ol><li>Keep the six-row input and independently derived expected totals.</li><li>Prepare a focused check that exposes an observed mismatch. Verify it against the failing behavior before treating it as a regression check.</li><li>Define the smallest allowed implementation change and protect the acceptance expectation from the repair worker.</li><li>After separately authorized work, inspect the same check, actual diff and broader relevant results. Preserve failed attempts and any remaining concerns.</li></ol><div class=\"callout\"><h3>Filled proposed response</h3><p><strong>Trigger:</strong> a reproduced missing-row failure, if found.</p><p><strong>Expected answer:</strong> all six entries remain counted; the total is 270 minutes.</p><p><strong>Review point:</strong> inspect the input, failure, allowed file scope and independent check before starting a correction.</p><p><strong>Current state:</strong> this lesson has proposed a response; it has not established a defect or performed a repair.</p></div>",
+      "copies": [],
+      "presenterNotes": [
+        "Keep a hypothetical repair separate from the current software-check result.",
+        "Changing the expected answer changes the contract; it is not a shortcut to green tests."
+      ]
+    },
+    {
+      "id": "section-6",
+      "navTitle": "Try a smaller variation",
+      "phase": "Verify · Transfer",
+      "title": "Notice when a plausible total is wrong",
+      "intro": "The omitted-row example lets you practice checking a result with fewer hints.",
+      "html": "<p>If the final 15-minute testing row were omitted, the report would show <strong>5 entries and 255 minutes</strong>. Orion would total 165 and Testing 30; Lumen would remain at 90. These numbers could look plausible until compared with the complete input.</p><ol><li>Identify the omitted row in the six-row fixture.</li><li>Recalculate one affected subtotal.</li><li>Explain which check would expose the omission: entry count, grand total, project total or category total.</li><li>State what your check would leave untested, such as invalid input or output-file handling.</li></ol><p>Use an independent expected answer. Asking the same implementation to produce its own expected total can repeat the same mistake.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Keep the optional check nonblocking. Invite an explanation rather than merely choosing an option.",
+        "The omitted-row numbers are independently calculated expectations, not a software failure report."
+      ],
+      "check": {
+        "question": "The sample matches the six-row arithmetic and its selected checks pass. Which conclusion is supported?",
+        "options": [
+          {
+            "text": "The recorded checks support the sample and tested cases within the stated source and environment; other behavior may still need evidence.",
+            "correct": true,
+            "feedback": "Correct. Connect the conclusion to the actual checks and keep untested cases visible."
+          },
+          {
+            "text": "Every possible input, platform and future change is now proven correct.",
+            "correct": false,
+            "feedback": "The evidence covers the selected inputs, cases, source and environment. Broader claims need their own checks."
+          }
+        ]
+      }
+    },
+    {
+      "id": "section-7",
+      "navTitle": "Write your decision",
+      "phase": "Review · Decision",
+      "title": "Leave an explanation another person can inspect",
+      "intro": "Use a short note to connect the useful result, checked claims and next decision.",
+      "html": "<div class=\"callout\"><h3>Filled review decision</h3><p><strong>Useful result:</strong> the sample accounts for six entries and 270 minutes. Orion totals 180 and Lumen 90; categories total Development 150, Documentation 75 and Testing 45.</p><p><strong>Evidence to retain:</strong> the input, actual report and current software-check record with source, commands, environment and outcomes.</p><p><strong>Concern considered:</strong> a missing 15-minute row was an illustrative counterexample, not a confirmed defect.</p><p><strong>Decision:</strong> accept only claims supported by the inspected current results. Investigate an actual mismatch before authorizing a correction.</p><p><strong>Limit:</strong> sample agreement and selected tests do not establish every input or platform.</p></div><label for=\"review-decision\"><strong>Your review decision</strong></label><textarea id=\"review-decision\" data-save=\"reviewDecision\" rows=\"5\" placeholder=\"What do you trust, what remains open, and what decision follows?\"></textarea><p>Your wording stays in local browser notes when storage is available. It does not alter a Harness record.</p><details><summary>Current version and verification limits</summary><p>Follow the <a href=\"../setup.html\">course setup instructions</a> to practice with the published Harness 1.7.0 package. The November 5 software checks used a separately built wheel from source <code>5159e7a79fbdb84d2982937716043b142534e6e9</code> before publication.</p><p>Read the <a href=\"../assets/current-checks.json\">November 5 software-check record</a> for the exact checked files, commands, environment and results. These local checks make no model call. They do not establish every input, platform, model outcome or learner experience.</p></details><p><strong>Next:</strong> Open <strong><a href=\"../05-deliver/\">Tutorial 5: Make the tool usable</a></strong> to prepare a local handoff.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Ask the learner to name one supported claim and one remaining limit.",
+        "Keep the note concise and do not score writing style or force a response."
+      ]
+    }
+  ],
+  "coursePosition": 4,
+  "courseRoutes": [
+    "../01-define/",
+    "../02-build/",
+    "../03-return/",
+    "../04-review/",
+    "../05-deliver/",
+    "../06-improve/"
+  ]
+}

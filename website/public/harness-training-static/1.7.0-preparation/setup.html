@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,follow"><title>Get ready for the course · Attune Harness</title><link rel="stylesheet" href="assets/styles.css"></head>
+<body><main style="max-width:900px;margin:auto;padding:2rem">
+<p><a href="./">Course overview</a></p>
+<h1>Get ready for the course</h1>
+<p>Read the lessons and inspect the sample report before installing anything. For the command practice, use published Harness 1.7.0 in a separate Python environment.</p>
+<h2>Start with a useful result</h2>
+<ol><li>Open <a href="assets/example/expected/activity-report.html">the sample report</a> and compare a total with <a href="assets/example/data/activity.csv">the six input rows</a>.</li><li>Start <a href="01-define/">Turn an idea into a useful result</a>. Use <strong>Next section</strong>, or select a section from the sidebar.</li><li>Use <strong>Copy</strong> controls only after reading their text. If copying is unavailable, click <strong>Select text</strong> and use your keyboard’s copy shortcut.</li><li>Keep <strong>Presenter notes</strong> off for ordinary reading. Use <strong>Print lesson</strong> for a printable copy, or <strong>Read full lesson</strong> for static text.</li></ol>
+<p>Optional questions explain their answers and never lock navigation. Progress and practice notes stay in this browser; they are separate from saved Harness work.</p>
+<h2 id="select-a-practice-runtime">Select a practice runtime</h2>
+<p>Use Bash or another POSIX shell on macOS or Linux. Install <a href="https://docs.astral.sh/uv/getting-started/installation/">uv</a> and Git if needed. The commands download the public course source and install Harness and pytest in a new directory. After this setup, the lesson runs offline.</p>
+<pre><code>COURSE_WORK="$(mktemp -d)"
+COURSE_WORK="$(cd "$COURSE_WORK" &amp;&amp; pwd -P)"
+git clone --depth 1 https://github.com/Smart-AI-Memory/attune-harness.git "$COURSE_WORK/source"
+uv venv --python 3.12 "$COURSE_WORK/.venv"
+uv pip install --python "$COURSE_WORK/.venv/bin/python" 'attune-harness==1.7.0' 'pytest==9.1.1'
+. "$COURSE_WORK/.venv/bin/activate"
+python -c "from importlib.metadata import version; print(version('attune-harness'))"
+cd "$COURSE_WORK/source/training/1.7.0-preparation"</code></pre>
+<p>Expect <code>1.7.0</code>. Keep this terminal open for lesson 2. You are in the course folder with <code>practice.py</code> and its example files. These files are in the course checkout. The wheel provides the runtime.</p>
+<p>The <a href="https://github.com/Smart-AI-Memory/attune-harness/releases/tag/v1.7.0">release record</a> lists the published wheel hash. The <a href="assets/current-checks.json">November 5 course check</a> records its original, separately built wheel.</p>
+<h2>Keep practice separate from real work</h2>
+<p>Lesson 2’s helper prepares a new disposable reporting project and an unaccepted work request. Fixed local command participants supply known reference code and acknowledge the review protocol. The protected tests execute, but this does not assess AI implementation or reviewer quality. Accepting the practice request grants no authority over another task.</p>
+<p>For real project work, review the exact scope, participants, checks and applicable permissions. The <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/5159e7a79fbdb84d2982937716043b142534e6e9/docs/participant-funding.md">current participant-funding guide</a> describes supported routes and remaining limits. The lesson interface never starts a shell, model or build.</p>
+<p><a href="02-build/">Continue to Build your first report</a></p>
+</main></body></html>

@@ -1,0 +1,12 @@
+Project activity report
+Entries: 6
+Total minutes: 270
+
+By project
+- Lumen: 90
+- Orion: 180
+
+By category
+- Development: 150
+- Documentation: 75
+- Testing: 45

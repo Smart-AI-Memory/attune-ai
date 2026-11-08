@@ -1,4 +1,4 @@
-import { HARNESS_SOURCE_ROOT, HARNESS_RELEASE_NOTICE, HARNESS_PREPARATION_NOTICE, HARNESS_GET_STARTED, HARNESS_INSTALL_COMMAND } from '@/lib/harness-release';
+import { HARNESS_SOURCE_ROOT, HARNESS_RELEASE_NOTICE, HARNESS_GET_STARTED, HARNESS_INSTALL_COMMAND } from '@/lib/harness-release';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
@@ -70,7 +70,7 @@ export default function PricingPage() {
               confirm the version and run a small local example before
               connecting your agent.
             </p>
-            <p className="text-[var(--text-secondary)] mb-6">{HARNESS_RELEASE_NOTICE} {HARNESS_PREPARATION_NOTICE}</p>
+            <p className="text-[var(--text-secondary)] mb-6">{HARNESS_RELEASE_NOTICE}</p>
             <Link className="btn btn-primary" href={HARNESS_GET_STARTED}>Get started with Harness</Link>
           </div>
         </section>

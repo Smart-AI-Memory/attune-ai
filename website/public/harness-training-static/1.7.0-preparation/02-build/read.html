@@ -1,0 +1,60 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,follow"><title>Build your first report · Attune Harness</title><link rel="stylesheet" href="../assets/styles.css"></head><body><main style="max-width:900px;margin:auto;padding:2rem"><p><a href="https://smartaimemory.com/harness/help/">Help Center</a></p><p><a href="../">Course overview</a></p><h1>Build your first report</h1>
+<p>Harness 1.7.0 · current course</p>
+<p>A useful result. Clear boundaries. Evidence you can inspect.</p>
+<p>This full-text reading copy does not save answers. <a href="./">Open the interactive lesson</a> for saved browser notes.</p>
+<section id="section-1">
+<h2>Build a report you can explain</h2>
+<p>Turn six synthetic activity entries into a formatted report, while keeping the input and checks protected.</p>
+<p>Open the <a href="../assets/example/expected/activity-report.html" target="_blank" rel="noopener">formatted report</a>. It accounts for <strong>6 entries and 270 minutes</strong>. Orion has 180 minutes and Lumen has 90.</p><p>This lesson practices the current Harness 1.7.0 workflow with fixed local command participants. The worker supplies known reference code; the protocol reviewer does not judge its quality. The protected tests check the actual program. No model or provider is called.</p><p>For real implementation, your assistant needs participants suited to the task and the execution authority you choose. Start with the offline practice to understand the decisions.</p><p><strong>Choose your starting path:</strong> this bounded reporting exercise starts from a clear goal. If your real project has several workflows or unresolved requirements, use <a href="../development-paths.html">the goal-driven and spec-driven reference</a> to choose the preparation it needs before accepting a plan.</p>
+</section>
+<section id="section-2">
+<h2>Start in an isolated practice folder</h2>
+<p>Use the Python 3.12 environment from the course setup.</p>
+<p>Complete the <a href="../setup.html#select-a-practice-runtime">course setup</a> first. Keep the same terminal, with <code>COURSE_WORK</code> set and the course folder open. These commands use a POSIX shell on macOS or Linux.</p><p>The helper creates an unfinished <code>report.py</code>, two test files, the CSV, expected output, a local participant registry and a work request. It initializes a disposable Git checkout. It accepts nothing and starts no build.</p>
+<h3>practice setup</h3><pre><code>PRACTICE=&quot;$COURSE_WORK/practice&quot;
+python practice.py &quot;$PRACTICE&quot;</code></pre>
+</section>
+<section id="section-3">
+<h2>Ask what may change and how it will be checked</h2>
+<p>Prepare the draft, then inspect its complete scope before deciding.</p>
+<p>Keep the same terminal and <code>PRACTICE</code> value. The task and request live beside the project, outside the checkout whose inputs Harness freezes.</p><p>Expect <code>draft</code>, no missing questions and a <code>checkpoint_digest</code>. Read the goal and both test criteria. Only <code>report.py</code> may change. The tests, input, expected outputs, registry and pytest configuration are protected.</p><p>If anything is wrong, stop and revise through the supported workflow. Editing the original request after preview does not update the saved task.</p>
+<h3>plan preview</h3><pre><code>python -m attune_harness plan --request &quot;$PRACTICE/task.work.json&quot; \
+  --project &quot;$PRACTICE/project&quot; --config &quot;$PRACTICE/project/participants.json&quot; \
+  --task-dir &quot;$PRACTICE/task&quot;</code></pre>
+</section>
+<section id="section-4">
+<h2>Agree to the exact request</h2>
+<p>Acceptance records the scope you reviewed; execution is another decision.</p>
+<p>Copy the full <code>checkpoint_digest</code> from your own preview into <code>PREVIEW_CHECKPOINT</code>. If the displayed request is correct, accept that checkpoint. Expect <code>accepted</code> and a new current checkpoint.</p><p>You have not completed the implementation by accepting its scope. In a browser intake, <strong>Approve this work request</strong> and <strong>Keep as draft</strong> record the corresponding intent decision; this command practice uses the CLI.</p>
+<h3>scope acceptance</h3><pre><code>PREVIEW_CHECKPOINT=&quot;replace-with-your-full-preview-digest&quot;
+python -m attune_harness plan --task-dir &quot;$PRACTICE/task&quot; \
+  --accept --checkpoint &quot;$PREVIEW_CHECKPOINT&quot;</code></pre>
+<details><summary>What has acceptance established?</summary>
+<p><strong>Agreement to the displayed scope; execution is still separate.</strong> The saved request is accepted. Starting the local command workers is the next decision.</p>
+<p><strong>The report has already been implemented and checked.</strong> Acceptance records intent, not implementation or test evidence.</p>
+</details>
+</section>
+<section id="section-5">
+<h2>Give the local commands a bounded go</h2>
+<p>Inspect the registry before authorizing the prepared offline build.</p>
+<p>The practice registry uses two fixed local commands. They make no API or native-model request. Read their configuration and the permitted effects before running the build command.</p><p><code>--allow-external</code> permits these local subprocess participants. It is not a funding grant or a security sandbox. For real model work, review the <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/5159e7a79fbdb84d2982937716043b142534e6e9/docs/participant-funding.md">current participant setup and funding guide</a>; do not infer your route from this fixture.</p><p>Expect <code>completed</code> only after the configured checks actually pass. If the command fails, inspect its saved error and journal before choosing a next action.</p>
+<h3>offline build</h3><pre><code>python -m attune_harness build &quot;$PRACTICE/task&quot; --allow-external</code></pre>
+</section>
+<section id="section-6">
+<h2>Separate a completed task from a trustworthy claim</h2>
+<p>Read the saved outcome and the tests that support it.</p>
+<p>Inspect the saved task. Find the permitted file change, task probe and final probe. The <a href="../assets/current-checks.json">November 5 course check</a> recorded 77 cases in the two reporting test files. The fixed reviewer exercises the review protocol. For a real implementation, assess the result against your own criteria.</p><p>Compare the hashes of the input and protected files before and after the build. A passing result supports the cases that ran.</p>
+<h3>saved task inspection</h3><pre><code>python -m attune_harness status &quot;$PRACTICE/task&quot; --format markdown</code></pre>
+</section>
+<section id="section-7">
+<h2>Take the checked result into your browser</h2>
+<p>Run the completed program against the unchanged six-row CSV.</p>
+<p>Move into the practice project. Save the report beside the project so the saved work’s input snapshot stays unchanged.</p><p>Expect <code>Saved report to …</code>. Open that file and check 6 entries, 270 minutes, the project totals and the date range against the CSV. If you run this command again, choose a new filename.</p>
+<h3>report command</h3><pre><code>cd &quot;$PRACTICE/project&quot;
+python report.py data/activity.csv --format html --output &quot;$PRACTICE/activity-report.html&quot;</code></pre>
+</section>
+<section id="section-8">
+<h2>Leave the work ready to inspect tomorrow</h2>
+<p>Explain one result, one boundary and the next decision.</p>
+<h3>Your result and next decision</h3><p>Write your answer in your own notes, or use the interactive lesson.</p><p>In the interactive lesson, these notes stay in your browser. They do not change or approve the Harness task.</p><p>Continue with <a href="../03-return/">Come back tomorrow</a> to inspect saved work before continuing. Use <a href="../04-review/">Decide whether to trust the report</a> to connect a claim to independent evidence.</p>
+</section></main></body></html>

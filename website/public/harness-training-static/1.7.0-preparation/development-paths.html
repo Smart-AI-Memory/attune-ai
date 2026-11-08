@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,follow"><title>Choose how to start · Attune Harness</title><link rel="stylesheet" href="assets/styles.css"></head>
+<body><main style="max-width:900px;margin:auto;padding:2rem">
+<p><a href="./">Course overview</a></p>
+<h1>Choose how to start</h1>
+<p>Start with the result you want. Give the work enough structure to make its important decisions and checks clear. Goal-driven and spec-driven development are two ways to prepare that work.</p>
+<p>Harness 1.7.0</p>
+<table><caption>Choose the useful amount of preparation</caption><thead><tr><th scope="col">Approach</th><th scope="col">Useful when</th><th scope="col">What you review</th></tr></thead><tbody>
+<tr><th scope="row"><a href="#goal-driven">Goal-driven development</a></th><td>The outcome is small and bounded, and the affected files and checks can be made clear in a short request.</td><td>The goal, scope, constraints, success criteria and proposed plan.</td></tr>
+<tr><th scope="row"><a href="#spec-driven">Spec-driven development</a></th><td>Several workflows, dependencies, consequential choices or competing requirements need to be settled before implementation.</td><td>A specification with requirements, exclusions, acceptance examples, dependencies and unresolved decisions.</td></tr>
+</tbody></table>
+<h2 id="goal-driven">Start from a bounded goal</h2>
+<p>In this course, the useful result is a report of six synthetic activity entries. Its expected totals and file boundary are easy to inspect together. That makes a short goal-led request a useful starting point.</p>
+<ol><li>Describe the result in ordinary language: a readable report of time by project and category.</li><li>Have the assistant inspect the actual project and propose the file scope, constraints and independent checks.</li><li>Resolve consequential questions and review the resulting request and plan.</li><li>Accept the exact scope when it is ready. Authorize execution separately, then inspect the outcome and evidence.</li></ol>
+<p><strong>Example request:</strong> “Create the activity report from this synthetic CSV. Keep the data and acceptance checks unchanged. Show me the plan and the expected totals before starting.”</p>
+<p>Use <a href="01-define/">Turn an idea into a useful result</a> to define the request, then <a href="02-build/">Build your first report</a> to practice planning and execution. Read the <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/5159e7a79fbdb84d2982937716043b142534e6e9/README.md#goal-driven-development">current goal-driven guide</a> for the source procedure.</p>
+<h2 id="spec-driven">Develop requirements before implementation</h2>
+<p>Suppose a later reporting product must accept several input formats, preserve saved reports and support shared access. Those are proposed extensions beyond this course’s local tool. Data compatibility, access rules and failure behavior need clearer decisions before building.</p>
+<ol><li>Describe who needs the product, its useful outcome and the first complete workflow.</li><li>Work with the assistant to draft numbered requirements, non-goals, concrete acceptance examples and dependencies. Mark unresolved choices visibly.</li><li>Review alternatives and supporting evidence. Use consultation only when it can resolve a useful uncertainty and its selected scope and usage are authorized.</li><li>Review and accept the requirements. Then ask the assistant to turn them into a Harness implementation plan, with exact files, permitted changes and protected checks.</li><li>Review and accept that plan before separately authorizing execution.</li></ol>
+<p><strong>Example request:</strong> “Help me write a reviewable spec for shared activity reporting. Identify the user workflows, data and access rules, dependencies, acceptance examples and open decisions. Keep implementation and model consultations pending while we review the requirements.”</p>
+<p>A specification can explain more than a small task needs. Use the amount of structure the work requires. If a short goal exposes important unresolved requirements, develop the spec before accepting implementation scope.</p>
+<p>Read the <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/5159e7a79fbdb84d2982937716043b142534e6e9/README.md#spec-driven-development">current spec-driven guide</a> and <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/5159e7a79fbdb84d2982937716043b142534e6e9/docs/cli-guide.md#importing-a-plan-from-another-project">supported plan-import guidance</a>. An accepted prose spec is not automatically a build-ready task graph or permission to run participants.</p>
+<h2 id="shared-decisions">Keep the same review points</h2>
+<ul><li><strong>Scope:</strong> What result is wanted, and what may change?</li><li><strong>Checks:</strong> What independent evidence would establish success?</li><li><strong>Acceptance:</strong> Does the current request or plan match your decision?</li><li><strong>Execution:</strong> Are the selected participants, effects and usage authorized?</li><li><strong>Assessment:</strong> What actually happened, and what remains uncertain?</li></ul>
+<p>Choosing either approach grants no execution, spending or publication authority. Revisit the requirements and plan when the work changes.</p>
+<p><a href="01-define/">Start the first lesson</a></p>
+</main></body></html>

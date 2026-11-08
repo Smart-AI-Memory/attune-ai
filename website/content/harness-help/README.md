@@ -7,27 +7,20 @@ existing topic URLs and heading fragments, including `/harness/help/goals/`.
 Do not edit exported HTML or maintain
 a second command reference here.
 
-## Published guidance and 1.7.0 preparation
+## Published 1.7.0 guidance
 
-The export contains fifteen pages and thirty files, imported from merged
-Harness commit `5159e7a79fbdb84d2982937716043b142534e6e9`.
-The current installation guide at `/harness/help/get-started/` describes
-published 1.6.0. The separate `/harness/help/1-7-0-preparation/` page describes an
-unpublished candidate and retains its selected source and wheel evidence.
+The export contains fifteen pages and thirty files from merged Harness commit
+[`cba3fd0`](https://github.com/Smart-AI-Memory/attune-harness/commit/cba3fd05343d826204addd47b076f82d3dd1d9bd).
+The installation guide at `/harness/help/get-started/` uses the published
+Harness 1.7.0 package and links to the offline course. The archive retains
+previous installation guides and the 1.7.0 preparation walkthroughs with their
+original source and wheel evidence.
 
-The reference version remains 1.5.1 with its original behavior commit; it is not
-the current package version. Website installation and package links read
-`published_version` and `release-1.6.0.json`, while preparation source links read
-the exact import receipt. Historical guides, assets, original commands and the
-`next-release` redirect retain their identities. Generated HTML is refreshed
-only through the canonical importer.
-
-Before changing the published installation to 1.7.0, verify package publication
-and its source/artifact record with the release owner, update the canonical
-Help source, and import that exact merged source again. Do not promote this
-preparation export by relabeling its historical reference version. The Windows
-walkthrough and its scope remain release-owner evidence. The website is still
-a local candidate; hosted preview, merge and production delivery are separate.
+The reference version remains 1.5.1 with its original behavior commit. Website
+installation and package links use `published_version`. The guide links use the
+merged source in `import.json`, shared by both exports. Use the
+[1.7.0 release record](https://github.com/Smart-AI-Memory/attune-harness/releases/tag/v1.7.0)
+for package provenance and the limits of its platform checks.
 
 ## Cutover design
 
@@ -37,9 +30,9 @@ website build checks that receipt using Node's standard library. Python-Markdown
 is needed only when refreshing the export, not when Vercel builds this website.
 
 Next.js rewrites keep the established public URLs while serving the static files.
-The eleven registered topics, overview, scripts, styles, images and evidence records must resolve.
-Unknown topic paths must stay 404; changed exported bytes or path escapes must
-fail the receipt check. The old noindex preparation URL redirects to its immutable
+The registered topics, overview, scripts, styles, images and evidence records
+must resolve. Unknown topic paths must return 404. The receipt check rejects
+changed exported bytes and path escapes. The old noindex preparation URL redirects to its immutable
 historical record. Source snapshots and their original provenance remain below.
 
 The Harness renderer's twelve-page build, internal-link checks, refusal controls,
