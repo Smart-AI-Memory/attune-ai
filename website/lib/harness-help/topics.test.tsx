@@ -127,7 +127,8 @@ describe('Harness-owned Help Center export', () => {
 
   it('keeps public routes and serves generated files through rewrites', async () => {
     const rewrites = await config.rewrites!();
-    expect(rewrites).toEqual(expect.arrayContaining([
+    const routes = Array.isArray(rewrites) ? rewrites : rewrites.afterFiles;
+    expect(routes).toEqual(expect.arrayContaining([
       { source: '/harness/help/', destination: '/harness-help-static/index.html' },
       { source: '/harness/help/:topic([a-z0-9-]+)/', destination: '/harness-help-static/:topic/index.html' },
       { source: '/harness/help/help.css', destination: '/harness-help-static/help.css' },

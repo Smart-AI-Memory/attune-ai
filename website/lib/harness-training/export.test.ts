@@ -5,6 +5,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync,
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import config from '@/next.config';
 import { checkTrainingExport, importTrainingExport } from '../../scripts/harness-training-export.mjs';
 
 const course = '1.7.0-preparation';
@@ -72,6 +73,24 @@ function rewriteReceipt(output: string, change: (receipt: Record<string, unknown
 }
 
 describe('Harness-owned training export', () => {
+  it('routes committed course files before the hosted filesystem lookup', async () => {
+    const rewrites = await config.rewrites!();
+    const paths = [
+      ['1\\.7\\.0-preparation/setup\\.html', '1.7.0-preparation/setup.html'],
+      ['1\\.7\\.0-preparation/02-build/read\\.html', '1.7.0-preparation/02-build/read.html'],
+      ['1\\.7\\.0-preparation/assets/reporting-example\\.zip', '1.7.0-preparation/assets/reporting-example.zip'],
+    ];
+    expect(rewrites).toMatchObject({
+      beforeFiles: expect.arrayContaining(paths.map(([source, destination]) => ({
+        source: `/harness/learn/${source}`,
+        destination: `/harness-training-static/${destination}`,
+      }))),
+      afterFiles: expect.arrayContaining([
+        { source: '/harness/learn/:path*/', destination: '/harness-training-static/:path*/index.html' },
+      ]),
+    });
+  });
+
   it('imports committed current-course and archive bytes through Git and generator check', () => {
     const receipt = JSON.parse(readFileSync(path.join(baseline, 'import.json'), 'utf8'));
     const expected = Object.keys(source.files).filter((name) => name.startsWith(`training/${course}/`) || name.startsWith('training/archive/'));

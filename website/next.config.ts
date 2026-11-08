@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import path from "path";
+import trainingReceipt from "./public/harness-training-static/import.json";
 
 const nextConfig: NextConfig = {
   // standalone is for self-hosted deploys and `next start`. On Vercel it must
@@ -45,29 +46,35 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
-    return [
-      // Preserve the Harness-owned course hierarchy, reading views and downloads.
-      { source: '/harness/learn/:path*/', destination: '/harness-training-static/:path*/index.html' },
-      { source: '/harness/learn/:path*', destination: '/harness-training-static/:path*' },
-      // Harness owns this static export; keep the established public URLs.
-      { source: '/harness/help/', destination: '/harness-help-static/index.html' },
-      { source: '/harness/help/help.css', destination: '/harness-help-static/help.css' },
-      { source: '/harness/help/code-copy.js', destination: '/harness-help-static/code-copy.js' },
-      { source: '/harness/help/verification.json', destination: '/harness-help-static/verification.json' },
-      { source: '/harness/help/build.json', destination: '/harness-help-static/build.json' },
-      { source: '/harness/help/preparation.json', destination: '/harness-help-static/preparation.json' },
-      { source: '/harness/help/release-1.5.1.json', destination: '/harness-help-static/release-1.5.1.json' },
-      { source: '/harness/help/release-1.6.0.json', destination: '/harness-help-static/release-1.6.0.json' },
-      { source: '/harness/help/goals/goals.css', destination: '/harness-help-static/goals/goals.css' },
-      { source: '/harness/help/goals/controls.js', destination: '/harness-help-static/goals/controls.js' },
-      { source: '/harness/help/assets/:asset', destination: '/harness-help-static/assets/:asset' },
-      { source: '/harness/help/:topic([a-z0-9-]+)/', destination: '/harness-help-static/:topic/index.html' },
-      // Serve index.html for framework-docs directory paths
-      {
-        source: '/framework-docs/:path*/',
-        destination: '/framework-docs/:path*/index.html',
-      },
-    ];
+    return {
+      // Resolve the committed course files before Vercel checks the filesystem.
+      beforeFiles: [...Object.keys(trainingReceipt.files), 'import.json'].map((file) => ({
+        source: `/harness/learn/${file.replace(/\./g, '\\.')}`,
+        destination: `/harness-training-static/${file}`,
+      })),
+      afterFiles: [
+        { source: '/harness/learn/:path*/', destination: '/harness-training-static/:path*/index.html' },
+        // Harness owns this static export; keep the established public URLs.
+        { source: '/harness/help/', destination: '/harness-help-static/index.html' },
+        { source: '/harness/help/help.css', destination: '/harness-help-static/help.css' },
+        { source: '/harness/help/code-copy.js', destination: '/harness-help-static/code-copy.js' },
+        { source: '/harness/help/verification.json', destination: '/harness-help-static/verification.json' },
+        { source: '/harness/help/build.json', destination: '/harness-help-static/build.json' },
+        { source: '/harness/help/preparation.json', destination: '/harness-help-static/preparation.json' },
+        { source: '/harness/help/release-1.5.1.json', destination: '/harness-help-static/release-1.5.1.json' },
+        { source: '/harness/help/release-1.6.0.json', destination: '/harness-help-static/release-1.6.0.json' },
+        { source: '/harness/help/goals/goals.css', destination: '/harness-help-static/goals/goals.css' },
+        { source: '/harness/help/goals/controls.js', destination: '/harness-help-static/goals/controls.js' },
+        { source: '/harness/help/assets/:asset', destination: '/harness-help-static/assets/:asset' },
+        { source: '/harness/help/:topic([a-z0-9-]+)/', destination: '/harness-help-static/:topic/index.html' },
+        // Serve index.html for framework-docs directory paths
+        {
+          source: '/framework-docs/:path*/',
+          destination: '/framework-docs/:path*/index.html',
+        },
+      ],
+      fallback: [],
+    };
   },
   async redirects() {
     return [
