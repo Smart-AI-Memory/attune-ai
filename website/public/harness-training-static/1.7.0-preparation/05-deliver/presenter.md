@@ -1,6 +1,6 @@
 # Presenter notes: Make the tool usable
 
-Current 1.7.0 preparation. Derived from this lesson’s JSON.
+Harness 1.7.0. Derived from this lesson’s JSON.
 
 ## section-1: Make the useful result easy to obtain
 

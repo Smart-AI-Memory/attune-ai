@@ -1,6 +1,6 @@
 # Presenter notes: Make it work for your needs
 
-Current 1.7.0 preparation. Derived from this lesson’s JSON.
+Harness 1.7.0. Derived from this lesson’s JSON.
 
 ## section-1: Ask the next question the report does not answer
 

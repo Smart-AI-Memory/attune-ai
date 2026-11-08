@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,follow"><title>Build your first report · Attune Harness</title><link rel="stylesheet" href="../assets/styles.css"></head><body><main style="max-width:900px;margin:auto;padding:2rem"><p><a href="https://smartaimemory.com/harness/help/">Help Center</a></p><p><a href="../">Course overview</a></p><h1>Build your first report</h1>
-<p>Harness 1.7.0 preparation · current course · November 5, 2026</p>
+<p>Harness 1.7.0 · current course</p>
 <p>A useful result. Clear boundaries. Evidence you can inspect.</p>
 <p>This full-text reading copy does not save answers. <a href="./">Open the interactive lesson</a> for saved browser notes.</p>
 <section id="section-1">
@@ -9,9 +9,9 @@
 </section>
 <section id="section-2">
 <h2>Start in an isolated practice folder</h2>
-<p>Use your selected Python 3.12 environment containing the noneditable Harness 1.7.0 wheel.</p>
-<p>These practice commands use Bash or another POSIX shell on macOS/Linux. They use shell variables and line continuations. For another shell, have your assistant translate the commands and check the selected runtime before execution.</p><p>Follow the <a href="../setup.html#select-a-practice-runtime">course setup</a> first. In the folder containing <code>practice.py</code>, choose a new absolute directory. On macOS, use a canonical parent such as <code>/private/tmp</code>.</p><p>Read the command, replace the placeholder, then run it. The helper creates an unfinished <code>report.py</code>, two test files, the CSV, expected output, a local participant registry and a work request. It initializes a disposable Git checkout. It accepts nothing and starts no build.</p>
-<h3>practice setup</h3><pre><code>PRACTICE=&quot;/absolute/path/to/new-practice&quot;
+<p>Use the Python 3.12 environment from the course setup.</p>
+<p>Complete the <a href="../setup.html#select-a-practice-runtime">course setup</a> first. Keep the same terminal, with <code>COURSE_WORK</code> set and the course folder open. These commands use a POSIX shell on macOS or Linux.</p><p>The helper creates an unfinished <code>report.py</code>, two test files, the CSV, expected output, a local participant registry and a work request. It initializes a disposable Git checkout. It accepts nothing and starts no build.</p>
+<h3>practice setup</h3><pre><code>PRACTICE=&quot;$COURSE_WORK/practice&quot;
 python practice.py &quot;$PRACTICE&quot;</code></pre>
 </section>
 <section id="section-3">
@@ -43,15 +43,15 @@ python -m attune_harness plan --task-dir &quot;$PRACTICE/task&quot; \
 <section id="section-6">
 <h2>Separate a completed task from a trustworthy claim</h2>
 <p>Read the saved outcome and the tests that support it.</p>
-<p>Inspect the saved task. Find the permitted file change, task probe and final probe. In the <a href="../assets/current-checks.json">current course validation</a>, the two reporting test files contain 77 cases. The fixed reviewer only exercises the review protocol; independent assessment of a real implementation remains your responsibility.</p><p>Compare the source hash of the input and protected files before and after the build. A passing result supports the cases that ran, rather than every possible input or model.</p>
+<p>Inspect the saved task. Find the permitted file change, task probe and final probe. The <a href="../assets/current-checks.json">November 5 course check</a> recorded 77 cases in the two reporting test files. The fixed reviewer exercises the review protocol. For a real implementation, assess the result against your own criteria.</p><p>Compare the hashes of the input and protected files before and after the build. A passing result supports the cases that ran.</p>
 <h3>saved task inspection</h3><pre><code>python -m attune_harness status &quot;$PRACTICE/task&quot; --format markdown</code></pre>
 </section>
 <section id="section-7">
 <h2>Take the checked result into your browser</h2>
 <p>Run the completed program against the unchanged six-row CSV.</p>
-<p>Move into the practice project. Choose an output path outside that project so the saved work’s input snapshot stays unchanged. Replace the path below with a new filename.</p><p>Expect <code>Saved report to …</code>. Open that exact file and check 6 entries, 270 minutes, the project totals and the date range against the CSV. The program refuses to overwrite an existing destination.</p>
+<p>Move into the practice project. Save the report beside the project so the saved work’s input snapshot stays unchanged.</p><p>Expect <code>Saved report to …</code>. Open that file and check 6 entries, 270 minutes, the project totals and the date range against the CSV. If you run this command again, choose a new filename.</p>
 <h3>report command</h3><pre><code>cd &quot;$PRACTICE/project&quot;
-python report.py data/activity.csv --format html --output /absolute/path/to/new-report.html</code></pre>
+python report.py data/activity.csv --format html --output &quot;$PRACTICE/activity-report.html&quot;</code></pre>
 </section>
 <section id="section-8">
 <h2>Leave the work ready to inspect tomorrow</h2>

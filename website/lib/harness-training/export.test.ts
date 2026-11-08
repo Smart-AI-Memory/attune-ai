@@ -17,9 +17,11 @@ const temporary = () => mkdtempSync(path.join(realpathSync(tmpdir()), 'harness-t
 function fixture({ remote = origin, check = 'import sys\nassert sys.argv[1:] == ["--check"]\n', extra = {} as Record<string, string> } = {}) {
   const repo = temporary();
   const files: Record<string, string> = {
+    'help/manifest.json': '{"status":"published","published_version":"1.7.0"}\n',
     'training/build_course.py': check,
     'training/README.md': 'Maintainer instructions are not a course payload.\n',
-    [`training/${course}/index.html`]: '<!doctype html><h1>Harness 1.7.0 preparation</h1>\n',
+    [`training/${course}/index.html`]: '<!doctype html><h1>Harness 1.7.0</h1>\n',
+    [`training/${course}/setup.html`]: '<h1>Set up the published package</h1>\n',
     [`training/${course}/01-define/index.html`]: '<h1>Define the outcome</h1>\n',
     [`training/${course}/01-define/lesson.json`]: '{"title":"Define the outcome"}\n',
     [`training/${course}/assets/report.py`]: 'print("local fixture")\n',
@@ -41,7 +43,7 @@ function fixture({ remote = origin, check = 'import sys\nassert sys.argv[1:] == 
   }
   execFileSync('git', ['init', '--initial-branch=main', repo]);
   execFileSync('git', ['-C', repo, 'remote', 'add', 'origin', remote]);
-  execFileSync('git', ['-C', repo, 'add', 'training']);
+  execFileSync('git', ['-C', repo, 'add', 'help', 'training']);
   execFileSync('git', ['-C', repo, '-c', 'user.name=Training fixture', '-c', 'user.email=fixture@example.invalid',
     '-c', 'commit.gpgSign=false', '-c', `core.hooksPath=${path.join(repo, 'no-hooks')}`, 'commit', '-m', 'Trusted local training fixture']);
   const commit = execFileSync('git', ['-C', repo, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
@@ -72,8 +74,8 @@ function rewriteReceipt(output: string, change: (receipt: Record<string, unknown
 describe('Harness-owned training export', () => {
   it('imports committed current-course and archive bytes through Git and generator check', () => {
     const receipt = JSON.parse(readFileSync(path.join(baseline, 'import.json'), 'utf8'));
-    const expected = Object.keys(source.files).filter((name) => !['training/README.md', 'training/build_course.py'].includes(name));
-    expect(checkTrainingExport(baseline)).toEqual({ source: source.commit, course, status: 'preparation', files: expected.length });
+    const expected = Object.keys(source.files).filter((name) => name.startsWith(`training/${course}/`) || name.startsWith('training/archive/'));
+    expect(checkTrainingExport(baseline)).toEqual({ source: source.commit, course, status: 'published', files: expected.length });
     expect(Object.keys(receipt.files).sort()).toEqual(expected.map((name) => name.slice('training/'.length)).sort());
     for (const name of expected) {
       const relative = name.slice('training/'.length);
@@ -119,11 +121,11 @@ describe('Harness-owned training export', () => {
   it.each([
     { source_repository: 'lookalike/attune-harness' }, { source_commit: 'main' },
     { source_url: 'https://example.invalid/source' }, { schema_version: 2 },
-    { course: '1.8.0' }, { status: 'published' },
-  ])('refuses invalid preparation provenance %j', (change) => {
+    { course: '1.8.0' }, { status: 'preparation' },
+  ])('refuses invalid published course provenance %j', (change) => {
     const output = copyExport();
     rewriteReceipt(output, (receipt) => Object.assign(receipt, change));
-    expect(() => checkTrainingExport(output)).toThrow('exact Harness preparation provenance');
+    expect(() => checkTrainingExport(output)).toThrow('exact Harness published course provenance');
   });
 
   it('refuses malformed hash maps, digests and missing entry indexes', () => {
@@ -135,7 +137,20 @@ describe('Harness-owned training export', () => {
     expect(() => checkTrainingExport(badHash)).toThrow('Invalid training file hash');
     const missing = copyExport();
     rewriteReceipt(missing, (receipt) => { delete (receipt.files as Record<string, string>)['archive/index.html']; });
-    expect(() => checkTrainingExport(missing)).toThrow('current-course and archive indexes');
+    expect(() => checkTrainingExport(missing)).toThrow('current-course and archive entry points');
+  });
+
+  it.each([
+    { status: 'published', published_version: '1.6.0' },
+    { status: 'preparation', published_version: '1.7.0' },
+  ])('refuses to label a preparation source as published %j', (manifest) => {
+    const preparation = fixture({
+      extra: { 'help/manifest.json': JSON.stringify(manifest) },
+      check: 'raise SystemExit("renderer must not run for a preparation source")\n',
+    });
+    const output = path.join(temporary(), 'export');
+    expect(() => importTrainingExport({ ...preparation, output })).toThrow('published Harness 1.7.0 Help manifest');
+    expect(existsSync(output)).toBe(false);
   });
 
   it('refuses lookalike origins and abbreviated source commits before output creation', () => {
@@ -191,7 +206,7 @@ describe('Harness-owned training export', () => {
 
   it('supports the same integrity check through the CLI and refuses unknown arguments', () => {
     const result = execFileSync(process.execPath, [importer, 'check', '--output', baseline], { encoding: 'utf8' });
-    expect(JSON.parse(result)).toMatchObject({ source: source.commit, course, status: 'preparation' });
+    expect(JSON.parse(result)).toMatchObject({ source: source.commit, course, status: 'published' });
     expect(() => execFileSync(process.execPath, [importer, 'check', '--unknown', 'value'])).toThrow();
   });
 });

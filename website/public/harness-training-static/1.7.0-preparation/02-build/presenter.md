@@ -1,6 +1,6 @@
 # Presenter notes: Build your first report
 
-Current 1.7.0 preparation. Derived from this lesson’s JSON.
+Harness 1.7.0. Derived from this lesson’s JSON.
 
 ## section-1: Build a report you can explain
 
@@ -11,7 +11,7 @@ Turn six synthetic activity entries into a formatted report, while keeping the i
 
 ## section-2: Start in an isolated practice folder
 
-Use your selected Python 3.12 environment containing the noneditable Harness 1.7.0 wheel.
+Use the Python 3.12 environment from the course setup.
 
 - Ask the learner to explain the useful result and next decision in their own words.
 - Keep this offline practice distinct from authorizing real project or model work.

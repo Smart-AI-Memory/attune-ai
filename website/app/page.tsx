@@ -54,7 +54,7 @@ export default function Home() {
         </div>
         <div className={styles["release"]}>
           <p><strong>{HARNESS_RELEASE_NOTICE}</strong> <Link href={HARNESS_GET_STARTED}>Get started</Link> · <Link href={HARNESS_PACKAGE_URL}>Published package</Link></p>
-          <p className={styles["candidate"]}>{HARNESS_PREPARATION_NOTICE} <Link href={HARNESS_PREPARATION}>Explore the 1.7.0 preparation guide</Link>.</p>
+          <p className={styles["candidate"]}>{HARNESS_PREPARATION_NOTICE} <Link href={HARNESS_PREPARATION}>Explore the archived 1.7.0 preparation guide</Link>.</p>
           <p className={styles["candidate"]}>Browser forms guide intake and intent approval. Each workflow retains its own execution permissions and checks.</p>
           <details>
             <summary>Read the evidence and limits</summary>

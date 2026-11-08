@@ -49,7 +49,7 @@ export function checkExport(output = defaultOutput) {
   if (build.version !== '1.5.1'
       || build.behavior_commit !== 'ebb5b03b8a4398325df7ddabd28c08186451452e'
       || build.status !== 'published'
-      || build.published_version !== '1.6.0'
+      || build.published_version !== '1.7.0'
       || build.source_repository !== receipt.source_repository) {
     throw new Error('Unexpected Harness published release');
   }

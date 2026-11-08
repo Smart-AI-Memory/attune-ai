@@ -2,7 +2,7 @@
   "title": "Build your first report",
   "subtitle": "A useful result. Clear boundaries. Evidence you can inspect.",
   "courseLabel": "Harness in practice · Tutorial 2 of 6 · Plan → Build",
-  "revisionLabel": "Course draft · Harness 1.7.0 preparation · November 5, 2026",
+  "revisionLabel": "Harness 1.7.0 · November 7, 2026",
   "storageKey": "harness-170-course-02-build-20261105",
   "sections": [
     {
@@ -23,12 +23,12 @@
       "navTitle": "Prepare the project",
       "phase": "Plan → Build",
       "title": "Start in an isolated practice folder",
-      "intro": "Use your selected Python 3.12 environment containing the noneditable Harness 1.7.0 wheel.",
-      "html": "<p>These practice commands use Bash or another POSIX shell on macOS/Linux. They use shell variables and line continuations. For another shell, have your assistant translate the commands and check the selected runtime before execution.</p><p>Follow the <a href=\"../setup.html#select-a-practice-runtime\">course setup</a> first. In the folder containing <code>practice.py</code>, choose a new absolute directory. On macOS, use a canonical parent such as <code>/private/tmp</code>.</p><p>Read the command, replace the placeholder, then run it. The helper creates an unfinished <code>report.py</code>, two test files, the CSV, expected output, a local participant registry and a work request. It initializes a disposable Git checkout. It accepts nothing and starts no build.</p>",
+      "intro": "Use the Python 3.12 environment from the course setup.",
+      "html": "<p>Complete the <a href=\"../setup.html#select-a-practice-runtime\">course setup</a> first. Keep the same terminal, with <code>COURSE_WORK</code> set and the course folder open. These commands use a POSIX shell on macOS or Linux.</p><p>The helper creates an unfinished <code>report.py</code>, two test files, the CSV, expected output, a local participant registry and a work request. It initializes a disposable Git checkout. It accepts nothing and starts no build.</p>",
       "copies": [
         {
           "label": "practice setup",
-          "text": "PRACTICE=\"/absolute/path/to/new-practice\"\npython practice.py \"$PRACTICE\""
+          "text": "PRACTICE=\"$COURSE_WORK/practice\"\npython practice.py \"$PRACTICE\""
         }
       ],
       "presenterNotes": [
@@ -111,7 +111,7 @@
       "phase": "Plan → Build",
       "title": "Separate a completed task from a trustworthy claim",
       "intro": "Read the saved outcome and the tests that support it.",
-      "html": "<p>Inspect the saved task. Find the permitted file change, task probe and final probe. In the <a href=\"../assets/current-checks.json\">current course validation</a>, the two reporting test files contain 77 cases. The fixed reviewer only exercises the review protocol; independent assessment of a real implementation remains your responsibility.</p><p>Compare the source hash of the input and protected files before and after the build. A passing result supports the cases that ran, rather than every possible input or model.</p>",
+      "html": "<p>Inspect the saved task. Find the permitted file change, task probe and final probe. The <a href=\"../assets/current-checks.json\">November 5 course check</a> recorded 77 cases in the two reporting test files. The fixed reviewer exercises the review protocol. For a real implementation, assess the result against your own criteria.</p><p>Compare the hashes of the input and protected files before and after the build. A passing result supports the cases that ran.</p>",
       "copies": [
         {
           "label": "saved task inspection",
@@ -129,11 +129,11 @@
       "phase": "Plan → Build",
       "title": "Take the checked result into your browser",
       "intro": "Run the completed program against the unchanged six-row CSV.",
-      "html": "<p>Move into the practice project. Choose an output path outside that project so the saved work’s input snapshot stays unchanged. Replace the path below with a new filename.</p><p>Expect <code>Saved report to …</code>. Open that exact file and check 6 entries, 270 minutes, the project totals and the date range against the CSV. The program refuses to overwrite an existing destination.</p>",
+      "html": "<p>Move into the practice project. Save the report beside the project so the saved work’s input snapshot stays unchanged.</p><p>Expect <code>Saved report to …</code>. Open that file and check 6 entries, 270 minutes, the project totals and the date range against the CSV. If you run this command again, choose a new filename.</p>",
       "copies": [
         {
           "label": "report command",
-          "text": "cd \"$PRACTICE/project\"\npython report.py data/activity.csv --format html --output /absolute/path/to/new-report.html"
+          "text": "cd \"$PRACTICE/project\"\npython report.py data/activity.csv --format html --output \"$PRACTICE/activity-report.html\""
         }
       ],
       "presenterNotes": [

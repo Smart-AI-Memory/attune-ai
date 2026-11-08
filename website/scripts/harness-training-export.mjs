@@ -11,6 +11,7 @@ export const defaultOutput = path.join(website, 'public/harness-training-static'
 const repository = 'Smart-AI-Memory/attune-harness';
 const course = '1.7.0-preparation';
 const roots = [course, 'archive'];
+const entryPoints = [`${course}/index.html`, `${course}/setup.html`, 'archive/index.html'];
 const extensions = new Set(['.html', '.css', '.js', '.json', '.svg', '.py', '.csv', '.txt', '.ini', '.md', '.zip']);
 const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
@@ -58,8 +59,8 @@ export function checkTrainingExport(output = defaultOutput) {
   if (receipt.schema_version !== 1 || receipt.source_repository !== repository
       || typeof receipt.source_commit !== 'string' || !/^[a-f0-9]{40}$/.test(receipt.source_commit)
       || receipt.source_url !== `https://github.com/${repository}/tree/${receipt.source_commit}`
-      || receipt.course !== course || receipt.status !== 'preparation') {
-    throw new Error('Training export requires exact Harness preparation provenance');
+      || receipt.course !== course || receipt.status !== 'published') {
+    throw new Error('Training export requires exact Harness published course provenance');
   }
   if (!receipt.files || typeof receipt.files !== 'object' || Array.isArray(receipt.files)) {
     throw new Error('Training export requires a file-hash map');
@@ -68,8 +69,8 @@ export function checkTrainingExport(output = defaultOutput) {
     relativeFile(name);
     if (typeof digest !== 'string' || !/^[a-f0-9]{64}$/.test(digest)) throw new Error(`Invalid training file hash: ${name}`);
   }
-  if (roots.some((root) => !Object.hasOwn(receipt.files, `${root}/index.html`))) {
-    throw new Error('Training export requires current-course and archive indexes');
+  if (entryPoints.some((name) => !Object.hasOwn(receipt.files, name))) {
+    throw new Error('Training export requires current-course and archive entry points');
   }
   const expected = [...Object.keys(receipt.files), 'import.json'].sort();
   if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error('Training export file set drift');
@@ -92,6 +93,10 @@ export function importTrainingExport({ repo, commit, python = 'python3', output 
   if (!/^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)Smart-AI-Memory\/attune-harness(?:\.git)?$/.test(origin)) {
     throw new Error('Source repository is not Harness on GitHub');
   }
+  const manifest = JSON.parse(execFileSync('git', ['-C', repo, 'show', `${commit}:help/manifest.json`], { encoding: 'utf8' }));
+  if (manifest?.status !== 'published' || manifest.published_version !== '1.7.0') {
+    throw new Error('Training source requires a published Harness 1.7.0 Help manifest');
+  }
   const entries = execFileSync('git', ['-C', repo, 'ls-tree', '-rz', commit, '--', 'training'], { encoding: 'utf8' }).split('\0').filter(Boolean);
   if (entries.some((entry) => !/^100(?:644|755) blob /.test(entry))) {
     throw new Error('Training source must contain regular files, without symlinks');
@@ -103,6 +108,9 @@ export function importTrainingExport({ repo, commit, python = 'python3', output 
   execFileSync('tar', ['-xf', '-', '-C', source], { input: archive });
   const training = path.join(source, 'training');
   const files = payload(training);
+  if (entryPoints.some((name) => !Object.hasOwn(files, name))) {
+    throw new Error('Training source requires current-course and archive entry points');
+  }
   execFileSync(python, [path.join(training, 'build_course.py'), '--check'], { cwd: source });
   if (JSON.stringify(payload(training)) !== JSON.stringify(files)) {
     throw new Error('Training source check changed committed payload bytes');
@@ -116,7 +124,7 @@ export function importTrainingExport({ repo, commit, python = 'python3', output 
   writeFileSync(path.join(output, 'import.json'), JSON.stringify({
     schema_version: 1, source_repository: repository, source_commit: commit,
     source_url: `https://github.com/${repository}/tree/${commit}`, course,
-    status: 'preparation', files,
+    status: 'published', files,
   }, null, 2) + '\n');
   return checkTrainingExport(output);
 }

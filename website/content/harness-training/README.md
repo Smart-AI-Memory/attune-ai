@@ -5,14 +5,12 @@ The canonical lessons and renderer belong to
 This website owns their static delivery and discovery links. Do not edit the
 imported HTML or maintain another authored course here.
 
-## Current candidate
+## Current course
 
-Help and training are imported from Harness commit
-`1ad347d7b4a87d93f08df99e5c1efb4ee748632a`, on draft PR #340. Before production,
-merge the reviewed Harness source and reimport its exact merged commit.
-The course is a draft for unpublished 1.7.0; current installation guidance
-continues to describe published 1.6.0. Historical documents retain their
-original version and evidence behind the archive entrance.
+Help and training use merged Harness commit
+[`e889c0c`](https://github.com/Smart-AI-Memory/attune-harness/commit/e889c0c1625b51d9d401469b09b362ceeb955bc6).
+The six-lesson course uses the published Harness 1.7.0 package for offline
+practice. The archive retains the original guides and their evidence.
 
 The stable entry `/harness/learn/` redirects to
 `/harness/learn/1.7.0-preparation/`. Keep the course and archive directories as
@@ -28,11 +26,11 @@ node scripts/harness-training-export.mjs import --repo /absolute/path/to/attune-
 node scripts/harness-training-export.mjs check --output /absolute/path/to/new-export
 ```
 
-The importer verifies the configured GitHub origin, exact commit, regular
-files, confined paths, source renderer, complete inventory and SHA-256 hashes.
-Origin configuration does not authenticate a commit: source review establishes
-that trust boundary. The website build checks the committed receipt offline.
-Maintenance scripts are excluded from the delivered payload.
+The importer reads the Help manifest at the same commit and requires published
+Harness 1.7.0 before running the course renderer. It checks the configured GitHub
+origin, regular files, confined paths, entry points, complete inventory and SHA-256
+hashes. Review the commit to establish source trust. The website build checks the
+committed receipt offline. Maintenance scripts stay outside the delivered payload.
 
 The current export has 47 payload files. Its receipt and the Help receipt name
 the same source. Review a refreshed export before replacing the published tree;

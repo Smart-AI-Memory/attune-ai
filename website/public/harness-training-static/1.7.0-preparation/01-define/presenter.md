@@ -1,6 +1,6 @@
 # Presenter notes: Turn an idea into a useful result
 
-Current 1.7.0 preparation. Derived from this lesson’s JSON.
+Harness 1.7.0. Derived from this lesson’s JSON.
 
 ## section-1: See where the work went
 
