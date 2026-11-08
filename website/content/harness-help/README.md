@@ -10,7 +10,7 @@ a second command reference here.
 ## Published 1.7.0 guidance
 
 The export contains fifteen pages and thirty files from merged Harness commit
-[`a50ccc0`](https://github.com/Smart-AI-Memory/attune-harness/commit/a50ccc0beca9916a585c33cf76f01cdda1c511ae).
+[`cba3fd0`](https://github.com/Smart-AI-Memory/attune-harness/commit/cba3fd05343d826204addd47b076f82d3dd1d9bd).
 The installation guide at `/harness/help/get-started/` uses the published
 Harness 1.7.0 package and links to the offline course. The archive retains
 previous installation guides and the 1.7.0 preparation walkthroughs with their

@@ -35,7 +35,7 @@ Calculate expected project results directly from the original six rows.
 Use Harness to retain reviewed scope and checks after the product decisions are clear.
 
 - A concrete next request is not an accepted task merely because it is written in a lesson.
-- Use the selected 1.7.0 preparation runtime and inspect the current checkpoint.
+- Use the published Harness 1.7.0 runtime and inspect the current checkpoint.
 
 ## section-6: Explain your own next decision
 

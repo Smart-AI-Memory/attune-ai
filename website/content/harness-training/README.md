@@ -8,7 +8,7 @@ imported HTML or maintain another authored course here.
 ## Current course
 
 Help and training use merged Harness commit
-[`a50ccc0`](https://github.com/Smart-AI-Memory/attune-harness/commit/a50ccc0beca9916a585c33cf76f01cdda1c511ae).
+[`cba3fd0`](https://github.com/Smart-AI-Memory/attune-harness/commit/cba3fd05343d826204addd47b076f82d3dd1d9bd).
 The six-lesson course uses the published Harness 1.7.0 package for offline
 practice. The archive retains the original guides and their evidence.
 
