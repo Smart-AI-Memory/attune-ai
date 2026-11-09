@@ -1,6 +1,6 @@
 # Attune AI - eBook Configuration
 # Full book with PDF/ePub export
-# Build: mkdocs build -f mkdocs-ebook.yml
+# Build: python scripts/build_docs.py ebook
 
 site_name: "Empathy: A Framework for AI-Human Collaboration"
 site_description: The complete guide to building anticipatory AI systems
@@ -98,7 +98,7 @@ plugins:
       two_columns_level: 3
       render_js: false
       headless_chrome_path: null
-      output_path: ../dist/empathy-book.pdf
+      output_path: ../empathy-book.pdf
       enabled_if_env: ENABLE_PDF_EXPORT
       debug_html: false
       show_anchors: false
@@ -146,5 +146,4 @@ extra_css:
 
 extra_javascript:
   - javascripts/mathjax.js
-  - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
