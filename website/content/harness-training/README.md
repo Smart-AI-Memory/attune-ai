@@ -42,6 +42,28 @@ Explicitly include the reviewed synthetic CSV and run both export checks from
 a fresh clean Git checkout before pushing. A complete working directory alone
 does not establish that the committed payload is complete.
 
+## Smoke test the hosted preview
+
+After Vercel reports success, run this from the website repository with Python
+3.9 or newer, curl, and GitHub CLI access to the repository.
+
+```sh
+python3 website/scripts/harness-preview-smoke.py
+```
+
+The script looks up the Smart AI Memory preview for the checked-out commit.
+Use `--commit <sha>` to select another commit available locally. It follows
+**Get started with Harness**, **Get ready for the course**, **Continue to Build
+your first report**, and **Read full lesson**. Each public route must return
+HTTP 200. The script also checks the lesson data and matches both preview
+receipts against the selected commit.
+
+For a protected preview, supply an authorized same-project development
+`VERCEL_OIDC_TOKEN` through your environment. See
+[Vercel Trusted Sources](https://vercel.com/docs/deployment-protection/methods-to-bypass-deployment-protection/trusted-sources#default-access).
+For a signed-in browser check, open the immutable preview URL printed by the
+script and follow the same links.
+
 ## Verification boundary
 
 Check the importer refusal controls, full website tests, production build and
