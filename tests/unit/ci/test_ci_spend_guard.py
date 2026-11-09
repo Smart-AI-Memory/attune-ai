@@ -26,7 +26,9 @@ Policy enforced:
    "keyless-CI-faithful" lesson).
 4. Each allowlisted workflow's spend control is verified for what it
    actually is: ``integration-auth.yml`` caps spend via
-   ``ATTUNE_MAX_BUDGET_USD``. (``help-freshness.yml`` was de-keyed
+   ``ATTUNE_MAX_BUDGET_USD``. ``security-audit-manual.yml`` keeps an explicit
+   10 USD cap and standard depth, with a fresh approved dispatch.
+   (``help-freshness.yml`` was de-keyed
    2026-07-27 — report-only since author-consolidation T4 retired the
    in-CI regen path.)
 """
@@ -46,6 +48,7 @@ WORKFLOWS_DIR = Path(__file__).resolve().parents[3] / ".github" / "workflows"
 #: spend decision: the workflow must be schedule/dispatch-only and carry
 #: a spend control verified by a test in this module.
 KEYED_ALLOWLIST: dict[str, str] = {
+    "security-audit-manual.yml": "approved dispatch-only audit, exact SHA + 10 USD SDK cap",
     "integration-auth.yml": "weekly live-key canary, ATTUNE_MAX_BUDGET_USD-capped",
     "windows-payload-capture.yml": (
         "one-shot Windows hook-payload diagnostic, dispatch-only, "
@@ -195,3 +198,37 @@ def test_windows_payload_capture_caps_spend():
         f"without --max-turns: {unbounded} — the turn bound is part of "
         f"this workflow's spend control."
     )
+
+
+def test_security_audit_manual_caps_spend():
+    """The approved audit keeps both SDK cap paths and one keyed scan step."""
+    path = WORKFLOWS_DIR / "security-audit-manual.yml"
+    doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+    steps = doc["jobs"]["audit"]["steps"]
+    scan = next(s for s in steps if s["name"] == "Run one authenticated audit")
+    assert scan["env"]["ATTUNE_MAX_BUDGET_USD"] == "10"
+    assert scan["env"]["ANTHROPIC_API_KEY"] == "${{ secrets.ANTHROPIC_API_KEY }}"
+    assert "--input '{\"max_budget_usd\":10}'" in scan["run"]
+    assert "--depth standard" in scan["run"]
+    # The only second secret reference sanitizes output; it cannot run an audit.
+    keyed = [
+        s
+        for s in steps
+        if s.get("env", {}).get("ANTHROPIC_API_KEY") == "${{ secrets.ANTHROPIC_API_KEY }}"
+    ]
+    assert [s["name"] for s in keyed] == [
+        "Run one authenticated audit",
+        "Redact credential bytes before artifact upload",
+    ]
+    text = path.read_text(encoding="utf-8")
+    assert len(re.findall(r"(?i)\bsecrets\b", text)) == 2
+    assert (
+        re.findall(r"\$\{\{\s*secrets\.ANTHROPIC_API_KEY\s*\}\}", text)
+        == ["${{ secrets.ANTHROPIC_API_KEY }}"] * 2
+    )
+    assert "env" not in doc and "env" not in doc["jobs"]["audit"]
+    sanitizer = next(
+        s for s in steps if s["name"] == "Redact credential bytes before artifact upload"
+    )
+    assert "uses" not in sanitizer
+    assert not re.search(r"\b(attune|claude|anthropic|uv)\b", sanitizer["run"])
