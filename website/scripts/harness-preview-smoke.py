@@ -13,7 +13,9 @@ ROOT = Path(__file__).resolve().parents[2]
 GITHUB = "repos/Smart-AI-Memory/attune-ai/deployments"
 VERCEL_BOT = "vercel[bot]"
 PREVIEW_ENV = "Preview – smartaimemory.com"
-PREVIEW_ORIGIN = re.compile(r"https://smartaimemory-[a-z0-9]{9}-empathy-framework\.vercel\.app/?")
+PREVIEW_ORIGIN = re.compile(
+    r"https://smartaimemory-[a-z0-9]{9}-[a-z0-9]+(?:-[a-z0-9]+)*\.vercel\.app/?"
+)
 
 
 def command(*args: str) -> str:
@@ -44,6 +46,7 @@ def deployment_origin(commit: str) -> str:
         raise RuntimeError(
             f"Smart AI Memory preview for {commit} has no current successful deployment status"
         )
+    # The exact-commit Vercel deployment record identifies the project and team.
     origin = statuses[0]["environment_url"]
     if not PREVIEW_ORIGIN.fullmatch(origin):
         raise RuntimeError("Expected an immutable Smart AI Memory Vercel preview URL")
