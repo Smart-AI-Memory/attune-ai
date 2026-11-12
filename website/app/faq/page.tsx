@@ -18,10 +18,23 @@ interface FAQCategory {
   questions: FAQItem[];
 }
 
+const HARNESS_ISSUES_URL = 'https://github.com/Smart-AI-Memory/attune-harness/issues';
+const harnessBugReport = {
+  question: 'How do I report a Harness bug?',
+  answer: (
+    <>
+      Open an issue in the{' '}
+      <a href={HARNESS_ISSUES_URL} className="text-[var(--primary)] hover:underline">Harness issue tracker</a>.
+      Include your Harness version, operating system, steps to reproduce, and what you expected to happen.
+    </>
+  ),
+  answerText: 'Open an issue in the Harness issue tracker. Include your Harness version, operating system, steps to reproduce, and what you expected to happen.',
+};
+
 const faqData: FAQCategory[] = [
   {
     category: 'Attune Harness',
-    questions: [...HARNESS_FAQ_ITEMS],
+    questions: [...HARNESS_FAQ_ITEMS, harnessBugReport],
   },
   {
     category: 'Attune AI — General',
@@ -150,17 +163,17 @@ const faqData: FAQCategory[] = [
         answer: 'Use the project documentation and GitHub community channels. Report Attune AI bugs in its issue tracker; use the Harness issue tracker for Harness. A pilot or support arrangement would need a separate discussion and agreement.',
       },
       {
-        question: 'How do I report bugs?',
+        question: 'How do I report an Attune AI bug?',
         answer: (
           <>
             Report bugs via{' '}
             <Link href="https://github.com/Smart-AI-Memory/attune-ai/issues" className="text-[var(--primary)] hover:underline" target="_blank" rel="noopener noreferrer">
-              GitHub Issues
+              the Attune AI issue tracker
             </Link>
             . Include your environment details, steps to reproduce, and expected vs actual behavior.
           </>
         ),
-        answerText: 'Report bugs via GitHub Issues at https://github.com/Smart-AI-Memory/attune-ai/issues. Include your environment details, steps to reproduce, and expected vs actual behavior.',
+        answerText: 'Report Attune AI bugs at https://github.com/Smart-AI-Memory/attune-ai/issues. Include your environment details, steps to reproduce, and expected vs actual behavior.',
       },
       {
         question: 'Can I contribute to the project?',
@@ -206,7 +219,10 @@ export const metadata: Metadata = generateMetadata({
 
 export default function FAQPage() {
   const structuredData = generateStructuredData('faq', {
-    questions: [...HARNESS_FAQ_ITEMS],
+    questions: [
+      ...HARNESS_FAQ_ITEMS,
+      { question: harnessBugReport.question, answer: harnessBugReport.answerText },
+    ],
   });
   const breadcrumbSchema = generateStructuredData('breadcrumb', {
     items: [
@@ -283,7 +299,7 @@ export default function FAQPage() {
                   Contact
                 </a>
                 <a
-                  href="https://github.com/Smart-AI-Memory/attune-harness/issues"
+                  href={HARNESS_ISSUES_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-outline text-lg px-8 py-4"
