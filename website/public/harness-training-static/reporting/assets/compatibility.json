@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "checked_on": "2026-11-11",
+  "scope": "The same practice setup from Get Started and lesson 2 commands were run on the published wheels. The runtime was selected by a test-only resolver constraint. These checks exercise the reporting fixture on the listed platform.",
+  "report": {
+    "entries": 6,
+    "minutes": 270,
+    "matches_expected_bytes": true
+  },
+  "results": [
+    {
+      "harness": "1.7.0",
+      "pytest": "9.1.1",
+      "python": "3.12.2",
+      "platform": "Darwin arm64",
+      "wheel_sha256": "2b2d4cfc717ea685ce111cbb8b90eb601094e967d612d57f2b31bbc72b6eb67a",
+      "practice_zip_sha256": "df9c17238236050cc76ecfb66664762ceadd164172b0c8802eabe73c88da7f0e",
+      "report_sha256": "ae59332ac013d0ec220484b723457d4ac06a179e350218b769dc2d3425678124",
+      "protected_files_unchanged": 7,
+      "changed_files": [
+        "report.py"
+      ],
+      "passing_cases": {
+        "probe:change": 77,
+        "probe:final": 77
+      },
+      "model_calls": 0,
+      "status": "completed"
+    },
+    {
+      "harness": "1.8.0",
+      "pytest": "9.1.1",
+      "python": "3.12.2",
+      "platform": "Darwin arm64",
+      "wheel_sha256": "ba42b8f057b88a7fdf5ea5649346356a4ed2e4f012325991938d4fc69daca4f5",
+      "practice_zip_sha256": "df9c17238236050cc76ecfb66664762ceadd164172b0c8802eabe73c88da7f0e",
+      "report_sha256": "ae59332ac013d0ec220484b723457d4ac06a179e350218b769dc2d3425678124",
+      "protected_files_unchanged": 7,
+      "changed_files": [
+        "report.py"
+      ],
+      "passing_cases": {
+        "probe:change": 77,
+        "probe:final": 77
+      },
+      "model_calls": 0,
+      "status": "completed"
+    }
+  ]
+}

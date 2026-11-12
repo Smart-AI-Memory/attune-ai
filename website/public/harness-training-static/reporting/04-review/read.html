@@ -1,0 +1,42 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,follow"><title>Decide whether to trust the report · Attune Harness</title><link rel="stylesheet" href="../assets/styles.css"></head><body><main style="max-width:900px;margin:auto;padding:2rem"><p><a href="/harness/help/">Help Center</a></p><p><a href="../">Course overview</a></p><h1>Decide whether to trust the report</h1>
+<p>Check a subtotal in your report and read the evidence from your build.</p>
+<p>This full-text reading copy does not save answers. <a href="./">Open the interactive lesson</a> for saved browser notes.</p>
+<section id="section-1">
+<h2>Open the report you built</h2>
+<p>Use the HTML file and saved task from lesson 2.</p>
+<p>Open <code>$PRACTICE/activity-report.html</code> in your browser. Find the entry count, total minutes and Orion subtotal. Keep the briefing from <a href="../03-return/">Come back tomorrow</a> open.</p><details><summary>Follow along with the sample</summary><p>Open the <a href="../assets/example/expected/activity-report.html">sample HTML report</a> and <a href="../../1.7.0-preparation/assets/current-checks.json">archived 1.7.0 check record</a>. The archived checks describe the recorded 1.7.0 run.</p></details>
+</section>
+<section id="section-2">
+<h2>Check one answer yourself</h2>
+<p>Derive one expected answer from the CSV before comparing it with the report.</p>
+<ol><li>Open <code>$PRACTICE/project/data/activity.csv</code>.</li><li>Add the four Orion entries: <strong>90 + 30 + 45 + 15 = 180 minutes</strong>.</li><li>Compare that result with the Orion subtotal in your HTML report.</li></ol><p>For the sample route, use the <a href="../assets/example/data/activity.csv">supplied CSV</a>. The full sample has six entries and totals 270 minutes.</p><h3><strong>Your arithmetic check</strong></h3><p>Write your answer in your own notes, or use the interactive lesson.</p><p class="caption">This optional note stays in your browser profile and site.</p>
+</section>
+<section id="section-3">
+<h2>Read the evidence from your build</h2>
+<p>Use the saved briefing to see which checks ran and what happened.</p>
+<p>In the briefing, find <code>probe:change</code> and <code>probe:final</code> under <strong>Host checks</strong>. Check that both passed and read any recorded reviewer findings. If you closed the briefing, refresh it with the command from <a href="../03-return/">Come back tomorrow</a>.</p><p>The probes test the selected reporting cases. Your independent subtotal checks one result against the input.</p><details><summary>Optional test and reference details</summary><p>Inspect the <a href="../assets/example/tests/test_report.py">text checks</a> and <a href="../assets/example/tests/test_html_report.py">HTML checks</a>. The <a href="../assets/compatibility.json">compatibility results</a> record the course’s checked runtimes.</p><section class="copy-block" data-copy-kind="prompt"><h3>evidence inspection prompt</h3><pre><code>Compare my Orion subtotal with the input and HTML report. Read the saved task’s change and final probes and any reviewer findings. Explain what this evidence supports and any open concern. Stop after inspection.</code></pre></section></details>
+</section>
+<section id="section-4">
+<h2>Investigate a mismatch</h2>
+<p>If your independent answer and report differ, identify which rows explain the gap.</p>
+<p>Compare the CSV rows with the project totals in the HTML. Keep the input, report and expected subtotal together so the mismatch is easy to reproduce.</p><p>If the results agree, continue with the saved checks and the evidence you have.</p>
+</section>
+<section id="section-5">
+<h2>Choose a focused response</h2>
+<p>Use a confirmed mismatch to choose a check or a small correction.</p>
+<p>Write the expected answer from the original input. If the output disagrees, capture a check that exposes the discrepancy. Inspect the evidence and review the scope before authorizing any correction.</p>
+</section>
+<section id="section-6">
+<h2>Try the missing-row example</h2>
+<p>Use this hypothetical case to see how a plausible total can still be wrong.</p>
+<p>Imagine the report omitted Orion’s last 15-minute Testing entry. It would show <strong>5 entries, 255 minutes overall and 165 minutes for Orion</strong>. Which comparison would expose the omission?</p>
+<details><summary>The sample matches the six-row arithmetic and its selected checks pass. Which conclusion is supported?</summary>
+<p><strong>The recorded checks support the sample and tested cases within the stated source and environment; other behavior may still need evidence.</strong> Correct. Connect the conclusion to the actual checks and keep untested cases visible.</p>
+<p><strong>Every possible input, platform and future change is now proven correct.</strong> The evidence covers the selected inputs, cases, source and environment. Broader claims need their own checks.</p>
+</details>
+</section>
+<section id="section-7">
+<h2>Record what the evidence supports</h2>
+<p>State what you checked, what agreed and what needs another look.</p>
+<p>Example: “The CSV and HTML agree on 180 minutes for Orion. The saved probes passed the reporting checks. I can hand off this sample and its evidence.” Adjust the wording to reflect your results.</p><h3><strong>Your review decision</strong></h3><p>Write your answer in your own notes, or use the interactive lesson.</p><p class="caption">This optional note stays in your browser profile and site.</p><p><strong>Next:</strong> Open <strong><a href="../05-deliver/">Make the tool usable</a></strong> to hand off your report.</p>
+</section></main></body></html>

@@ -1,0 +1,132 @@
+{
+  "title": "Decide whether to trust the report",
+  "subtitle": "Check a subtotal in your report and read the evidence from your build.",
+  "courseLabel": "Harness in practice · Tutorial 4 of 6 · Verify → Review",
+  "revisionLabel": "Reporting course",
+  "storageKey": "attune-reporting-wbt-1-7-preparation-04-review-r1",
+  "coursePath": [
+    "Turn an idea into a useful result",
+    "Build your first report",
+    "Come back tomorrow",
+    "Decide whether to trust the report",
+    "Make the tool usable",
+    "Make it work for your needs"
+  ],
+  "sections": [
+    {
+      "id": "section-1",
+      "navTitle": "Open your report",
+      "phase": "Verify → Review",
+      "title": "Open the report you built",
+      "intro": "Use the HTML file and saved task from lesson 2.",
+      "html": "<p>Open <code>$PRACTICE/activity-report.html</code> in your browser. Find the entry count, total minutes and Orion subtotal. Keep the briefing from <a href=\"../03-return/\">Come back tomorrow</a> open.</p><details><summary>Follow along with the sample</summary><p>Open the <a href=\"../assets/example/expected/activity-report.html\">sample HTML report</a> and <a href=\"../../1.7.0-preparation/assets/current-checks.json\">archived 1.7.0 check record</a>. The archived checks describe the recorded 1.7.0 run.</p></details>",
+      "copies": [],
+      "presenterNotes": [
+        "Use the learner's generated HTML and saved task whenever they are available."
+      ]
+    },
+    {
+      "id": "section-2",
+      "navTitle": "Check a subtotal",
+      "phase": "Verify · Independent expectation",
+      "title": "Check one answer yourself",
+      "intro": "Derive one expected answer from the CSV before comparing it with the report.",
+      "html": "<ol><li>Open <code>$PRACTICE/project/data/activity.csv</code>.</li><li>Add the four Orion entries: <strong>90 + 30 + 45 + 15 = 180 minutes</strong>.</li><li>Compare that result with the Orion subtotal in your HTML report.</li></ol><p>For the sample route, use the <a href=\"../assets/example/data/activity.csv\">supplied CSV</a>. The full sample has six entries and totals 270 minutes.</p><label for=\"review-arithmetic\"><strong>Your arithmetic check</strong></label><textarea id=\"review-arithmetic\" data-save=\"reviewArithmetic\" rows=\"4\" placeholder=\"Which rows did you add, and what did you compare?\"></textarea><p class=\"caption\">This optional note stays in your browser profile and site.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Ask the learner to name the four rows and find the corresponding subtotal."
+      ]
+    },
+    {
+      "id": "section-3",
+      "navTitle": "Read the saved probes",
+      "phase": "Verify · Evidence",
+      "title": "Read the evidence from your build",
+      "intro": "Use the saved briefing to see which checks ran and what happened.",
+      "html": "<p>In the briefing, find <code>probe:change</code> and <code>probe:final</code> under <strong>Host checks</strong>. Check that both passed and read any recorded reviewer findings. If you closed the briefing, refresh it with the command from <a href=\"../03-return/\">Come back tomorrow</a>.</p><p>The probes test the selected reporting cases. Your independent subtotal checks one result against the input.</p><details><summary>Optional test and reference details</summary><p>Inspect the <a href=\"../assets/example/tests/test_report.py\">text checks</a> and <a href=\"../assets/example/tests/test_html_report.py\">HTML checks</a>. The <a href=\"../assets/compatibility.json\">compatibility results</a> record the course’s checked runtimes.</p><div data-copy-slot=\"review-evidence-prompt\"></div></details>",
+      "copies": [
+        {
+          "label": "evidence inspection prompt",
+          "text": "Compare my Orion subtotal with the input and HTML report. Read the saved task’s change and final probes and any reviewer findings. Explain what this evidence supports and any open concern. Stop after inspection.",
+          "slot": "review-evidence-prompt",
+          "kind": "prompt"
+        }
+      ],
+      "presenterNotes": [
+        "Read the learner's probe results and distinguish them from the archived sample evidence."
+      ]
+    },
+    {
+      "id": "section-4",
+      "navTitle": "Investigate a mismatch",
+      "phase": "Review · Reasoning",
+      "title": "Investigate a mismatch",
+      "intro": "If your independent answer and report differ, identify which rows explain the gap.",
+      "html": "<p>Compare the CSV rows with the project totals in the HTML. Keep the input, report and expected subtotal together so the mismatch is easy to reproduce.</p><p>If the results agree, continue with the saved checks and the evidence you have.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Use an observed mismatch if one exists."
+      ]
+    },
+    {
+      "id": "section-5",
+      "navTitle": "Choose a focused response",
+      "phase": "Review → Plan",
+      "title": "Choose a focused response",
+      "intro": "Use a confirmed mismatch to choose a check or a small correction.",
+      "html": "<p>Write the expected answer from the original input. If the output disagrees, capture a check that exposes the discrepancy. Inspect the evidence and review the scope before authorizing any correction.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Keep independent expectations and any observed failure with the proposed correction."
+      ]
+    },
+    {
+      "id": "section-6",
+      "navTitle": "Try a missing-row example",
+      "phase": "Verify · Transfer",
+      "title": "Try the missing-row example",
+      "intro": "Use this hypothetical case to see how a plausible total can still be wrong.",
+      "html": "<p>Imagine the report omitted Orion’s last 15-minute Testing entry. It would show <strong>5 entries, 255 minutes overall and 165 minutes for Orion</strong>. Which comparison would expose the omission?</p>",
+      "copies": [],
+      "presenterNotes": [
+        "This is an example to reason about, so keep its hypothetical results out of the learner’s saved evidence."
+      ],
+      "check": {
+        "question": "The sample matches the six-row arithmetic and its selected checks pass. Which conclusion is supported?",
+        "options": [
+          {
+            "text": "The recorded checks support the sample and tested cases within the stated source and environment; other behavior may still need evidence.",
+            "correct": true,
+            "feedback": "Correct. Connect the conclusion to the actual checks and keep untested cases visible."
+          },
+          {
+            "text": "Every possible input, platform and future change is now proven correct.",
+            "correct": false,
+            "feedback": "The evidence covers the selected inputs, cases, source and environment. Broader claims need their own checks."
+          }
+        ]
+      }
+    },
+    {
+      "id": "section-7",
+      "navTitle": "Record your review decision",
+      "phase": "Review · Decision",
+      "title": "Record what the evidence supports",
+      "intro": "State what you checked, what agreed and what needs another look.",
+      "html": "<p>Example: “The CSV and HTML agree on 180 minutes for Orion. The saved probes passed the reporting checks. I can hand off this sample and its evidence.” Adjust the wording to reflect your results.</p><label for=\"review-decision\"><strong>Your review decision</strong></label><textarea id=\"review-decision\" data-save=\"reviewDecision\" rows=\"5\" placeholder=\"What do you trust, what remains open, and what decision follows?\"></textarea><p class=\"caption\">This optional note stays in your browser profile and site.</p><p><strong>Next:</strong> Open <strong><a href=\"../05-deliver/\">Make the tool usable</a></strong> to hand off your report.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Check that the learner uses their actual result and evidence."
+      ]
+    }
+  ],
+  "coursePosition": 4,
+  "courseRoutes": [
+    "../01-define/",
+    "../02-build/",
+    "../03-return/",
+    "../04-review/",
+    "../05-deliver/",
+    "../06-improve/"
+  ]
+}

@@ -43,10 +43,10 @@ body{margin:0}
 .help-code-controls button:focus-visible{outline:3px solid var(--help-focus);outline-offset:4px}
 .help-code-status{font-size:.9rem;overflow-wrap:anywhere}
 .help-code-controls+pre{margin-top:0}
-.help-prompt{margin:28px 0;padding:20px;border-left:4px solid var(--help-green);border-radius:8px;background:var(--help-panel)}
-.help-prompt .help-eyebrow{margin:0 0 12px}
-.help-prompt .help-code-controls{margin:12px 0}
-.help-prompt [data-copy-prompt]{font:inherit;font-size:1.08rem;line-height:1.65;margin:14px 0 0}
+.help-prompt,.help-tip{margin:18px 0;padding:8px 0 8px 14px;border-left:2px solid var(--help-border)}
+.help-prompt .help-prompt-label{font-weight:700;margin:0 0 6px}
+.help-prompt .help-code-controls{margin:8px 0}
+.help-prompt [data-copy-prompt]{font:inherit;margin:8px 0 0}
 .help-table-scroll{overflow-x:auto;margin:24px 0;padding:4px}
 .help-prose table{border-collapse:collapse;min-width:100%;font-size:.9rem}
 .help-prose :where(th,td){border:1px solid var(--help-border);padding:12px;text-align:left;vertical-align:top;min-width:110px}
@@ -63,6 +63,7 @@ body{margin:0}
 
 .help-contents{border:1px solid var(--help-border);border-radius:8px;padding:16px 22px;margin:24px 0 32px;background:var(--help-panel)}
 .help-contents h2{margin:0 0 10px;font-size:1rem}
+.help-contents summary{font-weight:700;cursor:pointer}
 .help-contents ul{padding-left:22px;margin:8px 0}
 .help-contents li{margin:5px 0}
 .help-prose h2,.help-prose h3{scroll-margin-top:24px}
@@ -72,7 +73,8 @@ body{margin:0}
 .help-skip:focus{top:10px}
 .help-anchor{display:block;height:0;scroll-margin-top:24px}
 .help-featured-nav{border:1px solid var(--help-green);border-radius:6px;background:var(--help-panel);margin:16px 0;font-weight:700;padding:12px!important}
+@media(max-width:800px){.help-sidebar:has(.help-featured-nav[aria-current="page"]){display:none}}
 
 .help-course p+p{margin-top:16px}
-.help-course .help-course-action{margin-top:24px}
-.help-course .help-featured-nav{display:inline-block;margin:0}
+.help-course-action{margin-top:24px}
+.help-course-action .help-featured-nav{display:inline-block;margin:0}

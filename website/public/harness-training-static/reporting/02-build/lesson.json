@@ -1,0 +1,175 @@
+{
+  "title": "Build your first report",
+  "subtitle": "A useful result. Clear boundaries. Evidence you can inspect.",
+  "courseLabel": "Harness in practice · Tutorial 2 of 6 · Plan → Build",
+  "revisionLabel": "Reporting course",
+  "storageKey": "harness-170-course-02-build-20261105",
+  "sections": [
+    {
+      "id": "section-1",
+      "navTitle": "See the result",
+      "phase": "Plan → Build",
+      "title": "Build a report you can explain",
+      "intro": "Turn six synthetic activity entries into an HTML report. Keep the input and tests unchanged.",
+      "html": "<p>Open the <a href=\"../assets/example/expected/activity-report.html\" target=\"_blank\" rel=\"noopener\">sample report</a>. Look for <strong>6 entries and 270 minutes</strong>, with 180 minutes for Orion and 90 for Lumen.</p><p>You will preview the work, approve its scope, run the local build and inspect the result. The practice worker supplies reference code. The local reviewer exercises the review protocol. The tests check the resulting program, and the practice makes no model calls.</p><p>For a project that needs more preparation, compare the <a href=\"../development-paths.html\">goal-driven and spec-driven approaches</a>.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Ask the learner to explain the useful result and next decision in their own words.",
+        "Keep this offline practice distinct from authorizing real project or model work."
+      ]
+    },
+    {
+      "id": "section-2",
+      "navTitle": "Prepare the project",
+      "phase": "Plan → Build",
+      "title": "Start in an isolated practice folder",
+      "intro": "Use the terminal and Python environment from course setup.",
+      "html": "<p>Complete <a href=\"/harness/help/get-started/#set-up-the-practice-folder\">course setup</a> and keep the extracted folder open in the same terminal, with <code>COURSE_WORK</code> set.</p><p>Run the practice setup command below. It creates the sample project in <code>$PRACTICE/project</code> and writes the draft work request to <code>$PRACTICE/task.work.json</code>. Keep this terminal open for the rest of the lesson.</p>",
+      "copies": [
+        {
+          "label": "practice setup",
+          "text": "PRACTICE=\"$COURSE_WORK/practice\"\npython practice.py \"$PRACTICE\""
+        }
+      ],
+      "presenterNotes": [
+        "Ask the learner to explain the useful result and next decision in their own words.",
+        "Keep this offline practice distinct from authorizing real project or model work."
+      ]
+    },
+    {
+      "id": "section-3",
+      "navTitle": "Review the plan",
+      "phase": "Plan → Build",
+      "title": "Ask what may change and how it will be checked",
+      "intro": "Preview the request and check the proposed scope.",
+      "html": "<p>Run the <strong><code>plan</code></strong> command below. Look for <code>draft</code>, an empty list of missing questions and a <code>checkpoint_digest</code>.</p><p>Confirm that the goal and both test criteria match the exercise. The plan may change only <code>report.py</code>. It protects the CSV, expected reports, tests, participant registry and pytest configuration.</p><p>If the preview needs a correction, stop and revise the request through the supported workflow. Generate a fresh preview before you accept its scope.</p>",
+      "copies": [
+        {
+          "label": "plan preview",
+          "text": "python -m attune_harness plan --request \"$PRACTICE/task.work.json\" \\\n  --project \"$PRACTICE/project\" --config \"$PRACTICE/project/participants.json\" \\\n  --task-dir \"$PRACTICE/task\""
+        }
+      ],
+      "presenterNotes": [
+        "Ask the learner to explain the useful result and next decision in their own words.",
+        "Keep this offline practice distinct from authorizing real project or model work."
+      ]
+    },
+    {
+      "id": "section-4",
+      "navTitle": "Accept the scope",
+      "phase": "Plan → Build",
+      "title": "Agree to the exact request",
+      "intro": "Accept the exact draft you reviewed. You authorize execution in the next step.",
+      "html": "<p>If the preview matches the exercise, replace the placeholder in <code>PREVIEW_CHECKPOINT</code> with the full <code>checkpoint_digest</code> from your preview. Run the command below.</p><p>Look for <code>accepted</code> and a new checkpoint. That records your approval of the reviewed scope. You are ready to decide whether to run the build.</p>",
+      "copies": [
+        {
+          "label": "scope acceptance",
+          "text": "PREVIEW_CHECKPOINT=\"replace-with-your-full-preview-digest\"\npython -m attune_harness plan --task-dir \"$PRACTICE/task\" \\\n  --accept --checkpoint \"$PREVIEW_CHECKPOINT\""
+        }
+      ],
+      "presenterNotes": [
+        "Ask the learner to explain the useful result and next decision in their own words.",
+        "Keep this offline practice distinct from authorizing real project or model work."
+      ],
+      "check": {
+        "question": "What has acceptance established?",
+        "options": [
+          {
+            "text": "Agreement to the displayed scope; execution is still separate.",
+            "correct": true,
+            "feedback": "The saved request is accepted. Starting the local command workers is the next decision."
+          },
+          {
+            "text": "The report has already been implemented and checked.",
+            "correct": false,
+            "feedback": "Acceptance records intent, not implementation or test evidence."
+          }
+        ]
+      }
+    },
+    {
+      "id": "section-5",
+      "navTitle": "Start the practice",
+      "phase": "Plan → Build",
+      "title": "Give the local commands a bounded go",
+      "intro": "Review the local participant commands and authorize the practice build.",
+      "html": "<p>Check the two local commands in <code>$PRACTICE/project/participants.json</code> and the effects in the accepted plan. Run <strong><code>build</code></strong> with <code>--allow-external</code> to authorize those commands for this practice run.</p><p>Look for <code>completed</code> after the configured checks pass. If the build fails, read the saved error and journal before choosing what to do next.</p><p>For real model work, check your selected route in the <a href=\"https://github.com/Smart-AI-Memory/attune-harness/blob/main/docs/participant-funding.md\">participant setup and funding guide</a>.</p>",
+      "copies": [
+        {
+          "label": "offline build",
+          "text": "python -m attune_harness build \"$PRACTICE/task\" --allow-external"
+        }
+      ],
+      "presenterNotes": [
+        "Ask the learner to explain the useful result and next decision in their own words.",
+        "Keep this offline practice distinct from authorizing real project or model work."
+      ]
+    },
+    {
+      "id": "section-6",
+      "navTitle": "Inspect the evidence",
+      "phase": "Plan → Build",
+      "title": "Separate a completed task from a trustworthy claim",
+      "intro": "Check the saved task for the change and test results.",
+      "html": "<p>Run <strong><code>status</code></strong> below to inspect <code>$PRACTICE/task</code>. Under <strong>Planned tasks</strong>, look for <code>report.py</code> in <strong>Outputs</strong>. Under <strong>Host checks</strong>, look for <strong>Passed</strong> beside <code>probe:change</code> and <code>probe:final</code>.</p><p>The <a href=\"../assets/compatibility.json\">course compatibility results</a> record 77 passing cases per probe in the tested exercise. Use your own task record to see what ran in your environment.</p>",
+      "copies": [
+        {
+          "label": "saved task inspection",
+          "text": "python -m attune_harness status \"$PRACTICE/task\" --format markdown"
+        }
+      ],
+      "presenterNotes": [
+        "Ask the learner to explain the useful result and next decision in their own words.",
+        "Keep this offline practice distinct from authorizing real project or model work."
+      ]
+    },
+    {
+      "id": "section-7",
+      "navTitle": "Generate the report",
+      "phase": "Plan → Build",
+      "title": "Take the checked result into your browser",
+      "intro": "Generate the report from the unchanged six-row CSV.",
+      "html": "<p>Run the report command below. It writes <code>$PRACTICE/activity-report.html</code> beside the project. Look for <code>Saved report to …</code> and open that file in your browser.</p><p>Check the count, 270 minutes, project totals and date range against the CSV. Choose a new output filename if you run the command again.</p>",
+      "copies": [
+        {
+          "label": "report command",
+          "text": "cd \"$PRACTICE/project\"\npython report.py data/activity.csv --format html --output \"$PRACTICE/activity-report.html\""
+        }
+      ],
+      "presenterNotes": [
+        "Ask the learner to explain the useful result and next decision in their own words.",
+        "Keep this offline practice distinct from authorizing real project or model work."
+      ]
+    },
+    {
+      "id": "section-8",
+      "navTitle": "Choose the next step",
+      "phase": "Plan → Build",
+      "title": "Leave the work ready to inspect tomorrow",
+      "intro": "Explain one result, one boundary and the next decision.",
+      "html": "<label for=\"build-review-note\">Your result and next decision</label><textarea id=\"build-review-note\" data-save=\"build-review-note\" rows=\"5\" placeholder=\"What did the checks establish, and what still needs your review?\"></textarea><p>This lesson saves your note in this browser when storage is available. Keep the paths to <code>$PRACTICE/task</code> and <code>$PRACTICE/activity-report.html</code> for the next lessons.</p><p><strong>Next:</strong> Open <strong><a href=\"../03-return/\">Come back tomorrow</a></strong> to return to the saved task.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Ask the learner to explain the useful result and next decision in their own words.",
+        "Keep this offline practice distinct from authorizing real project or model work."
+      ]
+    }
+  ],
+  "coursePosition": 2,
+  "coursePath": [
+    "Turn an idea into a useful result",
+    "Build your first report",
+    "Come back tomorrow",
+    "Decide whether to trust the report",
+    "Make the tool usable",
+    "Make it work for your needs"
+  ],
+  "courseRoutes": [
+    "../01-define/",
+    "../02-build/",
+    "../03-return/",
+    "../04-review/",
+    "../05-deliver/",
+    "../06-improve/"
+  ]
+}

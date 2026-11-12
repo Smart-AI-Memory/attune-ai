@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project activity report</title>
+<style>
+:root { color-scheme: light; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #243831; background: #f7f4ec; }
+* { box-sizing: border-box; }
+body { margin: 0; line-height: 1.6; }
+main { max-width: 1060px; margin: 0 auto; padding: 48px 32px; }
+header { padding: 30px 34px; border-radius: 10px; color: #f7f4ec; background: #143e34; }
+.eyebrow { margin: 0 0 8px; color: #d5e2cd; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); line-height: 1.2; letter-spacing: -.025em; }
+.date-range { margin: 16px 0 0; color: #e3e9dc; }
+.summary { display: grid; grid-template-columns: 2fr 1.5fr 1fr; gap: 16px; margin: 24px 0 36px; }
+.summary > div { min-width: 0; padding: 20px; border: 1px solid #d5ddcd; border-radius: 8px; background: #fffdf8; }
+dt { font-size: 13px; font-weight: 600; color: #52654f; }
+dd { margin: 6px 0 0; font-size: 24px; font-weight: 650; line-height: 1.4; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+section { margin-top: 32px; }
+h2 { margin: 0 0 8px; color: #143e34; font-size: 23px; }
+.table-wrap { width: 100%; }
+table { width: 100%; border-collapse: collapse; table-layout: fixed; background: #fffdf8; }
+caption { padding: 0 0 12px; text-align: left; font-size: 14px; color: #52654f; }
+th, td { padding: 14px 16px; border-bottom: 1px solid #d5ddcd; text-align: left; vertical-align: top; }
+thead th { background: #e6ecdf; color: #284e3b; font-size: 13px; }
+thead th:first-child { width: 43%; }
+thead th:nth-child(2) { width: 30%; }
+thead th:nth-child(3) { width: 27%; }
+tbody th { font-weight: 500; }
+.group-name { white-space: pre-wrap; overflow-wrap: anywhere; }
+.minutes { overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.share-value { font-size: 14px; font-variant-numeric: tabular-nums; }
+.bar-track { display: block; height: 9px; margin-top: 8px; border: 1px solid #b8cbb3; border-radius: 3px; overflow: hidden; background: #e8eddf; }
+.bar { display: block; height: 100%; background: #31654a; }
+.empty-state { color: #52654f; }
+.report-note { margin: 28px 0 0; color: #52654f; font-size: 13px; }
+@media (max-width: 640px) {
+  main { padding: 20px 16px; }
+  header { padding: 24px 20px; }
+  .summary { grid-template-columns: 1fr; gap: 10px; margin-bottom: 28px; }
+  .summary > div { padding: 14px 18px; }
+  dd { font-size: 22px; }
+  th, td { padding: 12px 8px; font-size: 14px; }
+  thead th:first-child { width: 38%; }
+  thead th:nth-child(2) { width: 32%; }
+  thead th:nth-child(3) { width: 30%; }
+}
+@page { margin: 18mm; }
+@media print {
+  :root { background: white; color: #172c20; font-size: 10pt; }
+  main { max-width: none; padding: 0; }
+  header { padding: 0 0 18px; border-bottom: 2px solid #143e34; border-radius: 0; color: #143e34; background: white; }
+  .eyebrow, .date-range { color: #344b39; }
+  h1 { font-size: 25pt; }
+  h2 { break-after: avoid; font-size: 17pt; }
+  .summary { grid-template-columns: 2fr 1.5fr 1fr; gap: 10px; }
+  .summary > div { padding: 12px; }
+  dd { font-size: 16pt; }
+  table { font-size: 10pt; }
+  thead { display: table-header-group; }
+  tr { break-inside: avoid; }
+  .bar-track, .bar { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+<main>
+<header>
+<p class="eyebrow">Activity summary</p>
+<h1>Project activity report</h1>
+<p class="date-range">Date range: <time datetime="2026-10-19">19</time>–<time datetime="2026-10-21">21 October 2026</time></p>
+</header>
+<dl class="summary" aria-label="Report summary">
+<div><dt>Total time</dt><dd>4 hours 30 minutes</dd></div>
+<div><dt>Total minutes</dt><dd>270</dd></div>
+<div><dt>Entries</dt><dd>6</dd></div>
+</dl>
+<section aria-labelledby="by-project">
+<h2 id="by-project">By project</h2>
+<div class="table-wrap"><table>
+<caption>Recorded minutes and share of total time by project.</caption>
+<thead><tr><th scope="col">Project</th><th scope="col">Minutes</th><th scope="col">Share of total</th></tr></thead>
+<tbody>
+<tr><th scope="row" class="group-name">Lumen</th><td class="minutes">90</td><td><span class="share-value">33.33%</span><span class="bar-track" aria-hidden="true"><span class="bar" style="width: 33.33%"></span></span></td></tr>
+<tr><th scope="row" class="group-name">Orion</th><td class="minutes">180</td><td><span class="share-value">66.66%</span><span class="bar-track" aria-hidden="true"><span class="bar" style="width: 66.66%"></span></span></td></tr>
+</tbody></table></div>
+</section>
+<section aria-labelledby="by-category">
+<h2 id="by-category">By category</h2>
+<div class="table-wrap"><table>
+<caption>Recorded minutes and share of total time by category.</caption>
+<thead><tr><th scope="col">Category</th><th scope="col">Minutes</th><th scope="col">Share of total</th></tr></thead>
+<tbody>
+<tr><th scope="row" class="group-name">Development</th><td class="minutes">150</td><td><span class="share-value">55.55%</span><span class="bar-track" aria-hidden="true"><span class="bar" style="width: 55.55%"></span></span></td></tr>
+<tr><th scope="row" class="group-name">Documentation</th><td class="minutes">75</td><td><span class="share-value">27.77%</span><span class="bar-track" aria-hidden="true"><span class="bar" style="width: 27.77%"></span></span></td></tr>
+<tr><th scope="row" class="group-name">Testing</th><td class="minutes">45</td><td><span class="share-value">16.66%</span><span class="bar-track" aria-hidden="true"><span class="bar" style="width: 16.66%"></span></span></td></tr>
+</tbody></table></div>
+</section>
+<p class="report-note">All totals include every validated CSV entry. Shares are rounded down to two decimal places; visual bars show the same shares.</p>
+</main>
+</body>
+</html>

@@ -1,0 +1,145 @@
+{
+  "title": "Turn an idea into a useful result",
+  "subtitle": "Choose a result you can explain and a first version you can check.",
+  "courseLabel": "Harness in practice · Tutorial 1 of 6 · Define",
+  "revisionLabel": "Reporting course",
+  "storageKey": "attune-reporting-course-170-01-define-20261105-v1",
+  "coursePath": [
+    "Turn an idea into a useful result",
+    "Build your first report",
+    "Come back tomorrow",
+    "Decide whether to trust the report",
+    "Make the tool usable",
+    "Make it work for your needs"
+  ],
+  "sections": [
+    {
+      "id": "section-1",
+      "navTitle": "Start with the benefit",
+      "phase": "Define",
+      "title": "See where the work went",
+      "intro": "Six activity entries can answer a useful question: how much time went to each project and category?",
+      "html": "<p>Click <strong><a href=\"../assets/example/expected/activity-report.html\" target=\"_blank\" rel=\"noopener\">Open formatted report</a></strong>. Find the total, one project and one category. A readable report lets you explain where the time went without adding every row again.</p><table><caption>The target result from the six supplied rows</caption><tbody><tr><th scope=\"row\">Entries</th><td>6</td></tr><tr><th scope=\"row\">Total</th><td>270 minutes, or 4 hours 30 minutes</td></tr><tr><th scope=\"row\">Projects</th><td>Orion 180 minutes; Lumen 90 minutes</td></tr><tr><th scope=\"row\">Categories</th><td>Development 150; Documentation 75; Testing 45 minutes</td></tr></tbody></table><p>In this course, you direct the outcome and decisions. Your assistant helps inspect the project and prepare the work. Harness retains the agreed request, checks and execution evidence for supported workflows.</p><p>Start by defining what would make the report useful. You do not need to design its code. Opening the supplied report does not mean that you have built a new one.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Show the useful report before explaining workflow terms. Ask the learner to locate one value they care about.",
+        "Use the current supplied report and current checks summary. Opening an example is different from the learner completing a new task."
+      ]
+    },
+    {
+      "id": "section-2",
+      "navTitle": "Read the input",
+      "phase": "Define · Input",
+      "title": "Check the six entries",
+      "intro": "The projects and activity are synthetic. The small input makes the target result easy to check yourself.",
+      "html": "<table><caption>The supplied activity data</caption><thead><tr><th scope=\"col\">Project</th><th scope=\"col\">Category</th><th scope=\"col\">Minutes</th></tr></thead><tbody><tr><td>Orion</td><td>Development</td><td>90</td></tr><tr><td>Orion</td><td>Testing</td><td>30</td></tr><tr><td>Orion</td><td>Documentation</td><td>45</td></tr><tr><td>Lumen</td><td>Development</td><td>60</td></tr><tr><td>Lumen</td><td>Documentation</td><td>30</td></tr><tr><td>Orion</td><td>Testing</td><td>15</td></tr></tbody></table><p>Read the actual <a href=\"../assets/example/data/activity.csv\">activity CSV</a>, which also includes the dates. Add Orion's rows: <strong>90 + 30 + 45 + 15 = 180 minutes</strong>. Lumen has <strong>60 + 30 = 90 minutes</strong>. Together they account for <strong>270 minutes</strong>, or 4 hours 30 minutes.</p><p>Pick a category and add its rows before looking at the report. Development should total 150 minutes, Documentation 75 and Testing 45. These expected answers come from the input, not from trusting the reporting code.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Let the learner work through one total in their own way. No arithmetic speed or coding skill is being assessed.",
+        "Read the linked CSV if a displayed table and source disagree. Preserve the synthetic fixture."
+      ]
+    },
+    {
+      "id": "section-3",
+      "navTitle": "Name the outcome",
+      "phase": "Define · Goal",
+      "title": "Describe what the person needs",
+      "intro": "State what the reader needs from the report. Let the assistant propose how to build it.",
+      "html": "<p>Use the sample CSV to describe the result you want and the checks that would show it works. Decide what the reader needs to see before you review the scope.</p><p>For a project with several workflows or unresolved requirements, compare the <a href=\"../development-paths.html\">goal-driven and spec-driven approaches</a>.</p>",
+      "copies": [
+        {
+          "label": "goal prompt",
+          "text": "Help me plan a readable HTML report of time by project and category from the supplied synthetic activity CSV. Include the entry count and total minutes so the reader can see where the time went. Inspect the CSV and sample report. Draft the goal, the files that may change and the checks that will show the totals are correct. Show me the draft for review and approval, then stop and wait for my decision.",
+          "kind": "prompt"
+        }
+      ],
+      "presenterNotes": [
+        "Invite the learner to explain the goal without copying the lesson. Accept their wording rather than rewriting it silently.",
+        "The prompt asks for preparation. Copying it does not create or accept a Harness task."
+      ]
+    },
+    {
+      "id": "section-4",
+      "navTitle": "Set the first version",
+      "phase": "Define · Boundary",
+      "title": "Keep one complete useful journey",
+      "intro": "Agree on the report you will build and the files that may change.",
+      "html": "<ul><li>Build a local HTML report showing the entry count, total minutes, and time by project and category. If an input row is invalid, show a clear error.</li><li>In lesson 2, the worker may change <code>report.py</code>.</li><li>Keep the sample CSV, expected reports, tests and practice configuration unchanged.</li></ul><p>In your own project, inspect the proposed file list before approving it. Consider filtering, remote services, new dependencies and deployment as separate decisions.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Ask whether an excluded feature is essential to this reader. If it is, revise the proposed first version before accepting scope.",
+        "Avoid a file-by-file repository tour. The learner needs to understand the allowed effect and protected expected answers."
+      ]
+    },
+    {
+      "id": "section-5",
+      "navTitle": "Define success",
+      "phase": "Define · Checks",
+      "title": "Say how you will recognize success",
+      "intro": "Use concrete examples and a failure case. A polished appearance alone cannot establish that the totals are right.",
+      "html": "<ul><li><strong>Completeness:</strong> all six valid entries appear in the count, without a hidden filter.</li><li><strong>Totals:</strong> the report shows 270 minutes; Orion 180 and Lumen 90.</li><li><strong>Categories:</strong> Development 150, Documentation 75 and Testing 45.</li><li><strong>Invalid input:</strong> an invalid row produces a helpful error and no misleading partial report.</li><li><strong>Preservation:</strong> the input and protected checks remain unchanged.</li></ul><p>Match each criterion to a check you can verify. You can add one total by hand now. In lesson 2, you will inspect the recorded test results.</p><p>Review the draft before you approve its scope. Authorize the build separately.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Treat the check as optional discussion. An incorrect choice must not lock navigation.",
+        "Use the failure-case requirement to show that success includes an understandable problem path. No new tests are claimed here."
+      ],
+      "check": {
+        "question": "Which success criterion is useful before the reporting work starts?",
+        "options": [
+          {
+            "text": "The six supplied entries total 270 minutes, and project totals account for that same total.",
+            "correct": true,
+            "feedback": "This is observable and can be checked independently from the source rows."
+          },
+          {
+            "text": "The report looks professional, so its totals can be assumed correct.",
+            "correct": false,
+            "feedback": "Appearance can help the reader, but the totals still need independent checks against the input."
+          }
+        ]
+      }
+    },
+    {
+      "id": "section-6",
+      "navTitle": "Try a small variation",
+      "phase": "Define · Your decision",
+      "title": "Change the reader, then explain the consequence",
+      "intro": "Suppose a colleague only wants to compare the two projects. Does that require a new feature?",
+      "html": "<p>The existing project table already supplies that comparison. A useful next step might be clearer instructions about where to look, rather than adding a filter or rewriting the tool.</p><p>Now consider a different request: “Show only Orion's activity.” That changes selection behavior. Keep it as a proposed later change until its goal, permitted files and checks are reviewed.</p><label for=\"define-reader-note\">Your reader and first-version decision</label><textarea id=\"define-reader-note\" data-save=\"define-reader-note\" rows=\"5\" placeholder=\"Who will use the report? What do they need to find? Which proposed additions can wait?\"></textarea><p class=\"caption\">This lesson saves your note in this browser when storage is available. Paste any wording you want to reuse into your project brief.</p><p>Explain why your chosen scope completes a useful journey. If the existing report already answers the question, keeping the scope unchanged is a valid decision.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Use less guidance here: ask the learner to distinguish interpreting the report from changing selection behavior.",
+        "Preserve the learner’s wording. Browser notes are separate from the saved task and may be unavailable in another browser."
+      ]
+    },
+    {
+      "id": "section-7",
+      "navTitle": "Take the brief forward",
+      "phase": "Define → Plan",
+      "title": "Prepare a brief you can review",
+      "intro": "You are ready for planning when you can explain the goal, the boundary and what would establish success.",
+      "html": "<div class=\"callout\"><h3>Proposed project brief</h3><dl><dt>Reader and benefit</dt><dd>A person reviewing activity wants to explain where the time went.</dd><dt>Input and result</dt><dd>Read the supplied synthetic CSV and produce an HTML report of time by project and category.</dd><dt>Success</dt><dd>Six entries; 270 minutes; correct project and category totals; clear bad-input behavior; preserved inputs and checks.</dd><dt>Boundary</dt><dd>A local reporting task. Filtering, remote services and deployment need separate decisions.</dd><dt>Status</dt><dd>Draft brief for review.</dd></dl></div><p>Ask your assistant to turn the brief into a draft request. Review the proposed files and checks before making a decision.</p><div data-copy-slot=\"define-brief-prompt\"></div><p><strong>Next:</strong> Open <strong><a href=\"../02-build/\">Build your first report</a></strong> to follow planning, scope approval, separately authorized execution and evidence inspection.</p><details><summary>Practice runtime and verification</summary><p>Follow the <a href=\"/harness/help/get-started/#set-up-the-practice-folder\">course setup instructions</a> to use a tested Harness release. Read the <a href=\"../../1.7.0-preparation/assets/current-checks.json\">original 1.7.0 check summary</a> for the supplied example's actual local results and limits. Software checks do not measure a learner's independence or establish model quality.</p><p><a href=\"https://github.com/Smart-AI-Memory/attune-harness/blob/main/docs/cli-guide.md#how-people-and-ai-work-together\">Read the working guide</a> or <a href=\"/harness/help/get-started/#set-up-the-practice-folder\">read the course guide</a>.</p></details>",
+      "copies": [
+        {
+          "label": "brief handoff prompt",
+          "text": "Use my reviewed reporting brief to draft the Harness request. Preserve my wording and existing work. Show me the goal, the files that may change, the protected inputs and the checks. Flag any decision I still need to make. Present the draft for my review and approval, then stop.",
+          "kind": "prompt",
+          "slot": "define-brief-prompt"
+        }
+      ],
+      "presenterNotes": [
+        "Ask the learner to explain one scope boundary and one success criterion before following the next lesson.",
+        "Keep version and observed-learning limits available without making them the main learning task."
+      ]
+    }
+  ],
+  "coursePosition": 1,
+  "courseRoutes": [
+    "../01-define/",
+    "../02-build/",
+    "../03-return/",
+    "../04-review/",
+    "../05-deliver/",
+    "../06-improve/"
+  ]
+}

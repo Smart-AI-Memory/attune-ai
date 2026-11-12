@@ -110,12 +110,11 @@ export default function DocsPage() {
 
         <section id="harness-learning" className="py-12 bg-[var(--surface-container-low)]" aria-labelledby="harness-learning-title">
           <div className="container max-w-5xl">
-            <p className="text-sm font-semibold text-[var(--text-secondary)] mb-3">Guided course · Harness 1.7.0</p>
             <h2 id="harness-learning-title" className="text-3xl font-bold mb-4">Harness in practice</h2>
             <p className="text-xl text-[var(--text-secondary)] mb-4">Build a useful reporting tool through six guided lessons. Define the result, plan and build, return to saved work, review the evidence, prepare a local handoff and make a scoped improvement.</p>
-            <p className="text-[var(--text-secondary)] mb-6">For optional command practice, follow the <Link className="underline" href="/harness/learn/1.7.0-preparation/setup.html">course setup for a separate 1.7.0 environment</Link>. Published installation instructions remain in the Help Center.</p>
+            <p className="text-[var(--text-secondary)] mb-6"><Link className="underline" href={`${HARNESS_GET_STARTED}#set-up-the-practice-folder`}>Set up the practice folder</Link> before running the commands in Tutorial 2.</p>
             <div className="flex flex-wrap gap-4">
-              <Link className="btn btn-primary" href="/harness/learn/">Learn Harness</Link>
+              <Link className="btn btn-primary" href="/harness/learn/reporting/">Browse the reporting tutorials</Link>
               <Link className="btn btn-outline" href="/harness/help/">Open Help Center</Link>
             </div>
           </div>

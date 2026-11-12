@@ -8,7 +8,8 @@ import { fileURLToPath } from 'node:url';
 import config from '@/next.config';
 import { checkTrainingExport, importTrainingExport } from '../../scripts/harness-training-export.mjs';
 
-const course = '1.7.0-preparation';
+const course = 'reporting';
+const legacyCourse = '1.7.0-preparation';
 const origin = 'https://github.com/Smart-AI-Memory/attune-harness.git';
 const importer = fileURLToPath(new URL('../../scripts/harness-training-export.mjs', import.meta.url));
 const digest = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
@@ -18,10 +19,10 @@ const temporary = () => mkdtempSync(path.join(realpathSync(tmpdir()), 'harness-t
 function fixture({ remote = origin, check = 'import sys\nassert sys.argv[1:] == ["--check"]\n', extra = {} as Record<string, string> } = {}) {
   const repo = temporary();
   const files: Record<string, string> = {
-    'help/manifest.json': '{"status":"published","published_version":"1.7.0"}\n',
+    'help/manifest.json': '{"status":"published","published_version":"1.8.0"}\n',
     'training/build_course.py': check,
     'training/README.md': 'Maintainer instructions are not a course payload.\n',
-    [`training/${course}/index.html`]: '<!doctype html><h1>Harness 1.7.0</h1>\n',
+    [`training/${course}/index.html`]: '<!doctype html><h1>Harness in practice</h1>\n',
     [`training/${course}/setup.html`]: '<h1>Set up the published package</h1>\n',
     [`training/${course}/01-define/index.html`]: '<h1>Define the outcome</h1>\n',
     [`training/${course}/01-define/lesson.json`]: '{"title":"Define the outcome"}\n',
@@ -33,6 +34,10 @@ function fixture({ remote = origin, check = 'import sys\nassert sys.argv[1:] == 
     [`training/${course}/assets/app.js`]: '"use strict";\n',
     [`training/${course}/assets/workflow.svg`]: '<svg xmlns="http://www.w3.org/2000/svg"></svg>\n',
     [`training/${course}/assets/README.md`]: 'Use synthetic data.\n',
+    [`training/${course}/assets/reporting-practice.zip`]: 'Practice bundle fixture.\n',
+    [`training/${legacyCourse}/index.html`]: '<h1>Harness 1.7.0</h1>\n',
+    [`training/${legacyCourse}/setup.html`]: '<h1>Historical setup</h1>\n',
+    [`training/${legacyCourse}/02-build/read.html`]: '<h1>Historical lesson</h1>\n',
     'training/archive/index.html': '<h1>Historical training</h1>\n',
     'training/archive/example.zip': 'Synthetic binary fixture: ZIP bytes are transported, not executed.\n',
     ...extra,
@@ -76,6 +81,9 @@ describe('Harness-owned training export', () => {
   it('routes committed course files before the hosted filesystem lookup', async () => {
     const rewrites = await config.rewrites!();
     const paths = [
+      ['reporting/setup\\.html', 'reporting/setup.html'],
+      ['reporting/02-build/read\\.html', 'reporting/02-build/read.html'],
+      ['reporting/assets/reporting-practice\\.zip', 'reporting/assets/reporting-practice.zip'],
       ['1\\.7\\.0-preparation/setup\\.html', '1.7.0-preparation/setup.html'],
       ['1\\.7\\.0-preparation/02-build/read\\.html', '1.7.0-preparation/02-build/read.html'],
       ['1\\.7\\.0-preparation/assets/reporting-example\\.zip', '1.7.0-preparation/assets/reporting-example.zip'],
@@ -89,11 +97,15 @@ describe('Harness-owned training export', () => {
         { source: '/harness/learn/:path*/', destination: '/harness-training-static/:path*/index.html' },
       ]),
     });
+    expect(await config.redirects!()).toContainEqual({
+      source: '/harness/learn/', destination: '/harness/help/get-started/#set-up-the-practice-folder', permanent: false,
+    });
   });
 
-  it('imports committed current-course and archive bytes through Git and generator check', () => {
+  it('imports committed current-course, legacy, and archive bytes through Git and generator check', () => {
     const receipt = JSON.parse(readFileSync(path.join(baseline, 'import.json'), 'utf8'));
-    const expected = Object.keys(source.files).filter((name) => name.startsWith(`training/${course}/`) || name.startsWith('training/archive/'));
+    const roots = [course, legacyCourse, 'archive'];
+    const expected = Object.keys(source.files).filter((name) => roots.some((root) => name.startsWith(`training/${root}/`)));
     expect(checkTrainingExport(baseline)).toEqual({ source: source.commit, course, status: 'published', files: expected.length });
     expect(Object.keys(receipt.files).sort()).toEqual(expected.map((name) => name.slice('training/'.length)).sort());
     for (const name of expected) {
@@ -160,16 +172,24 @@ describe('Harness-owned training export', () => {
   });
 
   it.each([
-    { status: 'published', published_version: '1.6.0' },
-    { status: 'preparation', published_version: '1.7.0' },
-  ])('refuses to label a preparation source as published %j', (manifest) => {
+    { status: 'published', published_version: '1.8.0rc1' },
+    { status: 'preparation', published_version: '1.8.0' },
+  ])('refuses invalid publication metadata %j', (manifest) => {
     const preparation = fixture({
       extra: { 'help/manifest.json': JSON.stringify(manifest) },
       check: 'raise SystemExit("renderer must not run for a preparation source")\n',
     });
     const output = path.join(temporary(), 'export');
-    expect(() => importTrainingExport({ ...preparation, output })).toThrow('published Harness 1.7.0 Help manifest');
+    expect(() => importTrainingExport({ ...preparation, output })).toThrow('published Harness Help manifest with a release version');
     expect(existsSync(output)).toBe(false);
+  });
+
+  it('keeps the course identity when the published Help release advances', () => {
+    const later = fixture({ extra: {
+      'help/manifest.json': JSON.stringify({ status: 'published', published_version: '1.9.0' }),
+    } });
+    const output = path.join(temporary(), 'export');
+    expect(importTrainingExport({ ...later, output })).toMatchObject({ course, status: 'published' });
   });
 
   it('refuses lookalike origins and abbreviated source commits before output creation', () => {

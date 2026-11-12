@@ -1,0 +1,49 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,follow"><title>Come back tomorrow · Attune Harness</title><link rel="stylesheet" href="../assets/styles.css"></head><body><main style="max-width:900px;margin:auto;padding:2rem"><p><a href="/harness/help/">Help Center</a></p><p><a href="../">Course overview</a></p><h1>Come back tomorrow</h1>
+<p>Open the saved task and pick up where you left off.</p>
+<p>This full-text reading copy does not save answers. <a href="./">Open the interactive lesson</a> for saved browser notes.</p>
+<section id="section-1">
+<h2>Open the saved task</h2>
+<p>Use the same practice project and Harness environment from lesson 2.</p>
+<p>In the terminal from lesson 2, run this command to open the current briefing for your saved task.</p><h3>saved task status</h3><pre><code>python -m attune_harness status &quot;$PRACTICE/task&quot; --format markdown</code></pre><details><summary>Start from a new terminal</summary><p>Change to the extracted course folder that contains <code>practice.py</code>. Set the absolute practice path and activate the environment you used in lesson 2. For the default course environment, run:</p><pre><code>COURSE_WORK="$(pwd -P)"
+PRACTICE="$COURSE_WORK/practice"
+. .venv/bin/activate</code></pre><p>If you used your own compatible environment, activate it in place of the last line.</p></details><div data-copy-slot="return-status"></div><p>Find <strong>Next useful step</strong>. For a completed build, it points you to the saved checks and reviewer findings. Copy the text under <strong>Your reply to the assistant</strong> into your conversation if you want help picking up the task.</p><p>Finish <a href="../02-build/">Build your first report</a> to create a task. For a preview, read the <a href="../../1.7.0-preparation/assets/current-checks.json">archived 1.7.0 check summary</a>.</p>
+</section>
+<section id="section-2">
+<h2>Find the information you need</h2>
+<p>Find the saved task, the report and your lesson notes in their respective places.</p>
+<dl><dt>Task and checks</dt><dd><code>$PRACTICE/task</code> holds the saved scope, execution and checks.</dd><dt>Input and result</dt><dd>Open <code>$PRACTICE/project/data/activity.csv</code> and <code>$PRACTICE/activity-report.html</code>.</dd><dt>Lesson notes</dt><dd>These stay in the same browser profile and site while local storage is available.</dd></dl>
+</section>
+<section id="section-3">
+<h2>Read the current briefing</h2>
+<p>Check that the task and report match the project you meant to reopen.</p>
+<ol><li>Read <strong>Goal</strong> and <strong>Current position</strong>.</li><li>Check the project, task ID and revision under <strong>Snapshot identity</strong>.</li><li>Follow <strong>Next useful step</strong>. If the task path is missing, find the original <code>practice/task</code> folder and run the status command again.</li></ol><details><summary>Optional assistant prompt to locate the task</summary><section class="copy-block" data-copy-kind="prompt"><h3>saved-task inspection prompt</h3><pre><code>Help me find the saved reporting task from lesson 2. Confirm its path and revision, then show me its current status and next useful step. Stop after inspection.</code></pre></section></details>
+</section>
+<section id="section-4">
+<h2>Read the checks and findings</h2>
+<p>Use the evidence saved with this run.</p>
+<p>Find <code>probe:change</code> and <code>probe:final</code> under <strong>Host checks</strong>. Read their recorded outcomes and check <strong>Reviewer findings</strong> for open concerns. The two probes exercise the same reporting tests at different points in the build.</p><p>Use the saved outcomes to decide whether to inspect the report or look into a reported problem.</p>
+<details><summary>A saved task is completed and its chosen checks passed. What should your return brief say?</summary>
+<p><strong>State which checks passed, inspect remaining findings and retain the limits of that evidence.</strong> A completed workflow and passing selected checks are useful evidence. They do not erase findings or establish untested behavior.</p>
+<p><strong>State that all possible report behavior is correct, because completed means no further concern is possible.</strong> Completed describes the recorded workflow. Read its checks, findings and limits before deciding whether any further action is needed.</p>
+</details>
+</section>
+<section id="section-5">
+<h2>Add context if it helps</h2>
+<p>Start with the generated briefing. Add a short note for a decision or observation that lives outside the task.</p>
+<p>For example, record “Check the Orion subtotal before handing off the report” beside the task path in your project notes. The next session can then find the task and understand what you wanted to check.</p><details><summary>Optional assistant prompt for a stopping note</summary><section class="copy-block" data-copy-kind="prompt"><h3>stopping-note prompt</h3><pre><code>Draft a short note for this task and revision. Include the decision or observation I want to retain, its evidence and the next action. Show me the note before saving it.</code></pre></section></details><p>For a structured note tied to a task revision, see the <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/main/docs/cli-guide.md#pause-and-return-to-work">pause-and-return procedure</a>.</p>
+</section>
+<section id="section-6">
+<h2>Choose the next action</h2>
+<p>Use the result to decide what you need next.</p>
+<p>Read the existing report to find the Orion total. If you need a report containing only Orion rows, save that idea for <a href="../06-improve/">Make it work for your needs</a>.</p><p>For the completed practice task, continue by checking the report against its input.</p>
+</section>
+<section id="section-7">
+<h2>Record your next decision</h2>
+<p>Capture one next step if you want to keep it with your lesson notes.</p>
+<h3>Your current position, evidence and next decision</h3><p>Write your answer in your own notes, or use the interactive lesson.</p><p class="caption">This optional note stays in your browser profile and site. For context you want the assistant to use later, include it with the task path in your project handoff.</p>
+</section>
+<section id="section-8">
+<h2>Continue with the report review</h2>
+<p>Bring the saved briefing and the HTML report to the next lesson.</p>
+<p>Keep <code>$PRACTICE/activity-report.html</code> and the latest briefing open. If you still need a result, return to <a href="../02-build/">Build your first report</a>.</p><p><strong>Next:</strong> Open <strong><a href="../04-review/">Decide whether to trust the report</a></strong>.</p>
+</section></main></body></html>

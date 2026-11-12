@@ -7,15 +7,16 @@ imported HTML or maintain another authored course here.
 
 ## Current course
 
-Help and training use merged Harness commit
-[`e1adfd7`](https://github.com/Smart-AI-Memory/attune-harness/commit/e1adfd7c5b7c838e2a35adf5a5773cd537de1bce).
-The six-lesson course uses the published Harness 1.7.0 package for offline
-practice. The archive retains the original guides and their evidence.
+Help and training name the same merged Harness commit in their import receipts.
+The maintained reporting course at `/harness/learn/reporting/` follows one offline
+project through six tutorials. The archive retains the original 1.7.0 course
+and its evidence.
 
-The stable entry `/harness/learn/` redirects to
-`/harness/learn/1.7.0-preparation/`. Keep the course and archive directories as
-siblings so their relative links work. Interactive lessons, reading views,
-fixtures and downloads are copied without content changes.
+The stable entry `/harness/learn/` redirects to the practice setup section on
+Get Started. Get Started also links directly to the tutorial overview. Keep
+the maintained course, original course, and archive directories as siblings so
+their relative links work. Import the interactive tutorials, reading views,
+fixtures, and downloads together.
 
 ## Refresh the export
 
@@ -26,14 +27,14 @@ node scripts/harness-training-export.mjs import --repo /absolute/path/to/attune-
 node scripts/harness-training-export.mjs check --output /absolute/path/to/new-export
 ```
 
-The importer reads the Help manifest at the same commit and requires published
-Harness 1.7.0 before running the course renderer. It checks the configured GitHub
+The importer reads the Help manifest at the same commit and requires a published
+release version before running the course renderer. It checks the configured GitHub
 origin, regular files, confined paths, entry points, complete inventory and SHA-256
 hashes. Review the commit to establish source trust. The website build checks the
 committed receipt offline. Maintenance scripts stay outside the delivered payload.
 
-The current export has 47 payload files. Its receipt and the Help receipt name
-the same source. Review a refreshed export before replacing the published tree;
+The training receipt lists each payload file and its digest. Review a refreshed
+export before replacing the published tree;
 the importer refuses an existing destination. Preserve earlier evidence beside
 new evidence rather than regenerating old receipts.
 
@@ -53,10 +54,11 @@ python3 website/scripts/harness-preview-smoke.py
 
 The script looks up the Smart AI Memory preview for the checked-out commit.
 Use `--commit <sha>` to select another commit available locally. It follows
-**Get started with Harness**, **Get ready for the course**, **Continue to Build
-your first report**, and **Read full lesson**. Each public route must return
-HTTP 200. The script also checks the lesson data and matches both preview
-receipts against the selected commit.
+**Get started with Harness**, **Browse the six Harness tutorials**, **Build your
+first report**, and **Read full lesson**. The script checks the practice setup,
+the downloaded ZIP, the tutorial assets, and both import receipts. In the browser,
+also use **Next lesson** and **Back to course overview** from the final sections.
+Follow **Help Center** from the tutorial back to Help on the same preview host.
 
 For a protected preview, supply an authorized same-project development
 `VERCEL_OIDC_TOKEN` through your environment. See
@@ -69,6 +71,5 @@ script and follow the same links.
 Check the importer refusal controls, full website tests, production build and
 actual public routes. Follow main navigation to Help, the course, a lesson and
 its reading view on desktop and mobile. Unknown routes must return 404.
-Course Help links use the canonical public domain, so local checks alone do not
-prove that return journey. Verify source identity and the complete public
+Verify source identity and the complete public
 journey after deployment before reporting publication complete.

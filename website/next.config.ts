@@ -78,7 +78,7 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
-      { source: '/harness/learn/', destination: '/harness/learn/1.7.0-preparation/', permanent: false },
+      { source: '/harness/learn/', destination: '/harness/help/get-started/#set-up-the-practice-folder', permanent: false },
       { source: '/harness/help/next-release/', destination: 'https://github.com/Smart-AI-Memory/attune-ai/blob/6695106f8a185e310b7b8f9d463395cb0752c22a/website/content/harness-help/next-release.json', permanent: true },
       { source: '/workflows/', destination: '/docs/#workflows', permanent: true },
       { source: '/wizards/', destination: '/docs/#workflows', permanent: true },

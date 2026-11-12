@@ -1,0 +1,138 @@
+{
+  "title": "Make it work for your needs",
+  "subtitle": "Capture one improvement and the evidence you would use to check it.",
+  "courseLabel": "Harness in practice · Tutorial 6 of 6 · Improve",
+  "revisionLabel": "Reporting course",
+  "storageKey": "attune-reporting-wbt-1-7-preparation-06-improve-r1",
+  "coursePath": [
+    "Turn an idea into a useful result",
+    "Build your first report",
+    "Come back tomorrow",
+    "Decide whether to trust the report",
+    "Make the tool usable",
+    "Make it work for your needs"
+  ],
+  "sections": [
+    {
+      "id": "section-1",
+      "navTitle": "Record an opportunity",
+      "phase": "Improve · Benefit",
+      "title": "Record one opportunity",
+      "intro": "A reader responsible for Orion wants a report with only Orion’s activity.",
+      "html": "<p>The report you handed off includes totals for both projects. Record an Orion-only view as a candidate improvement and keep the original CSV as its input.</p><p><strong>Tip:</strong> Capture an opportunity in one sentence with the reader, the benefit and one check. For example, “Let the Orion lead generate a report of the four Orion entries and confirm that they total 180 minutes.”</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Keep the opportunity narrow enough to check. Project filtering is proposed behavior."
+      ]
+    },
+    {
+      "id": "section-2",
+      "navTitle": "Keep the checked baseline",
+      "phase": "Improve · Inspect",
+      "title": "Keep the checked baseline",
+      "intro": "Use the result you already built and reviewed.",
+      "html": "<p>Keep <code>$PRACTICE/activity-report.html</code>, its original six-row CSV and the saved check outcomes. The full report has six entries and 270 minutes.</p><details><summary>Optional baseline text output</summary><p>Use the same course environment and practice path from lesson 2 to print the full report.</p><div data-copy-slot=\"improve-baseline-command\"></div></details>",
+      "copies": [
+        {
+          "label": "baseline command",
+          "text": "python \"$PRACTICE/project/report.py\" \"$PRACTICE/project/data/activity.csv\"",
+          "slot": "improve-baseline-command"
+        }
+      ],
+      "presenterNotes": [
+        "Retain the existing report and saved probe results as the comparison point."
+      ]
+    },
+    {
+      "id": "section-3",
+      "navTitle": "Scope the change",
+      "phase": "Improve → Define",
+      "title": "Describe the smallest useful change",
+      "intro": "Write the outcome and its boundaries in plain language.",
+      "html": "<ul><li><strong>Outcome:</strong> The reader can ask for a report containing only Orion entries.</li><li><strong>Preserve:</strong> Keep the original CSV, the current checks and the full report when the reader makes no selection.</li><li><strong>Decide:</strong> Agree on how the reader selects a project and what happens if the project name is unknown.</li></ul>",
+      "copies": [],
+      "presenterNotes": [
+        "Leave the interface decision with the learner. Use the current report as the baseline."
+      ]
+    },
+    {
+      "id": "section-4",
+      "navTitle": "Write two checks",
+      "phase": "Improve → Verify",
+      "title": "Write the expected results",
+      "intro": "Derive both expectations from the original CSV.",
+      "html": "<ul><li><strong>Orion selected:</strong> Four entries and 180 minutes (<strong>90 + 30 + 45 + 15</strong>).</li><li><strong>No selection:</strong> Six entries and 270 minutes.</li></ul><p>Use the same entry counts and totals for both text and HTML. These are expectations for the proposed change. The saved baseline checks describe the current program.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Ask the learner to locate the four Orion rows before evaluating any future implementation."
+      ]
+    },
+    {
+      "id": "section-5",
+      "navTitle": "Prepare the next request",
+      "phase": "Improve → Plan",
+      "title": "Bring the opportunity to your assistant",
+      "intro": "Use the saved task path and the new opportunity to prepare a draft.",
+      "html": "<p>Start with the generated reply from <a href=\"../03-return/\">Come back tomorrow</a> if you are opening a new conversation. Add your opportunity, the two expected results and any open decision.</p><div data-copy-slot=\"improve-planning-prompt\"></div><p>Review the resulting draft and its checks. Agree on scope and authorize execution as separate steps when you decide to pursue the improvement.</p>",
+      "copies": [
+        {
+          "label": "change planning prompt",
+          "text": "Prepare a draft for an Orion-only activity report from the existing six-row CSV. Orion should have four entries and 180 minutes. With no selection, the report should still show six entries and 270 minutes. Keep the input and existing checks intact. Ask me to settle the selection and unknown-project behavior. Show me the draft and checks for review, then stop.",
+          "slot": "improve-planning-prompt",
+          "kind": "prompt"
+        }
+      ],
+      "presenterNotes": [
+        "Reuse the existing context. Treat the new improvement as a separate decision."
+      ]
+    },
+    {
+      "id": "section-6",
+      "navTitle": "Try an optional variation",
+      "phase": "Improve · Transfer",
+      "title": "Try the same idea for Lumen",
+      "intro": "Optional practice with one independent answer.",
+      "html": "<p>Suppose the reader manages Lumen. Use the original CSV to calculate the expected count and total for that project. Keep the full-report expectation intact.</p><label for=\"improve-variation\"><strong>Your Lumen variation</strong></label><textarea id=\"improve-variation\" data-save=\"improveVariation\" rows=\"5\" placeholder=\"Describe the outcome, expected result, protected inputs and decision needed.\"></textarea><p class=\"caption\">This optional note stays in your browser profile and site.</p><details><summary>Check your answer</summary><p>Lumen has two entries totaling 90 minutes. Development has 60 minutes and Documentation has 30.</p></details>",
+      "copies": [],
+      "presenterNotes": [
+        "Use the hint after the learner tries the calculation."
+      ],
+      "check": {
+        "question": "Which evidence would support the proposed Orion filter most directly?",
+        "options": [
+          {
+            "text": "An unchanged six-row fixture yields four Orion rows and 180 minutes through the new option, while no selection still yields six rows and 270 minutes.",
+            "correct": true,
+            "feedback": "Correct. Those independent outcomes exercise the new selection and preserve the existing baseline. They still need actual execution after implementation."
+          },
+          {
+            "text": "The baseline checks prove that a project-filter option already works.",
+            "correct": false,
+            "feedback": "The supplied parser has no project-filter option. Baseline checks cannot establish behavior that was not implemented or exercised."
+          }
+        ]
+      }
+    },
+    {
+      "id": "section-7",
+      "navTitle": "Save the next decision",
+      "phase": "Improve · Continue",
+      "title": "Save the next decision",
+      "intro": "Leave enough context to pick up the opportunity later.",
+      "html": "<p>Keep the opportunity and its two checks with your project handoff. If you return to the saved baseline task, open its current briefing and add the decision you still need to make.</p><p>For this example, the next decision is how readers choose a project and how the program handles an unknown name.</p><p><strong>Next:</strong> Return to <strong><a href=\"../01-define/\">Turn an idea into a useful result</a></strong> when you want to frame another opportunity.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Close with the next decision and the evidence already on hand."
+      ]
+    }
+  ],
+  "coursePosition": 6,
+  "courseRoutes": [
+    "../01-define/",
+    "../02-build/",
+    "../03-return/",
+    "../04-review/",
+    "../05-deliver/",
+    "../06-improve/"
+  ]
+}
