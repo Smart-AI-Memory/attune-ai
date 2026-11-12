@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useTheme } from '@/lib/theme-provider';
 import { HELP_VIDEOS } from '@/lib/videos';
 
@@ -20,6 +20,7 @@ const navItems = [
 export default function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const mobileMenuToggle = useRef<HTMLButtonElement>(null);
   const { setTheme, resolvedTheme } = useTheme();
 
   useEffect(() => {
@@ -32,6 +33,14 @@ export default function Navigation() {
 
   const toggleTheme = () => {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
+  };
+
+  const handleMobileMenuKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (event.key !== 'Escape' || !isMobileMenuOpen) return;
+
+    event.preventDefault();
+    setIsMobileMenuOpen(false);
+    mobileMenuToggle.current?.focus();
   };
 
   return (
@@ -146,7 +155,9 @@ export default function Navigation() {
           {/* Mobile Menu Button */}
           <button
             type="button"
+            ref={mobileMenuToggle}
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            onKeyDown={handleMobileMenuKeyDown}
             className="xl:hidden p-2 rounded-lg hover:bg-[var(--border)] transition-colors"
             aria-label="Toggle mobile menu"
             aria-expanded={isMobileMenuOpen ? 'true' : 'false'}
@@ -191,7 +202,11 @@ export default function Navigation() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div id="site-mobile-menu" className="xl:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto py-4 border-t border-[var(--border)]">
+          <div
+            id="site-mobile-menu"
+            onKeyDown={handleMobileMenuKeyDown}
+            className="xl:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto py-4 border-t border-[var(--border)]"
+          >
             <div className="flex flex-col space-y-4">
               {navItems.map((item) => (
                 <Link

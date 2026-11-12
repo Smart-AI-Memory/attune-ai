@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import { generateMetadata as generateSEOMetadata, generateStructuredData } from '@/lib/metadata';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { resolveChangelogLink } from '@/lib/changelog-links';
 
 export const metadata: Metadata = generateSEOMetadata({
   title: 'Attune AI Changelog — Release History & Updates',
@@ -83,7 +84,19 @@ export default function ChangelogPage() {
           <div className="container">
             <div className="max-w-3xl mx-auto">
               <div className="prose prose-lg max-w-none prose-headings:font-bold prose-a:text-[var(--primary)] prose-a:no-underline hover:prose-a:underline prose-code:bg-[var(--border)] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-[var(--border)] prose-pre:border prose-pre:border-[var(--border)]">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    a: ({ href = '', children, title }) => {
+                      const destination = resolveChangelogLink(href);
+                      return destination === null ? (
+                        <span title="Historical reference unavailable">{children}</span>
+                      ) : (
+                        <a href={destination} title={title}>{children}</a>
+                      );
+                    },
+                  }}
+                >
                   {content}
                 </ReactMarkdown>
               </div>

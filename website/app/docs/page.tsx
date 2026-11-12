@@ -56,7 +56,7 @@ const faqItems = [
   {
     question: 'What happened to attune-author?',
     answer:
-      'Its AI authoring capabilities were consolidated into attune-ai in July 2026, and the standalone package is archived. Already-released versions stay installable from PyPI, but no further releases are planned — for template authoring, install attune-ai and use the author-feature skill or /coach maintain.',
+      'Attune AI incorporated the Attune Author tools in July 2026. PyPI marks both packages archived. Previously published versions remain installable for existing workflows.',
   },
 ];
 
@@ -214,16 +214,15 @@ export default function DocsPage() {
                 Attune Author
               </h2>
               <p className="text-center text-[var(--text-secondary)] mb-8 max-w-2xl mx-auto">
-                Consolidated into attune-ai as of July 2026. The
-                standalone package is archived on PyPI &mdash; released
-                versions stay installable, but no further releases are
-                planned.
+                Attune AI incorporated the Attune Author tools in July 2026.
+                PyPI marks both the standalone Attune Author package and{' '}
+                <a className="underline" href="https://pypi.org/project/attune-ai/">Attune AI</a>{' '}
+                as archived. Previously published versions remain installable for existing workflows.
               </p>
 
               <div className="bg-[var(--background)] border border-[var(--border)] rounded-lg p-6 max-w-2xl mx-auto">
                 <p className="text-sm text-[var(--text-secondary)] mb-4">
-                  Its authoring capabilities now ship with the attune-ai
-                  platform: the{" "}
+                  Published versions of Attune AI include the{" "}
                   <code className="text-xs bg-[var(--surface-container-high)] px-1 rounded">
                     author-feature
                   </code>{" "}
@@ -237,7 +236,7 @@ export default function DocsPage() {
                   attune-help remains the standalone reader.
                 </p>
                 <div className="bg-[#263c30] text-white/90 rounded-xl font-mono text-xs p-4 leading-relaxed">
-                  <div className="text-white/50"># Authoring now ships with attune-ai</div>
+                  <div className="text-white/50"># Historical Attune AI install</div>
                   <div>pip install attune-ai</div>
                 </div>
               </div>
