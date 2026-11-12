@@ -3,7 +3,11 @@ import { getAllPosts, getAllTags } from '@/lib/blog';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://smartaimemory.com';
-  const canonicalUrl = (route: string) => `${baseUrl}${route}${route.endsWith('/') ? '' : '/'}`;
+  const canonicalUrl = (route: string) => {
+    // Next.js omits a trailing slash from file-like paths, including version tags.
+    const suffix = route.endsWith('/') || /\.\w+$/.test(route) ? '' : '/';
+    return `${baseUrl}${route}${suffix}`;
+  };
 
   // Homepage
   const homepage = [{
