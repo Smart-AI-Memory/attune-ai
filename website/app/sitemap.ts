@@ -3,10 +3,11 @@ import { getAllPosts, getAllTags } from '@/lib/blog';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://smartaimemory.com';
+  const canonicalUrl = (route: string) => `${baseUrl}${route}${route.endsWith('/') ? '' : '/'}`;
 
   // Homepage
   const homepage = [{
-    url: baseUrl,
+    url: canonicalUrl('/'),
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
     priority: 1,
@@ -22,7 +23,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/harness/help/ai-tools-and-integrations/',
     '/pricing',
   ].map((route) => ({
-    url: `${baseUrl}${route}`,
+    url: canonicalUrl(route),
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
     priority: 0.9,
@@ -34,9 +35,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/benchmarks',
     '/changelog',
     '/contact',
+    '/faq/',
     '/migrate',
   ].map((route) => ({
-    url: `${baseUrl}${route}`,
+    url: canonicalUrl(route),
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
     priority: 0.7,
@@ -47,7 +49,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/privacy',
     '/terms',
   ].map((route) => ({
-    url: `${baseUrl}${route}`,
+    url: canonicalUrl(route),
     lastModified: new Date(),
     changeFrequency: 'monthly' as const,
     priority: 0.3,
@@ -56,7 +58,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Blog posts
   const posts = getAllPosts();
   const blogPages = posts.map((post) => ({
-    url: `${baseUrl}/blog/${post.slug}`,
+    url: canonicalUrl(`/blog/${post.slug}`),
     lastModified: new Date(post.date),
     changeFrequency: 'monthly' as const,
     priority: 0.6,
@@ -65,7 +67,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // Blog tag archive pages
   const tags = getAllTags();
   const tagPages = tags.map((tag) => ({
-    url: `${baseUrl}/blog/tag/${encodeURIComponent(tag)}`,
+    url: canonicalUrl(`/blog/tag/${encodeURIComponent(tag)}`),
     lastModified: new Date(),
     changeFrequency: 'weekly' as const,
     priority: 0.5,
