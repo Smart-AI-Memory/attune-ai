@@ -74,7 +74,11 @@ class Page(HTMLParser):
             self.anchors.add(anchor)
         if tag == "script" and (source := attributes.get("src")):
             self.assets.add(source)
-        if tag == "link" and attributes.get("rel") == "stylesheet" and (href := attributes.get("href")):
+        if (
+            tag == "link"
+            and attributes.get("rel") == "stylesheet"
+            and (href := attributes.get("href"))
+        ):
             self.assets.add(href)
         if tag in {"a", "h1", "h2"}:
             self.tag = tag
@@ -201,7 +205,9 @@ def check_journey(
     lesson_title = "Build your first report"
     lesson_path = f"{course}/02-build/"
     lesson_url = linked(overview, overview_url, lesson_title, lesson_path)
-    lesson = Page(check_training_file(f"{course_name}/02-build/index.html", lesson_path).decode("utf-8"))
+    lesson = Page(
+        check_training_file(f"{course_name}/02-build/index.html", lesson_path).decode("utf-8")
+    )
     for asset in ("assets/app.js", "assets/styles.css"):
         name = f"{course_name}/{asset}"
         route = f"{course}/{asset}?v={training_receipt['files'][name][:12]}"
