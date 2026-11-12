@@ -18,8 +18,8 @@
   </header>
   <div class="help-shell">
     <aside class="help-sidebar">
-      <nav aria-label="Help topics"><a href="/harness/help/">Help Center overview</a><a class="help-featured-nav" href="/harness/help/get-started/">Get started with Harness 1.7.0</a><a class="help-featured-nav" href="/harness/help/goals/">Browse all goals</a><ol><li><a href="/harness/help/goals/">What do you want to accomplish?</a></li><li><a href="/harness/help/ai-tools-and-integrations/">AI tools and integrations</a></li><li><a href="/harness/help/start-and-continue/">Start and continue work</a></li><li><a href="/harness/help/plan-and-accept/">Plan and accept work</a></li><li><a href="/harness/help/research/">Research a question</a></li><li><a href="/harness/help/save-and-resume/">Save and resume</a></li><li><a href="/harness/help/troubleshooting/">Troubleshooting</a></li><li><a href="/harness/help/dependencies/">Dependencies and reference</a></li><li><a href="/harness/help/archive/">Documentation archive</a></li></ol></nav>
-      <p class="help-version">Current release: Harness <strong>1.7.0</strong><br>Each guide states its version and publication status. Superseded instructions are in the archive.</p>
+      <nav aria-label="Help topics"><a href="/harness/help/">Help Center overview</a><a class="help-featured-nav" href="/harness/help/get-started/">Get started with Harness</a><a class="help-featured-nav" href="/harness/help/get-started/#set-up-the-practice-folder">Set up the reporting course</a><a class="help-featured-nav" href="/harness/help/goals/">Browse all goals</a><ol><li><a href="/harness/help/goals/">What do you want to accomplish?</a></li><li><a href="/harness/help/ai-tools-and-integrations/">AI tools and integrations</a></li><li><a href="/harness/help/troubleshooting/">Troubleshooting</a></li><li><a href="/harness/help/dependencies/">Dependencies and reference</a></li><li><a href="/harness/help/archive/">Documentation archive</a></li></ol></nav>
+      <p class="help-version">Current release: Harness <strong>1.8.0</strong><br>Each guide states its version and publication status. Superseded instructions are in the archive.</p>
     </aside>
     <main id="main-content" tabindex="-1" class="help-main">
 <nav aria-label="Breadcrumb" class="help-breadcrumb"><a href="/harness/help/">Help Center</a> / <span aria-current="page">Harness 1.5.1 — published guide</span></nav><p class="help-eyebrow">Attune Harness · 1.5.1</p><h1>Harness 1.5.1 — published guide</h1><p class="help-lead">Install the published release, check a local result and choose your next workflow.</p><p class="help-version-note">Archived guide: these instructions describe published <strong>Harness 1.5.1</strong>. Keep their original evidence limits. <a href="/harness/help/archive/">Browse the archive</a> or <a href="/harness/help/get-started/">use current guidance</a>.</p>
@@ -27,6 +27,7 @@
 <ul>
 <li><a href="#install-harness-151">Install Harness 1.5.1</a></li>
 <li><a href="#choose-a-useful-next-step">Choose a useful next step</a></li>
+<li><a href="#prepare-the-151-practice-examples">Prepare the 1.5.1 practice examples</a></li>
 <li><a href="#work-on-windows-within-the-documented-limits">Work on Windows within the documented limits</a></li>
 <li><a href="#inspect-completed-assessment-evidence">Inspect completed assessment evidence</a></li>
 <li><a href="#check-the-release-and-its-evidence">Check the release and its evidence</a></li>
@@ -61,7 +62,7 @@ quality. For a managed CLI, you can instead use
 records outside checkouts used for file effects and use canonical absolute paths.</p>
 <h2 id="choose-a-useful-next-step">Choose a useful next step<a class="headerlink" href="#choose-a-useful-next-step" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="/harness/help/get-started/">Get started</a>: check your installation and obtain the release examples.</li>
+<li><a href="#prepare-the-151-practice-examples">Prepare the 1.5.1 practice examples</a>.</li>
 <li><a href="/harness/help/goals/">Browse all goals</a>: choose from 21 goals and six testing FAQs, with prompts and review points.</li>
 <li><a href="/harness/help/start-and-continue/">Start and continue work</a>: save answers and review the request in a browser form.</li>
 <li><a href="/harness/help/plan-and-accept/">Plan and accept work</a>: inspect scope and acceptance criteria before execution.</li>
@@ -77,6 +78,36 @@ runtime does not install a host plugin or skill. Follow the selected host's
 setup, read the <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/main/docs/migration.md">current migration guide</a>.
 Preserve working environments while validating the journeys you need. Deprecation
 does not establish saved-work migration or complete host or Windows parity.</p>
+<h2 id="prepare-the-151-practice-examples">Prepare the 1.5.1 practice examples<a class="headerlink" href="#prepare-the-151-practice-examples" title="Permanent link">&para;</a></h2>
+<p>The <a href="/harness/help/start-and-continue/">Start and continue</a>,
+<a href="/harness/help/plan-and-accept/">Plan and accept</a>,
+<a href="/harness/help/research/">Research</a> and
+<a href="/harness/help/save-and-resume/">Save and resume</a> practice guides retain their
+published 1.5.1 commands and historical observations. Use this separate setup
+for those guides.</p>
+<p>Open a fresh POSIX shell on macOS or Linux and choose an unused working directory.
+On macOS, use a canonical path under <code>/private/tmp</code> rather than the <code>/tmp</code> symlink.
+Run:</p>
+<pre><code class="language-sh">PRACTICE=&quot;$PWD/harness-1.5.1-practice&quot;
+mkdir &quot;$PRACTICE&quot;
+cd &quot;$PRACTICE&quot;
+python3.12 -m venv .venv
+. .venv/bin/activate
+python -m pip install 'attune-harness==1.5.1'
+git clone --no-checkout https://github.com/Smart-AI-Memory/attune-harness.git release-source
+R=&quot;$(cd release-source &amp;&amp; pwd -P)&quot;
+git -C &quot;$R&quot; checkout --detach ebb5b03b8a4398325df7ddabd28c08186451452e
+python -c &quot;from importlib.metadata import version; assert version('attune-harness') == '1.5.1'; print(version('attune-harness'))&quot;
+python -m attune_harness
+</code></pre>
+<p><strong>Expected result:</strong> Version <code>1.5.1</code>, a verified local demonstration receipt, and
+<code>R</code> naming the absolute source checkout for that same release. Keep this shell
+open for the practice guide. Its task directories belong beside <code>release-source</code>,
+outside the checkout. The examples are source files, not wheel contents.</p>
+<p>These are POSIX practice instructions, not a new Windows shell qualification.
+The <a href="/harness/help/release-1.5.1.json">1.5.1 release record</a> retains its exact
+artifact identities and original evidence. Use another shell for your regular
+CLI, or run <code>deactivate</code> when finished with the practice environment.</p>
 <h2 id="work-on-windows-within-the-documented-limits">Work on Windows within the documented limits<a class="headerlink" href="#work-on-windows-within-the-documented-limits" title="Permanent link">&para;</a></h2>
 <p>Windows users can install Harness and use its documented CLI workflows and
 browser forms. Release qualification passed the hosted Windows Server source

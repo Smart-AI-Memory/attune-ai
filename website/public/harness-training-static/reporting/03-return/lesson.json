@@ -1,0 +1,158 @@
+{
+  "title": "Come back tomorrow",
+  "subtitle": "Open the saved task and pick up where you left off.",
+  "courseLabel": "Harness in practice · Tutorial 3 of 6 · Continue across phases",
+  "revisionLabel": "Reporting course",
+  "storageKey": "attune-reporting-course-170-03-return-20261105-v1",
+  "coursePath": [
+    "Turn an idea into a useful result",
+    "Build your first report",
+    "Come back tomorrow",
+    "Decide whether to trust the report",
+    "Make the tool usable",
+    "Make it work for your needs"
+  ],
+  "sections": [
+    {
+      "id": "section-1",
+      "navTitle": "Open the saved task",
+      "phase": "Continue",
+      "title": "Open the saved task",
+      "intro": "Use the same practice project and Harness environment from lesson 2.",
+      "html": "<p>In the terminal from lesson 2, run this command to open the current briefing for your saved task.</p><div data-copy-slot=\"return-status-command\"></div><details><summary>Start from a new terminal</summary><p>Change to the extracted course folder that contains <code>practice.py</code>. Set the absolute practice path and activate the environment you used in lesson 2. For the default course environment, run:</p><pre><code>COURSE_WORK=\"$(pwd -P)\"\nPRACTICE=\"$COURSE_WORK/practice\"\n. .venv/bin/activate</code></pre><p>If you used your own compatible environment, activate it in place of the last line.</p></details><div data-copy-slot=\"return-status\"></div><p>Find <strong>Next useful step</strong>. For a completed build, it points you to the saved checks and reviewer findings. Copy the text under <strong>Your reply to the assistant</strong> into your conversation if you want help picking up the task.</p><p>Finish <a href=\"../02-build/\">Build your first report</a> to create a task. For a preview, read the <a href=\"../../1.7.0-preparation/assets/current-checks.json\">archived 1.7.0 check summary</a>.</p>",
+      "copies": [
+        {
+          "label": "saved task status",
+          "text": "python -m attune_harness status \"$PRACTICE/task\" --format markdown",
+          "slot": "return-status-command"
+        }
+      ],
+      "presenterNotes": [
+        "Use the learner's actual task directory. The generated reply identifies the task and snapshot revision.",
+        "Expect a read-only briefing. Guide the learner to its Next useful step."
+      ]
+    },
+    {
+      "id": "section-2",
+      "navTitle": "Know what was saved",
+      "phase": "Continue · Records",
+      "title": "Find the information you need",
+      "intro": "Find the saved task, the report and your lesson notes in their respective places.",
+      "html": "<dl><dt>Task and checks</dt><dd><code>$PRACTICE/task</code> holds the saved scope, execution and checks.</dd><dt>Input and result</dt><dd>Open <code>$PRACTICE/project/data/activity.csv</code> and <code>$PRACTICE/activity-report.html</code>.</dd><dt>Lesson notes</dt><dd>These stay in the same browser profile and site while local storage is available.</dd></dl>",
+      "copies": [],
+      "presenterNotes": [
+        "Ask where the learner would find checks and report output."
+      ]
+    },
+    {
+      "id": "section-3",
+      "navTitle": "Inspect the current task",
+      "phase": "Continue · Status",
+      "title": "Read the current briefing",
+      "intro": "Check that the task and report match the project you meant to reopen.",
+      "html": "<ol><li>Read <strong>Goal</strong> and <strong>Current position</strong>.</li><li>Check the project, task ID and revision under <strong>Snapshot identity</strong>.</li><li>Follow <strong>Next useful step</strong>. If the task path is missing, find the original <code>practice/task</code> folder and run the status command again.</li></ol><details><summary>Optional assistant prompt to locate the task</summary><div data-copy-slot=\"return-inspection-prompt\"></div></details>",
+      "copies": [
+        {
+          "label": "saved-task inspection prompt",
+          "text": "Help me find the saved reporting task from lesson 2. Confirm its path and revision, then show me its current status and next useful step. Stop after inspection.",
+          "slot": "return-inspection-prompt",
+          "kind": "prompt"
+        }
+      ],
+      "presenterNotes": [
+        "Have the learner identify the task before discussing any follow-up work."
+      ]
+    },
+    {
+      "id": "section-4",
+      "navTitle": "Read the evidence",
+      "phase": "Continue · Checks",
+      "title": "Read the checks and findings",
+      "intro": "Use the evidence saved with this run.",
+      "html": "<p>Find <code>probe:change</code> and <code>probe:final</code> under <strong>Host checks</strong>. Read their recorded outcomes and check <strong>Reviewer findings</strong> for open concerns. The two probes exercise the same reporting tests at different points in the build.</p><p>Use the saved outcomes to decide whether to inspect the report or look into a reported problem.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Read the result of each probe from the actual briefing."
+      ],
+      "check": {
+        "question": "A saved task is completed and its chosen checks passed. What should your return brief say?",
+        "options": [
+          {
+            "text": "State which checks passed, inspect remaining findings and retain the limits of that evidence.",
+            "correct": true,
+            "feedback": "A completed workflow and passing selected checks are useful evidence. They do not erase findings or establish untested behavior."
+          },
+          {
+            "text": "State that all possible report behavior is correct, because completed means no further concern is possible.",
+            "correct": false,
+            "feedback": "Completed describes the recorded workflow. Read its checks, findings and limits before deciding whether any further action is needed."
+          }
+        ]
+      }
+    },
+    {
+      "id": "section-5",
+      "navTitle": "Add an optional note",
+      "phase": "Continue · Briefing",
+      "title": "Add context if it helps",
+      "intro": "Start with the generated briefing. Add a short note for a decision or observation that lives outside the task.",
+      "html": "<p>For example, record “Check the Orion subtotal before handing off the report” beside the task path in your project notes. The next session can then find the task and understand what you wanted to check.</p><details><summary>Optional assistant prompt for a stopping note</summary><div data-copy-slot=\"return-stopping-note\"></div></details><p>For a structured note tied to a task revision, see the <a href=\"https://github.com/Smart-AI-Memory/attune-harness/blob/main/docs/cli-guide.md#pause-and-return-to-work\">pause-and-return procedure</a>.</p>",
+      "copies": [
+        {
+          "label": "stopping-note prompt",
+          "text": "Draft a short note for this task and revision. Include the decision or observation I want to retain, its evidence and the next action. Show me the note before saving it.",
+          "slot": "return-stopping-note",
+          "kind": "prompt"
+        }
+      ],
+      "presenterNotes": [
+        "Use the generated reply first. Add a note only for human context the task record leaves out."
+      ]
+    },
+    {
+      "id": "section-6",
+      "navTitle": "Choose the next action",
+      "phase": "Continue · Your decision",
+      "title": "Choose the next action",
+      "intro": "Use the result to decide what you need next.",
+      "html": "<p>Read the existing report to find the Orion total. If you need a report containing only Orion rows, save that idea for <a href=\"../06-improve/\">Make it work for your needs</a>.</p><p>For the completed practice task, continue by checking the report against its input.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Ask the learner to distinguish reading an existing total from requesting a new filter."
+      ]
+    },
+    {
+      "id": "section-7",
+      "navTitle": "Record your decision",
+      "phase": "Continue · Practice",
+      "title": "Record your next decision",
+      "intro": "Capture one next step if you want to keep it with your lesson notes.",
+      "html": "<label for=\"return-decision-note\">Your current position, evidence and next decision</label><textarea id=\"return-decision-note\" data-save=\"return-decision-note\" rows=\"6\" placeholder=\"Which actual task or supplied evidence am I inspecting? What does it establish? What remains unknown? What should happen next, and why?\"></textarea><p class=\"caption\">This optional note stays in your browser profile and site. For context you want the assistant to use later, include it with the task path in your project handoff.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Accept the learner's wording. A useful note names a decision and the relevant evidence."
+      ]
+    },
+    {
+      "id": "section-8",
+      "navTitle": "Continue to the report review",
+      "phase": "Continue → Review",
+      "title": "Continue with the report review",
+      "intro": "Bring the saved briefing and the HTML report to the next lesson.",
+      "html": "<p>Keep <code>$PRACTICE/activity-report.html</code> and the latest briefing open. If you still need a result, return to <a href=\"../02-build/\">Build your first report</a>.</p><p><strong>Next:</strong> Open <strong><a href=\"../04-review/\">Decide whether to trust the report</a></strong>.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Carry the same project and task into the review lesson."
+      ]
+    }
+  ],
+  "coursePosition": 3,
+  "courseRoutes": [
+    "../01-define/",
+    "../02-build/",
+    "../03-return/",
+    "../04-review/",
+    "../05-deliver/",
+    "../06-improve/"
+  ]
+}

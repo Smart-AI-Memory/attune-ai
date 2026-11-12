@@ -7,19 +7,18 @@ existing topic URLs and heading fragments, including `/harness/help/goals/`.
 Do not edit exported HTML or maintain
 a second command reference here.
 
-## Published 1.7.0 guidance
+## Published Harness guidance
 
-The export contains fifteen pages and thirty files from merged Harness commit
-[`e1adfd7`](https://github.com/Smart-AI-Memory/attune-harness/commit/e1adfd7c5b7c838e2a35adf5a5773cd537de1bce).
-The installation guide at `/harness/help/get-started/` uses the published
-Harness 1.7.0 package and links to the offline course. The archive retains
-previous installation guides and the 1.7.0 preparation walkthroughs with their
-original source and wheel evidence.
+The export identifies its merged Harness source in `import.json`. The
+installation guide at `/harness/help/get-started/` uses the published Harness
+package and links to the reporting tutorials. The archive retains previous
+installation guides and the 1.7.0 preparation walkthroughs with their original
+source and wheel evidence.
 
 The reference version remains 1.5.1 with its original behavior commit. Website
 installation and package links use `published_version`. The guide links use the
-merged source in `import.json`, shared by both exports. Use the
-[1.7.0 release record](https://github.com/Smart-AI-Memory/attune-harness/releases/tag/v1.7.0)
+merged source in `import.json`, shared by both exports. Use the corresponding
+[release record](https://github.com/Smart-AI-Memory/attune-harness/releases)
 for package provenance and the limits of its platform checks.
 
 ## Cutover design

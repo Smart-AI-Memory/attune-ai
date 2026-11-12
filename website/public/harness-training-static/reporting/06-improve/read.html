@@ -1,0 +1,42 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,follow"><title>Make it work for your needs · Attune Harness</title><link rel="stylesheet" href="../assets/styles.css"></head><body><main style="max-width:900px;margin:auto;padding:2rem"><p><a href="/harness/help/">Help Center</a></p><p><a href="../">Course overview</a></p><h1>Make it work for your needs</h1>
+<p>Capture one improvement and the evidence you would use to check it.</p>
+<p>This full-text reading copy does not save answers. <a href="./">Open the interactive lesson</a> for saved browser notes.</p>
+<section id="section-1">
+<h2>Record one opportunity</h2>
+<p>A reader responsible for Orion wants a report with only Orion’s activity.</p>
+<p>The report you handed off includes totals for both projects. Record an Orion-only view as a candidate improvement and keep the original CSV as its input.</p><p><strong>Tip:</strong> Capture an opportunity in one sentence with the reader, the benefit and one check. For example, “Let the Orion lead generate a report of the four Orion entries and confirm that they total 180 minutes.”</p>
+</section>
+<section id="section-2">
+<h2>Keep the checked baseline</h2>
+<p>Use the result you already built and reviewed.</p>
+<p>Keep <code>$PRACTICE/activity-report.html</code>, its original six-row CSV and the saved check outcomes. The full report has six entries and 270 minutes.</p><details><summary>Optional baseline text output</summary><p>Use the same course environment and practice path from lesson 2 to print the full report.</p><h3>baseline command</h3><pre><code>python &quot;$PRACTICE/project/report.py&quot; &quot;$PRACTICE/project/data/activity.csv&quot;</code></pre></details>
+</section>
+<section id="section-3">
+<h2>Describe the smallest useful change</h2>
+<p>Write the outcome and its boundaries in plain language.</p>
+<ul><li><strong>Outcome:</strong> The reader can ask for a report containing only Orion entries.</li><li><strong>Preserve:</strong> Keep the original CSV, the current checks and the full report when the reader makes no selection.</li><li><strong>Decide:</strong> Agree on how the reader selects a project and what happens if the project name is unknown.</li></ul>
+</section>
+<section id="section-4">
+<h2>Write the expected results</h2>
+<p>Derive both expectations from the original CSV.</p>
+<ul><li><strong>Orion selected:</strong> Four entries and 180 minutes (<strong>90 + 30 + 45 + 15</strong>).</li><li><strong>No selection:</strong> Six entries and 270 minutes.</li></ul><p>Use the same entry counts and totals for both text and HTML. These are expectations for the proposed change. The saved baseline checks describe the current program.</p>
+</section>
+<section id="section-5">
+<h2>Bring the opportunity to your assistant</h2>
+<p>Use the saved task path and the new opportunity to prepare a draft.</p>
+<p>Start with the generated reply from <a href="../03-return/">Come back tomorrow</a> if you are opening a new conversation. Add your opportunity, the two expected results and any open decision.</p><section class="copy-block" data-copy-kind="prompt"><h3>change planning prompt</h3><pre><code>Prepare a draft for an Orion-only activity report from the existing six-row CSV. Orion should have four entries and 180 minutes. With no selection, the report should still show six entries and 270 minutes. Keep the input and existing checks intact. Ask me to settle the selection and unknown-project behavior. Show me the draft and checks for review, then stop.</code></pre></section><p>Review the resulting draft and its checks. Agree on scope and authorize execution as separate steps when you decide to pursue the improvement.</p>
+</section>
+<section id="section-6">
+<h2>Try the same idea for Lumen</h2>
+<p>Optional practice with one independent answer.</p>
+<p>Suppose the reader manages Lumen. Use the original CSV to calculate the expected count and total for that project. Keep the full-report expectation intact.</p><h3><strong>Your Lumen variation</strong></h3><p>Write your answer in your own notes, or use the interactive lesson.</p><p class="caption">This optional note stays in your browser profile and site.</p><details><summary>Check your answer</summary><p>Lumen has two entries totaling 90 minutes. Development has 60 minutes and Documentation has 30.</p></details>
+<details><summary>Which evidence would support the proposed Orion filter most directly?</summary>
+<p><strong>An unchanged six-row fixture yields four Orion rows and 180 minutes through the new option, while no selection still yields six rows and 270 minutes.</strong> Correct. Those independent outcomes exercise the new selection and preserve the existing baseline. They still need actual execution after implementation.</p>
+<p><strong>The baseline checks prove that a project-filter option already works.</strong> The supplied parser has no project-filter option. Baseline checks cannot establish behavior that was not implemented or exercised.</p>
+</details>
+</section>
+<section id="section-7">
+<h2>Save the next decision</h2>
+<p>Leave enough context to pick up the opportunity later.</p>
+<p>Keep the opportunity and its two checks with your project handoff. If you return to the saved baseline task, open its current briefing and add the decision you still need to make.</p><p>For this example, the next decision is how readers choose a project and how the program handles an unknown name.</p><p><strong>Next:</strong> Return to <strong><a href="../01-define/">Turn an idea into a useful result</a></strong> when you want to frame another opportunity.</p>
+</section></main></body></html>

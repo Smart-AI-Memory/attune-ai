@@ -1,0 +1,143 @@
+{
+  "title": "Make the tool usable",
+  "subtitle": "Hand off the report you built with a clear way to check it.",
+  "courseLabel": "Harness in practice · Tutorial 5 of 6 · Deliver",
+  "revisionLabel": "Reporting course",
+  "storageKey": "attune-reporting-wbt-1-7-preparation-05-deliver-r1",
+  "coursePath": [
+    "Turn an idea into a useful result",
+    "Build your first report",
+    "Come back tomorrow",
+    "Decide whether to trust the report",
+    "Make the tool usable",
+    "Make it work for your needs"
+  ],
+  "sections": [
+    {
+      "id": "section-1",
+      "navTitle": "Use your report",
+      "phase": "Deliver · Benefit",
+      "title": "Hand off the report you built",
+      "intro": "Start with the HTML report and the evidence you just reviewed.",
+      "html": "<p>Open <code>$PRACTICE/activity-report.html</code>. Your handoff will show the result, the input it came from and the check you performed in <a href=\"../04-review/\">Decide whether to trust the report</a>.</p><p>If you still need a report, return to <a href=\"../02-build/\">Build your first report</a> or use the optional checked example in the next section.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Have learners reuse their report and task evidence when available."
+      ]
+    },
+    {
+      "id": "section-2",
+      "navTitle": "Gather the handoff files",
+      "phase": "Deliver · Setup",
+      "title": "Gather the files for your handoff",
+      "intro": "Use the report and original sample CSV from your practice project.",
+      "html": "<ul><li>HTML report <code>$PRACTICE/activity-report.html</code></li><li>Sample CSV <code>$PRACTICE/project/data/activity.csv</code></li><li>Your review note or the relevant outcomes from the saved task</li></ul><details><summary>Optional fresh start with the checked example</summary><p>Download the <a href=\"../assets/reporting-example.zip\">checked example ZIP</a> and extract it into a new folder. Open a terminal in the folder containing <code>report.py</code> and <code>data/activity.csv</code>. The <a href=\"../assets/example/README.md\">example instructions</a> list the Python requirements and runnable commands.</p></details>",
+      "copies": [],
+      "presenterNotes": [
+        "Keep the checked example available for people starting from scratch."
+      ]
+    },
+    {
+      "id": "section-3",
+      "navTitle": "Open or recreate the report",
+      "phase": "Deliver · Local execution",
+      "title": "Show how to open or recreate the report",
+      "intro": "Give the recipient the report path first.",
+      "html": "<p>Ask the recipient to open the supplied HTML file in a browser. If they are running the checked ZIP from a new extraction, use the command below from the folder containing <code>report.py</code>. It writes <code>activity-report.html</code> beside the script.</p><details><summary>Optional HTML command for the checked example</summary><div data-copy-slot=\"delivery-run-command\"></div><p>Expect <code>Saved report to activity-report.html</code>. If that name is already in use, choose an unused name with <code>--output</code>, then open the new file.</p></details>",
+      "copies": [
+        {
+          "label": "HTML report command",
+          "text": "python3.12 report.py data/activity.csv --format html --output activity-report.html\n",
+          "slot": "delivery-run-command"
+        }
+      ],
+      "presenterNotes": [
+        "Opening the existing report is the main path. Use the ZIP command only in the checked example folder."
+      ]
+    },
+    {
+      "id": "section-4",
+      "navTitle": "Show one check",
+      "phase": "Deliver → Verify",
+      "title": "Give the recipient one way to check it",
+      "intro": "Share an expected result the recipient can find in the HTML.",
+      "html": "<p>Ask the recipient to find six entries and 270 minutes, then show how the four Orion rows add up to 180 minutes. Cite the original CSV and the probe outcomes you inspected in lesson 4.</p><details><summary>Optional text output for the checked example</summary><p>From the checked example folder, print a text report with this command. Compare it with <a href=\"../assets/example/expected/activity-report.txt\">the expected text output</a>.</p><div data-copy-slot=\"delivery-text-command\"></div></details>",
+      "copies": [
+        {
+          "label": "baseline text command",
+          "text": "python3.12 report.py data/activity.csv\n",
+          "slot": "delivery-text-command"
+        }
+      ],
+      "presenterNotes": [
+        "One concrete comparison makes the handoff usable. Leave extra checks available as references."
+      ]
+    },
+    {
+      "id": "section-5",
+      "navTitle": "Try an optional variation",
+      "phase": "Deliver · Practice",
+      "title": "Try a separate input copy",
+      "intro": "Optional practice if you want to see how the report responds to a change.",
+      "html": "<details><summary>Change one row and compare the result</summary><p>In the course environment, use the <code>PRACTICE</code> path from lesson 2. Copy <code>$PRACTICE/project/data/activity.csv</code> to a new <code>$PRACTICE/activity-practice.csv</code>. In the copy, change Lumen’s Documentation entry from 30 to 45 minutes.</p><p>Predict the result before running the command: six entries, 285 minutes overall and 105 minutes for Lumen. Choose unused input-copy and output filenames, and update the command if you chose different names.</p><div data-copy-slot=\"delivery-practice-command\"></div><p>Open the new HTML file. Compare its actual numbers with your prediction.</p></details>",
+      "copies": [
+        {
+          "label": "practice report command",
+          "text": "python \"$PRACTICE/project/report.py\" \"$PRACTICE/activity-practice.csv\" --format html --output \"$PRACTICE/activity-practice.html\"",
+          "slot": "delivery-practice-command"
+        }
+      ],
+      "presenterNotes": [
+        "Place the optional input copy and output beside the project so the protected inputs stay intact."
+      ]
+    },
+    {
+      "id": "section-6",
+      "navTitle": "Prepare the handoff",
+      "phase": "Deliver · Documentation",
+      "title": "Write a short handoff",
+      "intro": "Give the recipient a file to open, a result to look for and the evidence you used.",
+      "html": "<div class=\"callout\"><h3>Example handoff</h3><p>Open <code>activity-report.html</code> in your browser. Look for six entries and 270 minutes. Compare Orion’s 180 minutes with its four rows in the attached CSV. I checked that subtotal and inspected both saved reporting probes.</p></div><p>Use your own result and observed checks in the handoff. Include the checked example ZIP only if the recipient needs to recreate the report independently.</p><label for=\"delivery-handoff\"><strong>Your handoff note</strong></label><textarea id=\"delivery-handoff\" data-save=\"deliveryHandoff\" rows=\"5\" placeholder=\"What does the next person need, and what did you actually check?\"></textarea><p class=\"caption\">This optional note stays in your browser profile and site.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Check that the handoff uses the learner’s actual report and results."
+      ]
+    },
+    {
+      "id": "section-7",
+      "navTitle": "Check the handoff",
+      "phase": "Deliver · Reflection",
+      "title": "Check that someone can use the handoff",
+      "intro": "Read your note as a recipient who has never seen the practice folder.",
+      "html": "<p>Check that you can find the report, locate one number and see what the original check covered. If a recipient needs to recreate the file, include the checked example instructions and explain how to choose a fresh output filename.</p><p><strong>Next:</strong> Open <strong><a href=\"../06-improve/\">Make it work for your needs</a></strong> to identify one improvement.</p>",
+      "copies": [],
+      "presenterNotes": [
+        "Use the check to confirm that the recipient can preserve an existing report."
+      ],
+      "check": {
+        "question": "A previous activity-report.html already exists. What is the supported next action?",
+        "options": [
+          {
+            "text": "Keep it and use an unused --output filename, then open that same new file.",
+            "correct": true,
+            "feedback": "Correct. The reporting tool creates a new file and refuses to overwrite an existing destination."
+          },
+          {
+            "text": "Run the same command again and expect it to replace the old report.",
+            "correct": false,
+            "feedback": "The existing-file refusal is intentional. Select a new output path and preserve the previous result."
+          }
+        ]
+      }
+    }
+  ],
+  "coursePosition": 5,
+  "courseRoutes": [
+    "../01-define/",
+    "../02-build/",
+    "../03-return/",
+    "../04-review/",
+    "../05-deliver/",
+    "../06-improve/"
+  ]
+}

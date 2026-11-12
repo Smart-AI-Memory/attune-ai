@@ -21,8 +21,11 @@ describe('Harness-owned Help Center export', () => {
     const build = JSON.parse(readFileSync(path.join(defaultOutput, 'build.json'), 'utf8'));
     for (const name of Object.keys(build.files).filter((name) => name.endsWith('index.html'))) {
       const html = readFileSync(path.join(defaultOutput, name.replace('harness/help/', '')), 'utf8');
-      if (name === 'harness/help/index.html') expect(html).toContain('Current published setup: <strong>Harness 1.7.0</strong>');
-      else if (name.includes('/get-started/')) expect(html).toContain('published <strong>Harness 1.7.0</strong>');
+      if (name === 'harness/help/index.html') expect(html).toContain('Current published setup: <strong>Harness 1.8.0</strong>');
+      else if (name.includes('/get-started/')) {
+        expect(html).toContain('Current release: Harness <strong>1.8.0</strong>');
+        expect(html).toContain('href="/harness/learn/reporting/">Browse the six Harness tutorials</a>');
+      }
       else if (name.includes('/1-7-0-preparation/')) expect(html).toContain('Archived guide:');
       else if (name.includes('/1-5-0/')) expect(html).toContain('published <strong>Harness 1.5.0</strong>');
       else if (name.includes('/1-5-1-preparation/')) expect(html).toContain('Archived guide:');
@@ -68,6 +71,7 @@ describe('Harness-owned Help Center export', () => {
       { status: 'unknown' },
       { published_version: '1.5.1' },
       { published_version: '1.6.0' },
+      { published_version: '1.7.0' },
       { version: '1.6.0' },
       { behavior_commit: '1'.repeat(40) },
     ]) {

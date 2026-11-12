@@ -9,9 +9,14 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const website = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const defaultOutput = path.join(website, 'public/harness-training-static');
 const repository = 'Smart-AI-Memory/attune-harness';
-const course = '1.7.0-preparation';
-const roots = [course, 'archive'];
-const entryPoints = [`${course}/index.html`, `${course}/setup.html`, 'archive/index.html'];
+const course = 'reporting';
+const legacyCourse = '1.7.0-preparation';
+const roots = [course, legacyCourse, 'archive'];
+const entryPoints = [
+  `${course}/index.html`, `${course}/setup.html`, `${course}/assets/reporting-practice.zip`,
+  `${legacyCourse}/index.html`, `${legacyCourse}/setup.html`, 'archive/index.html',
+];
+const releaseVersion = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)$/;
 const extensions = new Set(['.html', '.css', '.js', '.json', '.svg', '.py', '.csv', '.txt', '.ini', '.md', '.zip']);
 const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
 
@@ -94,8 +99,9 @@ export function importTrainingExport({ repo, commit, python = 'python3', output 
     throw new Error('Source repository is not Harness on GitHub');
   }
   const manifest = JSON.parse(execFileSync('git', ['-C', repo, 'show', `${commit}:help/manifest.json`], { encoding: 'utf8' }));
-  if (manifest?.status !== 'published' || manifest.published_version !== '1.7.0') {
-    throw new Error('Training source requires a published Harness 1.7.0 Help manifest');
+  if (manifest?.status !== 'published' || typeof manifest.published_version !== 'string'
+      || !releaseVersion.test(manifest.published_version)) {
+    throw new Error('Training source requires a published Harness Help manifest with a release version');
   }
   const entries = execFileSync('git', ['-C', repo, 'ls-tree', '-rz', commit, '--', 'training'], { encoding: 'utf8' }).split('\0').filter(Boolean);
   if (entries.some((entry) => !/^100(?:644|755) blob /.test(entry))) {

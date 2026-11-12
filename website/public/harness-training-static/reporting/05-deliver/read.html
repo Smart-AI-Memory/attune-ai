@@ -1,0 +1,44 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,follow"><title>Make the tool usable · Attune Harness</title><link rel="stylesheet" href="../assets/styles.css"></head><body><main style="max-width:900px;margin:auto;padding:2rem"><p><a href="/harness/help/">Help Center</a></p><p><a href="../">Course overview</a></p><h1>Make the tool usable</h1>
+<p>Hand off the report you built with a clear way to check it.</p>
+<p>This full-text reading copy does not save answers. <a href="./">Open the interactive lesson</a> for saved browser notes.</p>
+<section id="section-1">
+<h2>Hand off the report you built</h2>
+<p>Start with the HTML report and the evidence you just reviewed.</p>
+<p>Open <code>$PRACTICE/activity-report.html</code>. Your handoff will show the result, the input it came from and the check you performed in <a href="../04-review/">Decide whether to trust the report</a>.</p><p>If you still need a report, return to <a href="../02-build/">Build your first report</a> or use the optional checked example in the next section.</p>
+</section>
+<section id="section-2">
+<h2>Gather the files for your handoff</h2>
+<p>Use the report and original sample CSV from your practice project.</p>
+<ul><li>HTML report <code>$PRACTICE/activity-report.html</code></li><li>Sample CSV <code>$PRACTICE/project/data/activity.csv</code></li><li>Your review note or the relevant outcomes from the saved task</li></ul><details><summary>Optional fresh start with the checked example</summary><p>Download the <a href="../assets/reporting-example.zip">checked example ZIP</a> and extract it into a new folder. Open a terminal in the folder containing <code>report.py</code> and <code>data/activity.csv</code>. The <a href="../assets/example/README.md">example instructions</a> list the Python requirements and runnable commands.</p></details>
+</section>
+<section id="section-3">
+<h2>Show how to open or recreate the report</h2>
+<p>Give the recipient the report path first.</p>
+<p>Ask the recipient to open the supplied HTML file in a browser. If they are running the checked ZIP from a new extraction, use the command below from the folder containing <code>report.py</code>. It writes <code>activity-report.html</code> beside the script.</p><details><summary>Optional HTML command for the checked example</summary><h3>HTML report command</h3><pre><code>python3.12 report.py data/activity.csv --format html --output activity-report.html
+</code></pre><p>Expect <code>Saved report to activity-report.html</code>. If that name is already in use, choose an unused name with <code>--output</code>, then open the new file.</p></details>
+</section>
+<section id="section-4">
+<h2>Give the recipient one way to check it</h2>
+<p>Share an expected result the recipient can find in the HTML.</p>
+<p>Ask the recipient to find six entries and 270 minutes, then show how the four Orion rows add up to 180 minutes. Cite the original CSV and the probe outcomes you inspected in lesson 4.</p><details><summary>Optional text output for the checked example</summary><p>From the checked example folder, print a text report with this command. Compare it with <a href="../assets/example/expected/activity-report.txt">the expected text output</a>.</p><h3>baseline text command</h3><pre><code>python3.12 report.py data/activity.csv
+</code></pre></details>
+</section>
+<section id="section-5">
+<h2>Try a separate input copy</h2>
+<p>Optional practice if you want to see how the report responds to a change.</p>
+<details><summary>Change one row and compare the result</summary><p>In the course environment, use the <code>PRACTICE</code> path from lesson 2. Copy <code>$PRACTICE/project/data/activity.csv</code> to a new <code>$PRACTICE/activity-practice.csv</code>. In the copy, change Lumen’s Documentation entry from 30 to 45 minutes.</p><p>Predict the result before running the command: six entries, 285 minutes overall and 105 minutes for Lumen. Choose unused input-copy and output filenames, and update the command if you chose different names.</p><h3>practice report command</h3><pre><code>python &quot;$PRACTICE/project/report.py&quot; &quot;$PRACTICE/activity-practice.csv&quot; --format html --output &quot;$PRACTICE/activity-practice.html&quot;</code></pre><p>Open the new HTML file. Compare its actual numbers with your prediction.</p></details>
+</section>
+<section id="section-6">
+<h2>Write a short handoff</h2>
+<p>Give the recipient a file to open, a result to look for and the evidence you used.</p>
+<div class="callout"><h3>Example handoff</h3><p>Open <code>activity-report.html</code> in your browser. Look for six entries and 270 minutes. Compare Orion’s 180 minutes with its four rows in the attached CSV. I checked that subtotal and inspected both saved reporting probes.</p></div><p>Use your own result and observed checks in the handoff. Include the checked example ZIP only if the recipient needs to recreate the report independently.</p><h3><strong>Your handoff note</strong></h3><p>Write your answer in your own notes, or use the interactive lesson.</p><p class="caption">This optional note stays in your browser profile and site.</p>
+</section>
+<section id="section-7">
+<h2>Check that someone can use the handoff</h2>
+<p>Read your note as a recipient who has never seen the practice folder.</p>
+<p>Check that you can find the report, locate one number and see what the original check covered. If a recipient needs to recreate the file, include the checked example instructions and explain how to choose a fresh output filename.</p><p><strong>Next:</strong> Open <strong><a href="../06-improve/">Make it work for your needs</a></strong> to identify one improvement.</p>
+<details><summary>A previous activity-report.html already exists. What is the supported next action?</summary>
+<p><strong>Keep it and use an unused --output filename, then open that same new file.</strong> Correct. The reporting tool creates a new file and refuses to overwrite an existing destination.</p>
+<p><strong>Run the same command again and expect it to replace the old report.</strong> The existing-file refusal is intentional. Select a new output path and preserve the previous result.</p>
+</details>
+</section></main></body></html>

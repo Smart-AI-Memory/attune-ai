@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,follow"><title>Choose how to start · Attune Harness</title><link rel="stylesheet" href="assets/styles.css"></head>
+<body><main style="max-width:900px;margin:auto;padding:2rem">
+<p><a href="./">Course overview</a></p>
+<h1>Choose how to start</h1>
+<p>Start with the result you want. Choose how much preparation you need to review the scope and checks.</p>
+<table><caption>Choose the useful amount of preparation</caption><thead><tr><th scope="col">Approach</th><th scope="col">Useful when</th><th scope="col">What you review</th></tr></thead><tbody>
+<tr><th scope="row"><a href="#goal-driven">Goal-driven development</a></th><td>The outcome is small and bounded, and the affected files and checks can be made clear in a short request.</td><td>The goal, scope, constraints, success criteria and proposed plan.</td></tr>
+<tr><th scope="row"><a href="#spec-driven">Spec-driven development</a></th><td>Several workflows, dependencies, consequential choices or competing requirements need to be settled before implementation.</td><td>A specification with requirements, exclusions, acceptance examples, dependencies and unresolved decisions.</td></tr>
+</tbody></table>
+<h2 id="goal-driven">Start from a bounded goal</h2>
+<p>A short prompt is enough for this reporting exercise. The input, expected totals and files that may change are easy to review together.</p>
+<section class="copy-block" data-copy-kind="prompt" aria-labelledby="goal-example-prompt">
+<h3 id="goal-example-prompt">Example prompt</h3>
+<p>Plan a readable HTML report of time by project and category from this synthetic CSV. Keep the sample data and acceptance checks unchanged. Show me the plan and expected totals for my review and approval, then stop and wait for my decision.</p>
+</section>
+<ol>
+<li>Open <strong><a href="01-define/">Turn an idea into a useful result</a></strong> to define the outcome and checks.</li>
+<li>Open <strong><a href="02-build/">Build your first report</a></strong> to preview the plan, approve its scope and authorize the build separately.</li>
+</ol>
+<p>For your own project, read the <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/main/README.md#goal-driven-development">goal-driven development guide</a>.</p>
+<h2 id="spec-driven">Develop requirements before implementation</h2>
+<p>Use a specification when decisions about requirements, dependencies or failures need to hold across several workflows. For example, a shared reporting product may need rules for input formats, saved reports and access.</p>
+<section class="copy-block" data-copy-kind="prompt" aria-labelledby="spec-example-prompt">
+<h3 id="spec-example-prompt">Example prompt</h3>
+<p>Help me draft a spec for shared activity reporting. List the user workflows, data and access rules, dependencies, acceptance examples and open decisions. Show me the draft for review and wait for my approval before starting implementation or model consultations.</p>
+</section>
+<ol>
+<li>Review the requirements, exclusions and acceptance examples. Resolve open decisions with your assistant.</li>
+<li>Ask the assistant to turn the reviewed spec into a supported Harness plan. Review and accept the plan before authorizing the build.</li>
+</ol>
+<p>Read the <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/main/README.md#spec-driven-development">spec-driven development guide</a> and <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/main/docs/cli-guide.md#importing-a-plan-from-another-project">plan import instructions</a>.</p>
+<details>
+<summary>Optional reference for spec authoring</summary>
+<p><a href="https://github.com/Smart-AI-Memory/attune-ai/blob/main/plugin/skills/spec/SKILL.md">Spec Ladders</a> is the Attune AI host workflow invoked with <code>/spec</code>. It organizes requirements, design and a sequence of tasks with approval points. This course uses the Harness plan and build commands, which the <a href="assets/compatibility.json">course checks</a> exercised with Harness 1.7.0 and 1.8.0.</p>
+</details>
+<h2 id="prompt-form">Choose a prompt format</h2>
+<p>Use plain language for a short request. Use XML tags when headings such as context, instructions and expected result make a longer prompt easier to read. See <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/main/docs/cli-guide.md#how-people-and-ai-work-together">Harness authoring forms</a>.</p>
+<h2 id="shared-decisions">Keep the same review points</h2>
+<ul><li><strong>Scope:</strong> What result is wanted, and what may change?</li><li><strong>Checks:</strong> What independent evidence would establish success?</li><li><strong>Acceptance:</strong> Does the current request or plan match your decision?</li><li><strong>Execution:</strong> Are the selected participants, effects and usage authorized?</li><li><strong>Assessment:</strong> What actually happened, and what remains uncertain?</li></ul>
+<p>Revisit the requirements and plan when the work changes.</p>
+<p><a href="01-define/">Start the first lesson</a></p>
+</main></body></html>

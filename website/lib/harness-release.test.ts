@@ -8,9 +8,9 @@ const build = JSON.parse(readFileSync(path.join(output, 'build.json'), 'utf8'));
 
 describe('current website release boundaries', () => {
   it('installs the published package while keeping preparation evidence separate', () => {
-    expect(HARNESS_PUBLISHED_VERSION).toBe('1.7.0');
-    expect(HARNESS_INSTALL_COMMAND).toContain('attune-harness==1.7.0');
-    expect(HARNESS_PACKAGE_URL).toBe('https://pypi.org/project/attune-harness/1.7.0/');
+    expect(HARNESS_PUBLISHED_VERSION).toBe('1.8.0');
+    expect(HARNESS_INSTALL_COMMAND).toContain('attune-harness==1.8.0');
+    expect(HARNESS_PACKAGE_URL).toBe('https://pypi.org/project/attune-harness/1.8.0/');
     expect(HARNESS_PREPARATION_NOTICE).toContain('original test results');
     expect(build.version).toBe('1.5.1');
   });
