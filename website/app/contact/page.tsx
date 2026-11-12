@@ -141,200 +141,202 @@ export default function ContactPage() {
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="py-20 gradient-primary text-white">
-        <div className="container">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-5xl font-bold mb-6">
-              Contact Us
-            </h1>
-            <p className="text-2xl mb-8 opacity-90">
-              Questions about the platform? Looking to partner? We&apos;d love to hear from you.
-            </p>
+      <main id="main-content" tabIndex={-1}>
+        {/* Hero */}
+        <section className="py-20 gradient-primary text-white">
+          <div className="container">
+            <div className="max-w-3xl mx-auto text-center">
+              <h1 className="text-5xl font-bold mb-6">
+                Contact Us
+              </h1>
+              <p className="text-2xl mb-8 opacity-90">
+                Questions about the platform? Looking to partner? We&apos;d love to hear from you.
+              </p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Contact Form */}
-      <section className="py-20">
-        <div className="container">
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-8">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Name */}
-                <div>
-                  <label htmlFor="name" className="block text-sm font-bold mb-2">
-                    Name *
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    required
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-lg border-2 border-[var(--border)] bg-[var(--background)] focus:border-[var(--primary)] focus:outline-none"
-                    placeholder="Your name"
-                  />
-                </div>
-
-                {/* Email */}
-                <div>
-                  <label htmlFor="email" className="block text-sm font-bold mb-2">
-                    Email *
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    required
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-lg border-2 border-[var(--border)] bg-[var(--background)] focus:border-[var(--primary)] focus:outline-none"
-                    placeholder="your.email@example.com"
-                  />
-                </div>
-
-                {/* Company */}
-                <div>
-                  <label htmlFor="company" className="block text-sm font-bold mb-2">
-                    Company (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    id="company"
-                    name="company"
-                    value={formData.company}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-lg border-2 border-[var(--border)] bg-[var(--background)] focus:border-[var(--primary)] focus:outline-none"
-                    placeholder="Your company name"
-                  />
-                </div>
-
-                {/* Topic */}
-                <div>
-                  <label htmlFor="topic" className="block text-sm font-bold mb-2">
-                    Topic *
-                  </label>
-                  <select
-                    id="topic"
-                    name="topic"
-                    required
-                    value={formData.topic}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-lg border-2 border-[var(--border)] bg-[var(--background)] focus:border-[var(--primary)] focus:outline-none"
-                  >
-                    <option value="general">General Inquiry</option>
-                    <option value="technical">Technical Question</option>
-                    <option value="help-system">Help System / Templates</option>
-                    <option value="plugin">Claude Code Plugin</option>
-                    <option value="contributing">Contributing</option>
-                    <option value="partnership">Partnership</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-
-                {/* Message with Dictation */}
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label htmlFor="message" className="block text-sm font-bold">
-                      Message *
+        {/* Contact Form */}
+        <section className="py-20">
+          <div className="container">
+            <div className="max-w-2xl mx-auto">
+              <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-8">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Name */}
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-bold mb-2">
+                      Name *
                     </label>
-                    <button
-                      type="button"
-                      onClick={startDictation}
-                      className={`flex min-h-[var(--semantic-target-min)] items-center gap-2 px-3 py-1 rounded-lg text-sm font-bold transition-all ${
-                        isRecording
-                          ? 'bg-[var(--error)] text-white'
-                          : 'bg-[var(--accent)] bg-opacity-10 text-[var(--accent)] hover:bg-opacity-20'
-                      }`}
-                    >
-                      {isRecording ? (
-                        <>
-                          <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse"></span>
-                          Stop Recording
-                        </>
-                      ) : (
-                        <>
-                          🎤 Start Dictation
-                        </>
-                      )}
-                    </button>
+                    <input
+                      type="text"
+                      id="name"
+                      name="name"
+                      required
+                      value={formData.name}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-lg border-2 border-[var(--border)] bg-[var(--background)] focus:border-[var(--primary)] focus:outline-none"
+                      placeholder="Your name"
+                    />
                   </div>
-                  <textarea
-                    id="message"
-                    name="message"
-                    required
-                    rows={6}
-                    value={formData.message}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 rounded-lg border-2 border-[var(--border)] bg-[var(--background)] focus:border-[var(--primary)] focus:outline-none resize-vertical"
-                    placeholder="Tell us about your question, project, or partnership opportunity. You can type or use the dictation button above to speak your message."
-                  />
-                  <p className="mt-2 text-xs text-[var(--muted)]">
-                    💡 Tip: Click &quot;Start Dictation&quot; to use voice input. Works in Chrome and Edge browsers.
-                  </p>
-                </div>
 
-                {/* Submit Button */}
-                <div>
-                  <button
-                    type="submit"
-                    disabled={submitStatus === 'sending' || submitStatus === 'success'}
-                    className="w-full btn btn-primary text-lg py-4 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {submitStatus === 'sending' && 'Sending...'}
-                    {submitStatus === 'success' && '✓ Message Sent!'}
-                    {submitStatus === 'idle' && 'Send Message'}
-                    {submitStatus === 'error' && 'Try Again'}
-                  </button>
-                </div>
+                  {/* Email */}
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-bold mb-2">
+                      Email *
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      name="email"
+                      required
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-lg border-2 border-[var(--border)] bg-[var(--background)] focus:border-[var(--primary)] focus:outline-none"
+                      placeholder="your.email@example.com"
+                    />
+                  </div>
 
-                {submitStatus === 'error' && (
-                  <p role="alert" className="text-[var(--error)] text-center">
-                    We couldn’t send your message. Your entries are still here. Click <strong>Try Again</strong>.
-                  </p>
-                )}
+                  {/* Company */}
+                  <div>
+                    <label htmlFor="company" className="block text-sm font-bold mb-2">
+                      Company (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      id="company"
+                      name="company"
+                      value={formData.company}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-lg border-2 border-[var(--border)] bg-[var(--background)] focus:border-[var(--primary)] focus:outline-none"
+                      placeholder="Your company name"
+                    />
+                  </div>
 
-                {submitStatus === 'success' && (
-                  <div className="bg-[var(--success)] bg-opacity-10 border-2 border-[var(--success)] rounded-lg p-4 text-center">
-                    <p className="text-[var(--success)] font-bold">
-                      Thank you! We&apos;ll get back to you within 24-48 hours.
+                  {/* Topic */}
+                  <div>
+                    <label htmlFor="topic" className="block text-sm font-bold mb-2">
+                      Topic *
+                    </label>
+                    <select
+                      id="topic"
+                      name="topic"
+                      required
+                      value={formData.topic}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-lg border-2 border-[var(--border)] bg-[var(--background)] focus:border-[var(--primary)] focus:outline-none"
+                    >
+                      <option value="general">General Inquiry</option>
+                      <option value="technical">Technical Question</option>
+                      <option value="help-system">Help System / Templates</option>
+                      <option value="plugin">Claude Code Plugin</option>
+                      <option value="contributing">Contributing</option>
+                      <option value="partnership">Partnership</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  {/* Message with Dictation */}
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <label htmlFor="message" className="block text-sm font-bold">
+                        Message *
+                      </label>
+                      <button
+                        type="button"
+                        onClick={startDictation}
+                        className={`flex min-h-[var(--semantic-target-min)] items-center gap-2 px-3 py-1 rounded-lg text-sm font-bold transition-all ${
+                          isRecording
+                            ? 'bg-[var(--error)] text-white'
+                            : 'bg-[var(--accent)] bg-opacity-10 text-[var(--accent)] hover:bg-opacity-20'
+                        }`}
+                      >
+                        {isRecording ? (
+                          <>
+                            <span className="inline-block w-2 h-2 bg-white rounded-full animate-pulse"></span>
+                            Stop Recording
+                          </>
+                        ) : (
+                          <>
+                            🎤 Start Dictation
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <textarea
+                      id="message"
+                      name="message"
+                      required
+                      rows={6}
+                      value={formData.message}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-lg border-2 border-[var(--border)] bg-[var(--background)] focus:border-[var(--primary)] focus:outline-none resize-vertical"
+                      placeholder="Tell us about your question, project, or partnership opportunity. You can type or use the dictation button above to speak your message."
+                    />
+                    <p className="mt-2 text-xs text-[var(--muted)]">
+                      💡 Tip: Click &quot;Start Dictation&quot; to use voice input. Works in Chrome and Edge browsers.
                     </p>
                   </div>
-                )}
-              </form>
-            </div>
 
-            {/* Alternative Contact Methods */}
-            <div className="mt-12 grid md:grid-cols-3 gap-6">
-              <div className="text-center p-6 bg-[var(--border)] bg-opacity-30 rounded-lg">
-                <div className="text-3xl mb-3">📧</div>
-                <h3 className="font-bold mb-2">Email</h3>
-                <a href="mailto:patrick.roebuck@pm.me" className="text-sm text-[var(--accent)] hover:underline">
-                  patrick.roebuck@pm.me
-                </a>
+                  {/* Submit Button */}
+                  <div>
+                    <button
+                      type="submit"
+                      disabled={submitStatus === 'sending' || submitStatus === 'success'}
+                      className="w-full btn btn-primary text-lg py-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {submitStatus === 'sending' && 'Sending...'}
+                      {submitStatus === 'success' && '✓ Message Sent!'}
+                      {submitStatus === 'idle' && 'Send Message'}
+                      {submitStatus === 'error' && 'Try Again'}
+                    </button>
+                  </div>
+
+                  {submitStatus === 'error' && (
+                    <p role="alert" className="text-[var(--error)] text-center">
+                      We couldn’t send your message. Your entries are still here. Click <strong>Try Again</strong>.
+                    </p>
+                  )}
+
+                  {submitStatus === 'success' && (
+                    <div className="bg-[var(--success)] bg-opacity-10 border-2 border-[var(--success)] rounded-lg p-4 text-center">
+                      <p className="text-[var(--success)] font-bold">
+                        Thank you! We&apos;ll get back to you within 24-48 hours.
+                      </p>
+                    </div>
+                  )}
+                </form>
               </div>
 
-              <div className="text-center p-6 bg-[var(--border)] bg-opacity-30 rounded-lg">
-                <div className="text-3xl mb-3">💬</div>
-                <h3 className="font-bold mb-2">GitHub Discussions</h3>
-                <a href="https://github.com/Smart-AI-Memory/attune-ai/discussions" className="text-sm text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">
-                  Community Support
-                </a>
-              </div>
+              {/* Alternative Contact Methods */}
+              <div className="mt-12 grid md:grid-cols-3 gap-6">
+                <div className="text-center p-6 bg-[var(--border)] bg-opacity-30 rounded-lg">
+                  <div className="text-3xl mb-3">📧</div>
+                  <h3 className="font-bold mb-2">Email</h3>
+                  <a href="mailto:patrick.roebuck@pm.me" className="text-sm text-[var(--accent)] hover:underline">
+                    patrick.roebuck@pm.me
+                  </a>
+                </div>
 
-              <div className="text-center p-6 bg-[var(--border)] bg-opacity-30 rounded-lg">
-                <div className="text-3xl mb-3">🐛</div>
-                <h3 className="font-bold mb-2">Bug Reports</h3>
-                <a href="https://github.com/Smart-AI-Memory/attune-ai/issues" className="text-sm text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">
-                  GitHub Issues
-                </a>
+                <div className="text-center p-6 bg-[var(--border)] bg-opacity-30 rounded-lg">
+                  <div className="text-3xl mb-3">💬</div>
+                  <h3 className="font-bold mb-2">GitHub Discussions</h3>
+                  <a href="https://github.com/Smart-AI-Memory/attune-ai/discussions" className="text-sm text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">
+                    Community Support
+                  </a>
+                </div>
+
+                <div className="text-center p-6 bg-[var(--border)] bg-opacity-30 rounded-lg">
+                  <div className="text-3xl mb-3">🐛</div>
+                  <h3 className="font-bold mb-2">Bug Reports</h3>
+                  <a href="https://github.com/Smart-AI-Memory/attune-ai/issues" className="text-sm text-[var(--accent)] hover:underline" target="_blank" rel="noopener noreferrer">
+                    GitHub Issues
+                  </a>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
       <Footer />
     </div>
