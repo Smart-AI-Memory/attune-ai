@@ -6,6 +6,7 @@ export const HARNESS_PUBLISHED_VERSION = build.published_version;
 export const HARNESS_GET_STARTED = '/harness/help/get-started/';
 export const HARNESS_PREPARATION = '/harness/help/1-7-0-preparation/';
 export const HARNESS_PACKAGE_URL = `https://pypi.org/project/attune-harness/${HARNESS_PUBLISHED_VERSION}/`;
+export const HARNESS_QUALIFICATION_URL = `https://github.com/Smart-AI-Memory/attune-harness/blob/v${HARNESS_PUBLISHED_VERSION}/docs/qualification.md`;
 export const HARNESS_SOURCE_ROOT = `https://github.com/Smart-AI-Memory/attune-harness/blob/${source.source_commit}`;
 export const HARNESS_INSTALL_COMMAND = `uv tool install --python 3.12 'attune-harness==${HARNESS_PUBLISHED_VERSION}'`;
 export const HARNESS_RELEASE_NOTICE = `Published: Attune Harness ${HARNESS_PUBLISHED_VERSION}.`;

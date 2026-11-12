@@ -1,4 +1,4 @@
-import { HARNESS_PUBLISHED_VERSION, HARNESS_RELEASE_NOTICE, HARNESS_PREPARATION_NOTICE, HARNESS_GET_STARTED, HARNESS_PREPARATION, HARNESS_PACKAGE_URL, HARNESS_SOURCE_ROOT } from '@/lib/harness-release';
+import { HARNESS_PUBLISHED_VERSION, HARNESS_RELEASE_NOTICE, HARNESS_PREPARATION_NOTICE, HARNESS_GET_STARTED, HARNESS_PREPARATION, HARNESS_QUALIFICATION_URL, HARNESS_SOURCE_ROOT } from '@/lib/harness-release';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
@@ -128,7 +128,7 @@ export default function DocsPage() {
             <div className="flex flex-wrap gap-4 mb-6">
               <Link className="btn btn-primary" href={HARNESS_GET_STARTED}>Install Harness {HARNESS_PUBLISHED_VERSION}</Link>
               <a className="btn btn-outline" href={`${HARNESS_SOURCE_ROOT}/docs/cli-guide.md`}>Read the Harness guide</a>
-              <a className="btn btn-outline" href={`${HARNESS_PACKAGE_URL}#user-content-what-is-qualified-and-what-is-not`}>Check the qualification limits</a>
+              <a className="btn btn-outline" href={HARNESS_QUALIFICATION_URL}>Check the qualification limits</a>
             </div>
             <p className="text-sm text-[var(--text-secondary)]">Claude Code and Codex have documented setup paths. Native planning and building remain experimental; Antigravity integration is unverified here. Intent acceptance is separate from paid execution permission.</p>
             <p className="text-sm text-[var(--text-secondary)] mt-4">Harness does not yet replace every Attune AI workflow. <a className="underline" href={`${HARNESS_SOURCE_ROOT}/docs/migration.md`}>Review the migration boundaries</a> before changing an existing setup.</p>
