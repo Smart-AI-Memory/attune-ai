@@ -1,0 +1,45 @@
+.page { margin-top: 64px; color: var(--text-primary); background: var(--background); padding-bottom: 4rem; line-height: 1.7; }
+.wrap { width: min(1120px, calc(100% - 48px)); margin-inline: auto; }
+.breadcrumb { display: flex; flex-wrap: wrap; gap: .65rem; padding-top: 2rem; color: var(--text-muted); font-size: .875rem; }
+.page a { color: var(--primary); text-decoration: underline; text-underline-offset: .22em; }
+.page a:hover { text-decoration-thickness: 2px; }
+.page a:focus-visible, .page summary:focus-visible, .tableRegion:focus-visible { outline: 3px solid var(--primary); outline-offset: 4px; }
+.hero { padding: 3rem 0 3.5rem; max-width: 850px; }
+.eyebrow { font-size: .8rem; letter-spacing: .06em; font-weight: 650; color: var(--text-muted); }
+.hero h1 { font-size: clamp(2.25rem, 5vw, 3.8rem); line-height: 1.12; letter-spacing: -.04em; margin: 1rem 0 1.5rem; }
+.intro { font-size: 1.15rem; color: var(--text-secondary); max-width: 70ch; }
+.actions { display: flex; align-items: center; flex-wrap: wrap; gap: 1rem 1.5rem; margin-top: 1.75rem; font-size: .95rem; }
+.actions .primary { background: var(--primary); color: var(--action-foreground); border-radius: 7px; padding: .75rem 1rem; font-weight: 600; text-decoration: none; }
+.actions .primary:hover { background: var(--primary-dark); }
+.section { border-top: 1px solid var(--border); padding: 2.5rem 0; scroll-margin-top: 5rem; }
+.section h2 { font-size: clamp(1.6rem, 3vw, 2.1rem); line-height: 1.25; margin: 0 0 1rem; letter-spacing: -.025em; }
+.section h3 { font-size: 1.15rem; margin: 0 0 .5rem; }
+.section p { max-width: 85ch; margin: .9rem 0 0; }
+.benefits { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; margin: 1.5rem 0; }
+.benefits article { background: var(--surface-container-low); border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; }
+.benefits p { color: var(--text-secondary); margin: 0; }
+.tableRegion { overflow-x: auto; margin-top: 1.5rem; border: 1px solid var(--border); border-radius: 8px; }
+.scrollHint { display: none; color: var(--text-secondary); font-size: .875rem; }
+.tableRegion table { border-collapse: collapse; width: 100%; min-width: 760px; font-size: .94rem; }
+.tableRegion caption { text-align: left; padding: 1rem; color: var(--text-secondary); font-size: .85rem; }
+.tableRegion th, .tableRegion td { text-align: left; vertical-align: top; padding: 1.15rem; border-top: 1px solid var(--border); }
+.tableRegion thead { background: var(--surface-container-low); }
+.tableRegion th:first-child { width: 25%; }
+.tableRegion td { width: 37.5%; }
+.tableRegion th span { display: block; color: var(--text-secondary); font-weight: 400; margin-top: .5rem; font-size: .875rem; }
+.page code { font-family: var(--font-geist-mono), monospace; font-size: .87em; overflow-wrap: anywhere; }
+.note { font-size: .9rem; color: var(--text-secondary); }
+.checklist, .sources { list-style: disc; padding-left: 1.4rem; margin: 1rem 0; max-width: 90ch; }
+.checklist li, .sources li { margin: .75rem 0; padding-left: .25rem; }
+.identity { background: var(--surface-container-low); padding: 1rem 1.25rem; border: 1px solid var(--border); border-radius: 8px; margin: 1.5rem 0; }
+.identity summary { cursor: pointer; font-weight: 600; }
+.identity dl { margin-top: 1rem; }
+.identity dt { font-weight: 600; margin-top: .75rem; }
+.identity dd { margin: .25rem 0 0; overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  .wrap { width: calc(100% - 32px); }
+  .hero { padding: 2.5rem 0; }
+  .benefits { grid-template-columns: 1fr; }
+  .section { padding-block: 2rem; }
+}
+@media (max-width: 800px) { .scrollHint { display: block; } }

@@ -62,6 +62,7 @@ export default function Home() {
           <p><strong>{HARNESS_RELEASE_NOTICE}</strong> <Link href={HARNESS_GET_STARTED}>Get started</Link> · <Link href={HARNESS_PACKAGE_URL}>Published package</Link></p>
           <p className={styles["candidate"]}>{HARNESS_PREPARATION_NOTICE} <Link href={HARNESS_PREPARATION}>Explore the archived 1.7.0 preparation guide</Link>.</p>
           <p className={styles["candidate"]}>Browser forms guide intake and intent approval. Each workflow retains its own execution permissions and checks.</p>
+          <p><Link href="/harness/windows/">Check Windows 11, PowerShell and ARM64 compatibility for Harness 1.8.1</Link>.</p>
           <details>
             <summary>Read the evidence and limits</summary>
             <p>In one exporter comparison, command-line checks found three defects that direct serializer checks had missed.</p>
