@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { HARNESS_PACKAGE_URL } from '@/lib/harness-release';
+import { HARNESS_CURRENT_VERSION, HARNESS_CURRENT_PACKAGE_URL, HARNESS_PUBLISHED_VERSION } from '@/lib/harness-release';
 import styles from './Footer.module.css';
 
 const linkClass = 'text-sm text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors';
@@ -20,7 +20,7 @@ export default function Footer() {
             <h3 className={styles.heading}>Attune Harness</h3>
             <ul className="space-y-2">
               <li><Link href="/#harness" className={linkClass}>What you can do</Link></li>
-              <li><Link href="/harness/help/" className={linkClass}>Help Center</Link></li>
+              <li><Link href="/harness/help/" className={linkClass}>Help Center for Harness {HARNESS_PUBLISHED_VERSION}</Link></li>
               <li><Link href="/harness/learn/" className={linkClass}>Learn Harness</Link></li>
               <li><Link href="/docs#harness-docs" className={linkClass}>Harness documentation</Link></li>
               <li><Link href="/#context" className={linkClass}>Context and next steps</Link></li>
@@ -32,7 +32,7 @@ export default function Footer() {
           <div>
             <h3 className={styles.heading}>Resources and References</h3>
             <ul className="space-y-2">
-              <li><a href={HARNESS_PACKAGE_URL} target="_blank" rel="noopener noreferrer" className={linkClass}>Harness package and release guide</a></li>
+              <li><a href={HARNESS_CURRENT_PACKAGE_URL} target="_blank" rel="noopener noreferrer" className={linkClass}>Harness {HARNESS_CURRENT_VERSION} package and release guide</a></li>
               <li><Link href="/#portfolio" className={linkClass}>Supporting tools and earlier work</Link></li>
               <li><Link href="/framework-docs" className={linkClass}>Attune AI reference</Link></li>
               <li><Link href="/how-it-works" className={linkClass}>Attune AI workflow reference</Link></li>

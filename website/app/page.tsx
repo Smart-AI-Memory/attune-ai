@@ -1,4 +1,4 @@
-import { HARNESS_PACKAGE_URL, HARNESS_QUALIFICATION_URL, HARNESS_RELEASE_NOTICE, HARNESS_PREPARATION_NOTICE, HARNESS_GET_STARTED, HARNESS_PREPARATION, HARNESS_SOURCE_ROOT } from '@/lib/harness-release';
+import { HARNESS_CURRENT_VERSION, HARNESS_CURRENT_PACKAGE_URL, HARNESS_CURRENT_INSTALL_URL, HARNESS_PUBLISHED_VERSION, HARNESS_QUALIFICATION_URL, HARNESS_PREPARATION_NOTICE, HARNESS_GET_STARTED, HARNESS_PREPARATION, HARNESS_SOURCE_ROOT } from '@/lib/harness-release';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
@@ -17,8 +17,8 @@ export default function Home() {
         <p className={styles["eyebrow"]}>Open-source tools for AI-assisted engineering</p>
         <h1 id="hero-title">Turn a goal into a plan.<br />Put agents to work.<br />Check the results.</h1>
         <p className={styles["intro"]}>Plan a change, review a document, repair files, run tests or return to saved work with your assistant in Codex or Claude Code. Harness keeps the output and check results so you can see what happened and decide what to do next.</p>
-        <Link className={styles["cta"] + " " + styles["primary"]} href={HARNESS_GET_STARTED}>
-          Get started with Harness <span aria-hidden="true">↗</span>
+        <Link className={styles["cta"] + " " + styles["primary"]} href={HARNESS_CURRENT_INSTALL_URL}>
+          Install Harness {HARNESS_CURRENT_VERSION} <span aria-hidden="true">↗</span>
         </Link>
         <p className={styles["secondary-paths"]}>
           <Link href="/harness/help/goals/">Choose your next task</Link>
@@ -59,15 +59,17 @@ export default function Home() {
           <div><h3>Understand the checks.</h3><p>A passing check establishes what it tested. It does not guarantee every output is correct.</p></div>
         </div>
         <div className={styles["release"]}>
-          <p><strong>{HARNESS_RELEASE_NOTICE}</strong> <Link href={HARNESS_GET_STARTED}>Get started</Link> · <Link href={HARNESS_PACKAGE_URL}>Published package</Link></p>
+          <p><strong>Published: Attune Harness {HARNESS_CURRENT_VERSION}.</strong> <Link href={HARNESS_CURRENT_INSTALL_URL}>Install {HARNESS_CURRENT_VERSION}</Link> · <Link href={HARNESS_CURRENT_PACKAGE_URL}>{HARNESS_CURRENT_VERSION} package</Link></p>
+          <p className={styles["candidate"]}>The <Link href={HARNESS_GET_STARTED}>Help Center for Harness {HARNESS_PUBLISHED_VERSION}</Link> retains its versioned setup instructions and walkthrough results.</p>
           <p className={styles["candidate"]}>{HARNESS_PREPARATION_NOTICE} <Link href={HARNESS_PREPARATION}>Explore the archived 1.7.0 preparation guide</Link>.</p>
           <p className={styles["candidate"]}>Browser forms guide intake and intent approval. Each workflow retains its own execution permissions and checks.</p>
+          <p><Link href="/harness/windows/">Check Windows 11, PowerShell and ARM64 compatibility for Harness 1.8.1</Link>.</p>
           <details>
             <summary>Read the evidence and limits</summary>
             <p>In one exporter comparison, command-line checks found three defects that direct serializer checks had missed.</p>
             <p>The result applies to that example. General model reliability needs separate assessment.</p>
             <p><Link href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.3.0/docs/plan-build-native-results.md">Read the comparison and its limits</Link></p>
-            <p>A passing check establishes what it tested. Native planning and building remain experimental. Claude Code and Codex have documented setup paths; Antigravity integration is unverified in this review. Native MCP panel delivery remains unverified. <Link href={HARNESS_QUALIFICATION_URL}>Review the qualification guide</Link>.</p>
+            <p>A passing check establishes what it tested. Native planning and building remain experimental. Claude Code and Codex have documented setup paths; Antigravity integration is unverified in this review. Native MCP panel delivery remains unverified. <Link href={HARNESS_QUALIFICATION_URL}>Review the {HARNESS_PUBLISHED_VERSION} qualification guide</Link>.</p>
           </details>
         </div>
       </div>

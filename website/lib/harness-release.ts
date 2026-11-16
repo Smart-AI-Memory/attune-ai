@@ -2,6 +2,11 @@
 import build from '@/public/harness-help-static/build.json';
 import source from '@/public/harness-help-static/import.json';
 
+// The published release can advance before the versioned Help bundle is imported.
+export const HARNESS_CURRENT_VERSION = '1.8.1';
+export const HARNESS_CURRENT_PACKAGE_URL = `https://pypi.org/project/attune-harness/${HARNESS_CURRENT_VERSION}/`;
+export const HARNESS_CURRENT_INSTALL_URL = 'https://github.com/Smart-AI-Memory/attune-harness/blob/f2baa8b1f9c0acaab2109cbc7facfb029c596586/docs/installation.md#install-181-with-pipx-or-a-virtual-environment';
+
 export const HARNESS_PUBLISHED_VERSION = build.published_version;
 export const HARNESS_GET_STARTED = '/harness/help/get-started/';
 export const HARNESS_PREPARATION = '/harness/help/1-7-0-preparation/';
