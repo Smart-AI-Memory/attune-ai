@@ -1,11 +1,6 @@
-// The Help export binds the current guides to their merged Harness source.
+// Current installation guidance and versioned Help share one source receipt.
 import build from '@/public/harness-help-static/build.json';
 import source from '@/public/harness-help-static/import.json';
-
-// The published release can advance before the versioned Help bundle is imported.
-export const HARNESS_CURRENT_VERSION = '1.8.1';
-export const HARNESS_CURRENT_PACKAGE_URL = `https://pypi.org/project/attune-harness/${HARNESS_CURRENT_VERSION}/`;
-export const HARNESS_CURRENT_INSTALL_URL = 'https://github.com/Smart-AI-Memory/attune-harness/blob/f2baa8b1f9c0acaab2109cbc7facfb029c596586/docs/installation.md#install-181-with-pipx-or-a-virtual-environment';
 
 export const HARNESS_PUBLISHED_VERSION = build.published_version;
 export const HARNESS_GET_STARTED = '/harness/help/get-started/';
@@ -16,3 +11,6 @@ export const HARNESS_SOURCE_ROOT = `https://github.com/Smart-AI-Memory/attune-ha
 export const HARNESS_INSTALL_COMMAND = `uv tool install --python 3.12 'attune-harness==${HARNESS_PUBLISHED_VERSION}'`;
 export const HARNESS_RELEASE_NOTICE = `Published: Attune Harness ${HARNESS_PUBLISHED_VERSION}.`;
 export const HARNESS_PREPARATION_NOTICE = 'The preparation walkthroughs preserve their original test results.';
+export const HARNESS_CURRENT_VERSION = HARNESS_PUBLISHED_VERSION;
+export const HARNESS_CURRENT_PACKAGE_URL = HARNESS_PACKAGE_URL;
+export const HARNESS_CURRENT_INSTALL_URL = `${HARNESS_GET_STARTED}#install-harness`;

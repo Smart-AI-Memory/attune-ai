@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { generateMetadata } from '@/lib/metadata';
+import { HARNESS_CURRENT_INSTALL_URL, HARNESS_SOURCE_ROOT } from '@/lib/harness-release';
 import styles from './page.module.css';
 
 const SOURCE = 'https://github.com/Smart-AI-Memory/attune-harness/blob/f2baa8b1f9c0acaab2109cbc7facfb029c596586';
@@ -26,10 +27,10 @@ export default function WindowsCompatibilityPage() {
           <header className={styles.hero}>
             <p className={styles.eyebrow}>Attune Harness 1.8.1 · Checked November 16, 2026</p>
             <h1>Work with Harness on Windows.</h1>
-            <p className={styles.intro}>Version 1.8.1 fixes prepared PowerShell commands containing Windows paths with spaces, special characters and trailing backslashes. Choose your configuration and see what the tests establish.</p>
+            <p className={styles.intro}>Harness 1.8.1 is available on PyPI. It fixes prepared PowerShell commands containing Windows paths with spaces, special characters and trailing backslashes. Choose your configuration and see what the tests establish.</p>
             <div className={styles.actions}>
               <a href="#configurations" className={styles.primary}>Check your configuration</a>
-              <a href={`${SOURCE}/docs/installation.md#install-181-with-pipx-or-a-virtual-environment`}>Read the 1.8.1 installation guide</a>
+              <Link href={HARNESS_CURRENT_INSTALL_URL}>Install published 1.8.1</Link>
             </div>
           </header>
 
@@ -45,7 +46,7 @@ export default function WindowsCompatibilityPage() {
                 <p>In PowerShell 5.1, a path with whitespace and a trailing backslash no longer consumes the option that follows it.</p>
               </article>
             </div>
-            <p>The fix covers setup, plan and repair previews, review intake, and roundtable preparation. When a response is JSON, decode the command value before using it. <a href={`${SOURCE}/docs/release-notes-1.8.1.md#use-your-windows-project-paths`}>Read the release notes</a>.</p>
+            <p>The fix covers setup, plan and repair previews, review intake, and roundtable preparation. When a response is JSON, decode the command value before using it. <a href={`${HARNESS_SOURCE_ROOT}/docs/release-notes-1.8.1.md#use-your-windows-project-paths`}>Read the release notes</a>.</p>
           </section>
 
           <section id="configurations" className={styles.section} aria-labelledby="configurations-title">
@@ -74,8 +75,8 @@ export default function WindowsCompatibilityPage() {
                   </tr>
                   <tr>
                     <th scope="row">Windows 11 on ARM64 hardware<span>Native ARM64 CPython 3.12</span></th>
-                    <td><strong>Binary-only base installation is blocked.</strong> Version 1.8.1 retains <code>tiktoken==0.12.0</code> and <code>cryptography==50.0.2</code>. Neither release provides a Windows ARM64 wheel in the checked PyPI file inventory.</td>
-                    <td>Dependency resolution, source-build validation and native ARM64 runtime qualification. The retained 1.8.0 installation attempt stopped at tiktoken; no native Harness workflow ran.</td>
+                    <td><strong>Published 1.8.1 passed bounded native checks with locally built wheels.</strong> Installation, native token and crypto operations, an approved feature build, deterministic review execution and 11 CLI checks completed in Parallels. Four local participant turns made zero model calls. <a href={`${HARNESS_SOURCE_ROOT}/docs/windows-arm64-validation-1.8.1.md`}>Read the native results and limits</a>.</td>
+                    <td><strong>PyPI-only binary installation remains blocked.</strong> The pinned <code>tiktoken==0.12.0</code> and <code>cryptography==50.0.2</code> releases lack Windows ARM64 wheels. Full qualification, optional extras and a second clean host remain open.</td>
                   </tr>
                 </tbody>
               </table>
@@ -85,9 +86,18 @@ export default function WindowsCompatibilityPage() {
 
           <section className={styles.section} aria-labelledby="architecture-title">
             <h2 id="architecture-title">Choose the right Python architecture</h2>
-            <p>An ARM64 Windows device can run x64 Python under emulation. That is the interpreter used in the Parallels results above. Native ARM64 Python is a separate installation and validation path.</p>
-            <p>To compare your machine with the recorded desktop configurations, use x64 CPython 3.12 in a fresh environment on fixed local NTFS. Keep existing working environments and saved tasks intact. Start with the <a href={`${SOURCE}/docs/installation.md#install-181-with-pipx-or-a-virtual-environment`}>versioned installation guide</a>, then choose a <a href={`${SOURCE}/docs/supported-journeys.md#windows-capabilities-and-reliability`}>documented Windows workflow</a>.</p>
+            <p>An ARM64 Windows device can run x64 Python under emulation. Use x64 CPython 3.12 for the published-package installation path without a custom wheelhouse. The newer native ARM64 experiment used a separate interpreter and locally built dependencies.</p>
+            <p>To compare your machine with the recorded desktop configurations, use x64 CPython 3.12 in a fresh environment on fixed local NTFS. Keep existing working environments and saved tasks intact. Start with the <a href={`${HARNESS_SOURCE_ROOT}/docs/installation.md#install-181-with-pipx-or-a-virtual-environment`}>1.8.1 installation guide</a>, then choose a <a href={`${SOURCE}/docs/supported-journeys.md#windows-capabilities-and-reliability`}>documented Windows workflow</a>.</p>
             <p>Record the hardware architecture, Windows build, Python version and architecture, shell version, and installed Harness version with each result. Python reporting <code>win-amd64</code> identifies its target architecture; it does not prove that the hardware is x64.</p>
+          </section>
+
+          <section className={styles.section} aria-labelledby="native-title">
+            <h2 id="native-title">What the native ARM64 work establishes</h2>
+            <p>The published 1.8.1 package ran unchanged on Windows 11 Pro build 26200 with native CPython 3.12.10 and local NTFS. Locally built wheels supplied its exact dependency pins; the installation used the release constraints and passed <code>pip check</code>. The feature build changed only its three permitted files and preserved four protected files.</p>
+            <p>The documentary review completed while correctly leaving its conclusion unknown and acceptance unverified. The original diagnostic wrapper failed while decoding output; the later staged checks passed separately. These results establish the listed operations, not a pass for the original all-in-one checker or full platform qualification.</p>
+            <h3>Upstream build validation</h3>
+            <p>Separate tests of newer upstream source passed on the same native ARM64 Python: <a href="https://github.com/openai/tiktoken/pull/634#issuecomment-6933942152">33 tiktoken tests</a> and <a href="https://github.com/pyca/cryptography/pull/15350#issuecomment-6933962883">4,714 cryptography tests, with 45 skips</a>. These development builds are different from Harness 1.8.1&apos;s pinned dependencies. The <a href="https://github.com/pyca/cryptography/issues/16016">Nox coverage-selection issue</a> was filed separately.</p>
+            <p>To remove the custom-wheel step, compatible ARM64 wheels need to be published upstream, then adopted and qualified in a future Harness release. The current 1.8.1 pins and published files remain unchanged.</p>
           </section>
 
           <section className={styles.section} aria-labelledby="remaining-title">
@@ -95,7 +105,7 @@ export default function WindowsCompatibilityPage() {
             <ul className={styles.checklist}>
               <li><strong>Windows 11 user journeys:</strong> run the revised quickstart with published 1.8.1 and inspect the generated report and status pages in a Windows browser.</li>
               <li><strong>Timeouts and recovery:</strong> investigate the unresolved desktop timeout, verify that every owned child process stops, and check recovery without silently repeating uncertain work.</li>
-              <li><strong>Native ARM64 Python:</strong> resolve the installation dependencies, then qualify the installed runtime and its workflows.</li>
+              <li><strong>Native ARM64 distribution:</strong> follow upstream wheel publication, qualify a supported dependency update and repeat the installation on a second clean host. Optional Voyage dependencies have separate ARM64 wheel gaps.</li>
               <li><strong>Broader integrations:</strong> complete the separate storage, filesystem, live-provider and Windows Redis service checks before extending those claims.</li>
             </ul>
             <p>Plan acceptance and execution remain separate decisions. Passing software checks does not establish model quality or full Windows parity. <a href={`${SOURCE}/docs/windows-reliability.md`}>Read the reliability requirements</a>.</p>
@@ -105,7 +115,8 @@ export default function WindowsCompatibilityPage() {
             <h2 id="sources-title">Check the sources</h2>
             <ul className={styles.sources}>
               <li><a href="https://pypi.org/project/attune-harness/1.8.1/#files">Published Harness 1.8.1 files</a> · <a href={RELEASE_RUN}>Publishing run and Windows release checks</a></li>
-              <li><a href={`${SOURCE}/docs/release-notes-1.8.1.md`}>1.8.1 release notes</a> · <a href="https://github.com/Smart-AI-Memory/attune-harness/pull/364">PowerShell fix and review</a></li>
+              <li><a href={`${HARNESS_SOURCE_ROOT}/docs/release-notes-1.8.1.md`}>1.8.1 release notes</a> · <a href="https://github.com/Smart-AI-Memory/attune-harness/pull/364">PowerShell fix and review</a></li>
+              <li><a href={`${HARNESS_SOURCE_ROOT}/docs/windows-arm64-validation-1.8.1.md`}>Native ARM64 experiment: package identities, results and retained failures</a></li>
               <li><a href={`${SOURCE}/pyproject.toml`}>1.8.1 dependency pins</a> · <a href="https://pypi.org/project/tiktoken/0.12.0/#files">tiktoken files</a> · <a href="https://pypi.org/project/cryptography/50.0.2/#files">cryptography files</a></li>
             </ul>
             <details className={styles.identity}>

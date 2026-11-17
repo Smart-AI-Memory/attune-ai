@@ -18,7 +18,7 @@ export default function Home() {
         <h1 id="hero-title">Turn a goal into a plan.<br />Put agents to work.<br />Check the results.</h1>
         <p className={styles["intro"]}>Plan a change, review a document, repair files, run tests or return to saved work with your assistant in Codex or Claude Code. Harness keeps the output and check results so you can see what happened and decide what to do next.</p>
         <Link className={styles["cta"] + " " + styles["primary"]} href={HARNESS_CURRENT_INSTALL_URL}>
-          Install Harness {HARNESS_CURRENT_VERSION} <span aria-hidden="true">↗</span>
+          Install Harness {HARNESS_CURRENT_VERSION}
         </Link>
         <p className={styles["secondary-paths"]}>
           <Link href="/harness/help/goals/">Choose your next task</Link>
@@ -60,7 +60,7 @@ export default function Home() {
         </div>
         <div className={styles["release"]}>
           <p><strong>Published: Attune Harness {HARNESS_CURRENT_VERSION}.</strong> <Link href={HARNESS_CURRENT_INSTALL_URL}>Install {HARNESS_CURRENT_VERSION}</Link> · <Link href={HARNESS_CURRENT_PACKAGE_URL}>{HARNESS_CURRENT_VERSION} package</Link></p>
-          <p className={styles["candidate"]}>The <Link href={HARNESS_GET_STARTED}>Help Center for Harness {HARNESS_PUBLISHED_VERSION}</Link> retains its versioned setup instructions and walkthrough results.</p>
+          <p className={styles["candidate"]}>The <Link href={HARNESS_GET_STARTED}>Help Center for Harness {HARNESS_PUBLISHED_VERSION}</Link> guides you through installation, a local check and assistant setup. Earlier walkthrough results retain their tested versions.</p>
           <p className={styles["candidate"]}>{HARNESS_PREPARATION_NOTICE} <Link href={HARNESS_PREPARATION}>Explore the archived 1.7.0 preparation guide</Link>.</p>
           <p className={styles["candidate"]}>Browser forms guide intake and intent approval. Each workflow retains its own execution permissions and checks.</p>
           <p><Link href="/harness/windows/">Check Windows 11, PowerShell and ARM64 compatibility for Harness 1.8.1</Link>.</p>

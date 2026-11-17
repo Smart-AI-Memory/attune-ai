@@ -19,7 +19,7 @@
   <div class="help-shell">
     <aside class="help-sidebar">
       <nav aria-label="Help topics"><a href="/harness/help/">Help Center overview</a><a class="help-featured-nav" href="/harness/help/get-started/" aria-current="page">Get started with Harness</a><a class="help-featured-nav" href="/harness/help/get-started/#set-up-the-practice-folder">Set up the reporting course</a><a class="help-featured-nav" href="/harness/help/goals/">Browse all goals</a><ol><li><a href="/harness/help/goals/">What do you want to accomplish?</a></li><li><a href="/harness/help/ai-tools-and-integrations/">AI tools and integrations</a></li><li><a href="/harness/help/troubleshooting/">Troubleshooting</a></li><li><a href="/harness/help/dependencies/">Dependencies and reference</a></li><li><a href="/harness/help/archive/">Documentation archive</a></li></ol></nav>
-      <p class="help-version">Current release: Harness <strong>1.8.0</strong><br>Each guide states its version and publication status. Superseded instructions are in the archive.</p>
+      <p class="help-version">Current release: Harness <strong>1.8.1</strong><br>Each guide states its version and publication status. Superseded instructions are in the archive.</p>
     </aside>
     <main id="main-content" tabindex="-1" class="help-main">
 <nav aria-label="Breadcrumb" class="help-breadcrumb"><a href="/harness/help/">Help Center</a> / <span aria-current="page">Get started with Harness</span></nav><h1>Get started with Harness</h1><p class="help-lead">Install Harness, check a local result and connect your assistant.</p>
@@ -40,8 +40,16 @@
 
 <span class="help-anchor" id="set-up-an-isolated-environment" aria-hidden="true"></span><span class="help-anchor" id="install-harness-160" aria-hidden="true"></span><span class="help-anchor" id="install-harness-170" aria-hidden="true"></span><span class="help-anchor" id="prepare-for-160-separately" aria-hidden="true"></span><h2 id="install-harness">Install Harness<a class="headerlink" href="#install-harness" title="Permanent link">&para;</a></h2>
 <p>Install <a href="https://docs.astral.sh/uv/getting-started/installation/">uv</a> if needed.
-Harness requires Python 3.12 or later.</p>
-<pre><code class="language-sh">uv tool install --python 3.12 attune-harness
+<a href="https://pypi.org/project/attune-harness/1.8.1/">Harness 1.8.1 is published on PyPI</a>
+and requires Python 3.12 or later. Keep a working installation intact while
+<a href="https://github.com/Smart-AI-Memory/attune-harness/blob/main/docs/installation.md#upgrade-and-keep-a-rollback-path">checking an upgrade in a separate environment</a>.</p>
+<p>On Windows, select x64 CPython 3.12 using the
+<a href="https://github.com/Smart-AI-Memory/attune-harness/blob/main/docs/installation.md#install-181-with-pipx-or-a-virtual-environment">installation guide</a>
+and check the <a href="https://smartaimemory.com/harness/windows/">current compatibility results</a>.
+Native Windows ARM64 Python still requires separately built dependency wheels;
+the Python version alone does not select the architecture.</p>
+<p>On macOS or Linux, install with:</p>
+<pre><code class="language-sh">uv tool install --python 3.12 'attune-harness==1.8.1'
 </code></pre>
 <h2 id="check-a-local-result">Check a local result<a class="headerlink" href="#check-a-local-result" title="Permanent link">&para;</a></h2>
 <pre><code class="language-sh">attune-harness
@@ -107,7 +115,7 @@ and review the imported scope before acceptance.</p>
   before switching. See the <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/main/docs/migration.md">migration guide</a>
   for saved tasks, memory, and host settings.</li>
 <li>If your shell can't find the command, <a href="https://docs.astral.sh/uv/concepts/tools/#tool-executables">add the uv tool directory to your path</a>.
-  See the <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/main/docs/installation.md#install-with-pipx-or-a-virtual-environment">installation guide</a>
+  See the <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/main/docs/installation.md#install-181-with-pipx-or-a-virtual-environment">installation guide</a>
   for pipx and virtual environments.</li>
 <li>Check the <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/main/docs/supported-journeys.md#windows-capabilities-and-reliability">supported Windows configurations</a>
   and <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/main/README.md#optional-integrations">optional integrations</a>
