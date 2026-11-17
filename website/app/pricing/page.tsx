@@ -55,9 +55,10 @@ export default function PricingPage() {
           <div className="container max-w-3xl">
             <h2 className="text-4xl font-bold mb-4">Start with Harness</h2>
             <p className="text-xl text-[var(--text-secondary)] mb-6">
-              Use Python 3.12 or later. Install the published base package in its own managed environment:
+              On macOS or Linux, use Python 3.12 or later. Install the published base package in its own managed environment:
             </p>
             <pre className="bg-[#263c30] text-white/90 rounded-xl font-mono text-sm p-4 overflow-x-auto"><code>{HARNESS_INSTALL_COMMAND}</code></pre>
+            <p className="text-[var(--text-secondary)] mt-4">On Windows, select x64 CPython 3.12 and follow the <Link className="underline" href="/harness/windows/">Windows installation and compatibility guidance</Link>. Native ARM64 Python currently needs locally built dependencies.</p>
             <p className="text-[var(--text-secondary)] mt-6">
               Add Redis or Voyage when the chosen workflow needs them. Redis needs a
               running service; Voyage retrieval needs an API key and spending permission. Integration requirements are covered in
