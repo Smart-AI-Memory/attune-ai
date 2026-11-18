@@ -12,7 +12,7 @@ Repair the maintained Harness website journey checker so it follows the publishe
 - Prepare a draft PR for Patrick's review. Do not merge it.
 - Completion review: complete for the checker implementation; PR and desktop experiment review remain pending.
 
-## Scope and state
+## Current state
 
 - Branch: `codex/windows-diagnostic-followup`.
 - Base: freshly fetched `origin/main`, `656d1ec308f401e29701bf6b4b5469b5cdf40191`.
