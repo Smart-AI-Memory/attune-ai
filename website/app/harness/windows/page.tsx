@@ -7,7 +7,7 @@ import styles from './page.module.css';
 
 const SOURCE = 'https://github.com/Smart-AI-Memory/attune-harness/blob/f2baa8b1f9c0acaab2109cbc7facfb029c596586';
 const RELEASE_RUN = 'https://github.com/Smart-AI-Memory/attune-harness/actions/runs/43830794405';
-const COURSE_REVIEW = 'https://github.com/Smart-AI-Memory/attune-harness/blob/12b03c18342bbd248ab06608e803bac40fb24032/docs/windows-course-validation-1.8.1.md';
+const COURSE_REVIEW = 'https://github.com/Smart-AI-Memory/attune-harness/blob/af5d0baeffb34844b0ce55c3d6c10e74ca128637/docs/windows-course-validation-1.8.1.md';
 
 export const metadata = generateMetadata({
   title: 'Windows compatibility — Attune Harness 1.8.1',
@@ -71,7 +71,7 @@ export default function WindowsCompatibilityPage() {
                   </tr>
                   <tr>
                     <th scope="row">Windows 11 on ARM64 hardware<span>x64 CPython 3.12.10 under emulation</span></th>
-                    <td><strong>Published 1.8.1 passed a full workflow using the reviewed course candidate</strong> in fresh Parallels environments using PowerShell 5.1 and 7. Each run completed plan, build, saved status and return from a fresh shell. Each of the two protected probes passed 77 tests; only <code>report.py</code> changed, and the HTML matched the expected report. Two fixed local participant turns per run made zero model calls. <a href={COURSE_REVIEW}>Review the course changes and evidence</a>.</td>
+                    <td><strong>Published 1.8.1 passed a full workflow using the revised reporting course</strong> in fresh Parallels environments using PowerShell 5.1 and 7. Each run completed plan, build, saved status and return from a fresh shell. Each of the two protected probes passed 77 tests; only <code>report.py</code> changed, and the HTML matched the expected report. Two fixed local participant turns per run made zero model calls. <a href={COURSE_REVIEW}>Review the course changes and evidence</a>.</td>
                     <td>These automated rehearsals used x64 Python under emulation. They do not establish native x64 or native ARM64 Python results, an unaided learner walkthrough, or browser download and extraction behavior.</td>
                   </tr>
                   <tr>
