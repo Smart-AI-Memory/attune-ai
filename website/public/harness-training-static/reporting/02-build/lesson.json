@@ -24,11 +24,12 @@
       "phase": "Plan → Build",
       "title": "Start in an isolated practice folder",
       "intro": "Use the terminal and Python environment from course setup.",
-      "html": "<p>Complete <a href=\"/harness/help/get-started/#set-up-the-practice-folder\">course setup</a> and keep the extracted folder open in the same terminal, with <code>COURSE_WORK</code> set.</p><p>Run the practice setup command below. It creates the sample project in <code>$PRACTICE/project</code> and writes the draft work request to <code>$PRACTICE/task.work.json</code>. Keep this terminal open for the rest of the lesson.</p>",
+      "html": "<p>Complete <a href=\"/harness/help/get-started/#set-up-the-practice-folder\">course setup</a> and keep the extracted folder open in the same terminal, with <code>COURSE_WORK</code> set.</p><p>Run the practice setup command below. It creates the sample project in <code>$PRACTICE/project</code> and writes the draft work request to <code>$PRACTICE/task.work.json</code>. Keep this terminal open for the rest of the lesson.</p><p>Use the command block for your shell. In the interactive lesson, select <strong>Windows PowerShell 5.1 or 7</strong> or <strong>macOS/Linux — Bash or Zsh</strong> in <strong>Command shell</strong>. Use the same shell throughout. The course uses its Python executable directly; you do not need to activate the environment.</p><p>Look for <code>accepted: false</code> and <code>build_started: false</code> in the preparation result. If preparation fails, stop here. Read the named error and keep the printed diagnostic folder and existing practice folder. If you are unsure how to continue, ask your assistant or teammate to review the printed error and failed step. Agree on the next action before trying another directory.</p>",
       "copies": [
         {
           "label": "practice setup",
-          "text": "PRACTICE=\"$COURSE_WORK/practice\"\npython practice.py \"$PRACTICE\""
+          "text": "PRACTICE=\"$COURSE_WORK/practice\"\n\"$COURSE_PYTHON\" \"$COURSE_WORK/practice.py\" \"$PRACTICE\"",
+          "powershell": "$PRACTICE = Join-Path $COURSE_WORK \"practice\"\n& $COURSE_PYTHON (Join-Path $COURSE_WORK \"practice.py\") $PRACTICE"
         }
       ],
       "presenterNotes": [
@@ -46,7 +47,8 @@
       "copies": [
         {
           "label": "plan preview",
-          "text": "python -m attune_harness plan --request \"$PRACTICE/task.work.json\" \\\n  --project \"$PRACTICE/project\" --config \"$PRACTICE/project/participants.json\" \\\n  --task-dir \"$PRACTICE/task\""
+          "text": "\"$COURSE_PYTHON\" -m attune_harness plan --request \"$PRACTICE/task.work.json\" \\\n  --project \"$PRACTICE/project\" --config \"$PRACTICE/project/participants.json\" \\\n  --task-dir \"$PRACTICE/task\"",
+          "powershell": "& $COURSE_PYTHON -m attune_harness plan --request \"$PRACTICE/task.work.json\" --project \"$PRACTICE/project\" --config \"$PRACTICE/project/participants.json\" --task-dir \"$PRACTICE/task\""
         }
       ],
       "presenterNotes": [
@@ -64,7 +66,8 @@
       "copies": [
         {
           "label": "scope acceptance",
-          "text": "PREVIEW_CHECKPOINT=\"replace-with-your-full-preview-digest\"\npython -m attune_harness plan --task-dir \"$PRACTICE/task\" \\\n  --accept --checkpoint \"$PREVIEW_CHECKPOINT\""
+          "text": "PREVIEW_CHECKPOINT=\"replace-with-your-full-preview-digest\"\n\"$COURSE_PYTHON\" -m attune_harness plan --task-dir \"$PRACTICE/task\" \\\n  --accept --checkpoint \"$PREVIEW_CHECKPOINT\"",
+          "powershell": "$PREVIEW_CHECKPOINT = \"replace-with-your-full-preview-digest\"\n& $COURSE_PYTHON -m attune_harness plan --task-dir \"$PRACTICE/task\" --accept --checkpoint \"$PREVIEW_CHECKPOINT\""
         }
       ],
       "presenterNotes": [
@@ -97,7 +100,8 @@
       "copies": [
         {
           "label": "offline build",
-          "text": "python -m attune_harness build \"$PRACTICE/task\" --allow-external"
+          "text": "\"$COURSE_PYTHON\" -m attune_harness build \"$PRACTICE/task\" --allow-external",
+          "powershell": "& $COURSE_PYTHON -m attune_harness build \"$PRACTICE/task\" --allow-external"
         }
       ],
       "presenterNotes": [
@@ -111,11 +115,12 @@
       "phase": "Plan → Build",
       "title": "Separate a completed task from a trustworthy claim",
       "intro": "Check the saved task for the change and test results.",
-      "html": "<p>Run <strong><code>status</code></strong> below to inspect <code>$PRACTICE/task</code>. Under <strong>Planned tasks</strong>, look for <code>report.py</code> in <strong>Outputs</strong>. Under <strong>Host checks</strong>, look for <strong>Passed</strong> beside <code>probe:change</code> and <code>probe:final</code>.</p><p>The <a href=\"../assets/compatibility.json\">course compatibility results</a> record 77 passing cases per probe in the tested exercise. Use your own task record to see what ran in your environment.</p>",
+      "html": "<p>Run <strong><code>status</code></strong> below to inspect <code>$PRACTICE/task</code>. Under <strong>Planned tasks</strong>, look for <code>report.py</code> in <strong>Outputs</strong>. Under <strong>Host checks</strong>, look for <strong>Passed</strong> beside <code>probe:change</code> and <code>probe:final</code>.</p><p>The <a href=\"../assets/compatibility.json\">course compatibility results</a> identify the versions and platforms actually tested, including 77 passing cases per probe in the recorded exercise. Use your own task record to see what ran in your environment.</p>",
       "copies": [
         {
           "label": "saved task inspection",
-          "text": "python -m attune_harness status \"$PRACTICE/task\" --format markdown"
+          "text": "\"$COURSE_PYTHON\" -m attune_harness status \"$PRACTICE/task\" --format markdown",
+          "powershell": "& $COURSE_PYTHON -m attune_harness status \"$PRACTICE/task\" --format markdown"
         }
       ],
       "presenterNotes": [
@@ -133,7 +138,8 @@
       "copies": [
         {
           "label": "report command",
-          "text": "cd \"$PRACTICE/project\"\npython report.py data/activity.csv --format html --output \"$PRACTICE/activity-report.html\""
+          "text": "\"$COURSE_PYTHON\" \"$PRACTICE/project/report.py\" \"$PRACTICE/project/data/activity.csv\" --format html --output \"$PRACTICE/activity-report.html\"",
+          "powershell": "& $COURSE_PYTHON \"$PRACTICE/project/report.py\" \"$PRACTICE/project/data/activity.csv\" --format html --output \"$PRACTICE/activity-report.html\""
         }
       ],
       "presenterNotes": [

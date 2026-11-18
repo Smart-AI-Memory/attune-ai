@@ -66,6 +66,12 @@ main { width: min(100%, 1140px); margin: 0 auto; padding: 2.6rem clamp(1.5rem, 4
 h1, h2, h3, h4 { line-height: 1.22; color: var(--forest-deep); text-wrap: pretty; }
 h1 { margin: .3rem 0 .75rem; font-size: clamp(1.9rem, 3.2vw, 2.65rem); font-weight: 680; letter-spacing: -.035em; }
 .lesson-subtitle { max-width: 48rem; margin: 0; color: var(--muted); font-size: .99rem; line-height: 1.65; }
+.shell-choice { margin-top: 1.2rem; max-width: 32rem; }
+.shell-choice label { display: block; margin-bottom: .3rem; font-size: .86rem; font-weight: 650; }
+.shell-choice select { width: 100%; padding: .55rem .65rem; border: 1px solid #b9c4b8; border-radius: 6px; color: var(--forest); background: #fffdf8; }
+.shell-choice p { margin: .4rem 0; font-size: .8rem; color: var(--muted); }
+.shell-choice select:disabled { cursor: wait; }
+.copy-shell { margin: 0; padding: .5rem 1rem; font-size: .8rem; font-weight: 650; background: #edf0e5; }
 .lesson-tools { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.2rem; }
 .lesson-tools button { background: transparent; font-size: .75rem; padding: .4rem .7rem; }
 .lesson-tools button[aria-pressed="true"] { color: white; background: var(--forest); border-color: var(--forest); }
@@ -193,7 +199,7 @@ footer { margin-top: 2rem; padding-top: 1.15rem; border-top: 1px solid var(--rul
   .development-path h3, .development-path p, .development-path .path-action { color: inherit; }
   :root, body { color: #19271f; background: white; font-size: 10pt; }
   .lesson-layout { display: block; }
-  .sidebar, .skip-link, .lesson-tools, .section-pagination, .storage-notice, .loading-message, .copy-heading button, .copy-status, .manual-copy, .sr-only { display: none !important; }
+  .sidebar, .skip-link, .lesson-tools, .shell-choice, .section-pagination, .storage-notice, .loading-message, .copy-heading button, .copy-status, .manual-copy, .sr-only { display: none !important; }
   main { width: auto; max-width: none; margin: 0; padding: 0; }
   .lesson-header { padding-bottom: 1rem; }
   h1 { font-size: 25pt; }
