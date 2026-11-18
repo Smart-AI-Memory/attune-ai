@@ -8,8 +8,8 @@
   <meta name="robots" content="noindex,follow">
   <title>Attune Harness learning program</title>
   <link rel="icon" href="../assets/media/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="../assets/styles.css?v=c02a257e9761">
-  <script src="../assets/app.js?v=7137921b8a6e" defer></script>
+  <link rel="stylesheet" href="../assets/styles.css?v=39847b9f114a">
+  <script src="../assets/app.js?v=915d833a643e" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main-content">Skip to lesson</a>
@@ -41,6 +41,15 @@
         <div class="lesson-meta"><span class="eyebrow">Guided walkthrough</span><span class="revision-label" id="revision-label">Reporting course</span></div>
         <h1 id="lesson-title">Harness in practice</h1>
         <p class="lesson-subtitle" id="lesson-subtitle">Loading the lesson…</p>
+        <div class="shell-choice">
+          <label for="command-shell">Command shell</label>
+          <select id="command-shell" aria-describedby="command-shell-hint" disabled>
+            <option value="posix">macOS/Linux — Bash or Zsh</option>
+            <option value="powershell">Windows PowerShell 5.1 or 7</option>
+          </select>
+          <p id="command-shell-hint">Choose the shell used in your terminal. This changes command examples only.</p>
+          <p id="shell-storage-notice" role="status" hidden></p>
+        </div>
         <div class="lesson-tools" role="group" aria-label="Lesson views">
           <button id="presenter-toggle" type="button" aria-pressed="false" aria-describedby="presenter-hint" disabled>Presenter notes</button>
           <button id="print-lesson" type="button" disabled>Print lesson</button>

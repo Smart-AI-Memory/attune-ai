@@ -35,8 +35,9 @@
       "copies": [
         {
           "label": "baseline command",
-          "text": "python \"$PRACTICE/project/report.py\" \"$PRACTICE/project/data/activity.csv\"",
-          "slot": "improve-baseline-command"
+          "text": "\"$COURSE_PYTHON\" \"$PRACTICE/project/report.py\" \"$PRACTICE/project/data/activity.csv\"",
+          "slot": "improve-baseline-command",
+          "powershell": "& $COURSE_PYTHON \"$PRACTICE/project/report.py\" \"$PRACTICE/project/data/activity.csv\""
         }
       ],
       "presenterNotes": [

@@ -43,12 +43,13 @@
       "phase": "Deliver · Local execution",
       "title": "Show how to open or recreate the report",
       "intro": "Give the recipient the report path first.",
-      "html": "<p>Ask the recipient to open the supplied HTML file in a browser. If they are running the checked ZIP from a new extraction, use the command below from the folder containing <code>report.py</code>. It writes <code>activity-report.html</code> beside the script.</p><details><summary>Optional HTML command for the checked example</summary><div data-copy-slot=\"delivery-run-command\"></div><p>Expect <code>Saved report to activity-report.html</code>. If that name is already in use, choose an unused name with <code>--output</code>, then open the new file.</p></details>",
+      "html": "<p>Use the course terminal and its <code>COURSE_PYTHON</code> from setup. If you reopened the terminal, first follow <a href=\"../03-return/\">Come back tomorrow</a>. For the optional checked example, open the extracted folder containing <code>report.py</code> and keep the course interpreter selected.</p><p>Ask the recipient to open the supplied HTML file in a browser. If they are running the checked ZIP from a new extraction, use the command below from the folder containing <code>report.py</code>. It writes <code>activity-report.html</code> beside the script.</p><details><summary>Optional HTML command for the checked example</summary><div data-copy-slot=\"delivery-run-command\"></div><p>Expect <code>Saved report to activity-report.html</code>. If that name is already in use, choose an unused name with <code>--output</code>, then open the new file.</p></details>",
       "copies": [
         {
           "label": "HTML report command",
-          "text": "python3.12 report.py data/activity.csv --format html --output activity-report.html\n",
-          "slot": "delivery-run-command"
+          "text": "\"$COURSE_PYTHON\" report.py data/activity.csv --format html --output activity-report.html\n",
+          "slot": "delivery-run-command",
+          "powershell": "& $COURSE_PYTHON report.py data/activity.csv --format html --output activity-report.html\n"
         }
       ],
       "presenterNotes": [
@@ -61,12 +62,13 @@
       "phase": "Deliver → Verify",
       "title": "Give the recipient one way to check it",
       "intro": "Share an expected result the recipient can find in the HTML.",
-      "html": "<p>Ask the recipient to find six entries and 270 minutes, then show how the four Orion rows add up to 180 minutes. Cite the original CSV and the probe outcomes you inspected in lesson 4.</p><details><summary>Optional text output for the checked example</summary><p>From the checked example folder, print a text report with this command. Compare it with <a href=\"../assets/example/expected/activity-report.txt\">the expected text output</a>.</p><div data-copy-slot=\"delivery-text-command\"></div></details>",
+      "html": "<p>Use the course terminal and its <code>COURSE_PYTHON</code> from setup. If you reopened the terminal, first follow <a href=\"../03-return/\">Come back tomorrow</a>. For the optional checked example, open the extracted folder containing <code>report.py</code> and keep the course interpreter selected.</p><p>Ask the recipient to find six entries and 270 minutes, then show how the four Orion rows add up to 180 minutes. Cite the original CSV and the probe outcomes you inspected in lesson 4.</p><details><summary>Optional text output for the checked example</summary><p>From the checked example folder, print a text report with this command. Compare it with <a href=\"../assets/example/expected/activity-report.txt\">the expected text output</a>.</p><div data-copy-slot=\"delivery-text-command\"></div></details>",
       "copies": [
         {
           "label": "baseline text command",
-          "text": "python3.12 report.py data/activity.csv\n",
-          "slot": "delivery-text-command"
+          "text": "\"$COURSE_PYTHON\" report.py data/activity.csv\n",
+          "slot": "delivery-text-command",
+          "powershell": "& $COURSE_PYTHON report.py data/activity.csv\n"
         }
       ],
       "presenterNotes": [
@@ -83,8 +85,9 @@
       "copies": [
         {
           "label": "practice report command",
-          "text": "python \"$PRACTICE/project/report.py\" \"$PRACTICE/activity-practice.csv\" --format html --output \"$PRACTICE/activity-practice.html\"",
-          "slot": "delivery-practice-command"
+          "text": "\"$COURSE_PYTHON\" \"$PRACTICE/project/report.py\" \"$PRACTICE/activity-practice.csv\" --format html --output \"$PRACTICE/activity-practice.html\"",
+          "slot": "delivery-practice-command",
+          "powershell": "& $COURSE_PYTHON \"$PRACTICE/project/report.py\" \"$PRACTICE/activity-practice.csv\" --format html --output \"$PRACTICE/activity-practice.html\""
         }
       ],
       "presenterNotes": [

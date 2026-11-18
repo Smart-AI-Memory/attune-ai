@@ -7,6 +7,7 @@ import styles from './page.module.css';
 
 const SOURCE = 'https://github.com/Smart-AI-Memory/attune-harness/blob/f2baa8b1f9c0acaab2109cbc7facfb029c596586';
 const RELEASE_RUN = 'https://github.com/Smart-AI-Memory/attune-harness/actions/runs/43830794405';
+const COURSE_REVIEW = 'https://github.com/Smart-AI-Memory/attune-harness/blob/af5d0baeffb34844b0ce55c3d6c10e74ca128637/docs/windows-course-validation-1.8.1.md';
 
 export const metadata = generateMetadata({
   title: 'Windows compatibility — Attune Harness 1.8.1',
@@ -25,7 +26,7 @@ export default function WindowsCompatibilityPage() {
           </nav>
 
           <header className={styles.hero}>
-            <p className={styles.eyebrow}>Attune Harness 1.8.1 · Checked November 16, 2026</p>
+            <p className={styles.eyebrow}>Attune Harness 1.8.1 · Course results updated November 18, 2026</p>
             <h1>Work with Harness on Windows.</h1>
             <p className={styles.intro}>Harness 1.8.1 is available on PyPI. It fixes prepared PowerShell commands containing Windows paths with spaces, special characters and trailing backslashes. Choose your configuration and see what the tests establish.</p>
             <div className={styles.actions}>
@@ -70,8 +71,8 @@ export default function WindowsCompatibilityPage() {
                   </tr>
                   <tr>
                     <th scope="row">Windows 11 on ARM64 hardware<span>x64 CPython 3.12.10 under emulation</span></th>
-                    <td><strong>227 fix-candidate checks passed</strong> in Parallels across PowerShell 5.1 and 7. They covered argument transport, preparation and intake, including trailing backslashes. <a href={`${SOURCE}/docs/release-readiness-1.8.1.md#earlier-compatibility-evidence`}>Candidate evidence</a>.</td>
-                    <td>The tested candidate still had 1.8.0 metadata. Its fix ships in 1.8.1, but this was not a fresh 1.8.1 desktop installation test or native ARM64 Python run.</td>
+                    <td><strong>Published 1.8.1 passed a full workflow using the revised reporting course</strong> in fresh Parallels environments using PowerShell 5.1 and 7. Each run completed plan, build, saved status and return from a fresh shell. Each of the two protected probes passed 77 tests; only <code>report.py</code> changed, and the HTML matched the expected report. Two fixed local participant turns per run made zero model calls. <a href={COURSE_REVIEW}>Review the course changes and evidence</a>.</td>
+                    <td>These automated rehearsals used x64 Python under emulation. They do not establish native x64 or native ARM64 Python results, an unaided learner walkthrough, or browser download and extraction behavior.</td>
                   </tr>
                   <tr>
                     <th scope="row">Windows 11 on ARM64 hardware<span>Native ARM64 CPython 3.12</span></th>
@@ -88,6 +89,7 @@ export default function WindowsCompatibilityPage() {
             <h2 id="architecture-title">Choose the right Python architecture</h2>
             <p>An ARM64 Windows device can run x64 Python under emulation. Use x64 CPython 3.12 for the published-package installation path without a custom wheelhouse. The newer native ARM64 experiment used a separate interpreter and locally built dependencies.</p>
             <p>To compare your machine with the recorded desktop configurations, use x64 CPython 3.12 in a fresh environment on fixed local NTFS. Keep existing working environments and saved tasks intact. Start with the <a href={`${HARNESS_SOURCE_ROOT}/docs/installation.md#install-181-with-pipx-or-a-virtual-environment`}>1.8.1 installation guide</a>, then choose a <a href={`${SOURCE}/docs/supported-journeys.md#windows-capabilities-and-reliability`}>documented Windows workflow</a>.</p>
+            <p>For the reporting tutorial, open <Link href="/harness/help/get-started/">Get Started</Link> and follow the Windows PowerShell 5.1 or 7 commands. The course uses the selected Python executable directly; it does not require environment activation or a PowerShell execution-policy change. Review the plan checkpoint before accepting it, then authorize BUILD separately.</p>
             <p>Record the hardware architecture, Windows build, Python version and architecture, shell version, and installed Harness version with each result. Python reporting <code>win-amd64</code> identifies its target architecture; it does not prove that the hardware is x64.</p>
           </section>
 
@@ -103,7 +105,7 @@ export default function WindowsCompatibilityPage() {
           <section className={styles.section} aria-labelledby="remaining-title">
             <h2 id="remaining-title">What still needs validation</h2>
             <ul className={styles.checklist}>
-              <li><strong>Windows 11 user journeys:</strong> run the revised quickstart with published 1.8.1 and inspect the generated report and status pages in a Windows browser.</li>
+              <li><strong>Windows 11 user journeys:</strong> validate the revised course on native x64 hardware and collect an unaided learner walkthrough. Check the browser download and extraction path separately from the completed Parallels command rehearsals, and inspect the generated report in a Windows browser.</li>
               <li><strong>Timeouts and recovery:</strong> investigate the unresolved desktop timeout, verify that every owned child process stops, and check recovery without silently repeating uncertain work.</li>
               <li><strong>Native ARM64 distribution:</strong> follow upstream wheel publication, qualify a supported dependency update and repeat the installation on a second clean host. Optional Voyage dependencies have separate ARM64 wheel gaps.</li>
               <li><strong>Broader integrations:</strong> complete the separate storage, filesystem, live-provider and Windows Redis service checks before extending those claims.</li>

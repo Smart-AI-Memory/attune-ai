@@ -8,6 +8,15 @@
   const nextSection = byId("next-section");
   const nextLesson = document.createElement("a");
   const mobile = window.matchMedia("(max-width: 760px)");
+  const shellSelector = byId("command-shell");
+  const shellStorageKey = "attune-reporting-course-shell-v1";
+  const shellLabels = {
+    posix: "macOS/Linux — Bash or Zsh",
+    powershell: "Windows PowerShell 5.1 or 7"
+  };
+  const copyViews = [];
+  let commandShell = "posix";
+  let shellStorageAvailable = true;
   let lesson;
   let currentId;
   let visited = new Set();
@@ -31,6 +40,24 @@
   function storageFailure() {
     storageAvailable = false;
     storageNotice("Browser storage is unavailable. Progress and practice notes will last for this page session only.");
+  }
+
+  function shellStorageFailure() {
+    shellStorageAvailable = false;
+    byId("shell-storage-notice").textContent = "Your shell choice will last for this page session only because browser storage is unavailable.";
+    byId("shell-storage-notice").hidden = false;
+  }
+
+  function readCommandShell() {
+    const platform = navigator.userAgentData?.platform || navigator.platform || "";
+    commandShell = /^Win/i.test(platform) ? "powershell" : "posix";
+    try {
+      const saved = window.localStorage.getItem(shellStorageKey);
+      if (Object.prototype.hasOwnProperty.call(shellLabels, saved)) commandShell = saved;
+    } catch {
+      shellStorageFailure();
+    }
+    shellSelector.value = commandShell;
   }
 
   function readProgress() {
@@ -105,6 +132,8 @@
   }
 
   function buildCopy(copy, sectionIndex, copyIndex) {
+    const selectedText = () => commandShell === "powershell" && copy.powershell !== undefined
+      ? copy.powershell : copy.text;
     const group = document.createElement("section");
     group.className = "copy-block";
     if (copy.kind === "prompt") group.dataset.copyKind = "prompt";
@@ -127,7 +156,7 @@
     heading.append(title, actions);
     const pre = document.createElement("pre");
     const code = document.createElement("code");
-    code.textContent = copy.text;
+    code.textContent = selectedText();
     pre.append(code);
     const fallback = document.createElement("div");
     fallback.className = "manual-copy";
@@ -139,8 +168,8 @@
     const field = document.createElement("textarea");
     field.id = `manual-copy-${sectionIndex}-${copyIndex}`;
     field.readOnly = true;
-    field.rows = Math.min(12, Math.max(4, copy.text.split("\n").length + 1));
-    field.value = copy.text;
+    field.rows = Math.min(12, Math.max(4, selectedText().split("\n").length + 1));
+    field.value = selectedText();
     field.setAttribute("aria-describedby", hint.id);
     label.htmlFor = field.id;
     label.textContent = `${copy.label} — manual copy`;
@@ -150,10 +179,26 @@
     feedback.setAttribute("role", "status");
     feedback.setAttribute("aria-live", "polite");
     feedback.setAttribute("aria-atomic", "true");
-    group.append(heading, pre, feedback, fallback);
+    group.append(heading);
+    if (copy.powershell !== undefined) {
+      const shellLabel = document.createElement("p");
+      shellLabel.className = "copy-shell";
+      group.append(shellLabel);
+      const refresh = () => {
+        code.textContent = selectedText();
+        field.value = selectedText();
+        field.rows = Math.min(12, Math.max(4, selectedText().split("\n").length + 1));
+        shellLabel.textContent = shellLabels[commandShell];
+        label.textContent = `${copy.label} — ${shellLabels[commandShell]} — manual copy`;
+        feedback.textContent = "";
+      };
+      copyViews.push(refresh);
+      refresh();
+    }
+    group.append(pre, feedback, fallback);
     function selectManually() {
       fallback.hidden = false;
-      field.value = copy.text;
+      field.value = selectedText();
       field.focus();
       field.select();
       field.setSelectionRange(0, field.value.length);
@@ -169,6 +214,7 @@
         return;
       }
       copyPending = true;
+      shellSelector.disabled = true;
       const controls = [...sectionHost.querySelectorAll(".copy-actions button")];
       for (const control of controls) control.setAttribute("aria-disabled", "true");
       button.setAttribute("aria-busy", "true");
@@ -176,7 +222,7 @@
       try {
         // Start the write during the click gesture; do not await before this call.
         await navigator.clipboard.write([
-          new ClipboardItem({ "text/plain": new Blob([copy.text], { type: "text/plain" }) })
+          new ClipboardItem({ "text/plain": new Blob([selectedText()], { type: "text/plain" }) })
         ]);
         fallback.hidden = true;
         feedback.textContent = `Copied ${copy.label}. Paste it where needed.`;
@@ -185,6 +231,7 @@
         feedback.textContent = "Copy was unavailable. Choose Select text, then use your keyboard’s copy shortcut.";
       } finally {
         copyPending = false;
+        shellSelector.disabled = false;
         button.removeAttribute("aria-busy");
         for (const control of controls) control.removeAttribute("aria-disabled");
       }
@@ -317,7 +364,11 @@
       for (const key of ["navTitle", "phase", "title", "intro", "html"]) {
         if (typeof section[key] !== "string") throw new Error("Invalid section content");
       }
-      if (section.copies && (!Array.isArray(section.copies) || section.copies.some((copy) => typeof copy.label !== "string" || typeof copy.text !== "string"))) throw new Error("Invalid copy content");
+      if (section.copies && (!Array.isArray(section.copies) || section.copies.some((copy) =>
+        !copy || typeof copy.label !== "string" || typeof copy.text !== "string"
+        || (Object.prototype.hasOwnProperty.call(copy, "powershell")
+          && (typeof copy.powershell !== "string" || !copy.powershell.trim() || copy.kind === "prompt"))
+      ))) throw new Error("Invalid copy content");
       if (section.presenterNotes && (!Array.isArray(section.presenterNotes) || section.presenterNotes.some((note) => typeof note !== "string"))) throw new Error("Invalid notes");
       if (section.check && (typeof section.check.question !== "string" || !Array.isArray(section.check.options) || section.check.options.some((option) => typeof option.text !== "string" || typeof option.feedback !== "string" || typeof option.correct !== "boolean"))) throw new Error("Invalid check");
     }
@@ -325,6 +376,18 @@
   }
 
   function bindControls() {
+    shellSelector.addEventListener("change", () => {
+      if (copyPending || !Object.prototype.hasOwnProperty.call(shellLabels, shellSelector.value)) {
+        shellSelector.value = commandShell;
+        return;
+      }
+      commandShell = shellSelector.value;
+      for (const refresh of copyViews) refresh();
+      if (shellStorageAvailable) {
+        try { window.localStorage.setItem(shellStorageKey, commandShell); } catch { shellStorageFailure(); }
+      }
+      announce(`Command examples now use ${shellLabels[commandShell]}.`);
+    });
     byId("previous-section").addEventListener("click", () => {
       const index = lesson.sections.findIndex((section) => section.id === currentId);
       if (index > 0) navigateTo(lesson.sections[index - 1].id);
@@ -396,6 +459,7 @@
       byId("revision-label").textContent = lesson.revisionLabel || "Local unpublished draft";
       byId("lesson-progress").max = lesson.sections.length;
       readProgress();
+      readCommandShell();
       lesson.sections.forEach(renderSection);
       if (Array.isArray(lesson.coursePath) && lesson.coursePath.length) {
         lesson.coursePath.forEach((text, index) => {
@@ -425,7 +489,7 @@
       activateSection(initialId);
       byId("loading-message").hidden = true;
       byId("section-pagination").hidden = false;
-      for (const id of ["nav-toggle", "presenter-toggle", "print-lesson", "reset-progress"]) byId(id).disabled = false;
+      for (const id of ["nav-toggle", "presenter-toggle", "print-lesson", "reset-progress", "command-shell"]) byId(id).disabled = false;
     } catch {
       byId("loading-message").hidden = true;
       byId("load-error").hidden = false;

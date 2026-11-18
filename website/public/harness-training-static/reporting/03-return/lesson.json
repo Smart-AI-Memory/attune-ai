@@ -19,12 +19,19 @@
       "phase": "Continue",
       "title": "Open the saved task",
       "intro": "Use the same practice project and Harness environment from lesson 2.",
-      "html": "<p>In the terminal from lesson 2, run this command to open the current briefing for your saved task.</p><div data-copy-slot=\"return-status-command\"></div><details><summary>Start from a new terminal</summary><p>Change to the extracted course folder that contains <code>practice.py</code>. Set the absolute practice path and activate the environment you used in lesson 2. For the default course environment, run:</p><pre><code>COURSE_WORK=\"$(pwd -P)\"\nPRACTICE=\"$COURSE_WORK/practice\"\n. .venv/bin/activate</code></pre><p>If you used your own compatible environment, activate it in place of the last line.</p></details><div data-copy-slot=\"return-status\"></div><p>Find <strong>Next useful step</strong>. For a completed build, it points you to the saved checks and reviewer findings. Copy the text under <strong>Your reply to the assistant</strong> into your conversation if you want help picking up the task.</p><p>Finish <a href=\"../02-build/\">Build your first report</a> to create a task. For a preview, read the <a href=\"../../1.7.0-preparation/assets/current-checks.json\">archived 1.7.0 check summary</a>.</p>",
+      "html": "<p>In the terminal from lesson 2, run this command to open the current briefing for your saved task.</p><div data-copy-slot=\"return-status-command\"></div><details><summary>Start from a new terminal</summary><p>Open a terminal in the extracted course folder that contains <code>practice.py</code>. Use the path commands for your shell below before checking status. In the interactive lesson, select your shell in <strong>Command shell</strong>. These select the existing environment; they do not reinstall packages or run a build.</p><div data-copy-slot=\"return-environment-command\"></div><p>If you selected your own compatible environment, set <code>COURSE_PYTHON</code> to that interpreter instead. If you used a different practice directory in lesson 2, set <code>PRACTICE</code> to its saved full path instead of the default <code>practice</code> folder before checking status.</p></details><div data-copy-slot=\"return-status\"></div><p>Find <strong>Next useful step</strong>. For a completed build, it points you to the saved checks and reviewer findings. Copy the text under <strong>Your reply to the assistant</strong> into your conversation if you want help picking up the task.</p><p>Finish <a href=\"../02-build/\">Build your first report</a> to create a task. For a preview, read the <a href=\"../../1.7.0-preparation/assets/current-checks.json\">archived 1.7.0 check summary</a>.</p>",
       "copies": [
         {
+          "label": "saved course paths",
+          "slot": "return-environment-command",
+          "text": "COURSE_WORK=\"$(pwd -P)\"\nCOURSE_PYTHON=\"$COURSE_WORK/.venv/bin/python\"\nPRACTICE=\"$COURSE_WORK/practice\"",
+          "powershell": "$COURSE_WORK = (Get-Location).Path\n$COURSE_PYTHON = Join-Path $COURSE_WORK \".venv\\Scripts\\python.exe\"\n$PRACTICE = Join-Path $COURSE_WORK \"practice\""
+        },
+        {
           "label": "saved task status",
-          "text": "python -m attune_harness status \"$PRACTICE/task\" --format markdown",
-          "slot": "return-status-command"
+          "text": "\"$COURSE_PYTHON\" -m attune_harness status \"$PRACTICE/task\" --format markdown",
+          "slot": "return-status-command",
+          "powershell": "& $COURSE_PYTHON -m attune_harness status \"$PRACTICE/task\" --format markdown"
         }
       ],
       "presenterNotes": [
