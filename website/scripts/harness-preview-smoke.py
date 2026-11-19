@@ -175,8 +175,13 @@ def check_journey(
     homepage_url = origin + "/"
     homepage = Page(get(homepage_url).decode("utf-8"))
     help_page, help_url = follow(
-        homepage, homepage_url, "Get started with Harness", "/harness/help/get-started/"
+        homepage,
+        homepage_url,
+        f"Install Harness {version}",
+        "/harness/help/get-started/#install-harness",
     )
+    if "install-harness" not in help_page.anchors:
+        raise RuntimeError(f"{urlsplit(help_url).path}: missing installation anchor")
     require_heading(help_page, help_url, "Get started with Harness")
     course_name = training_receipt["course"]
     course = f"/harness/learn/{course_name}"

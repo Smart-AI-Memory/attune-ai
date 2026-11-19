@@ -54,8 +54,9 @@ python3 website/scripts/harness-preview-smoke.py
 
 The script looks up the Smart AI Memory preview for the checked-out commit.
 Use `--commit <sha>` to select another commit available locally. It follows
-**Get started with Harness**, **Browse the six Harness tutorials**, **Build your
-first report**, and **Read full lesson**. The script checks the practice setup,
+**Install Harness** for the published version, checks the installation anchor,
+then follows **Browse the six Harness tutorials**, **Build your first report**,
+and **Read full lesson**. The script checks the practice setup,
 the downloaded ZIP, the tutorial assets, and both import receipts. In the browser,
 also use **Next lesson** and **Back to course overview** from the final sections.
 Follow **Help Center** from the tutorial back to Help on the same preview host.
