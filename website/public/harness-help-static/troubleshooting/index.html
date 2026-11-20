@@ -37,7 +37,10 @@
 </ul>
 </div>
 </nav>
-      <article class="help-prose"><h2 id="the-private-form-link-stopped-working">The private form link stopped working<a class="headerlink" href="#the-private-form-link-stopped-working" title="Permanent link">&para;</a></h2>
+      <article class="help-prose"><p>For Harness 1.8.1, check the <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.8.1/docs/installation.md">installation guide</a>,
+<a href="/harness/help/dependencies/">dependency reference</a>, or <a href="https://github.com/Smart-AI-Memory/attune-harness/blob/v1.8.1/docs/supported-journeys.md">supported workflows</a>.
+The examples below retain their original release and preparation context.</p>
+<h2 id="the-private-form-link-stopped-working">The private form link stopped working<a class="headerlink" href="#the-private-form-link-stopped-working" title="Permanent link">&para;</a></h2>
 <p>The form listener must remain running. A stopped listener invalidates its link.</p>
 <ol>
 <li>In the original selected environment, start a listener for the same canonical task directory: <code>python -m attune_harness.gui --task "$TASK" --edit --launch-json</code>.</li>
@@ -62,7 +65,7 @@ an older submission or edit task evidence to bypass the refusal.</p>
 <ol>
 <li>Check the installed distribution in the interpreter you selected: <code>python -c "from importlib.metadata import version; print(version('attune-harness'))"</code>.</li>
 <li>Read the selected route's <code>--help</code> and the actual diagnostic. Follow the installed interface if it differs from this guide.</li>
-<li>Compare your installation with <a href="/harness/help/dependencies/">the release dependency map</a>. A <code>--no-deps</code> installation omits the normal base dependencies; restore the normal install in a disposable isolated environment.</li>
+<li>Compare your installation with the <a href="/harness/help/dependencies/#read-guidance-for-your-version">dependency map for your version</a>. A <code>--no-deps</code> installation omits the normal base dependencies; restore the normal install in a disposable isolated environment.</li>
 </ol>
 <p><strong>Expected result:</strong> The CLI and interpreter refer to one environment. Optional
 integrations are installed only for the requested journey. Do not upgrade a

@@ -26,6 +26,11 @@ describe('Harness-owned Help Center export', () => {
         expect(html).toContain('Current release: Harness <strong>1.8.1</strong>');
         expect(html).toContain('href="/harness/learn/reporting/">Browse the six Harness tutorials</a>');
       }
+      else if (name === 'harness/help/dependencies/index.html') {
+        expect(html).toContain(`published <strong>Harness ${build.published_version}</strong>`);
+        expect(html).toContain(`python -m pip install 'attune-harness[redis]==${build.published_version}'`);
+        expect(html).not.toContain("python -m pip install 'attune-harness[redis]==1.5.1'");
+      }
       else if (name.includes('/1-7-0-preparation/')) expect(html).toContain('Archived guide:');
       else if (name.includes('/1-5-0/')) expect(html).toContain('published <strong>Harness 1.5.0</strong>');
       else if (name.includes('/1-5-1-preparation/')) expect(html).toContain('Archived guide:');
