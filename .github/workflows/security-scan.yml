@@ -1,7 +1,10 @@
 name: Security Audit (blocking)
 
+# The controller is trusted main code. It never checks out or executes PR code.
+# A missing, failed, expired or incomplete exact-commit manual audit stays red.
 on:
-  pull_request:
+  pull_request_target:
+    branches: [main]
     types: [opened, synchronize, reopened]
     paths:
       - '**.py'
@@ -9,240 +12,41 @@ on:
       - '**.ts'
       - '**.tsx'
       - '**.jsx'
-  workflow_dispatch:
-
-concurrency:
-  # Literal group id, deliberately NOT ${{ github.workflow }} — see the same
-  # comment in security.yml. This workflow blocks on critical findings, so a
-  # name collision silently cancelling it is a security hole, not a cosmetic
-  # CI annoyance. Keep these literals unique per file.
-  group: security-attune-audit-${{ github.head_ref || github.ref }}
-  cancel-in-progress: true
+  workflow_run:
+    workflows: ['Security audit (approved manual run)']
+    types: [requested, in_progress, completed]
+    branches: [main]
 
 permissions:
   contents: read
-  pull-requests: write
+  pull-requests: read
+  actions: read
   checks: write
+
+concurrency:
+  group: security-attune-audit-${{ github.event.pull_request.head.sha || fromJSON(github.event.workflow_run.display_title || '{"sha":"none"}').sha }}
+  cancel-in-progress: false
 
 jobs:
   security-scan:
-    name: Run Security Scanner
+    name: Verify SDK audit
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
+    timeout-minutes: 10
     steps:
-      - name: Checkout code
+      - name: Checkout trusted controller
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0  # Full history for better context
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: '3.10'
-          cache: 'pip'
-          cache-dependency-path: |
-            pyproject.toml
-            uv.lock
+          python-version: '3.12'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -e .
-
-      - name: Run security audit
-        id: security_scan
-        continue-on-error: true  # Don't fail job, we'll control blocking in next step
+      - name: Verify manual audit evidence
         env:
-          # Non-interactive CI run — opt into the spend gate explicitly
-          # (collaboration-gates D10). Without this the gate would block
-          # the run by default in a context that can't confirm.
-          ATTUNE_SPEND_GATE_AUTHORIZED: "1"
-        run: |
-          # Run security audit and capture raw output
-          # --json flag outputs JSON but CLI also prints rich text (progress, panels)
-          # Capture everything, then extract JSON in post-processing
-          attune workflow run security-audit --json > security_results_raw.txt 2>security_scan_stderr.log
-          scan_exit=$?
-
-          # Extract JSON from mixed output (CLI prints rich text before JSON result)
-          # The JSON result is the last { ... } block in the output
-          python3 -c "
-          import json, sys
-          content = open('security_results_raw.txt').read()
-          # Try parsing whole file as JSON
-          try:
-              json.loads(content)
-              open('security_results.json', 'w').write(content)
-              sys.exit(0)
-          except json.JSONDecodeError:
-              pass
-          # Find last JSON object in output
-          last_brace = content.rfind('}')
-          if last_brace == -1:
-              open('security_results.json', 'w').write(json.dumps({'findings': [], 'error': 'No JSON found in output'}))
-              sys.exit(0)
-          # Walk backwards to find matching opening brace
-          depth = 0
-          for i in range(last_brace, -1, -1):
-              if content[i] == '}': depth += 1
-              elif content[i] == '{': depth -= 1
-              if depth == 0:
-                  try:
-                      data = json.loads(content[i:last_brace+1])
-                      open('security_results.json', 'w').write(json.dumps(data, indent=2))
-                      sys.exit(0)
-                  except json.JSONDecodeError:
-                      break
-          open('security_results.json', 'w').write(json.dumps({'findings': [], 'error': 'Could not extract JSON from CLI output'}))
-          "
-
-          # Check if scan succeeded
-          if [ $scan_exit -eq 0 ]; then
-            echo "scan_status=success" >> $GITHUB_OUTPUT
-          else
-            echo "scan_status=failed" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Ensure results file exists
-        if: always()
-        run: |
-          if [ ! -f security_results.json ]; then
-            echo '{"findings": [], "error": "Security scan produced no output"}' > security_results.json
-          fi
-
-      - name: Parse and analyze results
-        id: analyze
-        run: |
-          python .github/scripts/analyze_security_results.py \
-            --input security_results.json \
-            --output analysis.json \
-            --github-output $GITHUB_OUTPUT
-
-      - name: Post results to PR
-        # Skip when extraction failed (no pr_comment.md written) — see issue #560.
-        # The GH check stays green; workflow logs carry the real diagnostic.
-        if: github.event_name == 'pull_request' && hashFiles('pr_comment.md') != ''
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const analysis = JSON.parse(fs.readFileSync('analysis.json', 'utf8'));
-
-            // Read the formatted comment
-            const comment = fs.readFileSync('pr_comment.md', 'utf8');
-
-            // Find existing security scan comment
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-
-            const botComment = comments.find(comment =>
-              comment.user.type === 'Bot' &&
-              comment.body.includes('🔒 Security Scan Results')
-            );
-
-            // Update or create comment
-            if (botComment) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body: comment
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: comment
-              });
-            }
-
-      - name: Check for bypass label
-        if: github.event_name == 'pull_request'
-        id: check_bypass
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const { data: pr } = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-            });
-
-            const bypassLabels = ['security-scan-bypass', 'hotfix', 'security-approved'];
-            const hasBypass = pr.labels.some(label => bypassLabels.includes(label.name));
-
-            console.log(`Has bypass label: ${hasBypass}`);
-            core.setOutput('has_bypass', hasBypass);
-
-            return hasBypass;
-
-      - name: Block on critical findings
-        if: steps.analyze.outputs.has_critical == 'true' && steps.check_bypass.outputs.has_bypass != 'true'
-        run: |
-          echo "❌ CRITICAL security issues found!"
-          echo ""
-          echo "Found ${{ steps.analyze.outputs.critical_count }} CRITICAL security finding(s)."
-          echo "These must be fixed before merging."
-          echo ""
-          echo "If this is a false positive, you can:"
-          echo "1. Add a security note comment in the code"
-          echo "2. Request security team review by adding 'security-review' label"
-          echo "3. For emergencies, add 'hotfix' label (requires post-deploy fix)"
-          echo ""
-          echo "See PR comment for detailed findings."
-          exit 1
-
-      - name: Upload scan results
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: security-scan-results
-          path: |
-            security_results_raw.txt
-            security_results.json
-            security_scan_stderr.log
-            analysis.json
-            pr_comment.md
-          retention-days: 90
-
-      - name: Create check run
-        if: always()
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const analysis = JSON.parse(fs.readFileSync('analysis.json', 'utf8'));
-
-            const conclusion = analysis.has_critical && !analysis.has_bypass ? 'failure' : 'success';
-            const summary = `
-            ## Security Scan Summary
-
-            - **Total Findings:** ${analysis.total_findings}
-            - **Critical:** ${analysis.critical_count}
-            - **Medium:** ${analysis.medium_count}
-            - **Low:** ${analysis.low_count}
-
-            ${conclusion === 'failure' ? '❌ **BLOCKED:** Critical findings must be resolved' : '✅ No blocking issues'}
-            `;
-
-            await github.rest.checks.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              name: 'Security Scan',
-              head_sha: context.sha,
-              status: 'completed',
-              conclusion: conclusion,
-              output: {
-                title: conclusion === 'failure' ? 'Critical Security Issues Found' : 'Security Scan Passed',
-                summary: summary,
-                text: analysis.detailed_text || 'See PR comment for details'
-              }
-            });
+          GITHUB_TOKEN: ${{ github.token }}
+          ANTHROPIC_API_KEY: ""
+          CLAUDE_CODE_OAUTH_TOKEN: ""
+        run: python3 -I .github/scripts/verify_manual_security_audit.py

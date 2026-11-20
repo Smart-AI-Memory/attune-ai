@@ -67,7 +67,6 @@ WORKFLOWS_REQUIRING_CONCURRENCY = {
     # enabled. Left the lesson intact for future repos.
     "docs.yml",
     "security.yml",
-    "security-scan.yml",
     "tier-pattern-analysis.yml",
 }
 
@@ -78,6 +77,10 @@ WORKFLOWS_FORBIDDING_CONCURRENCY = {
 
 # setup-python steps that intentionally skip pip caching (minimal deps)
 PIP_CACHE_EXCEPTIONS = {
+    # Trusted verifier uses only stdlib and installs no packages.
+    ("security-scan.yml", "security-scan"),
+    # Approved audit executes reviewed PR code on main; do not save a main-scoped cache.
+    ("security-audit-manual.yml", "audit"),
     ("tests.yml", "platform-compat"),
     ("tests.yml", "build"),
 }
@@ -211,6 +214,14 @@ class TestConcurrencyControls:
         assert (
             conc.get("cancel-in-progress") is True
         ), f"{filename} concurrency missing cancel-in-progress: true"
+
+    def test_sdk_evidence_consumer_serializes_exact_commit_callbacks(self):
+        # Cancelling an in-flight publisher can lose a failed-check revocation.
+        workflow = ALL_WORKFLOWS["security-scan.yml"]
+        triggers = workflow.get("on", workflow.get(True))
+        assert set(triggers) == {"pull_request_target", "workflow_run"}
+        assert workflow["concurrency"]["cancel-in-progress"] is False
+        assert "github.event.pull_request.head.sha" in workflow["concurrency"]["group"]
 
     @pytest.mark.parametrize("filename", sorted(WORKFLOWS_FORBIDDING_CONCURRENCY))
     def test_dangerous_workflows_lack_concurrency(self, filename):
