@@ -64,6 +64,37 @@ Update documentation for any user-facing changes:
 - Update API docs if needed
 - Update CHANGELOG.md
 
+### Build the documentation
+
+The core package and normal website documentation support Python 3.10 or later.
+From the repository root, install the documentation tools and build the website:
+
+```bash
+python -m pip install -e '.[docs]'
+python scripts/build_docs.py website
+```
+
+PDF export requires Python 3.11 or later because the patched Pillow dependency no longer
+supports Python 3.10. Use a fresh Python 3.11 or later virtual environment, install `.[docs]`,
+and run:
+
+```bash
+python scripts/build_docs.py ebook
+```
+
+The `docs` and `all` extras omit the PDF toolchain on Python 3.10. The `ebook`
+target refuses Python 3.10 before creating output or starting a build. Install
+the native libraries required by [WeasyPrint](https://doc.courtbouillon.org/weasyprint/stable/first_steps.html#installation)
+for your operating system before exporting a PDF. Use a fresh virtual environment
+when changing Python versions: upgrading an existing environment does not remove
+previously installed PDF dependencies. If a Python 3.10 environment previously
+installed `.[docs]` or `.[all]`, create a fresh environment instead of upgrading in place;
+older PDF dependencies can otherwise remain installed.
+
+On Python 3.10, the default `all` target builds the PyPI and website outputs, then
+reports that PDF export is unavailable and exits with status 1. Use the `website`
+target to build normal documentation on Python 3.10.
+
 ## Pull Request Guidelines
 
 - Keep PRs focused (one feature/fix per PR)

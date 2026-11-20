@@ -5,14 +5,52 @@ This script parses the output from the security audit workflow,
 categorizes findings by severity, and generates formatted output
 for GitHub PR comments and status checks.
 
-Strategy: Block on CRITICAL only, warn on MEDIUM/LOW
+Strategy: Block on CRITICAL only, warn on HIGH/MEDIUM/LOW
 """
 
 import argparse
+import html
 import json
+import os
+import re
 import sys
 from collections import defaultdict
 from pathlib import Path
+
+_DESCRIPTION_CHARS = 60
+_HIGH_DETAILS_LIMIT = 10
+_HIGH_DETAILS_CHARS = 6000
+_GROUP_DETAILS_LIMIT = 10
+_GROUP_DETAILS_CHARS = 6000
+
+
+def _safe_comment_text(value: object, limit: int) -> tuple[str, bool]:
+    """Clip a displayed value and encode HTML and selected Markdown characters."""
+    text = str(value).replace("\r", " ").replace("\n", " ")
+    truncated = len(text) > limit
+    rendered = html.escape(text[:limit], quote=True)
+    for char in "`@[]()*_~|":
+        rendered = rendered.replace(char, f"&#{ord(char)};")
+    return rendered + ("…" if truncated else ""), truncated
+
+
+def _artifact_note() -> str:
+    """Link the current Actions run only when its public identity is valid."""
+    repository = os.environ.get("GITHUB_REPOSITORY", "")
+    run_id = os.environ.get("GITHUB_RUN_ID", "")
+    if (
+        os.environ.get("GITHUB_SERVER_URL") == "https://github.com"
+        and len(repository) <= 200
+        and re.fullmatch(
+            r"[A-Za-z0-9][A-Za-z0-9-]{0,38}/[A-Za-z0-9][A-Za-z0-9_.-]{0,99}", repository
+        )
+        and re.fullmatch(r"[0-9]{1,20}", run_id)
+    ):
+        return (
+            "See [analysis.json in the security-scan-results artifact]"
+            f"(https://github.com/{repository}/actions/runs/{run_id})."
+        )
+    return "See `analysis.json` in the `security-scan-results` artifact."
 
 
 def parse_security_results(results_file: Path) -> dict:
@@ -91,6 +129,7 @@ def categorize_findings(findings: list) -> dict:
     """
     categorized = {
         "critical": [],
+        "high": [],
         "medium": [],
         "low": [],
         "by_type": defaultdict(list),
@@ -126,13 +165,19 @@ def generate_pr_comment(categorized: dict, analysis: dict) -> str:
         Formatted markdown comment
     """
     critical = categorized["critical"]
+    high = categorized["high"]
     medium = categorized["medium"]
     low = categorized["low"]
+    truncated_descriptions = 0
+    artifact_note = _artifact_note()
 
     # Header with summary
     if analysis["has_critical"]:
         status_icon = "❌"
         status_text = "**BLOCKED** - Critical issues must be resolved"
+    elif high:
+        status_icon = "⚠️"
+        status_text = "**WARNING** - High severity issues found"
     elif medium:
         status_icon = "⚠️"
         status_text = "**WARNING** - Medium severity issues found"
@@ -149,6 +194,7 @@ def generate_pr_comment(categorized: dict, analysis: dict) -> str:
 | Severity | Count | Action |
 |----------|-------|--------|
 | 🔴 CRITICAL | {len(critical)} | ❌ **BLOCKS PR** |
+| 🟠 HIGH | {len(high)} | ⚠️ Review recommended |
 | 🟡 MEDIUM | {len(medium)} | ⚠️ Review recommended |
 | 🔵 LOW | {len(low)} | ℹ️ Informational |
 
@@ -166,19 +212,26 @@ These **must be fixed** before merging:
 
 """
         for i, finding in enumerate(critical[:10], 1):  # Show first 10
-            file_path = finding.get("file", "unknown")
-            line = finding.get("line", "?")
-            finding_type = finding.get("type", "unknown").replace("_", " ").title()
-            match = finding.get("match", "")[:60]
-            owasp = finding.get("owasp", "")
+            location, _ = _safe_comment_text(
+                f"{finding.get('file', 'unknown')}:{finding.get('line', '?')}", 160
+            )
+            finding_type, _ = _safe_comment_text(
+                finding.get("type", "unknown").replace("_", " ").title(), 80
+            )
+            match, clipped = _safe_comment_text(
+                finding.get("description", finding.get("match", "")), _DESCRIPTION_CHARS
+            )
+            truncated_descriptions += int(clipped)
+            detail_label = "Description" if "description" in finding else "Match"
+            owasp, _ = _safe_comment_text(finding.get("owasp", ""), 80)
 
             comment += f"""
 <details>
-<summary>{i}. <b>{finding_type}</b> in <code>{file_path}:{line}</code></summary>
+<summary>{i}. <b>{finding_type}</b> in <code>{location}</code></summary>
 
 **Type:** {finding_type}
 **OWASP:** {owasp}
-**Match:** `{match}...`
+**{detail_label}:** <code>{match}</code>
 
 **Fix Required:** This is a critical security vulnerability that must be addressed.
 
@@ -213,11 +266,46 @@ These **must be fixed** before merging:
 """
 
         if len(critical) > 10:
-            comment += f"\n*...and {len(critical) - 10} more critical findings.*\n"
+            comment += f"\n… and {len(critical) - 10} more CRITICAL findings. {artifact_note}\n"
 
-    # Medium findings (warning)
+    # HIGH remains non-blocking under the existing CRITICAL-only policy.
+    # Bound visible details; retain every HIGH finding in the analysis artifact.
+    if high:
+        details = "\n---\n\n### 🟠 High Severity Issues (Non-Blocking)\n\n"
+        displayed = 0
+        for finding in high[:_HIGH_DETAILS_LIMIT]:
+            category, _ = _safe_comment_text(
+                finding.get("category", finding.get("type", "unknown")), 80
+            )
+            location, _ = _safe_comment_text(
+                f"{finding.get('file', 'unknown')}:{finding.get('line', '?')}", 160
+            )
+            description, clipped = _safe_comment_text(
+                finding.get("description", finding.get("match", "")), _DESCRIPTION_CHARS
+            )
+            detail = (
+                f"- <code>{category}</code> in <code>{location}</code>: "
+                f"<code>{description}</code>\n"
+            )
+            # Reserve room for the omitted-count and artifact link below.
+            if len(details) + len(detail) > _HIGH_DETAILS_CHARS - 500:
+                break
+            details += detail
+            displayed += 1
+            truncated_descriptions += int(clipped)
+        if displayed < len(high):
+            details += f"\n… and {len(high) - displayed} more HIGH findings. {artifact_note}\n"
+        comment += details
+
+    if truncated_descriptions:
+        comment += (
+            f"\n{truncated_descriptions} displayed finding descriptions were truncated "
+            f"to {_DESCRIPTION_CHARS} characters. {artifact_note}\n"
+        )
+
+    # Medium findings (warning): bound grouped labels and locations.
     if medium:
-        comment += """
+        details = """
 ---
 
 ### 🟡 Medium Severity Issues (Non-Blocking)
@@ -225,24 +313,44 @@ These **must be fixed** before merging:
 These should be reviewed but won't block the PR:
 
 """
-        # Group by type
+        groups = []
         for finding_type, findings in categorized["by_type"].items():
-            medium_of_type = [f for f in findings if f.get("severity") == "medium"]
+            medium_of_type = [f for f in findings if f.get("severity", "").lower() == "medium"]
             if medium_of_type:
-                type_name = finding_type.replace("_", " ").title()
-                comment += f"\n**{type_name}** ({len(medium_of_type)} occurrences):\n"
+                groups.append((finding_type, medium_of_type))
+        displayed_groups = 0
+        displayed_locations = 0
+        truncated_fields = 0
+        for finding_type, findings in groups[:_GROUP_DETAILS_LIMIT]:
+            type_name, clipped = _safe_comment_text(finding_type.replace("_", " ").title(), 80)
+            group_truncations = int(clipped)
+            detail = f"\n<code>{type_name}</code> ({len(findings)} occurrences):\n"
+            for finding in findings[:3]:
+                location, clipped = _safe_comment_text(
+                    f"{finding.get('file', 'unknown')}:{finding.get('line', '?')}", 160
+                )
+                group_truncations += int(clipped)
+                detail += f"- <code>{location}</code>\n"
+            # Reserve room for counted omissions and the artifact link.
+            if len(details) + len(detail) > _GROUP_DETAILS_CHARS - 500:
+                break
+            details += detail
+            displayed_groups += 1
+            displayed_locations += min(len(findings), 3)
+            truncated_fields += group_truncations
+        omitted_groups = len(groups) - displayed_groups
+        omitted_locations = len(medium) - displayed_locations
+        if omitted_groups or omitted_locations or truncated_fields:
+            details += (
+                f"\n{omitted_groups} MEDIUM groups and {omitted_locations} MEDIUM finding "
+                f"locations omitted; {truncated_fields} displayed fields truncated. "
+                f"{artifact_note}\n"
+            )
+        comment += details
 
-                for finding in medium_of_type[:3]:  # Show first 3 per type
-                    file_path = finding.get("file", "unknown")
-                    line = finding.get("line", "?")
-                    comment += f"- `{file_path}:{line}`\n"
-
-                if len(medium_of_type) > 3:
-                    comment += f"- *...and {len(medium_of_type) - 3} more*\n"
-
-    # Low findings (info)
+    # Low findings (info): retain count ordering and bound category groups.
     if low:
-        comment += f"""
+        details = f"""
 ---
 
 ### 🔵 Low Severity Issues (Informational)
@@ -251,20 +359,32 @@ These should be reviewed but won't block the PR:
 <summary>Found {len(low)} low-severity findings (click to expand)</summary>
 
 """
-        # Group by type
-        for finding_type, count in sorted(
-            [
-                (t, len([f for f in findings if f.get("severity") == "low"]))
-                for t, findings in categorized["by_type"].items()
-            ],
-            key=lambda x: x[1],
-            reverse=True,
-        ):
-            if count > 0:
-                type_name = finding_type.replace("_", " ").title()
-                comment += f"- **{type_name}**: {count} occurrences\n"
-
-        comment += "\n</details>\n"
+        groups = []
+        for finding_type, findings in categorized["by_type"].items():
+            count = sum(f.get("severity", "").lower() == "low" for f in findings)
+            if count:
+                groups.append((finding_type, count))
+        groups.sort(key=lambda group: group[1], reverse=True)
+        displayed_groups = 0
+        displayed_findings = 0
+        truncated_fields = 0
+        for finding_type, count in groups[:_GROUP_DETAILS_LIMIT]:
+            type_name, clipped = _safe_comment_text(finding_type.replace("_", " ").title(), 80)
+            detail = f"- <code>{type_name}</code>: {count} occurrences\n"
+            if len(details) + len(detail) > _GROUP_DETAILS_CHARS - 500:
+                break
+            details += detail
+            displayed_groups += 1
+            displayed_findings += count
+            truncated_fields += int(clipped)
+        omitted_groups = len(groups) - displayed_groups
+        omitted_findings = len(low) - displayed_findings
+        if omitted_groups or truncated_fields:
+            details += (
+                f"\n{omitted_groups} LOW groups with {omitted_findings} LOW findings omitted; "
+                f"{truncated_fields} displayed fields truncated. {artifact_note}\n"
+            )
+        comment += details + "\n</details>\n"
 
     # Footer with bypass instructions
     comment += """
@@ -334,6 +454,7 @@ def main():
         analysis = {
             "total_findings": 0,
             "critical_count": 0,
+            "high_count": 0,
             "medium_count": 0,
             "low_count": 0,
             "has_critical": False,
@@ -381,12 +502,14 @@ Please check the workflow logs for details.
     analysis = {
         "total_findings": len(findings),
         "critical_count": len(categorized["critical"]),
+        "high_count": len(categorized["high"]),
         "medium_count": len(categorized["medium"]),
         "low_count": len(categorized["low"]),
         "has_critical": len(categorized["critical"]) > 0,
         "has_bypass": False,  # Will be determined by workflow
         "by_type": {k: len(v) for k, v in categorized["by_type"].items()},
         "by_file": {k: len(v) for k, v in categorized["by_file"].items()},
+        "findings": findings,
     }
 
     # Generate PR comment
@@ -404,6 +527,7 @@ Please check the workflow logs for details.
         with open(args.github_output, "a", encoding="utf-8") as f:
             f.write(f"has_critical={'true' if analysis['has_critical'] else 'false'}\n")
             f.write(f"critical_count={analysis['critical_count']}\n")
+            f.write(f"high_count={analysis['high_count']}\n")
             f.write(f"medium_count={analysis['medium_count']}\n")
             f.write(f"low_count={analysis['low_count']}\n")
             f.write(f"total_findings={analysis['total_findings']}\n")
@@ -414,6 +538,7 @@ Please check the workflow logs for details.
     print("=" * 60)
     print(f"Total Findings: {analysis['total_findings']}")
     print(f"  Critical: {analysis['critical_count']}")
+    print(f"  High: {analysis['high_count']}")
     print(f"  Medium: {analysis['medium_count']}")
     print(f"  Low: {analysis['low_count']}")
     print()

@@ -1,0 +1,316 @@
+name: Security audit (approved manual run)
+run-name: '{"pr":"${{ inputs.pull_request }}","sha":"${{ inputs.reviewed_sha }}"}'
+
+# This is additional audit evidence. It never overwrites the automatic
+# security check or turns an absent audit into a pass.
+on:
+  workflow_dispatch:
+    inputs:
+      pull_request:
+        description: Open same-repository PR to audit
+        required: true
+        type: string
+      reviewed_sha:
+        description: Full 40-character PR head SHA reviewed for this paid run
+        required: true
+        type: string
+      authorize_spend:
+        description: Approve one standard-depth SDK audit with a 10 USD SDK cap
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: manual-security-audit-${{ inputs.pull_request }}
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    name: Approved SDK security audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Validate approval and reviewed head
+        id: identity
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_NUMBER: ${{ inputs.pull_request }}
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+          SPEND_APPROVED: ${{ inputs.authorize_spend }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        with:
+          script: |
+            if (context.eventName !== 'workflow_dispatch' ||
+                context.ref !== 'refs/heads/main' ||
+                process.env.SPEND_APPROVED !== 'true' ||
+                process.env.RUN_ATTEMPT !== '1') {
+              throw new Error('A main-branch dispatch and explicit spend approval are required');
+            }
+            const number = process.env.PR_NUMBER;
+            const sha = process.env.REVIEWED_SHA;
+            if (!/^[1-9][0-9]*$/.test(number) || !/^[0-9a-f]{40}$/.test(sha)) {
+              throw new Error('Expected a positive PR number and full reviewed commit SHA');
+            }
+            const {data: pr} = await github.rest.pulls.get({
+              ...context.repo, pull_number: Number(number)
+            });
+            if (pr.state !== 'open' || pr.head.sha !== sha ||
+                pr.base.ref !== 'main' ||
+                pr.head.repo?.full_name !== `${context.repo.owner}/${context.repo.repo}`) {
+              throw new Error('PR must be open on main with this exact same-repository head');
+            }
+            core.setOutput('sha', sha);
+
+      - name: Checkout the reviewed source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.identity.outputs.sha }}
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Install the locked noneditable package without model credentials
+        env:
+          ANTHROPIC_API_KEY: ""
+          CLAUDE_CODE_OAUTH_TOKEN: ""
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+          CONTROLLER_SHA: ${{ github.workflow_sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          ACTOR: ${{ github.actor }}
+          PR_NUMBER: ${{ inputs.pull_request }}
+          SPEND_APPROVED: ${{ inputs.authorize_spend }}
+          UV_PROJECT_ENVIRONMENT: ${{ runner.temp }}/manual-security-venv
+          UV_NO_CACHE: "1"
+        run: |
+          python -m pip install --no-cache-dir 'uv==0.9.22'
+          uv sync --locked --no-dev --no-editable
+          [ "$(git rev-parse HEAD)" = "$REVIEWED_SHA" ]
+          git diff --exit-code
+          mkdir -p "$RUNNER_TEMP/manual-security-evidence"
+          git rev-parse HEAD > "$RUNNER_TEMP/manual-security-evidence/audited-sha.txt"
+          python3 -I - <<'PYCODE'
+          import json
+          import os
+          from pathlib import Path
+          fields = ('CONTROLLER_SHA', 'RUN_ID', 'RUN_ATTEMPT', 'ACTOR',
+                    'PR_NUMBER', 'REVIEWED_SHA', 'SPEND_APPROVED')
+          target = Path(os.environ['RUNNER_TEMP']) / 'manual-security-evidence/run-identity.json'
+          target.write_text(json.dumps({name: os.environ[name] for name in fields}, indent=2),
+                            encoding='utf-8')
+          PYCODE
+
+      - name: Run one authenticated audit
+        id: scan
+        continue-on-error: true
+        working-directory: ${{ runner.temp }}/manual-security-evidence
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ""
+          ATTUNE_SPEND_GATE_AUTHORIZED: "1"
+          ATTUNE_MAX_BUDGET_USD: "10"
+          ATTUNE_HOME: ${{ runner.temp }}/manual-security-state
+        run: |
+          if [ -z "${ANTHROPIC_API_KEY//[[:space:]]/}" ]; then
+            echo "Inference credential is unavailable; no audit was run"
+            exit 1
+          fi
+          scan_exit=0
+          timeout --signal=TERM --kill-after=30s 1800s \
+            "$RUNNER_TEMP/manual-security-venv/bin/attune" workflow run security-audit \
+            --path "$GITHUB_WORKSPACE" --depth standard \
+            --input '{"max_budget_usd":10}' --json \
+            > security_results_raw.txt 2> security_scan_stderr.log || scan_exit=$?
+          echo "scan_exit=$scan_exit" >> "$GITHUB_OUTPUT"
+          printf '%s\n' "$scan_exit" > scanner-exit.txt
+          results_exit=0
+          python3 -I - <<'PY' || results_exit=$?
+          import json
+          import sys
+          from pathlib import Path
+
+          def unique_object(pairs):
+              result = {}
+              for key, value in pairs:
+                  if key in result:
+                      raise ValueError('Duplicate JSON key')
+                  result[key] = value
+              return result
+
+          def refuse_constant(value):
+              raise ValueError('Non-finite JSON value')
+
+          decoder = json.JSONDecoder(object_pairs_hook=unique_object, parse_constant=refuse_constant)
+          content = ''
+          data = None
+          try:
+              content = Path('security_results_raw.txt').read_text(encoding='utf-8')
+              data = json.loads(content, object_pairs_hook=unique_object, parse_constant=refuse_constant)
+          except (ValueError, UnicodeDecodeError):
+              for start, char in enumerate(content):
+                  if char != '{' or (start and content[start - 1] != '\n'):
+                      continue
+                  try:
+                      candidate, end = decoder.raw_decode(content, start)
+                  except ValueError:
+                      break
+                  if not content[end:].strip():
+                      data = candidate
+                  break
+          valid = (
+              isinstance(data, dict)
+              and data.get('schema_version') == 'security-audit/v1'
+              and data.get('workflow') == 'security-audit'
+              and data.get('success') is True
+              and data.get('audit_complete') is True
+              and isinstance(data.get('sdk_completion'), dict)
+              and data['sdk_completion'].get('subtype') == 'success'
+              and data['sdk_completion'].get('is_error') is False
+              and data['sdk_completion'].get('stop_reason') in (None, 'end_turn')
+              and not data.get('partial')
+              and 'error' not in data
+              and not data.get('scan_skipped')
+              and isinstance(data.get('summary'), dict)
+              and isinstance(data['summary'].get('text'), str)
+              and bool(data['summary']['text'].strip())
+              and isinstance(data.get('suggestions'), list)
+              and isinstance(data.get('findings'), list)
+              and all(
+                  isinstance(finding, dict)
+                  and finding.get('severity') in ('critical', 'high', 'medium', 'low')
+                  and isinstance(finding.get('file'), str)
+                  and bool(finding['file'].strip())
+                  and type(finding.get('line')) is int
+                  and finding['line'] > 0
+                  and isinstance(finding.get('description'), str)
+                  and bool(finding['description'].strip())
+                  for finding in data['findings']
+              )
+          )
+          if not valid:
+              data = {'error': 'SDK audit did not produce a completed supported result'}
+          Path('security_results.json').write_text(json.dumps(data, indent=2), encoding='utf-8')
+          sys.exit(0 if valid else 1)
+          PY
+          [ "$scan_exit" -eq 0 ] && [ "$results_exit" -eq 0 ]
+
+      - name: Redact credential bytes before artifact upload
+        id: redact
+        if: always() && steps.identity.outcome == 'success' && steps.scan.outcome != 'skipped'
+        working-directory: ${{ runner.temp }}
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python3 -I - <<'PYCODE'
+          import os
+          from pathlib import Path
+          key = os.environ.get('ANTHROPIC_API_KEY', '').encode()
+          if not key.strip():
+              raise SystemExit('No credential available for output sanitation')
+          root = Path(os.environ['RUNNER_TEMP'])
+          evidence = root / 'manual-security-evidence'
+          files = list(evidence.rglob('*'))
+          files += [root / 'manual-security-state/telemetry' / name
+                    for name in ('usage.jsonl', 'usage_summary.json')]
+          for path in files:
+              if path.is_symlink():
+                  raise SystemExit('Symlink in audit evidence; upload refused')
+              if path.is_file():
+                  data = path.read_bytes().replace(key, b'[REDACTED]')
+                  path.write_bytes(data.replace(key.strip(), b'[REDACTED]'))
+          if any(key in path.read_bytes() or key.strip() in path.read_bytes()
+                 for path in files if path.is_file()):
+              raise SystemExit('Credential remains in audit evidence; upload refused')
+          PYCODE
+
+      - name: Reject incomplete audits and critical findings
+        id: verdict
+        if: always() && steps.identity.outcome == 'success'
+        working-directory: ${{ runner.temp }}/manual-security-evidence
+        env:
+          SCAN_OUTCOME: ${{ steps.scan.outcome }}
+        run: |
+          [ "$SCAN_OUTCOME" = success ]
+          python3 -I - <<'PY'
+          import json
+          from pathlib import Path
+          result = json.loads(Path('security_results.json').read_text(encoding='utf-8'))
+          if any(f['severity'] == 'critical' for f in result['findings']):
+              raise SystemExit('Critical findings require repair; no bypass applies')
+          PY
+          git -C "$GITHUB_WORKSPACE" diff --exit-code
+
+      - name: Refuse a result for a changed PR head
+        id: head
+        if: always() && steps.identity.outcome == 'success'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          PR_NUMBER: ${{ inputs.pull_request }}
+          REVIEWED_SHA: ${{ inputs.reviewed_sha }}
+        with:
+          script: |
+            const {data: pr} = await github.rest.pulls.get({
+              ...context.repo, pull_number: Number(process.env.PR_NUMBER)
+            });
+            if (pr.state !== 'open' || pr.head.sha !== process.env.REVIEWED_SHA ||
+                pr.base.ref !== 'main' ||
+                pr.head.repo?.full_name !== `${context.repo.owner}/${context.repo.repo}`) {
+              throw new Error('PR changed during the audit; results are historical only');
+            }
+
+      - name: Bind audit payload to its run
+        id: bind
+        if: always() && steps.redact.outcome == 'success'
+        working-directory: ${{ runner.temp }}/manual-security-evidence
+        env:
+          SCAN_OUTCOME: ${{ steps.scan.outcome }}
+          REDACT_OUTCOME: ${{ steps.redact.outcome }}
+          VERDICT_OUTCOME: ${{ steps.verdict.outcome }}
+          HEAD_OUTCOME: ${{ steps.head.outcome }}
+        run: |
+          python3 -I - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          root = Path.cwd()
+          state = Path(os.environ['RUNNER_TEMP']) / 'manual-security-state/telemetry'
+          for original, renamed in [('usage.jsonl', 'telemetry-usage.jsonl'),
+                                    ('usage_summary.json', 'telemetry-summary.json')]:
+              source = state / original
+              if source.is_file() and not source.is_symlink():
+                  (root / renamed).write_bytes(source.read_bytes())
+          required = {'audited-sha.txt', 'run-identity.json', 'scanner-exit.txt',
+                      'security_results_raw.txt', 'security_results.json', 'security_scan_stderr.log'}
+          allowed = required | {'telemetry-usage.jsonl', 'telemetry-summary.json'}
+          paths = list(root.iterdir())
+          if not required <= {p.name for p in paths} or any(
+                  p.name not in allowed or p.is_symlink() or not p.is_file() for p in paths):
+              raise SystemExit('Audit evidence is incomplete or has unexpected members')
+          receipt = {
+              'schema': 'attune/manual-sdk-evidence/v1',
+              'repository': os.environ['GITHUB_REPOSITORY'],
+              'workflow_path': '.github/workflows/security-audit-manual.yml',
+              'identity': json.loads((root / 'run-identity.json').read_text(encoding='utf-8')),
+              'steps': {name: os.environ[name.upper() + '_OUTCOME']
+                        for name in ('scan', 'redact', 'verdict', 'head')},
+              'files': {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in paths},
+          }
+          (root / 'audit-evidence.json').write_text(json.dumps(receipt, indent=2), encoding='utf-8')
+          PY
+
+      - name: Retain audit evidence
+        if: always() && steps.identity.outcome == 'success' && steps.redact.outcome == 'success' && steps.bind.outcome == 'success'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: manual-security-audit-${{ steps.identity.outputs.sha }}
+          path: ${{ runner.temp }}/manual-security-evidence/
+          retention-days: 7
+          if-no-files-found: error

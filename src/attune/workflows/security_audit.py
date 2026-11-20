@@ -15,6 +15,7 @@ Copyright 2025-2026 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
+import json
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -41,6 +42,11 @@ from .agent_sdk_adapter import (
 from .base import BaseWorkflow, ModelTier
 from .data_classes import WorkflowResult
 from .output_schemas import WORKFLOW_OUTPUT_SCHEMA
+from .security_audit_json import (
+    SECURITY_AUDIT_JSON_INSTRUCTION,
+    SECURITY_AUDIT_JSON_SCHEMA,
+    security_audit_json,
+)
 from .validation import InputSchema
 
 logger = logging.getLogger(__name__)
@@ -144,6 +150,7 @@ class SecurityAuditWorkflow(BaseWorkflow):
         self.validate_input(kwargs)
         path_arg: str = kwargs.get("path", "")
         depth: str = kwargs.get("depth", "standard")
+        json_mode = kwargs.get("output_format") == "json"
 
         if not path_arg:
             return self._error_result("path argument is required")
@@ -158,11 +165,22 @@ class SecurityAuditWorkflow(BaseWorkflow):
         started_at = datetime.now()
 
         try:
+            json_options = {"json_mode": True} if json_mode else {}
             run_result = await self._run_agent_audit(
-                resolved_path, max_turns, depth, max_budget_usd=max_budget_usd
+                resolved_path, max_turns, depth, max_budget_usd=max_budget_usd, **json_options
             )
             self._track_sdk_run_telemetry(stage="agent", agent_run_result=run_result)
             completed_at = datetime.now()
+            json_output = None
+            if json_mode:
+                try:
+                    json_output = security_audit_json(run_result)
+                except ValueError as exc:
+                    failure = self._error_result(f"Incomplete security audit JSON: {exc}")
+                    failure.final_output = json.dumps(
+                        {"success": False, "audit_complete": False, "error": failure.error}
+                    )
+                    return failure
 
             # Recover per-subagent findings from the session transcript
             # so the orchestrator's synthesis is no longer a single point
@@ -179,7 +197,7 @@ class SecurityAuditWorkflow(BaseWorkflow):
                     else f"## Subagent findings\n\n{rendered_transcripts}"
                 )
 
-            return AgentSDKResultAdapter.from_agent_output(
+            result = AgentSDKResultAdapter.from_agent_output(
                 report_title="Security audit",
                 result_text=run_result.result_text,
                 subagent_names=_SUBAGENT_NAMES,
@@ -193,6 +211,9 @@ class SecurityAuditWorkflow(BaseWorkflow):
                 },
                 agent_run_result=run_result,
             )
+            if json_output is not None:
+                result.final_output = json_output
+            return result
 
         except ImportError as exc:
             logger.error("Agent SDK import failed: %s", exc)
@@ -224,6 +245,7 @@ class SecurityAuditWorkflow(BaseWorkflow):
         max_turns: int,
         depth: str = "standard",
         max_budget_usd: float | None = None,
+        json_mode: bool = False,
     ) -> AgentRunResult:
         """Run the Agent SDK audit and return result text.
 
@@ -237,6 +259,8 @@ class SecurityAuditWorkflow(BaseWorkflow):
         assistant_parts: list[str] = []
         result_parts: list[str] = []
         run_result = AgentRunResult(result_text="No results returned.")
+        terminal_results = 0
+        terminal_complete = False
 
         # Token-aware budget (SDK 0.1.51+): the model sees remaining
         # budget and paces itself instead of getting cut mid-exploration.
@@ -251,6 +275,8 @@ class SecurityAuditWorkflow(BaseWorkflow):
             extra_opts["effort"] = "high"
 
         system_prompt = _SYSTEM_PROMPT + (self._system_prompt_suffix or "")
+        if json_mode:
+            system_prompt += SECURITY_AUDIT_JSON_INSTRUCTION
         async for message in iter_agent_messages(
             claude_agent_sdk.query(
                 prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
@@ -262,7 +288,9 @@ class SecurityAuditWorkflow(BaseWorkflow):
                     allowed_tools=["Read", "Glob", "Grep", "Agent"],
                     permission_mode="default",
                     max_turns=max_turns,
-                    output_format=WORKFLOW_OUTPUT_SCHEMA,
+                    output_format=(
+                        SECURITY_AUDIT_JSON_SCHEMA if json_mode else WORKFLOW_OUTPUT_SCHEMA
+                    ),
                     **extra_opts,
                     agents={
                         "vuln-scanner": claude_agent_sdk.AgentDefinition(
@@ -327,8 +355,24 @@ class SecurityAuditWorkflow(BaseWorkflow):
                 ),
             )
         ):
+            # Inspect security JSON terminal fields before the shared collector
+            # drops them. Human mode retains the existing SDK adapter behavior.
+            if json_mode and isinstance(message, claude_agent_sdk.ResultMessage):
+                terminal_complete = (
+                    getattr(message, "terminal_reason", None) == "completed"
+                    and getattr(message, "origin", None) is None
+                    and getattr(message, "api_error_status", None) is None
+                    and getattr(message, "deferred_tool_use", None) is None
+                )
             sdk_result = collect_agent_output(message, assistant_parts, result_parts)
             if sdk_result is not None:
+                terminal_results += 1
                 run_result = sdk_result
+        if json_mode and terminal_results != 1:
+            run_result.subtype = "error_terminal_result_count"
+            run_result.errors = ["Security audit requires exactly one terminal SDK result"]
+        elif json_mode and not terminal_complete:
+            run_result.subtype = "error_incomplete_terminal"
+            run_result.errors = ["Security audit requires a completed own-prompt SDK result"]
         run_result.result_text = build_result_text(assistant_parts, result_parts)
         return run_result
